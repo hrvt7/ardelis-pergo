@@ -1,7 +1,7 @@
 import { Component, Suspense, lazy, memo, use, useEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
 import { assetUrl } from '@/lib/assetUrl'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { ContactShadows, Environment, Html, Line, OrbitControls, RoundedBox, useGLTF, useProgress, useTexture } from '@react-three/drei'
+import { ContactShadows, Environment, Html, Line, OrbitControls, RoundedBox, useEnvironment, useGLTF, useProgress, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
@@ -12,6 +12,7 @@ import { setActiveScene } from '@/lib/sceneRegistry'
 import { useTenant } from '@/tenants/TenantContext'
 import { EMBEDDED_GRASS_RGBA, EMBEDDED_GRASS_SIZE } from '@/lib/grassTexture'
 import { log } from '@/lib/logger'
+import { pbrPath } from '@/lib/textures'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
 // ?effects=0 → utófeldolgozás kikapcsolva (hibakereséshez, gyenge géphez).
@@ -60,7 +61,7 @@ function OptionalSceneAsset({ name, children }: SceneAssetBoundaryProps) {
 
 function usePBR(asset: string, repeat: [number, number], rotation = 0): TextureMaps {
   const [repeatX, repeatY] = repeat
-  const textures = useTexture({ diff: assetUrl(`/assets/textures/${asset}/diff.jpg`), normal: assetUrl(`/assets/textures/${asset}/nor_gl.jpg`), rough: assetUrl(`/assets/textures/${asset}/rough.jpg`) })
+  const textures = useTexture({ diff: assetUrl(pbrPath(asset, 'diff')), normal: assetUrl(pbrPath(asset, 'nor_gl')), rough: assetUrl(pbrPath(asset, 'rough')) })
   const maps = useMemo(() => {
     const result = {} as TextureMaps
     ;(['diff', 'normal', 'rough'] as const).forEach((key) => {
@@ -440,6 +441,27 @@ function getHouseAsset() {
       .catch((error) => { houseAssetPromise = null; throw error })
   }
   return houseAssetPromise
+}
+
+const DECOR_MODELS = ['tree_small_02/optimized.gltf', 'shrub_04/model.gltf', 'potted_plant_02/model.gltf', 'modern_coffee_table_01/model.gltf'].map((path) => assetUrl(`/assets/models/${path}`))
+let prefetchedHdr = ''
+/**
+ * Előtöltés: amíg a böngésző az első képkockát (shadereket) készíti, a háttér
+ * nagy fájljai — ház, égbolt, terasz, növények, bútor — már párhuzamosan töltődnek.
+ * A betöltők gyorsítótárát tölti, így a későbbi megjelenítés azonnal kész.
+ */
+function prefetchSceneAssets(scene: SceneSettings) {
+  const hdr = getLighting(scene).hdr
+  if (scene.photoMode || prefetchedHdr === hdr) return
+  prefetchedHdr = hdr
+  try {
+    getHouseAsset().catch(() => undefined)
+    useEnvironment.preload({ files: hdr })
+    useTexture.preload((['diff', 'nor_gl', 'rough'] as const).map((map) => assetUrl(pbrPath('oak_wood_planks', map))))
+    DECOR_MODELS.forEach((url) => useGLTF.preload(url))
+  } catch (error) {
+    log.warn('Scene prefetch skipped', { error: error instanceof Error ? error.message : String(error) })
+  }
 }
 
 function getHouseLayout(config: PergolaConfig) {
@@ -1220,6 +1242,7 @@ export default memo(function PergolaScene({ config, scene, view, onSideSelect, o
   const [coreOnly, setCoreOnly] = useState(false)
   const automaticQuality: QualityLevel = window.innerWidth < 760 || /Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'high'
   const quality = scene.quality === 'auto' ? automaticQuality : scene.quality
+  useEffect(() => { prefetchSceneAssets(scene) }, [scene])
   const onReady = useMemo(() => () => setReady(true), [])
   const onContextLost = useMemo(() => () => { setReady(false); setContextLost(true) }, [])
   const onFatal = useMemo(() => () => {

@@ -1,5 +1,20 @@
 # Változások
 
+## 3.1 — gyorsabb betöltés, minőségvesztés nélkül (2026. 10. 28.)
+
+- **Textúrák WebP-ben:** 15,7 MB → 6,9 MB. Fájlonként addig emeltük a minőséget, amíg az eltérés
+  az eredetitől vizuálisan nem észlelhető (PSNR ≥ 42 dB, a kevés kivétel 40,5–41,6 dB, zajos normáltérképek);
+  ahol a WebP nem lett érdemben kisebb, maradt a JPG.
+- **3D modellek tömörítve (meshopt, veszteségmentes):** fa, bokor, cserepes növény, asztal ~25%-kal kisebb;
+  a méretarány-ember 3,1 MB → 0,7 MB.
+- **Párhuzamos előtöltés:** a ház, az égbolt, a teraszburkolat és a kerti elemek már akkor töltődnek, amikor
+  a böngésző még az első képkockát készíti, nem utána.
+- Induláskor letöltött adat: 18,8 MB → 11,7 MB (−38%).
+- Ellenőrzés: a régi és az új verzió ugyanabból a nézetből renderelve 46–58 dB egyezés, szemmel azonos.
+- Gyorsítótár (Vercel): a modellek/textúrák/HDR 1 napig gyorsítótárazva, háttérben frissülnek; a buildelt
+  JS/CSS változatlanul „immutable”.
+- Előnézet: a bináris fájlok visszaalakítása fájlonként egyszer történik (az előtöltés és a betöltés közösen használja).
+
 ## 3. kör — L/U alakú ház, fény és árnyék, előnézeti link (2026. 10. 28.)
 
 ### A ház maga lesz L vagy U alakú

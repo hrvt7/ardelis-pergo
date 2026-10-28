@@ -12,6 +12,8 @@ function decode(text: string) {
 }
 
 const originalFetch = window.fetch.bind(window)
+// Egy fájlt csak egyszer tölt le és alakít vissza (az előtöltés és a tényleges betöltés ugyanazt kéri).
+const decoded = new Map<string, Promise<Uint8Array<ArrayBuffer> | Response>>()
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const href = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
   let url: URL | null = null
@@ -19,8 +21,14 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   if (!url || url.origin !== window.location.origin || !BINARY.test(url.pathname)) return originalFetch(input, init)
   const encoded = new URL(url.href)
   encoded.pathname += '.b64.txt'
-  const response = await originalFetch(encoded.href, { signal: init?.signal })
-  if (!response.ok) return response
-  const bytes = decode(await response.text())
+  let pending = decoded.get(encoded.href)
+  if (!pending) {
+    pending = originalFetch(encoded.href).then(async (response) => (response.ok ? decode(await response.text()) : response))
+    decoded.set(encoded.href, pending)
+    pending.then((result) => { if (result instanceof Response) decoded.delete(encoded.href) }, () => decoded.delete(encoded.href))
+  }
+  const result = await pending
+  if (result instanceof Response) return result.clone()
+  const bytes = result
   return new Response(bytes, { status: 200, headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(bytes.byteLength) } })
 }

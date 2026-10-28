@@ -34,9 +34,9 @@ function setExposure(renderer: THREE.WebGLRenderer, night: boolean) {
 
 function MaterialProvider({ config, children }: { config: OutdoorConfig; children: ReactNode }) {
   const source = useTexture({
-    diff: '/assets/textures/oak_wood_planks/diff.jpg',
-    normal: '/assets/textures/oak_wood_planks/nor_gl.jpg',
-    rough: '/assets/textures/oak_wood_planks/rough.jpg',
+    diff: '/assets/textures/oak_wood_planks/diff.webp',
+    normal: '/assets/textures/oak_wood_planks/nor_gl.webp',
+    rough: '/assets/textures/oak_wood_planks/rough.webp',
   })
   const wood = useMemo<TextureMaps>(() => ({
     diff: clonedTexture(source.diff, [1.8, 0.65], true),
@@ -141,7 +141,7 @@ function Post({ x, z, height, color }: { x: number; z: number; height: number; c
 }
 
 function Ground({ config }: { config: OutdoorConfig }) {
-  const source = useTexture({ grass: '/assets/textures/grass_ground/diff.jpg', concrete: '/assets/textures/concrete_floor_02/diff.jpg' })
+  const source = useTexture({ grass: '/assets/textures/grass_ground/diff.webp', concrete: '/assets/textures/concrete_floor_02/diff.webp' })
   const maps = useMemo(() => ({
     grass: clonedTexture(source.grass, [18, 18], true),
     concrete: clonedTexture(source.concrete, [9, 9], true),
@@ -163,7 +163,7 @@ function Ground({ config }: { config: OutdoorConfig }) {
 }
 
 function ModernHouse({ position = [0, 0, -5], width = 10, night }: { position?: Vec3; width?: number; night: boolean }) {
-  const source = useTexture('/assets/textures/plastered_wall_04/diff.jpg')
+  const source = useTexture('/assets/textures/plastered_wall_04/diff.webp')
   const wall = useMemo(() => clonedTexture(source, [4, 4], true), [source])
   useEffect(() => () => wall.dispose(), [wall])
   return <group position={position}>
