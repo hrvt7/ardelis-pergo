@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
+import { assetUrl } from '@/lib/assetUrl'
 import { buildStructuredData, getSeoPage } from '@contracts/seo'
 
-const SOCIAL_IMAGE = '/assets/ardelis-og.jpg'
+const SOCIAL_IMAGE = assetUrl('/assets/ardelis-og.jpg')
 
 function setMeta(attribute: 'name' | 'property', key: string, content: string) {
   let element = document.head.querySelector<HTMLMetaElement>(`meta[${attribute}="${key}"]`)
@@ -36,7 +37,7 @@ export function usePageSeo(pathname: string, options: { noindex?: boolean; title
     const page = { ...base, title: title ?? base.title, robots: noindex ? 'noindex,nofollow' : base.robots }
     const origin = window.location.origin
     const canonical = noindex ? '' : `${origin}${page.path === '/' ? '/' : page.path}`
-    const socialImage = `${origin}${SOCIAL_IMAGE}`
+    const socialImage = SOCIAL_IMAGE.startsWith('http') ? SOCIAL_IMAGE : `${origin}${SOCIAL_IMAGE}`
 
     document.documentElement.lang = 'hu'
     document.title = page.title

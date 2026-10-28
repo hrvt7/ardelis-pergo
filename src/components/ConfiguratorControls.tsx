@@ -84,9 +84,9 @@ function SectionTitle({ title, hint }: { title: string; hint?: string }) {
 }
 
 const WALL_FINISHES: { id: WallFinish; label: string; swatch: string }[] = [
+  { id: 'cedar', label: 'Fa, mint a ház', swatch: '#8a5a3c' },
   { id: 'plaster', label: 'Vakolt', swatch: '#d9d4c8' },
   { id: 'brick', label: 'Tégla', swatch: '#8f5a43' },
-  { id: 'cedar', label: 'Fa burkolat', swatch: '#8a6142' },
 ]
 
 /** Felülnézeti jel: vastag vonal = fal, pont = oszlop. */
@@ -174,7 +174,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <SectionTitle title="Rögzítés" hint="A falak, az oszlopok és az ár a modellen is azonnal frissülnek." />
             <div className="roof-options mount-options">{MOUNT_TYPES.filter((mount) => tenant.mounts.includes(mount)).map((mount) => <button type="button" key={mount} className={config.mount === mount ? 'selected' : ''} aria-pressed={config.mount === mount} onClick={() => onChange({ mount })}><MountIcon mount={mount} /><span><strong>{MOUNT_LABELS[mount]}</strong><small>{MOUNT_DESCRIPTIONS[mount]}</small></span><span className="selection-dot">{config.mount === mount && <Check size={12} />}</span></button>)}</div>
             {sideWalls(config.mount).length > 0 && <>
-              <SectionTitle title="Oldalfal burkolata" hint="Csak a látványt módosítja; az árat nem befolyásolja." />
+              <SectionTitle title="Házszárny homlokzata" hint="Csak a látványt módosítja; az árat nem befolyásolja." />
               <div className="scene-options">{WALL_FINISHES.map((finish) => <button type="button" key={finish.id} className={scene.wallFinish === finish.id ? 'selected' : ''} aria-pressed={scene.wallFinish === finish.id} onClick={() => onSceneChange({ wallFinish: finish.id })}><span aria-hidden="true" style={{ width: 18, height: 18, borderRadius: 4, background: finish.swatch, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.18)' }} /><span>{finish.label}</span></button>)}</div>
             </>}
             <SectionTitle title="Tetőrendszer" />

@@ -7,13 +7,14 @@
 //
 // A pergola valós méretben jelenik meg (ar-scale="fixed"), a talajra helyezve.
 import { useEffect, useRef, useState } from 'react'
+import { assetUrl } from '@/lib/assetUrl'
 import { ExternalLink, LoaderCircle, Rotate3d, Smartphone } from 'lucide-react'
 import QRCode from 'qrcode'
 import { Modal } from '@/components/Dialogs'
 import { exportPergolaGlb } from '@/lib/arExport'
 import { getActiveScene } from '@/lib/sceneRegistry'
 
-const MODEL_VIEWER_SRC = '/vendor/model-viewer-4.4.0.min.js'
+const MODEL_VIEWER_SRC = assetUrl('/vendor/model-viewer-4.4.0.min.js')
 
 type Phase = 'checking' | 'preparing' | 'ready' | 'launching' | 'qr' | 'error'
 type ModelViewerElement = HTMLElement & { canActivateAR?: boolean; activateAR?: () => Promise<void> }

@@ -7,26 +7,26 @@ export const MOUNT_TYPES: MountType[] = ['wall', 'corner-left', 'corner-right', 
 
 export const MOUNT_LABELS: Record<MountType, string> = {
   wall: 'Falhoz csatlakozó',
-  'corner-left': 'Sarokba, bal oldali fallal',
-  'corner-right': 'Sarokba, jobb oldali fallal',
-  niche: 'Fülkébe, három fal közé',
+  'corner-left': 'L-alakú ház sarkába, balra',
+  'corner-right': 'L-alakú ház sarkába, jobbra',
+  niche: 'U-alakú ház két szárnya közé',
   freestanding: 'Önálló',
 }
 
 /** Rövid címke a fejlécekhez és az árpanelhez. */
 export const MOUNT_SHORT: Record<MountType, string> = {
   wall: 'Fal menti',
-  'corner-left': 'Sarok · bal',
-  'corner-right': 'Sarok · jobb',
-  niche: 'Fülke',
+  'corner-left': 'L-sarok · bal',
+  'corner-right': 'L-sarok · jobb',
+  niche: 'U-fülke',
   freestanding: 'Önálló',
 }
 
 export const MOUNT_DESCRIPTIONS: Record<MountType, string> = {
   wall: 'A házfalra rögzítve, két elülső oszloppal',
-  'corner-left': 'Házfal és bal oldali fal sarkában, egy oszloppal',
-  'corner-right': 'Házfal és jobb oldali fal sarkában, egy oszloppal',
-  niche: 'Három fal között, elülső oszlop nélkül',
+  'corner-left': 'A ház és a bal oldali szárny sarkában, egy oszloppal',
+  'corner-right': 'A ház és a jobb oldali szárny sarkában, egy oszloppal',
+  niche: 'A ház két szárnya között, elülső oszlop nélkül',
   freestanding: 'Négy oszlopon, bárhol a kertben',
 }
 
@@ -73,7 +73,7 @@ export function omittedPosts(mount: MountType) {
 }
 
 export function wallLabel(side: SideKey) {
-  return side === 'back' ? 'Házfal' : 'Oldalfal'
+  return side === 'back' ? 'Házfal' : 'Házszárny'
 }
 
 /** Az oldalak, amelyekre oldalzárás tehető (nem fal). */

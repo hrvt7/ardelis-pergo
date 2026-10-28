@@ -28,6 +28,13 @@ export default function LeadForm({ productFamily, config }: Props) {
     const field = (name: string) => String(form.get(name) ?? '')
     setPending(true)
     setError('')
+    if (import.meta.env.VITE_PREVIEW_MODE === '1') {
+      // Előnézeti build: nincs szerver, a beküldést csak szimuláljuk (semmi nem megy ki).
+      await new Promise((resolve) => window.setTimeout(resolve, 700))
+      setResult({ publicRef: `ELONEZET-${Date.now().toString(36).toUpperCase()}` })
+      setPending(false)
+      return
+    }
     try {
       const response = await fetch('/api/lead', {
         method: 'POST',
@@ -69,7 +76,7 @@ export default function LeadForm({ productFamily, config }: Props) {
     }
   }
 
-  if (result) return <div className="thank-you real-lead-success" role="status"><CheckCircle2 size={30} /><div><span>KÉRELEM RÖGZÍTVE</span><h4>A felmérési kérelmedet megkaptuk.</h4><p>Azonosító: <strong>{result.publicRef}</strong></p><p>Az adataid és a konfigurációd alapján {tenant.brand.name} felveszi veled a kapcsolatot a részletek egyeztetéséhez. Érdemes megőrizni az azonosítót.</p><small>Az irányár nem minősül kötelező érvényű árajánlatnak. A végleges műszaki tartalom helyszíni felmérés után készül.</small></div></div>
+  if (result) return <div className="thank-you real-lead-success" role="status"><CheckCircle2 size={30} /><div><span>KÉRELEM RÖGZÍTVE</span><h4>A felmérési kérelmedet megkaptuk.</h4><p>Azonosító: <strong>{result.publicRef}</strong></p><p>Az adataid és a konfigurációd alapján {tenant.brand.name} felveszi veled a kapcsolatot a részletek egyeztetéséhez. Érdemes megőrizni az azonosítót.</p>{import.meta.env.VITE_PREVIEW_MODE === '1' && <p><strong>Előnézeti mód:</strong> a kérelem nem lett elküldve, csak a folyamatot mutatja.</p>}<small>Az irányár nem minősül kötelező érvényű árajánlatnak. A végleges műszaki tartalom helyszíni felmérés után készül.</small></div></div>
 
   return <form className="real-lead-form" onSubmit={submit}>
     <div className="lead-form-intro"><span><MapPin size={16} />{PRODUCT_LABELS[productFamily]}</span><p>A konfigurációt és az irányárat a kérelmedhez csatoljuk, hogy a felmérés egyeztetése konkrét műszaki elképzelésből induljon.</p></div>

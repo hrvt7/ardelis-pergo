@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
+import { assetUrl } from '@/lib/assetUrl'
 import { ArrowDown, ArrowRight, ArrowUpRight, Check, MoveRight } from 'lucide-react'
 import { Link } from 'react-router'
 import gsap from 'gsap'
@@ -242,7 +243,7 @@ export default function Home() {
           <div className="cinema-hero-proof hero-intro-item"><span><Check size={13} />Valós idejű 3D előnézet</span><span><Check size={13} />Azonnali irányár</span><span><Check size={13} />Felmérési kérelem a tervvel</span></div>
         </div>
         <div className="cinema-hero-visual">
-          <img src="/assets/pergo-hero.webp" alt="Modern, antracit alumínium PERGO pergola egy otthon teraszán" fetchPriority="high" decoding="async" />
+          <img src={assetUrl('/assets/pergo-hero.webp')} alt="Modern, antracit alumínium PERGO pergola egy otthon teraszán" fetchPriority="high" decoding="async" />
           <div className="cinema-hero-shade" />
           <span className="hero-edition">PERGO®<small>ATELIER SERIES / 01</small></span>
           <span className="hero-material-note">PORSZINTEREZETT ALUMÍNIUM<br />PARAMÉTERES VALÓSÁG</span>
@@ -261,7 +262,7 @@ export default function Home() {
         <div className="film-stage" ref={filmStage}>
           <div className="hero-film-word" aria-hidden="true">PERGO</div>
           <div className="film-media" aria-hidden="true">
-            <img src="/assets/pergo-hero.webp" alt="" loading="lazy" decoding="async" />
+            <img src={assetUrl('/assets/pergo-hero.webp')} alt="" loading="lazy" decoding="async" />
             <div className="film-day-grade" />
             <div className="film-lamella-shadow" />
             <div className="film-night" />
@@ -293,7 +294,7 @@ export default function Home() {
       </section>
 
       <section className="studio-cinema" data-cinema-reveal>
-        <div className="studio-cinema-visual" data-reveal-item><span aria-hidden="true">PERGO</span><img src="/assets/pergo-hero.webp" alt="PERGO pergola a konfigurátor vizuális környezetében" loading="lazy" decoding="async" /><Blueprint /></div>
+        <div className="studio-cinema-visual" data-reveal-item><span aria-hidden="true">PERGO</span><img src={assetUrl('/assets/pergo-hero.webp')} alt="PERGO pergola a konfigurátor vizuális környezetében" loading="lazy" decoding="async" /><Blueprint /></div>
         <div className="studio-cinema-copy" data-reveal-item><div className="cinema-section-index">02 — A STÚDIÓ</div><h2>Ne képzeld el.<br /><em>Forgasd meg.</em></h2><p>Add meg a méreteket, válaszd ki a tetőrendszert és az oldalzárást. Nézd meg a pergolát nappal, esőben vagy éjszaka — akár a kanapé nézőpontjából is.</p><ul><li><span>01</span>Valós méretarány és 180 cm-es emberi figura</li><li><span>02</span>PDF műszaki összefoglaló és megosztható terv</li><li><span>03</span>Nettó, ÁFA és bruttó irányár egy nézetben</li></ul><OvalLink to="/studio/pergola">Belépek a konfigurátorba</OvalLink></div>
       </section>
 

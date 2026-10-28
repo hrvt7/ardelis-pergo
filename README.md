@@ -26,6 +26,12 @@ npm run dev              # http://localhost:3000
 
 Ellenőrzések: `npm run check` (TypeScript), `npm run lint`, `npm test`, `npm run build`.
 
+## Kattintható előnézet
+
+`npm run build:preview` egy aloldalról is futó változatot készít a `dist-preview/` mappába
+(belső útválasztás, szimulált ajánlatkérés). Kezdőnézet: `?route=/` a főoldal,
+alapból a konfigurátor nyílik.
+
 ## Élesítés (Vercel)
 
 1. Repó feltöltése GitHubra, importálás Vercelben (a `vercel.json` mindent beállít).

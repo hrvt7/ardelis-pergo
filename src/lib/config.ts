@@ -18,7 +18,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   glassOpen: false,
   wallLouverOpen: false,
   quality: 'auto',
-  wallFinish: 'plaster',
+  wallFinish: 'cedar',
   photoMode: false,
   photoX: 0,
   photoY: 0,

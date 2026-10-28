@@ -38,7 +38,7 @@ export interface SceneSettings {
   glassOpen: boolean
   wallLouverOpen: boolean
   quality: QualityLevel
-  /** Az oldalfalak burkolata sarok- és fülkerögzítésnél (csak látvány). */
+  /** A ház oldalszárnyának homlokzata L- és U-rögzítésnél (csak látvány). */
   wallFinish: WallFinish
   photoMode: boolean
   photoUrl?: string

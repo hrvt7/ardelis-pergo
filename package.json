@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "check": "tsc -b",
     "format": "prettier --write .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:preview": "vite build --mode artifact --base ./ --outDir dist-preview && node scripts/encode-binaries.mjs dist-preview"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.3",

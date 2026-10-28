@@ -77,8 +77,8 @@ describe('lead e-mail tartalma', () => {
     const { tenantPrice } = await import('../src/tenants/rules')
     const config = { ...demoTenant.defaultConfig, mount: 'corner-left' as const }
     const rows = Object.fromEntries(describeConfig(demoTenant, config, tenantPrice(demoTenant, config)))
-    expect(rows['Rögzítés']).toBe('Sarokba, bal oldali fallal')
-    expect(rows['Oldalak']).toContain('Bal oldali: oldalfal')
+    expect(rows['Rögzítés']).toBe('L-alakú ház sarkába, balra')
+    expect(rows['Oldalak']).toContain('Bal oldali: házszárny')
     expect(rows['Oldalak']).toContain('Hátsó: házfal')
   })
 })

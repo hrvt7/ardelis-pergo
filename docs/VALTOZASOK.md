@@ -1,5 +1,44 @@
 # Változások
 
+## 3. kör — L/U alakú ház, fény és árnyék, előnézeti link (2026. 10. 28.)
+
+### A ház maga lesz L vagy U alakú
+- A különálló téglafalak helyett L-sarok módban egy, U-fülke módban két **valódi házszárny**
+  épül a főház mellé: lábazat, homlokzat, lapos cinktető szegéllyel, ablakok
+  keretezéssel, és a pergola felé néző tolóajtó.
+- A szárny a főház anyagait használja (keret, üveg, kő), így egy épületnek látszik.
+- Homlokzat választható: **fa, mint a ház** (alapértelmezett), vakolt, tégla. Az anyagminta méterhez
+  igazított, nem nyúlik meg kis vagy nagy pergolánál.
+- A szárny magassága, mélysége és az ablakok száma a pergola méretéhez igazodik
+  (2,5 × 2,5 m-től 7 × 5 × 3,2 m-ig ellenőrizve).
+- Éjszaka a szárny ablakai belülről meleg fénnyel világítanak.
+- Fotós nézetben a szárnyak elrejthetők, mint eddig a falak.
+
+### Fény és árnyék
+- Javítva: a napszak váltásakor az árnyékok nem frissültek (a lamellák csíkos árnyéka
+  csak újratöltés után jelent meg).
+- Új fényegyensúly: erősebb nap, kevesebb szórt fény, így a pergola valódi, éles árnyékot vet
+  a teraszra; a belső nézetek sem sötétülnek be.
+- Fülke módban a nyitó kamera távolabbról, magasabbról néz be, hogy a két szárny ne takarjon.
+
+### „Alulról” nézet javítva
+- Hiba volt: a kamera nem tudott felfelé nézni (a forgatás vízszintesen meg volt állítva),
+  ezért a tető alja tömör sötét sávnak látszott.
+- Most a terasz közepéről kb. 50°-ban felfelé nézünk a lamellák dőlésével egy irányba:
+  a lamellák között látszik az ég. Ebben a nézetben szabadon lehet felfelé forgatni.
+
+### Kattintható előnézet
+- `npm run build:preview` → `dist-preview/`: aloldalról is futó változat belső útválasztással,
+  az ajánlatkérés csak szimulált („Előnézeti mód”, e-mail nem megy ki).
+- A tárhely nem szolgál ki bizonyos bináris fájltípusokat, ezért ezek a build végén base64
+  szövegként kerülnek fel, és egy csak itt betöltődő réteg alakítja vissza őket
+  (`src/lib/binaryShim.ts`, `scripts/encode-binaries.mjs`). Az éles buildbe nem kerül bele.
+
+### Ellenőrizve
+- TypeScript, ESLint, 23 egységteszt, éles build.
+- Mind az 5 rögzítési mód × 5 kameranézet × nappal/éjszaka: nincs üres vagy fekete kép, nincs konzolhiba.
+- Előnézet aloldalról: 3D betölt, ár 8 080 000 Ft, ajánlatkérés, főoldal, AR QR, nincs hibás kérés.
+
 ## 2. kör — rögzítési módok, prémium látvány, AR (2026. 10. 28.)
 
 ### Rögzítési módok
