@@ -1,0 +1,31 @@
+const { chromium } = require('playwright');
+const issues = []; const log = (...a) => console.log(...a); const bad = (w) => { issues.push(w); log('  ✗', w) };
+(async () => {
+  const b = await chromium.launch({ args: ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'] });
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  const p = await ctx.newPage(); p.setDefaultTimeout(150000);
+  const errors = []; p.on('pageerror', e => errors.push('pageerror: ' + e.message)); p.on('console', m => m.type() === 'error' && errors.push('console: ' + m.text().slice(0, 200)));
+  const BASE = process.argv[2] || 'http://127.0.0.1:5173';
+  await p.goto(BASE + '/studio/pergola'); await p.waitForSelector('.scene-canvas-wrap[data-scene-ready="true"]', { timeout: 120000 });
+  await p.locator('.control-tabs button', { hasText: 'Összegzés' }).click(); await p.waitForTimeout(800);
+  const submit = p.locator('.lead-submit');
+  if (!(await submit.isDisabled())) bad('beküldés gomb aktív hozzájárulás nélkül');
+  await p.locator('.consent-row input').check();
+  await submit.click(); await p.waitForTimeout(500);
+  const invalidCount = await p.evaluate(() => [...document.querySelectorAll('.real-lead-form :invalid')].length); log('üres űrlap érvénytelen mezők:', invalidCount); if (!invalidCount) bad('üres űrlap nem jelez hibát');
+  await p.fill('input[name=customerName]', 'Teszt Elek'); await p.fill('input[name=phone]', 'abc123'); await p.fill('input[name=email]', 'a@b.hu'); await p.fill('input[name=city]', 'Vép'); await p.fill('input[name=postalCode]', '9751');
+  const phoneValid = await p.evaluate(() => document.querySelector('input[name=phone]').checkValidity()); if (phoneValid) bad('betűs telefonszám érvényesnek számít');
+  await p.fill('input[name=phone]', '+36 (30) 123-4567');
+  const phoneValid2 = await p.evaluate(() => document.querySelector('input[name=phone]').checkValidity()); if (!phoneValid2) bad('helyes telefonszám érvénytelennek számít');
+  await p.fill('input[name=email]', 'a@b'); // böngészőnek jó, zodnak nem
+  await p.waitForTimeout(3000);
+  await submit.click(); await p.waitForTimeout(2500);
+  const err = await p.locator('.form-error').innerText().catch(() => ''); log('a@b hiba:', err); if (!/e-mail/i.test(err)) bad('a@b e-mail: nem mondja meg, mi a hiba: ' + err);
+  await p.fill('input[name=email]', 'teszt@pelda.hu'); await submit.click();
+  await p.waitForSelector('.real-lead-success', { timeout: 20000 }).catch(() => bad('sikeres beküldés nem jelent meg'));
+  log('siker:', (await p.locator('.real-lead-success').innerText().catch(() => '')).slice(0, 80).replace(/\n/g, ' '));
+  log('\nkonzol:', [...new Set(errors)].join('\n') || 'nincs');
+  [...new Set(errors)].filter(e => !/Download the React DevTools|synchronously unmount/.test(e)).forEach(e => bad(e));
+  log('\nÖSSZES PROBLÉMA:', issues.length); issues.forEach(i => log(' -', i));
+  await b.close();
+})().catch(e => { console.error('FAILED', e.message); process.exit(1) });

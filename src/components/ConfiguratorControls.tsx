@@ -60,7 +60,7 @@ function SliderField({ label, value, min, max, step, unit, metric = false, onCha
             const next = draft.trim() && Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed / factor)) : value
             setDraft(String(Math.round(next * factor)))
             if (next !== value) onChange(next)
-          }} />
+          }} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur() }} />
           <span>{metric ? 'cm' : unit}</span>
         </span>
       </div>
@@ -204,7 +204,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           {step === 'extras' && <>
             <SectionTitle title="Integrált komfort" hint="Az opciók azonnal megjelennek a modellen és a tételes árban." />
             <div className="extra-grid">
-              {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett, melegfehér világítás" icon={LampCeiling} price={`${formatHuf(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led })} />}
+              {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett, beépített világítás" icon={LampCeiling} price={`${formatHuf(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led })} />}
               {tenant.extras.speakers && <Toggle label="Bluetooth hangrendszer" description="Egy pár beépített hangszóró" icon={Zap} price={formatHuf(prices.speakerPairNet)} checked={config.speakers} onChange={(speakers) => onChange({ speakers })} />}
               {tenant.extras.sensors && <Toggle label="Eső- és szélszenzor" description="Automata tetőzárás esőben" icon={CloudRain} price={formatHuf(prices.sensorsNet)} checked={config.sensors} onChange={(sensors) => onChange({ sensors })} />}
             </div>

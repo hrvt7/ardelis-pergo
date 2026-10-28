@@ -121,7 +121,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
   if (config.led) {
     lines.push({
       id: 'led',
-      label: 'Periméter LED · melegfehér',
+      label: 'Periméter LED-világítás',
       detail: `${formatNumber(perimeter)} fm integrált világítás`,
       amountNet: round(perimeter * prices.ledPerMeterNet),
     })

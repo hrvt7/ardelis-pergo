@@ -20,7 +20,8 @@ export function configToCompact(config: PergolaConfig) {
     Math.round(config.louverAngle), Math.round(config.screenOpen),
     config.led ? 1 : 0, config.heaters, config.speakers ? 1 : 0, config.sensors ? 1 : 0,
   ].map(String)
-  if (config.frameColor === 'custom' && config.customRal) parts.push(encodeURIComponent(config.customRal.slice(0, 12)).replace(/_/g, '%5F'))
+  // Csak a hash-mintában engedett karakterek maradhatnak (A–Z, 0–9, . -); minden más %XX.
+  if (config.frameColor === 'custom' && config.customRal) parts.push(encodeURIComponent(config.customRal.slice(0, 12)).replace(/[_!'()*~]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`))
   return parts.join('_')
 }
 

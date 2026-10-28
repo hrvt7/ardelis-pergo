@@ -39,8 +39,10 @@ const leadSchema = z.object({
   consent: z.literal(true),
   /** Rejtett mező: ember nem tölti ki. */
   website: z.string().max(200).optional().default(''),
-  /** Mikor nyílt meg az űrlap (ms). */
+  /** Régi kliensek: az űrlap megnyitásának időpontja (ms). Az óraeltérés miatt nem használjuk szűrésre. */
   startedAt: z.number().int().positive().optional(),
+  /** Mennyi ideig volt nyitva az űrlap a beküldésig (ms), a böngésző saját órájával mérve. */
+  elapsedMs: z.number().int().nonnegative().max(1_000_000_000).optional(),
   source: z.enum(['demo', 'standalone', 'embed']).default('standalone'),
   pageUrl: z.string().max(2000).optional(),
 })
@@ -61,6 +63,33 @@ const json = (status: number, body: unknown) => new Response(JSON.stringify(body
   status,
   headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
 })
+
+/** Egysoros szöveg (pl. e-mail tárgy): sortörés és vezérlőkarakter nélkül. */
+const oneLine = (value: string) => Array.from(value, (character) => (character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127 ? ' ' : character)).join('').replace(/\s+/g, ' ').trim()
+
+const RATE_WINDOW_MS = 10 * 60_000
+const RATE_MAX_PER_CLIENT = 6
+const RATE_MAX_PER_EMAIL = 3
+const recent = new Map<string, number[]>()
+
+/** Tesztekhez: a visszaélés-fék számlálóinak törlése. */
+export function resetLeadRateLimit() { recent.clear() }
+
+function clientKey(request: Request) {
+  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+  return `ip:${forwarded || request.headers.get('x-real-ip') || 'unknown'}`
+}
+
+function rateLimited(client: string, email: string, now: number) {
+  const hits = (key: string) => (recent.get(key) ?? []).filter((time) => now - time < RATE_WINDOW_MS)
+  const clientHits = hits(client)
+  const emailHits = hits(`email:${email}`)
+  if (clientHits.length >= RATE_MAX_PER_CLIENT || emailHits.length >= RATE_MAX_PER_EMAIL) return true
+  recent.set(client, [...clientHits, now])
+  recent.set(`email:${email}`, [...emailHits, now])
+  if (recent.size > 5000) for (const [key, times] of recent) if (!times.some((time) => now - time < RATE_WINDOW_MS)) recent.delete(key)
+  return false
+}
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] ?? character)
 
@@ -219,9 +248,15 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   const now = new Date()
   const ref = makeRef(tenant, now)
 
-  // Robotszűrés: a robot sikert lát, de semmi nem megy ki.
-  const tooFast = input.startedAt !== undefined && now.getTime() - input.startedAt < MIN_FILL_MS
+  // Robotszűrés: a robot sikert lát, de semmi nem megy ki. A kitöltési időt a böngésző
+  // méri (elapsedMs) — a kliens és a szerver órájának eltérése így nem dob el valódi kérelmet.
+  const tooFast = input.elapsedMs !== undefined && input.elapsedMs < MIN_FILL_MS
   if (input.website || tooFast) return json(200, { ok: true, ref })
+
+  // Visszaélés elleni fék (példányonként, legjobb szándékkal): ugyanarról a címről vagy
+  // ugyanarra az e-mailre rövid idő alatt csak néhány kérelem mehet ki.
+  const limited = rateLimited(clientKey(request), input.customer.email.toLowerCase(), now.getTime())
+  if (limited) return json(429, { ok: false, error: 'Túl sok kérelem érkezett rövid idő alatt. Kérlek, próbáld újra néhány perc múlva.' })
 
   const price = tenantPrice(tenant, config)
   const configUrl = `${siteOrigin(request, env)}/k/${tenant.id}#${shareHash(config)}`
@@ -244,7 +279,7 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
     canStore ? storeLead(env, record) : Promise.resolve('skipped'),
     canEmail ? sendEmail(env, {
       to: recipients,
-      subject: `${tenant.lead.subjectPrefix} ${input.customer.name} – ${input.customer.city} – ${formatHuf(price.totalGross)}`,
+      subject: oneLine(`${tenant.lead.subjectPrefix} ${input.customer.name} – ${input.customer.city} – ${formatHuf(price.totalGross)}`),
       html: managerEmailHtml(record),
       replyTo: input.customer.email,
     }) : Promise.resolve('skipped'),
@@ -260,7 +295,7 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
     try {
       await sendEmail(env, {
         to: [input.customer.email],
-        subject: `${tenant.brand.name}: megkaptuk a felmérési kérelmedet (${ref})`,
+        subject: oneLine(`${tenant.brand.name}: megkaptuk a felmérési kérelmedet (${ref})`),
         html: customerEmailHtml(record),
         replyTo: tenant.brand.email,
       })

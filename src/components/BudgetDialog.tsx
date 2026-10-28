@@ -20,13 +20,13 @@ export default function BudgetDialog({ config, prices, furniture, currentGross, 
   const chips = useMemo(() => [0.6, 0.7, 0.8, 0.9].map((rate) => Math.round((currentGross * rate) / 500000) * 500000).filter((value, index, list) => value > 0 && list.indexOf(value) === index), [currentGross])
 
   useEffect(() => {
-    if (amount < 100000) return
+    if (amount <= 0) return
     // A keresés néhány száz konfigurációt áraz be: begépelés után, a felület blokkolása nélkül.
     const timer = window.setTimeout(() => setResult({ amount, value: planBudget(tenant, config, prices, amount, furniture) }), 300)
     return () => window.clearTimeout(timer)
   }, [amount, tenant, config, prices, furniture])
 
-  const busy = amount >= 100000 && result?.amount !== amount
+  const busy = amount > 0 && result?.amount !== amount
   const value = result?.amount === amount ? result.value : null
 
   return <Modal title="Mennyit szánsz rá?" eyebrow="KÖLTSÉGKERET" onClose={onClose} className="budget-dialog">
@@ -38,10 +38,10 @@ export default function BudgetDialog({ config, prices, furniture, currentGross, 
     <div className="budget-chips">{chips.map((chip) => <button type="button" key={chip} className={chip === amount ? 'selected' : ''} onClick={() => setText(group(chip))}>{(chip / 1000000).toLocaleString('hu-HU', { maximumFractionDigits: 1 })} M Ft</button>)}</div>
 
     <div className="budget-results" aria-live="polite">
-      {amount < 100000 && <p className="budget-note">Adj meg egy összeget.</p>}
+      {amount <= 0 && <p className="budget-note">Adj meg egy összeget.</p>}
       {busy && <p className="budget-note"><LoaderCircle size={15} className="spin" />Számolás a gyártó árlistájával…</p>}
       {value?.status === 'fits' && <div className="budget-fits"><Check size={18} /><div><strong>Belefér a terved.</strong><span>Marad {formatHuf(value.remaining)} — ebből kényelmesen futja pl. LED-re vagy oldalzárásra.</span></div></div>}
-      {value?.status === 'impossible' && <div className="budget-fits is-warning"><Wallet size={18} /><div><strong>Ebbe a keretbe nem fér bele ez a fajta pergola.</strong><span>A legkisebb, alapfelszereltségű változat ára {formatHuf(value.minimumGross)}. Érdemes megnézni egy kisebb vagy fix tetős kivitelt is.</span></div></div>}
+      {value?.status === 'impossible' && <div className="budget-fits is-warning"><Wallet size={18} /><div><strong>Ebbe a keretbe nem fér bele ez a fajta pergola.</strong><span>A legolcsóbb elérhető változat (legkisebb méret{furniture !== 'none' ? ' a választott bútorhoz' : ''}, egyszerűbb tető, kiegészítők nélkül) ára {formatHuf(value.minimumGross)}.</span></div></div>}
       {value?.status === 'plans' && <div className="budget-plans">
         {value.plans.map((plan) => <article key={plan.id} className={`budget-plan${plan.id === 'balanced' ? ' is-best' : ''}`}>
           <header><span>{plan.title}</span>{plan.id === 'balanced' && <em>Ajánlott</em>}</header>

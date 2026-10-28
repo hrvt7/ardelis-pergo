@@ -92,6 +92,8 @@ export function persistPrices(tenant: Tenant, prices: PriceSettings) {
 
 export function createShareUrl(config: PergolaConfig) {
   const url = new URL(window.location.href)
+  // Beágyazott (gyártói weboldalba tett) nézetből a link az önálló oldalra mutasson.
+  url.pathname = url.pathname.replace(/\/embed\//, '/k/')
   url.searchParams.delete('admin')
   url.searchParams.delete('ar')
   url.searchParams.delete('arDebug')

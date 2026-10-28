@@ -13,6 +13,18 @@ interface Props {
 
 type LeadResponse = { ok: true; ref: string } | { ok: false; error: string; field?: string }
 
+/** A szerver által hibásnak jelzett mező olvasható neve. */
+const FIELD_NAMES: Record<string, string> = {
+  'customer.name': 'a nevet',
+  'customer.email': 'az e-mail-címet',
+  'customer.phone': 'a telefonszámot (csak számjegy, szóköz, +, -, /, zárójel)',
+  'customer.postalCode': 'az irányítószámot',
+  'customer.city': 'a település nevét',
+  'customer.region': 'a megyét',
+  'customer.address': 'a címet',
+  'customer.notes': 'a megjegyzést',
+}
+
 export default function LeadForm({ productFamily, config }: Props) {
   const { tenant, embed } = useTenant()
   const startedAt = useRef(Date.now())
@@ -54,14 +66,15 @@ export default function LeadForm({ productFamily, config }: Props) {
           },
           consent: true,
           website: field('website'),
-          startedAt: startedAt.current,
+          elapsedMs: Date.now() - startedAt.current,
           source: embed ? 'embed' : tenant.demo ? 'demo' : 'standalone',
           pageUrl: embed && document.referrer ? document.referrer : window.location.origin + window.location.pathname,
         }),
       })
       const data = await response.json().catch(() => null) as LeadResponse | null
       if (!response.ok || !data || !data.ok) {
-        setError(data && !data.ok ? data.error : 'A kérelem elküldése nem sikerült. Ellenőrizd a kapcsolatot, és próbáld újra.')
+        const fieldName = data && !data.ok && data.field ? FIELD_NAMES[data.field] : undefined
+        setError(fieldName ? `Kérlek, ellenőrizd ${fieldName}.` : data && !data.ok ? data.error : 'A kérelem elküldése nem sikerült. Ellenőrizd a kapcsolatot, és próbáld újra.')
         return
       }
       setResult({ publicRef: data.ref })
@@ -82,8 +95,8 @@ export default function LeadForm({ productFamily, config }: Props) {
     <div className="lead-form-intro"><span><MapPin size={16} />{PRODUCT_LABELS[productFamily]}</span><p>A konfigurációt és az irányárat a kérelmedhez csatoljuk, hogy a felmérés egyeztetése konkrét műszaki elképzelésből induljon.</p></div>
     <div className="lead-grid">
       <label><span>Név *</span><input name="customerName" autoComplete="name" required minLength={2} maxLength={120} placeholder="Teljes név" /></label>
-      <label><span>Telefon *</span><input name="phone" type="tel" autoComplete="tel" required minLength={6} maxLength={40} placeholder="+36 30 123 4567" /></label>
-      <label><span>E-mail *</span><input name="email" type="email" autoComplete="email" required maxLength={320} placeholder="nev@email.hu" /></label>
+      <label><span>Telefon *</span><input name="phone" type="tel" autoComplete="tel" required minLength={6} maxLength={40} pattern="[+0-9 \(\)\/\-]{6,40}" title="Csak számjegy, szóköz és + - / ( ) karakter" placeholder="+36 30 123 4567" /></label>
+      <label><span>E-mail *</span><input name="email" type="email" autoComplete="email" required maxLength={320} pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Pl. nev@email.hu" placeholder="nev@email.hu" /></label>
       <label><span>Megye *</span><select name="county" autoComplete="address-level1" required defaultValue={tenant.regions.includes('Vas') ? 'Vas' : tenant.regions[0]}>{tenant.regions.map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
       <label><span>Település *</span><input name="city" autoComplete="address-level2" required minLength={2} maxLength={120} placeholder="Település" /></label>
       <label><span>Irányítószám *</span><input name="postalCode" autoComplete="postal-code" required minLength={4} maxLength={12} inputMode="numeric" placeholder="9600" /></label>

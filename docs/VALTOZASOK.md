@@ -1,5 +1,34 @@
 # Változások
 
+## 3.5 — Hibavadászat (2026. 10. 28.)
+
+Automatikus végigkattintás minden funkción (tests/e2e), kódátnézés, javítás, újrafuttatás — az utolsó körben 0 hiba.
+
+**Javított hibák**
+- **Elveszett ajánlatkérések:** a robotszűrő a böngésző és a szerver órájának különbségével számolt; ha a vásárló
+  gépének órája néhány másodperccel előrébb járt, a kérelmet csendben eldobta. Most a böngésző maga méri a kitöltési időt.
+- **Megosztott link + frissítés:** megosztott linkről megnyitva, módosítás után frissítéskor a régi link felülírta a
+  változtatásokat. Most a címsor linkje követi a módosításokat.
+- **Egyedi RAL-kód zárójellel / aposztróffal** („RAL 7016 (matt)”) a megosztott linket érvénytelenné tette. Javítva; 1000 véletlen konfigurációs oda-vissza teszt.
+- **Méret beírása + Enter** nem lépett érvénybe (csak a mezőből kilépve). Most Enterre is, a határokhoz igazítva.
+- **Ctrl+Y** (ismétlés) nem működött, és csúszkán állva a Ctrl+Z sem. Javítva.
+- **Hibás e-mail / telefonszám** esetén csak általános hibaüzenet jött; most megmondja, melyik mezőt kell javítani, és a böngésző már beküldés előtt jelzi.
+- **iPhone HEIC fotó** feltöltésekor üres kép lett; most érthető üzenetet ad (JPG/PNG kell).
+- **Beágyazott nézetből megosztva** a címsor útvonala /k/-ra váltott az iframe-ben; most csak a hash frissül.
+- **Költségkeret 100 000 Ft alatt** „Adj meg egy összeget” üzenet jött; most megmondja a legolcsóbb elérhető árat.
+- **Esti hangulat:** a LED/fűtés ki-be kapcsolása az összes anyag újrafordítását okozta (mobilon akadás) — a fényforrások száma most állandó.
+- **Kanapé nézetben** a bútor helyigény-jelölése belelógott a képbe — ott elrejtve.
+- 375 px széles mobilon a fejléc 2 px-et túllógott.
+- Árnyéktérkép-figyelmeztetés a konzolban (PCFSoft) megszüntetve.
+- A LED megnevezése semleges lett (a fény színe a vásárló hangulatbeállításától függ).
+
+**Biztonság**
+- Visszaélés-fék az ajánlatkérésen: rövid idő alatt címenként max. 6, e-mail-címenként max. 3 kérelem
+  (különben bárki tömegesen küldethetne „visszaigazoló” e-mailt egy idegen címre).
+- Az e-mail tárgyából kiszűrve a sortörés és vezérlőkarakter.
+
+Tesztek: 45 egység- és integrációs teszt + 4 böngészős ellenőrzőszkript.
+
 ## 3.4 — Bútor, költségkeret, esti hangulat (2026. 10. 28.)
 
 **„Mit szeretnél alatta?” (Méret lépés)**

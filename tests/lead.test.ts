@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { handleLeadRequest } from '../server/lead'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { handleLeadRequest, resetLeadRateLimit } from '../server/lead'
 import { demoTenant } from '../src/tenants/demo'
 
 const body = (patch: Record<string, unknown> = {}) => ({
@@ -8,7 +8,7 @@ const body = (patch: Record<string, unknown> = {}) => ({
   customer: { name: 'Teszt Elek', email: 'teszt@example.com', phone: '+36 30 123 4567', postalCode: '9600', city: 'Sárvár', region: 'Vas', address: '', notes: '' },
   consent: true,
   website: '',
-  startedAt: Date.now() - 60_000,
+  elapsedMs: 60_000,
   source: 'demo',
   ...patch,
 })
@@ -16,6 +16,8 @@ const body = (patch: Record<string, unknown> = {}) => ({
 const post = (payload: unknown) => new Request('https://example.test/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
+
+beforeEach(() => resetLeadRateLimit())
 
 describe('POST /api/lead', () => {
   it('élesben kézbesítés nélkül 503-at ad, nem tesz úgy, mintha sikerült volna', async () => {
@@ -61,6 +63,35 @@ describe('POST /api/lead', () => {
     expect((await handleLeadRequest(post(body({ customer: { name: 'X' } })), {})).status).toBe(422)
     expect((await handleLeadRequest(post(body({ tenantId: 'nincs-ilyen' })), {})).status).toBe(404)
     expect((await handleLeadRequest(post(body({ consent: false })), {})).status).toBe(422)
+  })
+
+  it('a kliens órájának eltérése nem dob el valódi kérelmet (régi startedAt a jövőben)', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+    const response = await handleLeadRequest(post(body({ elapsedMs: undefined, startedAt: Date.now() + 10 * 60_000 })), { NODE_ENV: 'development' })
+    expect(((await response.json()) as { delivered?: string }).delivered).toBe('dev-log')
+  })
+
+  it('a túl gyors (2,5 s alatti) kitöltést csendben elnyeli', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const response = await handleLeadRequest(post(body({ elapsedMs: 800 })), { NODE_ENV: 'production', RESEND_API_KEY: 'k', LEAD_FALLBACK_EMAIL: 'a@b.hu' })
+    expect(response.status).toBe(200)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('ugyanarra az e-mailre rövid időn belül legfeljebb 3 kérelem megy ki', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+    const statuses: number[] = []
+    for (let i = 0; i < 4; i++) statuses.push((await handleLeadRequest(post(body()), { NODE_ENV: 'development' })).status)
+    expect(statuses).toEqual([200, 200, 200, 429])
+  })
+
+  it('sortörés a névben nem kerül az e-mail tárgyába', async () => {
+    const calls: Record<string, unknown>[] = []
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => { calls.push(JSON.parse(String(init.body))); return new Response('{}', { status: 200 }) }))
+    const customer = { ...body().customer, name: 'Teszt\r\nBcc: x@y.hu' }
+    await handleLeadRequest(post(body({ customer })), { NODE_ENV: 'production', RESEND_API_KEY: 'k', LEAD_FALLBACK_EMAIL: 'gyarto@example.com' })
+    for (const call of calls) expect(String(call.subject)).not.toMatch(/[\r\n]/)
   })
 
   it('ha minden kézbesítés elbukik, 502-t ad', async () => {

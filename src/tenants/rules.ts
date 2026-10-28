@@ -83,7 +83,7 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     mount: tenant.mounts.includes(config.mount) ? config.mount : tenant.mounts[0],
     roof: roofs.includes(config.roof) ? config.roof : roofs[0],
     frameColor,
-    customRal: frameColor === 'custom' ? config.customRal : undefined,
+    customRal: frameColor === 'custom' && config.customRal ? config.customRal : undefined,
     sides,
     louverAngle: clamp(config.louverAngle, [0, 90]),
     screenOpen: clamp(config.screenOpen, [0, 100]),
