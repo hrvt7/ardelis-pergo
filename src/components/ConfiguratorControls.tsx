@@ -1,13 +1,14 @@
 import { useRef, useState, type ReactNode, type TouchEvent } from 'react'
-import { ArrowLeft, ArrowRight, Box, Check, ChevronDown, CloudRain, Columns3, Expand, Image, LampCeiling, Layers3, Minus, Moon, Move, PanelTop, Plus, SlidersHorizontal, Sparkles, Sun, Sunset, Upload, Wind, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Box, Check, ChevronDown, CloudRain, Columns3, Expand, Image, LampCeiling, Layers3, Minus, Moon, Move, Plus, SlidersHorizontal, Sparkles, Sun, Sunset, Upload, Wind, Zap } from 'lucide-react'
 import { getFrameColorHex } from '@/lib/config'
 import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, sideWalls, wallLabel } from '@/lib/mount'
 import { formatHuf, SIDE_LABELS } from '@/lib/pricing'
-import { enabledRoofs, presetConfig } from '@/tenants/rules'
+import { enabledRoofs, presetConfig, tenantPrice } from '@/tenants/rules'
+import { ROOF_INFO } from '@/lib/roofs'
 import { useTenant } from '@/tenants/TenantContext'
 import { getSizeRecommendation } from '@/lib/specification'
 import FurniturePicker from '@/components/FurniturePicker'
-import type { ConfigStep, FrameColor, MountType, PergolaConfig, PriceSettings, QualityLevel, SceneSettings, SideKey, SideType, WallFinish } from '@/types/pergola'
+import type { ConfigStep, FrameColor, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey, SideType, WallFinish } from '@/types/pergola'
 
 const STEPS: { id: ConfigStep; label: string; short: string }[] = [
   { id: 'size', label: 'Méret', short: 'Alapterület' },
@@ -22,10 +23,10 @@ interface Props {
   config: PergolaConfig
   scene: SceneSettings
   step: ConfigStep
-  selectedSide: SideKey
+  selectedSide: SideKey | 'roof'
   summary: ReactNode
   onStepChange: (step: ConfigStep) => void
-  onSideSelect: (side: SideKey) => void
+  onSideSelect: (side: SideKey | 'roof') => void
   onChange: (patch: Partial<PergolaConfig>) => void
   onSceneChange: (patch: Partial<SceneSettings>) => void
   onPreset: (config: PergolaConfig) => void
@@ -106,17 +107,54 @@ function MountIcon({ mount }: { mount: MountType }) {
   </svg>
 }
 
-function SideDiagram({ config, selected, onSelect }: { config: PergolaConfig; selected: SideKey; onSelect: (side: SideKey) => void }) {
+function SideDiagram({ config, selected, roofName, onSelect }: { config: PergolaConfig; selected: SideKey | 'roof'; roofName: string; onSelect: (side: SideKey | 'roof') => void }) {
   return (
-    <div className="side-diagram" aria-label="Oldalválasztó felülnézet">
+    <div className="side-diagram" aria-label="Oldal- és tetőválasztó felülnézet">
       {(['back', 'left', 'right', 'front'] as SideKey[]).map((side) => (
-        <button key={side} type="button" className={`diagram-${side} ${selected === side ? 'selected' : ''} type-${config.sides[side]}`} disabled={isWallSide(config.mount, side)} onClick={() => onSelect(side)} aria-label={`${side === 'front' ? 'Elülső' : side === 'back' ? 'Hátsó' : side === 'left' ? 'Bal' : 'Jobb'} oldal kiválasztása`}>
+        <button key={side} type="button" className={`diagram-${side} ${selected === side ? 'selected' : ''} type-${config.sides[side]}`} disabled={isWallSide(config.mount, side)} onClick={() => onSelect(side)} aria-label={`${side === 'front' ? 'Elülső' : side === 'back' ? 'Hátsó' : side === 'left' ? 'Bal' : 'Jobb'} oldal kiválasztása`} aria-pressed={selected === side}>
           {isWallSide(config.mount, side) ? wallLabel(side) : side === 'front' ? 'Elülső' : side === 'back' ? 'Hátsó' : side === 'left' ? 'Bal' : 'Jobb'}
         </button>
       ))}
-      <div className="diagram-core"><span>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m</span><small>Koppints egy oldalra</small></div>
+      <button type="button" className={`diagram-core roof-${config.roof} ${selected === 'roof' ? 'selected' : ''}`} onClick={() => onSelect('roof')} aria-pressed={selected === 'roof'} aria-label="Tetőrendszer kiválasztása">
+        <span>Tető · {roofName}</span>
+        <small>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · koppints a cseréhez</small>
+      </button>
     </div>
   )
+}
+
+/** A tető mozgatása: lamellaszög (forgatható) vagy nyitottság %-ban (eltolható, behúzható). */
+function RoofControl({ config, onChange }: { config: PergolaConfig; onChange: (patch: Partial<PergolaConfig>) => void }) {
+  const info = ROOF_INFO[config.roof]
+  if (info.motion === 'none') return null
+  if (info.motion === 'tilt') return <SliderField label="Lamellaszög" value={config.louverAngle} min={0} max={90} step={1} unit="°" onChange={(louverAngle) => onChange({ louverAngle })} />
+  return <SliderField label="Tetőnyitás" value={Math.round(config.louverAngle / 0.9)} min={0} max={100} step={1} unit="%" onChange={(open) => onChange({ louverAngle: Math.round(open * 9) / 10 })} />
+}
+
+/** Tetőrendszer-választó: név, rövid leírás, tulajdonságok és az árkülönbség a jelenlegi tervhez képest. */
+function RoofPicker({ config, prices, onChange }: { config: PergolaConfig; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void }) {
+  const { tenant } = useTenant()
+  const current = tenantPrice(tenant, config, prices).totalGross
+  return <div className="roof-picker">
+    {enabledRoofs(tenant).map((roof) => {
+      const info = ROOF_INFO[roof]
+      const brand = tenant.roofs[roof]!
+      const delta = roof === config.roof ? 0 : tenantPrice(tenant, { ...config, roof }, prices).totalGross - current
+      return <button type="button" key={roof} className={`roof-card roof-${roof}${config.roof === roof ? ' selected' : ''}`} aria-pressed={config.roof === roof} onClick={() => onChange({ roof })}>
+        <span className="roof-card-head"><RoofIcon roof={roof} /><span><strong>{brand.name}</strong><small>{brand.short}</small></span><em>{roof === config.roof ? 'Kiválasztva' : `${delta > 0 ? '+' : '−'}${formatHuf(Math.abs(delta))}`}</em></span>
+        <span className="roof-card-text">{brand.description}</span>
+        <span className="roof-card-props"><span><b>Árnyék</b>{info.shade}</span><span><b>Eső</b>{info.rain}</span><span><b>Mozgás</b>{info.motion === 'tilt' ? 'Forgatható lamellák' : info.motion === 'slide' ? 'Behúzható / nyitható' : 'Fix'}</span></span>
+      </button>
+    })}
+  </div>
+}
+
+function RoofIcon({ roof }: { roof: RoofType }) {
+  const common = { width: 28, height: 20, viewBox: '0 0 28 20', 'aria-hidden': true, className: 'roof-icon' } as const
+  if (roof === 'louvered' || roof === 'retractable') return <svg {...common}>{[3, 8, 13, 18, 23].map((x, i) => <rect key={x} x={roof === 'retractable' && i > 2 ? x - 6 + i : x} y="5" width="3.2" height="10" rx="1" transform={`rotate(-25 ${x + 1.6} 10)`} />)}</svg>
+  if (roof === 'fabric') return <svg {...common}><path d="M2 7 Q6 13 10 7 Q14 13 18 7 Q22 13 26 7" fill="none" strokeWidth="2" /></svg>
+  if (roof === 'glass' || roof === 'polycarbonate') return <svg {...common}><rect x="2" y="5" width="24" height="10" rx="1" className={roof === 'glass' ? 'pane-glass' : 'pane-poly'} />{[2, 10, 18, 26].map((x) => <rect key={x} x={x - 1} y="4" width="2" height="12" />)}</svg>
+  return <svg {...common}><rect x="2" y="6" width="24" height="8" rx="1" /></svg>
 }
 
 export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, onPhotoUpload, mobileOpen, onMobileToggle }: Props) {
@@ -128,6 +166,14 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
     ...(tenant.customRal ? [{ id: 'custom' as const, name: `Egyedi RAL · ${customRate > 0 ? `+${customRate}% ${tenant.demo ? 'minta ' : ''}felár` : 'felár nélkül'}`, hex: '#687467' }] : []),
   ]
   const sideTypes: SideType[] = ['none', ...tenant.sides]
+  const sideSettings = (side: SideKey) => <>
+            <div className="selected-side-head"><strong>{sideNames[side]}</strong><span>{isWallSide(config.mount, side) ? wallLabel(side) : SIDE_LABELS[config.sides[side]]}</span></div>
+            <div className="side-options large">{sideTypes.map((type) => <button type="button" key={type} disabled={isWallSide(config.mount, side)} className={config.sides[side] === type ? 'selected' : ''} onClick={() => onChange({ sides: { ...config.sides, [side]: type } })}>{type === 'zip' ? <Wind size={18} /> : type === 'glass' ? <Box size={18} /> : type === 'louver' ? <Layers3 size={18} /> : <Expand size={18} />}<span>{SIDE_LABELS[type]}</span></button>)}</div>
+            {hasZip && <div className="inline-setting"><SliderField label="ZIP screen nyitottsága" value={config.screenOpen} min={0} max={100} step={1} unit="%" onChange={(screenOpen) => onChange({ screenOpen })} /></div>}
+            {config.sides[side] === 'glass' && <button type="button" className="side-motion-control" aria-pressed={scene.glassOpen} onClick={() => onSceneChange({ glassOpen: !scene.glassOpen })}><Move size={17} /><span>{scene.glassOpen ? 'Tolóüveg bezárása' : 'Tolóüveg eltolása'}</span></button>}
+            {config.sides[side] === 'louver' && <button type="button" className="side-motion-control" aria-pressed={scene.wallLouverOpen} onClick={() => onSceneChange({ wallLouverOpen: !scene.wallLouverOpen })}><Layers3 size={17} /><span>{scene.wallLouverOpen ? 'Oldallamellák zárása' : 'Oldallamellák döntése'}</span></button>}
+  </>
+  const roofLabelsFor = (roof: RoofType) => `${tenant.roofs[roof]?.name ?? ''} · ${tenant.roofs[roof]?.short ?? ''}`
   const touchStart = useRef(0)
   const stepIndex = STEPS.findIndex((item) => item.id === step)
   const hasZip = Object.entries(config.sides).some(([side, type]) => type === 'zip' && !isWallSide(config.mount, side as SideKey))
@@ -167,7 +213,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             {config.width > 6 && <div className="smart-warning"><Columns3 size={18} /><p><strong>Középoszlop javasolt</strong>600 cm felett a műszaki ellenőrzés és egy középoszlop szükséges lehet.</p></div>}
             <div className="smart-helper"><Sparkles size={18} /><p><strong>{getSizeRecommendation(config).split(' · ')[0]}</strong>{getSizeRecommendation(config).split(' · ')[1]}</p></div>
             <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
-            {config.roof !== 'fixed' && <SliderField label={config.roof === 'retractable' ? 'Tetőnyitás' : 'Lamellaszög'} value={config.louverAngle} min={0} max={90} step={1} unit="°" onChange={(louverAngle) => onChange({ louverAngle })} />}
+            <RoofControl config={config} onChange={onChange} />
           </>}
 
           {step === 'mount' && <>
@@ -180,7 +226,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               <div className="scene-options">{WALL_FINISHES.map((finish) => <button type="button" key={finish.id} className={scene.wallFinish === finish.id ? 'selected' : ''} aria-pressed={scene.wallFinish === finish.id} onClick={() => onSceneChange({ wallFinish: finish.id })}><span aria-hidden="true" style={{ width: 18, height: 18, borderRadius: 4, background: finish.swatch, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.18)' }} /><span>{finish.label}</span></button>)}</div>
             </>}
             <SectionTitle title="Tetőrendszer" />
-            <div className="roof-options">{enabledRoofs(tenant).map((id) => [id, tenant.roofs[id]!.name, tenant.roofs[id]!.description] as const).map(([id, name, description]) => <button type="button" key={id} className={config.roof === id ? 'selected' : ''} onClick={() => onChange({ roof: id })}><PanelTop size={20} /><span><strong>{name}</strong><small>{description}</small></span><span className="selection-dot">{config.roof === id && <Check size={12} />}</span></button>)}</div>
+            <RoofPicker config={config} prices={prices} onChange={onChange} />
           </>}
 
           {step === 'color' && <>
@@ -191,13 +237,13 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           </>}
 
           {step === 'sides' && <>
-            <SectionTitle title="Válaszd ki az oldalt" hint="A felülnézeti diagramon vagy közvetlenül a 3D modellen is kiválasztható." />
-            <SideDiagram config={config} selected={selectedSide} onSelect={onSideSelect} />
-            <div className="selected-side-head"><strong>{sideNames[selectedSide]}</strong><span>{isWallSide(config.mount, selectedSide) ? wallLabel(selectedSide) : SIDE_LABELS[config.sides[selectedSide]]}</span></div>
-            <div className="side-options large">{sideTypes.map((type) => <button type="button" key={type} disabled={isWallSide(config.mount, selectedSide)} className={config.sides[selectedSide] === type ? 'selected' : ''} onClick={() => onChange({ sides: { ...config.sides, [selectedSide]: type } })}>{type === 'zip' ? <Wind size={18} /> : type === 'glass' ? <Box size={18} /> : type === 'louver' ? <Layers3 size={18} /> : <Expand size={18} />}<span>{SIDE_LABELS[type]}</span></button>)}</div>
-            {hasZip && <div className="inline-setting"><SliderField label="ZIP screen nyitottsága" value={config.screenOpen} min={0} max={100} step={1} unit="%" onChange={(screenOpen) => onChange({ screenOpen })} /></div>}
-            {config.sides[selectedSide] === 'glass' && <button type="button" className="side-motion-control" aria-pressed={scene.glassOpen} onClick={() => onSceneChange({ glassOpen: !scene.glassOpen })}><Move size={17} /><span>{scene.glassOpen ? 'Tolóüveg bezárása' : 'Tolóüveg eltolása'}</span></button>}
-            {config.sides[selectedSide] === 'louver' && <button type="button" className="side-motion-control" aria-pressed={scene.wallLouverOpen} onClick={() => onSceneChange({ wallLouverOpen: !scene.wallLouverOpen })}><Layers3 size={17} /><span>{scene.wallLouverOpen ? 'Oldallamellák zárása' : 'Oldallamellák döntése'}</span></button>}
+            <SectionTitle title="Oldalak és tető" hint="Koppints egy oldalra vagy a középső mezőre (tető). Az oldalak a 3D modellen is kiválaszthatók." />
+            <SideDiagram config={config} selected={selectedSide} roofName={tenant.roofs[config.roof]?.name ?? ''} onSelect={onSideSelect} />
+            {selectedSide === 'roof' ? <>
+              <div className="selected-side-head"><strong>Tetőrendszer</strong><span>{roofLabelsFor(config.roof)}</span></div>
+              <RoofPicker config={config} prices={prices} onChange={onChange} />
+              <RoofControl config={config} onChange={onChange} />
+            </> : sideSettings(selectedSide)}
             <div className="interaction-hint"><Move size={17} /><p>A tolóüveg és az oldallamella a 3D-ben kattintásra, illetve a fenti gombbal is mozgatható. A ZIP a kazettából gördül le.</p></div>
           </>}
 

@@ -1206,3 +1206,29 @@ body:has(.marketing-page) { overflow: visible; background: #e8e7e0; }
   .price-collapsed .weather-toolbar, .price-collapsed .automation-status, .price-collapsed .sun-panel-slot { right: 20px; }
   .price-collapsed .viewer-footer { right: 24px; bottom: 96px; }
 }
+
+/* ── Tetőválasztó ──────────────────────────────────────────────── */
+button.diagram-core { color: var(--text-primary); font: inherit; cursor: pointer; padding: 6px; text-align: center; transition: border-color var(--component-transition), background var(--component-transition); }
+button.diagram-core:hover { border-color: rgba(216,255,114,.5); background: rgba(216,255,114,.06); }
+button.diagram-core.selected { border-color: var(--accent-primary); background: var(--accent-subtle); box-shadow: inset 0 0 0 1px var(--accent-primary); }
+button.diagram-core.selected span { color: var(--accent-primary); }
+.roof-picker { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.roof-card { display: flex; flex-direction: column; gap: 7px; padding: 11px 12px; border: 1px solid var(--surface-border); border-radius: 9px; background: transparent; color: var(--text-primary); text-align: left; transition: border-color var(--component-transition), background var(--component-transition); }
+.roof-card:hover { border-color: rgba(216,255,114,.45); }
+.roof-card.selected { border-color: rgba(216,255,114,.65); background: var(--accent-subtle); }
+.roof-card-head { display: flex; align-items: center; gap: 10px; }
+.roof-card-head > span { flex: 1; min-width: 0; }
+.roof-card-head strong, .roof-card-head small { display: block; }
+.roof-card-head strong { font-size: 11px; }
+.roof-card-head small { margin-top: 2px; color: var(--text-secondary); font-size: 8.5px; }
+.roof-card-head em { font-style: normal; font-size: 9px; font-variant-numeric: tabular-nums; color: var(--text-secondary); white-space: nowrap; }
+.roof-card.selected .roof-card-head em { color: var(--accent-primary); }
+.roof-card-text { color: var(--text-secondary); font-size: 8.5px; line-height: 1.5; }
+.roof-card-props { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.roof-card-props > span { display: flex; flex-direction: column; gap: 2px; font-size: 8px; line-height: 1.35; color: var(--text-primary); }
+.roof-card-props b { font-size: 7px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-secondary); }
+.roof-icon { flex: none; fill: currentColor; stroke: currentColor; color: var(--accent-primary); }
+.roof-icon path { fill: none; }
+.roof-icon .pane-glass { fill: rgba(190,225,230,.35); stroke: none; }
+.roof-icon .pane-poly { fill: rgba(245,243,234,.6); stroke: none; }
+@media (max-width: 420px) { .roof-card-props { grid-template-columns: 1fr 1fr; } }

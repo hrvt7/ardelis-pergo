@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { ExternalLink, RotateCcw, X } from 'lucide-react'
 import { useTenant } from '@/tenants/TenantContext'
+import { ROOF_INFO, ROOF_TYPES } from '@/lib/roofs'
 import type { PriceSettings } from '@/types/pergola'
 
 export function Modal({ title, eyebrow, onClose, children, className = '' }: { title: string; eyebrow?: string; onClose: () => void; children: ReactNode; className?: string }) {
@@ -51,11 +52,7 @@ const MONEY_FIELDS: { key: keyof PriceSettings; label: string; unit: string }[] 
 
 export function PriceSettingsDialog({ prices, onChange, onReset, onClose }: { prices: PriceSettings; onChange: (prices: PriceSettings) => void; onReset: () => void; onClose: () => void }) {
   const { tenant } = useTenant()
-  const roofFields: { key: keyof PriceSettings; label: string; unit: string }[] = [
-    ...(tenant.roofs.louvered ? [{ key: 'louveredPerM2Net' as const, label: `${tenant.roofs.louvered.name} ${tenant.roofs.louvered.short} alapár`, unit: 'Ft/m²' }] : []),
-    ...(tenant.roofs.retractable ? [{ key: 'retractablePerM2Net' as const, label: `${tenant.roofs.retractable.name} ${tenant.roofs.retractable.short} alapár`, unit: 'Ft/m²' }] : []),
-    ...(tenant.roofs.fixed ? [{ key: 'fixedPerM2Net' as const, label: `${tenant.roofs.fixed.name} ${tenant.roofs.fixed.short} alapár`, unit: 'Ft/m²' }] : []),
-  ]
+  const roofFields: { key: keyof PriceSettings; label: string; unit: string }[] = ROOF_TYPES.filter((roof) => tenant.roofs[roof]).map((roof) => ({ key: ROOF_INFO[roof].priceKey, label: `${tenant.roofs[roof]!.name} ${tenant.roofs[roof]!.short} alapár`, unit: 'Ft/m²' }))
   return (
     <Modal title="Mintaárak szerkesztése" eyebrow="SZERKESZTHETŐ MINTAÁRAK" onClose={onClose} className="price-settings-modal">
       <p className="modal-intro">Minden érték nettó forintban értendő, kivéve a százalékos mezőket. A módosítások azonnal újraszámolják a konfigurációt, és csak ebben a böngészőben mentődnek — a beküldött érdeklődőnél a szerver a gyártói árlistával számol.</p>

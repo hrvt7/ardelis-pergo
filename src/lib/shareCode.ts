@@ -5,9 +5,10 @@
 // Kb. 40 karakter a régi ~400 helyett → olvasható QR-kód, SMS-be is fér.
 // A régi formátum (#k=… base64 JSON) továbbra is beolvasható.
 import type { FrameColor, MountType, PergolaConfig, RoofType, SideType } from '../types/pergola'
+import { ROOF_INFO, ROOF_TYPES } from './roofs'
 
 const MOUNT: Record<MountType, string> = { wall: 'W', 'corner-left': 'L', 'corner-right': 'R', niche: 'N', freestanding: 'F' }
-const ROOF: Record<RoofType, string> = { louvered: 'l', retractable: 'r', fixed: 'f' }
+const ROOF = Object.fromEntries(ROOF_TYPES.map((roof) => [roof, ROOF_INFO[roof].share])) as Record<RoofType, string>
 const COLOR: Record<FrameColor, string> = { anthracite: 'a', black: 'b', white: 'w', bronze: 'z', custom: 'c' }
 const SIDE: Record<SideType, string> = { none: '0', zip: 'z', glass: 'g', louver: 'l' }
 const invert = <T extends string>(map: Record<T, string>) => Object.fromEntries(Object.entries(map).map(([key, value]) => [value, key])) as Record<string, T>

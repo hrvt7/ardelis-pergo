@@ -3,12 +3,13 @@
 // A „veszteség” azt méri, mennyit kell lemondani a kívánt tervből; a terv a
 // legkisebb veszteségű, kerethez illő változat. Árazás: a gyártó saját árlistája.
 import { furnitureMinimum } from '@/lib/furniture'
+import { ROOF_INFO } from '@/lib/roofs'
 import { SIDE_LABELS } from '@/lib/pricing'
 import { enabledRoofs, normalizeConfig, roofLabels, tenantPrice } from '@/tenants/rules'
 import type { Tenant } from '@/tenants/types'
 import type { FurnitureSet, PergolaConfig, PriceSettings, RoofType, SideKey, SideType } from '@/types/pergola'
 
-const ROOF_VALUE: Record<RoofType, number> = { retractable: 9, louvered: 7, fixed: 2 }
+const ROOF_VALUE = Object.fromEntries(Object.entries(ROOF_INFO).map(([roof, info]) => [roof, info.value])) as Record<RoofType, number>
 const SIDE_VALUE: Record<SideType, number> = { glass: 2.4, louver: 1.8, zip: 1.4, none: 0 }
 const SIZE_STEPS = 9
 const SIDES: SideKey[] = ['front', 'back', 'left', 'right']

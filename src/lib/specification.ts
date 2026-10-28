@@ -1,4 +1,5 @@
 import { furnitureFit } from './furniture'
+import { ROOF_INFO, isGlazedRoof } from './roofs'
 import { isWallSide, MOUNT_CODES, MOUNT_LABELS, openSides, postPositions, sideWalls, wallLabel } from './mount'
 import { formatHuf, formatNumber, ROOF_LABELS, SIDE_LABELS, SIDE_NAMES } from './pricing'
 import type { PergolaConfig, PriceBreakdown, RoofType, SideKey } from '../types/pergola'
@@ -6,7 +7,7 @@ import type { PergolaConfig, PriceBreakdown, RoofType, SideKey } from '../types/
 export interface BomLine { label: string; value: string }
 
 export function getSpecCode(config: PergolaConfig) {
-  const roof = { louvered: 'AE', retractable: 'GL', fixed: 'LN' }[config.roof]
+  const roof = ROOF_INFO[config.roof].spec
   const mount = MOUNT_CODES[config.mount]
   const color = config.frameColor === 'custom'
     ? config.customRal?.replace(/[^a-z0-9]/gi, '').toUpperCase() || 'RAL'
@@ -30,12 +31,24 @@ export function getBom(config: PergolaConfig): BomLine[] {
     { label: 'Hordozó oszlop', value: posts === 0 ? 'nincs · a falak tartják' : `${posts - middlePosts} db${middlePosts ? ` + ${middlePosts} db középoszlop` : ''} · ${formatNumber(config.height, 2)} m` },
     ...(walls.length ? [{ label: 'Oldalfali csatlakozó profil', value: walls.map((side) => `${side === 'left' ? 'bal' : 'jobb'} ${formatNumber(config.depth, 2)} m`).join(' + ') }] : []),
     { label: 'Keretgerenda', value: `2 × ${formatNumber(config.width, 2)} m + 2 × ${formatNumber(config.depth, 2)} m` },
-    { label: config.roof === 'fixed' ? 'Fix tetőpanel' : 'Aerofoil tetőlamella', value: config.roof === 'fixed' ? `${Math.max(2, Math.floor(config.depth / 0.65))} résszel` : `${Math.max(10, Math.floor(config.depth / 0.22))} db × ${formatNumber(Math.max(0, config.width - 0.18), 2)} m` },
+    roofBomLine(config),
     { label: 'Tolóüveg panel', value: `${glassPanes} db` },
     { label: 'ZIP screen kazetta', value: `${screens} db` },
     { label: 'Rejtett lefolyó', value: posts === 0 ? '1 db · falon vezetett lefolyócső' : `${config.mount === 'freestanding' ? 2 : 1} db · oszlopba integrálva` },
     { label: 'Villamos opciók', value: `${config.led ? 'LED' : 'LED nélkül'} · ${config.heaters} db fűtés${config.speakers ? ' · hangrendszer' : ''}${config.sensors ? ' · szenzor' : ''}` },
   ]
+}
+
+/** A tető anyaglista-sora tetőtípusonként. */
+function roofBomLine(config: PergolaConfig) {
+  const span = formatNumber(Math.max(0, config.width - 0.18), 2)
+  if (config.roof === 'fixed') return { label: 'Fix tetőpanel', value: `${Math.max(2, Math.floor(config.depth / 0.65))} résszel` }
+  if (isGlazedRoof(config.roof)) {
+    const bays = Math.max(2, Math.ceil(config.width / 0.95))
+    return { label: config.roof === 'glass' ? 'VSG üvegtábla' : 'Polikarbonát lemez', value: `${bays} db × ${formatNumber(config.depth - 0.2, 2)} m · ${bays + 1} db borda` }
+  }
+  if (config.roof === 'fabric') return { label: 'Textil ponyva + futósín', value: `${formatNumber(config.width * config.depth, 1)} m² · ${Math.max(4, Math.ceil(config.depth / 0.5))} db ponyvatartó` }
+  return { label: 'Aerofoil tetőlamella', value: `${Math.max(10, Math.floor(config.depth / 0.22))} db × ${span} m` }
 }
 
 export function getDeliveryEstimate(config: PergolaConfig) {

@@ -4,6 +4,7 @@ import { formatHuf, formatNumber } from '@/lib/pricing'
 import { getSpecCode } from '@/lib/specification'
 import type { Tenant } from '@/tenants/types'
 import type { PergolaConfig, PriceBreakdown, RoofType } from '@/types/pergola'
+import { ROOF_INFO } from '@/lib/roofs'
 const SIDE_NAMES = { front: 'Elülső', back: 'Hátsó', left: 'Bal', right: 'Jobb' }
 const SIDE_TYPES = { none: 'Nyitott', zip: 'ZIP screen', glass: 'Tolóüveg', louver: 'Fix lamella' }
 
@@ -37,7 +38,7 @@ export async function exportPergolaPdf(config: PergolaConfig, price: PriceBreakd
     ['Szerkezetszín', colorName],
     ['Spec-kód', getSpecCode(config)],
     ...(['front', 'back', 'left', 'right'] as const).map((side) => [`${SIDE_NAMES[side]} oldal`, isWallSide(config.mount, side) ? wallLabel(side) : SIDE_TYPES[config.sides[side]]]),
-    ...(config.roof !== 'fixed' ? [[config.roof === 'retractable' ? 'Tetőnyitás' : 'Lamellaszög', `${config.louverAngle}°`]] : []),
+    ...(ROOF_INFO[config.roof].control ? [[ROOF_INFO[config.roof].control!, ROOF_INFO[config.roof].motion === 'slide' ? `${Math.round(config.louverAngle / 0.9)}%` : `${config.louverAngle}°`]] : []),
     ['LED világítás', config.led ? 'Igen' : 'Nem'],
     ['Teraszfűtés', `${config.heaters} db`],
     ['Hangrendszer', config.speakers ? 'Igen' : 'Nem'],

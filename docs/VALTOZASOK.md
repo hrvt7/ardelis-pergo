@@ -1,5 +1,19 @@
 # Változások
 
+## 3.6 — Választható tetőtípusok (2026. 10. 28.)
+- Az **Oldalak** lépésben a diagram közepére (a „Tető” kockára) kattintva cserélhető a tető.
+- 6 piaci tetőtípus: motoros lamellás (Aero), eltolható lamellás (Glide),
+  behúzható textiltető (Velum), üvegtető (Lumen), polikarbonát (Opal), fix alumínium (Line).
+- Minden kártyán: árnyék / eső / mozgás tulajdonság és az **árkülönbség** a mostani tervhez.
+- Mozgatható tetőnél csúszka: lamellaszög (°) vagy tetőnyitás (%), a 3D-ben animálva.
+- Saját 3D-modell: bordázott üveg (átlátszó, nem vet árnyékot), opál polikarbonát,
+  harmonikásan behúzható ponyva.
+- Végig összekötve: ár, megosztó link, konfigurációs kód, anyaglista, PDF,
+  költségkeret-tervező, esőautomatika, árnyékelemzés (pl. üvegtető 29%, fix alu 69% árnyék).
+- A gyártó az admin árbeállításban m²-áron árazza, és kikapcsolhatja, amit nem gyárt.
+  A demó árak (textil 195e, üveg 150e, polikarbonát 95e Ft/m² nettó) **becsült értékek**.
+- 6 új automatikus teszt (összesen 50).
+
 ## 3.5 — Hibavadászat (2026. 10. 28.)
 
 Automatikus végigkattintás minden funkción (tests/e2e), kódátnézés, javítás, újrafuttatás — az utolsó körben 0 hiba.

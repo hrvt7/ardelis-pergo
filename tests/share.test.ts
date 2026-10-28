@@ -15,7 +15,7 @@ describe('megosztó link oda-vissza', () => {
       const frameColor = pick(['anthracite', 'black', 'white', 'bronze', 'custom'] as const)
       const config: PergolaConfig = {
         width: Math.round((2.5 + rnd() * 4.5) * 20) / 20, depth: Math.round((2.5 + rnd() * 2.5) * 20) / 20, height: Math.round((2.2 + rnd()) * 20) / 20,
-        mount: pick(['wall', 'corner-left', 'corner-right', 'niche', 'freestanding'] as const), roof: pick(['louvered', 'retractable', 'fixed'] as const),
+        mount: pick(['wall', 'corner-left', 'corner-right', 'niche', 'freestanding'] as const), roof: pick(['louvered', 'retractable', 'fabric', 'glass', 'polycarbonate', 'fixed'] as const),
         frameColor, ...(frameColor === 'custom' ? { customRal: pick(['RAL 7016', 'ral_9005 (m)', "7035'*!~", 'ŐÜ 1234', '']) } : {}),
         sides: { front: pick(SIDES), back: pick(SIDES), left: pick(SIDES), right: pick(SIDES) },
         louverAngle: Math.round(rnd() * 90), screenOpen: Math.round(rnd() * 100), led: rnd() > 0.5, heaters: Math.floor(rnd() * 5), speakers: rnd() > 0.5, sensors: rnd() > 0.5,

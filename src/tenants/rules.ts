@@ -3,6 +3,7 @@
 // számolja újra a beérkező leadet, így a kliens által küldött ár nem számít.
 import { z } from 'zod'
 import { calculatePrice } from '../lib/pricing'
+import { ROOF_TYPES } from '../lib/roofs'
 import type { PergolaConfig, PriceBreakdown, PriceSettings, RoofType, SideKey } from '../types/pergola'
 import type { Tenant } from './types'
 
@@ -14,7 +15,7 @@ export const pergolaConfigSchema = z.object({
   depth: z.number().finite().min(1).max(20),
   height: z.number().finite().min(1).max(6),
   mount: z.enum(['freestanding', 'wall', 'corner-left', 'corner-right', 'niche']),
-  roof: z.enum(['louvered', 'retractable', 'fixed']),
+  roof: z.enum(['louvered', 'retractable', 'fabric', 'glass', 'polycarbonate', 'fixed']),
   frameColor: z.enum(['anthracite', 'black', 'white', 'bronze', 'custom']),
   customRal: z.string().max(12).optional(),
   sides: z.object({ front: sideEnum, back: sideEnum, left: sideEnum, right: sideEnum }),
@@ -30,6 +31,9 @@ export const priceSettingsSchema = z.object({
   louveredPerM2Net: z.number().min(0).max(2000000),
   retractablePerM2Net: z.number().min(0).max(2000000),
   fixedPerM2Net: z.number().min(0).max(2000000),
+  fabricRoofPerM2Net: z.number().min(0).max(2000000).default(195000),
+  glassRoofPerM2Net: z.number().min(0).max(2000000).default(150000),
+  polycarbonatePerM2Net: z.number().min(0).max(2000000).default(95000),
   freestandingSurchargeNet: z.number().min(0).max(5000000),
   sideWallAttachPerMeterNet: z.number().min(0).max(1000000).default(0),
   postNet: z.number().min(0).max(2000000).default(0),
@@ -49,7 +53,7 @@ const clamp = (value: number, [min, max]: [number, number]) => Math.min(max, Mat
 const roundCm = (value: number) => Math.round(value * 100) / 100
 
 export function enabledRoofs(tenant: Tenant): RoofType[] {
-  return (['louvered', 'retractable', 'fixed'] as RoofType[]).filter((roof) => tenant.roofs[roof])
+  return ROOF_TYPES.filter((roof) => tenant.roofs[roof])
 }
 
 /** „Aero · motoros lamellás” formátumú címkék a gyártó termékneveivel. */
@@ -59,7 +63,7 @@ export function roofLabels(tenant: Tenant): Record<RoofType, string> {
     const item = tenant.roofs[roof] ?? tenant.roofs[fallback]!
     return `${item.name} · ${item.short}`
   }
-  return { louvered: label('louvered'), retractable: label('retractable'), fixed: label('fixed') }
+  return Object.fromEntries(ROOF_TYPES.map((roof) => [roof, label(roof)])) as Record<RoofType, string>
 }
 
 /**

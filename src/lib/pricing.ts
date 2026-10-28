@@ -1,3 +1,4 @@
+import { ROOF_INFO, ROOF_TYPES } from './roofs'
 import { isWallSide, omittedPosts, sideWalls } from './mount'
 import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, RoofType, SideKey, SideType } from '../types/pergola'
 
@@ -5,6 +6,9 @@ export const DEFAULT_PRICES: PriceSettings = {
   louveredPerM2Net: 220000,
   retractablePerM2Net: 340000,
   fixedPerM2Net: 80000,
+  fabricRoofPerM2Net: 195000,
+  glassRoofPerM2Net: 150000,
+  polycarbonatePerM2Net: 95000,
   freestandingSurchargeNet: 120000,
   sideWallAttachPerMeterNet: 24000,
   postNet: 65000,
@@ -20,11 +24,7 @@ export const DEFAULT_PRICES: PriceSettings = {
   vatRate: 0.27,
 }
 
-export const ROOF_LABELS: Record<RoofType, string> = {
-  louvered: 'Aero · motoros lamellás',
-  retractable: 'Glide · eltolható lamellás',
-  fixed: 'Line · fix alumínium',
-}
+export const ROOF_LABELS = Object.fromEntries(ROOF_TYPES.map((roof) => [roof, `${ROOF_INFO[roof].name} · ${ROOF_INFO[roof].short}`])) as Record<RoofType, string>
 
 export const SIDE_LABELS: Record<SideType, string> = {
   none: 'Nyitott',
@@ -53,11 +53,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
   const perimeter = 2 * (config.width + config.depth)
   const lines: PriceLine[] = []
 
-  const roofRate = config.roof === 'louvered'
-    ? prices.louveredPerM2Net
-    : config.roof === 'retractable'
-      ? prices.retractablePerM2Net
-      : prices.fixedPerM2Net
+  const roofRate = prices[ROOF_INFO[config.roof].priceKey]
 
   const structure = area * roofRate
   lines.push({

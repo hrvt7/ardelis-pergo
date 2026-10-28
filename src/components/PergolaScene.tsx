@@ -20,6 +20,7 @@ import type { FurnitureSet } from '@/types/pergola'
 import { kelvinToHex } from '@/lib/color'
 import { glassPanels } from '@/lib/glass'
 import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
+import { isGlazedRoof, isMovableRoof } from '@/lib/roofs'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
 const ShadeProbe = lazy(() => import('@/components/ShadeProbe'))
@@ -366,6 +367,108 @@ function Person({ config }: { config: PergolaConfig }) {
   return <group><RealisticAsset url={assetUrl('/assets/models/scale_person/person.glb')} position={position} height={1.8} rotation={0.28} /><Html position={[position[0], 1.94, position[2]]} center className="person-label">180 cm</Html></group>
 }
 
+/**
+ * Üveg- vagy polikarbonát tető: hosszanti alumínium bordák (kb. 95 cm-enként),
+ * köztük a táblák, a bordákon szorítóléc. Az üveg átengedi a napot (nem vet árnyékot),
+ * az opál polikarbonát szórt fényt ad (árnyékot vet).
+ */
+function GlazedRoof({ width, depth, height, color, kind }: { width: number; depth: number; height: number; color: string; kind: 'glass' | 'polycarbonate' }) {
+  const bays = Math.max(2, Math.ceil(width / 0.95))
+  const span = width - 0.14
+  const bay = span / bays
+  const length = depth - 0.12
+  const glass = kind === 'glass'
+  return <group name={`roof-${kind}`}>
+    {Array.from({ length: bays + 1 }, (_, index) => {
+      const x = -span / 2 + index * bay
+      return <group key={index}>
+        <Beam args={[0.055, 0.075, length]} position={[x, height + 0.165, 0]} color={color} radius={0.006} />
+        <Beam args={[0.062, 0.018, length]} position={[x, height + 0.227, 0]} color={color} radius={0.004} />
+      </group>
+    })}
+    {Array.from({ length: bays }, (_, index) => {
+      const x = -span / 2 + (index + 0.5) * bay
+      return <mesh key={index} position={[x, height + 0.211, 0]} castShadow={!glass} receiveShadow renderOrder={glass ? 2 : 0}>
+        <boxGeometry args={[bay - 0.05, glass ? 0.012 : 0.016, length - 0.02]} />
+        {glass
+          ? <meshPhysicalMaterial color="#cfe2e4" metalness={0.02} roughness={0.04} transparent opacity={0.24} clearcoat={1} clearcoatRoughness={0.03} envMapIntensity={2} depthWrite={false} side={THREE.DoubleSide} />
+          : <meshPhysicalMaterial color="#f3f1ea" roughness={0.55} transmission={0} transparent opacity={0.78} sheen={0.2} side={THREE.DoubleSide} />}
+      </mesh>
+    })}
+    {/* Elülső vízvető profil */}
+    <Beam args={[width - 0.1, 0.04, 0.05]} position={[0, height + 0.215, depth / 2 - 0.06]} color={color} radius={0.004} />
+  </group>
+}
+
+/**
+ * Behúzható textiltető: a futósínek között harmonikaszerűen redőzött, vízzáró ponyva.
+ * A ponyvatartó profilok behúzáskor a hátsó (fal felőli) végre gyűlnek össze;
+ * a ponyva a profilok között a távolságtól függően belóg.
+ */
+function FabricRoof({ width, depth, height, color, openness }: { width: number; depth: number; height: number; color: string; openness: number }) {
+  const count = Math.max(4, Math.ceil(depth / 0.5))
+  const pitch = (depth - 0.24) / count
+  // Kifeszítve enyhe hullám (2,5% ráhagyás), behúzva mély redők.
+  const slack = pitch * 1.025
+  const steps = 14
+  const profiles = useRef<THREE.Group[]>([])
+  const fabric = useMemo(() => Array.from({ length: count }, () => {
+    const geometry = new THREE.PlaneGeometry(width - 0.2, 1, 1, steps)
+    geometry.rotateX(-Math.PI / 2)
+    return geometry
+  }), [count, width])
+  useEffect(() => () => fabric.forEach((geometry) => geometry.dispose()), [fabric])
+  const current = useRef(openness)
+  const invalidate = useThree((state) => state.invalidate)
+  const gl = useThree((state) => state.gl)
+  const layout = (open: number) => Array.from({ length: count + 1 }, (_, index) => {
+    const extended = -depth / 2 + 0.12 + index * pitch
+    const packed = -depth / 2 + 0.12 + index * 0.055
+    return THREE.MathUtils.lerp(extended, packed, open)
+  })
+  const apply = (open: number) => {
+    const zs = layout(open)
+    profiles.current.slice(0, count + 1).forEach((profile, index) => { if (profile) profile.position.z = zs[index] })
+    fabric.forEach((geometry, index) => {
+      const a = zs[index]
+      const b = zs[index + 1]
+      const gap = Math.max(0.001, b - a)
+      // Parabolikus belógás: a ponyva hossza állandó, a profilok közelebb kerülve mélyebben lóg.
+      const sag = Math.min(slack * 0.45, Math.sqrt(Math.max(0, (3 * gap * (slack - gap)) / 8)) + 0.012)
+      const position = geometry.attributes.position as THREE.BufferAttribute
+      for (let row = 0; row <= steps; row++) {
+        const t = row / steps
+        const z = a + (b - a) * t
+        const y = -sag * 4 * t * (1 - t)
+        for (let column = 0; column < 2; column++) position.setXYZ(row * 2 + column, column === 0 ? -(width - 0.2) / 2 : (width - 0.2) / 2, y, z)
+      }
+      position.needsUpdate = true
+      geometry.computeVertexNormals()
+      geometry.computeBoundingSphere()
+      geometry.computeBoundingBox()
+    })
+  }
+  useEffect(() => { apply(current.current); invalidate() })
+  useFrame((_, delta) => {
+    const target = openness
+    if (Math.abs(current.current - target) < 0.001) return
+    current.current = REDUCED ? target : THREE.MathUtils.damp(current.current, target, 4, delta)
+    apply(current.current)
+    refreshShadows(gl)
+    invalidate()
+  })
+  return <group name="roof-fabric" position={[0, height + 0.2, 0]}>
+    {/* Futósínek a két oldalon */}
+    {[-1, 1].map((side) => <Beam key={side} args={[0.07, 0.05, depth - 0.1]} position={[side * (width / 2 - 0.09), -0.02, 0]} color={color} radius={0.006} />)}
+    {Array.from({ length: count + 1 }, (_, index) => <group key={index} ref={(node) => { if (node) profiles.current[index] = node }}>
+      <Beam args={[width - 0.16, 0.028, 0.034]} position={[0, 0.004, 0]} color={color} radius={0.004} />
+    </group>)}
+    {fabric.map((geometry, index) => <mesh key={index} geometry={geometry} castShadow receiveShadow position={[0, -0.005, 0]}>
+      <meshStandardMaterial color="#ece8df" roughness={0.95} side={THREE.DoubleSide} />
+    </mesh>)}
+  </group>
+}
+
 /** Periméter LED: a fényerő és a színhőmérséklet a vásárló „esti hangulat” beállítása. */
 function LedLighting({ width, depth, height, night, kelvin, level }: { width: number; depth: number; height: number; night: boolean; kelvin: number; level: number }) {
   const color = kelvinToHex(kelvin)
@@ -395,7 +498,7 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
   const drainPost = postPositions.find(([x, z]) => z > 0 && x > 0.5) ?? postPositions.find(([x, z]) => z > 0 && x < -0.5)
   const sideWallList = sideWalls(mount)
   const louverCount = Math.max(10, Math.floor(depth / 0.22))
-  const rainProtection = scene.rain && config.sensors && roof !== 'fixed'
+  const rainProtection = scene.rain && config.sensors && isMovableRoof(roof)
   const effectiveAngle = rainProtection ? 0 : config.louverAngle
   const openness = effectiveAngle / 90
   const fixedSeamCount = Math.max(2, Math.floor(depth / 0.65))
@@ -438,8 +541,10 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     {drainPost && <mesh position={[drainPost[0], 0.14, drainPost[1] + 0.095]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.08, 0.025, 8, 20, Math.PI / 2]} /><PowderCoat color={color} /></mesh>}
     <RoundedBox args={[0.28, 0.19, 0.34]} position={[width / 2 - 0.02, height + 0.12, depth / 2 - 0.25]} radius={0.035} smoothness={4} castShadow><PowderCoat color={color} /></RoundedBox>
     <group position={[-width / 2 + 0.2, height + 0.32, -depth / 2 + 0.2]}><mesh><cylinderGeometry args={[0.045, 0.055, 0.12, 16]} /><meshStandardMaterial color="#31383a" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, 0.075, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.034, 16]} /><meshPhysicalMaterial color="#8aa0a4" roughness={0.1} clearcoat={1} /></mesh></group>
-    <group ref={louverGroup}>{roof !== 'fixed' && Array.from({ length: louverCount }, (_, index) => { const z = -depth / 2 + 0.2 + index * ((depth - 0.3) / louverCount); return <group key={index} position={[0, height + 0.15, z]}><mesh geometry={geometry} castShadow receiveShadow><PowderCoat color={roofColor} roughness={0.38} /></mesh><mesh position={[0, -0.026, 0.078]}><boxGeometry args={[width - 0.22, 0.012, 0.014]} /><meshStandardMaterial color="#111718" roughness={0.92} /></mesh>{[-1, 1].map((side) => <mesh key={side} position={[side * (width / 2 - 0.085), 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.034, 0.034, 0.014, 12]} /><meshStandardMaterial color={roofColor} metalness={0.35} roughness={0.4} /></mesh>)}</group> })}</group>
+    <group ref={louverGroup}>{(roof === 'louvered' || roof === 'retractable') && Array.from({ length: louverCount }, (_, index) => { const z = -depth / 2 + 0.2 + index * ((depth - 0.3) / louverCount); return <group key={index} position={[0, height + 0.15, z]}><mesh geometry={geometry} castShadow receiveShadow><PowderCoat color={roofColor} roughness={0.38} /></mesh><mesh position={[0, -0.026, 0.078]}><boxGeometry args={[width - 0.22, 0.012, 0.014]} /><meshStandardMaterial color="#111718" roughness={0.92} /></mesh>{[-1, 1].map((side) => <mesh key={side} position={[side * (width / 2 - 0.085), 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.034, 0.034, 0.014, 12]} /><meshStandardMaterial color={roofColor} metalness={0.35} roughness={0.4} /></mesh>)}</group> })}</group>
     {roof === 'fixed' && <group><mesh position={[0, height + 0.14, 0]} castShadow receiveShadow><boxGeometry args={[width - 0.12, 0.09, depth - 0.12]} /><PowderCoat color={roofColor} /></mesh>{Array.from({ length: fixedSeamCount }, (_, index) => { const z = -depth / 2 + (index + 1) * depth / (fixedSeamCount + 1); return <Beam key={index} args={[width - 0.16, 0.018, 0.025]} position={[0, height + 0.192, z]} color={roofColor} radius={0.003} /> })}</group>}
+    {isGlazedRoof(roof) && <GlazedRoof width={width} depth={depth} height={height} color={roofColor} kind={roof === 'glass' ? 'glass' : 'polycarbonate'} />}
+    {roof === 'fabric' && <FabricRoof width={width} depth={depth} height={height} color={roofColor} openness={openness} />}
     {(['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <SidePlacement key={side} side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} />)}
     {config.led && <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={scene.ledLevel / 100} />}
     {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <group key={index} position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={scene.heatersOn ? (night ? 3 : 0.15) : 0} toneMapped={false} /></mesh>{night && <pointLight position={[0, -0.25, 0.25]} color="#ff8a4a" intensity={scene.heatersOn ? 3.2 : 0} distance={3.2} decay={2} />}</group> })}

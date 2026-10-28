@@ -1,6 +1,6 @@
 export type MountType = 'freestanding' | 'wall' | 'corner-left' | 'corner-right' | 'niche'
 export type WallFinish = 'plaster' | 'brick' | 'cedar'
-export type RoofType = 'louvered' | 'retractable' | 'fixed'
+export type RoofType = 'louvered' | 'retractable' | 'fabric' | 'glass' | 'polycarbonate' | 'fixed'
 export type SideType = 'none' | 'zip' | 'glass' | 'louver'
 export type SideKey = 'front' | 'back' | 'left' | 'right'
 export type FrameColor = 'anthracite' | 'black' | 'white' | 'bronze' | 'custom'
@@ -80,6 +80,12 @@ export interface PriceSettings {
   louveredPerM2Net: number
   retractablePerM2Net: number
   fixedPerM2Net: number
+  /** Behúzható textiltető (PVC-ponyva, motoros). */
+  fabricRoofPerM2Net: number
+  /** Üvegtető (VSG) bordázattal. */
+  glassRoofPerM2Net: number
+  /** Polikarbonát tető bordázattal. */
+  polycarbonatePerM2Net: number
   freestandingSurchargeNet: number
   /** Oldalfali csatlakozó profil és rögzítés, folyóméterenként (sarok, fülke). */
   sideWallAttachPerMeterNet: number
