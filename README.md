@@ -77,3 +77,7 @@ public/vendor/      model-viewer 4.4.0 (Google, Apache-2.0) az AR-hez, csak igé
 - Élesítés után **valódi iPhone-on és Android-telefonon is próbáld ki** — a böngészős
   tesztkörnyezet az AR-munkamenetet nem tudja elindítani (a modell-exportot és a
   betöltést igen, ezek ellenőrizve vannak).
+
+## Adatforrások
+
+- Magyar irányítószámok koordinátái: GeoNames (CC BY 4.0), https://www.geonames.org — `public/assets/data/postal-hu.json`.

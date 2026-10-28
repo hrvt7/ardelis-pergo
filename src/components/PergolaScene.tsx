@@ -13,8 +13,12 @@ import { useTenant } from '@/tenants/TenantContext'
 import { EMBEDDED_GRASS_RGBA, EMBEDDED_GRASS_SIZE } from '@/lib/grassTexture'
 import { log } from '@/lib/logger'
 import { pbrPath } from '@/lib/textures'
+import { sunVectorInScene } from '@/lib/sun'
+import { studySun } from '@/lib/sunSite'
+import type { ShadeResult } from '@/components/ShadeProbe'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
+const ShadeProbe = lazy(() => import('@/components/ShadeProbe'))
 // ?effects=0 → utófeldolgozás kikapcsolva (hibakereséshez, gyenge géphez).
 const EFFECTS_DISABLED = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('effects') === '0'
 
@@ -543,7 +547,7 @@ function House({ config, night }: { config: PergolaConfig; night: boolean }) {
     invalidate()
   }, [night, prepared, invalidate, gl])
   const baseZ = layout.frontZ - (prepared.facade - prepared.center.z) * layout.scale
-  return <group>
+  return <group name="house">
     <group position={[0, 0, baseZ]} scale={layout.scale}>
       <primitive object={prepared.object} position={[-prepared.center.x, -prepared.minY, -prepared.center.z]} />
       <group position={[-5.2 - prepared.center.x, 6.15 - prepared.minY, -0.48 - prepared.center.z]}>
@@ -1143,7 +1147,12 @@ function CameraController({ view, config, autoRotate }: { view: CameraView; conf
   return <OrbitControls ref={controls} makeDefault enabled={view !== 'sofa'} enableDamping dampingFactor={0.07} minDistance={1.1} maxDistance={24} maxPolarAngle={view === 'interior' ? Math.PI * 0.86 : Math.PI / 1.98} autoRotate={autoRotate && view !== 'sofa'} autoRotateSpeed={0.4} onStart={() => { transitioning.current = false; idle.current = 0 }} />
 }
 
+/** Az égbolt-képeken (HDR) a nap iránya: equirect u koordináta → szög az xz síkban. */
+const HDR_SUN_ANGLE: Record<'day' | 'golden', number> = { day: (0.5947 - 0.5) * Math.PI * 2, golden: (0.25 - 0.5) * Math.PI * 2 }
+const DEFAULT_ENV_ROTATION = Math.PI * 0.35
+
 function getLighting(scene: SceneSettings) {
+  if (scene.sunStudy) return getStudyLighting(scene)
   const t = scene.dayTime
   const night = t >= 20 || t < 7
   const golden = t >= 17 && t < 20
@@ -1162,6 +1171,40 @@ function getLighting(scene: SceneSettings) {
     environment: night ? 0.68 : golden ? 0.72 : 0.72,
     exposure: night ? 0.96 : golden ? 0.86 : 0.86,
     position: [Math.cos(sunAngle) * 9, Math.max(0.8, Math.sin(sunAngle) * 10), 4] as [number, number, number],
+    envRotation: DEFAULT_ENV_ROTATION,
+    shadowExtent: 9,
+  }
+}
+
+/**
+ * Árnyékelemzés: a napfény iránya a valós napállásból (helyszín, nap, idő,
+ * tájolás). Az égbolt-kép úgy fordul, hogy a rajta látható nap is erről az
+ * oldalról süssön; a fény erőssége és színe a nap magasságát követi.
+ */
+function getStudyLighting(scene: SceneSettings) {
+  const sun = studySun(scene)
+  const elevation = sun.elevation
+  const night = elevation < -4
+  const golden = !night && elevation < 12
+  const [x, y, z] = sunVectorInScene(sun, scene.facing)
+  const strength = THREE.MathUtils.clamp(Math.sin(Math.max(elevation, 0) * Math.PI / 180) * 1.35, 0, 1)
+  const kind = night ? null : golden ? 'golden' : 'day'
+  const envRotation = kind ? HDR_SUN_ANGLE[kind] - Math.atan2(z, x) : DEFAULT_ENV_ROTATION
+  const lit = elevation > 0
+  return {
+    night,
+    hdr: night ? HDR_FILES.night : golden ? HDR_FILES.golden : HDR_FILES.day,
+    fog: night ? '#17252e' : golden ? '#a69a90' : '#c3cdce',
+    sun: night ? '#b5cff2' : golden ? (elevation < 5 ? '#ffc995' : '#ffe0bd') : '#ffffff',
+    intensity: night ? 0.52 : !lit ? 0.35 : golden ? 1.1 + strength * 2.4 : 1.2 + strength * 2.9,
+    ambient: night ? 0.25 : 0.1 + strength * 0.06,
+    hemisphere: 0.3,
+    environment: night ? 0.68 : 0.72,
+    exposure: night ? 0.96 : 0.86,
+    // Napnyugta után a fény már nem a horizont alól jön: halvány, magasról érkező szórt fény.
+    position: (lit ? [x * 14, y * 14, z * 14] : [4, 9, 6]) as [number, number, number],
+    envRotation,
+    shadowExtent: 13,
   }
 }
 
@@ -1177,28 +1220,47 @@ function ShadowBudget({ config, sunKey }: { config: PergolaConfig; sunKey: strin
   return null
 }
 
+/** Iránytű a talajon (árnyékelemzésnél): az É jel a valós északot mutatja a megadott tájolás szerint. */
+function CompassRose({ config, facing }: { config: PergolaConfig; facing: number }) {
+  const [nx, , nz] = sunVectorInScene({ azimuth: 0, elevation: 0, trueElevation: 0 }, facing)
+  const angle = Math.atan2(nx, nz)
+  const left = isWallSide(config.mount, 'left')
+  const position: [number, number, number] = [left ? config.width / 2 + 1.25 : -config.width / 2 - 1.25, 0.03, config.depth / 2 + 1.25]
+  const arrow = useMemo(() => { const shape = new THREE.Shape(); shape.moveTo(0, 0.62); shape.lineTo(0.13, 0); shape.lineTo(0, 0.1); shape.lineTo(-0.13, 0); shape.closePath(); return new THREE.ShapeGeometry(shape) }, [])
+  useEffect(() => () => arrow.dispose(), [arrow])
+  return <group name="compass-rose" position={position} rotation={[0, angle, 0]}>
+    <mesh rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.5, 0.54, 64]} /><meshBasicMaterial color="#d8ff72" transparent opacity={0.85} toneMapped={false} /></mesh>
+    {[0, 1, 2, 3].map((index) => <mesh key={index} rotation={[-Math.PI / 2, 0, (index * Math.PI) / 2]}><planeGeometry args={[0.02, 1.2]} /><meshBasicMaterial color="#ffffff" transparent opacity={0.45} toneMapped={false} /></mesh>)}
+    <mesh geometry={arrow} rotation={[-Math.PI / 2, 0, Math.PI]} position={[0, 0.004, 0]}><meshBasicMaterial color="#d8ff72" toneMapped={false} side={THREE.DoubleSide} /></mesh>
+    <Html position={[0, 0.05, 0.84]} center className="compass-label">É</Html>
+    <Html position={[0, 0.05, -0.8]} center className="compass-label is-minor">D</Html>
+  </group>
+}
+
 function SceneRegistration() {
   const scene = useThree((state) => state.scene)
   useEffect(() => { setActiveScene(scene); return () => setActiveScene(null) }, [scene])
   return null
 }
 
-function SceneContent({ config, scene, view, quality, coreOnly, onSideSelect, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; quality: QualityLevel; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
+function SceneContent({ config, scene, view, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; quality: QualityLevel; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const lighting = getLighting(scene)
   useFrame(({ gl }) => { if (gl.toneMappingExposure !== lighting.exposure) gl.toneMappingExposure = lighting.exposure })
   const pergola = <group position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} /></OptionalSceneAsset>}</group>
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}`} />
     {!scene.photoMode && <fog attach="fog" args={[lighting.fog, 20, 43]} />}
-    <ambientLight intensity={lighting.ambient} /><hemisphereLight args={['#c8d8e2', '#51483e', lighting.hemisphere]} /><directionalLight position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={quality === 'mobile' ? [1024, 1024] : [2048, 2048]} shadow-camera-left={-9} shadow-camera-right={9} shadow-camera-top={9} shadow-camera-bottom={-9} shadow-bias={-0.0001} shadow-normalBias={0.009} />
+    <ambientLight intensity={lighting.ambient} /><hemisphereLight args={['#c8d8e2', '#51483e', lighting.hemisphere]} /><directionalLight key={lighting.shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={quality === 'mobile' ? [1024, 1024] : [2048, 2048]} shadow-camera-left={-lighting.shadowExtent} shadow-camera-right={lighting.shadowExtent} shadow-camera-top={lighting.shadowExtent} shadow-camera-bottom={-lighting.shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
-    {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment} environmentRotation={[0, Math.PI * 0.35, 0]} /></OptionalSceneAsset>}
+    {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment} environmentRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
     {!scene.photoMode && <Ground scene={scene} />}
     {!scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} finish={scene.wallFinish} night={lighting.night} />}
     {!scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} night={lighting.night} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
     {pergola}
     {!scene.photoMode && <ContactShadows key={`${config.width}-${config.depth}-${config.height}-${config.mount}`} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality === 'mobile' ? 256 : 512} frames={1} color="#10171d" />}
     {scene.rain && <Rain config={config} quality={quality} />}
+    {scene.sunStudy && !scene.photoMode && <CompassRose config={config} facing={scene.facing} />}
+    {scene.sunStudy && !scene.photoMode && !coreOnly && onShade && <SceneAssetBoundary name="shade analysis"><Suspense fallback={null}><ShadeProbe config={config} scene={scene} onResult={onShade} /></Suspense></SceneAssetBoundary>}
     {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && (quality === 'high' || quality === 'ultra') && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects quality={quality} night={lighting.night} /></Suspense></SceneAssetBoundary>}
     <CameraController view={view} config={config} autoRotate={scene.autoRotate} />
   </>
@@ -1252,7 +1314,7 @@ function FirstFrameReady({ onReady }: { onReady: () => void }) {
   return null
 }
 
-export default memo(function PergolaScene({ config, scene, view, onSideSelect, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
+export default memo(function PergolaScene({ config, scene, view, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const [ready, setReady] = useState(false)
   const [decorativeReady, setDecorativeReady] = useState(false)
   const [attempt, setAttempt] = useState(0)
@@ -1316,6 +1378,7 @@ export default memo(function PergolaScene({ config, scene, view, onSideSelect, o
             coreOnly={coreScene}
             onSideSelect={onSideSelect}
             onSceneChange={onSceneChange}
+            onShade={onShade}
           />
         </Suspense>
         <FirstFrameReady onReady={onReady} />

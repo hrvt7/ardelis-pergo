@@ -23,6 +23,11 @@ export const DEFAULT_SCENE: SceneSettings = {
   photoX: 0,
   photoY: 0,
   photoScale: 1,
+  sunStudy: false,
+  sunDate: '',
+  sunHour: 15,
+  site: null,
+  facing: 180,
 }
 
 const RAL_COLORS: Record<string, string> = {

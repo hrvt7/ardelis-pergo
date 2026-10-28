@@ -1,5 +1,33 @@
 # Változások
 
+## 3.3 — Árnyékelemzés valós napállással (2026. 10. 28.)
+
+Új „Árnyék” gomb a jelenet felett. A vásárló megadja az irányítószámát, a napot és hogy merre néz
+a pergola kert felőli eleje; a 3D-ben a nap valós irányból süt, a panel pedig megmutatja, a pergola alatti
+terület hány százaléka van árnyékban, és ez hogyan alakul a nap folyamán.
+
+**Pontosság (mérve, nem becsülve):**
+- Napállás: NOAA/Meeus algoritmus, a NREL SPA referenciához (pvlib) képest 5 helyszín × 8 nap × 7 időpont
+  alapján az azimut és a magasság eltérése < 0,02°; napkelte/napnyugta/delelés < 1 perc (tests/sun.test.ts).
+- Nyári/téli időszámítás (Europe/Budapest) pontos, az átállás napjain is.
+- Árnyék-%: a pergola alapterületén 196 mintapontból sugárkövetés a Nap felé, a jelenet valódi geometriáján
+  (lamellák a beállított szögben, gerendák, ZIP-roló, lamellás fal, ház, házszárny). Az üveg átengedi a fényt.
+  Ellenőrzés: fix tetős pergola, Vép, jún. 21., delelés → kézi geometriai számítás 78,6%, a rendszer 79%.
+- Helyszín: 3046 magyar irányítószám koordinátája (GeoNames, CC BY 4.0), offline, ~2–5 km pontos —
+  ez a napállásban 0,05° alatti eltérés.
+
+**Ami a pontosságot ténylegesen meghatározza:** a tájolás. 10° tévedés a tájolásban többet számít,
+mint minden más együtt. Ezért van 8 gyorsgomb, fokra pontos csúszka, és telefonon iránytűs mérés
+(mágneses elhajlással korrigálva, 1,5 s átlag; a fal közelében a vasszerkezet zavarhatja).
+
+**Nincs a modellben:** a szomszéd épületei, a valódi fák, a terep lejtése, és a ház valódi magassága
+(a 3D ház általános, egyszintes + tetőtér).
+
+- A 3D-ben iránytű jelöli a valós északot; az égbolt képe úgy fordul, hogy a látható nap is a valós irányban legyen.
+- Mobilon a beállítások összecsukhatók, hogy az árnyék látszódjon.
+- Első bekapcsoláskor július 15. az alapértelmezett nap (nyáron számít az árnyék).
+- Javítva közben: az árnyékmérés késleltetett újramérése a régi időpontot használta (79% helyett 68%-ot mutatott).
+
 ## 3.2 — a pergola a házfalon ül (2026. 10. 28.)
 
 - Javítva: falhoz rögzített módban a pergola a ház előtti teraszlemez szélén állt, kb. 0,5 m-re

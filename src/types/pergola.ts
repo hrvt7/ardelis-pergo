@@ -45,6 +45,25 @@ export interface SceneSettings {
   photoX: number
   photoY: number
   photoScale: number
+  /** Árnyékelemzés: valós napállás a megadott helyen, napon és időpontban. */
+  sunStudy: boolean
+  /** A vizsgált nap (ÉÉÉÉ-HH-NN); üresen a mai nap. */
+  sunDate: string
+  /** Helyi idő, tizedes órában (15.5 = 15:30). */
+  sunHour: number
+  /** A helyszín (irányítószám alapján); üresen a gyártó alapértelmezett helyszíne. */
+  site: SunSite | null
+  /** Merre néz a pergola nyitott (kert felőli) eleje: fok, É = 0, K = 90, D = 180, Ny = 270. */
+  facing: number
+}
+
+export interface SunSite {
+  postalCode: string
+  name: string
+  region: string
+  lat: number
+  lon: number
+  timeZone: string
 }
 
 export interface PriceSettings {
