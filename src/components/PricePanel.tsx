@@ -1,0 +1,57 @@
+import { useEffect, useRef, useState } from 'react'
+import { ChevronDown, Download, Info, Link2, LoaderCircle, Settings2, TrendingDown, TrendingUp } from 'lucide-react'
+import { formatHuf, formatNumber, ROOF_LABELS } from '@/lib/pricing'
+import type { PergolaConfig, PriceBreakdown } from '@/types/pergola'
+
+interface Props {
+  config: PergolaConfig
+  price: PriceBreakdown
+  exporting: boolean
+  delta?: { amount: number; label: string } | null
+  compact?: boolean
+  onEditPrices: () => void
+  onExport: () => void
+  onShare: () => void
+}
+
+function AnimatedPrice({ value }: { value: number }) {
+  const [display, setDisplay] = useState(value)
+  const previous = useRef(value)
+  const [reduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  useEffect(() => {
+    const from = previous.current
+    previous.current = value
+    if (reduced) return
+    const started = performance.now()
+    let frame = 0
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - started) / 420)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplay(Math.round(from + (value - from) * eased))
+      if (progress < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [value, reduced])
+  return <>{formatHuf(reduced ? value : display)}</>
+}
+
+export default function PricePanel({ config, price, exporting, delta, compact = false, onEditPrices, onExport, onShare }: Props) {
+  const [mode, setMode] = useState<'net' | 'vat' | 'gross'>('gross')
+  const amount = mode === 'gross' ? price.totalGross : mode === 'net' ? price.totalNet : price.vatNet
+  const label = mode === 'gross' ? 'Bruttó irányár' : mode === 'net' ? 'Nettó irányár' : 'ÁFA összege'
+  return (
+    <aside className={`price-panel glass-panel ${compact ? 'compact' : ''}`} aria-label="Árkalkuláció">
+      <div className="price-topline"><span>Azonnali kalkuláció</span><span className="live-indicator"><i />ÉLŐ</span></div>
+      <div className="price-product"><span>{ROOF_LABELS[config.roof].split(' · ')[0]} / {config.mount === 'wall' ? 'Fal menti' : 'Önálló'}</span><strong>{config.width.toFixed(2).replace('.', ',')} × {config.depth.toFixed(2).replace('.', ',')} m</strong><small>{formatNumber(price.area)} m² · {formatHuf(price.totalGross / price.area)} / m²</small></div>
+      <div className="price-mode" aria-label="Ár megjelenítése">{(['net', 'vat', 'gross'] as const).map((id) => <button type="button" key={id} className={mode === id ? 'selected' : ''} onClick={() => setMode(id)}>{id === 'net' ? 'Nettó' : id === 'vat' ? 'ÁFA' : 'Bruttó'}</button>)}</div>
+      <div className="total-price"><span>{label}</span><strong><AnimatedPrice value={amount} /></strong><small>Telepítéssel · {price.totalNet > 0 ? Math.round(price.vatNet / price.totalNet * 100) : 0}% ÁFA</small></div>
+      {delta && delta.amount !== 0 && <div className={`price-delta ${delta.amount < 0 ? 'negative' : ''}`} role="status">{delta.amount > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}<span>Mi változott?</span><strong>{delta.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(delta.amount))}</strong><small>{delta.label}</small></div>}
+      <div className="monthly-example"><span>60 havi részre bontva</span><strong>{formatHuf(price.totalGross / 60)} / hó</strong><small>A bruttó irányár 60 egyenlő részre osztva; nem hitel- vagy finanszírozási ajánlat.</small></div>
+      <details className="price-details"><summary><span>Tételes kalkuláció <small>{price.lines.length + 1} tétel</small></span><ChevronDown size={16} /></summary><div className="price-lines">{price.lines.map((line) => <div key={line.id} className="price-line"><div><strong>{line.label}</strong><small>{line.detail}</small></div><span>{formatHuf(line.amountNet)}</span></div>)}<div className="price-line installation"><div><strong>Telepítés és üzembe helyezés</strong><small>Mintaarány a teljes nettó összegre</small></div><span>{formatHuf(price.installationNet)}</span></div><div className="price-line installation"><div><strong>Nettó + ÁFA</strong><small>{formatHuf(price.totalNet)} + {formatHuf(price.vatNet)}</small></div><span>{formatHuf(price.totalGross)}</span></div></div></details>
+      <div className="price-actions"><button type="button" className="primary-action" onClick={onExport} disabled={exporting}>{exporting ? <LoaderCircle size={17} className="spin" /> : <Download size={17} />}{exporting ? 'PDF készül…' : 'PDF összefoglaló'}</button><button type="button" className="secondary-action" onClick={onShare}><Link2 size={17} />Megosztás</button></div>
+      <button type="button" className="tariff-button" onClick={onEditPrices}><Settings2 size={15} />Mintaárak szerkesztése</button>
+      <div className="price-disclaimer"><Info size={15} /><p>Tájékoztató irányár, nem ajánlattétel. A végleges ár helyszíni felmérést és műszaki jóváhagyást igényel.</p></div>
+    </aside>
+  )
+}
