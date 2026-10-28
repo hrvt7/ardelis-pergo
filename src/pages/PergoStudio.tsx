@@ -185,7 +185,7 @@ export default function PergoStudio() {
   }
   const handleExport = async () => {
     setExporting(true)
-    try { await exportPergolaPdf(config, price, tenant, ROOF_LABELS); setToast('A PDF-összefoglaló elkészült.') }
+    try { await exportPergolaPdf(config, price, tenant, ROOF_LABELS, createShareUrl(config)); setToast('A PDF-összefoglaló elkészült.') }
     catch (error) { console.error(error); setToast('A PDF nem készült el. Próbáld újra, vagy frissítsd az oldalt.') }
     finally { setExporting(false) }
   }

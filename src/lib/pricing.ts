@@ -33,6 +33,9 @@ export const SIDE_LABELS: Record<SideType, string> = {
   louver: 'Fix lamella',
 }
 
+/** Ártételek címe (pl. „Bal oldal · ZIP screen”, nem „Bal oldali oldal”). */
+const SIDE_TITLES: Record<SideKey, string> = { front: 'Elülső oldal', back: 'Hátsó oldal', left: 'Bal oldal', right: 'Jobb oldal' }
+
 export const SIDE_NAMES: Record<SideKey, string> = {
   front: 'Elülső',
   back: 'Hátsó',
@@ -108,7 +111,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     const rate = type === 'zip' ? prices.zipPerM2Net : type === 'glass' ? prices.glassPerM2Net : prices.louverWallPerM2Net
     lines.push({
       id: `side-${side}`,
-      label: `${SIDE_NAMES[side]} oldal · ${SIDE_LABELS[type]}`,
+      label: `${SIDE_TITLES[side]} · ${SIDE_LABELS[type]}`,
       detail: `${formatNumber(sideArea)} m² × ${formatHuf(rate)} / m²`,
       amountNet: round(sideArea * rate),
     })

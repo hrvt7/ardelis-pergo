@@ -1,5 +1,17 @@
 # Változások
 
+## 3.7 — Új PDF: méretarányos műszaki rajzzal (2026. 10. 28.)
+- Teljesen újratervezett, 4 oldalas PDF, Manrope betűvel (beágyazva, ő/ű rendben):
+  1. **Borító** — 3D-kép, fő adatok, bruttó irányár, havi példa, QR-kód a 3D tervhez.
+  2. **Konfiguráció + anyaglista + tudnivalók** — csoportosítva (szerkezet, tető, oldalak, kiegészítők).
+  3. **Árkalkuláció + teendők** — tételes ár részletezéssel, 3 lépéses folyamat, kapcsolat.
+  4. **Műszaki rajz (A4 fekvő)** — homlokzat, A–A metszet, alaprajz (vízszintes metszet +1,00 m-en),
+     szabványos méretarány (1:50 / 1:75), méretláncok cm-ben, szintjelek m-ben, falmetszet-vonalkázás,
+     oszlopkiosztás, oldalzárások jelölése, rajzi fejléc **üres tervezői aláírás- és pecsétmezővel**.
+- A rajz ugyanabból az adatból készül, mint a 3D és az ár — nem térhet el tőlük.
+- Minden rögzítési módra, tetőtípusra és szélső méretre automatikusan tesztelve (53 teszt).
+- Javítva: „Bal oldali oldal” → „Bal oldal” az ártételekben; a 0 db-os anyaglista-sorok kimaradnak.
+
 ## 3.6 — Választható tetőtípusok (2026. 10. 28.)
 - Az **Oldalak** lépésben a diagram közepére (a „Tető” kockára) kattintva cserélhető a tető.
 - 6 piaci tetőtípus: motoros lamellás (Aero), eltolható lamellás (Glide),
