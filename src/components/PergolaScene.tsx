@@ -518,13 +518,12 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
       if (Math.abs(child.rotation.x + waveTarget) > 0.001 || wave < 1) moving = true
       const nextRotation = REDUCED ? -waveTarget : THREE.MathUtils.damp(child.rotation.x, -waveTarget, 8, delta)
       child.rotation.x = nextRotation
-      if (roof === 'retractable') {
-        const spacing = ((depth - 0.3) / louverCount) * (1 - openness * 0.84)
-        const targetZ = -depth / 2 + 0.2 + index * spacing
-        if (Math.abs(child.position.z - targetZ) > 0.001) moving = true
-        const nextZ = REDUCED ? targetZ : THREE.MathUtils.damp(child.position.z, targetZ, 8, delta)
-        child.position.z = nextZ
-      }
+      // A fix lamellás tetőn a lamellák mindig a teljes felületet fedik (csak forognak);
+      // az eltolhatónál összetolódnak. Tetőcsere után így a fix lamellák visszaállnak.
+      const spacing = ((depth - 0.3) / louverCount) * (roof === 'retractable' ? 1 - openness * 0.84 : 1)
+      const targetZ = -depth / 2 + 0.2 + index * spacing
+      if (Math.abs(child.position.z - targetZ) > 0.001) moving = true
+      child.position.z = REDUCED ? targetZ : THREE.MathUtils.damp(child.position.z, targetZ, 8, delta)
     })
     if (moving) { refreshShadows(gl); invalidate() }
   })

@@ -225,8 +225,6 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               <SectionTitle title="Házszárny homlokzata" hint="Csak a látványt módosítja; az árat nem befolyásolja." />
               <div className="scene-options">{WALL_FINISHES.map((finish) => <button type="button" key={finish.id} className={scene.wallFinish === finish.id ? 'selected' : ''} aria-pressed={scene.wallFinish === finish.id} onClick={() => onSceneChange({ wallFinish: finish.id })}><span aria-hidden="true" style={{ width: 18, height: 18, borderRadius: 4, background: finish.swatch, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.18)' }} /><span>{finish.label}</span></button>)}</div>
             </>}
-            <SectionTitle title="Tetőrendszer" />
-            <RoofPicker config={config} prices={prices} onChange={onChange} />
           </>}
 
           {step === 'color' && <>

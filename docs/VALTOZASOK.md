@@ -13,6 +13,8 @@
 - A gyártó az admin árbeállításban m²-áron árazza, és kikapcsolhatja, amit nem gyárt.
   A demó árak (textil 195e, üveg 150e, polikarbonát 95e Ft/m² nettó) **becsült értékek**.
 - 6 új automatikus teszt (összesen 50).
+- Javítva: a motoros lamellás tető az eltolható után félig összetolva maradt — most mindig a teljes tetőt fedi, csak a lamellaszög állítható.
+- A tetőválasztó csak az Oldalak lépésben van (a Rögzítésből kikerült).
 
 ## 3.5 — Hibavadászat (2026. 10. 28.)
 
