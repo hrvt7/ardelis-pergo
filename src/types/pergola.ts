@@ -55,7 +55,17 @@ export interface SceneSettings {
   site: SunSite | null
   /** Merre néz a pergola nyitott (kert felőli) eleje: fok, É = 0, K = 90, D = 180, Ny = 270. */
   facing: number
+  /** Bútorcsomag a pergola alatt (a méretválasztást segíti). */
+  furniture: FurnitureSet
+  /** A bútor helyigényének kijelölése a teraszon. */
+  showFurnitureZone: boolean
+  /** Esti hangulat: LED fényerő (0–100) és színhőmérséklet (K), fűtés be/ki. */
+  ledLevel: number
+  ledKelvin: number
+  heatersOn: boolean
 }
+
+export type FurnitureSet = 'none' | 'lounge' | 'dining6' | 'dining8' | 'combo'
 
 export interface SunSite {
   postalCode: string

@@ -1,3 +1,4 @@
+import { furnitureFit } from './furniture'
 import { isWallSide, MOUNT_CODES, MOUNT_LABELS, openSides, postPositions, sideWalls, wallLabel } from './mount'
 import { formatHuf, formatNumber, ROOF_LABELS, SIDE_LABELS, SIDE_NAMES } from './pricing'
 import type { PergolaConfig, PriceBreakdown, RoofType, SideKey } from '../types/pergola'
@@ -44,12 +45,14 @@ export function getDeliveryEstimate(config: PergolaConfig) {
   return `${min}–${min + 2} hét a műszaki jóváhagyástól · nem vállalt határidő`
 }
 
+/** Hány főnek való, és mi fér el alatta — ugyanazzal a helyigény-számítással, mint a bútorválasztó. */
 export function getSizeRecommendation(config: PergolaConfig) {
-  const area = config.width * config.depth
-  if (area < 10) return '2–4 főnek ajánlott · kompakt étkező vagy pihenősarok'
-  if (area < 18) return '4–6 főnek ajánlott · kanapé és dohányzóasztal kényelmesen elfér'
-  if (area < 27) return '6–8 főnek ajánlott · étkező és pihenősarok együtt is elfér'
-  return '8–10 főnek ajánlott · nagyobb étkező és pihenősarok is kialakítható'
+  const fits = (set: Parameters<typeof furnitureFit>[0]) => furnitureFit(set, config)?.level === 'comfortable'
+  if (fits('combo')) return '8–10 főnek ajánlott · étkező és pihenősarok együtt is kényelmesen elfér'
+  if (fits('dining8')) return '6–8 főnek ajánlott · 8 fős étkező vagy pihenősarok kényelmesen elfér'
+  if (fits('dining6')) return '4–6 főnek ajánlott · 6 fős étkező vagy pihenősarok elfér'
+  if (fits('lounge')) return '4–5 főnek ajánlott · kanapé és dohányzóasztal kényelmesen elfér'
+  return '2–4 főnek ajánlott · kompakt étkező vagy kisebb pihenősarok'
 }
 
 export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, roofLabels: Record<RoofType, string> = ROOF_LABELS, brandName = 'ARDELIS') {

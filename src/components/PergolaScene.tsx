@@ -16,6 +16,9 @@ import { pbrPath } from '@/lib/textures'
 import { sunVectorInScene } from '@/lib/sun'
 import { studySun } from '@/lib/sunSite'
 import type { ShadeResult } from '@/components/ShadeProbe'
+import type { FurnitureSet } from '@/types/pergola'
+import { kelvinToHex } from '@/lib/color'
+import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
 const ShadeProbe = lazy(() => import('@/components/ShadeProbe'))
@@ -329,8 +332,8 @@ function useAerofoilGeometry(width: number) {
   return geometry
 }
 
-function LedStrip({ args, position, night }: { args: [number, number, number]; position: [number, number, number]; night: boolean }) {
-  return <group position={position}><mesh><boxGeometry args={[args[0] + 0.018, args[1] + 0.014, args[2] + 0.014]} /><meshStandardMaterial color="#151a1c" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, -0.012, 0]}><boxGeometry args={args} /><meshStandardMaterial color="#ffe6bd" emissive="#ffc87a" emissiveIntensity={night ? 5 : 0.45} toneMapped={false} /></mesh></group>
+function LedStrip({ args, position, night, color = '#ffc87a', level = 0.8 }: { args: [number, number, number]; position: [number, number, number]; night: boolean; color?: string; level?: number }) {
+  return <group position={position}><mesh><boxGeometry args={[args[0] + 0.018, args[1] + 0.014, args[2] + 0.014]} /><meshStandardMaterial color="#151a1c" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, -0.012, 0]}><boxGeometry args={args} /><meshStandardMaterial color="#ffe6bd" emissive={color} emissiveIntensity={night ? 6.25 * level : 0.45} toneMapped={false} /></mesh></group>
 }
 
 const HOTSPOTS = {
@@ -360,6 +363,18 @@ function Hotspots({ config, posts }: { config: PergolaConfig; posts: [number, nu
 function Person({ config }: { config: PergolaConfig }) {
   const position: [number, number, number] = [-config.width / 2 + 0.68, 0.035, config.depth * 0.18]
   return <group><RealisticAsset url={assetUrl('/assets/models/scale_person/person.glb')} position={position} height={1.8} rotation={0.28} /><Html position={[position[0], 1.94, position[2]]} center className="person-label">180 cm</Html></group>
+}
+
+/** Periméter LED: a fényerő és a színhőmérséklet a vásárló „esti hangulat” beállítása. */
+function LedLighting({ width, depth, height, night, kelvin, level }: { width: number; depth: number; height: number; night: boolean; kelvin: number; level: number }) {
+  const color = kelvinToHex(kelvin)
+  return <group>
+    <LedStrip args={[width - 0.3, 0.018, 0.018]} position={[0, height - 0.15, depth / 2 - 0.12]} night={night} color={color} level={level} />
+    <LedStrip args={[width - 0.3, 0.018, 0.018]} position={[0, height - 0.15, -depth / 2 + 0.12]} night={night} color={color} level={level} />
+    <LedStrip args={[0.018, 0.018, depth - 0.3]} position={[-width / 2 + 0.12, height - 0.15, 0]} night={night} color={color} level={level} />
+    <LedStrip args={[0.018, 0.018, depth - 0.3]} position={[width / 2 - 0.12, height - 0.15, 0]} night={night} color={color} level={level} />
+    {night && level > 0 && <><pointLight position={[-width * 0.28, height - 0.4, 0]} color={color} intensity={25 * level} distance={7} decay={2} /><pointLight position={[width * 0.28, height - 0.4, 0]} color={color} intensity={25 * level} distance={7} decay={2} /></>}
+  </group>
 }
 
 function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
@@ -423,8 +438,8 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     <group ref={louverGroup}>{roof !== 'fixed' && Array.from({ length: louverCount }, (_, index) => { const z = -depth / 2 + 0.2 + index * ((depth - 0.3) / louverCount); return <group key={index} position={[0, height + 0.15, z]}><mesh geometry={geometry} castShadow receiveShadow><PowderCoat color={roofColor} roughness={0.38} /></mesh><mesh position={[0, -0.026, 0.078]}><boxGeometry args={[width - 0.22, 0.012, 0.014]} /><meshStandardMaterial color="#111718" roughness={0.92} /></mesh>{[-1, 1].map((side) => <mesh key={side} position={[side * (width / 2 - 0.085), 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.034, 0.034, 0.014, 12]} /><meshStandardMaterial color={roofColor} metalness={0.35} roughness={0.4} /></mesh>)}</group> })}</group>
     {roof === 'fixed' && <group><mesh position={[0, height + 0.14, 0]} castShadow receiveShadow><boxGeometry args={[width - 0.12, 0.09, depth - 0.12]} /><PowderCoat color={roofColor} /></mesh>{Array.from({ length: fixedSeamCount }, (_, index) => { const z = -depth / 2 + (index + 1) * depth / (fixedSeamCount + 1); return <Beam key={index} args={[width - 0.16, 0.018, 0.025]} position={[0, height + 0.192, z]} color={roofColor} radius={0.003} /> })}</group>}
     {(['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <SidePlacement key={side} side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} />)}
-    {config.led && <group><LedStrip args={[width - 0.3, 0.018, 0.018]} position={[0, height - 0.15, depth / 2 - 0.12]} night={night} /><LedStrip args={[width - 0.3, 0.018, 0.018]} position={[0, height - 0.15, -depth / 2 + 0.12]} night={night} /><LedStrip args={[0.018, 0.018, depth - 0.3]} position={[-width / 2 + 0.12, height - 0.15, 0]} night={night} /><LedStrip args={[0.018, 0.018, depth - 0.3]} position={[width / 2 - 0.12, height - 0.15, 0]} night={night} />{night && <><pointLight position={[-width * 0.28, height - 0.4, 0]} color="#ffd099" intensity={20} distance={7} decay={2} /><pointLight position={[width * 0.28, height - 0.4, 0]} color="#ffd099" intensity={20} distance={7} decay={2} /></>}</group>}
-    {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <group key={index} position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={night ? 3 : 0.15} toneMapped={false} /></mesh></group> })}
+    {config.led && <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={scene.ledLevel / 100} />}
+    {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <group key={index} position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={scene.heatersOn ? (night ? 3 : 0.15) : 0} toneMapped={false} /></mesh>{night && scene.heatersOn && <pointLight position={[0, -0.25, 0.25]} color="#ff8a4a" intensity={3.2} distance={3.2} decay={2} />}</group> })}
     {config.speakers && [-1, 1].map((direction) => <group key={direction} position={[direction * (width / 2 - 0.17), height - 0.38, depth / 2 - 0.17]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[0.082, 0.082, 0.065, 24]} /><meshStandardMaterial color="#1b2022" metalness={0.48} roughness={0.38} /></mesh><mesh position={[0, 0.035, 0]}><cylinderGeometry args={[0.065, 0.065, 0.004, 24]} /><meshStandardMaterial color="#080b0c" roughness={0.85} /></mesh></group>)}
     <group name="ar-skip-overlays">{scene.showDimensions && <DimensionGuides config={config} />}{scene.showPerson && <OptionalSceneAsset name="180 cm reference person"><Person config={config} /></OptionalSceneAsset>}{scene.showHotspots && <Hotspots config={config} posts={postPositions} />}</group>
   </group>
@@ -880,11 +895,72 @@ function PlantPot({ position, scale = 1 }: { position: [number, number, number];
   return <RealisticAsset url={assetUrl('/assets/models/potted_plant_02/model.gltf')} position={position} height={0.92 * scale} rotation={position[0] * 0.7} />
 }
 
-function Furniture({ config }: { config: PergolaConfig }) {
-  if (config.width < 3.2 || config.depth < 3) return null
-  const sofaWidth = Math.min(2.65, config.width * 0.56)
-  const cushionWidth = (sofaWidth - 0.24) / 3
-  return <group position={[0, 0, -config.depth * 0.17]}><RoundedBox args={[sofaWidth + 0.85, 0.018, 2.35]} position={[0, 0.018, 0.48]} radius={0.025} smoothness={2} receiveShadow><meshStandardMaterial color="#8c887d" roughness={1} /></RoundedBox><group position={[0, 0, -0.28]}><RoundedBox args={[sofaWidth, 0.22, 0.83]} position={[0, 0.29, 0]} radius={0.065} smoothness={4} castShadow receiveShadow><meshStandardMaterial color="#5c5b55" roughness={0.96} /></RoundedBox>{[-1, 0, 1].map((index) => <group key={index}><RoundedBox args={[cushionWidth - 0.025, 0.18, 0.71]} position={[index * cushionWidth, 0.48, 0.035]} radius={0.075} smoothness={5} castShadow><meshStandardMaterial color={index === 0 ? '#aaa397' : '#b8b1a5'} roughness={0.98} /></RoundedBox><RoundedBox args={[cushionWidth - 0.035, 0.48, 0.2]} position={[index * cushionWidth, 0.77, -0.33]} rotation={[-0.13, 0, 0]} radius={0.075} smoothness={5} castShadow><meshStandardMaterial color={index === 1 ? '#9e998f' : '#b5afa4'} roughness={0.98} /></RoundedBox></group>)}{[-1, 1].map((side) => <RoundedBox key={side} args={[0.16, 0.38, 0.84]} position={[side * (sofaWidth / 2 - 0.06), 0.49, 0]} radius={0.055} smoothness={4} castShadow><meshStandardMaterial color="#66645d" roughness={0.96} /></RoundedBox>)}</group><RealisticAsset url={assetUrl('/assets/models/modern_coffee_table_01/model.gltf')} position={[0, 0.03, 0.98]} height={0.46} rotation={Math.PI / 2} /><PlantPot position={[sofaWidth / 2 + 0.55, 0.02, -0.25]} scale={0.85} /></group>
+const FABRIC = ['#aaa397', '#b8b1a5', '#9e998f']
+
+function Sofa({ width = 2.2 }: { width?: number }) {
+  const cushionWidth = (width - 0.24) / 3
+  return <group>
+    <RoundedBox args={[width, 0.22, 0.83]} position={[0, 0.29, 0]} radius={0.065} smoothness={4} castShadow receiveShadow><meshStandardMaterial color="#5c5b55" roughness={0.96} /></RoundedBox>
+    {[-1, 0, 1].map((index) => <group key={index}>
+      <RoundedBox args={[cushionWidth - 0.025, 0.18, 0.71]} position={[index * cushionWidth, 0.48, 0.035]} radius={0.075} smoothness={5} castShadow><meshStandardMaterial color={FABRIC[index === 0 ? 0 : 1]} roughness={0.98} /></RoundedBox>
+      <RoundedBox args={[cushionWidth - 0.035, 0.48, 0.2]} position={[index * cushionWidth, 0.77, -0.33]} rotation={[-0.13, 0, 0]} radius={0.075} smoothness={5} castShadow><meshStandardMaterial color={FABRIC[index === 1 ? 2 : 1]} roughness={0.98} /></RoundedBox>
+    </group>)}
+    {[-1, 1].map((side) => <RoundedBox key={side} args={[0.16, 0.38, 0.84]} position={[side * (width / 2 - 0.06), 0.49, 0]} radius={0.055} smoothness={4} castShadow><meshStandardMaterial color="#66645d" roughness={0.96} /></RoundedBox>)}
+  </group>
+}
+
+/** Pihenősarok a zóna (3,0 × 2,6 m) közepén: kanapé, szőnyeg, dohányzóasztal, növény. */
+function LoungeSet() {
+  return <group>
+    <RoundedBox args={[2.75, 0.018, 2.1]} position={[0, 0.018, -0.05]} radius={0.025} smoothness={2} receiveShadow><meshStandardMaterial color="#8c887d" roughness={1} /></RoundedBox>
+    <group position={[0, 0, -0.78]}><Sofa /></group>
+    <RealisticAsset url={assetUrl('/assets/models/modern_coffee_table_01/model.gltf')} position={[0, 0.03, 0.32]} height={0.46} rotation={Math.PI / 2} />
+    <PlantPot position={[1.32, 0.02, -0.95]} scale={0.8} />
+  </group>
+}
+
+function DiningChair({ position, rotation }: { position: [number, number, number]; rotation: number }) {
+  return <group position={position} rotation={[0, rotation, 0]}>
+    <RoundedBox args={[0.46, 0.05, 0.46]} position={[0, 0.45, 0]} radius={0.02} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></RoundedBox>
+    <RoundedBox args={[0.46, 0.42, 0.04]} position={[0, 0.69, -0.21]} rotation={[-0.08, 0, 0]} radius={0.018} smoothness={3} castShadow><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></RoundedBox>
+    {[[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x, 0.215, z]} castShadow><boxGeometry args={[0.025, 0.43, 0.025]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>)}
+  </group>
+}
+
+/** Étkező: asztal és székek; a székek a kihúzáshoz szükséges helyen. */
+function DiningSet({ seats }: { seats: 6 | 8 }) {
+  const length = seats === 8 ? 2.2 : 1.8
+  const width = seats === 8 ? 1.0 : 0.9
+  const along = seats === 8 ? [-0.75, 0, 0.75] : [-0.6, 0, 0.6]
+  return <group>
+    <RoundedBox args={[length, 0.045, width]} position={[0, 0.75, 0]} radius={0.015} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#9a7652" roughness={0.7} /></RoundedBox>
+    {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x * (length / 2 - 0.12), 0.365, z * (width / 2 - 0.1)]} castShadow><boxGeometry args={[0.06, 0.73, 0.06]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>)}
+    {along.map((x) => <DiningChair key={`a${x}`} position={[x, 0, -(width / 2 + 0.22)]} rotation={0} />)}
+    {along.map((x) => <DiningChair key={`b${x}`} position={[x, 0, width / 2 + 0.22]} rotation={Math.PI} />)}
+    {seats === 8 && [-1, 1].map((side) => <DiningChair key={`e${side}`} position={[side * (length / 2 + 0.24), 0, 0]} rotation={side * -Math.PI / 2} />)}
+  </group>
+}
+
+/** A választott bútorcsomag a pergola alatt, és kérésre a helyigénye (zöld: kényelmes, sárga: szűkös, piros: nem fér el). */
+function Furniture({ config, scene }: { config: PergolaConfig; scene: SceneSettings }) {
+  const set = scene.furniture
+  if (set === 'none') return null
+  const fit = furnitureFit(set, config)!
+  const [zoneLong, zoneShort] = FURNITURE_SETS[set].zone
+  const content = set === 'lounge' ? <LoungeSet /> : set === 'dining6' ? <DiningSet seats={6} /> : set === 'dining8' ? <DiningSet seats={8} /> : <>
+    <group position={[-zoneLong / 4, 0, 0]}><LoungeSet /></group>
+    <group position={[zoneLong / 4, 0, 0]}><DiningSet seats={6} /></group>
+  </>
+  const zoneColor = fit.level === 'comfortable' ? '#9be26a' : fit.level === 'tight' ? '#ffc24a' : '#ff5b4a'
+  const half = [zoneLong / 2, zoneShort / 2]
+  const outline: [number, number, number][] = [[-half[0], 0.035, -half[1]], [half[0], 0.035, -half[1]], [half[0], 0.035, half[1]], [-half[0], 0.035, half[1]], [-half[0], 0.035, -half[1]]]
+  return <group name="terrace-furniture" rotation={[0, fit.alongWidth ? 0 : Math.PI / 2, 0]}>
+    {content}
+    {scene.showFurnitureZone && <group name="furniture-zone">
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}><planeGeometry args={[zoneLong, zoneShort]} /><meshBasicMaterial color={zoneColor} transparent opacity={0.16} depthWrite={false} toneMapped={false} /></mesh>
+      <Line points={outline} color={zoneColor} lineWidth={2} dashed dashSize={0.18} gapSize={0.1} />
+    </group>}
+  </group>
 }
 
 function Deck({ config }: { config: PergolaConfig }) {
@@ -1017,7 +1093,14 @@ function Rain({ config, quality }: { config: PergolaConfig; quality: QualityLeve
   return <group><points ref={points}><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry><pointsMaterial color="#c3d7df" size={0.038} transparent opacity={0.72} depthWrite={false} /></points><group ref={splashes}>{Array.from({ length: 18 }, (_, index) => <mesh key={index} position={[((index * 1.73) % 8) - 4, 0.025, ((index * 2.37) % 6) - 3]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.025, 0.038, 12]} /><meshBasicMaterial color="#d5e5e9" transparent opacity={0.3} depthWrite={false} /></mesh>)}</group><mesh position={[config.width / 2 - 0.02, 0.25, config.depth / 2 + 0.04]}><sphereGeometry args={[0.018, 8, 6]} /><meshPhysicalMaterial color="#b7d2dc" transmission={0.6} roughness={0.05} /></mesh></group>
 }
 
-function CameraController({ view, config, autoRotate }: { view: CameraView; config: PergolaConfig; autoRotate: boolean }) {
+function seatPosition(config: Pick<PergolaConfig, 'width' | 'depth'>, furniture: FurnitureSet): [number, number] {
+  if (furniture === 'none') return [0, -config.depth * 0.17 - 0.195]
+  const fit = furnitureFit(furniture, config)!
+  const local: [number, number] = furniture === 'lounge' ? [0, -0.7] : furniture === 'combo' ? [-FURNITURE_SETS.combo.zone[0] / 4, -0.7] : [0, -(furniture === 'dining8' ? 0.72 : 0.67)]
+  return fit.alongWidth ? local : [local[1], -local[0]]
+}
+
+function CameraController({ view, config, autoRotate, furniture }: { view: CameraView; config: PergolaConfig; autoRotate: boolean; furniture: FurnitureSet }) {
   const { camera, gl, invalidate } = useThree()
   const controls = useRef<OrbitControlsType>(null)
   const destination = useRef(new THREE.Vector3(12, 7, 14))
@@ -1030,7 +1113,8 @@ function CameraController({ view, config, autoRotate }: { view: CameraView; conf
 
   useEffect(() => {
     const size = Math.max(config.width, config.depth)
-    const eyeZ = -config.depth * 0.17 - 0.195
+    // Kanapé nézet: a választott bútor egyik ülőhelyéről, a kert felé.
+    const [eyeX, eyeZ] = seatPosition({ width: config.width, depth: config.depth }, furniture)
     // Oldalfalnál a kamera a nyitott oldal felől néz be, hogy a fal ne takarja a pergolát.
     const leftWall = isWallSide(config.mount, 'left')
     const rightWall = isWallSide(config.mount, 'right')
@@ -1047,7 +1131,7 @@ function CameraController({ view, config, autoRotate }: { view: CameraView; conf
       // szögből a lamellasor fizikailag is zárt felületnek látszik, így viszont átlátszik az ég.
       interior: [0, 0.82, -config.depth * 0.22],
       detail: niche ? [config.width / 2 - 1.25, config.height - 0.45, config.depth / 2 + 2.1] : [side * (config.width / 2 + 0.75), config.height + 0.45, config.depth / 2 + 0.85],
-      sofa: [0, 1.18, eyeZ],
+      sofa: [eyeX, 1.18, eyeZ],
     }
     destination.current.set(...positions[view])
     if (view === 'sofa') target.current.set(0, 1.22, config.depth / 2 + 6)
@@ -1071,7 +1155,7 @@ function CameraController({ view, config, autoRotate }: { view: CameraView; conf
       transitioning.current = true
     }
     invalidate()
-  }, [view, config.width, config.depth, config.height, config.mount, camera, invalidate])
+  }, [view, config.width, config.depth, config.height, config.mount, furniture, camera, invalidate])
 
   useEffect(() => {
     if (view !== 'sofa') return
@@ -1246,7 +1330,7 @@ function SceneRegistration() {
 function SceneContent({ config, scene, view, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; quality: QualityLevel; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const lighting = getLighting(scene)
   useFrame(({ gl }) => { if (gl.toneMappingExposure !== lighting.exposure) gl.toneMappingExposure = lighting.exposure })
-  const pergola = <group position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} /></OptionalSceneAsset>}</group>
+  const pergola = <group position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} /></OptionalSceneAsset>}</group>
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}`} />
     {!scene.photoMode && <fog attach="fog" args={[lighting.fog, 20, 43]} />}
@@ -1262,7 +1346,7 @@ function SceneContent({ config, scene, view, quality, coreOnly, onSideSelect, on
     {scene.sunStudy && !scene.photoMode && <CompassRose config={config} facing={scene.facing} />}
     {scene.sunStudy && !scene.photoMode && !coreOnly && onShade && <SceneAssetBoundary name="shade analysis"><Suspense fallback={null}><ShadeProbe config={config} scene={scene} onResult={onShade} /></Suspense></SceneAssetBoundary>}
     {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && (quality === 'high' || quality === 'ultra') && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects quality={quality} night={lighting.night} /></Suspense></SceneAssetBoundary>}
-    <CameraController view={view} config={config} autoRotate={scene.autoRotate} />
+    <CameraController view={view} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} />
   </>
 }
 

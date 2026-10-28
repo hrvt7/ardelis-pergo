@@ -1,5 +1,29 @@
 # Változások
 
+## 3.4 — Bútor, költségkeret, esti hangulat (2026. 10. 28.)
+
+**„Mit szeretnél alatta?” (Méret lépés)**
+- Bútorcsomagok: pihenősarok (4–5 fő), étkező 6 és 8 főre, pihenő + étkező együtt, üresen. A 3D-ben megjelenik.
+- Helyigény mozgástérrel (székek kihúzása 75 cm, közlekedés ≥ 60 cm) a pergola hasznos belső méretéhez
+  mérve: kényelmes / szűkös / nem fér el; a 3D-ben zöld–sárga–piros jelöléssel.
+- Ha nem fér el: egy gombos méretjavaslat az árkülönbséggel, a gyártói határokon belül; ha elforgatva fér el, úgy rendezi.
+- A „X főnek ajánlott” tipp mostantól ugyanezzel a számítással megy (korábban 5 × 4 m-re azt írta, hogy
+  étkező és pihenősarok együtt is elfér, pedig az 6 m hosszú helyet igényel).
+- A „Kanapé” nézet a választott bútor egyik ülőhelyéről néz a kertre.
+
+**Költségkeret („Van keretösszeged?” az árpanelen és az összegzésben)**
+- A vásárló beírja, mennyit szán rá; a gyártó árlistájával 3 tervet kap: legjobb egyensúly, méret megtartva,
+  felszereltség megtartva — mindegyiknél a pontos ár és a változások listája; egy gombbal alkalmazható, visszavonható.
+- Funkcionálisan értelmes cserék (üveg → ZIP → nyitott), a választott bútor helyigénye alá nem kicsinyít;
+  ha belefér, megmondja a maradékot; ha irreális, a legkisebb elérhető árat.
+
+**Esti hangulat (Éjszaka nézetben)**
+- LED fényerő és színhőmérséklet (2200–4000 K), a fény a 3D-ben valóban ilyen színű és erősségű.
+- Teraszfűtés be/ki (izzás + meleg fény a panelek alatt).
+- Ha még nincs a tervben LED vagy fűtés: „próbáld ki” gomb az árral.
+
+Tesztek: 38 (bútor-helyigény, költségkeret-tervek a kereten belül és a valós árral).
+
 ## 3.3 — Árnyékelemzés valós napállással (2026. 10. 28.)
 
 Új „Árnyék” gomb a jelenet felett. A vásárló megadja az irányítószámát, a napot és hogy merre néz

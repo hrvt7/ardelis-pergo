@@ -28,6 +28,11 @@ export const DEFAULT_SCENE: SceneSettings = {
   sunHour: 15,
   site: null,
   facing: 180,
+  furniture: 'lounge',
+  showFurnitureZone: false,
+  ledLevel: 80,
+  ledKelvin: 2700,
+  heatersOn: true,
 }
 
 const RAL_COLORS: Record<string, string> = {

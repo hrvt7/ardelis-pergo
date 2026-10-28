@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, Camera, Check, Clipboard, Clock3, Code2, GitCompareArrows, PackageCheck, Save } from 'lucide-react'
+import { ArrowRight, Camera, Check, Clipboard, Clock3, Code2, GitCompareArrows, PackageCheck, Save, Wallet } from 'lucide-react'
 import LeadForm from '@/components/LeadForm'
 import { copyShareUrl } from '@/lib/exportPdf'
 import { isWallSide, MOUNT_LABELS } from '@/lib/mount'
@@ -9,6 +9,7 @@ import { createTextSummary, getBom, getDeliveryEstimate, getSpecCode } from '@/l
 import type { PergolaConfig, PriceBreakdown, PriceSettings, SavedConfiguration } from '@/types/pergola'
 
 interface Props {
+  onBudget?: () => void
   config: PergolaConfig
   price: PriceBreakdown
   prices: PriceSettings
@@ -18,7 +19,7 @@ interface Props {
   onNotify: (message: string) => void
 }
 
-export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify }: Props) {
+export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget }: Props) {
   const { tenant, labels: ROOF_LABELS } = useTenant()
   const [thumbnail, setThumbnail] = useState('')
   const bom = getBom(config)
@@ -39,6 +40,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
         <div className="summary-thumbnail">{thumbnail ? <img src={thumbnail} alt="A konfigurált pergola 3D bélyegképe" /> : <div className="thumbnail-placeholder"><Camera size={26} /><span>3D bélyegkép</span></div>}<button type="button" onClick={capture}><Camera size={14} />{thumbnail ? 'Frissítés' : 'Bélyegkép készítése'}</button></div>
         <div><span>{ROOF_LABELS[config.roof]}</span><h3>{formatNumber(config.width, 2)} × {formatNumber(config.depth, 2)} m</h3><p>{formatNumber(price.area)} m² · {MOUNT_LABELS[config.mount]} · {config.heaters} db fűtés</p><strong>{formatHuf(price.totalGross)}</strong><small>bruttó irányár, telepítéssel</small></div>
       </section>
+      {onBudget && <button type="button" className="budget-trigger is-summary" onClick={onBudget}><Wallet size={15} /><span><strong>Van keretösszeged?</strong><small>Megmutatjuk, mi fér bele</small></span></button>}
       <div className="summary-actions"><button type="button" onClick={copy}><Clipboard size={15} />Összefoglaló másolása</button><button type="button" onClick={() => onSave('A')}><Save size={15} />Mentés A</button><button type="button" onClick={() => onSave('B')}><Save size={15} />Mentés B</button></div>
 
       <section className="summary-section"><div className="summary-section-title"><Code2 size={17} /><h3>Specifikáció</h3></div><div className="spec-code"><span>Konfigurációs kód</span><strong>{getSpecCode(config)}</strong></div><dl className="bom-list">{bom.map((line) => <div key={line.label}><dt>{line.label}</dt><dd>{line.value}</dd></div>)}</dl><div className="delivery-estimate"><Clock3 size={18} /><span><strong>Tájékoztató átfutási idő</strong>{getDeliveryEstimate(config)}</span></div></section>

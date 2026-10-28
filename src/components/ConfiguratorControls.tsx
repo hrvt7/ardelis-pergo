@@ -6,6 +6,7 @@ import { formatHuf, SIDE_LABELS } from '@/lib/pricing'
 import { enabledRoofs, presetConfig } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import { getSizeRecommendation } from '@/lib/specification'
+import FurniturePicker from '@/components/FurniturePicker'
 import type { ConfigStep, FrameColor, MountType, PergolaConfig, PriceSettings, QualityLevel, SceneSettings, SideKey, SideType, WallFinish } from '@/types/pergola'
 
 const STEPS: { id: ConfigStep; label: string; short: string }[] = [
@@ -165,6 +166,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <SliderField label="Oszlopmagasság" value={config.height} min={limits.height[0]} max={limits.height[1]} step={0.05} unit="m" metric onChange={(height) => onChange({ height })} />
             {config.width > 6 && <div className="smart-warning"><Columns3 size={18} /><p><strong>Középoszlop javasolt</strong>600 cm felett a műszaki ellenőrzés és egy középoszlop szükséges lehet.</p></div>}
             <div className="smart-helper"><Sparkles size={18} /><p><strong>{getSizeRecommendation(config).split(' · ')[0]}</strong>{getSizeRecommendation(config).split(' · ')[1]}</p></div>
+            <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
             {config.roof !== 'fixed' && <SliderField label={config.roof === 'retractable' ? 'Tetőnyitás' : 'Lamellaszög'} value={config.louverAngle} min={0} max={90} step={1} unit="°" onChange={(louverAngle) => onChange({ louverAngle })} />}
           </>}
 
