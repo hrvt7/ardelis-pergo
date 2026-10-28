@@ -29,11 +29,13 @@ function setLink(rel: string, key: string | undefined, href: string) {
   element.href = href
 }
 
-export function usePageSeo(pathname: string) {
+export function usePageSeo(pathname: string, options: { noindex?: boolean; title?: string } = {}) {
+  const { noindex = false, title } = options
   useEffect(() => {
-    const page = getSeoPage(pathname)
+    const base = getSeoPage(pathname)
+    const page = { ...base, title: title ?? base.title, robots: noindex ? 'noindex,nofollow' : base.robots }
     const origin = window.location.origin
-    const canonical = `${origin}${page.path === '/' ? '/' : page.path}`
+    const canonical = noindex ? '' : `${origin}${page.path === '/' ? '/' : page.path}`
     const socialImage = `${origin}${SOCIAL_IMAGE}`
 
     document.documentElement.lang = 'hu'
@@ -46,7 +48,7 @@ export function usePageSeo(pathname: string) {
     setMeta('property', 'og:type', 'website')
     setMeta('property', 'og:title', page.title)
     setMeta('property', 'og:description', page.description)
-    setMeta('property', 'og:url', canonical)
+    setMeta('property', 'og:url', canonical || window.location.href)
     setMeta('property', 'og:image', socialImage)
     setMeta('property', 'og:image:width', '1200')
     setMeta('property', 'og:image:height', '630')
@@ -55,9 +57,9 @@ export function usePageSeo(pathname: string) {
     setMeta('name', 'twitter:title', page.title)
     setMeta('name', 'twitter:description', page.description)
     setMeta('name', 'twitter:image', socialImage)
-    setLink('canonical', undefined, page.key === 'notFound' ? '' : canonical)
-    setLink('alternate', 'hu-HU', page.key === 'notFound' ? '' : canonical)
-    setLink('alternate', 'x-default', page.key === 'notFound' ? '' : canonical)
+    setLink('canonical', undefined, page.key === 'notFound' || noindex ? '' : canonical)
+    setLink('alternate', 'hu-HU', page.key === 'notFound' || noindex ? '' : canonical)
+    setLink('alternate', 'x-default', page.key === 'notFound' || noindex ? '' : canonical)
 
     document.head.querySelectorAll('script[data-ardelis-jsonld]').forEach((node) => node.remove())
     const graph = buildStructuredData(page.path, origin)
@@ -68,5 +70,5 @@ export function usePageSeo(pathname: string) {
       script.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c')
       document.head.appendChild(script)
     }
-  }, [pathname])
+  }, [pathname, noindex, title])
 }

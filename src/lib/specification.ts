@@ -1,5 +1,5 @@
-import { formatHuf, formatNumber, ROOF_LABELS, SIDE_LABELS, SIDE_NAMES } from '@/lib/pricing'
-import type { PergolaConfig, PriceBreakdown, SideKey } from '@/types/pergola'
+import { formatHuf, formatNumber, ROOF_LABELS, SIDE_LABELS, SIDE_NAMES } from './pricing'
+import type { PergolaConfig, PriceBreakdown, RoofType, SideKey } from '../types/pergola'
 
 export interface BomLine { label: string; value: string }
 
@@ -48,7 +48,7 @@ export function getSizeRecommendation(config: PergolaConfig) {
   return '8–10 főnek ajánlott · nagyobb étkező és pihenősarok is kialakítható'
 }
 
-export function createTextSummary(config: PergolaConfig, price: PriceBreakdown) {
+export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, roofLabels: Record<RoofType, string> = ROOF_LABELS, brandName = 'ARDELIS') {
   const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => `${SIDE_NAMES[side]}: ${config.mount === 'wall' && side === 'back' ? 'házfal' : SIDE_LABELS[config.sides[side]]}`).join(', ')
   const extras = [
     config.led ? 'periméter LED' : null,
@@ -57,7 +57,7 @@ export function createTextSummary(config: PergolaConfig, price: PriceBreakdown) 
     config.sensors ? 'eső- és szélszenzor' : null,
   ].filter((item): item is string => Boolean(item))
   return [
-    `ARDELIS / Pergo – ${ROOF_LABELS[config.roof]}`,
+    `${brandName} / Pergola – ${roofLabels[config.roof]}`,
     `Méret: ${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} × ${formatNumber(config.height, 2)} m (${formatNumber(price.area)} m²)`,
     `Kialakítás: ${config.mount === 'wall' ? 'falhoz csatlakozó' : 'önálló'} · ${sides}`,
     `Kiegészítők: ${extras.length ? extras.join(', ') : 'nincs kiegészítő'}`,

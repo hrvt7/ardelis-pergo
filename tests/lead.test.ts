@@ -1,0 +1,72 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { handleLeadRequest } from '../server/lead'
+import { demoTenant } from '../src/tenants/demo'
+
+const body = (patch: Record<string, unknown> = {}) => ({
+  tenantId: 'demo',
+  config: demoTenant.defaultConfig,
+  customer: { name: 'Teszt Elek', email: 'teszt@example.com', phone: '+36 30 123 4567', postalCode: '9600', city: 'Sárvár', region: 'Vas', address: '', notes: '' },
+  consent: true,
+  website: '',
+  startedAt: Date.now() - 60_000,
+  source: 'demo',
+  ...patch,
+})
+
+const post = (payload: unknown) => new Request('https://example.test/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
+
+describe('POST /api/lead', () => {
+  it('élesben kézbesítés nélkül 503-at ad, nem tesz úgy, mintha sikerült volna', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const response = await handleLeadRequest(post(body()), { NODE_ENV: 'production' })
+    expect(response.status).toBe(503)
+  })
+
+  it('fejlesztői módban naplóz és azonosítót ad', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+    const response = await handleLeadRequest(post(body()), { NODE_ENV: 'development' })
+    expect(response.status).toBe(200)
+    expect(((await response.json()) as { ref: string }).ref).toMatch(/^DEMO-\d{8}-[0-9A-F]{6}$/)
+  })
+
+  it('a szerver a gyártói árral számol, nem a böngészőből küldöttel, és e-mailt küld', async () => {
+    const calls: { url: string; body: Record<string, unknown> }[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, body: JSON.parse(String(init.body)) })
+      return new Response('{}', { status: 200 })
+    }))
+    const response = await handleLeadRequest(post(body({ estimateGross: 1 })), { NODE_ENV: 'production', RESEND_API_KEY: 'k', LEAD_FALLBACK_EMAIL: 'gyarto@example.com', SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 's' })
+    expect(response.status).toBe(200)
+    const stored = calls.find((call) => call.url.includes('/rest/v1/leads'))!
+    expect(stored.body.estimate_gross).toBe(8080000)
+    const manager = calls.find((call) => call.url.includes('resend') && (call.body.to as string[])[0] === 'gyarto@example.com')!
+    expect(String(manager.body.subject)).toContain('8')
+    expect(manager.body.reply_to).toBe('teszt@example.com')
+    expect(String(manager.body.html)).toContain('Teszt Elek')
+    const customer = calls.find((call) => call.url.includes('resend') && (call.body.to as string[])[0] === 'teszt@example.com')
+    expect(customer).toBeDefined()
+  })
+
+  it('a robotot (kitöltött rejtett mező) csendben elnyeli', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const response = await handleLeadRequest(post(body({ website: 'spam.example' })), { NODE_ENV: 'production', RESEND_API_KEY: 'k', LEAD_FALLBACK_EMAIL: 'a@b.hu' })
+    expect(response.status).toBe(200)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('hiányos adatra és ismeretlen gyártóra érthető hibát ad', async () => {
+    expect((await handleLeadRequest(post(body({ customer: { name: 'X' } })), {})).status).toBe(422)
+    expect((await handleLeadRequest(post(body({ tenantId: 'nincs-ilyen' })), {})).status).toBe(404)
+    expect((await handleLeadRequest(post(body({ consent: false })), {})).status).toBe(422)
+  })
+
+  it('ha minden kézbesítés elbukik, 502-t ad', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('hiba', { status: 500 })))
+    const response = await handleLeadRequest(post(body()), { NODE_ENV: 'production', RESEND_API_KEY: 'k', LEAD_FALLBACK_EMAIL: 'a@b.hu' })
+    expect(response.status).toBe(502)
+  })
+})

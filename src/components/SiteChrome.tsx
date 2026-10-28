@@ -19,7 +19,6 @@ export default function SiteHeader({ action }: { action?: ReactNode }) {
     <nav className={open ? 'is-open' : ''} aria-label="Fő navigáció" onClick={() => setOpen(false)}>
       <NavLink to="/studio/pergola">Pergo stúdió</NavLink>
       {location.pathname === '/' ? <a href="#folyamat">Folyamat</a> : <Link to="/#folyamat">Folyamat</Link>}
-      <NavLink to="/keresett">Kérelmem</NavLink>
       <div className="site-mobile-action">{action ?? defaultAction}</div>
     </nav>
     <div className="site-header-action">{action ?? defaultAction}</div>
@@ -27,5 +26,5 @@ export default function SiteHeader({ action }: { action?: ReactNode }) {
 }
 
 export function SiteFooter() {
-  return <footer className="site-footer"><Brand compact /><p>Paraméteres pergolatervezés, valós idejű vizualizáció és műszaki összefoglaló.</p><div><Link to="/studio/pergola">3D stúdió</Link><Link to="/keresett">Kérelem követése</Link><Link to="/partnerek">Partneri belépés</Link></div><small>© {new Date().getFullYear()} ARDELIS Atelier · Az irányárak nem minősülnek ajánlattételnek.</small></footer>
+  return <footer className="site-footer"><Brand compact /><p>Paraméteres pergolatervezés, valós idejű vizualizáció és műszaki összefoglaló.</p><div><Link to="/studio/pergola">3D stúdió</Link></div><small>© {new Date().getFullYear()} ARDELIS Atelier · Az irányárak nem minősülnek ajánlattételnek.</small></footer>
 }

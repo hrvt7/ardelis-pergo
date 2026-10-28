@@ -1,4 +1,4 @@
-import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, SideKey, SideType } from '@/types/pergola'
+import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, RoofType, SideKey, SideType } from '../types/pergola'
 
 export const DEFAULT_PRICES: PriceSettings = {
   louveredPerM2Net: 220000,
@@ -17,11 +17,11 @@ export const DEFAULT_PRICES: PriceSettings = {
   vatRate: 0.27,
 }
 
-export const ROOF_LABELS = {
+export const ROOF_LABELS: Record<RoofType, string> = {
   louvered: 'Aero · motoros lamellás',
   retractable: 'Glide · eltolható lamellás',
   fixed: 'Line · fix alumínium',
-} as const
+}
 
 export const SIDE_LABELS: Record<SideType, string> = {
   none: 'Nyitott',
@@ -45,7 +45,7 @@ export const formatNumber = (value: number, digits = 1) =>
 
 const round = (value: number) => Math.round(value / 1000) * 1000
 
-export function calculatePrice(config: PergolaConfig, prices: PriceSettings): PriceBreakdown {
+export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roofLabels: Record<RoofType, string> = ROOF_LABELS): PriceBreakdown {
   const area = config.width * config.depth
   const perimeter = 2 * (config.width + config.depth)
   const lines: PriceLine[] = []
@@ -59,7 +59,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings): Pr
   const structure = area * roofRate
   lines.push({
     id: 'structure',
-    label: ROOF_LABELS[config.roof],
+    label: roofLabels[config.roof],
     detail: `${formatNumber(area)} m² × ${formatHuf(roofRate)} / m²`,
     amountNet: round(structure),
   })

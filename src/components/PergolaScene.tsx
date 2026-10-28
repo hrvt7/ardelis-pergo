@@ -6,6 +6,7 @@ import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometr
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import type { CameraView, PergolaConfig, QualityLevel, SceneSettings, SideKey } from '@/types/pergola'
 import { getFrameColorHex } from '@/lib/config'
+import { useTenant } from '@/tenants/TenantContext'
 import { EMBEDDED_GRASS_RGBA, EMBEDDED_GRASS_SIZE } from '@/lib/grassTexture'
 import { log } from '@/lib/logger'
 
@@ -318,7 +319,8 @@ function Person({ config }: { config: PergolaConfig }) {
 
 function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
   const { width, depth, height, roof, mount } = config
-  const color = getFrameColorHex(config)
+  const { tenant } = useTenant()
+  const color = getFrameColorHex(config, tenant.colors)
   const roofColor = config.frameColor === 'white' ? '#d4d6d1' : color
   const louverGroup = useRef<THREE.Group>(null)
   const model = useRef<THREE.Group>(null)

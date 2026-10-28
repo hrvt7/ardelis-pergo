@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
+import { useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import { ArrowLeft, ArrowRight, Box, Check, ChevronDown, CloudRain, Columns3, Expand, House, Image, LampCeiling, Layers3, Minus, Moon, Move, PanelTop, Plus, SlidersHorizontal, Sparkles, Sun, Sunset, Upload, Wind, Zap } from 'lucide-react'
-import { getFrameColorHex, PRESETS } from '@/lib/config'
-import { DEFAULT_PRICES, formatHuf, SIDE_LABELS } from '@/lib/pricing'
+import { getFrameColorHex } from '@/lib/config'
+import { formatHuf, SIDE_LABELS } from '@/lib/pricing'
+import { enabledRoofs, presetConfig } from '@/tenants/rules'
+import { useTenant } from '@/tenants/TenantContext'
 import { getSizeRecommendation } from '@/lib/specification'
-import type { ConfigStep, FrameColor, PergolaConfig, QualityLevel, SceneSettings, SideKey, SideType } from '@/types/pergola'
+import type { ConfigStep, FrameColor, PergolaConfig, PriceSettings, QualityLevel, SceneSettings, SideKey, SideType } from '@/types/pergola'
 
 const STEPS: { id: ConfigStep; label: string; short: string }[] = [
   { id: 'size', label: 'Méret', short: 'Alapterület' },
@@ -25,25 +27,21 @@ interface Props {
   onChange: (patch: Partial<PergolaConfig>) => void
   onSceneChange: (patch: Partial<SceneSettings>) => void
   onPreset: (config: PergolaConfig) => void
+  prices: PriceSettings
   onPhotoUpload: (file: File) => void
   mobileOpen: boolean
   onMobileToggle: () => void
 }
 
-const FRAME_COLORS: { id: FrameColor; name: string; hex: string }[] = [
-  { id: 'anthracite', name: 'Antracit · RAL 7016', hex: '#343a3d' },
-  { id: 'white', name: 'Fehér · RAL 9016', hex: '#dedfd9' },
-  { id: 'black', name: 'Fekete · RAL 9005', hex: '#15191c' },
-  { id: 'bronze', name: 'Bronz · anodizált hatás', hex: '#705b4c' },
-  { id: 'custom', name: 'Egyedi RAL · +6% minta felár', hex: '#687467' },
-]
 
 function SliderField({ label, value, min, max, step, unit, metric = false, onChange }: { label: string; value: number; min: number; max: number; step: number; unit: string; metric?: boolean; onChange: (value: number) => void }) {
   const id = `slider-${label.toLowerCase().replace(/[^a-z0-9áéíóöőúüű]+/gi, '-')}`
   const factor = metric ? 100 : 1
   const shown = Math.round(value * factor)
   const [draft, setDraft] = useState(String(shown))
-  useEffect(() => setDraft(String(shown)), [shown])
+  // Külső változásnál (csúszka, visszavonás) a beírt érték is frissül — effect nélkül.
+  const [syncedShown, setSyncedShown] = useState(shown)
+  if (syncedShown !== shown) { setSyncedShown(shown); setDraft(String(shown)) }
   return (
     <div className="slider-field">
       <div className="field-heading">
@@ -97,7 +95,15 @@ function SideDiagram({ config, selected, onSelect }: { config: PergolaConfig; se
   )
 }
 
-export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, onPhotoUpload, mobileOpen, onMobileToggle }: Props) {
+export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, onPhotoUpload, mobileOpen, onMobileToggle }: Props) {
+  const { tenant } = useTenant()
+  const { limits } = tenant
+  const customRate = Math.round(prices.customColorRate * 100)
+  const FRAME_COLORS: { id: FrameColor; name: string; hex: string }[] = [
+    ...tenant.colors.map((color) => ({ id: color.id, name: `${color.name} · ${color.detail}`, hex: color.hex })),
+    ...(tenant.customRal ? [{ id: 'custom' as const, name: `Egyedi RAL · ${customRate > 0 ? `+${customRate}% ${tenant.demo ? 'minta ' : ''}felár` : 'felár nélkül'}`, hex: '#687467' }] : []),
+  ]
+  const sideTypes: SideType[] = ['none', ...tenant.sides]
   const touchStart = useRef(0)
   const stepIndex = STEPS.findIndex((item) => item.id === step)
   const hasZip = Object.entries(config.sides).some(([side, type]) => type === 'zip' && !(config.mount === 'wall' && side === 'back'))
@@ -108,7 +114,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   }
   const setDayTime = (dayTime: number) => onSceneChange({ dayTime, time: dayTime >= 20 || dayTime < 7 ? 'night' : dayTime >= 17 ? 'sunset' : 'day' })
   const sideNames: Record<SideKey, string> = { front: 'Elülső oldal', back: 'Hátsó oldal', left: 'Bal oldal', right: 'Jobb oldal' }
-  const activeColor = getFrameColorHex(config)
+  const activeColor = getFrameColorHex(config, tenant.colors)
   const customPreview = getFrameColorHex({ frameColor: 'custom', customRal: config.customRal })
 
   return (
@@ -131,9 +137,9 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
 
           {step === 'size' && <>
             <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
-            <SliderField label="Szélesség" value={config.width} min={2.5} max={7} step={0.05} unit="m" metric onChange={(width) => onChange({ width })} />
-            <SliderField label="Mélység" value={config.depth} min={2.5} max={5} step={0.05} unit="m" metric onChange={(depth) => onChange({ depth })} />
-            <SliderField label="Oszlopmagasság" value={config.height} min={2.2} max={3.2} step={0.05} unit="m" metric onChange={(height) => onChange({ height })} />
+            <SliderField label="Szélesség" value={config.width} min={limits.width[0]} max={limits.width[1]} step={0.05} unit="m" metric onChange={(width) => onChange({ width })} />
+            <SliderField label="Mélység" value={config.depth} min={limits.depth[0]} max={limits.depth[1]} step={0.05} unit="m" metric onChange={(depth) => onChange({ depth })} />
+            <SliderField label="Oszlopmagasság" value={config.height} min={limits.height[0]} max={limits.height[1]} step={0.05} unit="m" metric onChange={(height) => onChange({ height })} />
             {config.width > 6 && <div className="smart-warning"><Columns3 size={18} /><p><strong>Középoszlop javasolt</strong>600 cm felett a műszaki ellenőrzés és egy középoszlop szükséges lehet.</p></div>}
             <div className="smart-helper"><Sparkles size={18} /><p><strong>{getSizeRecommendation(config).split(' · ')[0]}</strong>{getSizeRecommendation(config).split(' · ')[1]}</p></div>
             {config.roof !== 'fixed' && <SliderField label={config.roof === 'retractable' ? 'Tetőnyitás' : 'Lamellaszög'} value={config.louverAngle} min={0} max={90} step={1} unit="°" onChange={(louverAngle) => onChange({ louverAngle })} />}
@@ -141,24 +147,20 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
 
           {step === 'mount' && <>
             <SectionTitle title="Kiinduló csomagok" hint="Egy koppintással indulhatsz, utána minden paraméter szabadon módosítható." />
-            <div className="preset-list">{PRESETS.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(preset.config)}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
+            <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
             <SectionTitle title="Rögzítés" hint="A házfal és az oszlopok a modellen is frissülnek." />
             <div className="segmented two">
-              <button type="button" className={config.mount === 'wall' ? 'selected' : ''} onClick={() => onChange({ mount: 'wall' })}><House size={18} />Falhoz csatlakozó</button>
-              <button type="button" className={config.mount === 'freestanding' ? 'selected' : ''} onClick={() => onChange({ mount: 'freestanding' })}><Box size={18} />Önálló</button>
+              {tenant.mounts.includes('wall') && <button type="button" className={config.mount === 'wall' ? 'selected' : ''} onClick={() => onChange({ mount: 'wall' })}><House size={18} />Falhoz csatlakozó</button>}
+              {tenant.mounts.includes('freestanding') && <button type="button" className={config.mount === 'freestanding' ? 'selected' : ''} onClick={() => onChange({ mount: 'freestanding' })}><Box size={18} />Önálló</button>}
             </div>
             <SectionTitle title="Tetőrendszer" />
-            <div className="roof-options">{([
-              ['louvered', 'Aero', 'Motoros, 0–90°-ban dönthető lamellák'],
-              ['retractable', 'Glide', 'Eltolható lamellacsomag, nagy nyitott felület'],
-              ['fixed', 'Line', 'Zárt, fix alumínium tető'],
-            ] as const).map(([id, name, description]) => <button type="button" key={id} className={config.roof === id ? 'selected' : ''} onClick={() => onChange({ roof: id })}><PanelTop size={20} /><span><strong>{name}</strong><small>{description}</small></span><span className="selection-dot">{config.roof === id && <Check size={12} />}</span></button>)}</div>
+            <div className="roof-options">{enabledRoofs(tenant).map((id) => [id, tenant.roofs[id]!.name, tenant.roofs[id]!.description] as const).map(([id, name, description]) => <button type="button" key={id} className={config.roof === id ? 'selected' : ''} onClick={() => onChange({ roof: id })}><PanelTop size={20} /><span><strong>{name}</strong><small>{description}</small></span><span className="selection-dot">{config.roof === id && <Check size={12} />}</span></button>)}</div>
           </>}
 
           {step === 'color' && <>
             <SectionTitle title="Porszinterezett alumínium" hint="Válassz szerkezetszínt; a 3D modell azonnal megmutatja a kiválasztott felületet." />
             <div className="material-swatches">{FRAME_COLORS.map((color) => <button type="button" key={color.id} className={config.frameColor === color.id ? 'selected' : ''} aria-pressed={config.frameColor === color.id} onClick={() => onChange({ frameColor: color.id })}><span className="material-sphere" style={{ '--swatch': color.id === 'custom' ? customPreview : color.hex } as React.CSSProperties}>{config.frameColor === color.id && <Check size={16} />}</span><strong>{color.name.split(' · ')[0]}</strong><small>{color.name.split(' · ')[1]}</small></button>)}</div>
-            {config.frameColor === 'custom' && <label className="text-field"><span>Egyedi RAL-kód</span><input value={config.customRal ?? ''} maxLength={12} placeholder="pl. RAL 7035" onChange={(event) => onChange({ customRal: event.target.value })} /><small>A gyakori RAL-kódok 3D színmintája is frissül. A mintaárazás 6% szerkezeti felárral számol.</small></label>}
+            {config.frameColor === 'custom' && <label className="text-field"><span>Egyedi RAL-kód</span><input value={config.customRal ?? ''} maxLength={12} placeholder="pl. RAL 7035" onChange={(event) => onChange({ customRal: event.target.value })} /><small>A gyakori RAL-kódok 3D színmintája is frissül.{customRate > 0 ? ` Az ${tenant.demo ? 'mintaárazás' : 'árazás'} ${customRate}% szerkezeti felárral számol.` : ''}</small></label>}
             <div className="finish-sample" style={{ '--finish': activeColor } as React.CSSProperties}><div /><span><strong>{config.frameColor === 'custom' && config.customRal ? `Egyedi RAL · ${config.customRal.toUpperCase()}` : FRAME_COLORS.find((item) => item.id === config.frameColor)?.name}</strong><small>Matt, UV-álló porszinterezett felület</small></span></div>
           </>}
 
@@ -166,7 +168,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <SectionTitle title="Válaszd ki az oldalt" hint="A felülnézeti diagramon vagy közvetlenül a 3D modellen is kiválasztható." />
             <SideDiagram config={config} selected={selectedSide} onSelect={onSideSelect} />
             <div className="selected-side-head"><strong>{sideNames[selectedSide]}</strong><span>{config.mount === 'wall' && selectedSide === 'back' ? 'Házfal' : SIDE_LABELS[config.sides[selectedSide]]}</span></div>
-            <div className="side-options large">{(['none', 'zip', 'glass', 'louver'] as SideType[]).map((type) => <button type="button" key={type} disabled={config.mount === 'wall' && selectedSide === 'back'} className={config.sides[selectedSide] === type ? 'selected' : ''} onClick={() => onChange({ sides: { ...config.sides, [selectedSide]: type } })}>{type === 'zip' ? <Wind size={18} /> : type === 'glass' ? <Box size={18} /> : type === 'louver' ? <Layers3 size={18} /> : <Expand size={18} />}<span>{SIDE_LABELS[type]}</span></button>)}</div>
+            <div className="side-options large">{sideTypes.map((type) => <button type="button" key={type} disabled={config.mount === 'wall' && selectedSide === 'back'} className={config.sides[selectedSide] === type ? 'selected' : ''} onClick={() => onChange({ sides: { ...config.sides, [selectedSide]: type } })}>{type === 'zip' ? <Wind size={18} /> : type === 'glass' ? <Box size={18} /> : type === 'louver' ? <Layers3 size={18} /> : <Expand size={18} />}<span>{SIDE_LABELS[type]}</span></button>)}</div>
             {hasZip && <div className="inline-setting"><SliderField label="ZIP screen nyitottsága" value={config.screenOpen} min={0} max={100} step={1} unit="%" onChange={(screenOpen) => onChange({ screenOpen })} /></div>}
             {config.sides[selectedSide] === 'glass' && <button type="button" className="side-motion-control" aria-pressed={scene.glassOpen} onClick={() => onSceneChange({ glassOpen: !scene.glassOpen })}><Move size={17} /><span>{scene.glassOpen ? 'Tolóüveg bezárása' : 'Tolóüveg eltolása'}</span></button>}
             {config.sides[selectedSide] === 'louver' && <button type="button" className="side-motion-control" aria-pressed={scene.wallLouverOpen} onClick={() => onSceneChange({ wallLouverOpen: !scene.wallLouverOpen })}><Layers3 size={17} /><span>{scene.wallLouverOpen ? 'Oldallamellák zárása' : 'Oldallamellák döntése'}</span></button>}
@@ -176,11 +178,11 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           {step === 'extras' && <>
             <SectionTitle title="Integrált komfort" hint="Az opciók azonnal megjelennek a modellen és a tételes árban." />
             <div className="extra-grid">
-              <Toggle label="Periméter LED" description="Rejtett, melegfehér világítás" icon={LampCeiling} price={`${formatHuf(DEFAULT_PRICES.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led })} />
-              <Toggle label="Bluetooth hangrendszer" description="Egy pár beépített hangszóró" icon={Zap} price={formatHuf(DEFAULT_PRICES.speakerPairNet)} checked={config.speakers} onChange={(speakers) => onChange({ speakers })} />
-              <Toggle label="Eső- és szélszenzor" description="Automata tetőzárás esőben" icon={CloudRain} price={formatHuf(DEFAULT_PRICES.sensorsNet)} checked={config.sensors} onChange={(sensors) => onChange({ sensors })} />
+              {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett, melegfehér világítás" icon={LampCeiling} price={`${formatHuf(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led })} />}
+              {tenant.extras.speakers && <Toggle label="Bluetooth hangrendszer" description="Egy pár beépített hangszóró" icon={Zap} price={formatHuf(prices.speakerPairNet)} checked={config.speakers} onChange={(speakers) => onChange({ speakers })} />}
+              {tenant.extras.sensors && <Toggle label="Eső- és szélszenzor" description="Automata tetőzárás esőben" icon={CloudRain} price={formatHuf(prices.sensorsNet)} checked={config.sensors} onChange={(sensors) => onChange({ sensors })} />}
             </div>
-            <div className="stepper-row"><span><strong>Infravörös teraszfűtés</strong><small>{formatHuf(DEFAULT_PRICES.heaterUnitNet)} / db</small></span><div className="stepper"><button type="button" aria-label="Fűtőpanel csökkentése" disabled={config.heaters === 0} onClick={() => onChange({ heaters: Math.max(0, config.heaters - 1) })}><Minus size={15} /></button><span>{config.heaters} db</span><button type="button" aria-label="Fűtőpanel növelése" disabled={config.heaters === 4} onClick={() => onChange({ heaters: Math.min(4, config.heaters + 1) })}><Plus size={15} /></button></div></div>
+            {limits.maxHeaters > 0 && <div className="stepper-row"><span><strong>Infravörös teraszfűtés</strong><small>{formatHuf(prices.heaterUnitNet)} / db</small></span><div className="stepper"><button type="button" aria-label="Fűtőpanel csökkentése" disabled={config.heaters === 0} onClick={() => onChange({ heaters: Math.max(0, config.heaters - 1) })}><Minus size={15} /></button><span>{config.heaters} db</span><button type="button" aria-label="Fűtőpanel növelése" disabled={config.heaters >= limits.maxHeaters} onClick={() => onChange({ heaters: Math.min(limits.maxHeaters, config.heaters + 1) })}><Plus size={15} /></button></div></div>}
           </>}
 
           {step === 'summary' && summary}

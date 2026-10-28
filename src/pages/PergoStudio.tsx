@@ -7,8 +7,11 @@ import PergolaScene from '@/components/PergolaScene'
 import PricePanel from '@/components/PricePanel'
 import SummaryPanel from '@/components/SummaryPanel'
 import { copyShareUrl, exportPergolaPdf } from '@/lib/exportPdf'
-import { createShareUrl, DEFAULT_CONFIG, DEFAULT_SCENE, loadInitialConfig, loadPrices, persistConfig, persistPrices } from '@/lib/config'
-import { calculatePrice, DEFAULT_PRICES, formatHuf, ROOF_LABELS } from '@/lib/pricing'
+import { createShareUrl, DEFAULT_SCENE, loadInitialConfig, loadPrices, persistConfig, persistPrices } from '@/lib/config'
+import { calculatePrice, formatHuf } from '@/lib/pricing'
+import { normalizeConfig, parseConfig } from '@/tenants/rules'
+import type { Tenant } from '@/tenants/types'
+import { useTenant } from '@/tenants/TenantContext'
 import type { CameraView, ConfigStep, PergolaConfig, PriceSettings, SavedConfiguration, SceneSettings, SideKey } from '@/types/pergola'
 import { usePageSeo } from '@/lib/usePageSeo'
 
@@ -24,17 +27,24 @@ const CHANGE_LABELS: Record<string, string> = {
   width: 'Szélesség', depth: 'Mélység', height: 'Magasság', mount: 'Rögzítés', roof: 'Tetőrendszer', frameColor: 'Szerkezetszín', customRal: 'Egyedi RAL', sides: 'Oldalkialakítás', louverAngle: 'Lamellaszög', screenOpen: 'ZIP nyitottság', led: 'Periméter LED', heaters: 'Teraszfűtés', speakers: 'Hangrendszer', sensors: 'Szenzorcsomag',
 }
 
-function loadSaved(): SavedConfiguration[] {
+const savedKey = (tenant: Tenant) => `pergo-atelier-saved-v3:${tenant.id}`
+
+function loadSaved(tenant: Tenant): SavedConfiguration[] {
   try {
-    const parsed = JSON.parse(localStorage.getItem('pergo-atelier-saved-v2') ?? '[]')
-    return Array.isArray(parsed) ? parsed.slice(0, 2) : []
+    const parsed: unknown = JSON.parse(localStorage.getItem(savedKey(tenant)) ?? '[]')
+    if (!Array.isArray(parsed)) return []
+    return parsed.slice(0, 2).flatMap((item: Partial<SavedConfiguration>) => {
+      const config = parseConfig(tenant, item?.config)
+      return config && typeof item.id === 'string' ? [{ id: item.id, name: String(item.name ?? item.id), config, savedAt: Number(item.savedAt) || 0 }] : []
+    })
   } catch { return [] }
 }
 
-export default function App() {
-  usePageSeo('/studio/pergola')
-  const [config, setConfig] = useState<PergolaConfig>(loadInitialConfig)
-  const [prices, setPrices] = useState<PriceSettings>(loadPrices)
+export default function PergoStudio() {
+  const { tenant, labels: ROOF_LABELS, admin, embed, homeHref } = useTenant()
+  usePageSeo('/studio/pergola', { noindex: embed || !tenant.demo, title: tenant.demo ? undefined : `${tenant.brand.name} · pergola konfigurátor` })
+  const [config, setConfig] = useState<PergolaConfig>(() => loadInitialConfig(tenant))
+  const [prices, setPrices] = useState<PriceSettings>(() => loadPrices(tenant, admin))
   const [scene, setScene] = useState<SceneSettings>(DEFAULT_SCENE)
   const [step, setStep] = useState<ConfigStep>('size')
   const [mobileControlsOpen, setMobileControlsOpen] = useState(false)
@@ -45,14 +55,14 @@ export default function App() {
   const [exporting, setExporting] = useState(false)
   const [presentation, setPresentation] = useState(false)
   const [delta, setDelta] = useState<{ amount: number; label: string } | null>(null)
-  const [saved, setSaved] = useState<SavedConfiguration[]>(loadSaved)
+  const [saved, setSaved] = useState<SavedConfiguration[]>(() => loadSaved(tenant))
   const history = useRef<{ past: PergolaConfig[]; future: PergolaConfig[] }>({ past: [], future: [] })
   const photoUrl = useRef<string | null>(null)
-  const price = useMemo(() => calculatePrice(config, prices), [config, prices])
+  const price = useMemo(() => calculatePrice(config, prices, ROOF_LABELS), [config, prices, ROOF_LABELS])
 
-  useEffect(() => persistConfig(config), [config])
-  useEffect(() => persistPrices(prices), [prices])
-  useEffect(() => { try { localStorage.setItem('pergo-atelier-saved-v2', JSON.stringify(saved)) } catch { /* privát mód */ } }, [saved])
+  useEffect(() => persistConfig(tenant, config), [tenant, config])
+  useEffect(() => { if (admin) persistPrices(tenant, prices) }, [tenant, admin, prices])
+  useEffect(() => { try { localStorage.setItem(savedKey(tenant), JSON.stringify(saved)) } catch { /* privát mód */ } }, [tenant, saved])
   useEffect(() => {
     if (!toast) return
     const timer = window.setTimeout(() => setToast(''), 3600)
@@ -67,16 +77,16 @@ export default function App() {
   }, [presentation])
 
   const applyConfig = useCallback((nextOrPatch: PergolaConfig | Partial<PergolaConfig>, replace = false) => {
-    const next = replace ? nextOrPatch as PergolaConfig : { ...config, ...nextOrPatch }
+    const next = normalizeConfig(tenant, replace ? nextOrPatch as PergolaConfig : { ...config, ...nextOrPatch })
     if (JSON.stringify(next) === JSON.stringify(config)) return
-    const nextPrice = calculatePrice(next, prices)
+    const nextPrice = calculatePrice(next, prices, ROOF_LABELS)
     const changed = Object.keys(nextOrPatch).find((key) => key !== 'louverAngle' && key !== 'screenOpen' && JSON.stringify((next as unknown as Record<string, unknown>)[key]) !== JSON.stringify((config as unknown as Record<string, unknown>)[key]))
     setDelta({ amount: nextPrice.totalGross - price.totalGross, label: changed ? CHANGE_LABELS[changed] ?? 'Konfiguráció' : 'Beállítás' })
     history.current.past.push(config)
     history.current.past = history.current.past.slice(-40)
     history.current.future = []
     setConfig(next)
-  }, [config, price.totalGross, prices])
+  }, [config, price.totalGross, prices, tenant, ROOF_LABELS])
 
   const updateConfig = useCallback((patch: Partial<PergolaConfig>) => applyConfig(patch), [applyConfig])
   const replaceConfig = useCallback((next: PergolaConfig) => applyConfig(next, true), [applyConfig])
@@ -127,7 +137,7 @@ export default function App() {
   }
   const handleExport = async () => {
     setExporting(true)
-    try { await exportPergolaPdf(config, price); setToast('A PDF-összefoglaló elkészült.') }
+    try { await exportPergolaPdf(config, price, tenant, ROOF_LABELS); setToast('A PDF-összefoglaló elkészült.') }
     catch (error) { console.error(error); setToast('A PDF nem készült el. Próbáld újra, vagy frissítsd az oldalt.') }
     finally { setExporting(false) }
   }
@@ -153,7 +163,7 @@ export default function App() {
   return (
     <div className={`app-shell ${presentation ? 'presentation-mode' : ''}`}>
       <header className="app-header">
-        <a className="brand" href="#top" aria-label="ARDELIS Pergo kezdőnézet" onClick={(event) => { event.preventDefault(); setView('perspective') }}><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M3 23V7h17l7 7-7 7H3Zm6-5h10l3-2-3-2H9v4Z" fill="currentColor" /><path d="M3 26 27 3" stroke="currentColor" strokeWidth="1.4" /></svg><span><strong>ARDELIS</strong><small>/ PERGO</small></span></a>
+        <a className="brand" href="#top" aria-label={`${tenant.brand.name} kezdőnézet`} onClick={(event) => { event.preventDefault(); setView('perspective') }}>{tenant.brand.logoUrl ? <img src={tenant.brand.logoUrl} alt="" aria-hidden="true" style={{ height: 30, width: 'auto' }} /> : <svg viewBox="0 0 30 30" aria-hidden="true"><path d="M3 23V7h17l7 7-7 7H3Zm6-5h10l3-2-3-2H9v4Z" fill="currentColor" /><path d="M3 26 27 3" stroke="currentColor" strokeWidth="1.4" /></svg>}<span><strong>{tenant.brand.name}</strong>{tenant.brand.suffix && <small>{tenant.brand.suffix}</small>}</span></a>
         <div className="project-identity"><span>ÉPÍTÉSZETI KONFIGURÁTOR</span><strong>Valós méretek. Azonnali előnézet.</strong></div>
         <div className="header-actions"><div className="history-actions"><button type="button" aria-label="Visszavonás" title="Visszavonás · Ctrl+Z" onClick={undo} disabled={!history.current.past.length}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" title="Ismétlés · Ctrl+Shift+Z" onClick={redo} disabled={!history.current.future.length}><Redo2 size={17} /></button></div><button type="button" className="header-text-button presentation-toggle" aria-label={presentation ? 'Szerkesztés' : 'Bemutató'} onClick={() => setPresentation(!presentation)}><Presentation size={16} /><span>{presentation ? 'Szerkesztés' : 'Bemutató'}</span></button><button type="button" className="header-text-button" aria-label="Tudnivalók" onClick={() => setModal('info')}><Info size={16} /><span>Tudnivalók</span></button><button type="button" className="header-text-button" aria-label="Alaphelyzet" onClick={() => setModal('reset')}><RotateCcw size={16} /><span>Alaphelyzet</span></button></div>
       </header>
@@ -172,16 +182,16 @@ export default function App() {
           <div className="viewer-footer"><span>{scene.photoMode ? 'HELYI FOTÓS ELŐNÉZET' : '1 egység = 1 méter'}</span><span>{price.area.toFixed(1).replace('.', ',')} m²</span></div>
         </section>
 
-        <ConfiguratorControls config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={setStep} onSideSelect={setSelectedSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} onPhotoUpload={handlePhoto} mobileOpen={mobileControlsOpen} onMobileToggle={() => setMobileControlsOpen((open) => !open)} />
-        <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={() => setModal('prices')} onExport={handleExport} onShare={handleShare} />
+        <ConfiguratorControls config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={setStep} onSideSelect={setSelectedSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} onPhotoUpload={handlePhoto} mobileOpen={mobileControlsOpen} onMobileToggle={() => setMobileControlsOpen((open) => !open)} />
+        <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={admin ? () => setModal('prices') : undefined} onExport={handleExport} onShare={handleShare} />
       </main>
 
       <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong>{formatHuf(price.totalGross)}</strong></div><button type="button" onClick={() => { setStep(step === 'summary' ? 'size' : 'summary'); setMobileControlsOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>
       {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label="Értesítés bezárása" onClick={() => setToast('')}><X size={16} /></button></div>}
-      {modal === 'prices' && <PriceSettingsDialog prices={prices} onChange={setPrices} onReset={() => { setPrices(DEFAULT_PRICES); setToast('Az alapértelmezett mintaárak visszaálltak.') }} onClose={() => setModal(null)} />}
+      {modal === 'prices' && admin && <PriceSettingsDialog prices={prices} onChange={setPrices} onReset={() => { setPrices(tenant.prices); setToast('A gyártói árlista visszaállt.') }} onClose={() => setModal(null)} />}
       {modal === 'info' && <InfoDialog onClose={() => setModal(null)} />}
-      {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(DEFAULT_CONFIG); setScene(DEFAULT_SCENE); setView('perspective'); setStep('size'); setToast('Az Atelier alapkonfiguráció visszaállt.') }} onClose={() => setModal(null)} />}
-      <Link className="studio-home-link" to="/">Kezdőlap</Link>
+      {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(tenant.defaultConfig); setScene(DEFAULT_SCENE); setView('perspective'); setStep('size'); setToast('Az alapkonfiguráció visszaállt.') }} onClose={() => setModal(null)} />}
+      {homeHref && (homeHref.startsWith('/') ? <Link className="studio-home-link" to={homeHref}>Kezdőlap</Link> : <a className="studio-home-link" href={homeHref} target="_top" rel="noreferrer">Kezdőlap</a>)}
     </div>
   )
 }
