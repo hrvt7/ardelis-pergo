@@ -1043,7 +1043,7 @@ function Ground({ scene }: { scene: SceneSettings }) {
     for (let index = 0; index < binary.length; index += 1) pixels[index] = binary.charCodeAt(index)
     const texture = new THREE.DataTexture(pixels, EMBEDDED_GRASS_SIZE, EMBEDDED_GRASS_SIZE, THREE.RGBAFormat)
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-    texture.repeat.set(14, 14)
+    texture.repeat.set(29, 29)
     texture.magFilter = THREE.LinearFilter
     texture.minFilter = THREE.LinearMipmapLinearFilter
     texture.generateMipmaps = true
@@ -1054,7 +1054,7 @@ function Ground({ scene }: { scene: SceneSettings }) {
   }, [])
   useEffect(() => () => grass.dispose(), [grass])
   return <mesh name="essential-grass-ground" rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.075, 0]} receiveShadow>
-    <planeGeometry args={[46, 46]} />
+    <planeGeometry args={[96, 96]} />
     <meshStandardMaterial map={grass} roughness={0.96} color={scene.time === 'night' ? '#7d887b' : '#c2c9b7'} />
   </mesh>
 }
@@ -1324,6 +1324,23 @@ function CompassRose({ config, facing }: { config: PergolaConfig; facing: number
   </group>
 }
 
+/**
+ * A köd a kamerával együtt távolodik: a ház és a pergola távolról nézve sem
+ * fakul ki, a köd csak a horizontot és a talaj szélét olvasztja az égbe.
+ */
+function FogFollow() {
+  useFrame(({ camera, scene, controls }) => {
+    const fog = scene.fog
+    if (!(fog instanceof THREE.Fog)) return
+    const target = (controls as unknown as { target?: THREE.Vector3 } | null)?.target
+    const distance = target ? camera.position.distanceTo(target) : camera.position.length()
+    const near = distance + 9
+    const far = distance + 34
+    if (Math.abs(fog.near - near) > 0.05 || Math.abs(fog.far - far) > 0.05) { fog.near = near; fog.far = far }
+  })
+  return null
+}
+
 function SceneRegistration() {
   const scene = useThree((state) => state.scene)
   useEffect(() => { setActiveScene(scene); return () => setActiveScene(null) }, [scene])
@@ -1336,7 +1353,7 @@ function SceneContent({ config, scene, view, quality, coreOnly, onSideSelect, on
   const pergola = <group position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} hideZone={view === 'sofa'} /></OptionalSceneAsset>}</group>
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}`} />
-    {!scene.photoMode && <fog attach="fog" args={[lighting.fog, 20, 43]} />}
+    {!scene.photoMode && <><fog attach="fog" args={[lighting.fog, 20, 43]} /><FogFollow /></>}
     <ambientLight intensity={lighting.ambient} /><hemisphereLight args={['#c8d8e2', '#51483e', lighting.hemisphere]} /><directionalLight key={lighting.shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={quality === 'mobile' ? [1024, 1024] : [2048, 2048]} shadow-camera-left={-lighting.shadowExtent} shadow-camera-right={lighting.shadowExtent} shadow-camera-top={lighting.shadowExtent} shadow-camera-bottom={-lighting.shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
     {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment} environmentRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}

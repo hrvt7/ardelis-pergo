@@ -125,6 +125,8 @@ export default function PergoStudio() {
   const updateScene = useCallback((patch: Partial<SceneSettings>) => setScene((current) => ({ ...current, ...patch })), [])
   const [shade, setShade] = useState<ShadeResult | null>(null)
   const [moodHidden, setMoodHidden] = useState(false)
+  const [priceCollapsed, setPriceCollapsed] = useState(() => { try { return localStorage.getItem('pergo-price-collapsed') === '1' } catch { return false } })
+  const togglePrice = useCallback(() => setPriceCollapsed((current) => { try { localStorage.setItem('pergo-price-collapsed', current ? '0' : '1') } catch { /* privát mód */ } return !current }), [])
   const toggleSunStudy = useCallback(() => setScene((current) => {
     if (current.sunStudy) return { ...current, sunStudy: false, time: timeForClock(current.dayTime) }
     setShade(null)
@@ -215,7 +217,7 @@ export default function PergoStudio() {
   const summary = <SummaryPanel config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} />
 
   return (
-    <div className={`app-shell ${presentation ? 'presentation-mode' : ''}`}>
+    <div className={`app-shell ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>
       <header className="app-header">
         <a className="brand" href="#top" aria-label={`${tenant.brand.name} kezdőnézet`} onClick={(event) => { event.preventDefault(); setView('perspective') }}>{tenant.brand.logoUrl ? <img src={tenant.brand.logoUrl} alt="" aria-hidden="true" style={{ height: 30, width: 'auto' }} /> : <svg viewBox="0 0 30 30" aria-hidden="true"><path d="M3 23V7h17l7 7-7 7H3Zm6-5h10l3-2-3-2H9v4Z" fill="currentColor" /><path d="M3 26 27 3" stroke="currentColor" strokeWidth="1.4" /></svg>}<span><strong>{tenant.brand.name}</strong>{tenant.brand.suffix && <small>{tenant.brand.suffix}</small>}</span></a>
         <div className="project-identity"><span>ÉPÍTÉSZETI KONFIGURÁTOR</span><strong>Valós méretek. Azonnali előnézet.</strong></div>
@@ -239,7 +241,7 @@ export default function PergoStudio() {
         </section>
 
         <ConfiguratorControls config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={setStep} onSideSelect={setSelectedSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} onPhotoUpload={handlePhoto} mobileOpen={mobileControlsOpen} onMobileToggle={() => setMobileControlsOpen((open) => !open)} />
-        <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={admin ? () => setModal('prices') : undefined} onExport={handleExport} onShare={handleShare} onBudget={() => setModal('budget')} />
+        <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={admin ? () => setModal('prices') : undefined} onExport={handleExport} onShare={handleShare} onBudget={() => setModal('budget')} collapsed={priceCollapsed} onToggleCollapse={togglePrice} />
       </main>
 
       <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong>{formatHuf(price.totalGross)}</strong></div><button type="button" onClick={() => { setStep(step === 'summary' ? 'size' : 'summary'); setMobileControlsOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>

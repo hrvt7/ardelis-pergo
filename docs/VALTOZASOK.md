@@ -5,6 +5,8 @@
 Automatikus végigkattintás minden funkción (tests/e2e), kódátnézés, javítás, újrafuttatás — az utolsó körben 0 hiba.
 
 **Javított hibák**
+- **Távolról nézve kifakult a ház:** a köd fix távolságtól indult, így kinagyított nézetben a ház is párás lett. Most a köd a kamerával együtt távolodik (csak a horizontot olvasztja), a talaj nagyobb lett.
+- **Összecsukható árpanel** (asztali nézet): a ›-gombbal kis ár-címkévé csukható a jobb alsó sarokba, így nem takarja a 3D képet; a böngésző megjegyzi.
 - **Tolóüveg kicsúszott a pergolából** bizonyos szélességeknél (pl. 535 cm), mert páratlan számú panel lett, és az utolsó mozgó panelnek nem volt párja. Most mindig páros a panelszám; teszt ellenőrzi 2,5–7 m között 5 cm-enként, hogy nyitva-zárva minden panel a kereten belül marad.
 - **Elveszett ajánlatkérések:** a robotszűrő a böngésző és a szerver órájának különbségével számolt; ha a vásárló
   gépének órája néhány másodperccel előrébb járt, a kérelmet csendben eldobta. Most a böngésző maga méri a kitöltési időt.

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, Download, Info, Link2, LoaderCircle, Settings2, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Download, Info, Link2, LoaderCircle, Settings2, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { MOUNT_SHORT } from '@/lib/mount'
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import { useTenant } from '@/tenants/TenantContext'
@@ -17,6 +17,9 @@ interface Props {
   onShare: () => void
   /** Költségkeret-varázsló megnyitása. */
   onBudget?: () => void
+  /** Asztali nézetben összecsukható, hogy ne takarja a 3D képet. */
+  collapsed?: boolean
+  onToggleCollapse?: () => void
 }
 
 function AnimatedPrice({ value }: { value: number }) {
@@ -41,14 +44,22 @@ function AnimatedPrice({ value }: { value: number }) {
   return <>{formatHuf(reduced ? value : display)}</>
 }
 
-export default function PricePanel({ config, price, exporting, delta, compact = false, onEditPrices, onExport, onShare, onBudget }: Props) {
+export default function PricePanel({ config, price, exporting, delta, compact = false, onEditPrices, onExport, onShare, onBudget, collapsed = false, onToggleCollapse }: Props) {
   const { tenant, labels: ROOF_LABELS } = useTenant()
   const [mode, setMode] = useState<'net' | 'vat' | 'gross'>('gross')
   const amount = mode === 'gross' ? price.totalGross : mode === 'net' ? price.totalNet : price.vatNet
   const label = mode === 'gross' ? 'Bruttó irányár' : mode === 'net' ? 'Nettó irányár' : 'ÁFA összege'
+  if (collapsed) return (
+    <aside className="price-panel glass-panel is-collapsed" aria-label="Árkalkuláció (összecsukva)">
+      <button type="button" className="price-expand" onClick={onToggleCollapse} aria-expanded="false" title="Árkalkuláció megnyitása">
+        <ChevronLeft size={16} />
+        <span><small>Bruttó irányár</small><strong data-value={price.totalGross}><AnimatedPrice value={price.totalGross} /></strong></span>
+      </button>
+    </aside>
+  )
   return (
     <aside className={`price-panel glass-panel ${compact ? 'compact' : ''}`} aria-label="Árkalkuláció">
-      <div className="price-topline"><span>Azonnali kalkuláció</span><span className="live-indicator"><i />ÉLŐ</span></div>
+      <div className="price-topline"><span>Azonnali kalkuláció</span><span className="live-indicator"><i />ÉLŐ</span>{onToggleCollapse && <button type="button" className="price-collapse" onClick={onToggleCollapse} aria-expanded="true" aria-label="Árkalkuláció összecsukása" title="Összecsukás — szabad kilátás a 3D-re"><ChevronRight size={15} /></button>}</div>
       <div className="price-product"><span>{ROOF_LABELS[config.roof].split(' · ')[0]} / {MOUNT_SHORT[config.mount]}</span><strong>{config.width.toFixed(2).replace('.', ',')} × {config.depth.toFixed(2).replace('.', ',')} m</strong><small>{formatNumber(price.area)} m² · {formatHuf(price.totalGross / price.area)} / m²</small></div>
       <div className="price-mode" aria-label="Ár megjelenítése">{(['net', 'vat', 'gross'] as const).map((id) => <button type="button" key={id} className={mode === id ? 'selected' : ''} onClick={() => setMode(id)}>{id === 'net' ? 'Nettó' : id === 'vat' ? 'ÁFA' : 'Bruttó'}</button>)}</div>
       <div className="total-price"><span>{label}</span><strong data-value={amount}><AnimatedPrice value={amount} /></strong><small>Telepítéssel · {price.totalNet > 0 ? Math.round(price.vatNet / price.totalNet * 100) : 0}% ÁFA</small></div>
