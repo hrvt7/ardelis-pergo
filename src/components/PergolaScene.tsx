@@ -18,6 +18,7 @@ import { studySun } from '@/lib/sunSite'
 import type { ShadeResult } from '@/components/ShadeProbe'
 import type { FurnitureSet } from '@/types/pergola'
 import { kelvinToHex } from '@/lib/color'
+import { glassPanels } from '@/lib/glass'
 import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
@@ -246,17 +247,17 @@ function ZipScreen({ length, height, open, color, wind }: { length: number; heig
 
 function GlassWall({ length, height, color, opened, onToggle }: { length: number; height: number; color: string; opened: boolean; onToggle: () => void }) {
   const usableHeight = height - 0.27
-  const panelCount = Math.max(2, Math.round(length / 1.12))
-  const panelWidth = (length - 0.12) / panelCount
+  const layout = glassPanels(length)
+  const panelCount = layout.count
+  const panelWidth = layout.width
   const panels = useRef<THREE.Group[]>([])
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
   useFrame((_, delta) => {
     let moving = false
-    panels.current.forEach((panel, index) => {
+    panels.current.slice(0, panelCount).forEach((panel, index) => {
       if (!panel) return
-      const base = -length / 2 + 0.06 + panelWidth * (index + 0.5)
-      const target = base + (opened && index % 2 === 0 ? panelWidth * 0.88 : 0)
+      const target = layout.position(index, opened)
       if (Math.abs(panel.position.x - target) > 0.002) moving = true
       panel.position.x = REDUCED ? target : THREE.MathUtils.damp(panel.position.x, target, 7, delta)
     })

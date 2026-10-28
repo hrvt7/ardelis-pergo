@@ -5,6 +5,7 @@
 Automatikus végigkattintás minden funkción (tests/e2e), kódátnézés, javítás, újrafuttatás — az utolsó körben 0 hiba.
 
 **Javított hibák**
+- **Tolóüveg kicsúszott a pergolából** bizonyos szélességeknél (pl. 535 cm), mert páratlan számú panel lett, és az utolsó mozgó panelnek nem volt párja. Most mindig páros a panelszám; teszt ellenőrzi 2,5–7 m között 5 cm-enként, hogy nyitva-zárva minden panel a kereten belül marad.
 - **Elveszett ajánlatkérések:** a robotszűrő a böngésző és a szerver órájának különbségével számolt; ha a vásárló
   gépének órája néhány másodperccel előrébb járt, a kérelmet csendben eldobta. Most a böngésző maga méri a kitöltési időt.
 - **Megosztott link + frissítés:** megosztott linkről megnyitva, módosítás után frissítéskor a régi link felülírta a
