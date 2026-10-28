@@ -1,5 +1,15 @@
 # Változások
 
+## 3.2 — a pergola a házfalon ül (2026. 10. 28.)
+
+- Javítva: falhoz rögzített módban a pergola a ház előtti teraszlemez szélén állt, kb. 0,5 m-re
+  a homlokzattól, az eresz alatt réssel. Most a fali profil közvetlenül a homlokzaton ül
+  (falmenti, L és U módban is); a ház előtti teraszlemez ilyenkor elrejtve, a pergola terasza veszi át.
+- A ház mérete a pergola magasságához igazodik: az eresz mindig a pergola fölé esik (3,2 m-nél is).
+- A hátsó sarokba tett cserepes növény nem lóg bele a falba.
+- U-fülkénél a „Részlet” nézet távolabbról mutatja a szárny és a gerenda csatlakozását.
+- Teszthez: `?arDebug=1` mellett `__pergolaWorldBoxes()` kiírja az elemek világkoordinátás befoglalóit.
+
 ## 3.1 — gyorsabb betöltés, minőségvesztés nélkül (2026. 10. 28.)
 
 - **Textúrák WebP-ben:** 15,7 MB → 6,9 MB. Fájlonként addig emeltük a minőséget, amíg az eltérés

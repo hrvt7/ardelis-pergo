@@ -19,6 +19,20 @@ if (typeof window !== 'undefined' && new URLSearchParams(window.location.search)
     activeScene?.traverse((object) => { if (object.name) names.push(object.name) })
     return names
   }
+  // Világkoordinátás befoglaló dobozok (pl. a ház homlokzata és a pergola hátsó gerendája közti rés méréséhez).
+  ;(window as Window & { __pergolaWorldBoxes?: (filter?: string) => string[] }).__pergolaWorldBoxes = (filter = '') => {
+    const rows: string[] = []
+    activeScene?.updateMatrixWorld(true)
+    activeScene?.traverse((object) => {
+      const mesh = object as unknown as { isMesh?: boolean; name: string; parent: { name: string } | null; geometry: { computeBoundingBox: () => void; boundingBox: { clone: () => { applyMatrix4: (m: unknown) => { min: { x: number; y: number; z: number }; max: { x: number; y: number; z: number } } } } }; matrixWorld: unknown }
+      if (!mesh.isMesh || (filter && !new RegExp(filter, 'i').test(`${mesh.name} ${mesh.parent?.name ?? ''}`))) return
+      mesh.geometry.computeBoundingBox()
+      const b = mesh.geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld)
+      const f = (v: { x: number; y: number; z: number }) => `${v.x.toFixed(2)},${v.y.toFixed(2)},${v.z.toFixed(2)}`
+      rows.push(`${mesh.name || '-'} <${mesh.parent?.name ?? ''}> min ${f(b.min)} max ${f(b.max)}`)
+    })
+    return rows
+  }
   ;(window as Window & { __pergolaUv?: () => string[] }).__pergolaUv = () => {
     const rows: string[] = []
     activeScene?.traverse((object) => {

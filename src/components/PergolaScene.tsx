@@ -1,4 +1,4 @@
-import { Component, Suspense, lazy, memo, use, useEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
+import { Component, Suspense, lazy, memo, use, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
 import { assetUrl } from '@/lib/assetUrl'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { ContactShadows, Environment, Html, Line, OrbitControls, RoundedBox, useEnvironment, useGLTF, useProgress, useTexture } from '@react-three/drei'
@@ -464,11 +464,19 @@ function prefetchSceneAssets(scene: SceneSettings) {
   }
 }
 
+// A ház modell saját méretei (modellegységben, a talajszinttől).
+const HOUSE_RAW = { width: 18.22, depth: 6.79, eave: 2.947, facadeInset: 0.573 }
+
+/**
+ * frontZ a ház homlokzatának síkja. Falhoz rögzítve a pergola 18 cm-es fali
+ * profilja közvetlenül a homlokzaton ül. A ház úgy méreteződik, hogy az eresz
+ * mindig a pergola fölé essen (magas pergolánál arányosan nagyobb a ház).
+ */
 function getHouseLayout(config: PergolaConfig) {
-  const frontZ = hasBackWall(config.mount) ? -config.depth / 2 - 0.095 : -config.depth / 2 - 4.6
-  const width = Math.max(17, config.width + 6)
-  const scale = width / 18.22
-  return { frontZ, width, scale, depth: 6.79 * scale }
+  const attached = hasBackWall(config.mount)
+  const scale = Math.max(Math.max(17, config.width + 6) / HOUSE_RAW.width, (config.height + 0.32) / HOUSE_RAW.eave)
+  const frontZ = attached ? -config.depth / 2 - 0.185 : -config.depth / 2 - 4.6 - HOUSE_RAW.facadeInset * scale
+  return { frontZ, attached, width: HOUSE_RAW.width * scale, scale, depth: HOUSE_RAW.depth * scale }
 }
 
 function House({ config, night }: { config: PergolaConfig; night: boolean }) {
@@ -507,8 +515,18 @@ function House({ config, night }: { config: PergolaConfig; night: boolean }) {
     object.updateMatrixWorld(true)
     const box = new THREE.Box3().setFromObject(object)
     const center = box.getCenter(new THREE.Vector3())
-    return { object, center, minY: box.min.y, front: box.max.z }
+    // A homlokzat síkja (a burkolat eleje) és az előtte lévő terasz-lemez, amelyet
+    // falhoz rögzített pergolánál elrejtünk — a pergola terasza veszi át a helyét.
+    const siding = object.getObjectByName('Horizontal_front_and_rear_siding')
+    const facade = siding ? new THREE.Box3().setFromObject(siding).max.z : box.max.z - HOUSE_RAW.facadeInset
+    const porch = ['Terrace_projection', 'Terrace_nosing'].map((name) => object.getObjectByName(name)).filter((item): item is THREE.Object3D => Boolean(item))
+    return { object, center, minY: box.min.y, facade, porch }
   }, [source])
+  useLayoutEffect(() => {
+    prepared.porch.forEach((item) => { item.visible = !layout.attached })
+    refreshShadows(gl)
+    invalidate()
+  }, [prepared, layout.attached, gl, invalidate])
   useEffect(() => {
     const materials = new Set<THREE.Material>()
     prepared.object.traverse((child) => {
@@ -524,7 +542,7 @@ function House({ config, night }: { config: PergolaConfig; night: boolean }) {
     refreshShadows(gl)
     invalidate()
   }, [night, prepared, invalidate, gl])
-  const baseZ = layout.frontZ - (prepared.front - prepared.center.z) * layout.scale
+  const baseZ = layout.frontZ - (prepared.facade - prepared.center.z) * layout.scale
   return <group>
     <group position={[0, 0, baseZ]} scale={layout.scale}>
       <primitive object={prepared.object} position={[-prepared.center.x, -prepared.minY, -prepared.center.z]} />
@@ -897,7 +915,7 @@ function Garden({ config, scene, quality }: { config: PergolaConfig; scene: Scen
     {[-0.32, 0, 0.32].map((fraction, index) => <RealisticAsset key={fraction} url={assetUrl('/assets/models/shrub_04/model.gltf')} position={[house.width * fraction, -0.04, rearZ]} height={0.95 + index * 0.08} rotation={index * 0.8} shadows={false} />)}
     {/* Oldalfal esetén a dézsák a fal végéhez, a terasz elejére kerülnek. */}
     <PlantPot position={isWallSide(config.mount, 'left') ? [-config.width / 2 + 0.38, 0.01, config.depth / 2 + 0.62] : [-config.width / 2 - 0.75, 0.01, config.depth / 2]} scale={1.25} />
-    <PlantPot position={isWallSide(config.mount, 'right') ? [config.width / 2 - 0.38, 0.01, config.depth / 2 + 0.62] : [config.width / 2 + 0.8, 0.01, -config.depth / 2]} scale={1.05} />
+    <PlantPot position={isWallSide(config.mount, 'right') ? [config.width / 2 - 0.38, 0.01, config.depth / 2 + 0.62] : [config.width / 2 + 0.8, 0.01, hasBackWall(config.mount) ? -config.depth / 2 + 0.5 : -config.depth / 2]} scale={1.05} />
   </group>
 }
 
@@ -1024,7 +1042,7 @@ function CameraController({ view, config, autoRotate }: { view: CameraView; conf
       // Alulról: meredeken (kb. 50°) felfelé, a lamellák dőlésével egy irányba — laposabb
       // szögből a lamellasor fizikailag is zárt felületnek látszik, így viszont átlátszik az ég.
       interior: [0, 0.82, -config.depth * 0.22],
-      detail: niche ? [config.width / 2 - 1.05, config.height - 0.15, config.depth / 2 + 1.15] : [side * (config.width / 2 + 0.75), config.height + 0.45, config.depth / 2 + 0.85],
+      detail: niche ? [config.width / 2 - 1.25, config.height - 0.45, config.depth / 2 + 2.1] : [side * (config.width / 2 + 0.75), config.height + 0.45, config.depth / 2 + 0.85],
       sofa: [0, 1.18, eyeZ],
     }
     destination.current.set(...positions[view])
