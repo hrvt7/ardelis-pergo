@@ -1,11 +1,12 @@
 import { useRef, useState, type ReactNode, type TouchEvent } from 'react'
-import { ArrowLeft, ArrowRight, Box, Check, ChevronDown, CloudRain, Columns3, Expand, House, Image, LampCeiling, Layers3, Minus, Moon, Move, PanelTop, Plus, SlidersHorizontal, Sparkles, Sun, Sunset, Upload, Wind, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Box, Check, ChevronDown, CloudRain, Columns3, Expand, Image, LampCeiling, Layers3, Minus, Moon, Move, PanelTop, Plus, SlidersHorizontal, Sparkles, Sun, Sunset, Upload, Wind, Zap } from 'lucide-react'
 import { getFrameColorHex } from '@/lib/config'
+import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, sideWalls, wallLabel } from '@/lib/mount'
 import { formatHuf, SIDE_LABELS } from '@/lib/pricing'
 import { enabledRoofs, presetConfig } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import { getSizeRecommendation } from '@/lib/specification'
-import type { ConfigStep, FrameColor, PergolaConfig, PriceSettings, QualityLevel, SceneSettings, SideKey, SideType } from '@/types/pergola'
+import type { ConfigStep, FrameColor, MountType, PergolaConfig, PriceSettings, QualityLevel, SceneSettings, SideKey, SideType, WallFinish } from '@/types/pergola'
 
 const STEPS: { id: ConfigStep; label: string; short: string }[] = [
   { id: 'size', label: 'Méret', short: 'Alapterület' },
@@ -82,12 +83,34 @@ function SectionTitle({ title, hint }: { title: string; hint?: string }) {
   return <div className="section-title"><h3>{title}</h3>{hint && <p>{hint}</p>}</div>
 }
 
+const WALL_FINISHES: { id: WallFinish; label: string; swatch: string }[] = [
+  { id: 'plaster', label: 'Vakolt', swatch: '#d9d4c8' },
+  { id: 'brick', label: 'Tégla', swatch: '#8f5a43' },
+  { id: 'cedar', label: 'Fa burkolat', swatch: '#8a6142' },
+]
+
+/** Felülnézeti jel: vastag vonal = fal, pont = oszlop. */
+function MountIcon({ mount }: { mount: MountType }) {
+  const walls = new Set<SideKey>(mount === 'freestanding' ? [] : mount === 'wall' ? ['back'] : mount === 'corner-left' ? ['back', 'left'] : mount === 'corner-right' ? ['back', 'right'] : ['back', 'left', 'right'])
+  const posts: [number, number][] = []
+  if (!walls.has('back')) posts.push([5, 7], [19, 7])
+  if (!walls.has('left')) posts.push([5, 19])
+  if (!walls.has('right')) posts.push([19, 19])
+  return <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+    <rect x="5" y="7" width="14" height="12" fill="none" stroke="currentColor" strokeWidth="1" opacity=".55" />
+    {walls.has('back') && <path d="M2 5.5h20" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />}
+    {walls.has('left') && <path d="M3.5 5.5v15" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />}
+    {walls.has('right') && <path d="M20.5 5.5v15" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />}
+    {posts.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.7" fill="currentColor" />)}
+  </svg>
+}
+
 function SideDiagram({ config, selected, onSelect }: { config: PergolaConfig; selected: SideKey; onSelect: (side: SideKey) => void }) {
   return (
     <div className="side-diagram" aria-label="Oldalválasztó felülnézet">
       {(['back', 'left', 'right', 'front'] as SideKey[]).map((side) => (
-        <button key={side} type="button" className={`diagram-${side} ${selected === side ? 'selected' : ''} type-${config.sides[side]}`} disabled={config.mount === 'wall' && side === 'back'} onClick={() => onSelect(side)} aria-label={`${side === 'front' ? 'Elülső' : side === 'back' ? 'Hátsó' : side === 'left' ? 'Bal' : 'Jobb'} oldal kiválasztása`}>
-          {side === 'front' ? 'Elülső' : side === 'back' ? (config.mount === 'wall' ? 'Házfal' : 'Hátsó') : side === 'left' ? 'Bal' : 'Jobb'}
+        <button key={side} type="button" className={`diagram-${side} ${selected === side ? 'selected' : ''} type-${config.sides[side]}`} disabled={isWallSide(config.mount, side)} onClick={() => onSelect(side)} aria-label={`${side === 'front' ? 'Elülső' : side === 'back' ? 'Hátsó' : side === 'left' ? 'Bal' : 'Jobb'} oldal kiválasztása`}>
+          {isWallSide(config.mount, side) ? wallLabel(side) : side === 'front' ? 'Elülső' : side === 'back' ? 'Hátsó' : side === 'left' ? 'Bal' : 'Jobb'}
         </button>
       ))}
       <div className="diagram-core"><span>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m</span><small>Koppints egy oldalra</small></div>
@@ -106,7 +129,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   const sideTypes: SideType[] = ['none', ...tenant.sides]
   const touchStart = useRef(0)
   const stepIndex = STEPS.findIndex((item) => item.id === step)
-  const hasZip = Object.entries(config.sides).some(([side, type]) => type === 'zip' && !(config.mount === 'wall' && side === 'back'))
+  const hasZip = Object.entries(config.sides).some(([side, type]) => type === 'zip' && !isWallSide(config.mount, side as SideKey))
   const go = (index: number) => onStepChange(STEPS[Math.max(0, Math.min(STEPS.length - 1, index))].id)
   const touchEnd = (event: TouchEvent) => {
     const distance = event.changedTouches[0].clientX - touchStart.current
@@ -122,7 +145,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
       <button type="button" className="sheet-toggle" aria-expanded={mobileOpen} aria-label={mobileOpen ? 'Beállítások összecsukása a 3D nézethez' : 'Pergola beállításainak megnyitása'} onClick={onMobileToggle}><span className="sheet-handle" aria-hidden="true" /><span><SlidersHorizontal size={16} />{mobileOpen ? 'Vissza a 3D nézethez' : 'Beállítások'}</span><ChevronDown size={16} /></button>
       <div className="config-head">
         <div><span>Konfiguráció</span><strong>{String(stepIndex + 1).padStart(2, '0')} / 06</strong></div>
-        <span className="mini-summary">{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {config.mount === 'wall' ? 'Fal menti' : 'Önálló'}</span>
+        <span className="mini-summary">{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {MOUNT_SHORT[config.mount]}</span>
       </div>
       <div className="control-tabs" role="tablist" aria-label="Konfigurációs lépések">
         {STEPS.map((item, index) => (
@@ -148,11 +171,12 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           {step === 'mount' && <>
             <SectionTitle title="Kiinduló csomagok" hint="Egy koppintással indulhatsz, utána minden paraméter szabadon módosítható." />
             <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
-            <SectionTitle title="Rögzítés" hint="A házfal és az oszlopok a modellen is frissülnek." />
-            <div className="segmented two">
-              {tenant.mounts.includes('wall') && <button type="button" className={config.mount === 'wall' ? 'selected' : ''} onClick={() => onChange({ mount: 'wall' })}><House size={18} />Falhoz csatlakozó</button>}
-              {tenant.mounts.includes('freestanding') && <button type="button" className={config.mount === 'freestanding' ? 'selected' : ''} onClick={() => onChange({ mount: 'freestanding' })}><Box size={18} />Önálló</button>}
-            </div>
+            <SectionTitle title="Rögzítés" hint="A falak, az oszlopok és az ár a modellen is azonnal frissülnek." />
+            <div className="roof-options mount-options">{MOUNT_TYPES.filter((mount) => tenant.mounts.includes(mount)).map((mount) => <button type="button" key={mount} className={config.mount === mount ? 'selected' : ''} aria-pressed={config.mount === mount} onClick={() => onChange({ mount })}><MountIcon mount={mount} /><span><strong>{MOUNT_LABELS[mount]}</strong><small>{MOUNT_DESCRIPTIONS[mount]}</small></span><span className="selection-dot">{config.mount === mount && <Check size={12} />}</span></button>)}</div>
+            {sideWalls(config.mount).length > 0 && <>
+              <SectionTitle title="Oldalfal burkolata" hint="Csak a látványt módosítja; az árat nem befolyásolja." />
+              <div className="scene-options">{WALL_FINISHES.map((finish) => <button type="button" key={finish.id} className={scene.wallFinish === finish.id ? 'selected' : ''} aria-pressed={scene.wallFinish === finish.id} onClick={() => onSceneChange({ wallFinish: finish.id })}><span aria-hidden="true" style={{ width: 18, height: 18, borderRadius: 4, background: finish.swatch, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.18)' }} /><span>{finish.label}</span></button>)}</div>
+            </>}
             <SectionTitle title="Tetőrendszer" />
             <div className="roof-options">{enabledRoofs(tenant).map((id) => [id, tenant.roofs[id]!.name, tenant.roofs[id]!.description] as const).map(([id, name, description]) => <button type="button" key={id} className={config.roof === id ? 'selected' : ''} onClick={() => onChange({ roof: id })}><PanelTop size={20} /><span><strong>{name}</strong><small>{description}</small></span><span className="selection-dot">{config.roof === id && <Check size={12} />}</span></button>)}</div>
           </>}
@@ -167,8 +191,8 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           {step === 'sides' && <>
             <SectionTitle title="Válaszd ki az oldalt" hint="A felülnézeti diagramon vagy közvetlenül a 3D modellen is kiválasztható." />
             <SideDiagram config={config} selected={selectedSide} onSelect={onSideSelect} />
-            <div className="selected-side-head"><strong>{sideNames[selectedSide]}</strong><span>{config.mount === 'wall' && selectedSide === 'back' ? 'Házfal' : SIDE_LABELS[config.sides[selectedSide]]}</span></div>
-            <div className="side-options large">{sideTypes.map((type) => <button type="button" key={type} disabled={config.mount === 'wall' && selectedSide === 'back'} className={config.sides[selectedSide] === type ? 'selected' : ''} onClick={() => onChange({ sides: { ...config.sides, [selectedSide]: type } })}>{type === 'zip' ? <Wind size={18} /> : type === 'glass' ? <Box size={18} /> : type === 'louver' ? <Layers3 size={18} /> : <Expand size={18} />}<span>{SIDE_LABELS[type]}</span></button>)}</div>
+            <div className="selected-side-head"><strong>{sideNames[selectedSide]}</strong><span>{isWallSide(config.mount, selectedSide) ? wallLabel(selectedSide) : SIDE_LABELS[config.sides[selectedSide]]}</span></div>
+            <div className="side-options large">{sideTypes.map((type) => <button type="button" key={type} disabled={isWallSide(config.mount, selectedSide)} className={config.sides[selectedSide] === type ? 'selected' : ''} onClick={() => onChange({ sides: { ...config.sides, [selectedSide]: type } })}>{type === 'zip' ? <Wind size={18} /> : type === 'glass' ? <Box size={18} /> : type === 'louver' ? <Layers3 size={18} /> : <Expand size={18} />}<span>{SIDE_LABELS[type]}</span></button>)}</div>
             {hasZip && <div className="inline-setting"><SliderField label="ZIP screen nyitottsága" value={config.screenOpen} min={0} max={100} step={1} unit="%" onChange={(screenOpen) => onChange({ screenOpen })} /></div>}
             {config.sides[selectedSide] === 'glass' && <button type="button" className="side-motion-control" aria-pressed={scene.glassOpen} onClick={() => onSceneChange({ glassOpen: !scene.glassOpen })}><Move size={17} /><span>{scene.glassOpen ? 'Tolóüveg bezárása' : 'Tolóüveg eltolása'}</span></button>}
             {config.sides[selectedSide] === 'louver' && <button type="button" className="side-motion-control" aria-pressed={scene.wallLouverOpen} onClick={() => onSceneChange({ wallLouverOpen: !scene.wallLouverOpen })}><Layers3 size={17} /><span>{scene.wallLouverOpen ? 'Oldallamellák zárása' : 'Oldallamellák döntése'}</span></button>}

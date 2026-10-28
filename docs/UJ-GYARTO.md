@@ -10,7 +10,11 @@
      LED folyóméterre, fűtés darabra, telepítési %, ÁFA);
    - `limits` — gyártható min/max méretek;
    - `roofs`, `sides`, `colors`, `extras`, `mounts` — csak azt sorold fel, amit
-     gyárt; ami nincs felsorolva, a konfigurátorban sem jelenik meg;
+     gyárt; ami nincs felsorolva, a konfigurátorban sem jelenik meg.
+     Rögzítések: `wall` (falhoz), `corner-left` / `corner-right` (sarokba, L),
+     `niche` (fülkébe, U), `freestanding` (önálló);
+   - sarok- és fülkerögzítéshez az árlistában: `sideWallAttachPerMeterNet`
+     (oldalfali rögzítés, Ft/fm) és `postNet` (egy elmaradó oszlop jóváírása, Ft/db);
    - `lead.recipients` — kik kapják az érdeklődőket.
 3. **Vedd fel** az `src/tenants/index.ts` `TENANTS` listájába.
 4. `npm run dev`, majd nyisd meg: `http://localhost:3000/k/kovacs`.
@@ -27,12 +31,13 @@ Ezt a kódot kapja meg a gyártó (a domaint cseréld a sajátodra):
   title="Pergola konfigurátor"
   style="width:100%;height:820px;border:0;border-radius:12px"
   loading="lazy"
-  allow="fullscreen; clipboard-write"
+  allow="fullscreen; clipboard-write; xr-spatial-tracking"
 ></iframe>
 ```
 
 Mobilon érdemes a magasságot `100vh`-ra állítani, vagy inkább a `/k/kovacs`
-önálló oldalra linkelni egy gombbal.
+önálló oldalra linkelni egy gombbal. Az AR-gomb beágyazva új lapon, az önálló
+oldalon nyitja meg az AR-nézetet.
 
 ### Konverziómérés a gyártó oldalán (opcionális)
 

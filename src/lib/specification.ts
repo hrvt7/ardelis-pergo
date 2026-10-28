@@ -1,3 +1,4 @@
+import { isWallSide, MOUNT_CODES, MOUNT_LABELS, openSides, postPositions, sideWalls, wallLabel } from './mount'
 import { formatHuf, formatNumber, ROOF_LABELS, SIDE_LABELS, SIDE_NAMES } from './pricing'
 import type { PergolaConfig, PriceBreakdown, RoofType, SideKey } from '../types/pergola'
 
@@ -5,36 +6,39 @@ export interface BomLine { label: string; value: string }
 
 export function getSpecCode(config: PergolaConfig) {
   const roof = { louvered: 'AE', retractable: 'GL', fixed: 'LN' }[config.roof]
-  const mount = config.mount === 'wall' ? 'W' : 'F'
+  const mount = MOUNT_CODES[config.mount]
   const color = config.frameColor === 'custom'
     ? config.customRal?.replace(/[^a-z0-9]/gi, '').toUpperCase() || 'RAL'
     : { anthracite: '7016', black: '9005', white: '9016', bronze: 'BRZ' }[config.frameColor]
-  const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => ({ none: '0', zip: 'Z', glass: 'G', louver: 'L' })[config.sides[side]]).join('')
+  const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => (isWallSide(config.mount, side) ? 'W' : { none: '0', zip: 'Z', glass: 'G', louver: 'L' }[config.sides[side]])).join('')
   return `PG-${roof}-${Math.round(config.width * 100)}${Math.round(config.depth * 100)}-${mount}-${color}-${sides}`
 }
 
 export function getBom(config: PergolaConfig): BomLine[] {
-  const activeSides = (['front', 'back', 'left', 'right'] as SideKey[]).filter((side) => !(config.mount === 'wall' && side === 'back'))
+  const activeSides = openSides(config.mount)
   const glassPanes = activeSides.reduce((sum, side) => {
     if (config.sides[side] !== 'glass') return sum
     const length = side === 'front' || side === 'back' ? config.width : config.depth
     return sum + Math.max(2, Math.round(length / 1.12))
   }, 0)
   const screens = activeSides.filter((side) => config.sides[side] === 'zip').length
-  const middlePosts = Math.max(0, Math.ceil(config.width / 6) - 1)
+  const posts = postPositions(config).length
+  const middlePosts = config.width > 6 ? 1 : 0
+  const walls = sideWalls(config.mount)
   return [
-    { label: 'Hordozó oszlop', value: `${config.mount === 'wall' ? 2 : 4} db${middlePosts ? ` + ${middlePosts} db középoszlop` : ''} · ${formatNumber(config.height, 2)} m` },
+    { label: 'Hordozó oszlop', value: posts === 0 ? 'nincs · a falak tartják' : `${posts - middlePosts} db${middlePosts ? ` + ${middlePosts} db középoszlop` : ''} · ${formatNumber(config.height, 2)} m` },
+    ...(walls.length ? [{ label: 'Oldalfali csatlakozó profil', value: walls.map((side) => `${side === 'left' ? 'bal' : 'jobb'} ${formatNumber(config.depth, 2)} m`).join(' + ') }] : []),
     { label: 'Keretgerenda', value: `2 × ${formatNumber(config.width, 2)} m + 2 × ${formatNumber(config.depth, 2)} m` },
     { label: config.roof === 'fixed' ? 'Fix tetőpanel' : 'Aerofoil tetőlamella', value: config.roof === 'fixed' ? `${Math.max(2, Math.floor(config.depth / 0.65))} résszel` : `${Math.max(10, Math.floor(config.depth / 0.22))} db × ${formatNumber(Math.max(0, config.width - 0.18), 2)} m` },
     { label: 'Tolóüveg panel', value: `${glassPanes} db` },
     { label: 'ZIP screen kazetta', value: `${screens} db` },
-    { label: 'Rejtett lefolyó', value: `${config.mount === 'wall' ? 1 : 2} db · oszlopba integrálva` },
+    { label: 'Rejtett lefolyó', value: posts === 0 ? '1 db · falon vezetett lefolyócső' : `${config.mount === 'freestanding' ? 2 : 1} db · oszlopba integrálva` },
     { label: 'Villamos opciók', value: `${config.led ? 'LED' : 'LED nélkül'} · ${config.heaters} db fűtés${config.speakers ? ' · hangrendszer' : ''}${config.sensors ? ' · szenzor' : ''}` },
   ]
 }
 
 export function getDeliveryEstimate(config: PergolaConfig) {
-  const activeSides = (['front', 'back', 'left', 'right'] as SideKey[]).filter((side) => !(config.mount === 'wall' && side === 'back'))
+  const activeSides = openSides(config.mount)
   const complexity = activeSides.filter((side) => config.sides[side] !== 'none').length + config.heaters + (config.speakers ? 1 : 0)
   const min = Math.min(8, 4 + Math.floor(complexity / 3))
   return `${min}–${min + 2} hét a műszaki jóváhagyástól · nem vállalt határidő`
@@ -49,7 +53,7 @@ export function getSizeRecommendation(config: PergolaConfig) {
 }
 
 export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, roofLabels: Record<RoofType, string> = ROOF_LABELS, brandName = 'ARDELIS') {
-  const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => `${SIDE_NAMES[side]}: ${config.mount === 'wall' && side === 'back' ? 'házfal' : SIDE_LABELS[config.sides[side]]}`).join(', ')
+  const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => `${SIDE_NAMES[side]}: ${isWallSide(config.mount, side) ? wallLabel(side).toLowerCase() : SIDE_LABELS[config.sides[side]]}`).join(', ')
   const extras = [
     config.led ? 'periméter LED' : null,
     config.heaters > 0 ? `${config.heaters} db teraszfűtés` : null,
@@ -59,7 +63,7 @@ export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, 
   return [
     `${brandName} / Pergola – ${roofLabels[config.roof]}`,
     `Méret: ${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} × ${formatNumber(config.height, 2)} m (${formatNumber(price.area)} m²)`,
-    `Kialakítás: ${config.mount === 'wall' ? 'falhoz csatlakozó' : 'önálló'} · ${sides}`,
+    `Kialakítás: ${MOUNT_LABELS[config.mount].toLowerCase()} · ${sides}`,
     `Kiegészítők: ${extras.length ? extras.join(', ') : 'nincs kiegészítő'}`,
     `Bruttó irányár: ${formatHuf(price.totalGross)} (telepítéssel, nem ajánlattétel)`,
     `Konfigurációs kód: ${getSpecCode(config)}`,

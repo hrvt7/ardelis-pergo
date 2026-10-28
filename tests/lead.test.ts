@@ -70,3 +70,15 @@ describe('POST /api/lead', () => {
     expect(response.status).toBe(502)
   })
 })
+
+describe('lead e-mail tartalma', () => {
+  it('a rögzítési mód és a falas oldal olvashatóan szerepel', async () => {
+    const { describeConfig } = await import('../server/lead')
+    const { tenantPrice } = await import('../src/tenants/rules')
+    const config = { ...demoTenant.defaultConfig, mount: 'corner-left' as const }
+    const rows = Object.fromEntries(describeConfig(demoTenant, config, tenantPrice(demoTenant, config)))
+    expect(rows['Rögzítés']).toBe('Sarokba, bal oldali fallal')
+    expect(rows['Oldalak']).toContain('Bal oldali: oldalfal')
+    expect(rows['Oldalak']).toContain('Hátsó: házfal')
+  })
+})

@@ -18,6 +18,8 @@ export const demoTenant: Tenant = {
     retractablePerM2Net: 340000,
     fixedPerM2Net: 80000,
     freestandingSurchargeNet: 120000,
+    sideWallAttachPerMeterNet: 24000,
+    postNet: 65000,
     zipPerM2Net: 85000,
     glassPerM2Net: 165000,
     louverWallPerM2Net: 120000,
@@ -35,7 +37,7 @@ export const demoTenant: Tenant = {
     height: [2.2, 3.2],
     maxHeaters: 4,
   },
-  mounts: ['wall', 'freestanding'],
+  mounts: ['wall', 'corner-left', 'corner-right', 'niche', 'freestanding'],
   roofs: {
     louvered: { name: 'Aero', short: 'motoros lamellás', description: 'Motoros, 0–90°-ban dönthető lamellák' },
     retractable: { name: 'Glide', short: 'eltolható lamellás', description: 'Eltolható lamellacsomag, nagy nyitott felület' },

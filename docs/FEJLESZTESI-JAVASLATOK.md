@@ -1,5 +1,7 @@
 # Hol lehet még magasabb szintre emelni?
 
+> Elkészült a 2. körben: rögzítési módok (sarok, fülke), utófeldolgozás, AR, rövid megosztó link.
+
 Prioritás szerint: előbb ami az első fizető gyártóhoz kell, utána ami a havidíjat
 és a megtartást indokolja. A becslések egy ember, AI-asszisztált munkájára szólnak.
 
@@ -47,3 +49,12 @@ kapu- és kerítésgyártókat is megcélozhatsz ugyanazzal a motorral.
   megjelenik a spam.
 - A nyitóoldal és a stúdió arculata eltér (arany/talpas és lime). Ez designkérdés,
   döntsd el, melyik maradjon.
+
+## F. Látvány — következő lépcső
+
+- **Lamellaárnyék a teraszon**: a napszak és a lamellaszög szerint mozgó csíkos árnyék
+  (finomabb árnyéktérkép a pergola körül). ½ nap.
+- **Valódi profil-keresztmetszetek** a Részlet nézethez (gyártónként): motorház,
+  véglezáró, talplemez. 1–2 nap.
+- **Választható ház és környezet** (lapostetős, nyeregtetős, csak terasz). 1 nap.
+- **Nagy felbontású „fotó” render** (2–4K) a PDF-be és közösségi formátumban. ½ nap.

@@ -1,14 +1,20 @@
-import { Component, Suspense, memo, use, useEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
+import { Component, Suspense, lazy, memo, use, useEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { ContactShadows, Environment, Html, Line, OrbitControls, RoundedBox, useGLTF, useProgress, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
-import type { CameraView, PergolaConfig, QualityLevel, SceneSettings, SideKey } from '@/types/pergola'
+import type { CameraView, PergolaConfig, QualityLevel, SceneSettings, SideKey, WallFinish } from '@/types/pergola'
+import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
+import { setActiveScene } from '@/lib/sceneRegistry'
 import { useTenant } from '@/tenants/TenantContext'
 import { EMBEDDED_GRASS_RGBA, EMBEDDED_GRASS_SIZE } from '@/lib/grassTexture'
 import { log } from '@/lib/logger'
+
+const SceneEffects = lazy(() => import('@/components/SceneEffects'))
+// ?effects=0 → utófeldolgozás kikapcsolva (hibakereséshez, gyenge géphez).
+const EFFECTS_DISABLED = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('effects') === '0'
 
 const REDUCED = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const seeded = (index: number, salt: number) => {
@@ -30,7 +36,7 @@ const HDR_FILES = {
 
 type TextureMaps = { diff: THREE.Texture; normal: THREE.Texture; rough: THREE.Texture }
 
-type SceneAssetBoundaryProps = { children: ReactNode; name: string }
+type SceneAssetBoundaryProps = { children: ReactNode; name: string; fallback?: ReactNode }
 class SceneAssetBoundary extends Component<SceneAssetBoundaryProps, { failed: boolean }> {
   state = { failed: false }
   static getDerivedStateFromError() { return { failed: true } }
@@ -42,7 +48,7 @@ class SceneAssetBoundary extends Component<SceneAssetBoundaryProps, { failed: bo
       componentStack: info.componentStack,
     })
   }
-  render() { return this.state.failed ? null : this.props.children }
+  render() { return this.state.failed ? (this.props.fallback ?? null) : this.props.children }
 }
 
 // Every decorative asset owns its Suspense boundary. A pending tree, HDR or
@@ -51,7 +57,7 @@ function OptionalSceneAsset({ name, children }: SceneAssetBoundaryProps) {
   return <SceneAssetBoundary name={name}><Suspense fallback={null}>{children}</Suspense></SceneAssetBoundary>
 }
 
-function usePBR(asset: string, repeat: [number, number]): TextureMaps {
+function usePBR(asset: string, repeat: [number, number], rotation = 0): TextureMaps {
   const [repeatX, repeatY] = repeat
   const textures = useTexture({ diff: `/assets/textures/${asset}/diff.jpg`, normal: `/assets/textures/${asset}/nor_gl.jpg`, rough: `/assets/textures/${asset}/rough.jpg` })
   const maps = useMemo(() => {
@@ -60,13 +66,14 @@ function usePBR(asset: string, repeat: [number, number]): TextureMaps {
       const texture = textures[key].clone()
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping
       texture.repeat.set(repeatX, repeatY)
+      if (rotation) { texture.center.set(0.5, 0.5); texture.rotation = rotation }
       texture.anisotropy = 8
       if (key === 'diff') texture.colorSpace = THREE.SRGBColorSpace
       texture.needsUpdate = true
       result[key] = texture
     })
     return result
-  }, [textures, repeatX, repeatY])
+  }, [textures, repeatX, repeatY, rotation])
   useEffect(() => () => Object.values(maps).forEach((texture) => texture.dispose()), [maps])
   return maps
 }
@@ -181,6 +188,28 @@ function WallAttachment({ config, color }: { config: PergolaConfig; color: strin
   </group>
 }
 
+/** Oldalfali csatlakozó profil, vízvető és konzolok — a hátsó fali rögzítés tükörképe. */
+function SideWallAttachment({ config, side, color }: { config: PergolaConfig; side: 'left' | 'right'; color: string }) {
+  const { width, depth, height } = config
+  const sx = side === 'left' ? -1 : 1
+  return <group name={`side-wall-attachment-${side}`}>
+    <Beam args={[0.035, 0.3, depth + 0.06]} position={[sx * (width / 2 + 0.105), height + 0.04, 0]} color={color} radius={0.006} />
+    <mesh position={[sx * (width / 2 + 0.015), height + 0.225, 0]} rotation={[0, 0, -sx * 0.12]} castShadow>
+      <boxGeometry args={[0.32, 0.026, depth + 0.08]} />
+      <PowderCoat color={color} roughness={0.4} />
+    </mesh>
+    <mesh position={[sx * (width / 2 - 0.135), height + 0.205, 0]}>
+      <boxGeometry args={[0.025, 0.075, depth + 0.08]} />
+      <PowderCoat color={color} />
+    </mesh>
+    {[-1, 1].map((end) => <group key={end} position={[sx * (width / 2 + 0.065), height - 0.02, end * (depth / 2 - 0.18)]}>
+      <Beam args={[0.035, 0.34, 0.16]} position={[sx * 0.035, 0, 0]} color={color} radius={0.005} />
+      <Beam args={[0.2, 0.035, 0.16]} position={[-sx * 0.045, -0.15, 0]} color={color} radius={0.005} />
+      <mesh position={[sx * 0.057, 0.07, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.018, 0.018, 0.014, 12]} /><meshStandardMaterial color="#737b7d" metalness={0.88} roughness={0.24} /></mesh>
+    </group>)}
+  </group>
+}
+
 function ZipScreen({ length, height, open, color, wind }: { length: number; height: number; open: number; color: string; wind: boolean }) {
   const usableHeight = height - 0.32
   const fabric = useRef<THREE.Mesh>(null)
@@ -251,7 +280,7 @@ function LouverWall({ length, height, color, opened, onToggle }: { length: numbe
 
 function SidePlacement({ side, config, scene, color, onSelect, onSceneChange }: { side: SideKey; config: PergolaConfig; scene: SceneSettings; color: string; onSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
   const { width, depth, height, sides } = config
-  if (config.mount === 'wall' && side === 'back') return null
+  if (isWallSide(config.mount, side)) return null
   const isHorizontal = side === 'front' || side === 'back'
   const length = isHorizontal ? width : depth
   const position: [number, number, number] = side === 'front' ? [0, 0, depth / 2] : side === 'back' ? [0, 0, -depth / 2] : side === 'left' ? [-width / 2, 0, 0] : [width / 2, 0, 0]
@@ -263,7 +292,14 @@ function DimensionGuides({ config }: { config: PergolaConfig }) {
   const { width, depth, height } = config
   const color = '#d8ff72'
   const cm = (value: number) => `${Math.round(value * 100)} cm`
-  return <group><Line points={[[-width / 2, 0.06, depth / 2 + 0.55], [width / 2, 0.06, depth / 2 + 0.55]]} color={color} lineWidth={1.2} /><Line points={[[-width / 2, 0.06, depth / 2 + 0.42], [-width / 2, 0.06, depth / 2 + 0.68]]} color={color} /><Line points={[[width / 2, 0.06, depth / 2 + 0.42], [width / 2, 0.06, depth / 2 + 0.68]]} color={color} /><Html position={[0, 0.09, depth / 2 + 0.57]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(width)}</Html><Line points={[[width / 2 + 0.55, 0.06, -depth / 2], [width / 2 + 0.55, 0.06, depth / 2]]} color={color} lineWidth={1.2} /><Html position={[width / 2 + 0.56, 0.09, 0]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(depth)}</Html><Line points={[[-width / 2 - 0.35, 0.05, depth / 2], [-width / 2 - 0.35, height + 0.25, depth / 2]]} color={color} lineWidth={1.2} /><Html position={[-width / 2 - 0.35, height / 2, depth / 2]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(height)}</Html></group>
+  const leftWall = isWallSide(config.mount, 'left')
+  const rightWall = isWallSide(config.mount, 'right')
+  // A mélységvonal a falmentes oldalra kerül; fülkében a pergola alá.
+  const depthX = !rightWall ? width / 2 + 0.55 : !leftWall ? -width / 2 - 0.55 : width / 2 - 0.45
+  // A magasságvonal az elülső, falmentes sarokhoz kerül.
+  const heightX = !leftWall ? -width / 2 - 0.35 : !rightWall ? width / 2 + 0.35 : -width / 2 + 0.35
+  const heightZ = leftWall && rightWall ? depth / 2 + 0.3 : depth / 2
+  return <group><Line points={[[-width / 2, 0.06, depth / 2 + 0.55], [width / 2, 0.06, depth / 2 + 0.55]]} color={color} lineWidth={1.2} /><Line points={[[-width / 2, 0.06, depth / 2 + 0.42], [-width / 2, 0.06, depth / 2 + 0.68]]} color={color} /><Line points={[[width / 2, 0.06, depth / 2 + 0.42], [width / 2, 0.06, depth / 2 + 0.68]]} color={color} /><Html position={[0, 0.09, depth / 2 + 0.57]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(width)}</Html><Line points={[[depthX, 0.06, -depth / 2], [depthX, 0.06, depth / 2]]} color={color} lineWidth={1.2} /><Html position={[depthX + Math.sign(depthX) * 0.01, 0.09, 0]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(depth)}</Html><Line points={[[heightX, 0.05, heightZ], [heightX, height + 0.25, heightZ]]} color={color} lineWidth={1.2} /><Html position={[heightX, height / 2, heightZ]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(height)}</Html></group>
 }
 
 function useAerofoilGeometry(width: number) {
@@ -299,15 +335,18 @@ const HOTSPOTS = {
   post: { title: 'Merev, pontos alapozás', text: 'A talplemez és a látható rögzítéspontok a stabil kivitelezést szolgálják.' },
 }
 
-function Hotspots({ config }: { config: PergolaConfig }) {
+function Hotspots({ config, posts }: { config: PergolaConfig; posts: [number, number][] }) {
   const [active, setActive] = useState<keyof typeof HOTSPOTS | null>(null)
   const { width, depth, height } = config
+  const front = posts.filter(([, z]) => z > 0).sort((a, b) => b[0] - a[0])
+  const drain = front[0]
+  const post = front[front.length - 1]
   const points: { id: keyof typeof HOTSPOTS; position: [number, number, number] }[] = [
     { id: 'motor', position: [width / 2, height + 0.18, depth / 2 - 0.25] },
     { id: 'led', position: [-width / 2 + 0.2, height - 0.15, depth / 2 - 0.12] },
-    { id: 'drain', position: [width / 2 - 0.09, 0.5, depth / 2 - 0.09] },
+    ...(drain ? [{ id: 'drain' as const, position: [drain[0], 0.5, drain[1]] as [number, number, number] }] : []),
     { id: 'sensor', position: [-width / 2 + 0.2, height + 0.35, -depth / 2 + 0.2] },
-    { id: 'post', position: [-width / 2 + 0.09, 0.15, depth / 2 - 0.09] },
+    ...(post && post !== drain ? [{ id: 'post' as const, position: [post[0], 0.15, post[1]] as [number, number, number] }] : []),
   ]
   return <group>{points.map((point) => <group key={point.id} position={point.position}><Html center zIndexRange={[12, 0]}><button type="button" className={`hotspot ${active === point.id ? 'active' : ''}`} aria-label={HOTSPOTS[point.id].title} onClick={(event) => { event.stopPropagation(); setActive(active === point.id ? null : point.id) }}><span>+</span></button>{active === point.id && <div className="hotspot-card"><button type="button" aria-label="Előnykártya bezárása" onClick={() => setActive(null)}>×</button><strong>{HOTSPOTS[point.id].title}</strong><p>{HOTSPOTS[point.id].text}</p></div>}</Html></group>)}</group>
 }
@@ -327,8 +366,10 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
   const geometry = useAerofoilGeometry(width)
-  const postPositions: [number, number][] = mount === 'freestanding' ? [[-width / 2 + 0.09, -depth / 2 + 0.09], [width / 2 - 0.09, -depth / 2 + 0.09], [-width / 2 + 0.09, depth / 2 - 0.09], [width / 2 - 0.09, depth / 2 - 0.09]] : [[-width / 2 + 0.09, depth / 2 - 0.09], [width / 2 - 0.09, depth / 2 - 0.09]]
-  if (width > 6) postPositions.push([0, depth / 2 - 0.09])
+  const postPositions = getPostPositions(config)
+  // A lefolyó kifolyója az elülső sarokoszlopnál; ha ott fal van, a másik elülső sarkon.
+  const drainPost = postPositions.find(([x, z]) => z > 0 && x > 0.5) ?? postPositions.find(([x, z]) => z > 0 && x < -0.5)
+  const sideWallList = sideWalls(mount)
   const louverCount = Math.max(10, Math.floor(depth / 0.22))
   const rainProtection = scene.rain && config.sensors && roof !== 'fixed'
   const effectiveAngle = rainProtection ? 0 : config.louverAngle
@@ -361,14 +402,16 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     if (moving) { refreshShadows(gl); invalidate() }
   })
   const night = scene.time === 'night'
-  return <group ref={model} scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={height} color={color} />)}<StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[width / 2, height, 0]} color={color} />
+  return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={height} color={color} />)}<StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[width / 2, height, 0]} color={color} />
     <GutterChannel length={width - 0.18} position={[0, height + 0.04, depth / 2 - 0.105]} color={color} />
     <GutterChannel length={width - 0.18} position={[0, height + 0.04, -depth / 2 + 0.105]} color={color} />
     <GutterChannel length={depth - 0.2} position={[-width / 2 + 0.105, height + 0.04, 0]} rotation={Math.PI / 2} color={color} />
     <GutterChannel length={depth - 0.2} position={[width / 2 - 0.105, height + 0.04, 0]} rotation={Math.PI / 2} color={color} />
-    {mount === 'wall' && <WallAttachment config={config} color={color} />}
+    {hasBackWall(mount) && <WallAttachment config={config} color={color} />}
+    {sideWallList.map((side) => <SideWallAttachment key={side} config={config} side={side} color={color} />)}
+    {!drainPost && <group name="wall-downpipe" position={[width / 2 + 0.05, 0, depth / 2 - 0.06]}><mesh position={[0, height / 2 + 0.05, 0]} castShadow><cylinderGeometry args={[0.04, 0.04, height + 0.1, 18]} /><PowderCoat color={color} /></mesh><mesh position={[-0.02, 0.06, 0.04]} rotation={[0.9, 0, 0]}><cylinderGeometry args={[0.04, 0.04, 0.14, 18]} /><PowderCoat color={color} /></mesh></group>}
     <group position={[0, height + 0.02, depth / 2 + 0.105]}><mesh><boxGeometry args={[width - 0.05, 0.12, 0.045]} /><PowderCoat color={color} /></mesh><mesh position={[0, -0.065, 0.025]}><boxGeometry args={[width - 0.08, 0.014, 0.075]} /><meshStandardMaterial color="#1c2426" metalness={0.5} roughness={0.4} /></mesh></group>
-    <mesh position={[width / 2 - 0.09, 0.14, depth / 2 + 0.005]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.08, 0.025, 8, 20, Math.PI / 2]} /><PowderCoat color={color} /></mesh>
+    {drainPost && <mesh position={[drainPost[0], 0.14, drainPost[1] + 0.095]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.08, 0.025, 8, 20, Math.PI / 2]} /><PowderCoat color={color} /></mesh>}
     <RoundedBox args={[0.28, 0.19, 0.34]} position={[width / 2 - 0.02, height + 0.12, depth / 2 - 0.25]} radius={0.035} smoothness={4} castShadow><PowderCoat color={color} /></RoundedBox>
     <group position={[-width / 2 + 0.2, height + 0.32, -depth / 2 + 0.2]}><mesh><cylinderGeometry args={[0.045, 0.055, 0.12, 16]} /><meshStandardMaterial color="#31383a" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, 0.075, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.034, 16]} /><meshPhysicalMaterial color="#8aa0a4" roughness={0.1} clearcoat={1} /></mesh></group>
     <group ref={louverGroup}>{roof !== 'fixed' && Array.from({ length: louverCount }, (_, index) => { const z = -depth / 2 + 0.2 + index * ((depth - 0.3) / louverCount); return <group key={index} position={[0, height + 0.15, z]}><mesh geometry={geometry} castShadow receiveShadow><PowderCoat color={roofColor} roughness={0.38} /></mesh><mesh position={[0, -0.026, 0.078]}><boxGeometry args={[width - 0.22, 0.012, 0.014]} /><meshStandardMaterial color="#111718" roughness={0.92} /></mesh>{[-1, 1].map((side) => <mesh key={side} position={[side * (width / 2 - 0.085), 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.034, 0.034, 0.014, 12]} /><meshStandardMaterial color={roofColor} metalness={0.35} roughness={0.4} /></mesh>)}</group> })}</group>
@@ -377,7 +420,7 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     {config.led && <group><LedStrip args={[width - 0.3, 0.018, 0.018]} position={[0, height - 0.15, depth / 2 - 0.12]} night={night} /><LedStrip args={[width - 0.3, 0.018, 0.018]} position={[0, height - 0.15, -depth / 2 + 0.12]} night={night} /><LedStrip args={[0.018, 0.018, depth - 0.3]} position={[-width / 2 + 0.12, height - 0.15, 0]} night={night} /><LedStrip args={[0.018, 0.018, depth - 0.3]} position={[width / 2 - 0.12, height - 0.15, 0]} night={night} />{night && <><pointLight position={[-width * 0.28, height - 0.4, 0]} color="#ffd099" intensity={20} distance={7} decay={2} /><pointLight position={[width * 0.28, height - 0.4, 0]} color="#ffd099" intensity={20} distance={7} decay={2} /></>}</group>}
     {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <group key={index} position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={night ? 3 : 0.15} toneMapped={false} /></mesh></group> })}
     {config.speakers && [-1, 1].map((direction) => <group key={direction} position={[direction * (width / 2 - 0.17), height - 0.38, depth / 2 - 0.17]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[0.082, 0.082, 0.065, 24]} /><meshStandardMaterial color="#1b2022" metalness={0.48} roughness={0.38} /></mesh><mesh position={[0, 0.035, 0]}><cylinderGeometry args={[0.065, 0.065, 0.004, 24]} /><meshStandardMaterial color="#080b0c" roughness={0.85} /></mesh></group>)}
-    {scene.showDimensions && <DimensionGuides config={config} />}{scene.showPerson && <OptionalSceneAsset name="180 cm reference person"><Person config={config} /></OptionalSceneAsset>}{scene.showHotspots && <Hotspots config={config} />}
+    <group name="ar-skip-overlays">{scene.showDimensions && <DimensionGuides config={config} />}{scene.showPerson && <OptionalSceneAsset name="180 cm reference person"><Person config={config} /></OptionalSceneAsset>}{scene.showHotspots && <Hotspots config={config} posts={postPositions} />}</group>
   </group>
 }
 
@@ -399,7 +442,7 @@ function getHouseAsset() {
 }
 
 function getHouseLayout(config: PergolaConfig) {
-  const frontZ = config.mount === 'wall' ? -config.depth / 2 - 0.095 : -config.depth / 2 - 4.6
+  const frontZ = hasBackWall(config.mount) ? -config.depth / 2 - 0.095 : -config.depth / 2 - 4.6
   const width = Math.max(17, config.width + 6)
   const scale = width / 18.22
   return { frontZ, width, scale, depth: 6.79 * scale }
@@ -472,6 +515,138 @@ function House({ config, night }: { config: PergolaConfig; night: boolean }) {
   </group>
 }
 
+// ── Oldalfalak (sarok- és fülkerögzítés) ──────────────────────────────────
+const WALL_THICKNESS = 0.24
+const WALL_TINT: Record<WallFinish, string> = { plaster: '#ece6da', brick: '#ffffff', cedar: '#b4835c' }
+
+let brickTextures: { map: THREE.CanvasTexture; bump: THREE.CanvasTexture } | null = null
+/** Egyszer generált, varrat nélkül ismétlődő téglamintázat (1,0 × 0,6 m, futókötés). */
+function getBrickTextures() {
+  if (brickTextures) return brickTextures
+  const width = 1024
+  const height = 614
+  const color = document.createElement('canvas')
+  const bump = document.createElement('canvas')
+  color.width = bump.width = width
+  color.height = bump.height = height
+  const c = color.getContext('2d')!
+  const b = bump.getContext('2d')!
+  c.fillStyle = '#b9afa2'
+  c.fillRect(0, 0, width, height)
+  b.fillStyle = '#202020'
+  b.fillRect(0, 0, width, height)
+  const courses = 8
+  const courseHeight = height / courses
+  const brickLength = width / 4
+  const mortar = 10
+  for (let row = 0; row < courses; row += 1) {
+    const offset = row % 2 ? brickLength / 2 : 0
+    for (let col = -1; col < 5; col += 1) {
+      const x = col * brickLength + offset
+      const tone = seeded(row * 7 + col + 3, 41)
+      const r = Math.round(132 + tone * 38)
+      const g = Math.round(74 + tone * 22)
+      const bl = Math.round(56 + tone * 16)
+      c.fillStyle = `rgb(${r},${g},${bl})`
+      c.fillRect(x + mortar / 2, row * courseHeight + mortar / 2, brickLength - mortar, courseHeight - mortar)
+      for (let speck = 0; speck < 40; speck += 1) {
+        const sxp = x + mortar / 2 + seeded(row * 97 + col * 13 + speck, 7) * (brickLength - mortar)
+        const syp = row * courseHeight + mortar / 2 + seeded(row * 31 + col * 5 + speck, 9) * (courseHeight - mortar)
+        c.fillStyle = `rgba(${seeded(speck, row) > 0.5 ? '40,20,14' : '210,170,140'},0.18)`
+        c.fillRect(sxp, syp, 3, 2)
+      }
+      b.fillStyle = `rgb(${200 + Math.round(tone * 30)},${200 + Math.round(tone * 30)},${200 + Math.round(tone * 30)})`
+      b.fillRect(x + mortar / 2, row * courseHeight + mortar / 2, brickLength - mortar, courseHeight - mortar)
+    }
+  }
+  const make = (canvas: HTMLCanvasElement, srgb: boolean) => {
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+    texture.anisotropy = 8
+    if (srgb) texture.colorSpace = THREE.SRGBColorSpace
+    return texture
+  }
+  brickTextures = { map: make(color, true), bump: make(bump, false) }
+  return brickTextures
+}
+
+type WallSpec = { side: 'left' | 'right'; x: number; zStart: number; zEnd: number; height: number }
+
+function getSideWallSpecs(config: PergolaConfig): WallSpec[] {
+  const zStart = -config.depth / 2 - 0.095
+  const zEnd = config.depth / 2 + 0.16
+  return sideWalls(config.mount).map((side) => {
+    const sx = side === 'left' ? -1 : 1
+    return { side, x: sx * (config.width / 2 + 0.125 + WALL_THICKNESS / 2), zStart, zEnd, height: config.height + 0.62 }
+  })
+}
+
+function WallBody({ spec, material }: { spec: WallSpec; material: ReactNode }) {
+  const length = spec.zEnd - spec.zStart
+  const centerZ = (spec.zStart + spec.zEnd) / 2
+  return <group name={`side-wall-${spec.side}`} position={[spec.x, 0, centerZ]}>
+    <mesh position={[0, spec.height / 2 - 0.04, 0]} castShadow receiveShadow>
+      <boxGeometry args={[WALL_THICKNESS, spec.height + 0.08, length]} />
+      {material}
+    </mesh>
+    {/* Fedkő */}
+    <mesh position={[0, spec.height + 0.055, 0.03]} castShadow receiveShadow>
+      <boxGeometry args={[WALL_THICKNESS + 0.06, 0.05, length + 0.06]} />
+      <meshStandardMaterial color="#b8b4aa" roughness={0.86} />
+    </mesh>
+    {/* Lábazat */}
+    <mesh position={[0, 0.13, 0.002]} receiveShadow>
+      <boxGeometry args={[WALL_THICKNESS + 0.016, 0.3, length + 0.006]} />
+      <meshStandardMaterial color="#6f6c66" roughness={0.92} />
+    </mesh>
+  </group>
+}
+
+function PlainWall({ spec, finish }: { spec: WallSpec; finish: WallFinish }) {
+  return <WallBody spec={spec} material={<meshStandardMaterial color={finish === 'brick' ? '#8f5a43' : WALL_TINT[finish]} roughness={0.9} />} />
+}
+
+function PlasterWall({ spec }: { spec: WallSpec }) {
+  const length = spec.zEnd - spec.zStart
+  const maps = usePBR('plastered_wall_04', [length / 2.2, spec.height / 2.2])
+  return <WallBody spec={spec} material={<meshStandardMaterial map={maps.diff} normalMap={maps.normal} normalScale={[0.55, 0.55]} roughnessMap={maps.rough} color={WALL_TINT.plaster} roughness={0.95} />} />
+}
+
+function CedarWall({ spec }: { spec: WallSpec }) {
+  const length = spec.zEnd - spec.zStart
+  // A deszkák függőlegesen futnak, mint a ház cédrus burkolata.
+  const maps = usePBR('oak_wood_planks', [spec.height / 1.6, length / 1.1], Math.PI / 2)
+  return <WallBody spec={spec} material={<meshStandardMaterial map={maps.diff} normalMap={maps.normal} normalScale={[0.5, 0.5]} roughnessMap={maps.rough} color={WALL_TINT.cedar} roughness={0.82} />} />
+}
+
+function BrickWall({ spec }: { spec: WallSpec }) {
+  const length = spec.zEnd - spec.zStart
+  const textures = useMemo(() => {
+    const base = getBrickTextures()
+    const map = base.map.clone()
+    const bump = base.bump.clone()
+    ;[map, bump].forEach((texture) => { texture.repeat.set(length / 1.0, spec.height / 0.6); texture.needsUpdate = true })
+    return { map, bump }
+  }, [length, spec.height])
+  useEffect(() => () => { textures.map.dispose(); textures.bump.dispose() }, [textures])
+  return <WallBody spec={spec} material={<meshStandardMaterial map={textures.map} bumpMap={textures.bump} bumpScale={1.4} roughness={0.9} />} />
+}
+
+function SideWalls({ config, finish }: { config: PergolaConfig; finish: WallFinish }) {
+  const invalidate = useThree((state) => state.invalidate)
+  const gl = useThree((state) => state.gl)
+  const specs = getSideWallSpecs(config)
+  useEffect(() => { refreshShadows(gl); invalidate() }, [gl, invalidate, finish, config.mount, config.width, config.depth, config.height])
+  return <group name="side-walls">{specs.map((spec) => {
+    const plain = <PlainWall spec={spec} finish={finish} />
+    return <SceneAssetBoundary key={`${spec.side}-${finish}`} name={`${finish} side wall`} fallback={plain}>
+      <Suspense fallback={plain}>
+        {finish === 'plaster' ? <PlasterWall spec={spec} /> : finish === 'cedar' ? <CedarWall spec={spec} /> : <BrickWall spec={spec} />}
+      </Suspense>
+    </SceneAssetBoundary>
+  })}</group>
+}
+
 function PlantPot({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
   return <RealisticAsset url="/assets/models/potted_plant_02/model.gltf" position={position} height={0.92 * scale} rotation={position[0] * 0.7} />
 }
@@ -485,10 +660,15 @@ function Furniture({ config }: { config: PergolaConfig }) {
 
 function Deck({ config }: { config: PergolaConfig }) {
   const wood = usePBR('oak_wood_planks', [3.5, 0.7])
-  const width = config.width + (config.mount === 'wall' ? 2.2 : 1.1)
+  // Oldalfalnál a burkolat a fal belső síkjáig tart, különben kifut a pergola mellé.
+  const walls = sideWalls(config.mount)
+  const overhang = hasBackWall(config.mount) ? 1.1 : 0.55
+  const leftExtent = walls.includes('left') ? config.width / 2 + 0.125 : config.width / 2 + overhang
+  const rightExtent = walls.includes('right') ? config.width / 2 + 0.125 : config.width / 2 + overhang
+  const width = leftExtent + rightExtent
   const depth = config.depth + 1.2
   const planks = Math.ceil(depth / 0.145)
-  return <group position={[0, -0.035, 0.2]}>{Array.from({ length: planks }, (_, index) => { const z = -depth / 2 + (index + 0.5) * depth / planks; return <mesh key={index} position={[0, 0, z]} receiveShadow castShadow><boxGeometry args={[width, 0.065, depth / planks - 0.009]} /><meshStandardMaterial map={wood.diff} normalMap={wood.normal} normalScale={[0.38, 0.38]} roughnessMap={wood.rough} color={index % 4 === 0 ? '#bbb1a3' : '#d0c6b8'} roughness={0.78} /></mesh> })}</group>
+  return <group position={[(rightExtent - leftExtent) / 2, -0.035, 0.2]}>{Array.from({ length: planks }, (_, index) => { const z = -depth / 2 + (index + 0.5) * depth / planks; return <mesh key={index} position={[0, 0, z]} receiveShadow castShadow><boxGeometry args={[width, 0.065, depth / planks - 0.009]} /><meshStandardMaterial map={wood.diff} normalMap={wood.normal} normalScale={[0.38, 0.38]} roughnessMap={wood.rough} color={index % 4 === 0 ? '#bbb1a3' : '#d0c6b8'} roughness={0.78} /></mesh> })}</group>
 }
 
 function Tree({ position, scale = 1, wind }: { position: [number, number, number]; scale?: number; wind: boolean }) {
@@ -508,8 +688,9 @@ function Garden({ config, scene, quality }: { config: PergolaConfig; scene: Scen
     <Tree position={[sideX, -0.05, house.frontZ - 2.1]} scale={1.28} wind={scene.wind} />
     {quality !== 'mobile' && <Tree position={[sideX + 1.4, -0.05, 4.6]} scale={0.86} wind={scene.wind} />}
     {[-0.32, 0, 0.32].map((fraction, index) => <RealisticAsset key={fraction} url="/assets/models/shrub_04/model.gltf" position={[house.width * fraction, -0.04, rearZ]} height={0.95 + index * 0.08} rotation={index * 0.8} shadows={false} />)}
-    <PlantPot position={[-config.width / 2 - 0.75, 0.01, config.depth / 2]} scale={1.25} />
-    <PlantPot position={[config.width / 2 + 0.8, 0.01, -config.depth / 2]} scale={1.05} />
+    {/* Oldalfal esetén a dézsák a fal végéhez, a terasz elejére kerülnek. */}
+    <PlantPot position={isWallSide(config.mount, 'left') ? [-config.width / 2 + 0.38, 0.01, config.depth / 2 + 0.62] : [-config.width / 2 - 0.75, 0.01, config.depth / 2]} scale={1.25} />
+    <PlantPot position={isWallSide(config.mount, 'right') ? [config.width / 2 - 0.38, 0.01, config.depth / 2 + 0.62] : [config.width / 2 + 0.8, 0.01, -config.depth / 2]} scale={1.05} />
   </group>
 }
 
@@ -621,17 +802,24 @@ function CameraController({ view, config, autoRotate }: { view: CameraView; conf
   useEffect(() => {
     const size = Math.max(config.width, config.depth)
     const eyeZ = -config.depth * 0.17 - 0.195
+    // Oldalfalnál a kamera a nyitott oldal felől néz be, hogy a fal ne takarja a pergolát.
+    const leftWall = isWallSide(config.mount, 'left')
+    const rightWall = isWallSide(config.mount, 'right')
+    const niche = leftWall && rightWall
+    const side = rightWall && !leftWall ? -1 : 1
     const positions: Record<CameraView, [number, number, number]> = {
-      perspective: [config.width * 1.3 + 3.4, config.height * 1.7 + 1.4, config.depth * 1.5 + config.width * 0.75 + 3],
+      perspective: niche
+        ? [config.width * 0.38, config.height * 1.9 + 1.6, config.depth * 1.6 + config.width * 0.85 + 3.6]
+        : [side * (config.width * 1.3 + 3.4), config.height * 1.7 + 1.4, config.depth * 1.5 + config.width * 0.75 + 3],
       front: [0, config.height * 1.15, size * 2.65],
       top: [0.01, size * 2.2, 0.01],
       interior: [0, 0.72, config.depth * 0.18],
-      detail: [config.width / 2 + 0.75, config.height + 0.45, config.depth / 2 + 0.85],
+      detail: niche ? [config.width / 2 - 1.05, config.height - 0.15, config.depth / 2 + 1.15] : [side * (config.width / 2 + 0.75), config.height + 0.45, config.depth / 2 + 0.85],
       sofa: [0, 1.18, eyeZ],
     }
     destination.current.set(...positions[view])
     if (view === 'sofa') target.current.set(0, 1.22, config.depth / 2 + 6)
-    else if (view === 'detail') target.current.set(config.width / 2, config.height, config.depth / 2)
+    else if (view === 'detail') target.current.set(niche ? config.width / 2 - 0.3 : side * config.width / 2, config.height, config.depth / 2)
     else if (view === 'interior') target.current.set(0, config.height + 0.1, -config.depth / 2)
     else target.current.set(0, view === 'top' ? 0 : config.height * 0.42, 0)
 
@@ -651,7 +839,7 @@ function CameraController({ view, config, autoRotate }: { view: CameraView; conf
       transitioning.current = true
     }
     invalidate()
-  }, [view, config.width, config.depth, config.height, camera, invalidate])
+  }, [view, config.width, config.depth, config.height, config.mount, camera, invalidate])
 
   useEffect(() => {
     if (view !== 'sofa') return
@@ -754,6 +942,12 @@ function ShadowBudget({ config }: { config: PergolaConfig }) {
   return null
 }
 
+function SceneRegistration() {
+  const scene = useThree((state) => state.scene)
+  useEffect(() => { setActiveScene(scene); return () => setActiveScene(null) }, [scene])
+  return null
+}
+
 function SceneContent({ config, scene, view, quality, coreOnly, onSideSelect, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; quality: QualityLevel; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
   const lighting = getLighting(scene)
   useFrame(({ gl }) => { if (gl.toneMappingExposure !== lighting.exposure) gl.toneMappingExposure = lighting.exposure })
@@ -765,10 +959,12 @@ function SceneContent({ config, scene, view, quality, coreOnly, onSideSelect, on
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
     {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment} environmentRotation={[0, Math.PI * 0.35, 0]} /></OptionalSceneAsset>}
     {!scene.photoMode && <Ground scene={scene} />}
+    {!scene.photoMode && sideWalls(config.mount).length > 0 && <SideWalls config={config} finish={scene.wallFinish} />}
     {!scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} night={lighting.night} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
     {pergola}
     {!scene.photoMode && <ContactShadows key={`${config.width}-${config.depth}-${config.height}-${config.mount}`} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality === 'mobile' ? 256 : 512} frames={1} color="#10171d" />}
     {scene.rain && <Rain config={config} quality={quality} />}
+    {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && (quality === 'high' || quality === 'ultra') && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects quality={quality} night={lighting.night} /></Suspense></SceneAssetBoundary>}
     <CameraController view={view} config={config} autoRotate={scene.autoRotate} />
   </>
 }
@@ -874,6 +1070,7 @@ export default memo(function PergolaScene({ config, scene, view, onSideSelect, o
         }}
       >
         <WebGLContextGuard onLost={onContextLost} />
+        <SceneRegistration />
         <Suspense fallback={null}>
           <SceneContent
             config={config}

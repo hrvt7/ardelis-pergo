@@ -1,4 +1,45 @@
-# Változások — gyártói kiadás (2026. 10. 28.)
+# Változások
+
+## 2. kör — rögzítési módok, prémium látvány, AR (2026. 10. 28.)
+
+### Rögzítési módok
+- Öt rögzítés: **falhoz**, **sarokba bal / jobb fallal (L)**, **fülkébe (U, három fal)**, **önálló**.
+- A 3D-ben paraméteres oldalfal jelenik meg fedkővel és lábazattal, három burkolattal:
+  vakolt, tégla, fa (csak látvány, az árat nem befolyásolja).
+- A szerkezet követi a módot: oszlopszám (sarok: 1, fülke: 0, 6 m felett középoszlop),
+  oldalfali csatlakozó profil vízvetővel és konzolokkal, lefolyó a megfelelő
+  oszlopban, fülkében falon vezetett lefolyócső.
+- A falas oldalakra nem tehető oldalzárás (felület, ár, PDF, e-mail egységesen).
+- Ár: „Oldalfali rögzítés” (Ft/fm) és „Elmaradó oszlop” jóváírás (Ft/db) — gyártónként állítható.
+- A kamera, a méretvonalak, a terasz és a növények a falakhoz igazodnak.
+- Közös logika: `src/lib/mount.ts` (3D, ár, anyaglista, PDF, e-mail ugyanebből dolgozik).
+
+### Prémium megjelenítés (asztali gépen)
+- Ambient occlusion, bloom (a LED és a fűtés éjjel valóban világít), filmes tónusleképezés, élsimítás.
+- Csak asztali minőségnél töltődik be (külön csomag); mobilon és fotós nézetben nem.
+- `?effects=0` kapcsolóval kikapcsolható (hibakereséshez).
+- Védőlépcső a túlcsorduló csúcsfények ellen — javította a fülke módban jelentkező fekete képet.
+
+### AR — „Nézd meg a kertedben”
+- iPhone: Apple AR Quick Look; Android: WebXR (ARCore-képes Chrome); a pergola valós méretben.
+- Asztali gépen QR-kód: a telefon ugyanazt a konfigurációt nyitja meg, és onnan indul az AR.
+- Az AR-modell csak a terméket tartalmazza (ház, falak, bútor nélkül); a hivatalos
+  glTF-ellenőrző szerint hibátlan.
+- Beágyazott (iframe) módban az AR új lapon, az önálló oldalon nyílik.
+- A `model-viewer` (Google, Apache-2.0) a `public/vendor/` mappában van, csak AR-kor töltődik be.
+
+### Rövid megosztó link
+- `#c=500_400_260_L_l_a_0WWz_…` formátum (~40 karakter a korábbi ~400 helyett):
+  olvasható QR-kód, SMS-be is fér. A régi `#k=` linkek továbbra is működnek.
+
+### Ellenőrizve
+- 23 automatikus teszt (rögzítési módok, ár, anyaglista, spec-kód, megosztó link, lead-e-mail).
+- 5 rögzítés × 5 kameranézet × nappal/éjjel = 50 kombináció képernyőn, üres vagy hibás kép nélkül.
+- Produkciós build: ismételt betöltés, konzolhiba nélkül; mobilon az utófeldolgozás nem töltődik le.
+
+---
+
+## 1. kör — gyártói kiadás (2026. 10. 28.)
 
 A felület, a 3D-jelenet és az arculat **változatlan**. A változások a
 működést, az eladhatóságot és a hibákat érintik.

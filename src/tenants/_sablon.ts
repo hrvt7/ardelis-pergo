@@ -25,7 +25,8 @@ export const sablonTenant: Tenant = {
     ...demoTenant.prices,               // ← a gyártó NETTÓ árai kerüljenek ide
   },
   limits: { width: [3, 6], depth: [3, 4.5], height: [2.4, 3], maxHeaters: 2 },
-  mounts: ['wall', 'freestanding'],
+  // Elérhető: 'wall', 'corner-left', 'corner-right', 'niche', 'freestanding'
+  mounts: ['wall', 'corner-left', 'corner-right', 'freestanding'],
   roofs: {
     louvered: { name: 'Bioclima', short: 'motoros lamellás', description: 'Motoros, 0–135°-ban dönthető lamellák' },
     fixed: { name: 'Solid', short: 'fix alumínium', description: 'Zárt, fix alumínium tető' },

@@ -1,4 +1,4 @@
-import { configToHash, hashToJson } from '@/lib/shareCode'
+import { configToHash, decodeShareHash, shareHash } from '@/lib/shareCode'
 import { parseConfig, priceSettingsSchema } from '@/tenants/rules'
 
 export { configToHash }
@@ -18,6 +18,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   glassOpen: false,
   wallLouverOpen: false,
   quality: 'auto',
+  wallFinish: 'plaster',
   photoMode: false,
   photoX: 0,
   photoY: 0,
@@ -58,15 +59,9 @@ export function readStored(key: string): unknown {
 }
 
 export function loadInitialConfig(tenant: Tenant): PergolaConfig {
-  try {
-    const match = window.location.hash.match(/^#k=([A-Za-z0-9_-]+)$/)
-    if (match) {
-      const shared = parseConfig(tenant, hashToJson(match[1]))
-      if (shared) return shared
-    }
-  } catch {
-    // A hibás hivatkozás nem akadályozhatja meg az indulást.
-  }
+  // A hibás hivatkozás nem akadályozhatja meg az indulást: ilyenkor a piszkozat vagy az alapállapot jön.
+  const shared = window.location.hash ? parseConfig(tenant, decodeShareHash(window.location.hash)) : null
+  if (shared) return shared
   return parseConfig(tenant, readStored(configKey(tenant))) ?? tenant.defaultConfig
 }
 
@@ -88,6 +83,8 @@ export function persistPrices(tenant: Tenant, prices: PriceSettings) {
 export function createShareUrl(config: PergolaConfig) {
   const url = new URL(window.location.href)
   url.searchParams.delete('admin')
-  url.hash = `k=${configToHash(config)}`
+  url.searchParams.delete('ar')
+  url.searchParams.delete('arDebug')
+  url.hash = shareHash(config)
   return url.toString()
 }

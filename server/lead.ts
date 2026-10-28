@@ -9,8 +9,9 @@
 // 3. elmenti Supabase-be (ha be van állítva), e-mailt küld a gyártónak és
 //    visszaigazolást az ügyfélnek (Resenddel, ha be van állítva).
 import { z } from 'zod'
+import { isWallSide, MOUNT_LABELS, wallLabel } from '../src/lib/mount'
 import { formatHuf, formatNumber, SIDE_LABELS, SIDE_NAMES } from '../src/lib/pricing'
-import { configToHash } from '../src/lib/shareCode'
+import { shareHash } from '../src/lib/shareCode'
 import { getBom, getSpecCode } from '../src/lib/specification'
 import { getTenant } from '../src/tenants'
 import { parseConfig, roofLabels, tenantPrice } from '../src/tenants/rules'
@@ -80,12 +81,12 @@ export function describeConfig(tenant: Tenant, config: PergolaConfig, price: Pri
   const color = config.frameColor === 'custom'
     ? `Egyedi RAL ${config.customRal ?? ''}`.trim()
     : (() => { const item = tenant.colors.find((entry) => entry.id === config.frameColor); return item ? `${item.name} · ${item.detail}` : config.frameColor })()
-  const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => `${SIDE_NAMES[side]}: ${config.mount === 'wall' && side === 'back' ? 'házfal' : SIDE_LABELS[config.sides[side]]}`).join(' · ')
+  const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => `${SIDE_NAMES[side]}: ${isWallSide(config.mount, side) ? wallLabel(side).toLowerCase() : SIDE_LABELS[config.sides[side]]}`).join(' · ')
   const extras = [config.led && 'periméter LED', config.heaters > 0 && `${config.heaters} db fűtés`, config.speakers && 'hangrendszer', config.sensors && 'eső- és szélszenzor'].filter(Boolean).join(', ')
   return [
     ['Tetőrendszer', labels[config.roof]],
     ['Méret (sz × m × m)', `${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} × ${formatNumber(config.height, 2)} m · ${formatNumber(price.area)} m²`],
-    ['Rögzítés', config.mount === 'wall' ? 'Falhoz csatlakozó' : 'Önálló'],
+    ['Rögzítés', MOUNT_LABELS[config.mount]],
     ['Szín', color],
     ['Oldalak', sides],
     ['Kiegészítők', extras || 'nincs'],
@@ -223,7 +224,7 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   if (input.website || tooFast) return json(200, { ok: true, ref })
 
   const price = tenantPrice(tenant, config)
-  const configUrl = `${siteOrigin(request, env)}/k/${tenant.id}#k=${configToHash(config)}`
+  const configUrl = `${siteOrigin(request, env)}/k/${tenant.id}#${shareHash(config)}`
   const record: LeadRecord = { ref, tenant, input, config, price, configUrl, createdAt: now }
 
   const recipients = tenant.lead.recipients.length ? tenant.lead.recipients : (env.LEAD_FALLBACK_EMAIL ?? '').split(',').map((item) => item.trim()).filter(Boolean)

@@ -1,4 +1,5 @@
 import type { TDocumentDefinitions, TableCell } from 'pdfmake/interfaces'
+import { isWallSide, MOUNT_LABELS, wallLabel } from '@/lib/mount'
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import { getSpecCode } from '@/lib/specification'
 import type { Tenant } from '@/tenants/types'
@@ -29,13 +30,13 @@ export async function exportPergolaPdf(config: PergolaConfig, price: PriceBreakd
   }
 
   const configuration = [
-    ['Kialakítás', config.mount === 'wall' ? 'Falhoz csatlakozó' : 'Önálló'],
+    ['Kialakítás', MOUNT_LABELS[config.mount]],
     ['Tetőrendszer', ROOF_LABELS[config.roof]],
     ['Külső méretek', `${config.width.toFixed(2)} × ${config.depth.toFixed(2)} × ${config.height.toFixed(2)} m`],
     ['Lefedett terület', `${formatNumber(price.area)} m²`],
     ['Szerkezetszín', colorName],
     ['Spec-kód', getSpecCode(config)],
-    ...(['front', 'back', 'left', 'right'] as const).map((side) => [`${SIDE_NAMES[side]} oldal`, config.mount === 'wall' && side === 'back' ? 'Házfal' : SIDE_TYPES[config.sides[side]]]),
+    ...(['front', 'back', 'left', 'right'] as const).map((side) => [`${SIDE_NAMES[side]} oldal`, isWallSide(config.mount, side) ? wallLabel(side) : SIDE_TYPES[config.sides[side]]]),
     ...(config.roof !== 'fixed' ? [[config.roof === 'retractable' ? 'Tetőnyitás' : 'Lamellaszög', `${config.louverAngle}°`]] : []),
     ['LED világítás', config.led ? 'Igen' : 'Nem'],
     ['Teraszfűtés', `${config.heaters} db`],

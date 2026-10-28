@@ -1,3 +1,4 @@
+import { isWallSide, omittedPosts, sideWalls } from './mount'
 import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, RoofType, SideKey, SideType } from '../types/pergola'
 
 export const DEFAULT_PRICES: PriceSettings = {
@@ -5,6 +6,8 @@ export const DEFAULT_PRICES: PriceSettings = {
   retractablePerM2Net: 340000,
   fixedPerM2Net: 80000,
   freestandingSurchargeNet: 120000,
+  sideWallAttachPerMeterNet: 24000,
+  postNet: 65000,
   zipPerM2Net: 85000,
   glassPerM2Net: 165000,
   louverWallPerM2Net: 120000,
@@ -73,6 +76,25 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     })
   }
 
+  sideWalls(config.mount).forEach((side) => {
+    lines.push({
+      id: `wall-${side}`,
+      label: `Oldalfali rögzítés · ${side === 'left' ? 'bal' : 'jobb'} oldal`,
+      detail: `${formatNumber(config.depth, 2)} fm × ${formatHuf(prices.sideWallAttachPerMeterNet)} / fm`,
+      amountNet: round(config.depth * prices.sideWallAttachPerMeterNet),
+    })
+  })
+
+  const savedPosts = omittedPosts(config.mount)
+  if (savedPosts > 0 && prices.postNet > 0) {
+    lines.push({
+      id: 'posts-saved',
+      label: `Elmaradó oszlop · ${savedPosts} db`,
+      detail: `A falak kiváltják · ${savedPosts} × ${formatHuf(prices.postNet)}`,
+      amountNet: -round(savedPosts * prices.postNet),
+    })
+  }
+
   if (config.frameColor === 'custom') {
     lines.push({
       id: 'color',
@@ -84,7 +106,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
 
   ;(['front', 'back', 'left', 'right'] as SideKey[]).forEach((side) => {
     const type = config.sides[side]
-    if (type === 'none' || (config.mount === 'wall' && side === 'back')) return
+    if (type === 'none' || isWallSide(config.mount, side)) return
     const length = side === 'front' || side === 'back' ? config.width : config.depth
     const sideArea = length * config.height
     const rate = type === 'zip' ? prices.zipPerM2Net : type === 'glass' ? prices.glassPerM2Net : prices.louverWallPerM2Net

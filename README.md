@@ -13,6 +13,8 @@ konfiguráció után felmérést kér, és ez e-mailben a gyártóhoz kerül.
 | `/k/{gyarto}` | Egy gyártó önálló konfigurátor-oldala (hirdetésbe, e-mailbe) |
 | `/embed/{gyarto}` | Ugyanez a gyártó saját weboldalába ágyazva (iframe) |
 | `?admin=1` | Bármelyikhez: megjelenik az árszerkesztő (csak helyben, bemutatóhoz) |
+| `?ar=1` | Telefonon azonnal az AR-ablakot nyitja (a QR-kód ilyen linket ad) |
+| `?effects=0` | Kikapcsolja az asztali utófeldolgozást (hibakereséshez) |
 
 ## Indítás helyben
 
@@ -45,13 +47,14 @@ Lásd [`docs/UJ-GYARTO.md`](docs/UJ-GYARTO.md): nagyjából fél óra, egy fájl
 src/tenants/        gyártói beállítások (demo.ts, _sablon.ts, szabályok)
 src/pages/          Home, TenantStudio (útvonalak), PergoStudio (konfigurátor)
 src/components/     3D jelenet, vezérlők, árpanel, összegzés, űrlap
-src/lib/            árazás, PDF, megosztó link, specifikáció
+src/lib/            árazás, rögzítési módok (mount.ts), PDF, megosztó link, AR-export, specifikáció
 server/lead.ts      érdeklődő fogadása: ellenőrzés, ár újraszámolása, e-mail, mentés
 api/lead.ts         Vercel Edge függvény → server/lead.ts
 server/dev.ts       helyi /api a `npm run dev` alatt
 tests/              árazás-, szabály- és lead-végpont tesztek
 _marketplace/       félretett piactér-réteg (nem része a buildnek)
 _unused_assets/     használaton kívüli 3D/HDR fájlok (nem töltődnek le)
+public/vendor/      model-viewer 4.4.0 (Google, Apache-2.0) az AR-hez, csak igény szerint töltődik
 ```
 
 ## Biztonság és adatkezelés
@@ -60,3 +63,11 @@ _unused_assets/     használaton kívüli 3D/HDR fájlok (nem töltődnek le)
 - A rejtett mezős és időzítéses robotszűrő a robotot „sikerrel” engedi el, de semmit nem küld ki.
 - A Supabase-kulcs csak szerveroldali; a tábla RLS-sel zárt.
 - Éles gyártónál kötelező a `brand.privacyUrl` (adatkezelési tájékoztató), mert az űrlap személyes adatot gyűjt.
+
+## AR (kiterjesztett valóság)
+
+- iPhone/iPad: Safari, iOS 15+ (Apple AR Quick Look). Android: Chrome ARCore-támogatott telefonon (WebXR).
+- Asztali gépen QR-kódot mutat; a telefon ugyanazt a konfigurációt nyitja meg.
+- Élesítés után **valódi iPhone-on és Android-telefonon is próbáld ki** — a böngészős
+  tesztkörnyezet az AR-munkamenetet nem tudja elindítani (a modell-exportot és a
+  betöltést igen, ezek ellenőrizve vannak).

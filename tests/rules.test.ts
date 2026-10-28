@@ -57,3 +57,21 @@ describe('gyártói szabályok', () => {
     expect(hashToJson(configToHash(config))).toEqual(config)
   })
 })
+
+describe('rövid megosztó kód', () => {
+  it('oda-vissza alakítás minden rögzítéssel és egyedi RAL-lal', async () => {
+    const { configToCompact, decodeShareHash } = await import('../src/lib/shareCode')
+    for (const mount of ['wall', 'corner-left', 'corner-right', 'niche', 'freestanding'] as const) {
+      const config = { ...demoTenant.defaultConfig, mount, width: 5.35, frameColor: 'custom' as const, customRal: 'RAL 6005_é', sides: { front: 'glass' as const, back: 'none' as const, left: 'louver' as const, right: 'zip' as const }, heaters: 3 }
+      const code = configToCompact(config)
+      expect(code.length).toBeLessThan(70)
+      expect(parseConfig(demoTenant, decodeShareHash(`#c=${code}`))).toEqual(normalizeConfig(demoTenant, config))
+    }
+  })
+  it('a régi #k= linkek továbbra is működnek, a hibás link null', async () => {
+    const { configToHash, decodeShareHash } = await import('../src/lib/shareCode')
+    expect(decodeShareHash(`#k=${configToHash(demoTenant.defaultConfig)}`)).toEqual(demoTenant.defaultConfig)
+    expect(decodeShareHash('#c=szemet')).toBeNull()
+    expect(decodeShareHash('#k=@@@')).toBeNull()
+  })
+})

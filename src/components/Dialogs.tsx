@@ -3,7 +3,7 @@ import { ExternalLink, RotateCcw, X } from 'lucide-react'
 import { useTenant } from '@/tenants/TenantContext'
 import type { PriceSettings } from '@/types/pergola'
 
-function Modal({ title, eyebrow, onClose, children, className = '' }: { title: string; eyebrow?: string; onClose: () => void; children: ReactNode; className?: string }) {
+export function Modal({ title, eyebrow, onClose, children, className = '' }: { title: string; eyebrow?: string; onClose: () => void; children: ReactNode; className?: string }) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
   useEffect(() => { onCloseRef.current = onClose }, [onClose])
@@ -38,6 +38,8 @@ function Modal({ title, eyebrow, onClose, children, className = '' }: { title: s
 
 const MONEY_FIELDS: { key: keyof PriceSettings; label: string; unit: string }[] = [
   { key: 'freestandingSurchargeNet', label: 'Önálló kivitel felára', unit: 'Ft' },
+  { key: 'sideWallAttachPerMeterNet', label: 'Oldalfali rögzítés (sarok, fülke)', unit: 'Ft/fm' },
+  { key: 'postNet', label: 'Elmaradó oszlop jóváírása', unit: 'Ft/db' },
   { key: 'zipPerM2Net', label: 'ZIP screen', unit: 'Ft/m²' },
   { key: 'glassPerM2Net', label: 'Tolóüveg oldalfal', unit: 'Ft/m²' },
   { key: 'louverWallPerM2Net', label: 'Fix lamellás oldalfal', unit: 'Ft/m²' },

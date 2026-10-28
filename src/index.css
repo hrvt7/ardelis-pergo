@@ -1047,3 +1047,6 @@ body:has(.marketing-page) { overflow: visible; background: #e8e7e0; }
   [data-reveal] .section-number, [data-reveal] h2, [data-reveal] > p, [data-reveal] .process-heading, [data-reveal] .process-steps { opacity: 1; transform: none; }
   .detail-story .detail-art { clip-path: none; }
 }
+
+/* AR-indító gomb: ugyanaz a gombstílus, kiemelt színnel, hogy észrevehető legyen. */
+.weather-toolbar .ar-launch { color: var(--accent-primary); }

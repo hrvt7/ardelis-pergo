@@ -33,6 +33,8 @@ export default defineConfig(({ mode }) => {
       staticSeo(env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL),
     ],
     server: { port: 3000 },
+    // Előre optimalizált függőségek: különben fejlesztés közben az első AR-megnyitás teljes oldal-újratöltést okozna.
+    optimizeDeps: { include: ['qrcode', 'three/addons/exporters/GLTFExporter.js', '@react-three/postprocessing', 'postprocessing'] },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
@@ -47,9 +49,15 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           // A 3D-motor külön, hosszan gyorsítótárazható csomagba kerül.
+          // A 3D-motor külön, hosszan gyorsítótárazható csomagba kerül. Az utófeldolgozást
+          // (postprocessing, n8ao) és az AR-exportert szándékosan NEM soroljuk ide: azokat a
+          // Rollup a lustán betöltött SceneEffects / ArDialog csomagba teszi, így mobilon
+          // nem töltődnek le. (Kézi besorolásuk körkörös csomagfüggést és üres oldalt okozott.)
           manualChunks(id) {
+            if (id.includes("node_modules/three/examples/jsm/exporters")) return undefined
             if (id.includes("node_modules/three/")) return "three"
-            if (id.includes("node_modules/@react-three/") || id.includes("node_modules/three-stdlib") || id.includes("node_modules/postprocessing")) return "r3f"
+            if (id.includes("node_modules/@react-three/postprocessing")) return undefined
+            if (id.includes("node_modules/@react-three/") || id.includes("node_modules/three-stdlib")) return "r3f"
           },
         },
       },
