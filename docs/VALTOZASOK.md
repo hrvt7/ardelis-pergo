@@ -19,7 +19,8 @@
   telefonon/tableten a megosztó menübe (WhatsApp, Messenger), asztali gépen letöltésként.
 - **Ár-összetétel sáv:** szerkezet / oldalzárás / komfort / szín és napelem aránya az árpanelen és az összegzésben.
 - **A/B összehasonlító csúszka:** a két mentett változat képe egymásra húzható.
-- **Visszatérő látogató:** „Üdv újra! Ott folytatod, ahol abbahagytad” sáv, „Új terv” gombbal.
+- **Visszatérő látogató:** „Üdv újra! Ott folytatod, ahol abbahagytad” sáv, „Új terv” gombbal
+  (a kamera-gombsor fölött, hogy ne takarja a felső eszközsort).
 - **Berepülés:** a jelenet megjelenésekor a kamera magasról, drónszerűen érkezik a nézetbe.
 - **Javítás:** a méretarány-felirat a kamera-gombsor fölé került (eddig takarta).
 - **White-label javítás:** a betöltőképernyő a gyártó nevét mutatja (eddig fixen „ARDELIS”).

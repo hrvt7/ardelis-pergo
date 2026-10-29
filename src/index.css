@@ -1557,7 +1557,7 @@ button.diagram-core.selected span { color: var(--accent-primary); }
 .compare-label { position: absolute; top: 8px; padding: 3px 9px; border-radius: 999px; background: rgba(10,14,12,.75); color: #fff; font-size: 12px; font-weight: 700; pointer-events: none; }
 .compare-label.is-a { left: 8px; } .compare-label.is-b { right: 8px; }
 .compare-slider input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
-.welcome-back { position: absolute; z-index: 11; left: calc(50% + 20px); top: 22px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; max-width: min(640px, calc(100% - 40px)); padding: 8px 8px 8px 16px; border: 1px solid rgba(216,255,114,.35); border-radius: 999px; background: rgba(14,19,17,.92); backdrop-filter: blur(14px); box-shadow: 0 14px 40px rgba(0,0,0,.35); animation: pill-in 360ms cubic-bezier(.2,.9,.25,1.2); }
+.welcome-back { position: absolute; z-index: 11; left: calc(50% + 20px); bottom: 140px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; max-width: min(640px, calc(100% - 40px)); padding: 8px 8px 8px 16px; border: 1px solid rgba(216,255,114,.35); border-radius: 999px; background: rgba(14,19,17,.92); backdrop-filter: blur(14px); box-shadow: 0 14px 40px rgba(0,0,0,.35); animation: pill-in 360ms cubic-bezier(.2,.9,.25,1.2); }
 .welcome-back > span { min-width: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.35; }
 .welcome-back > span strong { margin-right: 6px; color: var(--text-primary); }
 .welcome-back button { flex: none; min-height: 36px; padding: 0 14px; border: 1px solid var(--surface-border); border-radius: 999px; background: transparent; color: var(--text-primary); font-size: 13px; font-weight: 600; }
