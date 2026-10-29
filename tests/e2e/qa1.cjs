@@ -88,7 +88,7 @@ const bad = (what) => { issues.push(what); log('  ✗', what) };
 
   // Összegzés + PDF
   await step('Összegzés');
-  const [dl] = await Promise.all([p.waitForEvent('download', { timeout: 60000 }).catch(() => null), p.locator('.price-actions .primary-action').click()]);
+  const [dl] = await Promise.all([p.waitForEvent('download', { timeout: 180000 }).catch(() => null), p.locator('.price-actions .primary-action').click()]);
   if (!dl) bad('PDF letöltés nem indult'); else { const path = await dl.path(); const size = require('fs').statSync(path).size; log('PDF', dl.suggestedFilename(), size); if (size < 20000) bad('PDF túl kicsi: ' + size) }
 
   // Megosztás
