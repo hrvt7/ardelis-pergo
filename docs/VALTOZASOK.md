@@ -1,5 +1,32 @@
 # Változások
 
+## 3.11 — Színválasztó: RAL katalógus, fa hatású bevonat, kéttónusú kivitel, szín a fotóról (2026. 10. 29.)
+
+**Miért:** a vásárlók többsége nem tudja a RAL-kódokat, a gyártók viszont bármely RAL színre
+porszórnak. Eddig csak 4 alapszín és egy szabad kódmező volt.
+
+- **Katalógus (`src/lib/colors.ts`):** 91 szín magyar névvel — a pergolákhoz jellemző RAL Classic
+  szürkék, fehérek, krémek, barnák, színesek, a DB 701/702/703 vascsillámos metálszínek, corten hatás,
+  és 6 fa hatású (szublimációs) bevonat (dió, aranytölgy, antik tölgy, cseresznye, teak, szürke tölgy).
+  Mindegyik képernyős közelítés; a felület ezt ki is mondja.
+- **Keresés** névre, kódra, becenévre, ékezet nélkül is („homok”, „7021”, „grafit”, „dio”);
+  csoportok (szürkék, fehér/krém, fekete, barnák, metál, fa hatású, színes); alapból a népszerűek.
+- **Alapszín felismerése:** ha a katalógusból vagy kóddal olyan színt választanak, ami a gyártónál
+  alapszín (pl. RAL 9016), az felár nélküli alapszín lesz. A gyártói alapszínekhez RAL-kód rendelhető (`ral`).
+- **Kéttónusú kivitel** (alumínium tetőknél): külön szín a váznak és a lamelláknak/tetőnek
+  (pl. antracit váz, fehér lamellák). Két alapszín párosítása felár nélküli; egyedi színnél a felár
+  a szerkezeti ár felére számolódik részenként. Gyártónként kapcsolható (`twoTone`).
+- **Szín a házadról:** fotón rábökve (9×9 képpont átlaga) a három legközelebbi katalógusszín
+  (CIE Lab ΔE94) „nagyon közeli / közeli / hasonló” jelöléssel, egy koppintással alkalmazható.
+  A kép csak a böngészőben marad. Ha már van fotós előnézet, azt használja.
+- **Fa hatású bevonat a 3D-ben** erezett felülettel; kéttónusúnál a lamellák saját színnel.
+- **Árazás:** egyedi szín +6%, fa hatású +18% (új, szerkeszthető `woodColorRate`), a tételes árban
+  névvel és kóddal („Egyedi szín · Feketésszürke (RAL 7021)”).
+- **Mindenhol megjelenik:** PDF (borító, konfiguráció, rajz megjegyzései), konfigurációs kód
+  (`FADIO/7035`), szöveges összefoglaló, gyártói e-mail, megosztó link, költségkeret-tervező
+  (az egyedi tetőszínt is le tudja adni).
+- 8 új teszt; a véletlen konfigurációs teszt a színeket is lefedi. 89 teszt zöld.
+
 ## 3.10.1 — Hibavadászat (2026. 10. 29.)
 
 - **Az árszámítás 40-szer gyorsabb** (0,7 ms → 18 µs): minden forint- és számformázás új

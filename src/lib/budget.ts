@@ -5,6 +5,7 @@
 import { furnitureMinimum } from '@/lib/furniture'
 import { ROOF_INFO } from '@/lib/roofs'
 import { SIDE_INFO, sideSummary } from '@/lib/sides'
+import { colorSummary } from '@/lib/colors'
 import { enabledRoofs, normalizeConfig, roofLabels, tenantPrice } from '@/tenants/rules'
 import type { Tenant } from '@/tenants/types'
 import type { FurnitureSet, PergolaConfig, PriceSettings, RoofType, SideKey, SideType } from '@/types/pergola'
@@ -72,6 +73,8 @@ function equipmentSteps(tenant: Tenant, config: PergolaConfig, original: Pergola
   if (config.sensors) steps.push({ apply: (c) => ({ ...c, sensors: false }), loss: EXTRA_LOSS.sensors })
   if (config.solar) steps.push({ apply: (c) => ({ ...c, solar: undefined }), loss: EXTRA_LOSS.solar })
   if (config.frameColor === 'custom' && original.frameColor === 'custom') steps.push({ apply: (c) => ({ ...c, frameColor: tenant.colors[0]?.id ?? 'anthracite', customRal: undefined }), loss: EXTRA_LOSS.color })
+  // Kéttónusú egyedi tetőszín → a váz színe (egyszínű kivitel).
+  if (config.roofColor === 'custom') steps.push({ apply: (c) => ({ ...c, roofColor: undefined, roofRal: undefined }), loss: EXTRA_LOSS.color * 0.6 })
   return steps
 }
 
@@ -97,6 +100,7 @@ function restoreSteps(config: PergolaConfig, original: PergolaConfig): { config:
   if (original.sensors && !config.sensors) steps.push({ config: { ...config, sensors: true }, gain: EXTRA_LOSS.sensors })
   if (original.solar && !config.solar && config.roof === 'fixed') steps.push({ config: { ...config, solar: true }, gain: EXTRA_LOSS.solar })
   if (original.frameColor !== config.frameColor) steps.push({ config: { ...config, frameColor: original.frameColor, customRal: original.customRal }, gain: EXTRA_LOSS.color })
+  if (original.roofColor && !config.roofColor) steps.push({ config: { ...config, roofColor: original.roofColor, roofRal: original.roofRal }, gain: EXTRA_LOSS.color * 0.6 })
   return steps
 }
 
@@ -131,7 +135,7 @@ export function describeChanges(tenant: Tenant, original: PergolaConfig, next: P
   if (original.ledRgb && next.led && !next.ledRgb) changes.push('Színváltós LED helyett fehér LED')
   if ((original.fans ?? 0) !== (next.fans ?? 0)) changes.push(next.fans ? `Mennyezeti ventilátor: ${original.fans} → ${next.fans} db` : 'Mennyezeti ventilátor nélkül')
   if (original.smartHome && !next.smartHome) changes.push('Okosotthon-vezérlés nélkül')
-  if (original.frameColor !== next.frameColor) changes.push('Egyedi RAL szín helyett antracit')
+  if (original.frameColor !== next.frameColor || original.roofColor !== next.roofColor) changes.push(`Szín: ${colorSummary(tenant, original)} → ${colorSummary(tenant, next)}`)
   return changes
 }
 
@@ -171,7 +175,7 @@ export function planBudget(tenant: Tenant, original: PergolaConfig, prices: Pric
       if (total > budgetGross && !sizeKept && loss >= bestLoss) continue
       // Alsó korlát: ha minden kiegészítő és oldalfal nélkül sem fér bele, a mohó lépések fölöslegesek.
       if (total > budgetGross) {
-        const bare = price(normalizeConfig(tenant, { ...config, sides: { front: 'none', back: 'none', left: 'none', right: 'none' }, split: undefined, led: false, ledRgb: undefined, heaters: 0, speakers: false, sensors: false, solar: undefined, fans: undefined, smartHome: undefined, frameColor: original.frameColor === 'custom' ? tenant.colors[0]?.id ?? 'anthracite' : config.frameColor, customRal: original.frameColor === 'custom' ? undefined : config.customRal }))
+        const bare = price(normalizeConfig(tenant, { ...config, sides: { front: 'none', back: 'none', left: 'none', right: 'none' }, split: undefined, led: false, ledRgb: undefined, heaters: 0, speakers: false, sensors: false, solar: undefined, fans: undefined, smartHome: undefined, frameColor: original.frameColor === 'custom' ? tenant.colors[0]?.id ?? 'anthracite' : config.frameColor, customRal: original.frameColor === 'custom' ? undefined : config.customRal, roofColor: undefined, roofRal: undefined }))
         if (bare > budgetGross) { minimumGross = Math.min(minimumGross, bare); continue }
       }
       // Mohó lépések: mindig az, amelyik a legtöbbet spórol egységnyi lemondásra.
@@ -180,7 +184,7 @@ export function planBudget(tenant: Tenant, original: PergolaConfig, prices: Pric
         if (!steps.length) break
         let best: { config: PergolaConfig; total: number; loss: number; score: number } | null = null
         for (const step of steps) {
-          const next = step.apply(config)
+          const next = normalizeConfig(tenant, step.apply(config))
           const nextTotal = price(next)
           const saving = total - nextTotal
           if (saving <= 0) continue
@@ -195,7 +199,9 @@ export function planBudget(tenant: Tenant, original: PergolaConfig, prices: Pric
       // Visszaadás: ha a mohó lépések túllőttek, amit lehet, visszakap (a legnagyobb értékűt először).
       for (let guard = 0; total <= budgetGross && guard < 12; guard++) {
         let best: { config: PergolaConfig; total: number; gain: number } | null = null
-        for (const candidate of restoreSteps(config, original)) {
+        for (const raw of restoreSteps(config, original)) {
+          const candidate = { ...raw, config: normalizeConfig(tenant, raw.config) }
+          if (JSON.stringify(candidate.config) === JSON.stringify(config)) continue
           const nextTotal = price(candidate.config)
           if (nextTotal <= budgetGross && (!best || candidate.gain > best.gain)) best = { config: candidate.config, total: nextTotal, gain: candidate.gain }
         }

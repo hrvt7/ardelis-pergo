@@ -34,7 +34,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
     } catch { onNotify('A 3D bélyegkép most nem készíthető el.') }
   }
   const copy = async () => {
-    try { await copyShareUrl(createTextSummary(config, price, ROOF_LABELS, tenant.brand.name)); onNotify('Az összefoglaló a vágólapra másolva.') }
+    try { await copyShareUrl(createTextSummary(config, price, ROOF_LABELS, tenant.brand.name, tenant)); onNotify('Az összefoglaló a vágólapra másolva.') }
     catch { onNotify('A másolás nem sikerült ebben a böngészőben.') }
   }
   return (

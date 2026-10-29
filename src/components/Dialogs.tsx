@@ -72,7 +72,7 @@ export function PriceSettingsDialog({ prices, onChange, onReset, onClose }: { pr
       </div>
       <div className="rate-grid">
         {([
-          ['customColorRate', 'Egyedi RAL felár'], ['installationRate', 'Telepítési arány'], ['vatRate', 'ÁFA kulcs'],
+          ['customColorRate', 'Egyedi RAL felár'], ['woodColorRate', 'Fa hatású bevonat felára'], ['installationRate', 'Telepítési arány'], ['vatRate', 'ÁFA kulcs'],
         ] as const).map(([key, label]) => (
           <label key={key}><span>{label}</span><div><input type="number" min="0" max="100" step="1" value={Math.round(prices[key] * 100)} onChange={(event) => onChange({ ...prices, [key]: Math.min(100, Math.max(0, Number(event.target.value) || 0)) / 100 })} /><span>%</span></div></label>
         ))}

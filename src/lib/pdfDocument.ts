@@ -9,6 +9,7 @@ import { getBom, getDeliveryEstimate, getSpecCode } from './specification'
 import { DEFAULT_USAGE, estimateEnergy, roundCost, TARIFF, type EnergyUsage } from './energy'
 import { estimateSolar, PANEL } from './solar'
 import { SIDE_INFO, sideSegments, HALF_NAMES } from './sides'
+import { colorLabel, colorSummary, frameColorInfo, roofColorInfo, roofPartName, type ColorInfo } from './colors'
 import type { Tenant } from '../tenants/types'
 import type { PergolaConfig, PriceBreakdown, RoofType, SideKey, SideType } from '../types/pergola'
 
@@ -59,9 +60,10 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
   const tenantRoof = tenant.roofs[config.roof]
   const roofName = tenantRoof?.name ?? roof.name
   const roofShort = tenantRoof?.short ?? roof.short
-  const color = config.frameColor === 'custom'
-    ? { name: 'Egyedi szín', detail: config.customRal || 'RAL egyeztetés szerint' }
-    : (() => { const item = tenant.colors.find((entry) => entry.id === config.frameColor); return { name: item?.name ?? config.frameColor, detail: item?.detail ?? '' } })()
+  const frameInfo = frameColorInfo(tenant, config)
+  const roofInfo = config.roofColor ? roofColorInfo(tenant, config) : null
+  const short = (info: ColorInfo) => (info.kind === 'wood' ? { name: info.name, detail: 'fa hatású bevonat' } : { name: info.name, detail: info.code || 'RAL egyeztetés szerint' })
+  const color = short(frameInfo)
   const levels = drawingLevels(config)
   const posts = postPositions(config).length
   const contact = [tenant.brand.legalName, tenant.brand.address, tenant.brand.phone, tenant.brand.email, tenant.brand.website].filter(Boolean).join(' · ')
@@ -108,7 +110,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
         fact('Méret', `${m2(config.width)} × ${m2(config.depth)} m`, `${formatNumber(price.area)} m² lefedett terület`),
         fact('Szabad magasság', `${m2(levels.beamBottom)} m`, `névleges ${m2(config.height)} m`),
         fact('Tető', roofName, roofShort),
-        fact('Szín', color.name, color.detail || 'porszórt alumínium'),
+        fact('Szín', roofInfo ? 'Kéttónusú' : color.name, roofInfo ? `${color.name} váz · ${short(roofInfo).name.toLowerCase()} ${roofPartName(config.roof).toLowerCase()}` : color.detail || 'porszórt alumínium'),
       ],
       columnGap: 14,
       margin: [0, 0, 0, 18],
@@ -154,7 +156,8 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     ['Névleges magasság', `${m2(config.height)} m (gerendatengely)`],
     ['Szabad belmagasság', `${m2(levels.beamBottom)} m`],
     ['Oszlopok', posts ? `${posts} db · ${Math.round(POST * 100)} × ${Math.round(POST * 100)} cm` : 'nincs · a falak tartják'],
-    ['Szerkezetszín', [color.name, color.detail].filter(Boolean).join(' · ')],
+    ['Szerkezetszín', colorLabel(frameInfo)],
+    ...(roofInfo ? [[`${roofPartName(config.roof)} színe`, colorLabel(roofInfo)] as [string, string]] : []),
   ]
   const energy = estimateEnergy(config, energyUsage, tenant.energy?.heaterWatts)
   const solarEstimate = config.roof === 'fixed' && config.solar ? estimateSolar(config, energyUsage.householdKwh) : null
@@ -246,7 +249,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
       'Méretek cm-ben, szintek m-ben, a kész járófelülettől (±0,00) mérve.',
       `A névleges magasság (${Math.round(config.height * 100)}) a keretgerenda tengelyére értendő; a szabad belmagasság ${Math.round(levels.beamBottom * 100)}.`,
       'Statikai méretezést nem tartalmaz. Az alapozás, a falrögzítés és a hó-/szélteher a helyszíni felmérés és a gyártói típusstatika szerint.',
-      `Szerkezetszín: ${[color.name, color.detail].filter(Boolean).join(', ')}, porszórt alumínium.`,
+      `Szín: ${colorSummary(tenant, config)}, porszórt alumínium.`,
       'Az alaprajz +1,00 m-en vett vízszintes metszet; a metszősík fölötti elemek szaggatottan.',
     ],
   }, sheetW, sheetH)

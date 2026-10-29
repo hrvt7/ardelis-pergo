@@ -16,6 +16,9 @@ export interface PergolaConfig {
   roof: RoofType
   frameColor: FrameColor
   customRal?: string
+  /** Kéttónusú kivitel: a tető/lamellák színe (alapszín vagy 'custom' + roofRal). Nincs megadva = a vázzal azonos. */
+  roofColor?: FrameColor
+  roofRal?: string
   sides: Record<SideKey, SideType>
   /** Félbe osztott oldalak második felének típusa (az első fél a `sides`-ban). */
   split?: Partial<Record<SideKey, SideType>>
@@ -133,6 +136,8 @@ export interface PriceSettings {
   /** Okosotthon-vezérlés (átjáró, beállítás). */
   smartHomeNet: number
   customColorRate: number
+  /** Fa hatású (szublimációs) bevonat felára a szerkezeti árhoz képest. */
+  woodColorRate: number
   installationRate: number
   vatRate: number
 }

@@ -33,7 +33,8 @@ function randomConfig(): PergolaConfig {
     led: rand() < 0.5, ledRgb: rand() < 0.5, heaters: Math.floor(rand() * 5), speakers: rand() < 0.3, sensors: rand() < 0.5,
     fans: Math.floor(rand() * 3), smartHome: rand() < 0.4, solar: rand() < 0.5 ? true : undefined,
     louverAngle: Math.round(rand() * 90), screenOpen: Math.round(rand() * 100),
-    frameColor: rand() < 0.2 ? 'custom' : 'anthracite', customRal: 'RAL 7035',
+    frameColor: rand() < 0.3 ? 'custom' : pick(['anthracite', 'white', 'black', 'bronze'] as const), customRal: pick(['RAL 7035', 'FA DIÓ', 'DB 703', '7016', 'ral 9016', 'XYZ']),
+    roofColor: rand() < 0.4 ? pick(['white', 'anthracite', 'custom'] as const) : undefined, roofRal: pick(['RAL 7035', 'FA TEAK', 'RAL 9005']),
   })
 }
 

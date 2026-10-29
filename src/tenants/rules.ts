@@ -4,6 +4,7 @@
 import { z } from 'zod'
 import { calculatePrice } from '../lib/pricing'
 import { ROOF_TYPES } from '../lib/roofs'
+import { normalizeColorCode, pickCatalogColor, supportsTwoTone } from '../lib/colors'
 import type { PergolaConfig, PriceBreakdown, PriceSettings, RoofType, SideKey } from '../types/pergola'
 import type { Tenant } from './types'
 
@@ -17,7 +18,9 @@ export const pergolaConfigSchema = z.object({
   mount: z.enum(['freestanding', 'wall', 'corner-left', 'corner-right', 'niche']),
   roof: z.enum(['louvered', 'retractable', 'fabric', 'glass', 'polycarbonate', 'fixed']),
   frameColor: z.enum(['anthracite', 'black', 'white', 'bronze', 'custom']),
-  customRal: z.string().max(12).optional(),
+  customRal: z.string().max(24).optional(),
+  roofColor: z.enum(['anthracite', 'black', 'white', 'bronze', 'custom']).optional(),
+  roofRal: z.string().max(24).optional(),
   sides: z.object({ front: sideEnum, back: sideEnum, left: sideEnum, right: sideEnum }),
   louverAngle: z.number().finite().min(0).max(90),
   screenOpen: z.number().finite().min(0).max(100),
@@ -59,6 +62,7 @@ export const priceSettingsSchema = z.object({
   fanUnitNet: z.number().min(0).max(2000000).default(130000),
   smartHomeNet: z.number().min(0).max(2000000).default(120000),
   customColorRate: z.number().min(0).max(1),
+  woodColorRate: z.number().min(0).max(1).default(0.18),
   installationRate: z.number().min(0).max(1),
   vatRate: z.number().min(0).max(1),
 })
@@ -84,6 +88,14 @@ export function roofLabels(tenant: Tenant): Record<RoofType, string> {
  * A konfigurációt a gyártó kínálatához igazítja: méreteket a határok közé
  * szorítja, a nem kínált opciókat a legközelebbi elérhetőre cseréli.
  */
+/** Szín egységesítése: a katalógusból választott, de a gyártónál alapszínnek számító RAL alapszín lesz. */
+function normalizeColorChoice(tenant: Tenant, color: PergolaConfig['frameColor'], custom: string | undefined): { color: PergolaConfig['frameColor']; custom?: string } {
+  if (color !== 'custom') return { color }
+  const code = normalizeColorCode(custom)
+  if (!code) return { color: 'custom' }
+  return pickCatalogColor(tenant, code) ?? { color: 'custom', custom: code }
+}
+
 export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaConfig {
   const roofs = enabledRoofs(tenant)
   const colorIds = tenant.colors.map((color) => color.id)
@@ -92,7 +104,14 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     const type = config.sides[side]
     return [side, type === 'none' || tenant.sides.includes(type) ? type : 'none']
   })) as PergolaConfig['sides']
-  const frameColor = colorOk ? config.frameColor : (colorIds[0] ?? 'anthracite')
+  const frame = normalizeColorChoice(tenant, colorOk ? config.frameColor : (colorIds[0] ?? 'anthracite'), config.customRal)
+  const frameColor = frame.color
+  const roof = roofs.includes(config.roof) ? config.roof : roofs[0]
+  // Kéttónusú: csak alumínium tetőnél és ha a gyártó kínálja; a vázzal azonos szín nem külön tétel.
+  const roofChoice = config.roofColor && tenant.twoTone && supportsTwoTone(roof) && (colorIds.includes(config.roofColor) || (config.roofColor === 'custom' && tenant.customRal))
+    ? normalizeColorChoice(tenant, config.roofColor, config.roofRal)
+    : null
+  const twoTone = roofChoice && !(roofChoice.color === frame.color && (roofChoice.custom ?? '') === (frame.custom ?? '')) ? roofChoice : null
   const mount = tenant.mounts.includes(config.mount) ? config.mount : tenant.mounts[0]
   // Félbe osztás a gyártó által kínált típussal. Fali oldalon is megmarad (mint az oldal típusa),
   // csak nem érvényes: ha a rögzítést visszaváltják, az osztás is visszajön.
@@ -108,9 +127,11 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     depth: roundCm(clamp(config.depth, tenant.limits.depth)),
     height: roundCm(clamp(config.height, tenant.limits.height)),
     mount,
-    roof: roofs.includes(config.roof) ? config.roof : roofs[0],
+    roof,
     frameColor,
-    customRal: frameColor === 'custom' && config.customRal ? config.customRal : undefined,
+    customRal: frame.custom,
+    roofColor: twoTone ? twoTone.color : undefined,
+    roofRal: twoTone ? twoTone.custom : undefined,
     sides,
     louverAngle: clamp(config.louverAngle, [0, 90]),
     screenOpen: clamp(config.screenOpen, [0, 100]),

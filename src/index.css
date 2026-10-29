@@ -1434,3 +1434,71 @@ button.diagram-core.selected span { color: var(--accent-primary); }
 .mood-fan.is-on { border-color: rgba(140,200,255,.6); background: rgba(140,200,255,.1); color: #8cc8ff; }
 @media (max-width: 380px) { .side-type-grid { grid-template-columns: 1fr; } }
 @media (max-width: 400px) { .rgb-preview { padding-left: 11px; } .rgb-swatches { gap: 6px; } }
+
+/* ---------- Színválasztó (v3.11) ---------- */
+.color-picker { display: flex; flex-direction: column; gap: 12px; }
+.color-mode { display: flex; flex-direction: column; gap: 8px; }
+.mode-dot { width: 13px; height: 13px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
+.mode-dot.two { background: linear-gradient(135deg, var(--a) 0 50%, var(--b) 50% 100%) !important; }
+.color-targets .target-swatch { flex: none; width: 22px; height: 22px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); }
+.color-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.color-section-head strong { font: 600 10.5px/1.3 'Instrument Sans', sans-serif; }
+.color-section-head span { color: var(--text-secondary); font-size: 8.5px; text-align: right; }
+.color-search { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; border: 1px solid var(--surface-border); border-radius: 8px; background: rgba(5,10,9,.35); color: var(--text-secondary); }
+.color-search:focus-within { border-color: rgba(216,255,114,.55); }
+.color-search input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text-primary); font-size: 10.5px; outline: none; }
+.color-search button { width: 28px; height: 28px; display: grid; place-items: center; border: 0; background: transparent; color: var(--text-secondary); }
+.color-groups { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.color-groups::-webkit-scrollbar { display: none; }
+.color-groups button { flex: none; min-height: 30px; padding: 0 11px; border: 1px solid var(--surface-border); border-radius: 999px; background: transparent; color: var(--text-secondary); font-size: 9px; font-weight: 600; white-space: nowrap; }
+.color-groups button.selected { border-color: rgba(216,255,114,.6); background: var(--accent-subtle); color: var(--accent-primary); }
+.color-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.color-chip { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 3px 7px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-primary); }
+.color-chip:hover { border-color: var(--surface-border); background: rgba(255,255,255,.03); }
+.color-chip.selected { border-color: rgba(216,255,114,.6); background: var(--accent-subtle); }
+.chip-swatch { --swatch: #555; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--swatch); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), inset -4px -5px 9px rgba(0,0,0,.28), 0 4px 10px rgba(0,0,0,.25); }
+.chip-swatch svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+.color-chip.is-wood .chip-swatch { background: repeating-linear-gradient(100deg, color-mix(in srgb, var(--swatch), #fff 14%) 0 3px, var(--swatch) 3px 6px, color-mix(in srgb, var(--swatch), #000 14%) 6px 8px); }
+.color-chip.is-metal .chip-swatch { background: radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--swatch), #fff 45%), var(--swatch) 55%, color-mix(in srgb, var(--swatch), #000 30%)); }
+.color-chip strong { font-size: 9px; font-variant-numeric: tabular-nums; }
+.color-chip small { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); font-size: 7.5px; text-align: center; }
+.color-empty { margin: 0; color: var(--text-secondary); font-size: 9px; line-height: 1.5; }
+.color-more { align-self: center; min-height: 34px; padding: 0 14px; border: 1px solid var(--surface-border); border-radius: 999px; background: transparent; color: var(--text-primary); font-size: 9px; font-weight: 600; }
+.color-tools { display: grid; gap: 10px; margin-top: 4px; }
+.color-photo-button { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px dashed rgba(216,255,114,.45); border-radius: 9px; background: transparent; color: var(--accent-primary); text-align: left; }
+.color-photo-button:hover { background: var(--accent-subtle); }
+.color-photo-button strong, .color-photo-button small { display: block; }
+.color-photo-button strong { color: var(--text-primary); font-size: 10.5px; }
+.color-photo-button small { margin-top: 2px; color: var(--text-secondary); font-size: 8px; }
+.color-code-field > span { display: block; margin-bottom: 6px; color: var(--text-soft); font-size: 9.5px; }
+.color-code-field input { width: 100%; min-height: 40px; padding: 0 11px; border: 1px solid var(--surface-border); border-radius: 6px; background: rgba(5,10,9,.35); color: var(--text-primary); font-size: 11px; text-transform: uppercase; }
+.color-code-field small { display: block; margin-top: 5px; color: var(--text-secondary); font-size: 8px; }
+.color-picker .finish-sample { margin-top: 8px; }
+.finish-sample .finish-part { margin: 0 0 3px; color: var(--accent-primary); font-size: 7.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.finish-sample.is-wood > div { background: repeating-linear-gradient(100deg, color-mix(in srgb, var(--finish), #fff 14%) 0 4px, var(--finish) 4px 9px, color-mix(in srgb, var(--finish), #000 14%) 9px 12px); }
+.photo-color-dialog { width: min(640px, 100%); }
+.photo-color-drop { position: relative; margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 34px 20px; border: 1px dashed rgba(216,255,114,.45); border-radius: 10px; color: var(--accent-primary); text-align: center; cursor: pointer; }
+.photo-color-drop strong { color: var(--text-primary); font-size: 12px; }
+.photo-color-drop small { max-width: 360px; color: var(--text-secondary); font-size: 9px; line-height: 1.5; }
+.photo-color-drop input, .photo-color-change input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.photo-color-hint { margin: 16px 0 10px; color: var(--text-secondary); font-size: 9.5px; line-height: 1.5; }
+.photo-color-stage { position: relative; width: fit-content; max-width: 100%; margin: 0 auto; border-radius: 8px; overflow: hidden; background: #0b0f0e; cursor: crosshair; touch-action: none; }
+/* A kép doboza = a kirajzolt kép (nincs letterbox), így a koppintás helye pontosan megfeleltethető. */
+.photo-color-stage img { display: block; max-width: 100%; max-height: 52dvh; width: auto; height: auto; user-select: none; -webkit-user-drag: none; }
+.photo-color-marker { position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 4px 12px rgba(0,0,0,.5); pointer-events: none; }
+.photo-color-results { display: grid; gap: 7px; margin-top: 12px; }
+.photo-color-sample { display: flex; align-items: center; gap: 10px; }
+.photo-color-sample i, .photo-color-match i { flex: none; width: 30px; height: 30px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+.photo-color-sample small, .photo-color-sample strong, .photo-color-match strong, .photo-color-match small { display: block; }
+.photo-color-sample small { color: var(--text-secondary); font-size: 8px; } .photo-color-sample strong { font-size: 11px; font-variant-numeric: tabular-nums; }
+.photo-color-match { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid var(--surface-border); border-radius: 8px; background: transparent; color: var(--text-primary); text-align: left; }
+.photo-color-match:hover { border-color: rgba(216,255,114,.55); background: var(--accent-subtle); }
+.photo-color-match strong { font-size: 10.5px; } .photo-color-match small { margin-top: 2px; color: var(--text-secondary); font-size: 8px; }
+.photo-color-match em { font-style: normal; color: var(--accent-primary); font-size: 9px; font-weight: 600; white-space: nowrap; }
+.photo-color-note { margin: 4px 0 0; color: var(--text-secondary); font-size: 8.5px; line-height: 1.5; }
+.photo-color-change { position: relative; margin-top: 12px; display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 400px) { .color-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .photo-color-match { grid-template-columns: auto minmax(0, 1fr); } .photo-color-match em { grid-column: 1 / -1; } }
+.photo-color-results { min-height: 212px; align-content: start; }
+.photo-color-results.is-empty { place-items: center; align-content: center; color: var(--text-secondary); border: 1px dashed var(--surface-border); border-radius: 8px; }
+.modal-backdrop:has(.photo-color-dialog) { place-items: start center; }
+.photo-color-results { min-height: 268px; }

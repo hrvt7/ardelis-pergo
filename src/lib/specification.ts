@@ -3,17 +3,29 @@ import { PANEL, panelLayout } from './solar'
 import { ROOF_INFO, isGlazedRoof } from './roofs'
 import { isWallSide, MOUNT_CODES, MOUNT_LABELS, postPositions, sideWalls, wallLabel } from './mount'
 import { formatHuf, formatNumber, ROOF_LABELS, SIDE_NAMES } from './pricing'
+import { colorSummary } from './colors'
+import type { Tenant } from '../tenants/types'
 import { closedSegments, SIDE_INFO, sideSegments, sideSummary, splitProfiles } from './sides'
 import type { PergolaConfig, PriceBreakdown, RoofType, SideKey } from '../types/pergola'
+
+/** Alapszínek a gyártó nélküli hívásokhoz (tesztek, régi hívók). */
+const DEFAULT_COLORS: Pick<Tenant, 'colors'> = { colors: [
+  { id: 'anthracite', name: 'Antracit', detail: 'RAL 7016', hex: '#343a3d', ral: '7016' },
+  { id: 'white', name: 'Fehér', detail: 'RAL 9016', hex: '#dedfd9', ral: '9016' },
+  { id: 'black', name: 'Fekete', detail: 'RAL 9005', hex: '#15191c', ral: '9005' },
+  { id: 'bronze', name: 'Bronz', detail: 'anodizált hatás', hex: '#705b4c' },
+] }
 
 export interface BomLine { label: string; value: string }
 
 export function getSpecCode(config: PergolaConfig) {
   const roof = ROOF_INFO[config.roof].spec
   const mount = MOUNT_CODES[config.mount]
-  const color = config.frameColor === 'custom'
-    ? config.customRal?.replace(/[^a-z0-9]/gi, '').toUpperCase() || 'RAL'
-    : { anthracite: '7016', black: '9005', white: '9016', bronze: 'BRZ' }[config.frameColor]
+  const colorCode = (color: PergolaConfig['frameColor'], custom?: string) => color === 'custom'
+    ? custom?.normalize('NFD').replace(/[^a-z0-9]/gi, '').replace(/^RAL/i, '').toUpperCase() || 'RAL'
+    : { anthracite: '7016', black: '9005', white: '9016', bronze: 'BRZ' }[color]
+  // Kéttónusú: „7016/9016” (váz/tető).
+  const color = colorCode(config.frameColor, config.customRal) + (config.roofColor ? `/${colorCode(config.roofColor, config.roofRal)}` : '')
   // Oldalanként egy betű; félbe osztott oldalnál a két fél zárójelben, pl. „(G/Z)”.
   const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => (isWallSide(config.mount, side) ? 'W' : (() => { const codes = sideSegments(config, side).map((segment) => SIDE_INFO[segment.type].spec); return codes.length > 1 ? `(${codes.join('/')})` : codes[0] })())).join('')
   const options = [config.solar ? 'PV' : '', config.smartHome ? 'SH' : '', config.fans ? `F${config.fans}` : '', config.led && config.ledRgb ? 'RGB' : ''].filter(Boolean)
@@ -90,7 +102,7 @@ export function getSizeRecommendation(config: PergolaConfig) {
   return '2–4 főnek ajánlott · kompakt étkező vagy kisebb pihenősarok'
 }
 
-export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, roofLabels: Record<RoofType, string> = ROOF_LABELS, brandName = 'ARDELIS') {
+export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, roofLabels: Record<RoofType, string> = ROOF_LABELS, brandName = 'ARDELIS', colors: Pick<Tenant, 'colors'> = DEFAULT_COLORS) {
   const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => `${SIDE_NAMES[side]}: ${isWallSide(config.mount, side) ? wallLabel(side).toLowerCase() : sideSummary(config, side)}`).join(', ')
   const extras = [
     config.led ? (config.ledRgb ? 'színváltós RGB+W LED' : 'periméter LED') : null,
@@ -105,6 +117,7 @@ export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, 
     `${brandName} / Pergola – ${roofLabels[config.roof]}`,
     `Méret: ${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} × ${formatNumber(config.height, 2)} m (${formatNumber(price.area)} m²)`,
     `Kialakítás: ${MOUNT_LABELS[config.mount].toLowerCase()} · ${sides}`,
+    `Szín: ${colorSummary(colors, config)}`,
     `Kiegészítők: ${extras.length ? extras.join(', ') : 'nincs kiegészítő'}`,
     `Bruttó irányár: ${formatHuf(price.totalGross)} (telepítéssel, nem ajánlattétel)`,
     `Konfigurációs kód: ${getSpecCode(config)}`,

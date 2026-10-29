@@ -1,6 +1,5 @@
 import { useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, CloudRain, Columns3, Gauge, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
-import { getFrameColorHex } from '@/lib/config'
 import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, sideWalls, wallLabel } from '@/lib/mount'
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import { FanOption, RgbOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
@@ -11,7 +10,8 @@ import { getSizeRecommendation } from '@/lib/specification'
 import { closedSegments } from '@/lib/sides'
 import { estimateSolar } from '@/lib/solar'
 import FurniturePicker from '@/components/FurniturePicker'
-import type { ConfigStep, FrameColor, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey, WallFinish } from '@/types/pergola'
+import ColorPicker from '@/components/ColorPicker'
+import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey, WallFinish } from '@/types/pergola'
 
 const STEPS: { id: ConfigStep; label: string; short: string }[] = [
   { id: 'size', label: 'Méret', short: 'Alapterület' },
@@ -198,11 +198,6 @@ function RoofIcon({ roof }: { roof: RoofType }) {
 export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, onPhotoUpload, mobileOpen, onMobileToggle, onAdvisor, energyCost, onEnergy }: Props) {
   const { tenant } = useTenant()
   const { limits } = tenant
-  const customRate = Math.round(prices.customColorRate * 100)
-  const FRAME_COLORS: { id: FrameColor; name: string; hex: string }[] = [
-    ...tenant.colors.map((color) => ({ id: color.id, name: `${color.name} · ${color.detail}`, hex: color.hex })),
-    ...(tenant.customRal ? [{ id: 'custom' as const, name: `Egyedi RAL · ${customRate > 0 ? `+${customRate}% ${tenant.demo ? 'minta ' : ''}felár` : 'felár nélkül'}`, hex: '#687467' }] : []),
-  ]
   const [half, setHalf] = useState<0 | 1>(0)
   // Másik oldal kiválasztásakor az első féllel kezdünk (render közbeni szinkron, effect nélkül).
   const [halfSide, setHalfSide] = useState(selectedSide)
@@ -224,8 +219,6 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   }
   const setDayTime = (dayTime: number) => onSceneChange({ dayTime, time: dayTime >= 20 || dayTime < 7 ? 'night' : dayTime >= 17 ? 'sunset' : 'day' })
   const sideNames: Record<SideKey, string> = { front: 'Elülső oldal', back: 'Hátsó oldal', left: 'Bal oldal', right: 'Jobb oldal' }
-  const activeColor = getFrameColorHex(config, tenant.colors)
-  const customPreview = getFrameColorHex({ frameColor: 'custom', customRal: config.customRal })
 
   return (
     <aside className={`controls-panel glass-panel ${mobileOpen ? 'is-mobile-open' : ''}`} aria-label="Pergola beállításai" onTouchStart={(event) => { touchStart.current = event.touches[0].clientX }} onTouchEnd={touchEnd}>
@@ -270,10 +263,8 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           </>}
 
           {step === 'color' && <>
-            <SectionTitle title="Porszinterezett alumínium" hint="Válassz szerkezetszínt; a 3D modell azonnal megmutatja a kiválasztott felületet." />
-            <div className="material-swatches">{FRAME_COLORS.map((color) => <button type="button" key={color.id} className={config.frameColor === color.id ? 'selected' : ''} aria-pressed={config.frameColor === color.id} onClick={() => onChange({ frameColor: color.id })}><span className="material-sphere" style={{ '--swatch': color.id === 'custom' ? customPreview : color.hex } as React.CSSProperties}>{config.frameColor === color.id && <Check size={16} />}</span><strong>{color.name.split(' · ')[0]}</strong><small>{color.name.split(' · ')[1]}</small></button>)}</div>
-            {config.frameColor === 'custom' && <label className="text-field"><span>Egyedi RAL-kód</span><input value={config.customRal ?? ''} maxLength={12} placeholder="pl. RAL 7035" onChange={(event) => onChange({ customRal: event.target.value })} /><small>A gyakori RAL-kódok 3D színmintája is frissül.{customRate > 0 ? ` Az ${tenant.demo ? 'mintaárazás' : 'árazás'} ${customRate}% szerkezeti felárral számol.` : ''}</small></label>}
-            <div className="finish-sample" style={{ '--finish': activeColor } as React.CSSProperties}><div /><span><strong>{config.frameColor === 'custom' && config.customRal ? `Egyedi RAL · ${config.customRal.toUpperCase()}` : FRAME_COLORS.find((item) => item.id === config.frameColor)?.name}</strong><small>Matt, UV-álló porszinterezett felület</small></span></div>
+            <SectionTitle title="Porszórt alumínium" hint="Alapszín felár nélkül, vagy bármely RAL szín. A 3D modell azonnal mutatja." />
+            <ColorPicker config={config} prices={prices} photoUrl={scene.photoUrl ?? null} onChange={onChange} />
           </>}
 
           {step === 'sides' && <>

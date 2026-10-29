@@ -22,6 +22,8 @@ export interface TenantColor {
   hex: string
   /** A 3D-modell színe, ha eltér a színmintától (fény miatt). */
   modelHex?: string
+  /** A szín RAL-kódja számokkal (pl. „7016”): a katalógusból választva ez felár nélküli alapszín. */
+  ral?: string
 }
 
 export interface TenantPreset {
@@ -68,6 +70,8 @@ export interface Tenant {
   colors: TenantColor[]
   /** Engedélyezett-e az egyedi RAL szín. */
   customRal: boolean
+  /** Kéttónusú kivitel (más színű tető/lamellák) választható-e. */
+  twoTone?: boolean
   extras: {
     led: boolean
     speakers: boolean

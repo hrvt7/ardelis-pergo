@@ -19,6 +19,7 @@ import type { ShadeResult } from '@/components/ShadeProbe'
 import type { FurnitureSet } from '@/types/pergola'
 import { kelvinToHex } from '@/lib/color'
 import { glassPanels } from '@/lib/glass'
+import { WOOD_HEXES } from '@/lib/colors'
 import { sideSegments } from '@/lib/sides'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
@@ -139,6 +140,9 @@ function RealisticAsset(props: RealisticAssetProps) {
 }
 
 let powderCoatTexture: THREE.DataTexture | null = null
+/** A textúra átlagosan ~0,8-as világosságú: a fa színét ennyivel világosítjuk (kissé), hogy a minta tónusa stimmeljen. */
+const lightenForWood = (hex: string) => `#${new THREE.Color(hex).multiplyScalar(1.1).getHexString()}`
+
 function getPowderCoatTexture() {
   if (powderCoatTexture) return powderCoatTexture
   const size = 64
@@ -157,7 +161,38 @@ function getPowderCoatTexture() {
   return powderCoatTexture
 }
 
+/** Fa hatású (szublimációs) bevonat: hosszanti erezet, a szín a textúrát tónusozza. */
+let woodTexture: THREE.DataTexture | null = null
+function getWoodTexture() {
+  if (woodTexture) return woodTexture
+  const width = 256
+  const height = 64
+  const data = new Uint8Array(width * height * 4)
+  for (let y = 0; y < height; y++) {
+    // Évgyűrű-sávok: lassan hullámzó, eltérő vastagságú csíkok.
+    const band = Math.sin(y * 0.55 + Math.sin(y * 0.13) * 2.2) * 0.5 + 0.5
+    for (let x = 0; x < width; x++) {
+      const wave = Math.sin((y + Math.sin(x * 0.045 + y * 0.2) * 3.5) * 0.9) * 0.5 + 0.5
+      const fleck = seeded(y * width + x, 47)
+      const value = Math.round(150 + band * 55 + wave * 35 + fleck * 15)
+      const index = (y * width + x) * 4
+      data[index] = Math.min(255, value + 8)
+      data[index + 1] = value
+      data[index + 2] = Math.max(0, value - 10)
+      data[index + 3] = 255
+    }
+  }
+  woodTexture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat)
+  woodTexture.colorSpace = THREE.SRGBColorSpace
+  woodTexture.wrapS = woodTexture.wrapT = THREE.RepeatWrapping
+  woodTexture.repeat.set(2, 3)
+  woodTexture.magFilter = THREE.LinearFilter
+  woodTexture.needsUpdate = true
+  return woodTexture
+}
+
 function PowderCoat({ color, roughness = 0.4 }: { color: string; roughness?: number }) {
+  if (WOOD_HEXES.has(color)) return <meshPhysicalMaterial color={lightenForWood(color)} map={getWoodTexture()} metalness={0.02} roughness={0.62} clearcoat={0.08} clearcoatRoughness={0.6} envMapIntensity={0.7} />
   return <meshPhysicalMaterial color={color} metalness={0.12} roughness={roughness} roughnessMap={getPowderCoatTexture()} clearcoat={0.1} clearcoatRoughness={0.48} specularIntensity={0.55} envMapIntensity={0.82} />
 }
 
@@ -607,7 +642,10 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
   const { width, depth, height, roof, mount } = config
   const { tenant } = useTenant()
   const color = getFrameColorHex(config, tenant.colors)
-  const roofColor = config.frameColor === 'white' ? '#d4d6d1' : color
+  // Kéttónusú kivitelnél a tető/lamellák saját színe; fehér tetőnél kicsit tompítva (ne égjen ki).
+  const roofBase = config.roofColor ? getFrameColorHex({ frameColor: config.roofColor, customRal: config.roofRal }, tenant.colors) : color
+  const roofIsWhite = (config.roofColor ?? config.frameColor) === 'white'
+  const roofColor = roofIsWhite ? '#d4d6d1' : roofBase
   const louverGroup = useRef<THREE.Group>(null)
   const model = useRef<THREE.Group>(null)
   const invalidate = useThree((state) => state.invalidate)

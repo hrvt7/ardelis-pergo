@@ -1,4 +1,8 @@
 import { PANEL, panelLayout } from './solar'
+import { describeColor, roofPartName, type ColorInfo } from './colors'
+
+/** Az árszámításnak csak a szín jellege kell (alapszín-e), a gyártói név nem. */
+const COLORLESS = { colors: [] as { id: never; name: string; detail: string; hex: string }[] }
 import { HALF_NAMES, SIDE_INFO, SIDE_LABELS, sideLength, sideSegments, splitProfiles } from './sides'
 import { ROOF_INFO, ROOF_TYPES } from './roofs'
 import { omittedPosts, sideWalls } from './mount'
@@ -31,6 +35,7 @@ export const DEFAULT_PRICES: PriceSettings = {
   fanUnitNet: 130000,
   smartHomeNet: 120000,
   customColorRate: 0.06,
+  woodColorRate: 0.18,
   installationRate: 0.1,
   vatRate: 0.27,
 }
@@ -107,14 +112,27 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     })
   }
 
-  if (config.frameColor === 'custom') {
-    lines.push({
-      id: 'color',
-      label: 'Egyedi RAL felületkezelés',
-      detail: `Szerkezeti ár × ${Math.round(prices.customColorRate * 100)}%`,
-      amountNet: round(structure * prices.customColorRate),
-    })
+  // Egyedi szín: a szerkezeti ár arányában (fa hatású bevonat külön kulccsal). Kéttónusú kivitelnél
+  // a váz és a tető/lamellák fele-fele arányban viseli; két alapszín kombinációja felár nélküli.
+  const colorParts: { id: string; part: string; color: ColorInfo; share: number }[] = []
+  const frame = describeColor(COLORLESS, config.frameColor, config.customRal)
+  if (config.roofColor) {
+    const roofInfo = describeColor(COLORLESS, config.roofColor, config.roofRal)
+    if (!frame.standard) colorParts.push({ id: 'color', part: 'Váz', color: frame, share: 0.5 })
+    if (!roofInfo.standard) colorParts.push({ id: 'color-roof', part: roofPartName(config.roof), color: roofInfo, share: 0.5 })
+  } else if (!frame.standard) {
+    colorParts.push({ id: 'color', part: '', color: frame, share: 1 })
   }
+  colorParts.forEach(({ id, part, color, share }) => {
+    const rate = color.kind === 'wood' ? prices.woodColorRate : prices.customColorRate
+    const what = color.kind === 'wood' ? 'Fa hatású bevonat' : 'Egyedi szín'
+    lines.push({
+      id,
+      label: `${part ? `${part} · ` : ''}${what}${color.name === 'Egyedi szín' ? (color.code ? ` · ${color.code}` : '') : ` · ${color.kind === 'wood' ? color.name : `${color.name} (${color.code})`}`}`,
+      detail: `Szerkezeti ár${share < 1 ? ' fele' : ''} × ${Math.round(rate * 100)}%`,
+      amountNet: round(structure * share * rate),
+    })
+  })
 
   ;(['front', 'back', 'left', 'right'] as SideKey[]).forEach((side) => {
     const segments = sideSegments(config, side)

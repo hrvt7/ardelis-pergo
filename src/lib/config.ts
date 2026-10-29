@@ -1,4 +1,5 @@
 import { configToHash, decodeShareHash, shareHash } from '@/lib/shareCode'
+import { findColor } from './colors'
 import { parseConfig, priceSettingsSchema } from '@/tenants/rules'
 
 export { configToHash }
@@ -48,6 +49,8 @@ const RAL_COLORS: Record<string, string> = {
 }
 
 export function getFrameColorHex(config: Pick<PergolaConfig, 'frameColor' | 'customRal'>, colors?: readonly { id: string; hex: string; modelHex?: string }[]) {
+  const catalog = config.frameColor === 'custom' ? findColor(config.customRal) : undefined
+  if (catalog) return catalog.hex
   if (config.frameColor !== 'custom') {
     const color = colors?.find((item) => item.id === config.frameColor)
     return color?.modelHex ?? color?.hex
