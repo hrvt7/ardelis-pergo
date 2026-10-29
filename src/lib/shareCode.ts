@@ -6,11 +6,13 @@
 // A régi formátum (#k=… base64 JSON) továbbra is beolvasható.
 import type { FrameColor, MountType, PergolaConfig, RoofType, SideType } from '../types/pergola'
 import { ROOF_INFO, ROOF_TYPES } from './roofs'
+import { SIDE_INFO, SIDE_TYPES } from './sides'
 
 const MOUNT: Record<MountType, string> = { wall: 'W', 'corner-left': 'L', 'corner-right': 'R', niche: 'N', freestanding: 'F' }
 const ROOF = Object.fromEntries(ROOF_TYPES.map((roof) => [roof, ROOF_INFO[roof].share])) as Record<RoofType, string>
 const COLOR: Record<FrameColor, string> = { anthracite: 'a', black: 'b', white: 'w', bronze: 'z', custom: 'c' }
-const SIDE: Record<SideType, string> = { none: '0', zip: 'z', glass: 'g', louver: 'l' }
+const SIDE = Object.fromEntries(SIDE_TYPES.map((type) => [type, SIDE_INFO[type].share])) as Record<SideType, string>
+const SIDE_KEYS = ['front', 'back', 'left', 'right'] as const
 const invert = <T extends string>(map: Record<T, string>) => Object.fromEntries(Object.entries(map).map(([key, value]) => [value, key])) as Record<string, T>
 
 export function configToCompact(config: PergolaConfig) {
@@ -23,9 +25,16 @@ export function configToCompact(config: PergolaConfig) {
   ].map(String)
   // Csak a hash-mintában engedett karakterek maradhatnak (A–Z, 0–9, . -); minden más %XX.
   const ral = config.frameColor === 'custom' && config.customRal ? encodeURIComponent(config.customRal.slice(0, 12)).replace(/[_!'()*~]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`) : ''
-  // 14. mező: egyedi RAL (üres is lehet), 15.: „p” = napelemes tető. A régi linkek változatlanul olvashatók.
-  if (ral || config.solar) parts.push(ral)
-  if (config.solar) parts.push('p')
+  // 14. mező: egyedi RAL (üres is lehet), 15.: kapcsolók kötőjellel: p = napelem, r = RGB LED,
+  // v1/v2 = ventilátor, h = okosotthon, s…. = félbe osztott oldalak második fele („.” = nem osztott).
+  const flags: string[] = []
+  if (config.solar) flags.push('p')
+  if (config.ledRgb) flags.push('r')
+  if (config.fans) flags.push(`v${config.fans}`)
+  if (config.smartHome) flags.push('h')
+  if (config.split && SIDE_KEYS.some((side) => config.split?.[side])) flags.push(`s${SIDE_KEYS.map((side) => { const type = config.split?.[side]; return type ? SIDE[type] : '.' }).join('')}`)
+  if (ral || flags.length) parts.push(ral)
+  if (flags.length) parts.push(flags.join('-'))
   return parts.join('_')
 }
 
@@ -43,8 +52,24 @@ export function compactToJson(code: string): unknown {
     louverAngle: number(angle), screenOpen: number(open),
     led: led === '1', heaters: number(heaters), speakers: speakers === '1', sensors: sensors === '1',
     ...(ral ? { customRal: decodeURIComponent(ral) } : {}),
-    ...(flags === 'p' ? { solar: true } : {}),
+    ...parseFlags(flags ?? '', sideMap),
   }
+}
+
+function parseFlags(text: string, sideMap: Record<string, SideType>) {
+  const result: Partial<PergolaConfig> = {}
+  for (const flag of text.split('-').filter(Boolean)) {
+    if (flag === 'p') result.solar = true
+    else if (flag === 'r') result.ledRgb = true
+    else if (flag === 'h') result.smartHome = true
+    else if (/^v\d$/.test(flag)) result.fans = Number(flag.slice(1))
+    else if (/^s.{4}$/.test(flag)) {
+      const split: NonNullable<PergolaConfig['split']> = {}
+      SIDE_KEYS.forEach((side, index) => { const type = sideMap[flag[index + 1]]; if (type) split[side] = type })
+      if (Object.keys(split).length) result.split = split
+    }
+  }
+  return result
 }
 
 /** Régi formátum: base64url JSON. */

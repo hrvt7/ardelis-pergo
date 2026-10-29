@@ -1,7 +1,8 @@
 import { PANEL, panelLayout } from './solar'
+import { HALF_NAMES, SIDE_INFO, SIDE_LABELS, sideLength, sideSegments, splitProfiles } from './sides'
 import { ROOF_INFO, ROOF_TYPES } from './roofs'
-import { isWallSide, omittedPosts, sideWalls } from './mount'
-import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, RoofType, SideKey, SideType } from '../types/pergola'
+import { omittedPosts, sideWalls } from './mount'
+import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, RoofType, SideKey } from '../types/pergola'
 
 export const DEFAULT_PRICES: PriceSettings = {
   louveredPerM2Net: 165000,
@@ -21,6 +22,14 @@ export const DEFAULT_PRICES: PriceSettings = {
   speakerPairNet: 220000,
   sensorsNet: 95000,
   solarPerKwpNet: 330000,
+  glassFramedPerM2Net: 95000,
+  glassFixedPerM2Net: 80000,
+  slatAluPerM2Net: 55000,
+  slatWoodPerM2Net: 45000,
+  splitProfileNet: 35000,
+  ledRgbPerMeterNet: 4000,
+  fanUnitNet: 130000,
+  smartHomeNet: 120000,
   customColorRate: 0.06,
   installationRate: 0.1,
   vatRate: 0.27,
@@ -28,12 +37,7 @@ export const DEFAULT_PRICES: PriceSettings = {
 
 export const ROOF_LABELS = Object.fromEntries(ROOF_TYPES.map((roof) => [roof, `${ROOF_INFO[roof].name} · ${ROOF_INFO[roof].short}`])) as Record<RoofType, string>
 
-export const SIDE_LABELS: Record<SideType, string> = {
-  none: 'Nyitott',
-  zip: 'ZIP screen',
-  glass: 'Tolóüveg',
-  louver: 'Fix lamella',
-}
+export { SIDE_LABELS } from './sides'
 
 /** Ártételek címe (pl. „Bal oldal · ZIP screen”, nem „Bal oldali oldal”). */
 const SIDE_TITLES: Record<SideKey, string> = { front: 'Elülső oldal', back: 'Hátsó oldal', left: 'Bal oldal', right: 'Jobb oldal' }
@@ -106,18 +110,30 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
   }
 
   ;(['front', 'back', 'left', 'right'] as SideKey[]).forEach((side) => {
-    const type = config.sides[side]
-    if (type === 'none' || isWallSide(config.mount, side)) return
-    const length = side === 'front' || side === 'back' ? config.width : config.depth
-    const sideArea = length * config.height
-    const rate = type === 'zip' ? prices.zipPerM2Net : type === 'glass' ? prices.glassPerM2Net : prices.louverWallPerM2Net
-    lines.push({
-      id: `side-${side}`,
-      label: `${SIDE_TITLES[side]} · ${SIDE_LABELS[type]}`,
-      detail: `${formatNumber(sideArea)} m² × ${formatHuf(rate)} / m²`,
-      amountNet: round(sideArea * rate),
+    const segments = sideSegments(config, side)
+    const length = sideLength(config, side)
+    segments.forEach((segment) => {
+      const key = SIDE_INFO[segment.type].priceKey
+      if (!key) return
+      const sideArea = length * (segment.to - segment.from) * config.height
+      const rate = prices[key] as number
+      lines.push({
+        id: segment.half === null ? `side-${side}` : `side-${side}-${segment.half}`,
+        label: `${SIDE_TITLES[side]}${segment.half === null ? '' : `, ${HALF_NAMES[side][segment.half]}`} · ${SIDE_LABELS[segment.type]}`,
+        detail: `${formatNumber(sideArea)} m² × ${formatHuf(rate)} / m²`,
+        amountNet: round(sideArea * rate),
+      })
     })
   })
+  const profiles = splitProfiles(config)
+  if (profiles > 0) {
+    lines.push({
+      id: 'split-profiles',
+      label: `Osztóprofil · ${profiles} db`,
+      detail: `Félbe osztott oldal középső merevítője · ${profiles} × ${formatHuf(prices.splitProfileNet)}`,
+      amountNet: round(profiles * prices.splitProfileNet),
+    })
+  }
 
   if (config.led) {
     lines.push({
@@ -125,6 +141,14 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
       label: 'Periméter LED-világítás',
       detail: `${formatNumber(perimeter)} fm integrált világítás`,
       amountNet: round(perimeter * prices.ledPerMeterNet),
+    })
+  }
+  if (config.led && config.ledRgb) {
+    lines.push({
+      id: 'led-rgb',
+      label: 'Színváltós RGB+W LED',
+      detail: `${formatNumber(perimeter)} fm × ${formatHuf(prices.ledRgbPerMeterNet)} felár · színek és jelenetek`,
+      amountNet: round(perimeter * prices.ledRgbPerMeterNet),
     })
   }
   if (config.heaters > 0) {
@@ -149,6 +173,23 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
       label: 'Eső- és szélérzékelő csomag',
       detail: 'Automata vezérlési mintacsomag',
       amountNet: round(prices.sensorsNet),
+    })
+  }
+
+  if (config.fans) {
+    lines.push({
+      id: 'fans',
+      label: `Mennyezeti ventilátor · ${config.fans} db`,
+      detail: 'Kültéri (IP44), DC motor, tartógerendával és bekötéssel',
+      amountNet: round(config.fans * prices.fanUnitNet),
+    })
+  }
+  if (config.smartHome) {
+    lines.push({
+      id: 'smart-home',
+      label: 'Okosotthon-vezérlés',
+      detail: 'Wi-Fi központ · telefonos app, időzítés, jelenetek, hangvezérlés',
+      amountNet: round(prices.smartHomeNet),
     })
   }
 

@@ -8,8 +8,9 @@ import { ROOF_INFO } from './roofs'
 import { getBom, getDeliveryEstimate, getSpecCode } from './specification'
 import { DEFAULT_USAGE, estimateEnergy, roundCost, TARIFF, type EnergyUsage } from './energy'
 import { estimateSolar, PANEL } from './solar'
+import { SIDE_INFO, sideSegments, HALF_NAMES } from './sides'
 import type { Tenant } from '../tenants/types'
-import type { PergolaConfig, PriceBreakdown, RoofType, SideKey } from '../types/pergola'
+import type { PergolaConfig, PriceBreakdown, RoofType, SideKey, SideType } from '../types/pergola'
 
 export const PDF_FONT_FILES = { regular: 'Manrope-400.ttf', semi: 'Manrope-600.ttf', bold: 'Manrope-700.ttf', heavy: 'Manrope-800.ttf' } as const
 export const PDF_FONTS = {
@@ -30,7 +31,6 @@ const MM = 72 / 25.4
 export const PDF_SHEET = { width: (841.89 - 80) / MM, height: (595.28 - 44 - 40) / MM }
 
 const SIDE_NAMES: Record<SideKey, string> = { front: 'Elöl', back: 'Hátul', left: 'Bal oldal', right: 'Jobb oldal' }
-const SIDE_TYPES = { none: 'Nyitott', zip: 'ZIP screen (szélálló árnyékoló)', glass: 'Tolóüveg-fal', louver: 'Fix lamellafal' }
 
 export interface PdfInput {
   config: PergolaConfig
@@ -66,7 +66,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
   const posts = postPositions(config).length
   const contact = [tenant.brand.legalName, tenant.brand.address, tenant.brand.phone, tenant.brand.email, tenant.brand.website].filter(Boolean).join(' · ')
   const dateText = hu(date)
-  const sideText = (side: SideKey) => (isWallSide(config.mount, side) ? `${wallLabel(side)} (rögzítés)` : SIDE_TYPES[config.sides[side]])
+  const sideText = (side: SideKey) => (isWallSide(config.mount, side) ? `${wallLabel(side)} (rögzítés)` : sideDetail(config, side))
   const roofState = roof.motion === 'tilt' ? `${config.louverAngle}° lamellaszög` : roof.motion === 'slide' ? `${Math.round(config.louverAngle / 0.9)}% nyitás` : null
 
   // ---------- Építőelemek ----------
@@ -79,9 +79,9 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
       rule(INK, 0.9, [0, 7, 0, 0]),
     ],
   })
-  const hairTable = (body: TableCell[][], widths: (string | number)[]): ContentTable => ({
+  const hairTable = (body: TableCell[][], widths: (string | number)[], pad = 3.8): ContentTable => ({
     table: { widths, body },
-    layout: { hLineWidth: (index: number, node) => (index === 0 || index === (node as ContentTable).table.body.length ? 0 : 0.5), vLineWidth: () => 0, hLineColor: () => HAIR, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 3.8, paddingBottom: () => 3.8 },
+    layout: { hLineWidth: (index: number, node) => (index === 0 || index === (node as ContentTable).table.body.length ? 0 : 0.5), vLineWidth: () => 0, hLineColor: () => HAIR, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => pad, paddingBottom: () => pad },
   })
   const kvBlock = (title: string, rows: [string, string][]): Content => ({
     stack: [
@@ -169,16 +169,24 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
   ]
   const sideRows = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => [SIDE_NAMES[side], sideText(side)] as [string, string])
   const extraRows: [string, string][] = [
-    ['LED-világítás', config.led ? 'periméter, szabályozható' : '—'],
+    ['LED-világítás', config.led ? (config.ledRgb ? 'színváltós RGB+W, jelenetekkel' : 'periméter, szabályozható') : '—'],
     ['Teraszfűtés', config.heaters ? `${config.heaters} db infravörös` : '—'],
     ['Hangrendszer', config.speakers ? 'Bluetooth, beépített' : '—'],
     ['Eső- és szélérzékelő', config.sensors ? 'automatikus zárással' : '—'],
+    ...(config.fans ? [['Mennyezeti ventilátor', `${config.fans} db, kültéri DC motorral`] as [string, string]] : []),
+    ...(config.smartHome ? [['Okosotthon-vezérlés', 'app, időzítés, jelenetek, hangvezérlés'] as [string, string]] : []),
   ]
 
+  // Sok tételnél (osztott oldalak, sok opció) tömörebb tördelés, hogy az ár egy lapon maradjon.
+  const densePrice = price.lines.length > 10
+  const bomLines = getBom(config).filter((line) => !/^0 db\b/.test(line.value))
+  const denseDetails = bomLines.length > 10 || sideRows.some(([, value]) => value.includes(' · ')) || extraRows.length > 4
   const priceRows: TableCell[][] = [
     [eyebrow('Tétel'), { ...(eyebrow('Nettó') as object), alignment: 'right' } as TableCell],
     ...price.lines.map((line): TableCell[] => [
-      { stack: [{ text: line.label, font: 'ManropeSemi', fontSize: 9, color: INK }, ...(line.detail ? [{ text: line.detail, fontSize: 7.5, color: MUTED, margin: [0, 1.5, 0, 0] } as Content] : [])] },
+      densePrice
+        ? { text: [{ text: line.label, font: 'ManropeSemi', fontSize: 8.5, color: INK }, ...(line.detail ? [{ text: `   ${line.detail}`, fontSize: 7, color: MUTED }] : [])] }
+        : { stack: [{ text: line.label, font: 'ManropeSemi', fontSize: 9, color: INK }, ...(line.detail ? [{ text: line.detail, fontSize: 7.5, color: MUTED, margin: [0, 1.5, 0, 0] } as Content] : [])] },
       { text: formatHuf(line.amountNet), alignment: 'right', fontSize: 9, color: INK, fontFeatures: ['tnum'] },
     ]),
     [{ stack: [{ text: 'Telepítés és üzembe helyezés', font: 'ManropeSemi', fontSize: 9, color: INK }, { text: 'helyszíni szerelés, beállítás, átadás', fontSize: 7.5, color: MUTED, margin: [0, 1.5, 0, 0] }] }, { text: formatHuf(price.installationNet), alignment: 'right', fontSize: 9, color: INK, fontFeatures: ['tnum'] }],
@@ -203,14 +211,8 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     unbreakable: true,
   }
 
-  const details: Content[] = [
-    sectionHead('01', 'Konfiguráció'),
-    { columns: [kvBlock('Szerkezet', structure), kvBlock('Tetőrendszer', roofRows)], columnGap: 28, margin: [0, 0, 0, 16] },
-    { columns: [kvBlock('Oldalak', sideRows), kvBlock('Kiegészítők', extraRows)], columnGap: 28, margin: [0, 0, 0, 20] },
-    sectionHead('02', 'Anyaglista', 'tájékoztató, a felmérés után véglegesítjük'),
-    hairTable(getBom(config).filter((line) => !/^0 db\b/.test(line.value)).map((line) => [{ text: line.label, color: MUTED, fontSize: 8.5 }, { text: line.value, font: 'ManropeSemi', fontSize: 8.5, color: INK }]), [150, '*']),
-    { text: '', margin: [0, 0, 0, 14] },
-    sectionHead('03', 'Fontos tudnivalók'),
+  const notesBlock: Content[] = [
+    sectionHead(denseDetails ? '05' : '03', 'Fontos tudnivalók'),
     {
       ol: [
         'Ez a dokumentum tájékoztató jellegű kalkuláció és terv, nem minősül ajánlattételnek, kiviteli tervnek vagy statikai számításnak.',
@@ -218,8 +220,17 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
         'A bejelentési vagy engedélyezési kötelezettség a kialakítástól és a helyi szabályozástól (településképi rendelet, HÉSZ) függ; kivitelezés előtt ellenőrizni kell.',
         'A 3D-látványkép illusztráció; a színek a képernyőtől és a nyomtatótól függően eltérhetnek. Színmintát kérésre biztosítunk.',
       ],
-      fontSize: 8, color: BODY, lineHeight: 1.4, markerColor: MUTED,
+      fontSize: denseDetails ? 7.5 : 8, color: BODY, lineHeight: denseDetails ? 1.3 : 1.4, markerColor: MUTED,
     },
+  ]
+  const details: Content[] = [
+    sectionHead('01', 'Konfiguráció'),
+    { columns: [kvBlock('Szerkezet', structure), kvBlock('Tetőrendszer', roofRows)], columnGap: 28, margin: [0, 0, 0, denseDetails ? 12 : 16] },
+    { columns: [kvBlock('Oldalak', sideRows), kvBlock('Kiegészítők', extraRows)], columnGap: 28, margin: [0, 0, 0, denseDetails ? 14 : 20] },
+    sectionHead('02', 'Anyaglista', 'tájékoztató, a felmérés után véglegesítjük'),
+    hairTable(bomLines.map((line) => [{ text: line.label, color: MUTED, fontSize: denseDetails ? 8 : 8.5 }, { text: line.value, font: 'ManropeSemi', fontSize: denseDetails ? 8 : 8.5, color: INK }]), [150, '*'], denseDetails ? 2.4 : 3.8),
+    { text: '', margin: [0, 0, 0, denseDetails ? 8 : 14] },
+    ...(denseDetails ? [] : notesBlock),
   ]
 
   // ---------- Melléklet: műszaki rajz (A4 fekvő) ----------
@@ -250,8 +261,8 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     ],
   })
   const closing: Content[] = [
-    sectionHead('04', 'Árkalkuláció', 'nettó egységárak, gyártói árlista'),
-    hairTable(priceRows, ['*', 110]),
+    sectionHead(denseDetails ? '03' : '04', 'Árkalkuláció', 'nettó egységárak, gyártói árlista'),
+    hairTable(priceRows, ['*', 110], densePrice ? 3 : 3.8),
     totals,
     ...(energy.hasElectrics || solarEstimate ? [{
       margin: [0, 14, 0, 0],
@@ -268,8 +279,9 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     { text: '', margin: [0, 0, 0, 14] },
     {
       unbreakable: true,
+      ...(denseDetails ? { pageBreak: 'before' as const } : {}),
       stack: [
-    sectionHead('05', 'Hogyan tovább?'),
+    sectionHead(denseDetails ? '04' : '05', 'Hogyan tovább?'),
     {
       columns: [
         step('1', 'Helyszíni felmérés', 'Megnézzük a falat, a burkolatot és az alapozást, és pontosítjuk a méreteket.'),
@@ -306,9 +318,21 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
       ...cover,
       { text: '', pageBreak: 'after' },
       ...details,
+      // Sűrű tervnél (osztott oldalak, sok opció) a második lap túlfuthat: ilyenkor az ár folyamatosan követi.
       { stack: closing, pageBreak: 'before' },
+      // Sűrű tervnél (osztott oldalak, sok opció) a tudnivalók a „Hogyan tovább?” után, külön lapon.
+      ...(denseDetails ? [{ stack: [{ text: '', margin: [0, 10, 0, 0] }, ...notesBlock], unbreakable: true } as Content] : []),
       // Melléklet: műszaki rajz A4 fekvő lapon (saját rajzi fejléccel).
       { svg: drawing.svg, width: sheetW * MM, pageBreak: 'before', pageOrientation: 'landscape' },
     ],
   }
+}
+
+/** PDF-be szánt oldalleírás: teljes név, osztott oldalnál a két fél. */
+const SIDE_LONG: Partial<Record<SideType, string>> = { zip: 'ZIP screen (szélálló árnyékoló)', glass: 'Keret nélküli tolóüveg', louver: 'Lamellafal (állítható)' }
+function sideDetail(config: PergolaConfig, side: SideKey) {
+  const segments = sideSegments(config, side)
+  const name = (type: SideType) => SIDE_LONG[type] ?? SIDE_INFO[type].label
+  if (segments.length < 2) return name(config.sides[side])
+  return segments.map((segment, index) => `${HALF_NAMES[side][index]}: ${SIDE_INFO[segment.type].label}`).join(' · ')
 }

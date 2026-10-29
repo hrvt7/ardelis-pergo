@@ -1,7 +1,7 @@
 // Energia és üzemeltetés: éves áramköltség a valós lakossági tarifával, állítható
 // használattal; napelemes tetőnél a termelés és annak őszinte, sávos értéke.
 import { useId, useState } from 'react'
-import { AlertTriangle, Flame, Info, Lightbulb, Plus, Radio, SolarPanel, Speaker, Zap, type LucideIcon } from 'lucide-react'
+import { AlertTriangle, Fan, Flame, Info, Lightbulb, Plus, Radio, SolarPanel, Speaker, Zap, type LucideIcon } from 'lucide-react'
 import { Modal } from '@/components/Dialogs'
 import { estimateEnergy, roundCost, TARIFF, type EnergyLine, type EnergyUsage } from '@/lib/energy'
 import { formatHuf, formatNumber } from '@/lib/pricing'
@@ -10,7 +10,7 @@ import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import type { PergolaConfig, PriceSettings } from '@/types/pergola'
 
-const LINE_ICONS: Record<EnergyLine['id'], LucideIcon> = { heaters: Flame, led: Lightbulb, motors: Zap, speakers: Speaker, standby: Radio }
+const LINE_ICONS: Record<EnergyLine['id'], LucideIcon> = { heaters: Flame, led: Lightbulb, motors: Zap, speakers: Speaker, fans: Fan, standby: Radio }
 const kwhText = (value: number) => `${formatNumber(value, value < 10 ? 1 : 0)} kWh`
 const ftPerKwh = (value: number) => `${value.toLocaleString('hu-HU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ft/kWh`
 

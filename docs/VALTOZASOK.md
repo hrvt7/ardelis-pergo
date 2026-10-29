@@ -1,5 +1,49 @@
 # Változások
 
+## 3.10 — Több oldalfal-típus, félbe osztott oldal, RGB LED, ventilátor, okosotthon (2026. 10. 29.)
+
+**Oldalfalak: 8 típus.** Nyitott, ZIP screen, keret nélküli tolóüveg, **keretes tolóüveg**, **fix üveg**,
+lamellafal (állítható), **alumínium lécfal**, **hőkezelt fa lécfal**. Egy helyen definiálva
+(`src/lib/sides.ts`: név, leírás, árkulcs, link- és rajzkód, költségkeret-érték), minden más innen olvas.
+
+**Félbe osztott oldal.** Bármely nem fali oldal két félre osztható, felenként más típussal
+(pl. fele tolóüveg, fele lécfal). Elöl/hátul bal és jobb fél, oldalt elülső és hátsó fél.
+A két fél között osztóprofil fut (külön ártétel); 6 m feletti elülső oldalon a középoszlop
+váltja ki. Megjelenik a 3D-ben, a tételes árban, az anyaglistában, a konfigurációs kódban
+(pl. `(G/Z)`), a szöveges összefoglalóban, a PDF-ben, a műszaki rajz mindhárom nézetében,
+a megosztó linkben és a gyártói lead-e-mailben.
+
+**Felület.** Az Oldalak lépésben kétállású kapcsoló (Egész oldal / Két fél), fél-fülek a két
+fél aktuális típusával, típuskártyák saját ikonnal, rövid leírással és a teljes bruttó ár
+változásával. A felülnézeti oldalválasztóban kis sáv mutatja oldalanként a típust és az osztást.
+
+**Komfort-opciók** (az Extrák lépés három csoportba rendezve: világítás · hő és légmozgás ·
+vezérlés és energia):
+- **Színváltós RGB+W LED** — a LED al-opciója, folyóméteres felárral. Színminták az Extrákban
+  és az esti hangulat panelen; koppintásra esti nézetben mutatja a teraszt az adott színnel.
+- **Mennyezeti ventilátor** (0–2 db) — tartógerendával, 3D-ben forgatható (≈30 fps-re
+  korlátozva, hogy mobilon ne merítse az akkut). 2,5 m oszlopmagasság alatt figyelmeztet
+  (lapátok alatt 2,1 m). A rajz alaprajzán Ø132-es lapátkörrel jelölve.
+- **Okosotthon-vezérlés** — a kártya megmutatja, mit kapcsol az app ebben a tervben
+  (tető, ZIP-ek, LED, fűtés, ventilátor).
+
+**Árak (nettó, telepítés nélkül, szerkeszthetők az admin árlistában):** keretes tolóüveg
+95 000 Ft/m², fix üveg 80 000, alu lécfal 55 000, fa lécfal 45 000, osztóprofil 35 000 Ft/db,
+RGB+W felár 4 000 Ft/fm, ventilátor 130 000 Ft/db, okosotthon-központ 120 000 Ft.
+
+**Energia.** Ventilátor 35 W × 3 óra × 92 nyári nap darabonként; okosotthon-központ 0,9 W
+készenlét; RGB+W szalag ×1,3 fogyasztás; a félbe osztott oldalak ZIP-jei is motorként számítanak.
+
+**Költségkeret-tervező.** A fél oldalakat külön-külön is le tudja adni, és a ventilátort,
+az RGB-t és az okosotthont is.
+
+**PDF.** Sok tételnél (osztott oldalak, sok opció) tömörebb tördelés: az ár egy lapon marad,
+a „Hogyan tovább?” és a tudnivalók külön lapra kerülnek (5 oldal); egyszerű tervnél
+változatlanul 4 oldal.
+
+**Kompatibilitás.** A régi linkek változatlanul nyílnak; az új opciók a link végére kerülnek
+(`r`, `v1`/`v2`, `h`, `s….`). Az alap demó ára nem változott (5 648 000 Ft).
+
 ## 3.9 — Piaci árakhoz igazított bemutató árlista (2026. 10. 29.)
 A demó árai magyar középkategóriás piaci szintre kerültek (korábban kb. 40%-kal drágábbak voltak).
 Példák bruttó, telepítéssel: 5 × 4 m motoros lamellás csupaszon **4,6 M Ft** (az alap demó LED-del,

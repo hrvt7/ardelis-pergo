@@ -13,6 +13,8 @@ export const DEFAULT_SCENE: SceneSettings = {
   autoRotate: false,
   rain: false,
   winter: false,
+  ledColor: null,
+  fanOn: false,
   wind: false,
   showPerson: false,
   showHotspots: false,

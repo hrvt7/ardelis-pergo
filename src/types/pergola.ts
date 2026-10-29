@@ -1,7 +1,7 @@
 export type MountType = 'freestanding' | 'wall' | 'corner-left' | 'corner-right' | 'niche'
 export type WallFinish = 'plaster' | 'brick' | 'cedar'
 export type RoofType = 'louvered' | 'retractable' | 'fabric' | 'glass' | 'polycarbonate' | 'fixed'
-export type SideType = 'none' | 'zip' | 'glass' | 'louver'
+export type SideType = 'none' | 'zip' | 'glass' | 'glassFramed' | 'glassFixed' | 'louver' | 'slatAlu' | 'slatWood'
 export type SideKey = 'front' | 'back' | 'left' | 'right'
 export type FrameColor = 'anthracite' | 'black' | 'white' | 'bronze' | 'custom'
 export type TimeOfDay = 'day' | 'sunset' | 'night'
@@ -17,6 +17,8 @@ export interface PergolaConfig {
   frameColor: FrameColor
   customRal?: string
   sides: Record<SideKey, SideType>
+  /** Félbe osztott oldalak második felének típusa (az első fél a `sides`-ban). */
+  split?: Partial<Record<SideKey, SideType>>
   louverAngle: number
   screenOpen: number
   led: boolean
@@ -25,6 +27,12 @@ export interface PergolaConfig {
   sensors: boolean
   /** Napelemes tető (csak fix tetőre, ha a gyártó kínálja). */
   solar?: boolean
+  /** Színváltós (RGB) LED a periméter LED helyett (csak LED-del). */
+  ledRgb?: boolean
+  /** Mennyezeti ventilátorok száma (0–2). */
+  fans?: number
+  /** Okosotthon-vezérlés (átjáró: telefon, hangvezérlés, időzítés). */
+  smartHome?: boolean
 }
 
 export interface SceneSettings {
@@ -65,6 +73,10 @@ export interface SceneSettings {
   ledLevel: number
   ledKelvin: number
   heatersOn: boolean
+  /** RGB LED színe (hex); null = fehér, a színhőmérséklet szerint. */
+  ledColor: string | null
+  /** A ventilátor forog-e a 3D-ben. */
+  fanOn: boolean
   /** Téli nézet: hó a kertben és a tetőn, havazás. */
   winter: boolean
 }
@@ -104,6 +116,22 @@ export interface PriceSettings {
   sensorsNet: number
   /** Napelemes tető, nettó Ft / kWp (modulok, tartószerkezet, inverter-csatlakozás). */
   solarPerKwpNet: number
+  /** Keretes tolóüveg-fal. */
+  glassFramedPerM2Net: number
+  /** Fix (szélfogó) üvegfal. */
+  glassFixedPerM2Net: number
+  /** Alumínium lécfal. */
+  slatAluPerM2Net: number
+  /** Fa lécfal. */
+  slatWoodPerM2Net: number
+  /** Osztóprofil félbe osztott oldalhoz (darab). */
+  splitProfileNet: number
+  /** RGB LED felár folyóméterenként (a fehér LED árán felül). */
+  ledRgbPerMeterNet: number
+  /** Mennyezeti ventilátor (darab, bekötéssel). */
+  fanUnitNet: number
+  /** Okosotthon-vezérlés (átjáró, beállítás). */
+  smartHomeNet: number
   customColorRate: number
   installationRate: number
   vatRate: number

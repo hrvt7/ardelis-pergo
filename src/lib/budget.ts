@@ -4,17 +4,17 @@
 // legkisebb veszteségű, kerethez illő változat. Árazás: a gyártó saját árlistája.
 import { furnitureMinimum } from '@/lib/furniture'
 import { ROOF_INFO } from '@/lib/roofs'
-import { SIDE_LABELS } from '@/lib/pricing'
+import { SIDE_INFO, sideSummary } from '@/lib/sides'
 import { enabledRoofs, normalizeConfig, roofLabels, tenantPrice } from '@/tenants/rules'
 import type { Tenant } from '@/tenants/types'
 import type { FurnitureSet, PergolaConfig, PriceSettings, RoofType, SideKey, SideType } from '@/types/pergola'
 
 const ROOF_VALUE = Object.fromEntries(Object.entries(ROOF_INFO).map(([roof, info]) => [roof, info.value])) as Record<RoofType, number>
-const SIDE_VALUE: Record<SideType, number> = { glass: 2.4, louver: 1.8, zip: 1.4, none: 0 }
+const SIDE_VALUE = Object.fromEntries(Object.entries(SIDE_INFO).map(([type, info]) => [type, info.value])) as Record<SideType, number>
 const SIZE_STEPS = 9
 const SIDES: SideKey[] = ['front', 'back', 'left', 'right']
 const SIDE_NAMES: Record<SideKey, string> = { front: 'Elülső oldal', back: 'Hátsó oldal', left: 'Bal oldal', right: 'Jobb oldal' }
-const EXTRA_LOSS = { led: 1, speakers: 0.7, sensors: 1, heater: 0.8, color: 0.9, solar: 1.1 }
+const EXTRA_LOSS = { led: 1, speakers: 0.7, sensors: 1, heater: 0.8, color: 0.9, solar: 1.1, rgb: 0.4, fan: 0.6, smartHome: 0.5 }
 
 export interface BudgetPlan {
   id: 'balanced' | 'keep-size' | 'keep-equipment'
@@ -32,22 +32,43 @@ export type BudgetResult =
 
 interface Step { apply: (config: PergolaConfig) => PergolaConfig; loss: number }
 
-/** Oldalanként a funkcionálisan értelmes olcsóbb csere: üveg → ZIP (ha van) → nyitott; lamellás fal és ZIP → nyitott. */
+/** Oldalanként a funkcionálisan értelmes olcsóbb csere: tolóüveg → ZIP (ha van) → nyitott; minden más fal → nyitott. */
 function sideDowngrade(tenant: Tenant, type: SideType): SideType | null {
-  if (type === 'glass') return tenant.sides.includes('zip') ? 'zip' : 'none'
-  if (type === 'zip' || type === 'louver') return 'none'
-  return null
+  if (type === 'glass' || type === 'glassFramed') return tenant.sides.includes('zip') ? 'zip' : 'none'
+  if (type === 'none') return null
+  return 'none'
+}
+
+/** A félbe osztott oldal második felének cseréje; ha egyezik az elsővel, megszűnik az osztás. */
+function withSplit(config: PergolaConfig, side: SideKey, type: SideType | undefined): PergolaConfig {
+  const split = { ...config.split }
+  if (!type || type === config.sides[side]) delete split[side]
+  else split[side] = type
+  return { ...config, split: Object.keys(split).length ? split : undefined }
+}
+
+/** Az első fél cseréje; osztott oldalnál az osztás megmarad (ha a két fél nem lesz azonos). */
+function withFirst(config: PergolaConfig, side: SideKey, type: SideType): PergolaConfig {
+  const next = { ...config, sides: { ...config.sides, [side]: type } }
+  return config.split?.[side] ? withSplit(next, side, config.split[side]) : next
 }
 
 function equipmentSteps(tenant: Tenant, config: PergolaConfig, original: PergolaConfig): Step[] {
   const steps: Step[] = []
   for (const side of SIDES) {
+    const split = config.split?.[side]
+    const factor = split ? 0.5 : 1
     const next = sideDowngrade(tenant, config.sides[side])
-    if (next) steps.push({ apply: (c) => ({ ...c, sides: { ...c.sides, [side]: next } }), loss: SIDE_VALUE[config.sides[side]] - SIDE_VALUE[next] })
+    if (next) steps.push({ apply: (c) => withFirst(c, side, next), loss: factor * (SIDE_VALUE[config.sides[side]] - SIDE_VALUE[next]) })
+    const nextSplit = split ? sideDowngrade(tenant, split) : null
+    if (split && nextSplit) steps.push({ apply: (c) => withSplit(c, side, nextSplit), loss: 0.5 * (SIDE_VALUE[split] - SIDE_VALUE[nextSplit]) })
   }
+  if (config.fans) steps.push({ apply: (c) => ({ ...c, fans: c.fans && c.fans > 1 ? c.fans - 1 : undefined }), loss: EXTRA_LOSS.fan })
+  if (config.ledRgb) steps.push({ apply: (c) => ({ ...c, ledRgb: undefined }), loss: EXTRA_LOSS.rgb })
+  if (config.smartHome) steps.push({ apply: (c) => ({ ...c, smartHome: undefined }), loss: EXTRA_LOSS.smartHome })
   if (config.speakers) steps.push({ apply: (c) => ({ ...c, speakers: false }), loss: EXTRA_LOSS.speakers })
   if (config.heaters > 0) steps.push({ apply: (c) => ({ ...c, heaters: c.heaters - 1 }), loss: EXTRA_LOSS.heater })
-  if (config.led) steps.push({ apply: (c) => ({ ...c, led: false }), loss: EXTRA_LOSS.led })
+  if (config.led) steps.push({ apply: (c) => ({ ...c, led: false, ledRgb: undefined }), loss: EXTRA_LOSS.led + (config.ledRgb ? EXTRA_LOSS.rgb : 0) })
   if (config.sensors) steps.push({ apply: (c) => ({ ...c, sensors: false }), loss: EXTRA_LOSS.sensors })
   if (config.solar) steps.push({ apply: (c) => ({ ...c, solar: undefined }), loss: EXTRA_LOSS.solar })
   if (config.frameColor === 'custom' && original.frameColor === 'custom') steps.push({ apply: (c) => ({ ...c, frameColor: tenant.colors[0]?.id ?? 'anthracite', customRal: undefined }), loss: EXTRA_LOSS.color })
@@ -58,10 +79,18 @@ function equipmentSteps(tenant: Tenant, config: PergolaConfig, original: Pergola
 function restoreSteps(config: PergolaConfig, original: PergolaConfig): { config: PergolaConfig; gain: number }[] {
   const steps: { config: PergolaConfig; gain: number }[] = []
   for (const side of SIDES) {
-    if (config.sides[side] === original.sides[side]) continue
-    steps.push({ config: { ...config, sides: { ...config.sides, [side]: original.sides[side] } }, gain: SIDE_VALUE[original.sides[side]] - SIDE_VALUE[config.sides[side]] })
-    if (original.sides[side] === 'glass' && config.sides[side] === 'none') steps.push({ config: { ...config, sides: { ...config.sides, [side]: 'zip' } }, gain: SIDE_VALUE.zip })
+    const factor = original.split?.[side] ? 0.5 : 1
+    if (config.sides[side] !== original.sides[side]) {
+      steps.push({ config: withFirst(config, side, original.sides[side]), gain: factor * (SIDE_VALUE[original.sides[side]] - SIDE_VALUE[config.sides[side]]) })
+      if ((original.sides[side] === 'glass' || original.sides[side] === 'glassFramed') && config.sides[side] === 'none') steps.push({ config: withFirst(config, side, 'zip'), gain: factor * SIDE_VALUE.zip })
+    }
+    const wanted = original.split?.[side]
+    const have = config.split?.[side] ?? config.sides[side]
+    if (wanted && have !== wanted) steps.push({ config: withSplit(config, side, wanted), gain: 0.5 * (SIDE_VALUE[wanted] - SIDE_VALUE[have]) })
   }
+  if ((original.fans ?? 0) > (config.fans ?? 0)) steps.push({ config: { ...config, fans: (config.fans ?? 0) + 1 }, gain: EXTRA_LOSS.fan })
+  if (original.ledRgb && !config.ledRgb && config.led) steps.push({ config: { ...config, ledRgb: true }, gain: EXTRA_LOSS.rgb })
+  if (original.smartHome && !config.smartHome) steps.push({ config: { ...config, smartHome: true }, gain: EXTRA_LOSS.smartHome })
   if (original.speakers && !config.speakers) steps.push({ config: { ...config, speakers: true }, gain: EXTRA_LOSS.speakers })
   if (config.heaters < original.heaters) steps.push({ config: { ...config, heaters: config.heaters + 1 }, gain: EXTRA_LOSS.heater })
   if (original.led && !config.led) steps.push({ config: { ...config, led: true }, gain: EXTRA_LOSS.led })
@@ -89,12 +118,19 @@ export function describeChanges(tenant: Tenant, original: PergolaConfig, next: P
   const changes: string[] = []
   if (next.width !== original.width || next.depth !== original.depth) changes.push(`Méret: ${m(original.width)} × ${m(original.depth)} → ${m(next.width)} × ${m(next.depth)} m`)
   if (next.roof !== original.roof) changes.push(`Tető: ${labels[original.roof].split(' · ')[0]} → ${labels[next.roof]}`)
-  for (const side of SIDES) if (next.sides[side] !== original.sides[side]) changes.push(`${SIDE_NAMES[side]}: ${SIDE_LABELS[original.sides[side]]} → ${next.sides[side] === 'none' ? 'nyitott' : SIDE_LABELS[next.sides[side]]}`)
+  for (const side of SIDES) {
+    const before = sideSummary(original, side)
+    const after = sideSummary(next, side)
+    if (before !== after) changes.push(`${SIDE_NAMES[side]}: ${before} → ${after === 'Nyitott' ? 'nyitott' : after}`)
+  }
   if (original.heaters !== next.heaters) changes.push(next.heaters === 0 ? 'Teraszfűtés nélkül' : `Teraszfűtés: ${original.heaters} → ${next.heaters} db`)
   if (original.speakers && !next.speakers) changes.push('Hangrendszer nélkül')
   if (original.led && !next.led) changes.push('LED-világítás nélkül')
   if (original.sensors && !next.sensors) changes.push('Eső- és szélszenzor nélkül')
   if (original.solar && !next.solar) changes.push('Napelemes tető nélkül')
+  if (original.ledRgb && next.led && !next.ledRgb) changes.push('Színváltós LED helyett fehér LED')
+  if ((original.fans ?? 0) !== (next.fans ?? 0)) changes.push(next.fans ? `Mennyezeti ventilátor: ${original.fans} → ${next.fans} db` : 'Mennyezeti ventilátor nélkül')
+  if (original.smartHome && !next.smartHome) changes.push('Okosotthon-vezérlés nélkül')
   if (original.frameColor !== next.frameColor) changes.push('Egyedi RAL szín helyett antracit')
   return changes
 }

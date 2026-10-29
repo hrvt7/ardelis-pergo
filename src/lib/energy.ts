@@ -7,7 +7,7 @@
 //   ha nem ismert a háztartás fogyasztása, a felső sávval (a számla ennél nem lesz kevesebb).
 // - Fogyasztók: infrapanel (gyártói névleges teljesítmény), LED (W/fm), motorok (Somfy adatlapok:
 //   lamellás 45 W, textil 240 W, ZIP ~120 W menetidőben), készenlét (vezérlő, tápegység, átjáró).
-import { openSides } from './mount'
+import { closedSegments } from './sides'
 import type { PergolaConfig } from '../types/pergola'
 
 export const TARIFF = {
@@ -40,7 +40,14 @@ export interface EnergyUsage {
 
 export const DEFAULT_USAGE: EnergyUsage = { heaterHours: 120, heaterHalf: false, ledHoursPerEvening: 3, householdKwh: null }
 
-export interface EnergyLine { id: 'heaters' | 'led' | 'motors' | 'speakers' | 'standby'; label: string; detail: string; kwh: number }
+/** Kültéri DC mennyezeti ventilátor közepes fokozaton; június–augusztus esténként. */
+const FAN_W = 35
+const FAN_HOURS = 3
+const FAN_DAYS = 92
+/** Okosotthon-központ (Wi-Fi/Zigbee átjáró) készenléti fogyasztása. */
+const SMART_HOME_W = 0.9
+
+export interface EnergyLine { id: 'heaters' | 'led' | 'motors' | 'speakers' | 'fans' | 'standby'; label: string; detail: string; kwh: number }
 
 export interface EnergyEstimate {
   lines: EnergyLine[]
@@ -55,6 +62,8 @@ export interface EnergyEstimate {
 }
 
 const LED_W_PER_M = 10
+/** RGB+W szalag: színes jeleneteknél átlagosan ennyivel több (a fehér csatorna mellett). */
+const LED_RGB_FACTOR = 1.3
 const SPEAKER_W = 10
 const SPEAKER_HOURS = 300
 
@@ -67,17 +76,18 @@ export function energyLines(config: PergolaConfig, usage: EnergyUsage, heaterWat
     lines.push({ id: 'heaters', label: 'Teraszfűtés', detail: `${config.heaters} × ${(heaterWatts / 1000).toLocaleString('hu-HU')} kW${usage.heaterHalf ? ' (fél teljesítmény)' : ''} · ${usage.heaterHours} óra/év`, kwh: config.heaters * kw * usage.heaterHours })
   }
   if (config.led) {
-    const watts = perimeter * LED_W_PER_M
-    lines.push({ id: 'led', label: 'LED-világítás', detail: `${Math.round(watts)} W · ${usage.ledHoursPerEvening.toLocaleString('hu-HU')} óra/este, ${SEASON_DAYS} este`, kwh: (watts * usage.ledHoursPerEvening * SEASON_DAYS) / 1000 })
+    const watts = perimeter * LED_W_PER_M * (config.ledRgb ? LED_RGB_FACTOR : 1)
+    lines.push({ id: 'led', label: config.ledRgb ? 'RGB+W LED-világítás' : 'LED-világítás', detail: `${Math.round(watts)} W · ${usage.ledHoursPerEvening.toLocaleString('hu-HU')} óra/este, ${SEASON_DAYS} este`, kwh: (watts * usage.ledHoursPerEvening * SEASON_DAYS) / 1000 })
   }
   // Motorok: percenkénti menetidő × napi mozgatás. Elhanyagolható, de kiírjuk, mert a vevő kérdezi.
-  const zipCount = openSides(config.mount).filter((side) => config.sides[side] === 'zip').length
+  const zipCount = closedSegments(config).filter((segment) => segment.type === 'zip').length
   const roofMotor = config.roof === 'louvered' ? { w: 45, cycles: 4, days: 365 } : config.roof === 'retractable' ? { w: 72, cycles: 4, days: 365 } : config.roof === 'fabric' ? { w: 240, cycles: 2, days: SEASON_DAYS } : null
   const motorKwh = (roofMotor ? (roofMotor.w * (1 / 60) * roofMotor.cycles * roofMotor.days) / 1000 : 0) + (zipCount * 120 * (1 / 60) * 2 * SEASON_DAYS) / 1000
   if (roofMotor || zipCount) lines.push({ id: 'motors', label: 'Motorok', detail: [roofMotor && 'tető', zipCount && `${zipCount} ZIP`].filter(Boolean).join(' + ') + ' · napi néhány perc menetidő', kwh: motorKwh })
   if (config.speakers) lines.push({ id: 'speakers', label: 'Hangrendszer', detail: `${SPEAKER_W} W átlag · ${SPEAKER_HOURS} óra/év`, kwh: (SPEAKER_W * SPEAKER_HOURS) / 1000 })
   // Készenlét: vezérlő/tápegység/rádióvevő folyamatosan (Somfy TaHoma 0,92 W, io vevők ~0,4–0,5 W).
-  const standbyW = (roofMotor ? 1 : 0) + zipCount * 0.45 + (config.sensors ? 1.2 : 0) + (config.led ? 0.5 : 0) + (config.speakers ? 0.5 : 0) + (config.heaters > 0 ? 0.3 : 0)
+  if (config.fans) lines.push({ id: 'fans', label: 'Mennyezeti ventilátor', detail: `${config.fans} × ${FAN_W} W (DC) · ${FAN_HOURS} óra/nap, ${FAN_DAYS} nyári nap`, kwh: (config.fans * FAN_W * FAN_HOURS * FAN_DAYS) / 1000 })
+  const standbyW = (config.smartHome ? SMART_HOME_W : 0) + (config.fans ? 0.3 * config.fans : 0) + (roofMotor ? 1 : 0) + zipCount * 0.45 + (config.sensors ? 1.2 : 0) + (config.led ? 0.5 : 0) + (config.speakers ? 0.5 : 0) + (config.heaters > 0 ? 0.3 : 0)
   if (standbyW > 0) lines.push({ id: 'standby', label: 'Készenlét', detail: `${standbyW.toLocaleString('hu-HU', { maximumFractionDigits: 1 })} W folyamatosan (vezérlő, tápegység, vevők)`, kwh: (standbyW * 8760) / 1000 })
   return lines
 }

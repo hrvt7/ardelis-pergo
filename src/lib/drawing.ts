@@ -7,6 +7,8 @@ import { glassPanels } from './glass'
 import { hasBackWall, postPositions, wallSides } from './mount'
 import { isGlazedRoof } from './roofs'
 import { PANEL, panelLayout } from './solar'
+import { sideSegments, type SideSegment } from './sides'
+import { FAN_DIAMETER, fanLayout } from './fans'
 import type { PergolaConfig, SideKey, SideType } from '../types/pergola'
 
 /** Keretgerenda szélessége és magassága, oszlop-keresztmetszet (m) — a 3D-modellel egyezik. */
@@ -71,6 +73,10 @@ class Svg {
   rect(x: number, y: number, w: number, h: number, opts: { stroke?: string; width?: number; fill?: string; dash?: string; opacity?: number } = {}) {
     const { stroke = INK, width = 0.25, fill = 'none', dash, opacity } = opts
     this.add(`<rect x="${r2(x)}" y="${r2(y)}" width="${r2(Math.max(0, w))}" height="${r2(Math.max(0, h))}" fill="${fill}"${opacity !== undefined ? ` fill-opacity="${opacity}"` : ''} stroke="${stroke === 'none' ? 'none' : stroke}" stroke-width="${stroke === 'none' ? 0 : width}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`)
+  }
+  circle(cx: number, cy: number, r: number, opts: { stroke?: string; width?: number; fill?: string; dash?: string } = {}) {
+    const { stroke = INK, width = 0.25, fill = 'none', dash } = opts
+    this.add(`<circle cx="${r2(cx)}" cy="${r2(cy)}" r="${r2(r)}" fill="${fill}" stroke="${stroke}" stroke-width="${width}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`)
   }
   path(d: string, opts: { stroke?: string; width?: number; fill?: string } = {}) {
     const { stroke = INK, width = 0.25, fill = 'none' } = opts
@@ -148,7 +154,10 @@ function viewTitle(svg: Svg, x: number, y: number, title: string, scale: number)
   svg.text(x + width + 2.5, y, `M 1:${scale}`, 2.2, { weight: 'semi', color: MID })
 }
 
-const SIDE_SHORT: Record<SideType, string> = { none: '', zip: 'ZIP screen', glass: 'tolóüveg', louver: 'fix lamellafal' }
+const SIDE_SHORT: Record<SideType, string> = { none: '', zip: 'ZIP screen', glass: 'tolóüveg', glassFramed: 'keretes tolóüveg', glassFixed: 'fix üveg', louver: 'lamellafal', slatAlu: 'alu lécfal', slatWood: 'fa lécfal' }
+/** Osztóprofil szélessége (m), félbe osztott oldal közepén, ha ott nincs oszlop. */
+const MULLION = 0.06
+const WOOD = '#e6d8c0'
 
 /**
  * Elrendezés: a lehető legnagyobb szabványos méretarány, amelynél mindhárom nézet és a fejléc elfér.
@@ -163,6 +172,23 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
   const levels = drawingLevels(config)
   const posts = postPositions(config)
   const sideOf = (side: SideKey): SideType => (walls.includes(side) ? 'none' : sides[side])
+  /** Az oldal szegmensei modell-koordinátában (elöl/hátul x, oldalt z), a sarkoknál és az osztásnál levágva. */
+  const segmentsOf = (side: SideKey) => {
+    if (walls.includes(side)) return [] as { segment: SideSegment; a: number; b: number }[]
+    const horizontal = side === 'front' || side === 'back'
+    const L = horizontal ? w : d
+    const hasMidPost = side === 'front' && w > 6
+    const midGap = hasMidPost ? POST / 2 : MULLION / 2
+    return sideSegments(config, side).filter((segment) => segment.type !== 'none').map((segment) => {
+      // Oldalt az első fél az elülső (+z) vég, ezért ott a helyi koordináta előjelet vált.
+      let [a, b] = horizontal ? [segment.from * L, segment.to * L] : [-segment.to * L, -segment.from * L]
+      const outer = 0.09 + POST / 2
+      a = Math.abs(a + L / 2) < 1e-6 ? a + outer : a + (segment.half === null ? 0 : midGap)
+      b = Math.abs(b - L / 2) < 1e-6 ? b - outer : b - (segment.half === null ? 0 : midGap)
+      return { segment, a, b }
+    })
+  }
+  const needsMullion = (side: SideKey) => !walls.includes(side) && Boolean(config.split?.[side]) && !(side === 'front' && w > 6)
 
   // Modell-kiterjedések (m).
   const xMin = -w / 2 - (leftWing ? WALL_T : back ? 0.35 : 0)
@@ -260,8 +286,8 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     if (rightWing) drawWallSection(X(w / 2), Y(yTop), WALL_T * k, yTop * k)
     // Elülső oldalzárás (oszlopok között).
     const frontPosts = posts.filter(([, z]) => z > 0).map(([x]) => x).sort((a, b) => a - b)
-    const frontType = sideOf('front')
-    if (frontType !== 'none') drawSideInElevation(frontType, X(-w / 2 + 0.09 + POST / 2), X(w / 2 - 0.09 - POST / 2), frontPosts)
+    segmentsOf('front').forEach(({ segment, a, b }) => drawSideInElevation(segment.type, X(a), X(b), frontPosts))
+    if (needsMullion('front')) svg.rect(X(-MULLION / 2), Y(levels.beamBottom), MULLION * k, (levels.beamBottom - 0.02) * k, { width: 0.3, fill: '#ffffff' })
     // Oszlopok.
     const columnXs = Array.from(new Set(posts.map(([x]) => r2(x))))
     columnXs.forEach((x) => {
@@ -309,8 +335,31 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
           svg.line(px + pw * 0.3, top + (bottom - top) * 0.3, px + pw * 0.45, top + (bottom - top) * 0.2, 0.13, SOFT)
           svg.line(px + pw * 0.3, top + (bottom - top) * 0.38, px + pw * 0.55, top + (bottom - top) * 0.22, 0.13, SOFT)
         }
+      } else if (type === 'glassFramed') {
+        const { count } = glassPanels((b - a) / k)
+        const pw = (b - a) / count
+        svg.rect(a, bottom - 0.6, b - a, 0.6, { width: 0.18, fill: INK })
+        for (let p = 0; p < count; p += 1) {
+          const px = a + p * pw
+          svg.rect(px + 0.15, top + 0.3, pw - 0.3, bottom - top - 0.9, { stroke: INK, width: 0.18, fill: '#ffffff' })
+          svg.rect(px + 0.15 + 0.05 * k, top + 0.3 + 0.05 * k, pw - 0.3 - 0.1 * k, bottom - top - 0.9 - 0.1 * k, { stroke: MID, width: 0.13, fill: '#eef3f3' })
+          svg.line(px + pw * 0.3, top + (bottom - top) * 0.3, px + pw * 0.45, top + (bottom - top) * 0.2, 0.13, SOFT)
+        }
+      } else if (type === 'glassFixed') {
+        const count = Math.max(1, Math.round((b - a) / k / 1.5))
+        const pw = (b - a) / count
+        for (let p = 0; p < count; p += 1) {
+          const px = a + p * pw
+          svg.rect(px + 0.1, top + 0.2, pw - 0.2, bottom - top - 0.4, { stroke: MID, width: 0.18, fill: '#eef3f3' })
+          svg.line(px + pw * 0.25, top + (bottom - top) * 0.35, px + pw * 0.5, top + (bottom - top) * 0.15, 0.13, SOFT)
+        }
+        svg.rect(a, bottom - 0.4, b - a, 0.4, { width: 0.13, fill: MID })
       } else if (type === 'louver') {
         for (let y = top + 1.2; y < bottom - 0.4; y += 0.11 * k) svg.rect(a, y, b - a, 0.05 * k, { stroke: MID, width: 0.13, fill: '#e9ecea' })
+      } else if (type === 'slatAlu' || type === 'slatWood') {
+        const pitch = (type === 'slatWood' ? 0.115 : 0.105) * k
+        const slat = (type === 'slatWood' ? 0.095 : 0.08) * k
+        for (let y = top + 0.6; y + slat < bottom - 0.2; y += pitch) svg.rect(a, y, b - a, slat, { stroke: MID, width: 0.12, fill: type === 'slatWood' ? WOOD : '#dfe2e0' })
       }
     }
   }
@@ -325,8 +374,25 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     svg.rect(X(-w / 2), Zp(-d / 2), w * k, d * k, { width: 0.35, dash: '2.2 1.1' })
     svg.rect(X(-w / 2 + BEAM_W), Zp(-d / 2 + BEAM_W), (w - 2 * BEAM_W) * k, (d - 2 * BEAM_W) * k, { width: 0.18, stroke: MID, dash: '1.6 1' })
     drawRoofPlan()
+    // Mennyezeti ventilátor(ok): a metszősík fölött, ezért szaggatva; tartógerenda és lapátkör.
+    const fans = fanLayout(config)
+    fans.bars.forEach((bar) => svg.rect(X(-w / 2 + BEAM_W), Zp(bar.at - 0.035), (w - 2 * BEAM_W) * k, 0.07 * k, { stroke: MID, width: 0.18, dash: '1.2 0.8' }))
+    fans.positions.forEach(([fx, fz]) => {
+      svg.circle(X(fx), Zp(fz), (FAN_DIAMETER / 2) * k, { stroke: MID, width: 0.2, dash: '1.4 0.9' })
+      svg.circle(X(fx), Zp(fz), 0.1 * k, { stroke: INK, width: 0.25, fill: '#ffffff' })
+      svg.text(X(fx), Zp(fz) + (FAN_DIAMETER / 2) * k + 2.6, `ventilátor Ø${Math.round(FAN_DIAMETER * 100)}`, 1.6, { anchor: 'middle', color: MID, weight: 'semi' })
+    })
     // Oldalzárások (a metszősíkban, vastagon).
-    ;(['front', 'back', 'left', 'right'] as SideKey[]).forEach((side) => drawSideInPlan(side, sideOf(side)))
+    ;(['front', 'back', 'left', 'right'] as SideKey[]).forEach((side) => {
+      const parts = segmentsOf(side)
+      parts.forEach(({ segment, a, b }) => drawSideInPlan(side, segment.type, a, b, segment.half !== null))
+      if (needsMullion(side)) {
+        const horizontal = side === 'front' || side === 'back'
+        const fixed = horizontal ? (side === 'front' ? d / 2 - 0.09 : -d / 2 + 0.09) : (side === 'left' ? -w / 2 + 0.09 : w / 2 - 0.09)
+        const [cx, cy] = horizontal ? [X(0), Zp(fixed)] : [X(fixed), Zp(0)]
+        svg.rect(cx - (MULLION / 2) * k, cy - (MULLION / 2) * k, MULLION * k, MULLION * k, { width: 0.2, fill: INK })
+      }
+    })
     // Oszlopok (metszve: telt).
     posts.forEach(([x, z]) => svg.rect(X(x - POST / 2), Zp(z - POST / 2), POST * k, POST * k, { width: 0.35, fill: INK }))
     // Tengelyek: vékony pontvonal az oszlopokon át.
@@ -387,22 +453,25 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       svg.line(X(px - solar.size[0] / 2), Zp(pz - solar.size[1] / 2), X(px + solar.size[0] / 2), Zp(pz + solar.size[1] / 2), 0.1, FAINT)
     })
     const label = solar ? `napelem ${solar.count} × ${PANEL.wp} Wp` : { louvered: 'forgatható lamellák', retractable: 'eltolható lamellacsomag', fabric: 'behúzható ponyva', glass: 'VSG üvegtető', polycarbonate: 'polikarbonát tető', fixed: 'fix tetőpanel' }[roof]
+    // A tetőfelirat ne essen a ventilátor lapátkörébe.
+    const fanAlongX = (config.fans ?? 0) > 0 && fanLayout(config).positions.every(([, z]) => z === 0)
     const cx = X(-w / 6)
-    const cy = Zp(0)
+    const cy = Zp(fanAlongX ? -d * 0.3 : 0)
     svg.rect(cx - label.length * 0.62 - 1.2, cy - 2.2, label.length * 1.24 + 2.4, 3.2, { stroke: 'none', fill: '#ffffff' })
     svg.text(cx, cy, label, 1.9, { anchor: 'middle', color: MID, weight: 'semi' })
   }
 
-  function drawSideInPlan(side: SideKey, type: SideType) {
+  function drawSideInPlan(side: SideKey, type: SideType, from: number, to: number, half: boolean) {
     if (type === 'none') return
     const horizontal = side === 'front' || side === 'back'
     const fixed = horizontal ? (side === 'front' ? d / 2 - 0.09 : -d / 2 + 0.09) : (side === 'left' ? -w / 2 + 0.09 : w / 2 - 0.09)
-    const length = horizontal ? w - 0.18 - POST : d - 0.18 - POST
-    const start = -length / 2
+    const length = to - from
+    const start = from
     const P = (along: number, across = 0): [number, number] => (horizontal ? [X(along), Zp(fixed + across)] : [X(fixed + across), Zp(along)])
     const seg = (a: number, b: number, across: number, width: number, color = INK) => { const [x1, y1] = P(a, across); const [x2, y2] = P(b, across); svg.line(x1, y1, x2, y2, width, color) }
-    if (type === 'glass') {
+    if (type === 'glass' || type === 'glassFramed') {
       const { count, width: pw } = glassPanels(length)
+      if (type === 'glassFramed') { seg(start, start + length, -0.045, 0.13, INK); seg(start, start + length, 0.045, 0.13, INK) }
       seg(start, start + length, -0.03, 0.13, MID)
       seg(start, start + length, 0.03, 0.13, MID)
       for (let p = 0; p < count; p += 1) {
@@ -412,6 +481,14 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     } else if (type === 'zip') {
       seg(start, start + length, 0, 0.45, INK)
       seg(start, start + length, 0.05, 0.13, SOFT)
+    } else if (type === 'glassFixed') {
+      seg(start, start + length, 0, 0.35, INK)
+      const count = Math.max(1, Math.round(length / 1.5))
+      for (let p = 1; p < count; p += 1) seg(start + (p * length) / count - 0.02, start + (p * length) / count + 0.02, 0, 0.9, INK)
+    } else if (type === 'slatAlu' || type === 'slatWood') {
+      seg(start, start + length, -0.025, 0.18, INK)
+      seg(start, start + length, 0.025, 0.18, INK)
+      if (type === 'slatWood') for (let a = start + 0.04; a < start + length - 0.03; a += 0.08) { const [x1, y1] = P(a, -0.025); const [x2, y2] = P(a + 0.04, 0.025); svg.line(x1, y1, x2, y2, 0.1, MID) }
     } else {
       const step = 0.11
       for (let a = start + 0.05; a < start + length - 0.04; a += step) {
@@ -421,7 +498,10 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       }
     }
     // Felirat a mező közepén, kívül.
-    const [tx, ty] = P(start + length * (horizontal ? 0.25 : 0.5), side === 'front' ? 0.32 : side === 'back' ? -0.32 : side === 'left' ? -0.32 : 0.32)
+    // Felirat helye: ne essen az A–A metszősík jelére (elöl/hátul az x = CUT(w) vonalán).
+    const candidates = horizontal && !half ? [0.25] : [0.5, 0.25, 0.75, 0.15, 0.85]
+    const along = (candidates.map((f) => start + length * f).find((x) => !horizontal || Math.abs(x - CUT(w)) > 0.85) ?? start + length * candidates[0])
+    const [tx, ty] = P(along, side === 'front' ? 0.32 : side === 'back' ? -0.32 : side === 'left' ? -0.32 : 0.32)
     const text = SIDE_SHORT[type]
     if (horizontal) svg.text(tx, ty + (side === 'front' ? 0.6 : 0.6), text, 1.75, { anchor: 'middle', color: MID, weight: 'semi' })
     else svg.text(tx + (side === 'left' ? -0.4 : 0.6), ty, text, 1.75, { anchor: 'middle', color: MID, weight: 'semi', rotate: -90 })
@@ -440,17 +520,19 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       svg.path(`M${r2(Zs(-d / 2))} ${r2(Ys(h + 0.245))} L${r2(Zs(-d / 2 + 0.3))} ${r2(Ys(h + 0.205))}`, { width: 0.45 })
     }
     // A metszősíkon túli oldal (jobb oldal) nézetben.
-    const rightType = sideOf('right')
     const rightPosts = posts.filter(([x]) => x > CUT(w)).map(([, z]) => z).sort((a, b) => a - b)
-    if (rightType !== 'none') {
-      const a = Zs(-d / 2 + 0.09 + POST / 2)
-      const b = Zs(d / 2 - 0.09 - POST / 2)
+    segmentsOf('right').forEach(({ segment, a: za, b: zb }) => {
+      const type = segment.type
+      const a = Zs(za)
+      const b = Zs(zb)
       const top = Ys(levels.beamBottom)
       const bottom = Ys(0.04)
-      if (rightType === 'zip') { svg.rect(a, top, b - a, 0.13 * k, { width: 0.18, fill: '#e6e8e6' }); svg.rect(a, top + 0.13 * k, b - a, bottom - top - 0.13 * k, { stroke: SOFT, width: 0.13, fill: '#f5f6f4' }) }
-      else if (rightType === 'glass') { const { count } = glassPanels((b - a) / k); const pw = (b - a) / count; for (let p = 0; p < count; p += 1) svg.rect(a + p * pw + 0.15, top + 0.3, pw - 0.3, bottom - top - 0.9, { stroke: SOFT, width: 0.13, fill: '#f1f5f5' }) }
+      if (type === 'zip') { svg.rect(a, top, b - a, 0.13 * k, { width: 0.18, fill: '#e6e8e6' }); svg.rect(a, top + 0.13 * k, b - a, bottom - top - 0.13 * k, { stroke: SOFT, width: 0.13, fill: '#f5f6f4' }) }
+      else if (type === 'glass' || type === 'glassFramed' || type === 'glassFixed') { const count = type === 'glassFixed' ? Math.max(1, Math.round((b - a) / k / 1.5)) : glassPanels((b - a) / k).count; const pw = (b - a) / count; for (let p = 0; p < count; p += 1) svg.rect(a + p * pw + 0.15, top + 0.3, pw - 0.3, bottom - top - 0.9, { stroke: type === 'glassFramed' ? MID : SOFT, width: type === 'glassFramed' ? 0.3 : 0.13, fill: '#f1f5f5' }) }
+      else if (type === 'slatAlu' || type === 'slatWood') { for (let y = top + 0.6; y < bottom - 0.4; y += 0.11 * k) svg.rect(a, y, b - a, 0.085 * k, { stroke: SOFT, width: 0.1, fill: type === 'slatWood' ? '#efe6d6' : '#eceeec' }) }
       else for (let y = top + 1.2; y < bottom - 0.4; y += 0.11 * k) svg.rect(a, y, b - a, 0.05 * k, { stroke: SOFT, width: 0.1, fill: '#eef0ee' })
-    }
+    })
+    if (needsMullion('right')) svg.rect(Zs(-MULLION / 2), Ys(levels.beamBottom), MULLION * k, (levels.beamBottom - 0.02) * k, { width: 0.25, fill: '#ffffff' })
     // A metszősíkon túli oszlopok nézetben.
     rightPosts.forEach((z) => svg.rect(Zs(z - POST / 2), Ys(levels.beamBottom), POST * k, levels.beamBottom * k, { width: 0.35, fill: '#ffffff' }))
     // Oldalgerenda nézetben, a hossz- (elülső/hátsó) gerendák metszve.

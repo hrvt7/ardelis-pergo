@@ -48,7 +48,7 @@ const CAMERA_VIEWS: { id: CameraView; label: string; icon: typeof View }[] = [
 ]
 
 const CHANGE_LABELS: Record<string, string> = {
-  width: 'Szélesség', depth: 'Mélység', height: 'Magasság', mount: 'Rögzítés', roof: 'Tetőrendszer', frameColor: 'Szerkezetszín', customRal: 'Egyedi RAL', sides: 'Oldalkialakítás', louverAngle: 'Lamellaszög', screenOpen: 'ZIP nyitottság', led: 'Periméter LED', heaters: 'Teraszfűtés', speakers: 'Hangrendszer', sensors: 'Szenzorcsomag', solar: 'Napelemes tető',
+  width: 'Szélesség', depth: 'Mélység', height: 'Magasság', mount: 'Rögzítés', roof: 'Tetőrendszer', frameColor: 'Szerkezetszín', customRal: 'Egyedi RAL', sides: 'Oldalkialakítás', louverAngle: 'Lamellaszög', screenOpen: 'ZIP nyitottság', led: 'Periméter LED', heaters: 'Teraszfűtés', speakers: 'Hangrendszer', sensors: 'Szenzorcsomag', solar: 'Napelemes tető', split: 'Osztott oldal', ledRgb: 'Színváltós LED', fans: 'Mennyezeti ventilátor', smartHome: 'Okosotthon-vezérlés',
 }
 
 const savedKey = (tenant: Tenant) => `pergo-atelier-saved-v3:${tenant.id}`

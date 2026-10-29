@@ -4,10 +4,11 @@
 import { z } from 'zod'
 import { calculatePrice } from '../lib/pricing'
 import { ROOF_TYPES } from '../lib/roofs'
+import { isWallSide } from '../lib/mount'
 import type { PergolaConfig, PriceBreakdown, PriceSettings, RoofType, SideKey } from '../types/pergola'
 import type { Tenant } from './types'
 
-const sideEnum = z.enum(['none', 'zip', 'glass', 'louver'])
+const sideEnum = z.enum(['none', 'zip', 'glass', 'glassFramed', 'glassFixed', 'louver', 'slatAlu', 'slatWood'])
 
 /** Szerkezeti séma: típusokat és durva tartományt ellenőriz, gyártótól függetlenül. */
 export const pergolaConfigSchema = z.object({
@@ -26,6 +27,10 @@ export const pergolaConfigSchema = z.object({
   speakers: z.boolean(),
   sensors: z.boolean(),
   solar: z.boolean().optional(),
+  split: z.object({ front: sideEnum.optional(), back: sideEnum.optional(), left: sideEnum.optional(), right: sideEnum.optional() }).optional(),
+  ledRgb: z.boolean().optional(),
+  fans: z.number().int().min(0).max(4).optional(),
+  smartHome: z.boolean().optional(),
 })
 
 export const priceSettingsSchema = z.object({
@@ -46,6 +51,14 @@ export const priceSettingsSchema = z.object({
   speakerPairNet: z.number().min(0).max(2000000),
   sensorsNet: z.number().min(0).max(2000000),
   solarPerKwpNet: z.number().min(0).max(5000000).default(330000),
+  glassFramedPerM2Net: z.number().min(0).max(1000000).default(95000),
+  glassFixedPerM2Net: z.number().min(0).max(1000000).default(80000),
+  slatAluPerM2Net: z.number().min(0).max(1000000).default(55000),
+  slatWoodPerM2Net: z.number().min(0).max(1000000).default(45000),
+  splitProfileNet: z.number().min(0).max(1000000).default(35000),
+  ledRgbPerMeterNet: z.number().min(0).max(500000).default(4000),
+  fanUnitNet: z.number().min(0).max(2000000).default(130000),
+  smartHomeNet: z.number().min(0).max(2000000).default(120000),
   customColorRate: z.number().min(0).max(1),
   installationRate: z.number().min(0).max(1),
   vatRate: z.number().min(0).max(1),
@@ -81,23 +94,35 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     return [side, type === 'none' || tenant.sides.includes(type) ? type : 'none']
   })) as PergolaConfig['sides']
   const frameColor = colorOk ? config.frameColor : (colorIds[0] ?? 'anthracite')
+  const mount = tenant.mounts.includes(config.mount) ? config.mount : tenant.mounts[0]
+  // Félbe osztás: csak nem fali oldalon, a gyártó által kínált típussal.
+  const splitEntries = (['front', 'back', 'left', 'right'] as SideKey[]).flatMap((side) => {
+    const type = config.split?.[side]
+    if (!type || isWallSide(mount, side)) return []
+    return [[side, type === 'none' || tenant.sides.includes(type) ? type : 'none'] as const]
+  })
+  const led = tenant.extras.led && config.led
   return {
     ...config,
     width: roundCm(clamp(config.width, tenant.limits.width)),
     depth: roundCm(clamp(config.depth, tenant.limits.depth)),
     height: roundCm(clamp(config.height, tenant.limits.height)),
-    mount: tenant.mounts.includes(config.mount) ? config.mount : tenant.mounts[0],
+    mount,
     roof: roofs.includes(config.roof) ? config.roof : roofs[0],
     frameColor,
     customRal: frameColor === 'custom' && config.customRal ? config.customRal : undefined,
     sides,
     louverAngle: clamp(config.louverAngle, [0, 90]),
     screenOpen: clamp(config.screenOpen, [0, 100]),
-    led: tenant.extras.led && config.led,
+    led,
     speakers: tenant.extras.speakers && config.speakers,
     sensors: tenant.extras.sensors && config.sensors,
     heaters: Math.round(clamp(config.heaters, [0, tenant.limits.maxHeaters])),
     // Napelem csak fix tetőn és csak ott, ahol a gyártó kínálja; különben a mező el is marad.
+    split: splitEntries.length ? Object.fromEntries(splitEntries) as PergolaConfig['split'] : undefined,
+    ledRgb: led && tenant.extras.rgb && config.ledRgb ? true : undefined,
+    fans: tenant.extras.fans && config.fans ? Math.round(clamp(config.fans, [0, 2])) || undefined : undefined,
+    smartHome: tenant.extras.smartHome && config.smartHome ? true : undefined,
     ...(tenant.extras.solar && config.solar && (roofs.includes(config.roof) ? config.roof : roofs[0]) === 'fixed' ? { solar: true } : { solar: undefined }),
   }
 }

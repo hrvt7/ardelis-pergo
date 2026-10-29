@@ -74,6 +74,10 @@ export interface Tenant {
     sensors: boolean
     /** Napelemes tető a fix tetős változathoz. */
     solar?: boolean
+    /** Színváltós LED, mennyezeti ventilátor, okosotthon-vezérlés. */
+    rgb?: boolean
+    fans?: boolean
+    smartHome?: boolean
   }
   /** Az üzemeltetési költség becsléséhez: a kínált fűtőpanel névleges teljesítménye (W). */
   energy?: { heaterWatts: number }
