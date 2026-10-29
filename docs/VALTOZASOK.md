@@ -22,7 +22,7 @@ vezérlés és energia):
 - **Színváltós RGB+W LED** — a LED al-opciója, folyóméteres felárral. Színminták az Extrákban
   és az esti hangulat panelen; koppintásra esti nézetben mutatja a teraszt az adott színnel.
 - **Mennyezeti ventilátor** (0–2 db) — tartógerendával, 3D-ben forgatható (≈30 fps-re
-  korlátozva, hogy mobilon ne merítse az akkut). 2,5 m oszlopmagasság alatt figyelmeztet
+  korlátozva, hogy mobilon ne merítse az akkut). 2,55 m oszlopmagasság alatt figyelmeztet
   (lapátok alatt 2,1 m). A rajz alaprajzán Ø132-es lapátkörrel jelölve.
 - **Okosotthon-vezérlés** — a kártya megmutatja, mit kapcsol az app ebben a tervben
   (tető, ZIP-ek, LED, fűtés, ventilátor).

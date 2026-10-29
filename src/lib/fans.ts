@@ -8,7 +8,7 @@ export const FAN_DIAMETER = 1.32
 /** A lapátsík a gerenda alja alatt (m). */
 export const FAN_DROP = 0.3
 /** Ennél alacsonyabb szabad belmagasságnál figyelmeztetünk (a lapátok alatt ≥ 2,1 m maradjon). */
-export const FAN_MIN_HEIGHT = 2.5
+export const FAN_MIN_HEIGHT = 2.55
 
 export interface FanLayout {
   /** Ventilátorok középpontja [x, z]. */

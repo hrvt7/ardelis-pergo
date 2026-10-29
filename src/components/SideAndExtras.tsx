@@ -140,7 +140,7 @@ export function FanOption({ config, scene, prices, onChange, onSceneChange }: Co
       <div className="stepper"><button type="button" aria-label="Ventilátor csökkentése" disabled={fans === 0} onClick={() => onChange({ fans: fans > 1 ? fans - 1 : undefined })}><Minus size={15} /></button><span>{fans} db</span><button type="button" aria-label="Ventilátor növelése" disabled={fans >= 2} onClick={() => onChange({ fans: fans + 1 })}><Plus size={15} /></button></div>
     </div>}
     {fans > 0 && <>
-      {config.height < FAN_MIN_HEIGHT && <p className="fan-warning">{`Alacsony belmagasság: ${FAN_MIN_HEIGHT.toFixed(1).replace('.', ',')} m oszlopmagasság alatt a lapátok 2,1 m alá kerülhetnek. Felméréskor ellenőrizzük, vagy válassz magasabb oszlopot.`}</p>}
+      {config.height < FAN_MIN_HEIGHT && <p className="fan-warning">{`Alacsony belmagasság: ${String(FAN_MIN_HEIGHT).replace('.', ',')} m oszlopmagasság alatt a lapátok 2,1 m alá kerülhetnek. Felméréskor ellenőrizzük, vagy válassz magasabb oszlopot.`}</p>}
       <button type="button" className="side-motion-control" aria-pressed={scene.fanOn} onClick={() => onSceneChange({ fanOn: !scene.fanOn })}><Power size={16} /><span>{scene.fanOn ? 'Ventilátor kikapcsolása' : 'Ventilátor bekapcsolása a 3D-ben'}</span></button>
     </>}
   </>
