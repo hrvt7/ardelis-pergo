@@ -14,7 +14,7 @@ const SIDE_VALUE: Record<SideType, number> = { glass: 2.4, louver: 1.8, zip: 1.4
 const SIZE_STEPS = 9
 const SIDES: SideKey[] = ['front', 'back', 'left', 'right']
 const SIDE_NAMES: Record<SideKey, string> = { front: 'Elülső oldal', back: 'Hátsó oldal', left: 'Bal oldal', right: 'Jobb oldal' }
-const EXTRA_LOSS = { led: 1, speakers: 0.7, sensors: 1, heater: 0.8, color: 0.9 }
+const EXTRA_LOSS = { led: 1, speakers: 0.7, sensors: 1, heater: 0.8, color: 0.9, solar: 1.1 }
 
 export interface BudgetPlan {
   id: 'balanced' | 'keep-size' | 'keep-equipment'
@@ -49,6 +49,7 @@ function equipmentSteps(tenant: Tenant, config: PergolaConfig, original: Pergola
   if (config.heaters > 0) steps.push({ apply: (c) => ({ ...c, heaters: c.heaters - 1 }), loss: EXTRA_LOSS.heater })
   if (config.led) steps.push({ apply: (c) => ({ ...c, led: false }), loss: EXTRA_LOSS.led })
   if (config.sensors) steps.push({ apply: (c) => ({ ...c, sensors: false }), loss: EXTRA_LOSS.sensors })
+  if (config.solar) steps.push({ apply: (c) => ({ ...c, solar: undefined }), loss: EXTRA_LOSS.solar })
   if (config.frameColor === 'custom' && original.frameColor === 'custom') steps.push({ apply: (c) => ({ ...c, frameColor: tenant.colors[0]?.id ?? 'anthracite', customRal: undefined }), loss: EXTRA_LOSS.color })
   return steps
 }
@@ -65,6 +66,7 @@ function restoreSteps(config: PergolaConfig, original: PergolaConfig): { config:
   if (config.heaters < original.heaters) steps.push({ config: { ...config, heaters: config.heaters + 1 }, gain: EXTRA_LOSS.heater })
   if (original.led && !config.led) steps.push({ config: { ...config, led: true }, gain: EXTRA_LOSS.led })
   if (original.sensors && !config.sensors) steps.push({ config: { ...config, sensors: true }, gain: EXTRA_LOSS.sensors })
+  if (original.solar && !config.solar && config.roof === 'fixed') steps.push({ config: { ...config, solar: true }, gain: EXTRA_LOSS.solar })
   if (original.frameColor !== config.frameColor) steps.push({ config: { ...config, frameColor: original.frameColor, customRal: original.customRal }, gain: EXTRA_LOSS.color })
   return steps
 }
@@ -92,6 +94,7 @@ export function describeChanges(tenant: Tenant, original: PergolaConfig, next: P
   if (original.speakers && !next.speakers) changes.push('Hangrendszer nélkül')
   if (original.led && !next.led) changes.push('LED-világítás nélkül')
   if (original.sensors && !next.sensors) changes.push('Eső- és szélszenzor nélkül')
+  if (original.solar && !next.solar) changes.push('Napelemes tető nélkül')
   if (original.frameColor !== next.frameColor) changes.push('Egyedi RAL szín helyett antracit')
   return changes
 }

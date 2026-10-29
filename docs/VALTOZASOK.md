@@ -1,5 +1,24 @@
 # Változások
 
+## 3.8 — Tanácsadó, téli nézet, üzemeltetési költség, napelemes tető (2026. 10. 29.)
+- **Tanácsadó** (fejléc + az első lépések elején): 4 kérdés (használat, időjárás, fény, hely)
+  → javasolt pergola indoklással, árral és egy olcsóbb alternatívával; egy kattintással a 3D-be,
+  bútorral együtt. Csak a gyártó kínálatából választ; mind a 108 válaszkombináció tesztelve.
+- **Téli nézet** (Tél gomb): hó a kertben, a ház tetején és a teraszon a tető vetületén kívül
+  (alatta száraz), havazás, kopasz fák, téli fény. Lamellás tető zárva, textiltető behúzva.
+  Tájékoztató panel a tervhez szabva (tető, oldalak), egy kattintásos tolóüveg/fűtés ajánlattal.
+- **Üzemeltetési költség**: éves áramköltség a 2026. októberi lakossági tarifával
+  (36,386 Ft/kWh 2523 kWh/év-ig, felette 70,104 Ft/kWh). Ismeretlen háztartási fogyasztásnál a
+  felső sávval (óvatos becslés); megadott fogyasztásnál sávhatár-átlépéssel is pontosan.
+  Fogyasztók: fűtés (gyártói kW, állítható óraszám, fél teljesítmény), LED (10 W/fm), motorok,
+  hangrendszer, készenlét. Az árpanelen, az Extrák lépésben, az összegzésben és a PDF-ben.
+- **Napelemes tető** (gyártónként kapcsolható, fix tetőre): valós panelkiosztás (1134 × 1762 mm,
+  430 Wp), 3D-modulok, kWp-ár, termelés (900 kWh/kWp/év, óvatos), éves érték bruttó elszámolással
+  (betáplálás ~5 Ft/kWh), megtérülés, figyelmeztetés szaldós rendszer bővítésére és az elosztói
+  engedélyre. Link, kód (-PV), anyaglista, műszaki rajz, PDF, költségkeret-tervező.
+- A demó napelem-ár (320 000 Ft/kWp nettó) **becsült érték**, a gyártó adja meg a sajátját.
+- Telefonon a gyorsgombok függőleges sávba kerültek; 63 automatikus teszt.
+
 ## 3.7 — Új PDF: méretarányos műszaki rajzzal (2026. 10. 28.)
 - Teljesen újratervezett, 4 oldalas PDF, Manrope betűvel (beágyazva, ő/ű rendben):
   1. **Borító** — 3D-kép, fő adatok, bruttó irányár, havi példa, QR-kód a 3D tervhez.

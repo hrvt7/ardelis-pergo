@@ -1,3 +1,4 @@
+import { PANEL, panelLayout } from './solar'
 import { ROOF_INFO, ROOF_TYPES } from './roofs'
 import { isWallSide, omittedPosts, sideWalls } from './mount'
 import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, RoofType, SideKey, SideType } from '../types/pergola'
@@ -19,6 +20,7 @@ export const DEFAULT_PRICES: PriceSettings = {
   heaterUnitNet: 220000,
   speakerPairNet: 280000,
   sensorsNet: 180000,
+  solarPerKwpNet: 320000,
   customColorRate: 0.06,
   installationRate: 0.12,
   vatRate: 0.27,
@@ -147,6 +149,16 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
       label: 'Eső- és szélérzékelő csomag',
       detail: 'Automata vezérlési mintacsomag',
       amountNet: round(prices.sensorsNet),
+    })
+  }
+
+  if (config.solar && config.roof === 'fixed') {
+    const layout = panelLayout(config)
+    if (layout.count > 0) lines.push({
+      id: 'solar',
+      label: 'Napelemes tető',
+      detail: `${layout.count} × ${PANEL.wp} Wp = ${formatNumber(layout.kwp, 2)} kWp · ${formatHuf(prices.solarPerKwpNet)} / kWp`,
+      amountNet: round(layout.kwp * prices.solarPerKwpNet),
     })
   }
 

@@ -22,7 +22,10 @@ export function configToCompact(config: PergolaConfig) {
     config.led ? 1 : 0, config.heaters, config.speakers ? 1 : 0, config.sensors ? 1 : 0,
   ].map(String)
   // Csak a hash-mintában engedett karakterek maradhatnak (A–Z, 0–9, . -); minden más %XX.
-  if (config.frameColor === 'custom' && config.customRal) parts.push(encodeURIComponent(config.customRal.slice(0, 12)).replace(/[_!'()*~]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`))
+  const ral = config.frameColor === 'custom' && config.customRal ? encodeURIComponent(config.customRal.slice(0, 12)).replace(/[_!'()*~]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`) : ''
+  // 14. mező: egyedi RAL (üres is lehet), 15.: „p” = napelemes tető. A régi linkek változatlanul olvashatók.
+  if (ral || config.solar) parts.push(ral)
+  if (config.solar) parts.push('p')
   return parts.join('_')
 }
 
@@ -30,7 +33,7 @@ export function configToCompact(config: PergolaConfig) {
 export function compactToJson(code: string): unknown {
   const parts = code.split('_')
   if (parts.length < 13) return null
-  const [w, d, h, mount, roof, color, sides, angle, open, led, heaters, speakers, sensors, ral] = parts
+  const [w, d, h, mount, roof, color, sides, angle, open, led, heaters, speakers, sensors, ral, flags] = parts
   const sideMap = invert(SIDE)
   const number = (value: string) => Number(value)
   return {
@@ -40,6 +43,7 @@ export function compactToJson(code: string): unknown {
     louverAngle: number(angle), screenOpen: number(open),
     led: led === '1', heaters: number(heaters), speakers: speakers === '1', sensors: sensors === '1',
     ...(ral ? { customRal: decodeURIComponent(ral) } : {}),
+    ...(flags === 'p' ? { solar: true } : {}),
   }
 }
 

@@ -23,6 +23,8 @@ export interface PergolaConfig {
   heaters: number
   speakers: boolean
   sensors: boolean
+  /** Napelemes tető (csak fix tetőre, ha a gyártó kínálja). */
+  solar?: boolean
 }
 
 export interface SceneSettings {
@@ -63,6 +65,8 @@ export interface SceneSettings {
   ledLevel: number
   ledKelvin: number
   heatersOn: boolean
+  /** Téli nézet: hó a kertben és a tetőn, havazás. */
+  winter: boolean
 }
 
 export type FurnitureSet = 'none' | 'lounge' | 'dining6' | 'dining8' | 'combo'
@@ -98,6 +102,8 @@ export interface PriceSettings {
   heaterUnitNet: number
   speakerPairNet: number
   sensorsNet: number
+  /** Napelemes tető, nettó Ft / kWp (modulok, tartószerkezet, inverter-csatlakozás). */
+  solarPerKwpNet: number
   customColorRate: number
   installationRate: number
   vatRate: number

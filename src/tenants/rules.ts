@@ -25,6 +25,7 @@ export const pergolaConfigSchema = z.object({
   heaters: z.number().int().min(0).max(20),
   speakers: z.boolean(),
   sensors: z.boolean(),
+  solar: z.boolean().optional(),
 })
 
 export const priceSettingsSchema = z.object({
@@ -44,6 +45,7 @@ export const priceSettingsSchema = z.object({
   heaterUnitNet: z.number().min(0).max(2000000),
   speakerPairNet: z.number().min(0).max(2000000),
   sensorsNet: z.number().min(0).max(2000000),
+  solarPerKwpNet: z.number().min(0).max(5000000).default(320000),
   customColorRate: z.number().min(0).max(1),
   installationRate: z.number().min(0).max(1),
   vatRate: z.number().min(0).max(1),
@@ -95,6 +97,8 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     speakers: tenant.extras.speakers && config.speakers,
     sensors: tenant.extras.sensors && config.sensors,
     heaters: Math.round(clamp(config.heaters, [0, tenant.limits.maxHeaters])),
+    // Napelem csak fix tetőn és csak ott, ahol a gyártó kínálja; különben a mező el is marad.
+    ...(tenant.extras.solar && config.solar && (roofs.includes(config.roof) ? config.roof : roofs[0]) === 'fixed' ? { solar: true } : { solar: undefined }),
   }
 }
 

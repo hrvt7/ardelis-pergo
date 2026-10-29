@@ -12,6 +12,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   showDimensions: false,
   autoRotate: false,
   rain: false,
+  winter: false,
   wind: false,
   showPerson: false,
   showHotspots: false,

@@ -6,6 +6,8 @@ import { isWallSide, MOUNT_LABELS, postPositions, wallLabel } from './mount'
 import { formatHuf, formatNumber } from './pricing'
 import { ROOF_INFO } from './roofs'
 import { getBom, getDeliveryEstimate, getSpecCode } from './specification'
+import { DEFAULT_USAGE, estimateEnergy, roundCost, TARIFF, type EnergyUsage } from './energy'
+import { estimateSolar, PANEL } from './solar'
 import type { Tenant } from '../tenants/types'
 import type { PergolaConfig, PriceBreakdown, RoofType, SideKey } from '../types/pergola'
 
@@ -42,12 +44,14 @@ export interface PdfInput {
   /** A konfiguráció megosztó linkje — a borítón QR-kódként. */
   shareUrl?: string
   date?: Date
+  /** Az üzemeltetési becslés beállításai (a felületen állítottak szerint). */
+  energyUsage?: EnergyUsage
 }
 
 const m2 = (value: number) => formatNumber(value, 2)
 const hu = (date: Date) => date.toLocaleDateString('hu-HU', { year: 'numeric', month: '2-digit', day: '2-digit' })
 
-export function buildPdfDefinition({ config, price, tenant, image, imageAspect = 16 / 10, shareUrl, date = new Date() }: PdfInput): TDocumentDefinitions {
+export function buildPdfDefinition({ config, price, tenant, image, imageAspect = 16 / 10, shareUrl, date = new Date(), energyUsage = DEFAULT_USAGE }: PdfInput): TDocumentDefinitions {
   const brand = tenant.brand.name
   const brandLine = [brand, tenant.brand.suffix].filter(Boolean).join(' ')
   const code = getSpecCode(config)
@@ -91,7 +95,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
   const fact = (label: string, value: string, sub: string): Content => ({
     stack: [eyebrow(label), { text: value, font: 'ManropeHeavy', fontSize: 14, color: INK, margin: [0, 5, 0, 1] }, { text: sub, fontSize: 7.5, color: MUTED }],
   })
-  const imageHeight = Math.min(330, 515 / imageAspect)
+  const imageHeight = Math.min(292, 515 / imageAspect)
   const cover: Content[] = [
     { text: `PERGOLA · ${MOUNT_LABELS[config.mount].toUpperCase()}`, font: 'ManropeSemi', fontSize: 7.5, characterSpacing: 1.6, color: ACCENT, margin: [0, 8, 0, 8] },
     { text: roofName, font: 'ManropeHeavy', fontSize: 44, color: INK, lineHeight: 0.95 },
@@ -130,6 +134,16 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
       layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },
     },
     { columns: [{ text: `Konfigurációs kód: ${code}`, fontSize: 7.5, color: MUTED }, { text: `Kelt: ${dateText}`, fontSize: 7.5, color: MUTED, alignment: 'right' }], margin: [0, 8, 0, 0] },
+    // Kapcsolat a borítón: itt van hely, és az első oldalon a legfontosabb.
+    {
+      columns: [
+        { width: 'auto', stack: [eyebrow('Kapcsolat', ACCENT), { text: brandLine, font: 'ManropeHeavy', fontSize: 11, color: INK, margin: [0, 3, 0, 0] }] },
+        { width: '*', stack: [{ text: tenant.demo ? 'Bemutató konfiguráció — a gyártó adatai éles használatban itt jelennek meg.' : contact, fontSize: 8, color: BODY, lineHeight: 1.35 }, { text: `Hivatkozz erre a kódra: ${code}`, font: 'ManropeSemi', fontSize: 7.5, color: MUTED, margin: [0, 3, 0, 0] }], margin: [0, 1, 0, 0] },
+      ],
+      columnGap: 18,
+      margin: [0, 18, 0, 0],
+      unbreakable: true,
+    },
   ]
 
   // ---------- 2. oldal: konfiguráció + anyaglista ----------
@@ -142,6 +156,8 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     ['Oszlopok', posts ? `${posts} db · ${Math.round(POST * 100)} × ${Math.round(POST * 100)} cm` : 'nincs · a falak tartják'],
     ['Szerkezetszín', [color.name, color.detail].filter(Boolean).join(' · ')],
   ]
+  const energy = estimateEnergy(config, energyUsage, tenant.energy?.heaterWatts)
+  const solarEstimate = config.roof === 'fixed' && config.solar ? estimateSolar(config, energyUsage.householdKwh) : null
   const roofRows: [string, string][] = [
     ['Rendszer', `${roofName} · ${roofShort}`],
     ['Árnyékolás', roof.shade],
@@ -149,6 +165,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     ['Fény', roof.light],
     ['Működtetés', roof.motion === 'none' ? 'fix' : 'motoros, távirányítóval'],
     ...(roofState ? [['Bemutatott állás', roofState] as [string, string]] : []),
+    ...(solarEstimate ? [['Napelem', `${solarEstimate.layout.count} × ${PANEL.wp} Wp = ${formatNumber(solarEstimate.layout.kwp, 2)} kWp`] as [string, string], ['Becsült termelés', `≈ ${formatNumber(Math.round(solarEstimate.production / 10) * 10, 0)} kWh/év`] as [string, string]] : []),
   ]
   const sideRows = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => [SIDE_NAMES[side], sideText(side)] as [string, string])
   const extraRows: [string, string][] = [
@@ -236,6 +253,18 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     sectionHead('04', 'Árkalkuláció', 'nettó egységárak, gyártói árlista'),
     hairTable(priceRows, ['*', 110]),
     totals,
+    ...(energy.hasElectrics || solarEstimate ? [{
+      margin: [0, 14, 0, 0],
+      table: {
+        widths: ['*', solarEstimate ? '*' : 0],
+        body: [[
+          { stack: [eyebrow('Becsült éves üzemeltetés', ACCENT), { text: energy.hasElectrics ? `≈ ${formatHuf(roundCost(energy.cost))} / év` : 'nincs áramfogyasztó', font: 'ManropeHeavy', fontSize: 13, color: INK, margin: [0, 4, 0, 2] }, { text: energy.hasElectrics ? `${formatNumber(Math.round(energy.kwh), 0)} kWh áram évente · ${energy.lines.map((line) => line.label.toLowerCase()).join(', ')}` : '', fontSize: 7.5, color: MUTED }], fillColor: PAPER, margin: [12, 10, 12, 10], border: [false, false, false, false] },
+          solarEstimate ? { stack: [eyebrow('Napelemes tető', ACCENT), { text: `≈ ${formatNumber(Math.round(solarEstimate.production / 10) * 10, 0)} kWh / év`, font: 'ManropeHeavy', fontSize: 13, color: INK, margin: [0, 4, 0, 2] }, { text: `≈ ${formatHuf(roundCost(solarEstimate.value))} éves érték (30% saját felhasználás, bruttó elszámolás)`, fontSize: 7.5, color: MUTED }], fillColor: PAPER, margin: [12, 10, 12, 10], border: [false, false, false, false] } : { text: '', border: [false, false, false, false] },
+        ]],
+      },
+      layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: (index: number) => (index === 1 ? 6 : 0), paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },
+      unbreakable: true,
+    } as Content, { text: `Áramár: ${TARIFF.source}, ${TARIFF.asOf} — ${TARIFF.below.toLocaleString('hu-HU')} Ft/kWh ${TARIFF.limit} kWh/év-ig, felette ${TARIFF.above.toLocaleString('hu-HU')} Ft/kWh (bruttó). ${energyUsage.householdKwh === null ? 'A háztartás fogyasztása nem ismert, ezért a felső sávval számoltunk.' : ''} Tájékoztató becslés, alapdíjak nélkül.`, fontSize: 6.5, color: MUTED, margin: [0, 5, 0, 0] } as Content] : []),
     { text: '', margin: [0, 0, 0, 14] },
     {
       unbreakable: true,
@@ -251,22 +280,6 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
       margin: [0, 0, 0, 16],
     },
       ],
-    },
-    {
-      table: {
-        widths: ['*'],
-        body: [[{
-          stack: [
-            eyebrow('Kapcsolat', ACCENT),
-            { text: brandLine, font: 'ManropeHeavy', fontSize: 13, color: INK, margin: [0, 5, 0, 3] },
-            { text: tenant.demo ? 'Bemutató konfiguráció — a gyártó adatai éles használatban itt jelennek meg.' : contact, fontSize: 8.5, color: BODY, lineHeight: 1.4 },
-            { text: `Hivatkozz erre a kódra: ${code}`, font: 'ManropeSemi', fontSize: 8, color: MUTED, margin: [0, 6, 0, 0] },
-          ],
-          fillColor: PAPER, margin: [14, 10, 14, 10], border: [false, false, false, false],
-        }]],
-      },
-      layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },
-      unbreakable: true,
     },
   ]
 

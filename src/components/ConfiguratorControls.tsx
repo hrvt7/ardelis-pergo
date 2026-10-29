@@ -1,12 +1,13 @@
 import { useRef, useState, type ReactNode, type TouchEvent } from 'react'
-import { ArrowLeft, ArrowRight, Box, Check, ChevronDown, CloudRain, Columns3, Expand, Image, LampCeiling, Layers3, Minus, Moon, Move, Plus, SlidersHorizontal, Sparkles, Sun, Sunset, Upload, Wind, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Box, Check, ChevronDown, ChevronRight, CloudRain, Columns3, Expand, Gauge, Image, LampCeiling, Layers3, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Wind, Zap } from 'lucide-react'
 import { getFrameColorHex } from '@/lib/config'
 import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, sideWalls, wallLabel } from '@/lib/mount'
-import { formatHuf, SIDE_LABELS } from '@/lib/pricing'
+import { formatHuf, formatNumber, SIDE_LABELS } from '@/lib/pricing'
 import { enabledRoofs, presetConfig, tenantPrice } from '@/tenants/rules'
 import { ROOF_INFO } from '@/lib/roofs'
 import { useTenant } from '@/tenants/TenantContext'
 import { getSizeRecommendation } from '@/lib/specification'
+import { estimateSolar } from '@/lib/solar'
 import FurniturePicker from '@/components/FurniturePicker'
 import type { ConfigStep, FrameColor, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey, SideType, WallFinish } from '@/types/pergola'
 
@@ -34,6 +35,11 @@ interface Props {
   onPhotoUpload: (file: File) => void
   mobileOpen: boolean
   onMobileToggle: () => void
+  /** A tanácsadó megnyitása (4 kérdés → javasolt konfiguráció). */
+  onAdvisor?: () => void
+  /** Üzemeltetési költség: becsült éves összeg és a részletek megnyitása. */
+  energyCost?: number | null
+  onEnergy?: () => void
 }
 
 
@@ -69,6 +75,35 @@ function SliderField({ label, value, min, max, step, unit, metric = false, onCha
       <div className="range-limits"><span>{metric ? Math.round(min * factor) : min * factor} {metric ? 'cm' : unit}</span><span>{metric ? Math.round(max * factor) : max * factor} {metric ? 'cm' : unit}</span></div>
     </div>
   )
+}
+
+/** A tanácsadó belépője: kiemelt kártya a lépések elején. */
+function AdvisorCard({ onOpen }: { onOpen: () => void }) {
+  return <button type="button" className="advisor-card" onClick={onOpen}>
+    <span className="advisor-card-icon"><WandSparkles size={18} /></span>
+    <span><strong>Nem tudod, hol kezdd?</strong><small>4 egyszerű kérdés, és összeállítjuk a hozzád illő pergolát</small></span>
+    <ChevronRight size={16} />
+  </button>
+}
+
+/** Napelemes tető kapcsoló: fix tetőnél be/ki, más tetőnél egy kattintással fix tetőre vált. */
+function SolarToggle({ config, prices, onChange }: { config: PergolaConfig; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void }) {
+  const { tenant } = useTenant()
+  if (!tenant.extras.solar || !tenant.roofs.fixed) return null
+  const solar = estimateSolar(config, null)
+  const fixedName = tenant.roofs.fixed.name
+  if (!solar.layout.count) return null
+  const current = tenantPrice(tenant, config, prices).totalGross
+  if (config.roof !== 'fixed') {
+    const switched = tenantPrice(tenant, { ...config, roof: 'fixed', solar: true }, prices).totalGross
+    return <button type="button" className="extra-card solar-switch" onClick={() => onChange({ roof: 'fixed', solar: true })}>
+      <SolarPanel size={20} strokeWidth={1.5} />
+      <span><strong>Napelemes tető</strong><small>A {fixedName} fix tetőre kérhető · {solar.layout.count} panel, ≈ {formatNumber(Math.round(solar.production / 100) * 100, 0)} kWh/év</small><em>Váltás {fixedName} + napelem: {switched >= current ? '+' : '−'}{formatHuf(Math.abs(switched - current))}</em></span>
+      <ArrowRight size={16} />
+    </button>
+  }
+  const delta = config.solar ? current - tenantPrice(tenant, { ...config, solar: undefined }, prices).totalGross : tenantPrice(tenant, { ...config, solar: true }, prices).totalGross - current
+  return <Toggle label="Napelemes tető" description={`${solar.layout.count} × 430 Wp = ${formatNumber(solar.layout.kwp, 2)} kWp · ≈ ${formatNumber(Math.round(solar.production / 100) * 100, 0)} kWh/év`} icon={SolarPanel} price={`${config.solar ? '' : '+'}${formatHuf(delta)}`} checked={Boolean(config.solar)} onChange={(solar) => onChange({ solar })} />
 }
 
 function Toggle({ label, description, checked, icon: Icon, price, onChange }: { label: string; description: string; checked: boolean; icon?: typeof Sun; price?: string; onChange: (checked: boolean) => void }) {
@@ -157,7 +192,7 @@ function RoofIcon({ roof }: { roof: RoofType }) {
   return <svg {...common}><rect x="2" y="6" width="24" height="8" rx="1" /></svg>
 }
 
-export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, onPhotoUpload, mobileOpen, onMobileToggle }: Props) {
+export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, onPhotoUpload, mobileOpen, onMobileToggle, onAdvisor, energyCost, onEnergy }: Props) {
   const { tenant } = useTenant()
   const { limits } = tenant
   const customRate = Math.round(prices.customColorRate * 100)
@@ -206,6 +241,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           <div className="step-heading"><span>0{stepIndex + 1} · {STEPS[stepIndex].short}</span><h2>{STEPS[stepIndex].label}</h2></div>
 
           {step === 'size' && <>
+            {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
             <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
             <SliderField label="Szélesség" value={config.width} min={limits.width[0]} max={limits.width[1]} step={0.05} unit="m" metric onChange={(width) => onChange({ width })} />
             <SliderField label="Mélység" value={config.depth} min={limits.depth[0]} max={limits.depth[1]} step={0.05} unit="m" metric onChange={(depth) => onChange({ depth })} />
@@ -218,6 +254,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
 
           {step === 'mount' && <>
             <SectionTitle title="Kiinduló csomagok" hint="Egy koppintással indulhatsz, utána minden paraméter szabadon módosítható." />
+            {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
             <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
             <SectionTitle title="Rögzítés" hint="A falak, az oszlopok és az ár a modellen is azonnal frissülnek." />
             <div className="roof-options mount-options">{MOUNT_TYPES.filter((mount) => tenant.mounts.includes(mount)).map((mount) => <button type="button" key={mount} className={config.mount === mount ? 'selected' : ''} aria-pressed={config.mount === mount} onClick={() => onChange({ mount })}><MountIcon mount={mount} /><span><strong>{MOUNT_LABELS[mount]}</strong><small>{MOUNT_DESCRIPTIONS[mount]}</small></span><span className="selection-dot">{config.mount === mount && <Check size={12} />}</span></button>)}</div>
@@ -241,6 +278,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               <div className="selected-side-head"><strong>Tetőrendszer</strong><span>{roofLabelsFor(config.roof)}</span></div>
               <RoofPicker config={config} prices={prices} onChange={onChange} />
               <RoofControl config={config} onChange={onChange} />
+              {config.roof === 'fixed' && <div className="extra-grid roof-solar"><SolarToggle config={config} prices={prices} onChange={onChange} /></div>}
             </> : sideSettings(selectedSide)}
             <div className="interaction-hint"><Move size={17} /><p>A tolóüveg és az oldallamella a 3D-ben kattintásra, illetve a fenti gombbal is mozgatható. A ZIP a kazettából gördül le.</p></div>
           </>}
@@ -251,8 +289,10 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett, beépített világítás" icon={LampCeiling} price={`${formatHuf(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led })} />}
               {tenant.extras.speakers && <Toggle label="Bluetooth hangrendszer" description="Egy pár beépített hangszóró" icon={Zap} price={formatHuf(prices.speakerPairNet)} checked={config.speakers} onChange={(speakers) => onChange({ speakers })} />}
               {tenant.extras.sensors && <Toggle label="Eső- és szélszenzor" description="Automata tetőzárás esőben" icon={CloudRain} price={formatHuf(prices.sensorsNet)} checked={config.sensors} onChange={(sensors) => onChange({ sensors })} />}
+              <SolarToggle config={config} prices={prices} onChange={onChange} />
             </div>
             {limits.maxHeaters > 0 && <div className="stepper-row"><span><strong>Infravörös teraszfűtés</strong><small>{formatHuf(prices.heaterUnitNet)} / db</small></span><div className="stepper"><button type="button" aria-label="Fűtőpanel csökkentése" disabled={config.heaters === 0} onClick={() => onChange({ heaters: Math.max(0, config.heaters - 1) })}><Minus size={15} /></button><span>{config.heaters} db</span><button type="button" aria-label="Fűtőpanel növelése" disabled={config.heaters >= limits.maxHeaters} onClick={() => onChange({ heaters: Math.min(limits.maxHeaters, config.heaters + 1) })}><Plus size={15} /></button></div></div>}
+            {onEnergy && <button type="button" className="energy-trigger" onClick={onEnergy}><Gauge size={16} /><span><strong>{energyCost ? `Üzemeltetés ≈ ${formatHuf(energyCost)} / év` : 'Üzemeltetési költség'}</strong><small>{energyCost ? 'Áramköltség a valós lakossági tarifával · részletek' : 'Nincs áramfogyasztó a tervben'}</small></span><ChevronRight size={15} /></button>}
           </>}
 
           {step === 'summary' && summary}
@@ -277,7 +317,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <div className="photo-mode">
               <div><Image size={18} /><span><strong>Előnézet saját fotóval</strong><small>A kép csak ebben a böngészőben jelenik meg.</small></span></div>
               <label className="upload-button"><Upload size={15} />Fotó feltöltése<input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoUpload(file); event.target.value = '' }} /></label>
-              {scene.photoUrl && <><Toggle label="Fotós előnézet" description="Pergola a saját teraszodon" checked={scene.photoMode} onChange={(photoMode) => onSceneChange({ photoMode })} />{scene.photoMode && <div className="photo-transform"><SliderField label="Vízszintes pozíció" value={scene.photoX} min={-3} max={3} step={0.05} unit="m" onChange={(photoX) => onSceneChange({ photoX })} /><SliderField label="Függőleges pozíció" value={scene.photoY} min={-2} max={2} step={0.05} unit="m" onChange={(photoY) => onSceneChange({ photoY })} /><SliderField label="Méret a fotón" value={scene.photoScale} min={0.5} max={1.8} step={0.05} unit="×" onChange={(photoScale) => onSceneChange({ photoScale })} /></div>}</>}
+              {scene.photoUrl && <><Toggle label="Fotós előnézet" description="Pergola a saját teraszodon" checked={scene.photoMode} onChange={(photoMode) => onSceneChange({ photoMode, ...(photoMode ? { winter: false } : {}) })} />{scene.photoMode && <div className="photo-transform"><SliderField label="Vízszintes pozíció" value={scene.photoX} min={-3} max={3} step={0.05} unit="m" onChange={(photoX) => onSceneChange({ photoX })} /><SliderField label="Függőleges pozíció" value={scene.photoY} min={-2} max={2} step={0.05} unit="m" onChange={(photoY) => onSceneChange({ photoY })} /><SliderField label="Méret a fotón" value={scene.photoScale} min={0.5} max={1.8} step={0.05} unit="×" onChange={(photoScale) => onSceneChange({ photoScale })} /></div>}</>}
             </div>
           </div>
         </details>}

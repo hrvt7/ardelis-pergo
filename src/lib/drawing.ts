@@ -6,6 +6,7 @@
 import { glassPanels } from './glass'
 import { hasBackWall, postPositions, wallSides } from './mount'
 import { isGlazedRoof } from './roofs'
+import { PANEL, panelLayout } from './solar'
 import type { PergolaConfig, SideKey, SideType } from '../types/pergola'
 
 /** Keretgerenda szélessége és magassága, oszlop-keresztmetszet (m) — a 3D-modellel egyezik. */
@@ -30,10 +31,11 @@ export interface DrawingMeta {
 export interface DrawingResult { svg: string; scale: number; width: number; height: number }
 
 /** Szintek (m): gerenda alsó éle = szabad belmagasság, szerkezet teteje (tetőhéjjal). */
-export function drawingLevels(config: Pick<PergolaConfig, 'height' | 'roof'>) {
+export function drawingLevels(config: Pick<PergolaConfig, 'height' | 'roof' | 'solar'>) {
   const beamBottom = config.height - BEAM_H / 2
   const beamTop = config.height + BEAM_H / 2
-  const roofTop = config.height + (isGlazedRoof(config.roof) ? 0.236 : config.roof === 'fabric' ? 0.23 : config.roof === 'fixed' ? 0.2 : 0.205)
+  const solar = config.roof === 'fixed' && config.solar
+  const roofTop = config.height + (solar ? 0.29 : isGlazedRoof(config.roof) ? 0.236 : config.roof === 'fabric' ? 0.23 : config.roof === 'fixed' ? 0.2 : 0.205)
   return { beamBottom, beamTop, roofTop }
 }
 
@@ -378,7 +380,13 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
         svg.line(ix1, Zp(z), ix2, Zp(z), 0.13, SOFT, '1.4 0.9')
       }
     }
-    const label = { louvered: 'forgatható lamellák', retractable: 'eltolható lamellacsomag', fabric: 'behúzható ponyva', glass: 'VSG üvegtető', polycarbonate: 'polikarbonát tető', fixed: 'fix tetőpanel' }[roof]
+    // Napelemek a fix tetőn: modulok körvonala (a metszősík fölött, szaggatottan).
+    const solar = roof === 'fixed' && config.solar ? panelLayout(config) : null
+    if (solar) solar.positions.forEach(([px, pz]) => {
+      svg.rect(X(px - solar.size[0] / 2), Zp(pz - solar.size[1] / 2), solar.size[0] * k, solar.size[1] * k, { stroke: MID, width: 0.25, dash: '1.8 0.9', fill: '#f2f5f8' })
+      svg.line(X(px - solar.size[0] / 2), Zp(pz - solar.size[1] / 2), X(px + solar.size[0] / 2), Zp(pz + solar.size[1] / 2), 0.1, FAINT)
+    })
+    const label = solar ? `napelem ${solar.count} × ${PANEL.wp} Wp` : { louvered: 'forgatható lamellák', retractable: 'eltolható lamellacsomag', fabric: 'behúzható ponyva', glass: 'VSG üvegtető', polycarbonate: 'polikarbonát tető', fixed: 'fix tetőpanel' }[roof]
     const cx = X(-w / 6)
     const cy = Zp(0)
     svg.rect(cx - label.length * 0.62 - 1.2, cy - 2.2, label.length * 1.24 + 2.4, 3.2, { stroke: 'none', fill: '#ffffff' })
@@ -493,6 +501,15 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     } else {
       svg.rect(Zs(-d / 2 + 0.06), Y(h + 0.185), (d - 0.12) * k, 0.09 * k, { width: 0.4, fill: '#ffffff' })
       svg.hatch(Zs(-d / 2 + 0.06), Y(h + 0.185), (d - 0.12) * k, 0.09 * k, 0.7, 0.1, SOFT)
+      if (config.solar) {
+        // Modulsorok metszetben (35 mm-es keret) a tartósíneken.
+        const layout = panelLayout(config)
+        const rows = Array.from(new Set(layout.positions.map(([, z]) => Math.round(z * 1000) / 1000)))
+        rows.forEach((z) => {
+          svg.rect(Zs(z - layout.size[1] / 2), Y(h + 0.2725), layout.size[1] * k, Math.max(0.35, 0.035 * k), { width: 0.2, fill: INK })
+          ;[-0.28, 0.28].forEach((offset) => svg.rect(Zs(z + offset * layout.size[1]) - 0.3, Y(h + 0.235), 0.6, 0.04 * k, { stroke: 'none', fill: MID }))
+        })
+      }
     }
   }
 

@@ -21,6 +21,8 @@ import { kelvinToHex } from '@/lib/color'
 import { glassPanels } from '@/lib/glass'
 import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
 import { isGlazedRoof, isMovableRoof } from '@/lib/roofs'
+import { deckBounds } from '@/lib/deck'
+import { RoofSnow, Snowfall, SnowCover, SolarPanels, type HouseRect } from '@/components/SceneExtras'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
 const ShadeProbe = lazy(() => import('@/components/ShadeProbe'))
@@ -89,8 +91,8 @@ function usePBR(asset: string, repeat: [number, number], rotation = 0): TextureM
   return maps
 }
 
-type RealisticAssetProps = { url: string; position: [number, number, number]; height: number; rotation?: number; shadows?: boolean }
-function RealisticAssetContent({ url, position, height, rotation = 0, shadows = true }: RealisticAssetProps) {
+type RealisticAssetProps = { url: string; position: [number, number, number]; height: number; rotation?: number; shadows?: boolean; bare?: boolean }
+function RealisticAssetContent({ url, position, height, rotation = 0, shadows = true, bare = false }: RealisticAssetProps) {
   const { scene: source } = useGLTF(url)
   const prepared = useMemo(() => {
     const object = source.clone(true)
@@ -118,6 +120,15 @@ function RealisticAssetContent({ url, position, height, rotation = 0, shadows = 
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
   useEffect(() => { refreshShadows(gl); invalidate() }, [gl, invalidate, prepared])
+  // Téli nézetben a lombhullató fa kopasz: a levél-hálók rejtve.
+  useEffect(() => {
+    prepared.object.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return
+      const materials = Array.isArray(child.material) ? child.material : [child.material]
+      if (materials.some((material) => /leaves|leaf/i.test(material.name))) child.visible = !bare
+    })
+    invalidate()
+  }, [prepared, bare, invalidate])
   return <group position={position} rotation={[0, rotation, 0]} scale={prepared.scale}><primitive object={prepared.object} position={[-prepared.center.x, -prepared.minY, -prepared.center.z]} /></group>
 }
 
@@ -499,7 +510,9 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
   const sideWallList = sideWalls(mount)
   const louverCount = Math.max(10, Math.floor(depth / 0.22))
   const rainProtection = scene.rain && config.sensors && isMovableRoof(roof)
-  const effectiveAngle = rainProtection ? 0 : config.louverAngle
+  // Télen a lamellás tetők zárva (vízzáró állás), a textiltető behúzva (nem hóteherre készül).
+  const winterFabric = scene.winter && roof === 'fabric'
+  const effectiveAngle = winterFabric ? 90 : rainProtection || (scene.winter && isMovableRoof(roof)) ? 0 : config.louverAngle
   const openness = effectiveAngle / 90
   const fixedSeamCount = Math.max(2, Math.floor(depth / 0.65))
   const introStart = useRef(0)
@@ -544,6 +557,8 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     {roof === 'fixed' && <group><mesh position={[0, height + 0.14, 0]} castShadow receiveShadow><boxGeometry args={[width - 0.12, 0.09, depth - 0.12]} /><PowderCoat color={roofColor} /></mesh>{Array.from({ length: fixedSeamCount }, (_, index) => { const z = -depth / 2 + (index + 1) * depth / (fixedSeamCount + 1); return <Beam key={index} args={[width - 0.16, 0.018, 0.025]} position={[0, height + 0.192, z]} color={roofColor} radius={0.003} /> })}</group>}
     {isGlazedRoof(roof) && <GlazedRoof width={width} depth={depth} height={height} color={roofColor} kind={roof === 'glass' ? 'glass' : 'polycarbonate'} />}
     {roof === 'fabric' && <FabricRoof width={width} depth={depth} height={height} color={roofColor} openness={openness} />}
+    {roof === 'fixed' && config.solar && <SolarPanels config={config} />}
+    {scene.winter && !winterFabric && <RoofSnow config={config} />}
     {(['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <SidePlacement key={side} side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} />)}
     {config.led && <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={scene.ledLevel / 100} />}
     {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <group key={index} position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={scene.heatersOn ? (night ? 3 : 0.15) : 0} toneMapped={false} /></mesh>{night && <pointLight position={[0, -0.25, 0.25]} color="#ff8a4a" intensity={scene.heatersOn ? 3.2 : 0} distance={3.2} decay={2} />}</group> })}
@@ -598,6 +613,12 @@ const HOUSE_RAW = { width: 18.22, depth: 6.79, eave: 2.947, facadeInset: 0.573 }
  * profilja közvetlenül a homlokzaton ül. A ház úgy méreteződik, hogy az eresz
  * mindig a pergola fölé essen (magas pergolánál arányosan nagyobb a ház).
  */
+/** A ház alaprajza a hóréteg kivágásához (a homlokzattól hátrafelé). */
+function houseRect(config: PergolaConfig): HouseRect {
+  const layout = getHouseLayout(config)
+  return { minX: -layout.width / 2, maxX: layout.width / 2, minZ: layout.frontZ - layout.depth, maxZ: layout.frontZ }
+}
+
 function getHouseLayout(config: PergolaConfig) {
   const attached = hasBackWall(config.mount)
   const scale = Math.max(Math.max(17, config.width + 6) / HOUSE_RAW.width, (config.height + 0.32) / HOUSE_RAW.eave)
@@ -605,7 +626,7 @@ function getHouseLayout(config: PergolaConfig) {
   return { frontZ, attached, width: HOUSE_RAW.width * scale, scale, depth: HOUSE_RAW.depth * scale }
 }
 
-function House({ config, night }: { config: PergolaConfig; night: boolean }) {
+function House({ config, night, winter = false }: { config: PergolaConfig; night: boolean; winter?: boolean }) {
   const source = use(getHouseAsset())
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
@@ -668,6 +689,23 @@ function House({ config, night }: { config: PergolaConfig; night: boolean }) {
     refreshShadows(gl)
     invalidate()
   }, [night, prepared, invalidate, gl])
+  // Télen a fémtető havas: matt, fehér felület (ugyanaz az anyag, visszaállítható).
+  useEffect(() => {
+    const materials = new Set<THREE.Material>()
+    prepared.object.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return
+      const meshMaterials = Array.isArray(child.material) ? child.material : [child.material]
+      meshMaterials.forEach((material) => {
+        if (materials.has(material) || !(material instanceof THREE.MeshStandardMaterial) || !/roof|zinc|standing_seam/i.test(`${child.name} ${material.name}`)) return
+        materials.add(material)
+        material.color.set(winter ? '#eef2f4' : '#697276')
+        material.metalness = winter ? 0.05 : 0.78
+        material.roughness = winter ? 0.9 : 0.42
+      })
+    })
+    refreshShadows(gl)
+    invalidate()
+  }, [winter, prepared, invalidate, gl])
   const baseZ = layout.frontZ - (prepared.facade - prepared.center.z) * layout.scale
   return <group name="house">
     <group position={[0, 0, baseZ]} scale={layout.scale}>
@@ -1073,22 +1111,17 @@ function Furniture({ config, scene, hideZone = false }: { config: PergolaConfig;
 function Deck({ config }: { config: PergolaConfig }) {
   const wood = usePBR('oak_wood_planks', [3.5, 0.7])
   // Oldalfalnál a burkolat a fal belső síkjáig tart, különben kifut a pergola mellé.
-  const walls = sideWalls(config.mount)
-  const overhang = hasBackWall(config.mount) ? 1.1 : 0.55
-  const leftExtent = walls.includes('left') ? config.width / 2 + 0.125 : config.width / 2 + overhang
-  const rightExtent = walls.includes('right') ? config.width / 2 + 0.125 : config.width / 2 + overhang
-  const width = leftExtent + rightExtent
-  const depth = config.depth + 1.2
+  const { width, depth, centerX, centerZ } = deckBounds(config)
   const planks = Math.ceil(depth / 0.145)
-  return <group position={[(rightExtent - leftExtent) / 2, -0.035, 0.2]}>{Array.from({ length: planks }, (_, index) => { const z = -depth / 2 + (index + 0.5) * depth / planks; return <mesh key={index} position={[0, 0, z]} receiveShadow castShadow><boxGeometry args={[width, 0.065, depth / planks - 0.009]} /><meshStandardMaterial map={wood.diff} normalMap={wood.normal} normalScale={[0.38, 0.38]} roughnessMap={wood.rough} color={index % 4 === 0 ? '#bbb1a3' : '#d0c6b8'} roughness={0.78} /></mesh> })}</group>
+  return <group position={[centerX, -0.035, centerZ]}>{Array.from({ length: planks }, (_, index) => { const z = -depth / 2 + (index + 0.5) * depth / planks; return <mesh key={index} position={[0, 0, z]} receiveShadow castShadow><boxGeometry args={[width, 0.065, depth / planks - 0.009]} /><meshStandardMaterial map={wood.diff} normalMap={wood.normal} normalScale={[0.38, 0.38]} roughnessMap={wood.rough} color={index % 4 === 0 ? '#bbb1a3' : '#d0c6b8'} roughness={0.78} /></mesh> })}</group>
 }
 
-function Tree({ position, scale = 1, wind }: { position: [number, number, number]; scale?: number; wind: boolean }) {
+function Tree({ position, scale = 1, wind, bare = false }: { position: [number, number, number]; scale?: number; wind: boolean; bare?: boolean }) {
   const group = useRef<THREE.Group>(null)
   const lastUpdate = useRef(0)
   const invalidate = useThree((state) => state.invalidate)
   useFrame(({ clock }) => { if (group.current) { group.current.rotation.z = wind ? Math.sin(clock.elapsedTime * 0.65 + position[0]) * 0.004 : 0; if (wind && clock.elapsedTime - lastUpdate.current >= 1 / 30) { lastUpdate.current = clock.elapsedTime; invalidate() } } })
-  return <group ref={group}><RealisticAsset url={assetUrl('/assets/models/tree_small_02/optimized.gltf')} position={position} height={4.8 * scale} rotation={position[0] * 0.43} shadows={false} /></group>
+  return <group ref={group}><RealisticAsset url={assetUrl('/assets/models/tree_small_02/optimized.gltf')} position={position} height={4.8 * scale} rotation={position[0] * 0.43} shadows={false} bare={bare} /></group>
 }
 
 function Garden({ config, scene, quality }: { config: PergolaConfig; scene: SceneSettings; quality: QualityLevel }) {
@@ -1096,9 +1129,9 @@ function Garden({ config, scene, quality }: { config: PergolaConfig; scene: Scen
   const sideX = house.width / 2 + 2.1
   const rearZ = house.frontZ - house.depth - 0.85
   return <group>
-    <Tree position={[-sideX, -0.05, house.frontZ - 1.5]} scale={1.12} wind={scene.wind} />
-    <Tree position={[sideX, -0.05, house.frontZ - 2.1]} scale={1.28} wind={scene.wind} />
-    {quality !== 'mobile' && <Tree position={[sideX + 1.4, -0.05, 4.6]} scale={0.86} wind={scene.wind} />}
+    <Tree position={[-sideX, -0.05, house.frontZ - 1.5]} scale={1.12} wind={scene.wind} bare={scene.winter} />
+    <Tree position={[sideX, -0.05, house.frontZ - 2.1]} scale={1.28} wind={scene.wind} bare={scene.winter} />
+    {quality !== 'mobile' && <Tree position={[sideX + 1.4, -0.05, 4.6]} scale={0.86} wind={scene.wind} bare={scene.winter} />}
     {[-0.32, 0, 0.32].map((fraction, index) => <RealisticAsset key={fraction} url={assetUrl('/assets/models/shrub_04/model.gltf')} position={[house.width * fraction, -0.04, rearZ]} height={0.95 + index * 0.08} rotation={index * 0.8} shadows={false} />)}
     {/* Oldalfal esetén a dézsák a fal végéhez, a terasz elejére kerülnek. */}
     <PlantPot position={isWallSide(config.mount, 'left') ? [-config.width / 2 + 0.38, 0.01, config.depth / 2 + 0.62] : [-config.width / 2 - 0.75, 0.01, config.depth / 2]} scale={1.25} />
@@ -1343,6 +1376,15 @@ const HDR_SUN_ANGLE: Record<'day' | 'golden', number> = { day: (0.5947 - 0.5) * 
 const DEFAULT_ENV_ROTATION = Math.PI * 0.35
 
 function getLighting(scene: SceneSettings) {
+  const base = getBaseLighting(scene)
+  if (!scene.winter || scene.sunStudy) return base
+  // Tél: borús, hideg, a hó visszaveri a fényt (erősebb szórt fény, gyengébb nap).
+  return base.night
+    ? { ...base, fog: '#1d2a33', hemisphere: 0.42 }
+    : { ...base, fog: '#d6dde1', sun: '#eef3ff', intensity: base.intensity * 0.62, ambient: base.ambient + 0.08, hemisphere: 0.62, exposure: 0.8 }
+}
+
+function getBaseLighting(scene: SceneSettings) {
   if (scene.sunStudy) return getStudyLighting(scene)
   const t = scene.dayTime
   const night = t >= 20 || t < 7
@@ -1458,15 +1500,17 @@ function SceneContent({ config, scene, view, quality, coreOnly, onSideSelect, on
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}`} />
     {!scene.photoMode && <><fog attach="fog" args={[lighting.fog, 20, 43]} /><FogFollow /></>}
-    <ambientLight intensity={lighting.ambient} /><hemisphereLight args={['#c8d8e2', '#51483e', lighting.hemisphere]} /><directionalLight key={lighting.shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={quality === 'mobile' ? [1024, 1024] : [2048, 2048]} shadow-camera-left={-lighting.shadowExtent} shadow-camera-right={lighting.shadowExtent} shadow-camera-top={lighting.shadowExtent} shadow-camera-bottom={-lighting.shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
+    <ambientLight intensity={lighting.ambient} /><hemisphereLight args={['#c8d8e2', scene.winter ? '#dfe5ea' : '#51483e', lighting.hemisphere]} /><directionalLight key={lighting.shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={quality === 'mobile' ? [1024, 1024] : [2048, 2048]} shadow-camera-left={-lighting.shadowExtent} shadow-camera-right={lighting.shadowExtent} shadow-camera-top={lighting.shadowExtent} shadow-camera-bottom={-lighting.shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
     {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment} environmentRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
     {!scene.photoMode && <Ground scene={scene} />}
     {!scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} finish={scene.wallFinish} night={lighting.night} />}
-    {!scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} night={lighting.night} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
+    {!scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} night={lighting.night} winter={scene.winter} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
     {pergola}
     {!scene.photoMode && <ContactShadows key={`${config.width}-${config.depth}-${config.height}-${config.mount}`} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality === 'mobile' ? 256 : 512} frames={1} color="#10171d" />}
-    {scene.rain && <Rain config={config} quality={quality} />}
+    {scene.rain && !scene.winter && <Rain config={config} quality={quality} />}
+    {scene.winter && !scene.photoMode && <SnowCover config={config} house={houseRect(config)} roofOpen={config.roof === 'fabric'} />}
+    {scene.winter && <Snowfall config={config} quality={quality} roofOpen={config.roof === 'fabric'} />}
     {scene.sunStudy && !scene.photoMode && <CompassRose config={config} facing={scene.facing} />}
     {scene.sunStudy && !scene.photoMode && !coreOnly && onShade && <SceneAssetBoundary name="shade analysis"><Suspense fallback={null}><ShadeProbe config={config} scene={scene} onResult={onShade} /></Suspense></SceneAssetBoundary>}
     {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && (quality === 'high' || quality === 'ultra') && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects quality={quality} night={lighting.night} /></Suspense></SceneAssetBoundary>}

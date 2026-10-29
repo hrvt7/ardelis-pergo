@@ -34,7 +34,8 @@ export const sablonTenant: Tenant = {
   sides: ['zip', 'glass'],
   colors: demoTenant.colors.filter((color) => color.id !== 'bronze'),
   customRal: false,
-  extras: { led: true, speakers: false, sensors: true },
+  extras: { led: true, speakers: false, sensors: true, solar: false }, // solar: napelemes fix tető
+  energy: { heaterWatts: 2000 },         // a kínált fűtőpanel teljesítménye (W) az üzemeltetési becsléshez
   installmentMonths: 0,                 // 0 = nincs havi részlet példa
   defaultConfig: { ...demoTenant.defaultConfig, sides: { front: 'none', back: 'none', left: 'zip', right: 'none' } },
   presets: [

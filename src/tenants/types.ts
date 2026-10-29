@@ -72,7 +72,11 @@ export interface Tenant {
     led: boolean
     speakers: boolean
     sensors: boolean
+    /** Napelemes tető a fix tetős változathoz. */
+    solar?: boolean
   }
+  /** Az üzemeltetési költség becsléséhez: a kínált fűtőpanel névleges teljesítménye (W). */
+  energy?: { heaterWatts: number }
   /** A havi részletpélda hány hónapra bontson; 0 = nem jelenik meg. */
   installmentMonths: number
   /** Régiók a felmérési űrlapon. */

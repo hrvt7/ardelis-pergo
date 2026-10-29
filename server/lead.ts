@@ -111,7 +111,7 @@ export function describeConfig(tenant: Tenant, config: PergolaConfig, price: Pri
     ? `Egyedi RAL ${config.customRal ?? ''}`.trim()
     : (() => { const item = tenant.colors.find((entry) => entry.id === config.frameColor); return item ? `${item.name} · ${item.detail}` : config.frameColor })()
   const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => `${SIDE_NAMES[side]}: ${isWallSide(config.mount, side) ? wallLabel(side).toLowerCase() : SIDE_LABELS[config.sides[side]]}`).join(' · ')
-  const extras = [config.led && 'periméter LED', config.heaters > 0 && `${config.heaters} db fűtés`, config.speakers && 'hangrendszer', config.sensors && 'eső- és szélszenzor'].filter(Boolean).join(', ')
+  const extras = [config.led && 'periméter LED', config.heaters > 0 && `${config.heaters} db fűtés`, config.speakers && 'hangrendszer', config.sensors && 'eső- és szélszenzor', config.solar && 'napelemes tető'].filter(Boolean).join(', ')
   return [
     ['Tetőrendszer', labels[config.roof]],
     ['Méret (sz × m × m)', `${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} × ${formatNumber(config.height, 2)} m · ${formatNumber(price.area)} m²`],

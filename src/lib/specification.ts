@@ -1,4 +1,5 @@
 import { furnitureFit } from './furniture'
+import { PANEL, panelLayout } from './solar'
 import { ROOF_INFO, isGlazedRoof } from './roofs'
 import { isWallSide, MOUNT_CODES, MOUNT_LABELS, openSides, postPositions, sideWalls, wallLabel } from './mount'
 import { formatHuf, formatNumber, ROOF_LABELS, SIDE_LABELS, SIDE_NAMES } from './pricing'
@@ -13,7 +14,7 @@ export function getSpecCode(config: PergolaConfig) {
     ? config.customRal?.replace(/[^a-z0-9]/gi, '').toUpperCase() || 'RAL'
     : { anthracite: '7016', black: '9005', white: '9016', bronze: 'BRZ' }[config.frameColor]
   const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => (isWallSide(config.mount, side) ? 'W' : { none: '0', zip: 'Z', glass: 'G', louver: 'L' }[config.sides[side]])).join('')
-  return `PG-${roof}-${Math.round(config.width * 100)}${Math.round(config.depth * 100)}-${mount}-${color}-${sides}`
+  return `PG-${roof}-${Math.round(config.width * 100)}${Math.round(config.depth * 100)}-${mount}-${color}-${sides}${config.solar ? '-PV' : ''}`
 }
 
 export function getBom(config: PergolaConfig): BomLine[] {
@@ -32,11 +33,17 @@ export function getBom(config: PergolaConfig): BomLine[] {
     ...(walls.length ? [{ label: 'Oldalfali csatlakozó profil', value: walls.map((side) => `${side === 'left' ? 'bal' : 'jobb'} ${formatNumber(config.depth, 2)} m`).join(' + ') }] : []),
     { label: 'Keretgerenda', value: `2 × ${formatNumber(config.width, 2)} m + 2 × ${formatNumber(config.depth, 2)} m` },
     roofBomLine(config),
+    ...(config.solar ? [solarBomLine(config)] : []),
     { label: 'Tolóüveg panel', value: `${glassPanes} db` },
     { label: 'ZIP screen kazetta', value: `${screens} db` },
     { label: 'Rejtett lefolyó', value: posts === 0 ? '1 db · falon vezetett lefolyócső' : `${config.mount === 'freestanding' ? 2 : 1} db · oszlopba integrálva` },
     { label: 'Villamos opciók', value: `${config.led ? 'LED' : 'LED nélkül'} · ${config.heaters} db fűtés${config.speakers ? ' · hangrendszer' : ''}${config.sensors ? ' · szenzor' : ''}` },
   ]
+}
+
+function solarBomLine(config: PergolaConfig): BomLine {
+  const layout = panelLayout(config)
+  return { label: 'Napelem modul', value: `${layout.count} db × ${PANEL.wp} Wp (${formatNumber(layout.kwp, 2)} kWp) · ${layout.cols} × ${layout.rows} kiosztás` }
 }
 
 /** A tető anyaglista-sora tetőtípusonként. */
@@ -75,6 +82,7 @@ export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, 
     config.heaters > 0 ? `${config.heaters} db teraszfűtés` : null,
     config.speakers ? 'hangrendszer' : null,
     config.sensors ? 'eső- és szélszenzor' : null,
+    config.solar ? `napelemes tető (${formatNumber(panelLayout(config).kwp, 2)} kWp)` : null,
   ].filter((item): item is string => Boolean(item))
   return [
     `${brandName} / Pergola – ${roofLabels[config.roof]}`,

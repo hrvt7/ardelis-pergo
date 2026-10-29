@@ -41,9 +41,12 @@ const bad = (what) => { issues.push(what); log('  ✗', what) };
     log('mount', m.split('\n')[0], await price());
   }
   await p.locator('.mount-options button').first().click(); await p.waitForTimeout(500);
-  const roofs = p.locator('.roof-options:not(.mount-options) button'); const rc = await roofs.count();
+  // A tetőválasztó az Oldalak lépésben, a diagram közepén van.
+  await step('Oldalak'); await p.locator('button.diagram-core').click(); await p.waitForTimeout(400)
+  const roofs = p.locator('.roof-card'); const rc = await roofs.count();
   for (let i = 0; i < rc; i++) { await roofs.nth(i).click(); await p.waitForTimeout(600); log('roof', i, await price()) }
   await roofs.first().click();
+  await step('Rögzítés');
   for (const preset of await p.locator('.preset-list button').allInnerTexts()) { await p.locator('.preset-list button', { hasText: preset.split('\n')[0] }).click(); await p.waitForTimeout(800); log('preset', preset.split('\n')[0], await price(), await p.locator('.price-product strong').innerText()) }
 
   // Szín

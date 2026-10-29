@@ -48,6 +48,7 @@ const MONEY_FIELDS: { key: keyof PriceSettings; label: string; unit: string }[] 
   { key: 'heaterUnitNet', label: 'Teraszfűtés', unit: 'Ft/db' },
   { key: 'speakerPairNet', label: 'Hangrendszer', unit: 'Ft/pár' },
   { key: 'sensorsNet', label: 'Szenzorcsomag', unit: 'Ft' },
+  { key: 'solarPerKwpNet', label: 'Napelemes tető', unit: 'Ft/kWp' },
 ]
 
 export function PriceSettingsDialog({ prices, onChange, onReset, onClose }: { prices: PriceSettings; onChange: (prices: PriceSettings) => void; onReset: () => void; onClose: () => void }) {

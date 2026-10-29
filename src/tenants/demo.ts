@@ -30,6 +30,7 @@ export const demoTenant: Tenant = {
     heaterUnitNet: 220000,
     speakerPairNet: 280000,
     sensorsNet: 180000,
+    solarPerKwpNet: 320000,
     customColorRate: 0.06,
     installationRate: 0.12,
     vatRate: 0.27,
@@ -57,7 +58,8 @@ export const demoTenant: Tenant = {
     { id: 'bronze', name: 'Bronz', detail: 'anodizált hatás', hex: '#705b4c' },
   ],
   customRal: true,
-  extras: { led: true, speakers: true, sensors: true },
+  extras: { led: true, speakers: true, sensors: true, solar: true },
+  energy: { heaterWatts: 2000 },
   installmentMonths: 60,
   regions: SERVICE_REGIONS,
   defaultConfig: {

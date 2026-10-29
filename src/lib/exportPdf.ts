@@ -1,15 +1,17 @@
+import type { EnergyUsage } from '@/lib/energy'
 import type { Tenant } from '@/tenants/types'
 import type { PergolaConfig, PriceBreakdown, RoofType } from '@/types/pergola'
 
 /** A PDF-összefoglaló elkészítése és letöltése (borító, részletek, ár, méretarányos műszaki rajz). */
-export async function exportPergolaPdf(config: PergolaConfig, price: PriceBreakdown, tenant: Tenant, roofLabels: Record<RoofType, string>, shareUrl?: string) {
-  const [{ default: pdfMake }, { buildPdfDefinition, PDF_FONTS }, { PDF_VFS }] = await Promise.all([
+export async function exportPergolaPdf(config: PergolaConfig, price: PriceBreakdown, tenant: Tenant, roofLabels: Record<RoofType, string>, shareUrl?: string, energyUsage?: EnergyUsage) {
+  const [{ default: pdfMake }, { buildPdfDefinition, PDF_FONTS }, { PDF_VFS, enableSvgFonts }] = await Promise.all([
     import('pdfmake/build/pdfmake'),
     import('@/lib/pdfDocument'),
     import('@/lib/pdfFonts'),
   ])
   pdfMake.addVirtualFileSystem(PDF_VFS)
-  pdfMake.addFonts(PDF_FONTS)
+  pdfMake.setFonts(PDF_FONTS)
+  await enableSvgFonts(pdfMake as never)
 
   const canvas = document.querySelector<HTMLCanvasElement>('canvas[data-pergola-canvas="true"]')
   let image: string | undefined
@@ -20,7 +22,7 @@ export async function exportPergolaPdf(config: PergolaConfig, price: PriceBreakd
     // A PDF képernyőkép nélkül is elkészül, ha a GPU nem engedi a kiolvasást.
   }
 
-  const definition = buildPdfDefinition({ config, price, tenant, roofLabels, image, imageAspect, shareUrl })
+  const definition = buildPdfDefinition({ config, price, tenant, roofLabels, image, imageAspect, shareUrl, energyUsage })
   const blob = await pdfMake.createPdf(definition).getBlob()
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
