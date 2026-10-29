@@ -1,5 +1,22 @@
 # Változások
 
+## 3.10.1 — Hibavadászat (2026. 10. 29.)
+
+- **Az árszámítás 40-szer gyorsabb** (0,7 ms → 18 µs): minden forint- és számformázás új
+  `Intl.NumberFormat`-ot hozott létre. A költségkeret-tervező így a legnehezebb esetben
+  (minden opció, fél keret) 20 s helyett 0,4 s alatt végez, a típuskártyák és a tetőválasztó
+  árkülönbségei is akadás nélkül számolódnak. A tervező emellett kihagyja az eleve rosszabb
+  és a semmiképp bele nem férő méret–tető párokat.
+- **Téli panel:** félbe osztott elejénél is helyesen dönti el, kell-e tolóüveget ajánlani
+  (eddig az osztott fél üvegre ráajánlott); az ajánlat elfogadása az osztást is megszünteti.
+  Az új típusokat is leírja (fix üveg, lamella- és lécfal).
+- **Rögzítésváltás:** ha egy osztott oldal ideiglenesen falra kerül, visszaváltáskor az osztás
+  is visszajön (eddig elveszett, az oldal típusa viszont megmaradt).
+- **Sérült link:** a kézzel átírt ventilátorszám (pl. `v9`) nem érvényteleníti az egész linket, 2-re vágjuk.
+- **Mobil (≤ 400 px):** az RGB-színminták egy sorba férnek.
+- Új tesztek: 300 véletlen konfiguráció (link oda-vissza, normalizálás, ár, rajz, PDF,
+  költségkeret, sérült linkek), gyártói e-mail osztott oldallal és komfort-opciókkal. 81 teszt zöld.
+
 ## 3.10 — Több oldalfal-típus, félbe osztott oldal, RGB LED, ventilátor, okosotthon (2026. 10. 29.)
 
 **Oldalfalak: 8 típus.** Nyitott, ZIP screen, keret nélküli tolóüveg, **keretes tolóüveg**, **fix üveg**,

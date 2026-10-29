@@ -1433,3 +1433,4 @@ button.diagram-core.selected span { color: var(--accent-primary); }
 .fan-row + .side-motion-control, .fan-warning + .side-motion-control { margin-top: 0; margin-bottom: 8px; }
 .mood-fan.is-on { border-color: rgba(140,200,255,.6); background: rgba(140,200,255,.1); color: #8cc8ff; }
 @media (max-width: 380px) { .side-type-grid { grid-template-columns: 1fr; } }
+@media (max-width: 400px) { .rgb-preview { padding-left: 11px; } .rgb-swatches { gap: 6px; } }

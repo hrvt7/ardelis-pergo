@@ -4,7 +4,6 @@
 import { z } from 'zod'
 import { calculatePrice } from '../lib/pricing'
 import { ROOF_TYPES } from '../lib/roofs'
-import { isWallSide } from '../lib/mount'
 import type { PergolaConfig, PriceBreakdown, PriceSettings, RoofType, SideKey } from '../types/pergola'
 import type { Tenant } from './types'
 
@@ -29,7 +28,7 @@ export const pergolaConfigSchema = z.object({
   solar: z.boolean().optional(),
   split: z.object({ front: sideEnum.optional(), back: sideEnum.optional(), left: sideEnum.optional(), right: sideEnum.optional() }).optional(),
   ledRgb: z.boolean().optional(),
-  fans: z.number().int().min(0).max(4).optional(),
+  fans: z.number().int().min(0).max(9).optional(),
   smartHome: z.boolean().optional(),
 })
 
@@ -95,10 +94,11 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
   })) as PergolaConfig['sides']
   const frameColor = colorOk ? config.frameColor : (colorIds[0] ?? 'anthracite')
   const mount = tenant.mounts.includes(config.mount) ? config.mount : tenant.mounts[0]
-  // Félbe osztás: csak nem fali oldalon, a gyártó által kínált típussal.
+  // Félbe osztás a gyártó által kínált típussal. Fali oldalon is megmarad (mint az oldal típusa),
+  // csak nem érvényes: ha a rögzítést visszaváltják, az osztás is visszajön.
   const splitEntries = (['front', 'back', 'left', 'right'] as SideKey[]).flatMap((side) => {
     const type = config.split?.[side]
-    if (!type || isWallSide(mount, side)) return []
+    if (!type) return []
     return [[side, type === 'none' || tenant.sides.includes(type) ? type : 'none'] as const]
   })
   const led = tenant.extras.led && config.led

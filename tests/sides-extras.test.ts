@@ -58,9 +58,11 @@ describe('félbe osztott oldal', () => {
     expect(price.lines.find((line) => line.id === 'split-profiles')!.amountNet).toBe(2 * prices.splitProfileNet)
   })
 
-  it('fali oldalon nem osztható, a gyártó által nem kínált típus kiesik', () => {
+  it('fali oldalon nem érvényes (de megmarad), a gyártó által nem kínált típus kiesik', () => {
     const normalized = normalizeConfig(demoTenant, { ...base, split: { back: 'glass', front: 'zip' } })
-    expect(normalized.split).toEqual({ front: 'zip' })
+    expect(sideSegments(normalized, 'back')).toEqual([])
+    expect(splitProfiles(normalized)).toBe(1)
+    expect(calculatePrice(normalized, prices).lines.some((line) => line.id.startsWith('side-back'))).toBe(false)
     const limited = normalizeConfig({ ...demoTenant, sides: ['zip'] }, { ...base, split: { front: 'slatWood' } })
     expect(limited.split).toEqual({ front: 'none' })
   })

@@ -51,6 +51,24 @@ describe('POST /api/lead', () => {
     expect(customer).toBeDefined()
   })
 
+  it('osztott oldal és komfort-opciók: ár a szerveren, leírás a gyártói e-mailben', async () => {
+    const calls: { url: string; body: Record<string, unknown> }[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, body: JSON.parse(String(init.body)) })
+      return new Response('{}', { status: 200 })
+    }))
+    const config = { ...demoTenant.defaultConfig, sides: { ...demoTenant.defaultConfig.sides, front: 'glassFramed' }, split: { front: 'slatWood' }, led: true, ledRgb: true, fans: 2, smartHome: true }
+    const response = await handleLeadRequest(post(body({ config })), { NODE_ENV: 'production', RESEND_API_KEY: 'k', LEAD_FALLBACK_EMAIL: 'gyarto@example.com', SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 's' })
+    expect(response.status).toBe(200)
+    const stored = calls.find((call) => call.url.includes('/rest/v1/leads'))!
+    expect(stored.body.estimate_gross).toBeGreaterThan(5648000)
+    const html = String(calls.find((call) => call.url.includes('resend') && (call.body.to as string[])[0] === 'gyarto@example.com')!.body.html)
+    expect(html).toContain('bal fél: Keretes tolóüveg · jobb fél: Fa lécfal')
+    expect(html).toContain('2 db mennyezeti ventilátor')
+    expect(html).toContain('okosotthon-vezérlés')
+    expect(html).toContain('színváltós RGB+W LED')
+  })
+
   it('a robotot (kitöltött rejtett mező) csendben elnyeli', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)

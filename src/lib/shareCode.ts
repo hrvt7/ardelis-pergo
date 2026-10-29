@@ -62,7 +62,7 @@ function parseFlags(text: string, sideMap: Record<string, SideType>) {
     if (flag === 'p') result.solar = true
     else if (flag === 'r') result.ledRgb = true
     else if (flag === 'h') result.smartHome = true
-    else if (/^v\d$/.test(flag)) result.fans = Number(flag.slice(1))
+    else if (/^v\d$/.test(flag)) result.fans = Math.min(2, Number(flag.slice(1)))
     else if (/^s.{4}$/.test(flag)) {
       const split: NonNullable<PergolaConfig['split']> = {}
       SIDE_KEYS.forEach((side, index) => { const type = sideMap[flag[index + 1]]; if (type) split[side] = type })

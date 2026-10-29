@@ -2,6 +2,7 @@
 // és egy-egy kattintással kipróbálható téli kiegészítők (árral).
 import { Check, Flame, Info, Plus, Snowflake, X } from 'lucide-react'
 import { isWallSide } from '@/lib/mount'
+import { closedSegments, sideSegments } from '@/lib/sides'
 import { formatHuf } from '@/lib/pricing'
 import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
@@ -19,12 +20,16 @@ const ROOF_WINTER: Record<PergolaConfig['roof'], string> = {
 export default function WinterPanel({ config, scene, prices, onChange, onSceneChange, onClose }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onClose: () => void }) {
   const { tenant } = useTenant()
   const current = tenantPrice(tenant, config, prices).totalGross
-  const frontOpen = !isWallSide(config.mount, 'front') && config.sides.front === 'none'
+  // Elöl teljesen nyitott (osztott oldalnál mindkét fél nyitott) → felajánlható a tolóüveg.
+  const frontOpen = !isWallSide(config.mount, 'front') && sideSegments(config, 'front').every((segment) => segment.type === 'none')
   const canGlass = tenant.sides.includes('glass') && frontOpen
-  const glassPrice = canGlass ? tenantPrice(tenant, { ...config, sides: { ...config.sides, front: 'glass' } }, prices).totalGross - current : 0
+  const withoutFrontSplit = () => { const split = { ...config.split }; delete split.front; return Object.keys(split).length ? split : undefined }
+  const glassPatch: Partial<PergolaConfig> = { sides: { ...config.sides, front: 'glass' }, split: withoutFrontSplit() }
+  const glassPrice = canGlass ? tenantPrice(tenant, { ...config, ...glassPatch }, prices).totalGross - current : 0
   const heaterPrice = tenantPrice(tenant, { ...config, heaters: Math.max(1, config.heaters) }, prices).totalGross - current
   const canHeat = tenant.limits.maxHeaters > 0
-  const sides = Object.entries(config.sides).filter(([side, type]) => type !== 'none' && !isWallSide(config.mount, side as never)).map(([, type]) => type)
+  const types = new Set(closedSegments(config).map((segment) => segment.type))
+  const has = (...wanted: string[]) => wanted.some((type) => types.has(type as never))
 
   return <section className="winter-panel" aria-label="Téli nézet">
     <header>
@@ -33,10 +38,12 @@ export default function WinterPanel({ config, scene, prices, onChange, onSceneCh
     </header>
     <ul className="winter-facts">
       <li><Check size={13} /><span><strong>Tető</strong>{ROOF_WINTER[config.roof]}</span></li>
-      {sides.includes('glass') && <li><Check size={13} /><span><strong>Tolóüveg</strong>Szél és hó ellen zárható, fűtéssel átmeneti időben is kellemes. Nem hőszigetelt télikert.</span></li>}
-      {sides.includes('zip') && <li><Check size={13} /><span><strong>ZIP screen</strong>A behordott hó és a szél ellen véd; hőt nem szigetel.</span></li>}
+      {has('glass', 'glassFramed') && <li><Check size={13} /><span><strong>Tolóüveg</strong>Szél és hó ellen zárható, fűtéssel átmeneti időben is kellemes. Nem hőszigetelt télikert.</span></li>}
+      {has('glassFixed') && <li><Check size={13} /><span><strong>Fix üveg</strong>Állandó szélfogó, a fényt átengedi. Nem hőszigetelt.</span></li>}
+      {has('louver', 'slatAlu', 'slatWood') && <li><Check size={13} /><span><strong>Lamella- és lécfal</strong>Megtöri a szelet és a behordott havat; a hőt nem tartja bent.</span></li>}
+      {has('zip') && <li><Check size={13} /><span><strong>ZIP screen</strong>A behordott hó és a szél ellen véd; hőt nem szigetel.</span></li>}
     </ul>
-    {canGlass && <button type="button" className="winter-add" onClick={() => onChange({ sides: { ...config.sides, front: 'glass' } })}><Plus size={14} /><span><strong>Zárd körbe elöl tolóüveggel</strong><small>Szélvédett terasz télen is · +{formatHuf(glassPrice)}</small></span></button>}
+    {canGlass && <button type="button" className="winter-add" onClick={() => onChange(glassPatch)}><Plus size={14} /><span><strong>Zárd körbe elöl tolóüveggel</strong><small>Szélvédett terasz télen is · +{formatHuf(glassPrice)}</small></span></button>}
     {canHeat && (config.heaters > 0
       ? <button type="button" className={`mood-heat${scene.heatersOn ? ' is-on' : ''}`} aria-pressed={scene.heatersOn} onClick={() => onSceneChange({ heatersOn: !scene.heatersOn })}><Flame size={15} /><span><strong>Teraszfűtés {scene.heatersOn ? 'bekapcsolva' : 'kikapcsolva'}</strong><small>{config.heaters} db infrapanel</small></span></button>
       : <button type="button" className="winter-add" onClick={() => onChange({ heaters: 1 })}><Plus size={14} /><span><strong>Infrapanel a hideg estékre</strong><small>1 db teraszfűtés · +{formatHuf(heaterPrice)}</small></span></button>)}

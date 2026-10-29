@@ -149,14 +149,31 @@ export function planBudget(tenant: Tenant, original: PergolaConfig, prices: Pric
   type Candidate = { config: PergolaConfig; total: number; loss: number; sizeKept: boolean; equipmentKept: boolean }
   const candidates: Candidate[] = []
   let minimumGross = Infinity
+  let bestLoss = Infinity
 
+  // A méret–tető párokat a lemondás szerint növekvő sorrendben vizsgáljuk: így hamar lesz egy jó
+  // terv, és a nála eleve rosszabb párokat (lásd lent) ki lehet hagyni.
+  const combos: { width: number; depth: number; roof: RoofType; base: number }[] = []
   for (const width of widths) for (const depth of depths) {
     if (!fitsFurniture(width, depth)) continue
-    for (const roof of roofs) {
+    for (const roof of roofs) combos.push({ width, depth, roof, base: sizeLoss({ ...original, width, depth }, original) + (ROOF_VALUE[original.roof] - ROOF_VALUE[roof]) })
+  }
+  combos.sort((a, b) => a.base - b.base)
+  for (const { width, depth, roof } of combos) {
+    {
       let config = normalizeConfig(tenant, { ...original, width, depth, roof })
       let loss = sizeLoss(config, original) + (ROOF_VALUE[original.roof] - ROOF_VALUE[roof])
       let total = price(config)
       const sizeAndRoofOnly = total
+      const sizeKept = width === original.width && depth === original.depth
+      // Ha már a méret- és tetőcsere többe „kerül”, mint az eddigi legjobb terv, és nem a
+      // méretmegtartó változat, ebből nem lehet jobb javaslat (a mohó lépések csak rontanak).
+      if (total > budgetGross && !sizeKept && loss >= bestLoss) continue
+      // Alsó korlát: ha minden kiegészítő és oldalfal nélkül sem fér bele, a mohó lépések fölöslegesek.
+      if (total > budgetGross) {
+        const bare = price(normalizeConfig(tenant, { ...config, sides: { front: 'none', back: 'none', left: 'none', right: 'none' }, split: undefined, led: false, ledRgb: undefined, heaters: 0, speakers: false, sensors: false, solar: undefined, fans: undefined, smartHome: undefined, frameColor: original.frameColor === 'custom' ? tenant.colors[0]?.id ?? 'anthracite' : config.frameColor, customRal: original.frameColor === 'custom' ? undefined : config.customRal }))
+        if (bare > budgetGross) { minimumGross = Math.min(minimumGross, bare); continue }
+      }
       // Mohó lépések: mindig az, amelyik a legtöbbet spórol egységnyi lemondásra.
       for (let guard = 0; total > budgetGross && guard < 24; guard++) {
         const steps = equipmentSteps(tenant, config, original)
@@ -189,7 +206,8 @@ export function planBudget(tenant: Tenant, original: PergolaConfig, prices: Pric
       }
       minimumGross = Math.min(minimumGross, total)
       if (total <= budgetGross) {
-        candidates.push({ config, total, loss, sizeKept: width === original.width && depth === original.depth, equipmentKept: total === sizeAndRoofOnly && roof === original.roof })
+        candidates.push({ config, total, loss, sizeKept, equipmentKept: total === sizeAndRoofOnly && roof === original.roof })
+        bestLoss = Math.min(bestLoss, loss)
       }
     }
   }

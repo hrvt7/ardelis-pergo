@@ -19,6 +19,7 @@ type Key = (typeof ADVISOR_ORDER)[number]
 
 function sidesSummary(config: PergolaConfig) {
   const types = Object.values(config.sides) as SideType[]
+  // A tanácsadó ma csak tolóüveget és ZIP-et javasol; a többi típus általános megnevezést kap.
   if (types.includes('glass')) return 'Tolóüveg + ZIP'
   if (types.includes('zip')) return 'ZIP screen oldalt'
   return 'Nyitott oldalak'

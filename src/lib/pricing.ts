@@ -49,11 +49,18 @@ export const SIDE_NAMES: Record<SideKey, string> = {
   right: 'Jobb oldali',
 }
 
-export const formatHuf = (value: number) =>
-  new Intl.NumberFormat('hu-HU', { style: 'currency', currency: 'HUF', maximumFractionDigits: 0 }).format(Math.round(value))
+// Az Intl.NumberFormat létrehozása drága (~50 µs): egyszer készül, utána újrahasznosítjuk.
+// (A költségkeret-tervező egy futása több tízezer árat számol.)
+const HUF_FORMAT = new Intl.NumberFormat('hu-HU', { style: 'currency', currency: 'HUF', maximumFractionDigits: 0 })
+const NUMBER_FORMATS = new Map<number, Intl.NumberFormat>()
 
-export const formatNumber = (value: number, digits = 1) =>
-  new Intl.NumberFormat('hu-HU', { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(value)
+export const formatHuf = (value: number) => HUF_FORMAT.format(Math.round(value))
+
+export function formatNumber(value: number, digits = 1) {
+  let format = NUMBER_FORMATS.get(digits)
+  if (!format) { format = new Intl.NumberFormat('hu-HU', { maximumFractionDigits: digits, minimumFractionDigits: digits }); NUMBER_FORMATS.set(digits, format) }
+  return format.format(value)
+}
 
 const round = (value: number) => Math.round(value / 1000) * 1000
 
