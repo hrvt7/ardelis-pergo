@@ -1,5 +1,33 @@
 # Változások
 
+## 3.9 — Piaci árakhoz igazított bemutató árlista (2026. 10. 29.)
+A demó árai magyar középkategóriás piaci szintre kerültek (korábban kb. 40%-kal drágábbak voltak).
+Példák bruttó, telepítéssel: 5 × 4 m motoros lamellás csupaszon **4,6 M Ft** (az alap demó LED-del,
+ZIP-pel, szenzorral 5,6 M Ft — korábban 8,1 M), 4 × 3 m lamellás 2,8 M, eltolható lamellás 7,7 M,
+textiltető 4,5 M, üvegtető 3,8 M, polikarbonát 2,9 M, fix alumínium 3,3 M, napelemmel +1,6 M Ft.
+
+| Tétel (nettó, telepítés nélkül) | Új | Régi |
+|---|---|---|
+| Motoros lamellás tető | 165 000 Ft/m² | 220 000 |
+| Eltolható lamellás | 240 000 Ft/m² | 340 000 |
+| Textiltető | 125 000 Ft/m² | 195 000 |
+| Üvegtető | 105 000 Ft/m² | 150 000 |
+| Polikarbonát | 70 000 Ft/m² | 95 000 |
+| Fix alumínium | 85 000 Ft/m² | 80 000 |
+| ZIP screen | 45 000 Ft/m² | 85 000 |
+| Tolóüveg (keret nélküli) | 105 000 Ft/m² | 165 000 |
+| Fix lamellafal | 70 000 Ft/m² | 120 000 |
+| LED | 10 000 Ft/fm | 12 000 |
+| Infrapanel | 200 000 Ft/db | 220 000 |
+| Hangrendszer | 220 000 Ft/pár | 280 000 |
+| Eső- és szélérzékelő | 95 000 Ft | 180 000 |
+| Napelem | 330 000 Ft/kWp | 320 000 |
+| Telepítés | 10% | 12% |
+
+Források: hazai gyártói árlisták és webshopok, tudjukki.hu/daibau.hu átlagárak, ZIP- és
+tolóüveg-forgalmazói árlisták, napelemkalauz.hu (2026). Ezek tájékoztató középárak; az éles gyártó
+a saját árlistáját állítja be az admin felületen.
+
 ## 3.8 — Tanácsadó, téli nézet, üzemeltetési költség, napelemes tető (2026. 10. 29.)
 - **Tanácsadó** (fejléc + az első lépések elején): 4 kérdés (használat, időjárás, fény, hely)
   → javasolt pergola indoklással, árral és egy olcsóbb alternatívával; egy kattintással a 3D-be,

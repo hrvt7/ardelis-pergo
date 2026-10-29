@@ -42,7 +42,7 @@ describe('POST /api/lead', () => {
     const response = await handleLeadRequest(post(body({ estimateGross: 1 })), { NODE_ENV: 'production', RESEND_API_KEY: 'k', LEAD_FALLBACK_EMAIL: 'gyarto@example.com', SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 's' })
     expect(response.status).toBe(200)
     const stored = calls.find((call) => call.url.includes('/rest/v1/leads'))!
-    expect(stored.body.estimate_gross).toBe(8080000)
+    expect(stored.body.estimate_gross).toBe(5648000)
     const manager = calls.find((call) => call.url.includes('resend') && (call.body.to as string[])[0] === 'gyarto@example.com')!
     expect(String(manager.body.subject)).toContain('8')
     expect(manager.body.reply_to).toBe('teszt@example.com')

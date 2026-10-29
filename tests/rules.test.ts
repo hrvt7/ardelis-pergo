@@ -21,7 +21,7 @@ describe('gyártói szabályok', () => {
   it('a demó árazása megegyezik az eredeti kalkulációval', () => {
     const config = demoTenant.defaultConfig
     expect(tenantPrice(demoTenant, config)).toEqual(calculatePrice(config, demoTenant.prices))
-    expect(tenantPrice(demoTenant, config).totalGross).toBe(8080000)
+    expect(tenantPrice(demoTenant, config).totalGross).toBe(5648000)
   })
 
   it('a nem kínált opciókat és a határon kívüli méreteket kiigazítja', () => {

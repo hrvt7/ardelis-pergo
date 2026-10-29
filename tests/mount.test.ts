@@ -45,7 +45,7 @@ describe('rögzítési módok', () => {
   })
 
   it('a falhoz csatlakozó és az önálló ár nem változott', () => {
-    expect(tenantPrice(demoTenant, config('wall')).totalGross).toBe(8080000)
+    expect(tenantPrice(demoTenant, config('wall')).totalGross).toBe(5648000)
     expect(omittedPosts('wall')).toBe(0)
     expect(wallSides('freestanding')).toEqual([])
   })
