@@ -47,12 +47,14 @@ export interface PdfInput {
   date?: Date
   /** Az üzemeltetési becslés beállításai (a felületen állítottak szerint). */
   energyUsage?: EnergyUsage
+  /** A vásárló által adott név (pl. „Kovácsék terasza”) a borítón. */
+  projectName?: string
 }
 
 const m2 = (value: number) => formatNumber(value, 2)
 const hu = (date: Date) => date.toLocaleDateString('hu-HU', { year: 'numeric', month: '2-digit', day: '2-digit' })
 
-export function buildPdfDefinition({ config, price, tenant, image, imageAspect = 16 / 10, shareUrl, date = new Date(), energyUsage = DEFAULT_USAGE }: PdfInput): TDocumentDefinitions {
+export function buildPdfDefinition({ config, price, tenant, image, imageAspect = 16 / 10, shareUrl, date = new Date(), energyUsage = DEFAULT_USAGE, projectName }: PdfInput): TDocumentDefinitions {
   const brand = tenant.brand.name
   const brandLine = [brand, tenant.brand.suffix].filter(Boolean).join(' ')
   const code = getSpecCode(config)
@@ -99,7 +101,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
   })
   const imageHeight = Math.min(292, 515 / imageAspect)
   const cover: Content[] = [
-    { text: `PERGOLA · ${MOUNT_LABELS[config.mount].toUpperCase()}`, font: 'ManropeSemi', fontSize: 7.5, characterSpacing: 1.6, color: ACCENT, margin: [0, 8, 0, 8] },
+    { text: `${projectName ? `${projectName.toUpperCase()} · ` : ''}PERGOLA · ${MOUNT_LABELS[config.mount].toUpperCase()}`, font: 'ManropeSemi', fontSize: 7.5, characterSpacing: 1.6, color: ACCENT, margin: [0, 8, 0, 8] },
     { text: roofName, font: 'ManropeHeavy', fontSize: 44, color: INK, lineHeight: 0.95 },
     { text: `${roofShort} pergola`, fontSize: 19, color: MUTED, margin: [0, 2, 0, 18] },
     image

@@ -35,8 +35,9 @@ interface Props {
   onPreset: (config: PergolaConfig) => void
   prices: PriceSettings
   onPhotoUpload: (file: File) => void
-  mobileOpen: boolean
-  onMobileToggle: () => void
+  /** Mobil alsó lap állása. */
+  sheet: SheetState
+  onSheetChange: (sheet: SheetState) => void
   /** A tanácsadó megnyitása (4 kérdés → javasolt konfiguráció). */
   onAdvisor?: () => void
   /** Üzemeltetési költség: becsült éves összeg és a részletek megnyitása. */
@@ -195,9 +196,62 @@ function RoofIcon({ roof }: { roof: RoofType }) {
   return <svg {...common}><rect x="2" y="6" width="24" height="8" rx="1" /></svg>
 }
 
-export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, onPhotoUpload, mobileOpen, onMobileToggle, onAdvisor, energyCost, onEnergy }: Props) {
+export type SheetState = 'peek' | 'half' | 'full'
+const SHEET_ORDER: SheetState[] = ['peek', 'half', 'full']
+
+/**
+ * Húzható alsó lap (mobil): a fejlécet felfelé/lefelé húzva a következő állásba pattan,
+ * koppintásra kicsi ↔ fél. Húzás közben a lap követi az ujjat.
+ */
+function useSheetGesture(panel: React.RefObject<HTMLElement | null>, sheet: SheetState, onChange: (sheet: SheetState) => void) {
+  const drag = useRef<{ y: number; height: number; moved: boolean } | null>(null)
+  const finish = (dy: number) => {
+    const element = panel.current
+    if (element) element.style.removeProperty('height')
+    element?.classList.remove('is-dragging')
+    const index = SHEET_ORDER.indexOf(sheet)
+    if (Math.abs(dy) < 8) { onChange(sheet === 'peek' ? 'half' : 'peek'); return }
+    const steps = Math.abs(dy) > 220 ? 2 : 1
+    onChange(SHEET_ORDER[Math.max(0, Math.min(2, index + (dy < 0 ? steps : -steps)))])
+  }
+  return {
+    onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (event.pointerType === 'mouse' && window.innerWidth > 820) return
+      drag.current = { y: event.clientY, height: panel.current?.getBoundingClientRect().height ?? 0, moved: false }
+      event.currentTarget.setPointerCapture(event.pointerId)
+    },
+    onPointerMove: (event: React.PointerEvent<HTMLButtonElement>) => {
+      const state = drag.current
+      const element = panel.current
+      if (!state || !element) return
+      const dy = event.clientY - state.y
+      if (Math.abs(dy) > 6) state.moved = true
+      if (!state.moved) return
+      element.classList.add('is-dragging')
+      const max = (element.parentElement?.getBoundingClientRect().height ?? window.innerHeight) - 16
+      element.style.setProperty('height', `${Math.max(96, Math.min(max, state.height - dy))}px`)
+    },
+    onPointerUp: (event: React.PointerEvent<HTMLButtonElement>) => {
+      const state = drag.current
+      drag.current = null
+      if (!state) return
+      finish(state.moved ? event.clientY - state.y : 0)
+    },
+    onPointerCancel: () => { drag.current = null; panel.current?.style.removeProperty('height'); panel.current?.classList.remove('is-dragging') },
+    onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
+      // Billentyűzetes aktiválás (Enter/Space) — a mutatós eseményeket a fenti kezelők intézik.
+      if (event.detail === 0) onChange(sheet === 'peek' ? 'half' : 'peek')
+      else if (window.innerWidth > 820) onChange(sheet === 'peek' ? 'half' : 'peek')
+    },
+  }
+}
+
+export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, onPhotoUpload, sheet, onSheetChange, onAdvisor, energyCost, onEnergy }: Props) {
   const { tenant } = useTenant()
   const { limits } = tenant
+  const panelRef = useRef<HTMLElement>(null)
+  const mobileOpen = sheet !== 'peek'
+  const sheetGesture = useSheetGesture(panelRef, sheet, onSheetChange)
   const [half, setHalf] = useState<0 | 1>(0)
   // Másik oldal kiválasztásakor az első féllel kezdünk (render közbeni szinkron, effect nélkül).
   const [halfSide, setHalfSide] = useState(selectedSide)
@@ -221,8 +275,8 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   const sideNames: Record<SideKey, string> = { front: 'Elülső oldal', back: 'Hátsó oldal', left: 'Bal oldal', right: 'Jobb oldal' }
 
   return (
-    <aside className={`controls-panel glass-panel ${mobileOpen ? 'is-mobile-open' : ''}`} aria-label="Pergola beállításai" onTouchStart={(event) => { touchStart.current = event.touches[0].clientX }} onTouchEnd={touchEnd}>
-      <button type="button" className="sheet-toggle" aria-expanded={mobileOpen} aria-label={mobileOpen ? 'Beállítások összecsukása a 3D nézethez' : 'Pergola beállításainak megnyitása'} onClick={onMobileToggle}><span className="sheet-handle" aria-hidden="true" /><span><SlidersHorizontal size={16} />{mobileOpen ? 'Vissza a 3D nézethez' : 'Beállítások'}</span><ChevronDown size={16} /></button>
+    <aside ref={panelRef} className={`controls-panel glass-panel sheet-${sheet} ${mobileOpen ? 'is-mobile-open' : ''}`} aria-label="Pergola beállításai" onTouchStart={(event) => { touchStart.current = event.touches[0].clientX }} onTouchEnd={touchEnd}>
+      <button type="button" className="sheet-toggle" aria-expanded={mobileOpen} aria-label={sheet === 'peek' ? 'Pergola beállításainak megnyitása' : 'Beállítások összecsukása a 3D nézethez'} {...sheetGesture}><span className="sheet-handle" aria-hidden="true" /><span><SlidersHorizontal size={16} />{sheet === 'peek' ? 'Beállítások' : sheet === 'half' ? 'Húzd fel a teljes nézethez' : 'Vissza a 3D nézethez'}</span><ChevronDown size={16} /></button>
       <div className="config-head">
         <div><span>Konfiguráció</span><strong>{String(stepIndex + 1).padStart(2, '0')} / 06</strong></div>
         <span className="mini-summary">{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {MOUNT_SHORT[config.mount]}</span>
@@ -315,6 +369,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               <Toggle label="Méretcímkék" description="Aktuális méretek centiméterben" checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
               <Toggle label="Műszaki jelölések" description="Részletek a 3D modellen" checked={scene.showHotspots} onChange={(showHotspots) => onSceneChange({ showHotspots })} />
               <Toggle label="Automata forgatás" description="Koppintásra megáll" checked={scene.autoRotate} onChange={(autoRotate) => onSceneChange({ autoRotate })} />
+              <Toggle label="Követő kamera" description="A választáshoz fordul (oldal, szín, ventilátor)" checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
             </div>
             <label className="select-field"><span>3D minőség</span><select value={scene.quality} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="mobile">Mobil</option></select></label>
             <div className="photo-mode">

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight, Download, Gauge, Info, Link2, LoaderCircle, Settings2, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { MOUNT_SHORT } from '@/lib/mount'
+import PriceMix from '@/components/PriceMix'
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import { useTenant } from '@/tenants/TenantContext'
 import type { PergolaConfig, PriceBreakdown } from '@/types/pergola'
@@ -25,7 +26,8 @@ interface Props {
   onEnergy?: () => void
 }
 
-function AnimatedPrice({ value }: { value: number }) {
+/** Az ár „pörögve” megy az új értékre (mozgáscsökkentésnél azonnal). */
+export function AnimatedPrice({ value }: { value: number }) {
   const [display, setDisplay] = useState(value)
   const previous = useRef(value)
   const [reduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
@@ -70,6 +72,7 @@ export default function PricePanel({ config, price, exporting, delta, compact = 
       {tenant.installmentMonths > 0 && <div className="monthly-example"><span>{tenant.installmentMonths} havi részre bontva</span><strong>{formatHuf(price.totalGross / tenant.installmentMonths)} / hó</strong><small>A bruttó irányár {tenant.installmentMonths} egyenlő részre osztva; nem hitel- vagy finanszírozási ajánlat.</small></div>}
       {onBudget && <button type="button" className="budget-trigger" onClick={onBudget}><Wallet size={15} /><span><strong>Van keretösszeged?</strong><small>Megmutatjuk, mi fér bele</small></span></button>}
       {onEnergy && energyCost ? <button type="button" className="energy-trigger is-panel" onClick={onEnergy}><Gauge size={15} /><span><strong>Üzemeltetés ≈ {formatHuf(energyCost)} / év</strong><small>Áramköltség valós tarifával · részletek</small></span><ChevronRight size={14} /></button> : null}
+      <PriceMix price={price} compact />
       <details className="price-details"><summary><span>Tételes kalkuláció <small>{price.lines.length + 1} tétel</small></span><ChevronDown size={16} /></summary><div className="price-lines">{price.lines.map((line) => <div key={line.id} className="price-line"><div><strong>{line.label}</strong><small>{line.detail}</small></div><span>{formatHuf(line.amountNet)}</span></div>)}<div className="price-line installation"><div><strong>Telepítés és üzembe helyezés</strong><small>{tenant.demo ? 'Mintaarány a teljes nettó összegre' : `${price.subtotalNet ? Math.round(price.installationNet / price.subtotalNet * 100) : 0}% a teljes nettó összegre`}</small></div><span>{formatHuf(price.installationNet)}</span></div><div className="price-line installation"><div><strong>Nettó + ÁFA</strong><small>{formatHuf(price.totalNet)} + {formatHuf(price.vatNet)}</small></div><span>{formatHuf(price.totalGross)}</span></div></div></details>
       <div className="price-actions"><button type="button" className="primary-action" onClick={onExport} disabled={exporting}>{exporting ? <LoaderCircle size={17} className="spin" /> : <Download size={17} />}{exporting ? 'PDF készül…' : 'PDF összefoglaló'}</button><button type="button" className="secondary-action" onClick={onShare}><Link2 size={17} />Megosztás</button></div>
       {onEditPrices && <button type="button" className="tariff-button" onClick={onEditPrices}><Settings2 size={15} />{tenant.demo ? 'Mintaárak szerkesztése' : 'Árak szerkesztése (admin)'}</button>}

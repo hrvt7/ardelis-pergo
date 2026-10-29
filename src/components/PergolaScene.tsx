@@ -1,11 +1,11 @@
-import { Component, Suspense, lazy, memo, use, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
+import { Component, Suspense, lazy, memo, use, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
 import { assetUrl } from '@/lib/assetUrl'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { ContactShadows, Environment, Html, Line, OrbitControls, RoundedBox, useEnvironment, useGLTF, useProgress, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
-import type { CameraView, PergolaConfig, QualityLevel, SceneSettings, SideKey, SideType, WallFinish } from '@/types/pergola'
+import type { CameraFocus, CameraView, PergolaConfig, QualityLevel, SceneSettings, SideKey, SideType, WallFinish } from '@/types/pergola'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
 import { setActiveScene } from '@/lib/sceneRegistry'
@@ -1388,18 +1388,21 @@ function seatPosition(config: Pick<PergolaConfig, 'width' | 'depth'>, furniture:
   return fit.alongWidth ? local : [local[1], -local[0]]
 }
 
-function CameraController({ view, config, autoRotate, furniture }: { view: CameraView; config: PergolaConfig; autoRotate: boolean; furniture: FurnitureSet }) {
+function CameraController({ view, focus, viewShift, revealed, config, autoRotate, furniture }: { view: CameraView; focus: CameraFocus | null; viewShift: number; revealed: boolean; config: PergolaConfig; autoRotate: boolean; furniture: FurnitureSet }) {
   const { camera, gl, invalidate } = useThree()
   const controls = useRef<OrbitControlsType>(null)
   const destination = useRef(new THREE.Vector3(12, 7, 14))
   const target = useRef(new THREE.Vector3())
   const transitioning = useRef(true)
+  // Első megjelenés: lassú, drónszerű berepülés magasról a nézetbe.
+  const firstFlight = useRef(!REDUCED)
   const idle = useRef(0)
   const autoFrame = useRef(0)
   const yaw = useRef(0)
   const pitch = useRef(0)
 
-  useEffect(() => {
+  // A nézet alapbeállítása (kameraállás + célpont). Fókusz után is ide térünk vissza, ha a lépés áttekintést kér.
+  const applyView = useCallback(() => {
     const size = Math.max(config.width, config.depth)
     // Kanapé nézet: a választott bútor egyik ülőhelyéről, a kert felé.
     const [eyeX, eyeZ] = seatPosition({ width: config.width, depth: config.depth }, furniture)
@@ -1444,6 +1447,50 @@ function CameraController({ view, config, autoRotate, furniture }: { view: Camer
     }
     invalidate()
   }, [view, config.width, config.depth, config.height, config.mount, furniture, camera, invalidate])
+  useEffect(() => { applyView() }, [applyView])
+
+  useEffect(() => { if (revealed) invalidate() }, [revealed, invalidate])
+
+  // Mobilon a félig nyitott alsó lap mögé ne kerüljön a pergola: a képet feljebb toljuk (nézet-eltolás).
+  const size = useThree((state) => state.size)
+  useEffect(() => {
+    const perspectiveCamera = camera as THREE.PerspectiveCamera
+    if (viewShift > 0) perspectiveCamera.setViewOffset(size.width, size.height, 0, Math.round(size.height * viewShift), size.width, size.height)
+    else perspectiveCamera.clearViewOffset()
+    perspectiveCamera.updateProjectionMatrix()
+    invalidate()
+  }, [viewShift, size.width, size.height, camera, invalidate])
+
+  // Egyszeri fókusz: a kiválasztott oldal elé fordul (enyhén oldalról és felülről, hogy a mélység is
+  // látsszon), vagy bemutató körbeforgás. A felhasználó bármikor átveheti az irányítást.
+  const showcase = useRef(0)
+  const focusId = focus?.id
+  useEffect(() => {
+    if (!focus || view === 'sofa') return
+    const { width: w, depth: d, height: h } = config
+    if (focus.kind === 'overview' || focus.kind === 'showcase') {
+      // Előbb vissza az áttekintő állásba (egy korábbi oldalfókusz után is), bemutatónál utána lassú körbeforgás.
+      applyView()
+      showcase.current = focus.kind === 'showcase' && !REDUCED ? 7.5 : 0
+      idle.current = 0
+      return
+    }
+    const side = focus.side
+    if (isWallSide(config.mount, side)) return
+    const horizontal = side === 'front' || side === 'back'
+    const length = horizontal ? w : d
+    const normal = new THREE.Vector3(side === 'left' ? -1 : side === 'right' ? 1 : 0, 0, side === 'front' ? 1 : side === 'back' ? -1 : 0)
+    const tangent = new THREE.Vector3(-normal.z, 0, normal.x)
+    const center = new THREE.Vector3(normal.x * (w / 2), h * 0.48, normal.z * (d / 2))
+    const distance = Math.max(6.4, length * 1.25 + 3.4) * (window.innerWidth < 820 ? 1.3 : 1)
+    // A célpont a kiválasztott oldal és a pergola közepe között: az oldal kerül előtérbe, de a teljes szerkezet a képben marad.
+    target.current.copy(center).multiplyScalar(0.62).setY(h * 0.45)
+    destination.current.copy(center).addScaledVector(normal, distance).addScaledVector(tangent, distance * 0.38)
+    destination.current.y = h * 1.05 + 1.3
+    transitioning.current = true
+    invalidate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- csak új fókuszkérésre fusson
+  }, [focusId])
 
   useEffect(() => {
     if (view !== 'sofa') return
@@ -1509,14 +1556,28 @@ function CameraController({ view, config, autoRotate, furniture }: { view: Camer
     if (!controls.current || view === 'sofa') return
     idle.current += delta
     autoFrame.current += delta
+    // A berepülés csak akkor induljon, amikor a betöltőkép már eltűnt.
+    if (transitioning.current && firstFlight.current && !revealed) return
     if (transitioning.current) {
       if (REDUCED) { camera.position.copy(destination.current); controls.current.target.copy(target.current); transitioning.current = false }
-      else { const alpha = 1 - Math.exp(-delta * 3.7); camera.position.lerp(destination.current, alpha); controls.current.target.lerp(target.current, alpha); if (camera.position.distanceTo(destination.current) < 0.025) transitioning.current = false }
+      else {
+        const alpha = 1 - Math.exp(-Math.min(delta, 0.25) * (firstFlight.current ? 1.6 : 3.7))
+        camera.position.lerp(destination.current, alpha); controls.current.target.lerp(target.current, alpha)
+        if (camera.position.distanceTo(destination.current) < 0.025) { transitioning.current = false; firstFlight.current = false }
+      }
       camera.position.set(camera.position.x, Math.max(0.28, camera.position.y), camera.position.z)
+      controls.current.update(); invalidate()
+    } else if (showcase.current > 0) {
+      // Bemutató: egy lassú, ívelt fél kör a pergola körül, majd megáll.
+      const step = Math.min(delta, 0.05)
+      showcase.current -= step
+      const offset = camera.position.clone().sub(controls.current.target)
+      offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), step * 0.42 * Math.min(1, showcase.current / 1.2 + 0.15))
+      camera.position.copy(controls.current.target).add(offset)
       controls.current.update(); invalidate()
     } else if (autoRotate && idle.current > 2 && autoFrame.current >= 1 / 30) { autoFrame.current = 0; invalidate() }
   })
-  return <OrbitControls ref={controls} makeDefault enabled={view !== 'sofa'} enableDamping dampingFactor={0.07} minDistance={1.1} maxDistance={24} maxPolarAngle={view === 'interior' ? Math.PI * 0.86 : Math.PI / 1.98} autoRotate={autoRotate && view !== 'sofa'} autoRotateSpeed={0.4} onStart={() => { transitioning.current = false; idle.current = 0 }} />
+  return <OrbitControls ref={controls} makeDefault enabled={view !== 'sofa'} enableDamping dampingFactor={0.07} minDistance={1.1} maxDistance={24} maxPolarAngle={view === 'interior' ? Math.PI * 0.86 : Math.PI / 1.98} autoRotate={autoRotate && view !== 'sofa'} autoRotateSpeed={0.4} onStart={() => { transitioning.current = false; firstFlight.current = false; showcase.current = 0; idle.current = 0 }} />
 }
 
 /** Az égbolt-képeken (HDR) a nap iránya: equirect u koordináta → szög az xz síkban. */
@@ -1641,7 +1702,7 @@ function SceneRegistration() {
   return null
 }
 
-function SceneContent({ config, scene, view, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; quality: QualityLevel; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
+function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualityLevel; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const lighting = getLighting(scene)
   useFrame(({ gl }) => { if (gl.toneMappingExposure !== lighting.exposure) gl.toneMappingExposure = lighting.exposure })
   const pergola = <group position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} hideZone={view === 'sofa'} /></OptionalSceneAsset>}</group>
@@ -1662,16 +1723,17 @@ function SceneContent({ config, scene, view, quality, coreOnly, onSideSelect, on
     {scene.sunStudy && !scene.photoMode && <CompassRose config={config} facing={scene.facing} />}
     {scene.sunStudy && !scene.photoMode && !coreOnly && onShade && <SceneAssetBoundary name="shade analysis"><Suspense fallback={null}><ShadeProbe config={config} scene={scene} onResult={onShade} /></Suspense></SceneAssetBoundary>}
     {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && (quality === 'high' || quality === 'ultra') && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects quality={quality} night={lighting.night} /></Suspense></SceneAssetBoundary>}
-    <CameraController view={view} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} />
+    <CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} />
   </>
 }
 
 function ScenePoster({ message, onRetry }: { message?: string; onRetry?: () => void }) {
   const { progress } = useProgress()
+  const { tenant } = useTenant()
   const failed = Boolean(onRetry)
   return <div className={`scene-poster${failed ? ' is-error' : ''}`} role={failed ? 'alert' : 'status'} aria-live="polite">
-    {failed ? <img className="scene-poster-image" src={assetUrl('/assets/pergo-hero.webp')} alt="Az ARDELIS PERGO pergola statikus előnézete" /> : <div className="poster-skeleton"><span /><span /><span /><span /></div>}
-    <div className="branded-loader"><div className="loader-brand">ARDELIS <small>/ PERGO</small></div>{!failed && <div className="loader-track"><span style={{ width: `${Math.max(8, progress)}%` }} /></div>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
+    {failed ? <img className="scene-poster-image" src={assetUrl('/assets/pergo-hero.webp')} alt={`${tenant.brand.name} pergola statikus előnézete`} /> : <div className="poster-skeleton"><span /><span /><span /><span /></div>}
+    <div className="branded-loader"><div className="loader-brand">{tenant.brand.name}{tenant.brand.suffix && <small> / {tenant.brand.suffix}</small>}</div>{!failed && <div className="loader-track"><span style={{ width: `${Math.max(8, progress)}%` }} /></div>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
   </div>
 }
 
@@ -1714,7 +1776,7 @@ function FirstFrameReady({ onReady }: { onReady: () => void }) {
   return null
 }
 
-export default memo(function PergolaScene({ config, scene, view, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
+export default memo(function PergolaScene({ config, scene, view, focus = null, viewShift = 0, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const [ready, setReady] = useState(false)
   const [decorativeReady, setDecorativeReady] = useState(false)
   const [attempt, setAttempt] = useState(0)
@@ -1754,7 +1816,7 @@ export default memo(function PergolaScene({ config, scene, view, onSideSelect, o
         frameloop="demand"
         shadows={{ type: THREE.PCFShadowMap }}
         dpr={quality === 'mobile' ? [1, 1.25] : quality === 'ultra' ? [1, 1.8] : [1, 1.5]}
-        camera={{ position: [12, 7, 14], fov: window.innerWidth < 820 ? 48 : 38, near: 0.1, far: 90 }}
+        camera={{ position: REDUCED ? [12, 7, 14] : [30, 21, 34], fov: window.innerWidth < 820 ? 48 : 38, near: 0.1, far: 90 }}
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' }}
         performance={{ min: 0.55 }}
         onCreated={({ gl }) => {
@@ -1774,6 +1836,9 @@ export default memo(function PergolaScene({ config, scene, view, onSideSelect, o
             config={config}
             scene={coreScene ? { ...scene, showPerson: false } : scene}
             view={view}
+            focus={focus}
+            viewShift={viewShift}
+            revealed={ready}
             quality={quality}
             coreOnly={coreScene}
             onSideSelect={onSideSelect}

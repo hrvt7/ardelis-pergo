@@ -12,6 +12,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   ground: 'terrace',
   showDimensions: false,
   autoRotate: false,
+  autoCamera: true,
   rain: false,
   winter: false,
   ledColor: null,
@@ -72,6 +73,11 @@ export function readStored(key: string): unknown {
   } catch {
     return null
   }
+}
+
+/** Van-e a böngészőben elmentett piszkozat ehhez a gyártóhoz. */
+export function hasStoredDraft(tenant: Tenant) {
+  return readStored(configKey(tenant)) !== null
 }
 
 export function loadInitialConfig(tenant: Tenant): PergolaConfig {

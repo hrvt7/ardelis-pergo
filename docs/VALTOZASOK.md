@@ -1,5 +1,29 @@
 # Változások
 
+## 3.12 — Prémium felhasználói élmény (2026. 10. 29.)
+
+- **Olvasható tipográfia:** a kis feliratok 7–9 px helyett 11–13 px-esek, a fő szövegek 14–16 px;
+  a beállítópanel 350 → 392 px, az árpanel 330 → 352 px széles, a felülnézeti oldalválasztó nagyobb.
+- **Követő kamera:** a kamera a választáshoz fordul — oldal kiválasztásakor és oldaltípus-váltáskor
+  az adott oldal elé (távolabbról, hogy a teljes pergola a képben maradjon), ventilátornál alulról;
+  a Szín, Méret, Rögzítés és Extrák lépésben, illetve szín-, rögzítés- vagy tetőcserénél vissza az áttekintő nézetbe
+  (akkor is, ha a kamera előtte egy oldalra fókuszált). LED vagy fűtés első bekapcsolásakor egyszer esti nézetre vált.
+  Kikapcsolható („Követő kamera” a jelenetbeállításokban); kézi mozgatáskor azonnal átadja az irányítást.
+- **Változás-jelző:** minden módosítás után 6 másodpercig lebegő címke a 3D felett
+  („+654 000 Ft · Oldalkialakítás”) **Visszavonás** gombbal; mobilon finom rezgés; a mobil árcsík is pörgő árral.
+- **Mobil alsó lap három állással** (kicsi / fél / teljes), a fejléccel húzható vagy koppintható.
+  Fél állásban a 3D kép feljebb tolódik, hogy a pergola ne kerüljön a lap mögé.
+- **Bemutató összegzés:** az Összegzésre lépve a kamera lassan körbefordul; nagy kép a tervről
+  (automatikusan elkészül), a terv elnevezhető („Kovácsék terasza” — a PDF borítóján is),
+  **„Kép küldése a családnak”**: márkázott 1080 × 1350-es kép a tervvel, színnel és árral —
+  telefonon/tableten a megosztó menübe (WhatsApp, Messenger), asztali gépen letöltésként.
+- **Ár-összetétel sáv:** szerkezet / oldalzárás / komfort / szín és napelem aránya az árpanelen és az összegzésben.
+- **A/B összehasonlító csúszka:** a két mentett változat képe egymásra húzható.
+- **Visszatérő látogató:** „Üdv újra! Ott folytatod, ahol abbahagytad” sáv, „Új terv” gombbal.
+- **Berepülés:** a jelenet megjelenésekor a kamera magasról, drónszerűen érkezik a nézetbe.
+- **Javítás:** a méretarány-felirat a kamera-gombsor fölé került (eddig takarta).
+- **White-label javítás:** a betöltőképernyő a gyártó nevét mutatja (eddig fixen „ARDELIS”).
+
 ## 3.11 — Színválasztó: RAL katalógus, fa hatású bevonat, kéttónusú kivitel, szín a fotóról (2026. 10. 29.)
 
 **Miért:** a vásárlók többsége nem tudja a RAL-kódokat, a gyártók viszont bármely RAL színre

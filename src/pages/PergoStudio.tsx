@@ -4,16 +4,18 @@ import { Link } from 'react-router'
 import ConfiguratorControls from '@/components/ConfiguratorControls'
 import { InfoDialog, PriceSettingsDialog, ResetDialog } from '@/components/Dialogs'
 import PergolaScene from '@/components/PergolaScene'
-import PricePanel from '@/components/PricePanel'
+import PricePanel, { AnimatedPrice } from '@/components/PricePanel'
 import SummaryPanel from '@/components/SummaryPanel'
 import { copyShareUrl, exportPergolaPdf } from '@/lib/exportPdf'
 import { shareHash } from '@/lib/shareCode'
-import { createShareUrl, DEFAULT_SCENE, loadInitialConfig, loadPrices, persistConfig, persistPrices } from '@/lib/config'
+import { captureScene } from '@/lib/showcase'
+import { createShareUrl, DEFAULT_SCENE, hasStoredDraft, loadInitialConfig, loadPrices, persistConfig, persistPrices } from '@/lib/config'
 import { calculatePrice, formatHuf } from '@/lib/pricing'
 import { normalizeConfig, parseConfig } from '@/tenants/rules'
 import type { Tenant } from '@/tenants/types'
 import { useTenant } from '@/tenants/TenantContext'
-import type { CameraView, ConfigStep, PergolaConfig, PriceSettings, SavedConfiguration, SceneSettings, SideKey } from '@/types/pergola'
+import type { SheetState } from '@/components/ConfiguratorControls'
+import type { CameraFocus, CameraView, ConfigStep, PergolaConfig, PriceSettings, SavedConfiguration, SceneSettings, SideKey } from '@/types/pergola'
 import { usePageSeo } from '@/lib/usePageSeo'
 import type { ShadeResult } from '@/components/ShadeProbe'
 import { studySun } from '@/lib/sunSite'
@@ -59,7 +61,7 @@ function loadSaved(tenant: Tenant): SavedConfiguration[] {
     if (!Array.isArray(parsed)) return []
     return parsed.slice(0, 2).flatMap((item: Partial<SavedConfiguration>) => {
       const config = parseConfig(tenant, item?.config)
-      return config && typeof item.id === 'string' ? [{ id: item.id, name: String(item.name ?? item.id), config, savedAt: Number(item.savedAt) || 0 }] : []
+      return config && typeof item.id === 'string' ? [{ id: item.id, name: String(item.name ?? item.id), config, savedAt: Number(item.savedAt) || 0, ...(typeof item.image === 'string' && item.image.startsWith('data:image/') ? { image: item.image } : {}) }] : []
     })
   } catch { return [] }
 }
@@ -68,10 +70,17 @@ export default function PergoStudio() {
   const { tenant, labels: ROOF_LABELS, admin, embed, homeHref } = useTenant()
   usePageSeo('/studio/pergola', { noindex: embed || !tenant.demo, title: tenant.demo ? undefined : `${tenant.brand.name} · pergola konfigurátor` })
   const [config, setConfig] = useState<PergolaConfig>(() => loadInitialConfig(tenant))
+  // Visszatérő látogató: ha piszkozatból (nem linkből) indultunk, és az nem az alapterv, felajánljuk a folytatást.
+  const [welcomeBack, setWelcomeBack] = useState(() => !window.location.hash && JSON.stringify(config) !== JSON.stringify(normalizeConfig(tenant, tenant.defaultConfig)) && hasStoredDraft(tenant))
+  const projectKey = `pergo-project-name:${tenant.id}`
+  const [projectName, setProjectName] = useState(() => { try { return localStorage.getItem(projectKey) ?? '' } catch { return '' } })
+  useEffect(() => { try { localStorage.setItem(projectKey, projectName) } catch { /* privát mód */ } }, [projectKey, projectName])
   const [prices, setPrices] = useState<PriceSettings>(() => loadPrices(tenant, admin))
   const [scene, setScene] = useState<SceneSettings>(DEFAULT_SCENE)
   const [step, setStep] = useState<ConfigStep>('size')
-  const [mobileControlsOpen, setMobileControlsOpen] = useState(false)
+  // Mobilon az alsó lap három állású: kicsi (csak lépés), fél (a 3D felül látszik), teljes.
+  const [sheet, setSheet] = useState<SheetState>('peek')
+  const setMobileControlsOpen = useCallback((open: boolean) => setSheet((current) => (open ? (current === 'peek' ? 'half' : current) : 'peek')), [])
   const [selectedSide, setSelectedSide] = useState<SideKey | 'roof'>('front')
   const [view, setView] = useState<CameraView>('perspective')
   const [modal, setModal] = useState<'prices' | 'info' | 'reset' | 'ar' | 'budget' | 'advisor' | 'energy' | null>(() => {
@@ -82,6 +91,15 @@ export default function PergoStudio() {
   const [exporting, setExporting] = useState(false)
   const [presentation, setPresentation] = useState(false)
   const [delta, setDelta] = useState<{ amount: number; label: string } | null>(null)
+  // Kontextus-kamera, változás-jelző és rezgés.
+  const [focus, setFocus] = useState<CameraFocus | null>(null)
+  const focusSeq = useRef(0)
+  const [change, setChange] = useState<{ id: number; amount: number; label: string } | null>(null)
+  const lastBuzz = useRef(0)
+  const eveningShown = useRef(false)
+  const sceneRef = useRef<SceneSettings>(DEFAULT_SCENE)
+  const [isNarrow, setIsNarrow] = useState(() => window.innerWidth <= 820)
+  useEffect(() => { const query = window.matchMedia('(max-width: 820px)'); const update = () => setIsNarrow(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update) }, [])
   const [saved, setSaved] = useState<SavedConfiguration[]>(() => loadSaved(tenant))
   const history = useRef<{ past: PergolaConfig[]; future: PergolaConfig[] }>({ past: [], future: [] })
   const photoUrl = useRef<string | null>(null)
@@ -116,6 +134,26 @@ export default function PergoStudio() {
     return () => window.removeEventListener('keydown', exit)
   }, [presentation])
 
+  const focusSide = useCallback((side: SideKey) => setFocus({ id: ++focusSeq.current, kind: 'side', side }), [])
+  /** Vissza az áttekintő nézetbe — akkor is, ha a kamera épp egy oldalra fókuszált. */
+  const overview = useCallback(() => { setView('perspective'); setFocus({ id: ++focusSeq.current, kind: 'overview' }) }, [])
+  /** Mit mutasson a kamera egy módosítás után (csak ha az automatikus kamera be van kapcsolva). */
+  const reactToChange = useCallback((before: PergolaConfig, after: PergolaConfig) => {
+    const current = sceneRef.current
+    if (!current.autoCamera || current.photoMode || current.sunStudy) return
+    const sides = (['front', 'back', 'left', 'right'] as SideKey[]).find((side) => before.sides[side] !== after.sides[side] || before.split?.[side] !== after.split?.[side])
+    if (sides) { setView('perspective'); focusSide(sides); return }
+    if ((after.fans ?? 0) > (before.fans ?? 0)) { setView('interior'); return }
+    if (before.frameColor !== after.frameColor || before.customRal !== after.customRal || before.roofColor !== after.roofColor || before.roofRal !== after.roofRal) { overview(); return }
+    if (before.mount !== after.mount || before.roof !== after.roof) overview()
+    const lightsOn = (!before.led && after.led) || (!before.ledRgb && after.ledRgb) || (before.heaters === 0 && after.heaters > 0)
+    if (lightsOn && !eveningShown.current && current.time !== 'night') {
+      eveningShown.current = true
+      setScene((value) => ({ ...value, time: 'night', dayTime: 21.5, winter: false }))
+      setToast('Esti nézetre váltottunk, hogy lásd a fényeket. Nappalra a felső sávban válthatsz vissza.')
+    }
+  }, [focusSide, overview])
+
   const applyConfig = useCallback((nextOrPatch: PergolaConfig | Partial<PergolaConfig>, replace = false) => {
     const next = normalizeConfig(tenant, replace ? nextOrPatch as PergolaConfig : { ...config, ...nextOrPatch })
     if (JSON.stringify(next) === JSON.stringify(config)) return
@@ -124,16 +162,45 @@ export default function PergoStudio() {
     const PAIRED: Record<string, string> = { customRal: 'frameColor', roofRal: 'roofColor', ledRgb: 'led' }
     const changedKeys = [...new Set(Object.keys(nextOrPatch).filter((key) => key !== 'louverAngle' && key !== 'screenOpen' && JSON.stringify((next as unknown as Record<string, unknown>)[key]) !== JSON.stringify((config as unknown as Record<string, unknown>)[key])).map((key) => (PAIRED[key] && key in nextOrPatch && PAIRED[key] in nextOrPatch ? PAIRED[key] : key)))]
     const changed = changedKeys[0]
-    setDelta({ amount: nextPrice.totalGross - price.totalGross, label: changedKeys.length > 1 ? 'Több módosítás' : changed ? CHANGE_LABELS[changed] ?? 'Konfiguráció' : 'Beállítás' })
+    const label = changedKeys.length > 1 ? 'Több módosítás' : changed ? CHANGE_LABELS[changed] ?? 'Konfiguráció' : 'Beállítás'
+    setDelta({ amount: nextPrice.totalGross - price.totalGross, label })
+    setChange({ id: Date.now(), amount: nextPrice.totalGross - price.totalGross, label })
+    // Finom visszajelzés érintőképernyőn (csúszka húzásakor ritkítva).
+    const now = performance.now()
+    if (now - lastBuzz.current > 260 && typeof navigator.vibrate === 'function' && window.matchMedia('(pointer: coarse)').matches) { lastBuzz.current = now; try { navigator.vibrate(8) } catch { /* nem támogatott */ } }
+    reactToChange(config, next)
     history.current.past.push(config)
     history.current.past = history.current.past.slice(-40)
     history.current.future = []
     setConfig(next)
-  }, [config, price.totalGross, prices, tenant, ROOF_LABELS])
+  }, [config, price.totalGross, prices, tenant, ROOF_LABELS, reactToChange])
 
   const updateConfig = useCallback((patch: Partial<PergolaConfig>) => applyConfig(patch), [applyConfig])
   const replaceConfig = useCallback((next: PergolaConfig) => applyConfig(next, true), [applyConfig])
   const updateScene = useCallback((patch: Partial<SceneSettings>) => setScene((current) => ({ ...current, ...patch })), [])
+  useEffect(() => { sceneRef.current = scene }, [scene])
+  useEffect(() => {
+    if (!change) return
+    const timer = window.setTimeout(() => setChange(null), 6000)
+    return () => window.clearTimeout(timer)
+  }, [change])
+  /** Lépésváltás: a kamera a lépéshez illő nézetre áll (szín: közeli, oldalak: a kiválasztott oldal, összegzés: körbeforgás). */
+  const goStep = useCallback((next: ConfigStep) => {
+    setStep(next)
+    const current = sceneRef.current
+    if (!current.autoCamera || current.photoMode || current.sunStudy) return
+    if (next === 'color' || next === 'size' || next === 'mount' || next === 'extras') overview()
+    else if (next === 'sides') { setView('perspective'); if (selectedSideRef.current !== 'roof') focusSide(selectedSideRef.current) }
+    else if (next === 'summary') { setView('perspective'); setFocus({ id: ++focusSeq.current, kind: 'showcase' }) }
+  }, [focusSide, overview])
+  const selectedSideRef = useRef<SideKey | 'roof'>('front')
+  useEffect(() => { selectedSideRef.current = selectedSide }, [selectedSide])
+  const selectSide = useCallback((side: SideKey | 'roof') => {
+    setSelectedSide(side)
+    if (!sceneRef.current.autoCamera) return
+    if (side === 'roof') overview()
+    else { setView('perspective'); focusSide(side) }
+  }, [focusSide, overview])
   const [shade, setShade] = useState<ShadeResult | null>(null)
   const [moodHidden, setMoodHidden] = useState(false)
   const [winterHidden, setWinterHidden] = useState(false)
@@ -152,7 +219,8 @@ export default function PergoStudio() {
     setSelectedSide(side)
     setStep('sides')
     setMobileControlsOpen(true)
-  }, [])
+    if (side !== 'roof' && sceneRef.current.autoCamera) focusSide(side)
+  }, [focusSide, setMobileControlsOpen])
 
   const undo = useCallback(() => {
     setConfig((current) => {
@@ -160,6 +228,7 @@ export default function PergoStudio() {
       if (!previous) return current
       history.current.future.push(current)
       setDelta(null)
+      setChange(null)
       return previous
     })
   }, [])
@@ -198,7 +267,7 @@ export default function PergoStudio() {
   }
   const handleExport = async () => {
     setExporting(true)
-    try { await exportPergolaPdf(config, price, tenant, ROOF_LABELS, createShareUrl(config), energyUsage); setToast('A PDF-összefoglaló elkészült.') }
+    try { await exportPergolaPdf(config, price, tenant, ROOF_LABELS, createShareUrl(config), energyUsage, projectName.trim() || undefined); setToast('A PDF-összefoglaló elkészült.') }
     catch (error) { console.error(error); setToast('A PDF nem készült el. Próbáld újra, vagy frissítsd az oldalt.') }
     finally { setExporting(false) }
   }
@@ -221,14 +290,15 @@ export default function PergoStudio() {
     probe.src = url
   }
   const saveSlot = (slot: 'A' | 'B') => {
-    const item: SavedConfiguration = { id: slot, name: `Konfiguráció ${slot}`, config: JSON.parse(JSON.stringify(config)) as PergolaConfig, savedAt: Date.now() }
+    const image = captureScene(640, 0.72) ?? undefined
+    const item: SavedConfiguration = { id: slot, name: `Konfiguráció ${slot}`, config: JSON.parse(JSON.stringify(config)) as PergolaConfig, savedAt: Date.now(), ...(image ? { image } : {}) }
     setSaved((current) => {
       const without = current.filter((savedItem) => savedItem.id !== slot)
       return slot === 'A' ? [item, ...without.filter((savedItem) => savedItem.id === 'B')].slice(0, 2) : [...without.filter((savedItem) => savedItem.id === 'A'), item].slice(0, 2)
     })
     setToast(`Konfiguráció ${slot} elmentve ebben a böngészőben.`)
   }
-  const summary = <SummaryPanel config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={() => setModal('energy')} />
+  const summary = <SummaryPanel config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={() => setModal('energy')} projectName={projectName} onProjectName={setProjectName} />
 
   return (
     <div className={`app-shell ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>
@@ -241,7 +311,7 @@ export default function PergoStudio() {
       <main className="studio-shell" id="top">
         <section className={`viewer-panel ${scene.photoMode ? 'photo-preview' : ''}`} aria-label="3D előnézet">
           {scene.photoMode && scene.photoUrl && <img className="photo-backdrop" src={scene.photoUrl} alt="A feltöltött teraszfotó háttere" />}
-          <PergolaScene config={config} scene={scene} view={view} onSideSelect={handleSideSelect} onSceneChange={updateScene} onShade={setShade} />
+          <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheet === 'half' && isNarrow ? 0.2 : 0} onSideSelect={handleSideSelect} onSceneChange={updateScene} onShade={setShade} />
           <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1>{ROOF_LABELS[config.roof].split(' · ')[0]} <i>/</i> {config.width.toFixed(1).replace('.', ',')}<small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>
           <div className="viewer-live"><i />VALÓS IDEJŰ 3D</div>
           <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások"><button type="button" className={scene.rain ? 'selected' : ''} aria-pressed={scene.rain} title="Eső be- és kikapcsolása" onClick={() => updateScene(scene.rain ? { rain: false } : { rain: true, winter: false })}><CloudRain size={17} /><span>Eső</span></button><button type="button" className={scene.time === 'night' ? 'selected' : ''} title="Nappal és éjszaka váltása" onClick={() => { setMoodHidden(false); updateScene(scene.time === 'night' ? { time: 'day', dayTime: 13, sunStudy: false } : { time: 'night', dayTime: 22, sunStudy: false }) }}>{scene.time === 'night' ? <Sun size={17} /> : <Moon size={17} />}<span>{scene.time === 'night' ? 'Nappal' : 'Éjszaka'}</span></button><button type="button" className={scene.winter ? 'selected' : ''} aria-pressed={scene.winter} title="Téli nézet: hó, havazás, téli használat" onClick={toggleWinter}><Snowflake size={17} /><span>Tél</span></button>{scene.photoUrl && <button type="button" className={scene.photoMode ? 'selected' : ''} title="Fotós előnézet" onClick={() => updateScene({ photoMode: !scene.photoMode, winter: false })}><Image size={17} /><span>Fotó</span></button>}<button type="button" className={scene.sunStudy ? 'selected' : ''} aria-pressed={scene.sunStudy} title="Árnyékelemzés: valós napállás a saját helyszíneden" onClick={toggleSunStudy}><SunMedium size={17} /><span>Árnyék</span></button><button type="button" className="ar-launch" title="Nézd meg valós méretben a saját kertedben (AR)" onClick={() => { if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') }}><Rotate3d size={17} /><span>AR</span></button></div>
@@ -252,14 +322,23 @@ export default function PergoStudio() {
           {view === 'sofa' && <div className="pov-note" role="status"><Armchair size={16} /><span><strong>Kanapé panoráma</strong>Húzd a képet a körbenézéshez · a nyilakkal is forgatható</span></div>}
           {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
           <div className="camera-toolbar" aria-label="Kamera nézetek">{CAMERA_VIEWS.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} aria-pressed={view === id} onClick={() => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} title={`${label} nézet`}><Icon size={16} /><span>{label}</span></button>)}</div>
+          {welcomeBack && <div className="welcome-back" role="status">
+            <span><strong>Üdv újra!</strong>Ott folytatod, ahol abbahagytad: {config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {formatHuf(price.totalGross)}</span>
+            <button type="button" className="welcome-primary" onClick={() => setWelcomeBack(false)}>Folytatom</button>
+            <button type="button" onClick={() => { replaceConfig(tenant.defaultConfig); setProjectName(''); setWelcomeBack(false); goStep('size') }}>Új terv</button>
+          </div>}
+          {change && change.amount !== 0 && !presentation && <div key={change.id} className={`change-pill ${change.amount < 0 ? 'is-down' : 'is-up'}`} role="status" aria-live="polite">
+            <strong>{change.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(change.amount))}</strong><span>{change.label}</span>
+            <button type="button" onClick={() => { undo(); setChange(null) }}><Undo2 size={14} />Visszavonás</button>
+          </div>}
           <div className="viewer-footer"><span>{scene.photoMode ? 'HELYI FOTÓS ELŐNÉZET' : '1 egység = 1 méter'}</span><span>{price.area.toFixed(1).replace('.', ',')} m²</span></div>
         </section>
 
-        <ConfiguratorControls config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={setStep} onSideSelect={setSelectedSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} onPhotoUpload={handlePhoto} mobileOpen={mobileControlsOpen} onMobileToggle={() => setMobileControlsOpen((open) => !open)} onAdvisor={() => setModal('advisor')} energyCost={energyCost} onEnergy={() => setModal('energy')} />
+        <ConfiguratorControls config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={goStep} onSideSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} onPhotoUpload={handlePhoto} sheet={sheet} onSheetChange={setSheet} onAdvisor={() => setModal('advisor')} energyCost={energyCost} onEnergy={() => setModal('energy')} />
         <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={admin ? () => setModal('prices') : undefined} onExport={handleExport} onShare={handleShare} onBudget={() => setModal('budget')} collapsed={priceCollapsed} onToggleCollapse={togglePrice} energyCost={energyCost} onEnergy={() => setModal('energy')} />
       </main>
 
-      <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong>{formatHuf(price.totalGross)}</strong></div><button type="button" onClick={() => { setStep(step === 'summary' ? 'size' : 'summary'); setMobileControlsOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>
+      <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong data-value={price.totalGross}><AnimatedPrice value={price.totalGross} /></strong></div><button type="button" onClick={() => { goStep(step === 'summary' ? 'size' : 'summary'); setMobileControlsOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>
       {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label="Értesítés bezárása" onClick={() => setToast('')}><X size={16} /></button></div>}
       {modal === 'prices' && admin && <PriceSettingsDialog prices={prices} onChange={setPrices} onReset={() => { setPrices(tenant.prices); setToast('A gyártói árlista visszaállt.') }} onClose={() => setModal(null)} />}
       {modal === 'info' && <InfoDialog onClose={() => setModal(null)} />}

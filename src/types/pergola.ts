@@ -44,6 +44,8 @@ export interface SceneSettings {
   ground: GroundType
   showDimensions: boolean
   autoRotate: boolean
+  /** A kamera kövesse a beállítást (oldal kiválasztása, szín, ventilátor). */
+  autoCamera: boolean
   rain: boolean
   wind: boolean
   showPerson: boolean
@@ -161,6 +163,9 @@ export interface PriceBreakdown {
 }
 
 export type CameraView = 'perspective' | 'front' | 'top' | 'interior' | 'detail' | 'sofa'
+
+/** Egyszeri kamerafókusz (pl. a kiválasztott oldalra fordulás vagy a bemutató körbeforgás); az `id` új értéke indítja. */
+export type CameraFocus = { id: number; kind: 'side'; side: SideKey } | { id: number; kind: 'showcase' } | { id: number; kind: 'overview' }
 export type ConfigStep = 'size' | 'mount' | 'color' | 'sides' | 'extras' | 'summary'
 
 export interface SavedConfiguration {
@@ -168,4 +173,6 @@ export interface SavedConfiguration {
   name: string
   config: PergolaConfig
   savedAt: number
+  /** Kis előnézeti kép (JPEG data URL) az összehasonlító csúszkához. */
+  image?: string
 }
