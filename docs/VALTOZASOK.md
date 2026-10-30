@@ -1,5 +1,13 @@
 # Változások
 
+## 3.15 — A házad a Szín lépésben (2026. 10. 30.)
+
+- „A házad” (homlokzat anyaga és színe, nyílászárók) a Rögzítés lépésből a **Szín** lépésbe került, két fülre bontva:
+  **Pergola** (porszórt szín, kéttónusú, RAL) és **A házad**. A fülek ragadósak görgetéskor, és mutatják
+  az aktuális választást (pl. „Antracit · RAL 7016”, „Vörös · antracit ablak”).
+- A Pergola fülön a ház egysoros összefoglalója és a „Igazítsd a nyílászárókhoz?” ajánlás; a sorra koppintva
+  a ház fül nyílik. A ház fül alján „Tovább a pergola színéhez”. Fülváltáskor finom beúszás, a lap tetejéről indul.
+
 ## 3.14 — Motoros tetőárnyékoló üveg- és polikarbonát tetőhöz (2026. 10. 30.)
 
 **Miért:** üvegtető alatt nyáron gyorsan meleg lesz — ez a vásárló első kérdése, és a gyártónak jó felár.

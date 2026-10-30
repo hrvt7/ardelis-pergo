@@ -11,7 +11,8 @@ import { closedSegments } from '@/lib/sides'
 import { estimateSolar } from '@/lib/solar'
 import FurniturePicker from '@/components/FurniturePicker'
 import HouseLook, { WindowMatch } from '@/components/HouseLook'
-import { finishPreview, houseSummary, wallColorHex } from '@/lib/house'
+import { findWindowColor, finishPreview, houseSummary, wallColorHex, wallColorName } from '@/lib/house'
+import { describeColor } from '@/lib/colors'
 import { supportsRoofShade } from '@/lib/roofShade'
 import ColorPicker from '@/components/ColorPicker'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
@@ -261,7 +262,12 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   const sheetGesture = useSheetGesture(panelRef, sheet, onSheetChange)
   // Lépésváltáskor a lap tetejéről indulunk (ne az előző lépés görgetési helyzetéből).
   const scrollRef = useRef<HTMLDivElement>(null)
-  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }) }, [step])
+  // Szín lépés fülei: a pergola színe és a ház (homlokzat, nyílászárók).
+  const [colorTab, setColorTab] = useState<'pergola' | 'house'>('pergola')
+  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }) }, [step, colorTab])
+  const frameInfo = describeColor(tenant, config.frameColor, config.customRal)
+  const frameHex = frameInfo.hex
+  const frameName = config.roofColor ? `${frameInfo.name} + ${describeColor(tenant, config.roofColor, config.roofRal).name.toLowerCase()}` : `${frameInfo.name}${frameInfo.code && frameInfo.code !== frameInfo.name ? ` · ${frameInfo.code}` : ''}`
   const [half, setHalf] = useState<0 | 1>(0)
   // Másik oldal kiválasztásakor az első féllel kezdünk (render közbeni szinkron, effect nélkül).
   const [halfSide, setHalfSide] = useState(selectedSide)
@@ -320,17 +326,32 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
             <SectionTitle title="Rögzítés" hint="A falak, az oszlopok és az ár a modellen is azonnal frissülnek." />
             <div className="roof-options mount-options">{MOUNT_TYPES.filter((mount) => tenant.mounts.includes(mount)).map((mount) => <button type="button" key={mount} className={config.mount === mount ? 'selected' : ''} aria-pressed={config.mount === mount} onClick={() => onChange({ mount })}><MountIcon mount={mount} /><span><strong>{MOUNT_LABELS[mount]}</strong><small>{MOUNT_DESCRIPTIONS[mount]}</small></span><span className="selection-dot">{config.mount === mount && <Check size={12} />}</span></button>)}</div>
-            <SectionTitle title="A házad" hint="Állítsd be, hogy a 3D ház a tiédre hasonlítson — így látod, milyen pergola illik hozzá." />
-            <HouseLook config={config} scene={scene} photoUrl={scene.photoUrl ?? null} onSceneChange={onSceneChange} onChange={onChange} />
           </>}
 
           {step === 'color' && <>
-            <SectionTitle title="Porszórt alumínium" hint="Alapszín felár nélkül, vagy bármely RAL szín. A 3D modell azonnal mutatja." />
-            <div className="house-color-context">
-              <HouseContext scene={scene} onEdit={() => onStepChange('mount')} />
-              <WindowMatch config={config} scene={scene} onChange={onChange} />
+            {/* Két, összetartozó döntés: a pergola színe és a ház, amelyhez illenie kell. */}
+            <div className="color-tabs" role="tablist" aria-label="Színek">
+              <button type="button" role="tab" aria-selected={colorTab === 'pergola'} className={colorTab === 'pergola' ? 'active' : ''} onClick={() => setColorTab('pergola')}>
+                <span className="color-tab-swatch" style={{ background: frameHex }} aria-hidden="true" />
+                <span><strong>Pergola</strong><small>{frameName}</small></span>
+              </button>
+              <button type="button" role="tab" aria-selected={colorTab === 'house'} className={colorTab === 'house' ? 'active' : ''} onClick={() => setColorTab('house')}>
+                <span className="color-tab-swatch" style={finishPreview(scene.wallFinish, wallColorHex(scene.wallFinish, scene.wallColor))} aria-hidden="true" />
+                <span><strong>A házad</strong><small>{wallColorName(scene.wallFinish, scene.wallColor)} · {findWindowColor(scene.windowColor).name.toLowerCase()} ablak</small></span>
+              </button>
             </div>
-            <ColorPicker config={config} prices={prices} photoUrl={scene.photoUrl ?? null} onChange={onChange} />
+            {colorTab === 'pergola' ? <div className="color-tab-panel" key="pergola">
+              <SectionTitle title="Porszórt alumínium" hint="Alapszín felár nélkül, vagy bármely RAL szín. A 3D modell azonnal mutatja." />
+              <div className="house-color-context">
+                <HouseContext scene={scene} onEdit={() => setColorTab('house')} />
+                <WindowMatch config={config} scene={scene} onChange={onChange} />
+              </div>
+              <ColorPicker config={config} prices={prices} photoUrl={scene.photoUrl ?? null} onChange={onChange} />
+            </div> : <div className="color-tab-panel" key="house">
+              <SectionTitle title="A házad" hint="Állítsd be, hogy a 3D ház a tiédre hasonlítson — így látod, milyen pergolaszín illik hozzá. Csak látvány, az árat nem módosítja." />
+              <HouseLook config={config} scene={scene} photoUrl={scene.photoUrl ?? null} onSceneChange={onSceneChange} onChange={onChange} />
+              <button type="button" className="color-tab-back" onClick={() => setColorTab('pergola')}>Tovább a pergola színéhez</button>
+            </div>}
           </>}
 
           {step === 'sides' && <>

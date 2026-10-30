@@ -1641,3 +1641,19 @@ button.diagram-core.selected span { color: var(--accent-primary); }
 .roof-shade-grid { grid-template-columns: 1fr; }
 .roof-shade-fabrics > span { flex-basis: 100%; }
 .roof-shade-fabrics button { padding-right: 9px; }
+
+/* ── Szín lépés: Pergola / A házad fülek (v3.15) ───────────────────────── */
+.color-tabs { position: sticky; top: -1px; z-index: 3; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 0 0 14px; padding: 4px; border: 1px solid var(--surface-border); border-radius: 12px; background: rgba(18,23,22,.94); backdrop-filter: blur(12px); }
+.color-tabs button { min-width: 0; display: flex; align-items: center; gap: 9px; padding: 8px 9px; border: 1px solid transparent; border-radius: 9px; background: transparent; text-align: left; color: var(--text-secondary); }
+.color-tabs button:hover { background: rgba(255,255,255,.04); }
+.color-tabs button.active { border-color: rgba(216,255,114,.5); background: var(--accent-subtle); color: var(--text-primary); }
+.color-tabs button > span:last-child { min-width: 0; display: flex; flex-direction: column; }
+.color-tabs strong { font-size: 14px; font-weight: 650; }
+.color-tabs button.active strong { color: var(--accent-primary); }
+.color-tabs small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; color: var(--text-secondary); }
+.color-tab-swatch { flex: none; width: 28px; height: 28px; border-radius: 7px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+.color-tab-panel { animation: color-tab-in 220ms cubic-bezier(.2,.8,.2,1); }
+@keyframes color-tab-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .color-tab-panel { animation: none; } }
+.color-tab-back { width: 100%; min-height: 42px; margin-top: 14px; border: 1px solid var(--surface-border); border-radius: 10px; background: transparent; color: var(--text-primary); font-size: 14px; font-weight: 600; }
+.color-tab-back:hover { border-color: rgba(216,255,114,.45); }
