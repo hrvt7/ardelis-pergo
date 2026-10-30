@@ -5,7 +5,7 @@ import { ContactShadows, Environment, Html, Line, OrbitControls, RoundedBox, use
 import * as THREE from 'three'
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
-import type { CameraFocus, CameraView, PergolaConfig, QualityLevel, SceneSettings, SideKey, SideType, WallFinish } from '@/types/pergola'
+import type { CameraFocus, CameraView, PergolaConfig, QualityLevel, SceneSettings, SideKey, SideType } from '@/types/pergola'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
 import { setActiveScene } from '@/lib/sceneRegistry'
@@ -20,6 +20,8 @@ import type { FurnitureSet } from '@/types/pergola'
 import { kelvinToHex } from '@/lib/color'
 import { glassPanels } from '@/lib/glass'
 import { WOOD_HEXES } from '@/lib/colors'
+import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
+import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { sideSegments } from '@/lib/sides'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
@@ -753,6 +755,8 @@ function prefetchSceneAssets(scene: SceneSettings) {
   }
 }
 
+type HouseLook = Pick<SceneSettings, 'wallFinish' | 'wallColor' | 'windowColor'>
+
 // A ház modell saját méretei (modellegységben, a talajszinttől).
 const HOUSE_RAW = { width: 18.22, depth: 6.79, eave: 2.947, facadeInset: 0.573 }
 
@@ -774,8 +778,21 @@ function getHouseLayout(config: PergolaConfig) {
   return { frontZ, attached, width: HOUSE_RAW.width * scale, scale, depth: HOUSE_RAW.depth * scale }
 }
 
-function House({ config, night, winter = false }: { config: PergolaConfig; night: boolean; winter?: boolean }) {
+// A ház modelljének részei a homlokzat- és nyílászáró-színezéshez.
+// Deszkák: valódi (profilos) geometria — vakolt vagy tégla háznál elrejtjük, mögöttük a sima falsíkok kapják az anyagot.
+const HOUSE_BOARDS = /^(Horizontal_front_and_rear_siding|Left_gable_siding|Right_gable_siding|Left_front_pier|Right_front_pier|Porch_back_cedar|Raised_rear_cedar_courses|Entry_left_reveal|Entry_right_reveal|Dormer_cheek_boards_-?1)$/
+const HOUSE_WALLS = /^(story0|gable1|gable2|gable1_raised_rear_infill|gable2_raised_rear_infill|Recessed_wall_returns|Dormer_front_carcass|Dormer_tapered_cheeks)$/
+const HOUSE_FRAMES = /(_frames|^Porch_return_midrails|^Dormer_four_lights_inset_sash_profiles|^doorf|^door)$/
+// Fa szegélyek (eresz, tetőablak-keret): fa homlokzatnál a fa színét, vakolt/tégla háznál a nyílászárók színét kapják.
+const HOUSE_TRIMS = /^(Cedar_eave_fascias|Porch_corner_fascia_return|Dormer_header_cedar|Dormer_left_jamb_cedar|Dormer_right_jamb_cedar|Dormer_sill_cedar)$/
+// Alsó fa felületek (ereszalj, terasz-mennyezet): csak átszínezett fa homlokzatnál változnak.
+const HOUSE_SOFFITS = /^(Sheltered_eave_soffit|Porch_ceiling|Entry_ceiling)$/
+
+type HousePart = { mesh: THREE.Mesh; material: THREE.Material | THREE.Material[]; geometry: THREE.BufferGeometry; matrix: THREE.Matrix4 }
+
+function House({ config, look, night, winter = false }: { config: PergolaConfig; look: HouseLook; night: boolean; winter?: boolean }) {
   const source = use(getHouseAsset())
+  const plaster = useTexture({ diff: assetUrl(pbrPath('plastered_wall_04', 'diff')), normal: assetUrl(pbrPath('plastered_wall_04', 'nor_gl')), rough: assetUrl(pbrPath('plastered_wall_04', 'rough')) })
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
   const layout = getHouseLayout(config)
@@ -815,8 +832,51 @@ function House({ config, night, winter = false }: { config: PergolaConfig; night
     const siding = object.getObjectByName('Horizontal_front_and_rear_siding')
     const facade = siding ? new THREE.Box3().setFromObject(siding).max.z : box.max.z - HOUSE_RAW.facadeInset
     const porch = ['Terrace_projection', 'Terrace_nosing'].map((name) => object.getObjectByName(name)).filter((item): item is THREE.Object3D => Boolean(item))
-    return { object, center, minY: box.min.y, facade, porch }
+    const parts = { boards: [] as HousePart[], walls: [] as HousePart[], frames: [] as HousePart[], trims: [] as HousePart[], soffits: [] as HousePart[] }
+    object.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return
+      const part = { mesh: child, material: child.material, geometry: child.geometry, matrix: child.matrixWorld.clone() }
+      if (HOUSE_BOARDS.test(child.name)) parts.boards.push(part)
+      else if (HOUSE_WALLS.test(child.name)) parts.walls.push(part)
+      else if (HOUSE_FRAMES.test(child.name)) parts.frames.push(part)
+      else if (HOUSE_TRIMS.test(child.name)) parts.trims.push(part)
+      else if (HOUSE_SOFFITS.test(child.name)) parts.soffits.push(part)
+    })
+    return { object, center, minY: box.min.y, facade, porch, parts }
   }, [source])
+  // Homlokzat: eredeti cédrus (a modell saját anyaga), átszínezett fa, vagy vakolt/tégla fal a deszkák helyén.
+  const facadeHex = wallColorHex(look.wallFinish, look.wallColor)
+  useLayoutEffect(() => {
+    const created: THREE.BufferGeometry[] = []
+    const project = (part: HousePart, uPerM: number, vPerM: number) => {
+      const geometry = boxProjectedGeometry(part.geometry, part.matrix, layout.scale, uPerM, vPerM)
+      created.push(geometry)
+      return geometry
+    }
+    const restore = (part: HousePart) => { part.mesh.material = part.material; part.mesh.geometry = part.geometry; part.mesh.visible = true }
+    if (isOriginalCedar(look.wallFinish, facadeHex)) {
+      ;[...prepared.parts.boards, ...prepared.parts.walls, ...prepared.parts.trims, ...prepared.parts.soffits].forEach(restore)
+    } else if (look.wallFinish === 'cedar') {
+      const board = getBoardMaterial(facadeHex)
+      ;[...prepared.parts.boards, ...prepared.parts.walls, ...prepared.parts.trims, ...prepared.parts.soffits].forEach((part) => { part.mesh.visible = true; part.mesh.material = board; part.mesh.geometry = project(part, 1 / 1.0, 1 / 0.25) })
+    } else {
+      const finish = getFacadeFinish(look.wallFinish, facadeHex, plaster)
+      const trim = getFrameMaterial(look.windowColor)
+      prepared.parts.boards.forEach((part) => { part.mesh.visible = false })
+      prepared.parts.walls.forEach((part) => { part.mesh.visible = true; part.mesh.material = finish.material; part.mesh.geometry = project(part, finish.uPerM, finish.vPerM) })
+      prepared.parts.trims.forEach((part) => { part.mesh.visible = true; part.mesh.material = trim; part.mesh.geometry = part.geometry })
+      prepared.parts.soffits.forEach(restore)
+    }
+    refreshShadows(gl)
+    invalidate()
+    return () => { created.forEach((geometry) => geometry.dispose()) }
+  }, [prepared, look.wallFinish, facadeHex, look.windowColor, layout.scale, plaster, gl, invalidate])
+  // Nyílászárók: ablak- és ajtókeretek, bejárati ajtó.
+  useLayoutEffect(() => {
+    const material = getFrameMaterial(look.windowColor)
+    prepared.parts.frames.forEach((part) => { part.mesh.material = material })
+    invalidate()
+  }, [prepared, look.windowColor, invalidate])
   useLayoutEffect(() => {
     prepared.porch.forEach((item) => { item.visible = !layout.attached })
     refreshShadows(gl)
@@ -869,131 +929,6 @@ function House({ config, night, winter = false }: { config: PergolaConfig; night
 }
 
 // ── Oldalfalak (sarok- és fülkerögzítés) ──────────────────────────────────
-const WALL_TINT: Record<WallFinish, string> = { plaster: '#ece6da', brick: '#ffffff', cedar: '#b4835c' }
-
-let brickTextures: { map: THREE.CanvasTexture; bump: THREE.CanvasTexture } | null = null
-/** Egyszer generált, varrat nélkül ismétlődő téglamintázat (1,0 × 0,6 m, futókötés). */
-function getBrickTextures() {
-  if (brickTextures) return brickTextures
-  const width = 1024
-  const height = 614
-  const color = document.createElement('canvas')
-  const bump = document.createElement('canvas')
-  color.width = bump.width = width
-  color.height = bump.height = height
-  const c = color.getContext('2d')!
-  const b = bump.getContext('2d')!
-  c.fillStyle = '#b9afa2'
-  c.fillRect(0, 0, width, height)
-  b.fillStyle = '#202020'
-  b.fillRect(0, 0, width, height)
-  const courses = 8
-  const courseHeight = height / courses
-  const brickLength = width / 4
-  const mortar = 10
-  for (let row = 0; row < courses; row += 1) {
-    const offset = row % 2 ? brickLength / 2 : 0
-    for (let col = -1; col < 5; col += 1) {
-      const x = col * brickLength + offset
-      const tone = seeded(row * 7 + col + 3, 41)
-      const r = Math.round(132 + tone * 38)
-      const g = Math.round(74 + tone * 22)
-      const bl = Math.round(56 + tone * 16)
-      c.fillStyle = `rgb(${r},${g},${bl})`
-      c.fillRect(x + mortar / 2, row * courseHeight + mortar / 2, brickLength - mortar, courseHeight - mortar)
-      for (let speck = 0; speck < 40; speck += 1) {
-        const sxp = x + mortar / 2 + seeded(row * 97 + col * 13 + speck, 7) * (brickLength - mortar)
-        const syp = row * courseHeight + mortar / 2 + seeded(row * 31 + col * 5 + speck, 9) * (courseHeight - mortar)
-        c.fillStyle = `rgba(${seeded(speck, row) > 0.5 ? '40,20,14' : '210,170,140'},0.18)`
-        c.fillRect(sxp, syp, 3, 2)
-      }
-      b.fillStyle = `rgb(${200 + Math.round(tone * 30)},${200 + Math.round(tone * 30)},${200 + Math.round(tone * 30)})`
-      b.fillRect(x + mortar / 2, row * courseHeight + mortar / 2, brickLength - mortar, courseHeight - mortar)
-    }
-  }
-  const make = (canvas: HTMLCanvasElement, srgb: boolean) => {
-    const texture = new THREE.CanvasTexture(canvas)
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-    texture.anisotropy = 8
-    if (srgb) texture.colorSpace = THREE.SRGBColorSpace
-    return texture
-  }
-  brickTextures = { map: make(color, true), bump: make(bump, false) }
-  return brickTextures
-}
-
-let cedarTextures: { map: THREE.CanvasTexture; bump: THREE.CanvasTexture } | null = null
-/**
- * Vízszintes cédrus deszkaburkolat (1,0 × 1,4 m-es, varratmentesen ismétlődő minta),
- * a ház oromfalának színéhez és deszkaosztásához igazítva (≈14 cm-es deszkák).
- */
-function getCedarTextures() {
-  if (cedarTextures) return cedarTextures
-  const width = 1024
-  const height = 1434
-  const color = document.createElement('canvas')
-  const bump = document.createElement('canvas')
-  color.width = bump.width = width
-  color.height = bump.height = height
-  const c = color.getContext('2d')!
-  const b = bump.getContext('2d')!
-  const boards = 10
-  const boardHeight = height / boards
-  for (let row = 0; row < boards; row += 1) {
-    const y = row * boardHeight
-    const tone = seeded(row, 77)
-    const r = Math.round(118 + tone * 26)
-    const g = Math.round(68 + tone * 14)
-    const bl = Math.round(46 + tone * 10)
-    c.fillStyle = `rgb(${r},${g},${bl})`
-    c.fillRect(0, y, width, boardHeight)
-    // Erezet: finom, vízszintes, hullámzó vonalak
-    for (let streak = 0; streak < 26; streak += 1) {
-      const sy = y + 6 + seeded(row * 31 + streak, 5) * (boardHeight - 16)
-      const light = seeded(row * 17 + streak, 9) > 0.5
-      c.strokeStyle = light ? 'rgba(170,112,80,0.22)' : 'rgba(60,32,22,0.2)'
-      c.lineWidth = 1 + seeded(streak, row) * 2.2
-      c.beginPath()
-      c.moveTo(0, sy)
-      for (let x = 0; x <= width; x += 64) c.lineTo(x, sy + Math.sin((x / width) * Math.PI * 2 * (1 + (streak % 3)) + row) * 2.4)
-      c.stroke()
-    }
-    // Toldások helye egyes deszkákon (függőleges illesztés)
-    if (seeded(row, 3) > 0.45) {
-      const jx = Math.round(seeded(row, 4) * width)
-      c.fillStyle = 'rgba(40,22,15,0.55)'
-      c.fillRect(jx, y + 2, 3, boardHeight - 4)
-    }
-    // Átfedés: felül fény, alul árnyékrés
-    const gradient = c.createLinearGradient(0, y, 0, y + boardHeight)
-    gradient.addColorStop(0, 'rgba(255,220,190,0.10)')
-    gradient.addColorStop(0.85, 'rgba(0,0,0,0)')
-    gradient.addColorStop(1, 'rgba(0,0,0,0.28)')
-    c.fillStyle = gradient
-    c.fillRect(0, y, width, boardHeight)
-    c.fillStyle = 'rgba(28,16,11,0.9)'
-    c.fillRect(0, y + boardHeight - 5, width, 5)
-    b.fillStyle = '#d0d0d0'
-    b.fillRect(0, y, width, boardHeight)
-    const bumpGradient = b.createLinearGradient(0, y, 0, y + boardHeight)
-    bumpGradient.addColorStop(0, '#f2f2f2')
-    bumpGradient.addColorStop(1, '#9a9a9a')
-    b.fillStyle = bumpGradient
-    b.fillRect(0, y, width, boardHeight)
-    b.fillStyle = '#202020'
-    b.fillRect(0, y + boardHeight - 5, width, 5)
-  }
-  const make = (canvas: HTMLCanvasElement, srgb: boolean) => {
-    const texture = new THREE.CanvasTexture(canvas)
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-    texture.anisotropy = 8
-    if (srgb) texture.colorSpace = THREE.SRGBColorSpace
-    return texture
-  }
-  cedarTextures = { map: make(color, true), bump: make(bump, false) }
-  return cedarTextures
-}
-
 // ── Ház-oldalszárny (L- és U-alakú ház) ──────────────────────────────────
 // A sarok- és fülkerögzítésnél nem szabadon álló fal, hanem a ház földszinti
 // szárnya áll a pergola mellett: ugyanazzal a cédrusburkolattal, kőlábazattal,
@@ -1014,8 +949,6 @@ function getWingSpecs(config: PergolaConfig): WingSpec[] {
     return { side, sx, inner, outer: inner + sx * WING_DEPTH, zBack, zFront, height, scale: layout.scale }
   })
 }
-
-type FacadeFinish = { material: THREE.Material; uPerM: number; vPerM: number }
 
 /** Homlokzati sík méterarányos UV-val, hogy a burkolat sűrűsége bármekkora szárnyon azonos legyen. */
 function useFacadePlane(width: number, height: number, uPerM: number, vPerM: number, uOffset = 0) {
@@ -1134,40 +1067,21 @@ function useHouseKit(night: boolean): HouseKit {
   return useMemo(() => ({ trim: kit.trim, glass: kit.glass, stone: kit.stone, zinc: kit.zinc, interior: night ? kit.interiorNight : kit.interiorDay }), [kit, night])
 }
 
-function CedarWings({ specs, config, kit }: { specs: WingSpec[]; config: PergolaConfig; kit: HouseKit }) {
-  const finish = useMemo<FacadeFinish>(() => {
-    const base = getCedarTextures()
-    return { material: new THREE.MeshStandardMaterial({ name: 'wing-cedar', map: base.map, bumpMap: base.bump, bumpScale: 2.2, roughness: 0.62, envMapIntensity: 0.72 }), uPerM: 1 / 1.0, vPerM: 1 / 1.4 }
-  }, [])
-  useEffect(() => () => finish.material.dispose(), [finish])
-  return <>{specs.map((spec) => <HouseWing key={spec.side} spec={spec} config={config} finish={finish} kit={kit} />)}</>
+/** A homlokzat anyaga a ház kinézete szerint (a vakolat PBR-textúrája mindig betöltődik, kicsi). */
+function useFacadeFinish(look: HouseLook): FacadeFinish {
+  const textures = useTexture({ diff: assetUrl(pbrPath('plastered_wall_04', 'diff')), normal: assetUrl(pbrPath('plastered_wall_04', 'nor_gl')), rough: assetUrl(pbrPath('plastered_wall_04', 'rough')) })
+  return useMemo(() => getFacadeFinish(look.wallFinish, look.wallColor, textures), [look.wallFinish, look.wallColor, textures])
 }
 
-function PlasterWings({ specs, config, kit }: { specs: WingSpec[]; config: PergolaConfig; kit: HouseKit }) {
-  const maps = usePBR('plastered_wall_04', [1, 1])
-  const finish = useMemo<FacadeFinish>(() => ({ material: new THREE.MeshStandardMaterial({ map: maps.diff, normalMap: maps.normal, normalScale: new THREE.Vector2(0.55, 0.55), roughnessMap: maps.rough, color: WALL_TINT.plaster, roughness: 0.95 }), uPerM: 1 / 2.2, vPerM: 1 / 2.2 }), [maps])
-  useEffect(() => () => finish.material.dispose(), [finish])
-  return <>{specs.map((spec) => <HouseWing key={spec.side} spec={spec} config={config} finish={finish} kit={kit} />)}</>
-}
-
-function BrickWings({ specs, config, kit }: { specs: WingSpec[]; config: PergolaConfig; kit: HouseKit }) {
-  const finish = useMemo<FacadeFinish>(() => {
-    const base = getBrickTextures()
-    return { material: new THREE.MeshStandardMaterial({ map: base.map, bumpMap: base.bump, bumpScale: 1.4, roughness: 0.9 }), uPerM: 1 / 1.0, vPerM: 1 / 0.6 }
-  }, [])
-  useEffect(() => () => finish.material.dispose(), [finish])
-  return <>{specs.map((spec) => <HouseWing key={spec.side} spec={spec} config={config} finish={finish} kit={kit} />)}</>
-}
-
-function HouseWingsContent({ config, finish, night }: { config: PergolaConfig; finish: WallFinish; night: boolean }) {
-  const kit = useHouseKit(night)
+function HouseWingsContent({ config, look, night }: { config: PergolaConfig; look: HouseLook; night: boolean }) {
+  const baseKit = useHouseKit(night)
+  const finish = useFacadeFinish(look)
+  const kit = useMemo(() => ({ ...baseKit, trim: getFrameMaterial(look.windowColor) }), [baseKit, look.windowColor])
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
   const specs = useMemo(() => getWingSpecs(config), [config])
-  useEffect(() => { refreshShadows(gl); invalidate() }, [gl, invalidate, finish, specs, night])
-  if (finish === 'plaster') return <Suspense fallback={<CedarWings specs={specs} config={config} kit={kit} />}><PlasterWings specs={specs} config={config} kit={kit} /></Suspense>
-  if (finish === 'brick') return <BrickWings specs={specs} config={config} kit={kit} />
-  return <CedarWings specs={specs} config={config} kit={kit} />
+  useEffect(() => { refreshShadows(gl); invalidate() }, [gl, invalidate, finish, kit, specs, night])
+  return <>{specs.map((spec) => <HouseWing key={spec.side} spec={spec} config={config} finish={finish} kit={kit} />)}</>
 }
 
 /** Ideiglenes tömeg, amíg a ház anyagai betöltődnek — a pergola sosem „lóg a levegőben”. */
@@ -1175,11 +1089,11 @@ function WingPlaceholder({ config }: { config: PergolaConfig }) {
   return <>{getWingSpecs(config).map((spec) => <mesh key={spec.side} position={[(spec.inner + spec.outer) / 2, spec.height / 2, (spec.zBack + spec.zFront) / 2]} castShadow receiveShadow><boxGeometry args={[WING_DEPTH, spec.height, spec.zFront - spec.zBack]} /><meshStandardMaterial color="#8d6a52" roughness={0.85} /></mesh>)}</>
 }
 
-function HouseWings({ config, finish, night }: { config: PergolaConfig; finish: WallFinish; night: boolean }) {
+function HouseWings({ config, look, night }: { config: PergolaConfig; look: HouseLook; night: boolean }) {
   const placeholder = <WingPlaceholder config={config} />
   return <group name="house-wings">
     <SceneAssetBoundary name="house wings" fallback={placeholder}>
-      <Suspense fallback={placeholder}><HouseWingsContent config={config} finish={finish} night={night} /></Suspense>
+      <Suspense fallback={placeholder}><HouseWingsContent config={config} look={look} night={night} /></Suspense>
     </SceneAssetBoundary>
   </group>
 }
@@ -1704,17 +1618,18 @@ function SceneRegistration() {
 
 function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualityLevel; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const lighting = getLighting(scene)
+  const houseLook = useMemo<HouseLook>(() => ({ wallFinish: scene.wallFinish, wallColor: scene.wallColor, windowColor: scene.windowColor }), [scene.wallFinish, scene.wallColor, scene.windowColor])
   useFrame(({ gl }) => { if (gl.toneMappingExposure !== lighting.exposure) gl.toneMappingExposure = lighting.exposure })
   const pergola = <group position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} hideZone={view === 'sofa'} /></OptionalSceneAsset>}</group>
   return <>
-    <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}`} />
+    <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}|${scene.wallColor}|${scene.windowColor}`} />
     {!scene.photoMode && <><fog attach="fog" args={[lighting.fog, 20, 43]} /><FogFollow /></>}
     <ambientLight intensity={lighting.ambient} /><hemisphereLight args={['#c8d8e2', scene.winter ? '#dfe5ea' : '#51483e', lighting.hemisphere]} /><directionalLight key={lighting.shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={quality === 'mobile' ? [1024, 1024] : [2048, 2048]} shadow-camera-left={-lighting.shadowExtent} shadow-camera-right={lighting.shadowExtent} shadow-camera-top={lighting.shadowExtent} shadow-camera-bottom={-lighting.shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
     {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment} environmentRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
     {!scene.photoMode && <Ground scene={scene} />}
-    {!scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} finish={scene.wallFinish} night={lighting.night} />}
-    {!scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} night={lighting.night} winter={scene.winter} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
+    {!scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} look={houseLook} night={lighting.night} />}
+    {!scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} look={houseLook} night={lighting.night} winter={scene.winter} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
     {pergola}
     {!scene.photoMode && <ContactShadows key={`${config.width}-${config.depth}-${config.height}-${config.mount}`} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality === 'mobile' ? 256 : 512} frames={1} color="#10171d" />}
     {scene.rain && !scene.winter && <Rain config={config} quality={quality} />}

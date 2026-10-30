@@ -1,5 +1,30 @@
 # Változások
 
+## 3.13 — A házad: homlokzat színe és nyílászárók (2026. 10. 30.)
+
+**Miért:** a vásárló akkor dönt magabiztosan a pergola színéről, ha a saját házán látja. Eddig a
+homlokzat anyaga csak a sarok-/fülkerögzítés oldalszárnyán változott, színt és nyílászárót nem lehetett állítani.
+
+- **„A házad” panel a Rögzítés lépésben** (mindig látszik, nem csak L/U-rögzítésnél):
+  - **Homlokzat:** Vakolt / Tégla / Fa — most már a **főépületen is**. Vakolt és tégla háznál a deszkaburkolat
+    eltűnik, a sima falsíkok kapják az anyagot; fa háznál a valódi deszkák kapják a választott színt.
+  - **Homlokzat színe** anyagonként a leggyakoribb árnyalatokkal (vakolat: fehér, törtfehér, homok, vanília, barack,
+    szürke, kavics, grafit; tégla: vörös, barna, homok, antracit klinker, festett fehér; fa: natúr, vörösfenyő,
+    sötét pác, szürkült, fekete) + **Egyedi** (színválasztó) + **Fotóról** (pipetta, a mért és egy „napfényben” világosított szín).
+  - **Nyílászárók:** fehér, antracit, fekete, alumínium, barna, aranytölgy, dió — ablakok, teraszajtó, bejárati ajtó,
+    tetőablak és az L/U-szárny ablakai egyszerre. Vakolt/tégla háznál az eresz- és tetőablak-szegély is ezt a színt kapja.
+- **„Igazítsd a nyílászárókhoz?”** ajánlás: egy gombbal a pergola a nyílászárók színét kapja (antracit → RAL 7016,
+  fehér → RAL 9016, aranytölgy → fa hatású aranytölgy …), a gyártó alapszínét felár nélkül. Ha már egyezik, megerősítés jelenik meg.
+- **Szín lépés:** felül a ház egysoros összefoglalója („Vakolt homlokzat (törtfehér) · fehér nyílászárók”, Módosítás)
+  és az igazítási ajánlás.
+- **A gyártó is látja:** a felmérési kérelem e-mailjében „A háza (3D alapján)” sor, az adatbázisban a megjegyzésben;
+  a PDF szerkezet-táblázatában „A ház (3D látvány)”.
+- A beállítást a böngésző megjegyzi (gyártónként); az „Alaphelyzet” nem törli. Módosításkor a követő kamera
+  az áttekintő nézetbe áll.
+- **Javítás:** lépésváltáskor a beállítópanel a lépés tetejéről indul (eddig az előző lépés görgetési helyzete maradt).
+- Technika: `src/lib/house.ts` (katalógus, összegzés, mentés), `src/components/houseMaterials.ts` (böngészőben
+  generált tégla/fa/erezet textúrák, doboz-vetítéses UV, gyorsítótárazott anyagok), `src/components/HouseLook.tsx`.
+
 ## 3.12 — Prémium felhasználói élmény (2026. 10. 29.)
 
 - **Olvasható tipográfia:** a kis feliratok 7–9 px helyett 11–13 px-esek, a fő szövegek 14–16 px;

@@ -9,6 +9,8 @@ interface Props {
   /** Csak tájékoztató; a szerver a gyártói árlistával újraszámol. */
   estimateNet?: number
   estimateGross?: number
+  /** A vásárló házának leírása a 3D beállításból (pl. „Vakolt homlokzat (fehér) · antracit nyílászárók”). */
+  house?: string
 }
 
 type LeadResponse = { ok: true; ref: string } | { ok: false; error: string; field?: string }
@@ -25,7 +27,7 @@ const FIELD_NAMES: Record<string, string> = {
   'customer.notes': 'a megjegyzést',
 }
 
-export default function LeadForm({ productFamily, config }: Props) {
+export default function LeadForm({ productFamily, config, house }: Props) {
   const { tenant, embed } = useTenant()
   const startedAt = useRef(Date.now())
   const [consent, setConsent] = useState(false)
@@ -64,6 +66,7 @@ export default function LeadForm({ productFamily, config }: Props) {
             address: field('address'),
             notes: field('notes'),
           },
+          ...(house ? { house } : {}),
           consent: true,
           website: field('website'),
           elapsedMs: Date.now() - startedAt.current,

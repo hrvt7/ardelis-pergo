@@ -49,12 +49,14 @@ export interface PdfInput {
   energyUsage?: EnergyUsage
   /** A vásárló által adott név (pl. „Kovácsék terasza”) a borítón. */
   projectName?: string
+  /** A vásárló házának leírása (a 3D-ben beállított homlokzat és nyílászárók). */
+  house?: string
 }
 
 const m2 = (value: number) => formatNumber(value, 2)
 const hu = (date: Date) => date.toLocaleDateString('hu-HU', { year: 'numeric', month: '2-digit', day: '2-digit' })
 
-export function buildPdfDefinition({ config, price, tenant, image, imageAspect = 16 / 10, shareUrl, date = new Date(), energyUsage = DEFAULT_USAGE, projectName }: PdfInput): TDocumentDefinitions {
+export function buildPdfDefinition({ config, price, tenant, image, imageAspect = 16 / 10, shareUrl, date = new Date(), energyUsage = DEFAULT_USAGE, projectName, house }: PdfInput): TDocumentDefinitions {
   const brand = tenant.brand.name
   const brandLine = [brand, tenant.brand.suffix].filter(Boolean).join(' ')
   const code = getSpecCode(config)
@@ -160,6 +162,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     ['Oszlopok', posts ? `${posts} db · ${Math.round(POST * 100)} × ${Math.round(POST * 100)} cm` : 'nincs · a falak tartják'],
     ['Szerkezetszín', colorLabel(frameInfo)],
     ...(roofInfo ? [[`${roofPartName(config.roof)} színe`, colorLabel(roofInfo)] as [string, string]] : []),
+    ...(house ? [['A ház (3D látvány)', house] as [string, string]] : []),
   ]
   const energy = estimateEnergy(config, energyUsage, tenant.energy?.heaterWatts)
   const solarEstimate = config.roof === 'fixed' && config.solar ? estimateSolar(config, energyUsage.householdKwh) : null

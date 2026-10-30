@@ -38,6 +38,8 @@ const leadSchema = z.object({
     address: z.string().trim().max(220).optional().default(''),
     notes: z.string().trim().max(2000).optional().default(''),
   }),
+  /** A vásárló házának leírása a 3D-ből (homlokzat, nyílászárók) — csak tájékoztató. */
+  house: z.string().trim().max(200).optional(),
   consent: z.literal(true),
   /** Rejtett mező: ember nem tölti ki. */
   website: z.string().max(200).optional().default(''),
@@ -133,6 +135,7 @@ function managerEmailHtml(record: LeadRecord) {
     ['Helyszín', [input.customer.postalCode, input.customer.city, input.customer.address].filter(Boolean).join(' ')],
     ['Régió', input.customer.region],
     ...(input.customer.notes ? [['Megjegyzés', input.customer.notes] as [string, string]] : []),
+    ...(input.house ? [['A háza (3D alapján)', input.house] as [string, string]] : []),
   ]
   const lines: [string, string][] = [...price.lines.map((line) => [line.label, formatHuf(line.amountNet)] as [string, string]), ['Telepítés', formatHuf(price.installationNet)]]
   const bom = getBom(config).map((line) => [line.label, line.value] as [string, string])
@@ -205,7 +208,7 @@ async function storeLead(env: LeadEnv, record: LeadRecord) {
       city: record.input.customer.city,
       region: record.input.customer.region,
       address: record.input.customer.address || null,
-      notes: record.input.customer.notes || null,
+      notes: [record.input.customer.notes, record.input.house && `Ház (3D): ${record.input.house}`].filter(Boolean).join('\n') || null,
       config: record.config,
       estimate_net: record.price.totalNet,
       estimate_gross: record.price.totalGross,

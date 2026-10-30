@@ -1,6 +1,6 @@
-import { useRef, useState, type ReactNode, type TouchEvent } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, CloudRain, Columns3, Gauge, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
-import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, sideWalls, wallLabel } from '@/lib/mount'
+import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, wallLabel } from '@/lib/mount'
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import { FanOption, RgbOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
 import { enabledRoofs, presetConfig, tenantPrice } from '@/tenants/rules'
@@ -10,8 +10,10 @@ import { getSizeRecommendation } from '@/lib/specification'
 import { closedSegments } from '@/lib/sides'
 import { estimateSolar } from '@/lib/solar'
 import FurniturePicker from '@/components/FurniturePicker'
+import HouseLook, { WindowMatch } from '@/components/HouseLook'
+import { finishPreview, houseSummary, wallColorHex } from '@/lib/house'
 import ColorPicker from '@/components/ColorPicker'
-import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey, WallFinish } from '@/types/pergola'
+import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
 
 const STEPS: { id: ConfigStep; label: string; short: string }[] = [
   { id: 'size', label: 'Méret', short: 'Alapterület' },
@@ -123,11 +125,15 @@ function SectionTitle({ title, hint }: { title: string; hint?: string }) {
   return <div className="section-title"><h3>{title}</h3>{hint && <p>{hint}</p>}</div>
 }
 
-const WALL_FINISHES: { id: WallFinish; label: string; swatch: string }[] = [
-  { id: 'cedar', label: 'Fa, mint a ház', swatch: '#8a5a3c' },
-  { id: 'plaster', label: 'Vakolt', swatch: '#d9d4c8' },
-  { id: 'brick', label: 'Tégla', swatch: '#8f5a43' },
-]
+/** A Szín lépésben: a ház beállított kinézete egy sorban, módosítás a Rögzítés lépésben. */
+function HouseContext({ scene, onEdit }: { scene: SceneSettings; onEdit: () => void }) {
+  const hex = wallColorHex(scene.wallFinish, scene.wallColor)
+  return <button type="button" className="house-context" onClick={onEdit}>
+    <span className="house-swatch" style={finishPreview(scene.wallFinish, hex)} aria-hidden="true" />
+    <span><small>A házad</small><strong>{houseSummary(scene)}</strong></span>
+    <em>Módosítás</em>
+  </button>
+}
 
 /** Felülnézeti jel: vastag vonal = fal, pont = oszlop. */
 function MountIcon({ mount }: { mount: MountType }) {
@@ -252,6 +258,9 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   const panelRef = useRef<HTMLElement>(null)
   const mobileOpen = sheet !== 'peek'
   const sheetGesture = useSheetGesture(panelRef, sheet, onSheetChange)
+  // Lépésváltáskor a lap tetejéről indulunk (ne az előző lépés görgetési helyzetéből).
+  const scrollRef = useRef<HTMLDivElement>(null)
+  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }) }, [step])
   const [half, setHalf] = useState<0 | 1>(0)
   // Másik oldal kiválasztásakor az első féllel kezdünk (render közbeni szinkron, effect nélkül).
   const [halfSide, setHalfSide] = useState(selectedSide)
@@ -288,7 +297,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           </button>
         ))}
       </div>
-      <div className="controls-scroll">
+      <div className="controls-scroll" ref={scrollRef}>
         <div className="panel-content" role="tabpanel" key={step}>
           <div className="step-heading"><span>0{stepIndex + 1} · {STEPS[stepIndex].short}</span><h2>{STEPS[stepIndex].label}</h2></div>
 
@@ -310,14 +319,16 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
             <SectionTitle title="Rögzítés" hint="A falak, az oszlopok és az ár a modellen is azonnal frissülnek." />
             <div className="roof-options mount-options">{MOUNT_TYPES.filter((mount) => tenant.mounts.includes(mount)).map((mount) => <button type="button" key={mount} className={config.mount === mount ? 'selected' : ''} aria-pressed={config.mount === mount} onClick={() => onChange({ mount })}><MountIcon mount={mount} /><span><strong>{MOUNT_LABELS[mount]}</strong><small>{MOUNT_DESCRIPTIONS[mount]}</small></span><span className="selection-dot">{config.mount === mount && <Check size={12} />}</span></button>)}</div>
-            {sideWalls(config.mount).length > 0 && <>
-              <SectionTitle title="Házszárny homlokzata" hint="Csak a látványt módosítja; az árat nem befolyásolja." />
-              <div className="scene-options">{WALL_FINISHES.map((finish) => <button type="button" key={finish.id} className={scene.wallFinish === finish.id ? 'selected' : ''} aria-pressed={scene.wallFinish === finish.id} onClick={() => onSceneChange({ wallFinish: finish.id })}><span aria-hidden="true" style={{ width: 18, height: 18, borderRadius: 4, background: finish.swatch, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.18)' }} /><span>{finish.label}</span></button>)}</div>
-            </>}
+            <SectionTitle title="A házad" hint="Állítsd be, hogy a 3D ház a tiédre hasonlítson — így látod, milyen pergola illik hozzá." />
+            <HouseLook config={config} scene={scene} photoUrl={scene.photoUrl ?? null} onSceneChange={onSceneChange} onChange={onChange} />
           </>}
 
           {step === 'color' && <>
             <SectionTitle title="Porszórt alumínium" hint="Alapszín felár nélkül, vagy bármely RAL szín. A 3D modell azonnal mutatja." />
+            <div className="house-color-context">
+              <HouseContext scene={scene} onEdit={() => onStepChange('mount')} />
+              <WindowMatch config={config} scene={scene} onChange={onChange} />
+            </div>
             <ColorPicker config={config} prices={prices} photoUrl={scene.photoUrl ?? null} onChange={onChange} />
           </>}
 

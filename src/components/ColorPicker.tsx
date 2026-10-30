@@ -7,6 +7,7 @@ import { Modal } from '@/components/Dialogs'
 import { COLOR_CATALOG, COLOR_GROUPS, colorLabel, describeColor, findColor, matchLabel, nearestColors, normalizeColorCode, pickCatalogColor, rgbToHex, roofPartName, searchColors, supportsTwoTone, type CatalogColor, type ColorGroup, type ColorInfo } from '@/lib/colors'
 import { formatHuf } from '@/lib/pricing'
 import { tenantPrice } from '@/tenants/rules'
+import { brightenPhotoColor } from '@/lib/house'
 import { useTenant } from '@/tenants/TenantContext'
 import type { FrameColor, PergolaConfig, PriceSettings } from '@/types/pergola'
 
@@ -126,7 +127,11 @@ function luminance(hex: string) {
 }
 
 /** Fotó → pipetta: a megbökött pont 9×9-es átlaga, és a három legközelebbi katalógusszín. */
-function PhotoColorDialog({ photoUrl, targetLabel, onApply, onClose }: { photoUrl: string | null; targetLabel: string; onApply: (code: string) => void; onClose: () => void }) {
+/**
+ * Fotó → pipetta. Alapból a három legközelebbi katalógusszínt ajánlja (pergola);
+ * `onApplyHex` esetén magát a mért színt adja vissza (pl. a ház homlokzatához), egy árnyékmentesített változattal.
+ */
+export function PhotoColorDialog({ photoUrl, targetLabel, onApply, onApplyHex, title = 'Szín a házadról', prompt, onClose }: { photoUrl: string | null; targetLabel: string; onApply?: (code: string) => void; onApplyHex?: (hex: string) => void; title?: string; prompt?: string; onClose: () => void }) {
   const [url, setUrl] = useState(photoUrl)
   const [ownUrl, setOwnUrl] = useState<string | null>(null)
   const [sample, setSample] = useState<{ hex: string; x: number; y: number } | null>(null)
@@ -152,21 +157,23 @@ function PhotoColorDialog({ photoUrl, targetLabel, onApply, onClose }: { photoUr
     for (let index = 0; index < data.length; index += 4) { r += data[index]; g += data[index + 1]; b += data[index + 2]; n += 1 }
     setSample({ hex: rgbToHex([r / n, g / n, b / n]), x: fx * 100, y: fy * 100 })
   }
-  return <Modal title="Szín a házadról" eyebrow="PIPETTA" onClose={close} className="photo-color-dialog">
+  return <Modal title={title} eyebrow="PIPETTA" onClose={close} className="photo-color-dialog">
     {!url ? <label className="photo-color-drop">
       <ImagePlus size={26} />
       <strong>Tölts fel egy fotót a házadról</strong>
       <small>Például az ablakkeretről, a kerítésről vagy a homlokzatról. A kép csak ebben a böngészőben marad.</small>
       <input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) { const next = URL.createObjectURL(file); setOwnUrl(next); setUrl(next) } }} />
     </label> : <>
-      <p className="photo-color-hint">Bökj rá arra a részre, amelyhez a pergola színét igazítanád. Árnyékos vagy fénylő részen a szín torzulhat — próbálj több pontot.</p>
+      <p className="photo-color-hint">{prompt ?? 'Bökj rá arra a részre, amelyhez a pergola színét igazítanád.'} Árnyékos vagy fénylő részen a szín torzulhat — próbálj több pontot.</p>
       <div className="photo-color-stage">
         <img src={url} alt="Feltöltött fotó a házról" onPointerDown={pick} draggable={false} />
         {sample && <span className="photo-color-marker" style={{ left: `${sample.x}%`, top: `${sample.y}%`, background: sample.hex }} />}
       </div>
       {sample ? <div className="photo-color-results">
         <div className="photo-color-sample"><i style={{ background: sample.hex }} /><span><small>A fotón mért szín</small><strong>{sample.hex.toUpperCase()}</strong></span></div>
-        {matches.map(({ color, distance }) => <button type="button" key={color.code} className="photo-color-match" onClick={() => onApply(color.code)}>
+        {onApplyHex ? [{ hex: sample.hex, name: 'Ahogy a fotón', note: 'a mért szín változtatás nélkül' }, { hex: brightenPhotoColor(sample.hex), name: 'Napfényben', note: 'kicsit világosabb — a fotók általában sötétebbek' }].map((option) => <button type="button" key={option.name} className="photo-color-match" onClick={() => onApplyHex(option.hex)}>
+          <i style={{ background: option.hex }} /><span><strong>{option.name}</strong><small>{option.note}</small></span><em>Alkalmazom {targetLabel}</em>
+        </button>) : matches.map(({ color, distance }) => <button type="button" key={color.code} className="photo-color-match" onClick={() => onApply?.(color.code)}>
           <i style={{ background: color.hex }} /><span><strong>{color.name}</strong><small>{color.code} · {matchLabel(distance)}</small></span><em>Alkalmazom {targetLabel}</em>
         </button>)}
         <p className="photo-color-note">A fotó színe a fénytől és a kamerától függ; a pontos árnyalatot a gyártói színminta mutatja meg.</p>

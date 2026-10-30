@@ -9,6 +9,7 @@ import SummaryPanel from '@/components/SummaryPanel'
 import { copyShareUrl, exportPergolaPdf } from '@/lib/exportPdf'
 import { shareHash } from '@/lib/shareCode'
 import { captureScene } from '@/lib/showcase'
+import { houseSummary, loadHouseLook, saveHouseLook } from '@/lib/house'
 import { createShareUrl, DEFAULT_SCENE, hasStoredDraft, loadInitialConfig, loadPrices, persistConfig, persistPrices } from '@/lib/config'
 import { calculatePrice, formatHuf } from '@/lib/pricing'
 import { normalizeConfig, parseConfig } from '@/tenants/rules'
@@ -76,7 +77,9 @@ export default function PergoStudio() {
   const [projectName, setProjectName] = useState(() => { try { return localStorage.getItem(projectKey) ?? '' } catch { return '' } })
   useEffect(() => { try { localStorage.setItem(projectKey, projectName) } catch { /* privát mód */ } }, [projectKey, projectName])
   const [prices, setPrices] = useState<PriceSettings>(() => loadPrices(tenant, admin))
-  const [scene, setScene] = useState<SceneSettings>(DEFAULT_SCENE)
+  // A ház kinézete (homlokzat, nyílászárók) a böngészőben megmarad: a vásárló háza nem változik két látogatás között.
+  const [scene, setScene] = useState<SceneSettings>(() => ({ ...DEFAULT_SCENE, ...loadHouseLook(tenant.id) }))
+  useEffect(() => { saveHouseLook(tenant.id, scene) }, [tenant.id, scene.wallFinish, scene.wallColor, scene.windowColor]) // eslint-disable-line react-hooks/exhaustive-deps
   const [step, setStep] = useState<ConfigStep>('size')
   // Mobilon az alsó lap három állású: kicsi (csak lépés), fél (a 3D felül látszik), teljes.
   const [sheet, setSheet] = useState<SheetState>('peek')
@@ -177,7 +180,12 @@ export default function PergoStudio() {
 
   const updateConfig = useCallback((patch: Partial<PergolaConfig>) => applyConfig(patch), [applyConfig])
   const replaceConfig = useCallback((next: PergolaConfig) => applyConfig(next, true), [applyConfig])
-  const updateScene = useCallback((patch: Partial<SceneSettings>) => setScene((current) => ({ ...current, ...patch })), [])
+  const updateScene = useCallback((patch: Partial<SceneSettings>) => {
+    // A ház kinézetének módosításakor a kamera az áttekintő nézetbe áll, hogy a ház és a pergola együtt látsszon.
+    const current = sceneRef.current
+    if (('wallFinish' in patch || 'wallColor' in patch || 'windowColor' in patch) && current.autoCamera && !current.photoMode && !current.sunStudy) overview()
+    setScene((value) => ({ ...value, ...patch }))
+  }, [overview])
   useEffect(() => { sceneRef.current = scene }, [scene])
   useEffect(() => {
     if (!change) return
@@ -267,7 +275,7 @@ export default function PergoStudio() {
   }
   const handleExport = async () => {
     setExporting(true)
-    try { await exportPergolaPdf(config, price, tenant, ROOF_LABELS, createShareUrl(config), energyUsage, projectName.trim() || undefined); setToast('A PDF-összefoglaló elkészült.') }
+    try { await exportPergolaPdf(config, price, tenant, ROOF_LABELS, createShareUrl(config), energyUsage, projectName.trim() || undefined, houseSummary(scene)); setToast('A PDF-összefoglaló elkészült.') }
     catch (error) { console.error(error); setToast('A PDF nem készült el. Próbáld újra, vagy frissítsd az oldalt.') }
     finally { setExporting(false) }
   }
@@ -298,7 +306,7 @@ export default function PergoStudio() {
     })
     setToast(`Konfiguráció ${slot} elmentve ebben a böngészőben.`)
   }
-  const summary = <SummaryPanel config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={() => setModal('energy')} projectName={projectName} onProjectName={setProjectName} />
+  const summary = <SummaryPanel config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={() => setModal('energy')} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} />
 
   return (
     <div className={`app-shell ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>
@@ -346,7 +354,7 @@ export default function PergoStudio() {
       {modal === 'advisor' && <Suspense fallback={null}><AdvisorDialog prices={prices} onApply={applyAdvice} onClose={() => setModal(null)} /></Suspense>}
       {modal === 'energy' && <Suspense fallback={null}><EnergyDialog config={config} prices={prices} usage={energyUsage} onUsageChange={setEnergyUsage} onConfigChange={updateConfig} onClose={() => setModal(null)} /></Suspense>}
       {modal === 'ar' && <Suspense fallback={null}><ArDialog shareUrl={buildArUrl(config)} onClose={() => setModal(null)} /></Suspense>}
-      {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(tenant.defaultConfig); setScene(DEFAULT_SCENE); setView('perspective'); setStep('size'); setToast('Az alapkonfiguráció visszaállt.') }} onClose={() => setModal(null)} />}
+      {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(tenant.defaultConfig); setScene((current) => ({ ...DEFAULT_SCENE, wallFinish: current.wallFinish, wallColor: current.wallColor, windowColor: current.windowColor })); setView('perspective'); setStep('size'); setToast('Az alapkonfiguráció visszaállt.') }} onClose={() => setModal(null)} />}
       {homeHref && (homeHref.startsWith('/') ? <Link className="studio-home-link" to={homeHref}>Kezdőlap</Link> : <a className="studio-home-link" href={homeHref} target="_top" rel="noreferrer">Kezdőlap</a>)}
     </div>
   )

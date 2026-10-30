@@ -196,6 +196,9 @@ export function deltaE([l1, a1, b1]: [number, number, number], [l2, a2, b2]: [nu
   return Math.sqrt(dl ** 2 + (dc / (1 + 0.045 * c1)) ** 2 + (dh / (1 + 0.015 * c1)) ** 2)
 }
 
+/** Két hex szín ΔE94 távolsága. */
+export const hexDistance = (a: string, b: string) => deltaE(toLab(hexToRgb(a)), toLab(hexToRgb(b)))
+
 const LAB = new Map(COLOR_CATALOG.map((color) => [color.code, toLab(hexToRgb(color.hex))]))
 
 /** A mintához legközelebbi katalógusszínek (fa hatásúak nélkül: azokat fotóról nem lehet eltalálni). */

@@ -53,8 +53,12 @@ export interface SceneSettings {
   glassOpen: boolean
   wallLouverOpen: boolean
   quality: QualityLevel
-  /** A ház oldalszárnyának homlokzata L- és U-rögzítésnél (csak látvány). */
+  /** A ház homlokzatának anyaga (főépület és L/U-szárny; csak látvány). */
   wallFinish: WallFinish
+  /** A homlokzat színe (hex). */
+  wallColor: string
+  /** A nyílászárók színe (a `WINDOW_COLORS` azonosítója). */
+  windowColor: string
   photoMode: boolean
   photoUrl?: string
   photoX: number

@@ -47,4 +47,13 @@ describe('műszaki rajz', () => {
     expect(text).toMatch(/\/MediaBox \[0 0 841\.89 595\.28\]/)
     expect(text).toContain('Manrope')
   }, 30000)
+
+  it('a ház leírása a PDF szerkezet-táblázatában', () => {
+    const price = calculatePrice(base, demoTenant.prices, ROOF_LABELS)
+    const definition = buildPdfDefinition({ config: base, price, tenant: demoTenant, date: new Date('2026-10-30'), house: 'Tégla homlokzat (vörös) · fehér nyílászárók' })
+    const json = JSON.stringify(definition.content)
+    expect(json).toContain('A ház (3D látvány)')
+    expect(json).toContain('Tégla homlokzat (vörös) · fehér nyílászárók')
+    expect(JSON.stringify(buildPdfDefinition({ config: base, price, tenant: demoTenant, date: new Date('2026-10-30') }).content)).not.toContain('A ház (3D látvány)')
+  })
 })

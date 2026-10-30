@@ -24,6 +24,8 @@ export const DEFAULT_SCENE: SceneSettings = {
   wallLouverOpen: false,
   quality: 'auto',
   wallFinish: 'cedar',
+  wallColor: '#8a5a3c',
+  windowColor: 'anthracite',
   photoMode: false,
   photoX: 0,
   photoY: 0,

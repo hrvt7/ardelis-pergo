@@ -3,7 +3,7 @@ import type { Tenant } from '@/tenants/types'
 import type { PergolaConfig, PriceBreakdown, RoofType } from '@/types/pergola'
 
 /** A PDF-összefoglaló elkészítése és letöltése (borító, részletek, ár, méretarányos műszaki rajz). */
-export async function exportPergolaPdf(config: PergolaConfig, price: PriceBreakdown, tenant: Tenant, roofLabels: Record<RoofType, string>, shareUrl?: string, energyUsage?: EnergyUsage, projectName?: string) {
+export async function exportPergolaPdf(config: PergolaConfig, price: PriceBreakdown, tenant: Tenant, roofLabels: Record<RoofType, string>, shareUrl?: string, energyUsage?: EnergyUsage, projectName?: string, house?: string) {
   const [{ default: pdfMake }, { buildPdfDefinition, PDF_FONTS }, { PDF_VFS, enableSvgFonts }] = await Promise.all([
     import('pdfmake/build/pdfmake'),
     import('@/lib/pdfDocument'),
@@ -22,7 +22,7 @@ export async function exportPergolaPdf(config: PergolaConfig, price: PriceBreakd
     // A PDF képernyőkép nélkül is elkészül, ha a GPU nem engedi a kiolvasást.
   }
 
-  const definition = buildPdfDefinition({ config, price, tenant, roofLabels, image, imageAspect, shareUrl, energyUsage, projectName })
+  const definition = buildPdfDefinition({ config, price, tenant, roofLabels, image, imageAspect, shareUrl, energyUsage, projectName, house })
   const blob = await pdfMake.createPdf(definition).getBlob()
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')

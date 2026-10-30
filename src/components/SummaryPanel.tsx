@@ -26,9 +26,11 @@ interface Props {
   /** A terv neve (pl. „Kovácsék terasza”): a megosztóképen és a PDF-en is megjelenik. */
   projectName: string
   onProjectName: (name: string) => void
+  /** A vásárló házának leírása (a 3D beállításból) — a kérelemhez és a PDF-hez. */
+  house?: string
 }
 
-export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, projectName, onProjectName }: Props) {
+export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, projectName, onProjectName, house }: Props) {
   const { tenant, labels: ROOF_LABELS } = useTenant()
   const [thumbnail, setThumbnail] = useState('')
   const bom = getBom(config)
@@ -95,7 +97,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
 
       <section className="summary-section"><div className="summary-section-title"><GitCompareArrows size={17} /><h3>Két konfiguráció összehasonlítása</h3></div>{saved.length < 2 ? <p className="empty-copy">Ments el két változatot az A és B mentési helyre. A két konfiguráció itt jelenik meg egymás mellett.</p> : <>{saved[0].image && saved[1].image && <CompareSlider a={saved[0].image} b={saved[1].image} />}<div className="comparison-grid">{saved.slice(0, 2).map((item, index) => { const savedPrice = calculatePrice(item.config, prices, ROOF_LABELS); return <div key={item.id}><span>Konfiguráció {index === 0 ? 'A' : 'B'}</span><strong>{formatNumber(item.config.width)} × {formatNumber(item.config.depth)} m</strong><small>{ROOF_LABELS[item.config.roof]}<br />{formatNumber(savedPrice.area)} m² · {(['front', 'back', 'left', 'right'] as const).filter((side) => sideSegments(item.config, side).some((segment) => segment.type !== 'none')).length} zárt oldal</small><b>{formatHuf(savedPrice.totalGross)}</b><button type="button" onClick={() => onLoad(item.config)}>Betöltés<ArrowRight size={13} /></button></div>})}</div></>}</section>
 
-      <section className="summary-section lead-section"><div className="summary-section-title"><PackageCheck size={17} /><h3>Kérj helyszíni felmérést</h3></div><LeadForm productFamily="pergola" config={config} estimateNet={price.totalNet} estimateGross={price.totalGross} /></section>
+      <section className="summary-section lead-section"><div className="summary-section-title"><PackageCheck size={17} /><h3>Kérj helyszíni felmérést</h3></div><LeadForm productFamily="pergola" config={config} estimateNet={price.totalNet} estimateGross={price.totalGross} house={house} /></section>
       <div className="summary-footnote"><Check size={14} />A piszkozat ebben a böngészőben marad; az elküldött felmérési kérelmet a csatolt konfigurációval együtt közvetlenül {tenant.brand.name} kapja meg.</div>
     </div>
   )

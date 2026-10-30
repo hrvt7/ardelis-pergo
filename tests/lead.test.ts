@@ -69,6 +69,24 @@ describe('POST /api/lead', () => {
     expect(html).toContain('színváltós RGB+W LED')
   })
 
+  it('a ház leírása (3D homlokzat, nyílászárók) a gyártói e-mailbe és a megjegyzésbe kerül', async () => {
+    const calls: { url: string; body: Record<string, unknown> }[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, body: JSON.parse(String(init.body)) })
+      return new Response('{}', { status: 200 })
+    }))
+    const house = 'Vakolt homlokzat (törtfehér) · antracit nyílászárók'
+    const response = await handleLeadRequest(post(body({ house })), { NODE_ENV: 'production', RESEND_API_KEY: 'k', LEAD_FALLBACK_EMAIL: 'gyarto@example.com', SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 's' })
+    expect(response.status).toBe(200)
+    const html = String(calls.find((call) => call.url.includes('resend') && (call.body.to as string[])[0] === 'gyarto@example.com')!.body.html)
+    expect(html).toContain('A háza (3D alapján)')
+    expect(html).toContain('antracit nyílászárók')
+    expect(calls.find((call) => call.url.includes('/rest/v1/leads'))!.body.notes).toBe(`Ház (3D): ${house}`)
+    // Túl hosszú leírást a szerver elutasít (nem kerülhet be tetszőleges szöveg).
+    const tooLong = await handleLeadRequest(post(body({ house: 'x'.repeat(400), customer: { ...body().customer, email: 'masik@example.com' } })), { NODE_ENV: 'development' })
+    expect(tooLong.status).toBe(422)
+  })
+
   it('a robotot (kitöltött rejtett mező) csendben elnyeli', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
