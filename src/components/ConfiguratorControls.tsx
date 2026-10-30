@@ -18,7 +18,7 @@ import ColorPicker from '@/components/ColorPicker'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
 
 const STEPS: { id: ConfigStep; label: string; short: string }[] = [
-  { id: 'size', label: 'Méret', short: 'Alapterület' },
+  { id: 'size', label: 'Pergola', short: 'Típus és méret' },
   { id: 'mount', label: 'Rögzítés', short: 'Szerkezet' },
   { id: 'color', label: 'Szín', short: 'Felület' },
   { id: 'sides', label: 'Oldalak', short: 'Zárás' },
@@ -164,7 +164,7 @@ function SideDiagram({ config, selected, roofName, onSelect }: { config: Pergola
       ))}
       <button type="button" className={`diagram-core roof-${config.roof} ${selected === 'roof' ? 'selected' : ''}`} onClick={() => onSelect('roof')} aria-pressed={selected === 'roof'} aria-label="Tetőrendszer kiválasztása">
         <span>Tető · {roofName}</span>
-        <small>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · koppints a cseréhez</small>
+        <small>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · koppints a mozgatáshoz</small>
       </button>
     </div>
   )
@@ -310,6 +310,10 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
 
           {step === 'size' && <>
             {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
+            <SectionTitle title="Kiinduló csomagok" hint="Egy koppintással indulhatsz, utána minden szabadon módosítható." />
+            <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
+            <SectionTitle title="Tetőrendszer" hint="A pergola típusa: ez határozza meg az árnyékolást, az esővédelmet és az árat." />
+            <RoofPicker config={config} prices={prices} onChange={onChange} />
             <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
             <SliderField label="Szélesség" value={config.width} min={limits.width[0]} max={limits.width[1]} step={0.05} unit="m" metric onChange={(width) => onChange({ width })} />
             <SliderField label="Mélység" value={config.depth} min={limits.depth[0]} max={limits.depth[1]} step={0.05} unit="m" metric onChange={(depth) => onChange({ depth })} />
@@ -317,14 +321,10 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             {config.width > 6 && <div className="smart-warning"><Columns3 size={18} /><p><strong>Középoszlop javasolt</strong>600 cm felett a műszaki ellenőrzés és egy középoszlop szükséges lehet.</p></div>}
             <div className="smart-helper"><Sparkles size={18} /><p><strong>{getSizeRecommendation(config).split(' · ')[0]}</strong>{getSizeRecommendation(config).split(' · ')[1]}</p></div>
             <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
-            <RoofControl config={config} onChange={onChange} />
           </>}
 
           {step === 'mount' && <>
-            <SectionTitle title="Kiinduló csomagok" hint="Egy koppintással indulhatsz, utána minden paraméter szabadon módosítható." />
-            {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
-            <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
-            <SectionTitle title="Rögzítés" hint="A falak, az oszlopok és az ár a modellen is azonnal frissülnek." />
+            <SectionTitle title="Hogyan kapcsolódik a házhoz?" hint="A falak, az oszlopok és az ár a modellen is azonnal frissülnek." />
             <div className="roof-options mount-options">{MOUNT_TYPES.filter((mount) => tenant.mounts.includes(mount)).map((mount) => <button type="button" key={mount} className={config.mount === mount ? 'selected' : ''} aria-pressed={config.mount === mount} onClick={() => onChange({ mount })}><MountIcon mount={mount} /><span><strong>{MOUNT_LABELS[mount]}</strong><small>{MOUNT_DESCRIPTIONS[mount]}</small></span><span className="selection-dot">{config.mount === mount && <Check size={12} />}</span></button>)}</div>
           </>}
 
@@ -355,14 +355,14 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           </>}
 
           {step === 'sides' && <>
-            <SectionTitle title="Oldalak és tető" hint="Koppints egy oldalra vagy a középső mezőre (tető). Az oldalak a 3D modellen is kiválaszthatók." />
+            <SectionTitle title="Melyik oldalt zárod?" hint="Koppints egy oldalra a felülnézeten vagy a 3D modellen. A középső mező a tető mozgatását mutatja." />
             <SideDiagram config={config} selected={selectedSide} roofName={tenant.roofs[config.roof]?.name ?? ''} onSelect={onSideSelect} />
             {selectedSide === 'roof' ? <>
               <div className="selected-side-head"><strong>Tetőrendszer</strong><span>{roofLabelsFor(config.roof)}</span></div>
-              <RoofPicker config={config} prices={prices} onChange={onChange} />
               <RoofControl config={config} onChange={onChange} />
-              <RoofShadeOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
-              {config.roof === 'fixed' && <div className="extra-grid roof-solar"><SolarToggle config={config} prices={prices} onChange={onChange} /></div>}
+              {ROOF_INFO[config.roof].motion === 'none' && <p className="split-note">Fix tető: nincs mozgatható része.</p>}
+              <button type="button" className="roof-change-link" onClick={() => onStepChange('size')}>Tetőtípus módosítása<ArrowRight size={15} /></button>
+              {(supportsRoofShade(config.roof) && tenant.extras.roofShade) || (config.roof === 'fixed' && tenant.extras.solar) ? <p className="split-note">{config.roof === 'fixed' ? 'Napelemes tető' : 'Motoros árnyékoló'} az Extrák lépésben választható.</p> : null}
             </> : sideSettings(selectedSide)}
             <div className="interaction-hint"><Move size={17} /><p>A tolóüveg és az oldallamella a 3D-ben kattintásra, illetve a fenti gombbal is mozgatható. Egy oldal két részre is osztható, például fele tolóüveg, fele lécfal.</p></div>
           </>}
@@ -398,7 +398,6 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <input aria-label="Napszak" className="range-input daylight-range" type="range" min={6} max={23} step={0.25} value={scene.dayTime} onChange={(event) => setDayTime(Number(event.target.value))} />
             <div className="scene-options compact">{([[13, 'Nappal', Sun], [18, 'Aranyóra', Sunset], [22, 'Éjszaka', Moon]] as const).map(([time, label, Icon]) => <button type="button" key={label} className={scene.time === (time === 13 ? 'day' : time === 18 ? 'sunset' : 'night') ? 'selected' : ''} onClick={() => setDayTime(time)}><Icon size={17} /><span>{label}</span></button>)}</div>
             <div className="scene-toggle-grid">
-              <Toggle label="Eső" description="Szenzorral automata zárás" checked={scene.rain} onChange={(rain) => onSceneChange({ rain })} />
               <Toggle label="Enyhe szél" description="Növények és ZIP mozgása" checked={scene.wind} onChange={(wind) => onSceneChange({ wind })} />
               <Toggle label="180 cm-es figura" description="A méretek szemléltetéséhez" checked={scene.showPerson} onChange={(showPerson) => onSceneChange({ showPerson })} />
               <Toggle label="Méretcímkék" description="Aktuális méretek centiméterben" checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
@@ -410,12 +409,14 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <div className="photo-mode">
               <div><Image size={18} /><span><strong>Előnézet saját fotóval</strong><small>A kép csak ebben a böngészőben jelenik meg.</small></span></div>
               <label className="upload-button"><Upload size={15} />Fotó feltöltése<input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoUpload(file); event.target.value = '' }} /></label>
-              {scene.photoUrl && <><Toggle label="Fotós előnézet" description="Pergola a saját teraszodon" checked={scene.photoMode} onChange={(photoMode) => onSceneChange({ photoMode, ...(photoMode ? { winter: false } : {}) })} />{scene.photoMode && <div className="photo-transform"><SliderField label="Vízszintes pozíció" value={scene.photoX} min={-3} max={3} step={0.05} unit="m" onChange={(photoX) => onSceneChange({ photoX })} /><SliderField label="Függőleges pozíció" value={scene.photoY} min={-2} max={2} step={0.05} unit="m" onChange={(photoY) => onSceneChange({ photoY })} /><SliderField label="Méret a fotón" value={scene.photoScale} min={0.5} max={1.8} step={0.05} unit="×" onChange={(photoScale) => onSceneChange({ photoScale })} /></div>}</>}
+              {scene.photoUrl && <><Toggle label="Fotós előnézet" description="Pergola a saját teraszodon" checked={scene.photoMode} onChange={(photoMode) => onSceneChange({ photoMode })} />{scene.photoMode && <div className="photo-transform"><SliderField label="Vízszintes pozíció" value={scene.photoX} min={-3} max={3} step={0.05} unit="m" onChange={(photoX) => onSceneChange({ photoX })} /><SliderField label="Függőleges pozíció" value={scene.photoY} min={-2} max={2} step={0.05} unit="m" onChange={(photoY) => onSceneChange({ photoY })} /><SliderField label="Méret a fotón" value={scene.photoScale} min={0.5} max={1.8} step={0.05} unit="×" onChange={(photoScale) => onSceneChange({ photoScale })} /></div>}</>}
             </div>
           </div>
         </details>}
       </div>
-      <div className="step-navigation"><button type="button" disabled={stepIndex === 0} onClick={() => go(stepIndex - 1)}><ArrowLeft size={16} />Vissza</button><button type="button" className="next-step" disabled={stepIndex === STEPS.length - 1} onClick={() => go(stepIndex + 1)}>{stepIndex === STEPS.length - 2 ? 'Összegzés' : 'Következő'}<ArrowRight size={16} /></button></div>
+      <div className="step-navigation"><button type="button" disabled={stepIndex === 0} onClick={() => go(stepIndex - 1)}><ArrowLeft size={16} />Vissza</button>{stepIndex === STEPS.length - 1
+        ? <button type="button" className="next-step" onClick={() => scrollRef.current?.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Felmérést kérek<ArrowRight size={16} /></button>
+        : <button type="button" className="next-step" onClick={() => go(stepIndex + 1)}>{stepIndex === STEPS.length - 2 ? 'Összegzés' : 'Következő'}<ArrowRight size={16} /></button>}</div>
     </aside>
   )
 }

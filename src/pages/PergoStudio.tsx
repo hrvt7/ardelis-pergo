@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Armchair, Box, Check, ChevronRight, CloudRain, Image, Info, Maximize2, Moon, Presentation, Redo2, Rotate3d, RotateCcw, Scan, ShieldCheck, Snowflake, Sun, SunMedium, Undo2, View, WandSparkles, X } from 'lucide-react'
+import { Armchair, Box, Check, ChevronRight, CloudRain, Image, Info, Maximize2, Moon, Presentation, Redo2, Rotate3d, RotateCcw, Scan, ShieldCheck, Sun, SunMedium, Undo2, View, WandSparkles, X } from 'lucide-react'
 import { Link } from 'react-router'
 import ConfiguratorControls from '@/components/ConfiguratorControls'
 import { InfoDialog, PriceSettingsDialog, ResetDialog } from '@/components/Dialogs'
@@ -31,7 +31,6 @@ const ArDialog = lazy(() => import('@/components/ArDialog'))
 const SunStudyPanel = lazy(() => import('@/components/SunStudyPanel'))
 const BudgetDialog = lazy(() => import('@/components/BudgetDialog'))
 const MoodPanel = lazy(() => import('@/components/MoodPanel'))
-const WinterPanel = lazy(() => import('@/components/WinterPanel'))
 const AdvisorDialog = lazy(() => import('@/components/AdvisorDialog'))
 const EnergyDialog = lazy(() => import('@/components/EnergyDialog'))
 
@@ -154,7 +153,7 @@ export default function PergoStudio() {
     const lightsOn = (!before.led && after.led) || (!before.ledRgb && after.ledRgb) || (before.heaters === 0 && after.heaters > 0)
     if (lightsOn && !eveningShown.current && current.time !== 'night') {
       eveningShown.current = true
-      setScene((value) => ({ ...value, time: 'night', dayTime: 21.5, winter: false }))
+      setScene((value) => ({ ...value, time: 'night', dayTime: 21.5 }))
       setToast('Esti nézetre váltottunk, hogy lásd a fényeket. Nappalra a felső sávban válthatsz vissza.')
     }
   }, [focusSide, overview])
@@ -213,8 +212,6 @@ export default function PergoStudio() {
   }, [focusSide, overview])
   const [shade, setShade] = useState<ShadeResult | null>(null)
   const [moodHidden, setMoodHidden] = useState(false)
-  const [winterHidden, setWinterHidden] = useState(false)
-  const toggleWinter = useCallback(() => { setWinterHidden(false); setScene((current) => current.winter ? { ...current, winter: false } : { ...current, winter: true, rain: false, sunStudy: false, photoMode: false, time: current.time === 'night' ? 'night' : 'day', dayTime: current.time === 'night' ? current.dayTime : 13 }) }, [])
   const applyAdvice = useCallback((next: PergolaConfig, furniture: FurnitureSet) => { replaceConfig(next); setScene((current) => ({ ...current, furniture })); setView('perspective'); setStep('size'); setModal(null); setToast('A javasolt pergola betöltve. Innen minden szabadon módosítható; visszavonás: ↶') }, [replaceConfig])
   const [priceCollapsed, setPriceCollapsed] = useState(() => { try { return localStorage.getItem('pergo-price-collapsed') === '1' } catch { return false } })
   const togglePrice = useCallback(() => setPriceCollapsed((current) => { try { localStorage.setItem('pergo-price-collapsed', current ? '0' : '1') } catch { /* privát mód */ } return !current }), [])
@@ -222,7 +219,7 @@ export default function PergoStudio() {
     if (current.sunStudy) return { ...current, sunStudy: false, time: timeForClock(current.dayTime) }
     setShade(null)
     // Az árnyék nyáron számít igazán: első bekapcsoláskor július közepe.
-    const next = { ...current, sunStudy: true, photoMode: false, winter: false, sunDate: current.sunDate || `${new Date().getFullYear()}-07-15` }
+    const next = { ...current, sunStudy: true, photoMode: false, sunDate: current.sunDate || `${new Date().getFullYear()}-07-15` }
     return { ...next, time: timeForSun(studySun(next).elevation) }
   }), [])
   const handleSideSelect = useCallback((side: SideKey | 'roof') => {
@@ -289,7 +286,7 @@ export default function PergoStudio() {
     probe.onload = () => {
       if (photoUrl.current) URL.revokeObjectURL(photoUrl.current)
       photoUrl.current = url
-      setScene((current) => ({ ...current, photoUrl: url, photoMode: true, sunStudy: false, winter: false }))
+      setScene((current) => ({ ...current, photoUrl: url, photoMode: true, sunStudy: false }))
       setView('perspective')
       setToast('A fotó csak helyben nyílt meg. Állítsd be a pergola pozícióját és méretét.')
     }
@@ -324,10 +321,9 @@ export default function PergoStudio() {
           <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheet === 'half' && isNarrow ? 0.2 : 0} onSideSelect={handleSideSelect} onSceneChange={updateScene} onShade={setShade} />
           <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1>{ROOF_LABELS[config.roof].split(' · ')[0]} <i>/</i> {config.width.toFixed(1).replace('.', ',')}<small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>
           <div className="viewer-live"><i />VALÓS IDEJŰ 3D</div>
-          <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások"><button type="button" className={scene.rain ? 'selected' : ''} aria-pressed={scene.rain} title="Eső be- és kikapcsolása" onClick={() => updateScene(scene.rain ? { rain: false } : { rain: true, winter: false })}><CloudRain size={17} /><span>Eső</span></button><button type="button" className={scene.time === 'night' ? 'selected' : ''} title="Nappal és éjszaka váltása" onClick={() => { setMoodHidden(false); updateScene(scene.time === 'night' ? { time: 'day', dayTime: 13, sunStudy: false } : { time: 'night', dayTime: 22, sunStudy: false }) }}>{scene.time === 'night' ? <Sun size={17} /> : <Moon size={17} />}<span>{scene.time === 'night' ? 'Nappal' : 'Éjszaka'}</span></button><button type="button" className={scene.winter ? 'selected' : ''} aria-pressed={scene.winter} title="Téli nézet: hó, havazás, téli használat" onClick={toggleWinter}><Snowflake size={17} /><span>Tél</span></button>{scene.photoUrl && <button type="button" className={scene.photoMode ? 'selected' : ''} title="Fotós előnézet" onClick={() => updateScene({ photoMode: !scene.photoMode, winter: false })}><Image size={17} /><span>Fotó</span></button>}<button type="button" className={scene.sunStudy ? 'selected' : ''} aria-pressed={scene.sunStudy} title="Árnyékelemzés: valós napállás a saját helyszíneden" onClick={toggleSunStudy}><SunMedium size={17} /><span>Árnyék</span></button><button type="button" className="ar-launch" title="Nézd meg valós méretben a saját kertedben (AR)" onClick={() => { if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') }}><Rotate3d size={17} /><span>AR</span></button></div>
+          <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások"><button type="button" className={scene.rain ? 'selected' : ''} aria-pressed={scene.rain} title="Eső be- és kikapcsolása" onClick={() => updateScene({ rain: !scene.rain })}><CloudRain size={17} /><span>Eső</span></button><button type="button" className={scene.time === 'night' ? 'selected' : ''} title="Nappal és éjszaka váltása" onClick={() => { setMoodHidden(false); updateScene(scene.time === 'night' ? { time: 'day', dayTime: 13, sunStudy: false } : { time: 'night', dayTime: 22, sunStudy: false }) }}>{scene.time === 'night' ? <Sun size={17} /> : <Moon size={17} />}<span>{scene.time === 'night' ? 'Nappal' : 'Éjszaka'}</span></button>{scene.photoUrl && <button type="button" className={scene.photoMode ? 'selected' : ''} title="Fotós előnézet" onClick={() => updateScene({ photoMode: !scene.photoMode })}><Image size={17} /><span>Fotó</span></button>}<button type="button" className={scene.sunStudy ? 'selected' : ''} aria-pressed={scene.sunStudy} title="Árnyékelemzés: valós napállás a saját helyszíneden" onClick={toggleSunStudy}><SunMedium size={17} /><span>Árnyék</span></button><button type="button" className="ar-launch" title="Nézd meg valós méretben a saját kertedben (AR)" onClick={() => { if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') }}><Rotate3d size={17} /><span>AR</span></button></div>
           {scene.rain && config.sensors && isMovableRoof(config.roof) && <div className="automation-status" role="status"><ShieldCheck size={16} /><span><strong>Esőautomata aktív</strong>{config.roof === 'retractable' ? 'A tolótető biztonságos, zárt pozícióban.' : 'A tetőlamellák biztonságos, zárt pozícióban.'}</span></div>}
-          {scene.time === 'night' && !scene.winter && !scene.sunStudy && !moodHidden && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot is-mood${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MoodPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onClose={() => setMoodHidden(true)} /></div></Suspense>}
-          {scene.winter && !scene.sunStudy && !scene.photoMode && !winterHidden && <Suspense fallback={null}><div className="sun-panel-slot is-winter"><WinterPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onClose={() => setWinterHidden(true)} /></div></Suspense>}
+          {scene.time === 'night' && !scene.sunStudy && !moodHidden && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot is-mood${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MoodPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onClose={() => setMoodHidden(true)} /></div></Suspense>}
           {scene.sunStudy && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><SunStudyPanel scene={scene} shade={shade} onChange={updateScene} onClose={toggleSunStudy} /></div></Suspense>}
           {view === 'sofa' && <div className="pov-note" role="status"><Armchair size={16} /><span><strong>Kanapé panoráma</strong>Húzd a képet a körbenézéshez · a nyilakkal is forgatható</span></div>}
           {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}

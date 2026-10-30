@@ -1,5 +1,24 @@
 # Változások
 
+## 3.16 — Átrendezett, ismétlésmentes felépítés; téli nézet kivéve (2026. 10. 30.)
+
+**Lépések most:** 1. **Pergola** (típus és méret) → 2. Rögzítés → 3. Szín (Pergola / A házad) → 4. Oldalak → 5. Extrák → 6. Összegzés.
+
+- **A tetőtípus az 1. lépésbe került**, a méret mellé: ez a fő termékdöntés és árképző, eddig a 4. lépés felülnézetének
+  középső mezője alá volt rejtve. Az 1. lépés sorrendje: Tanácsadó → Kiinduló csomagok → Tetőrendszer → Méretek → Bútor.
+- **A kiinduló csomagok** a Rögzítésből az 1. lépésbe kerültek (ott indul a tervezés); a Rögzítés lépésben csak a rögzítés maradt.
+- **Megszűnt ismétlés:**
+  - a Tanácsadó kártya csak az 1. lépésben van (eddig a Rögzítésben is);
+  - a lamellaszög-csúszka csak a tető mezőnél van (eddig a Méret lépésben is);
+  - a napelem és a motoros árnyékoló csak az Extrák lépésben van (eddig a tető mezőnél is); a tető mező jelzi, hol találhatók;
+  - az „Eső” kapcsoló csak a 3D eszköztáron van (eddig a Jelenet beállításokban is);
+  - asztali nézetben a keret-tervező, az üzemeltetés és az ár-összetétel csak az árpanelen jelenik meg (az Összegzésben és
+    az Extrákban mobilon, illetve összecsukott árpanelnél látszik).
+- A tető mező az Oldalak lépésben: aktuális tető, mozgatás, „Tetőtípus módosítása” → 1. lépés.
+- Azonos lépés- és szekciócímek helyett beszédes kérdések („Hogyan kapcsolódik a házhoz?”, „Melyik oldalt zárod?”).
+- Az Összegzésben a használhatatlan „Következő” helyett **„Felmérést kérek”**, amely az űrlaphoz görget.
+- **Téli nézet eltávolítva** (hó, havazás, téli panel, kopasz fák, havas háztető): kevesebb kód, gyorsabb betöltés.
+
 ## 3.15 — A házad a Szín lépésben (2026. 10. 30.)
 
 - „A házad” (homlokzat anyaga és színe, nyílászárók) a Rögzítés lépésből a **Szín** lépésbe került, két fülre bontva:

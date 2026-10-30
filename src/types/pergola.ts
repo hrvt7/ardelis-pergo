@@ -94,8 +94,6 @@ export interface SceneSettings {
   ledColor: string | null
   /** A ventilátor forog-e a 3D-ben. */
   fanOn: boolean
-  /** Téli nézet: hó a kertben és a tetőn, havazás. */
-  winter: boolean
 }
 
 export type FurnitureSet = 'none' | 'lounge' | 'dining6' | 'dining8' | 'combo'
