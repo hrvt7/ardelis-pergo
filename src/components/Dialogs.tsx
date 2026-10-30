@@ -53,6 +53,8 @@ const MONEY_FIELDS: { key: keyof PriceSettings; label: string; unit: string }[] 
   { key: 'ledRgbPerMeterNet', label: 'RGB+W LED felár', unit: 'Ft/fm' },
   { key: 'fanUnitNet', label: 'Mennyezeti ventilátor', unit: 'Ft/db' },
   { key: 'smartHomeNet', label: 'Okosotthon-vezérlés', unit: 'Ft' },
+  { key: 'roofShadeAbovePerM2Net', label: 'Tető feletti árnyékoló', unit: 'Ft/m²' },
+  { key: 'roofShadeBelowPerM2Net', label: 'Tető alatti árnyékoló', unit: 'Ft/m²' },
   { key: 'heaterUnitNet', label: 'Teraszfűtés', unit: 'Ft/db' },
   { key: 'speakerPairNet', label: 'Hangrendszer', unit: 'Ft/pár' },
   { key: 'sensorsNet', label: 'Szenzorcsomag', unit: 'Ft' },

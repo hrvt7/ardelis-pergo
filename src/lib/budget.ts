@@ -15,7 +15,7 @@ const SIDE_VALUE = Object.fromEntries(Object.entries(SIDE_INFO).map(([type, info
 const SIZE_STEPS = 9
 const SIDES: SideKey[] = ['front', 'back', 'left', 'right']
 const SIDE_NAMES: Record<SideKey, string> = { front: 'Elülső oldal', back: 'Hátsó oldal', left: 'Bal oldal', right: 'Jobb oldal' }
-const EXTRA_LOSS = { led: 1, speakers: 0.7, sensors: 1, heater: 0.8, color: 0.9, solar: 1.1, rgb: 0.4, fan: 0.6, smartHome: 0.5 }
+const EXTRA_LOSS = { led: 1, speakers: 0.7, sensors: 1, heater: 0.8, color: 0.9, solar: 1.1, rgb: 0.4, fan: 0.6, smartHome: 0.5, roofShade: 0.7 }
 
 export interface BudgetPlan {
   id: 'balanced' | 'keep-size' | 'keep-equipment'
@@ -67,6 +67,9 @@ function equipmentSteps(tenant: Tenant, config: PergolaConfig, original: Pergola
   if (config.fans) steps.push({ apply: (c) => ({ ...c, fans: c.fans && c.fans > 1 ? c.fans - 1 : undefined }), loss: EXTRA_LOSS.fan })
   if (config.ledRgb) steps.push({ apply: (c) => ({ ...c, ledRgb: undefined }), loss: EXTRA_LOSS.rgb })
   if (config.smartHome) steps.push({ apply: (c) => ({ ...c, smartHome: undefined }), loss: EXTRA_LOSS.smartHome })
+  // Tető feletti → tető alatti (olcsóbb), majd árnyékoló nélkül.
+  if (config.roofShade === 'above') steps.push({ apply: (c) => ({ ...c, roofShade: 'below' }), loss: EXTRA_LOSS.roofShade * 0.4 })
+  if (config.roofShade) steps.push({ apply: (c) => ({ ...c, roofShade: undefined, shadeFabric: undefined }), loss: EXTRA_LOSS.roofShade })
   if (config.speakers) steps.push({ apply: (c) => ({ ...c, speakers: false }), loss: EXTRA_LOSS.speakers })
   if (config.heaters > 0) steps.push({ apply: (c) => ({ ...c, heaters: c.heaters - 1 }), loss: EXTRA_LOSS.heater })
   if (config.led) steps.push({ apply: (c) => ({ ...c, led: false, ledRgb: undefined }), loss: EXTRA_LOSS.led + (config.ledRgb ? EXTRA_LOSS.rgb : 0) })
@@ -94,6 +97,7 @@ function restoreSteps(config: PergolaConfig, original: PergolaConfig): { config:
   if ((original.fans ?? 0) > (config.fans ?? 0)) steps.push({ config: { ...config, fans: (config.fans ?? 0) + 1 }, gain: EXTRA_LOSS.fan })
   if (original.ledRgb && !config.ledRgb && config.led) steps.push({ config: { ...config, ledRgb: true }, gain: EXTRA_LOSS.rgb })
   if (original.smartHome && !config.smartHome) steps.push({ config: { ...config, smartHome: true }, gain: EXTRA_LOSS.smartHome })
+  if (original.roofShade && config.roofShade !== original.roofShade && config.roof === original.roof) steps.push({ config: { ...config, roofShade: original.roofShade, shadeFabric: original.shadeFabric }, gain: config.roofShade ? EXTRA_LOSS.roofShade * 0.4 : EXTRA_LOSS.roofShade })
   if (original.speakers && !config.speakers) steps.push({ config: { ...config, speakers: true }, gain: EXTRA_LOSS.speakers })
   if (config.heaters < original.heaters) steps.push({ config: { ...config, heaters: config.heaters + 1 }, gain: EXTRA_LOSS.heater })
   if (original.led && !config.led) steps.push({ config: { ...config, led: true }, gain: EXTRA_LOSS.led })
@@ -135,6 +139,7 @@ export function describeChanges(tenant: Tenant, original: PergolaConfig, next: P
   if (original.ledRgb && next.led && !next.ledRgb) changes.push('Színváltós LED helyett fehér LED')
   if ((original.fans ?? 0) !== (next.fans ?? 0)) changes.push(next.fans ? `Mennyezeti ventilátor: ${original.fans} → ${next.fans} db` : 'Mennyezeti ventilátor nélkül')
   if (original.smartHome && !next.smartHome) changes.push('Okosotthon-vezérlés nélkül')
+  if (original.roofShade && original.roofShade !== next.roofShade) changes.push(next.roofShade ? 'Tető feletti helyett tető alatti árnyékoló' : 'Tetőárnyékoló nélkül')
   if (original.frameColor !== next.frameColor || original.roofColor !== next.roofColor) changes.push(`Szín: ${colorSummary(tenant, original)} → ${colorSummary(tenant, next)}`)
   return changes
 }
@@ -175,7 +180,7 @@ export function planBudget(tenant: Tenant, original: PergolaConfig, prices: Pric
       if (total > budgetGross && !sizeKept && loss >= bestLoss) continue
       // Alsó korlát: ha minden kiegészítő és oldalfal nélkül sem fér bele, a mohó lépések fölöslegesek.
       if (total > budgetGross) {
-        const bare = price(normalizeConfig(tenant, { ...config, sides: { front: 'none', back: 'none', left: 'none', right: 'none' }, split: undefined, led: false, ledRgb: undefined, heaters: 0, speakers: false, sensors: false, solar: undefined, fans: undefined, smartHome: undefined, frameColor: original.frameColor === 'custom' ? tenant.colors[0]?.id ?? 'anthracite' : config.frameColor, customRal: original.frameColor === 'custom' ? undefined : config.customRal, roofColor: undefined, roofRal: undefined }))
+        const bare = price(normalizeConfig(tenant, { ...config, sides: { front: 'none', back: 'none', left: 'none', right: 'none' }, split: undefined, led: false, ledRgb: undefined, heaters: 0, speakers: false, sensors: false, solar: undefined, fans: undefined, smartHome: undefined, roofShade: undefined, shadeFabric: undefined, frameColor: original.frameColor === 'custom' ? tenant.colors[0]?.id ?? 'anthracite' : config.frameColor, customRal: original.frameColor === 'custom' ? undefined : config.customRal, roofColor: undefined, roofRal: undefined }))
         if (bare > budgetGross) { minimumGross = Math.min(minimumGross, bare); continue }
       }
       // Mohó lépések: mindig az, amelyik a legtöbbet spórol egységnyi lemondásra.

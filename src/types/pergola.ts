@@ -1,5 +1,7 @@
 export type MountType = 'freestanding' | 'wall' | 'corner-left' | 'corner-right' | 'niche'
 export type WallFinish = 'plaster' | 'brick' | 'cedar'
+export type RoofShade = 'above' | 'below'
+export type ShadeFabric = 'white' | 'sand' | 'grey' | 'anthracite'
 export type RoofType = 'louvered' | 'retractable' | 'fabric' | 'glass' | 'polycarbonate' | 'fixed'
 export type SideType = 'none' | 'zip' | 'glass' | 'glassFramed' | 'glassFixed' | 'louver' | 'slatAlu' | 'slatWood'
 export type SideKey = 'front' | 'back' | 'left' | 'right'
@@ -36,6 +38,10 @@ export interface PergolaConfig {
   fans?: number
   /** Okosotthon-vezérlés (átjáró: telefon, hangvezérlés, időzítés). */
   smartHome?: boolean
+  /** Motoros tetőárnyékoló (csak üveg- és polikarbonát tetőhöz): tető feletti vagy tető alatti. */
+  roofShade?: RoofShade
+  /** Az árnyékoló ponyvájának színe. */
+  shadeFabric?: ShadeFabric
 }
 
 export interface SceneSettings {
@@ -82,6 +88,8 @@ export interface SceneSettings {
   ledLevel: number
   ledKelvin: number
   heatersOn: boolean
+  /** A tetőárnyékoló kihúzottsága a 3D-ben (0–100%). */
+  shadeOut: number
   /** RGB LED színe (hex); null = fehér, a színhőmérséklet szerint. */
   ledColor: string | null
   /** A ventilátor forog-e a 3D-ben. */
@@ -141,6 +149,9 @@ export interface PriceSettings {
   fanUnitNet: number
   /** Okosotthon-vezérlés (átjáró, beállítás). */
   smartHomeNet: number
+  /** Motoros tetőárnyékoló nettó ára m²-enként. */
+  roofShadeAbovePerM2Net: number
+  roofShadeBelowPerM2Net: number
   customColorRate: number
   /** Fa hatású (szublimációs) bevonat felára a szerkezeti árhoz képest. */
   woodColorRate: number

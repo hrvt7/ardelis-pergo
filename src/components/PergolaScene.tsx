@@ -22,6 +22,7 @@ import { glassPanels } from '@/lib/glass'
 import { WOOD_HEXES } from '@/lib/colors'
 import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
 import { isOriginalCedar, wallColorHex } from '@/lib/house'
+import { findShadeFabric } from '@/lib/roofShade'
 import { sideSegments } from '@/lib/sides'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
@@ -558,6 +559,63 @@ function GlazedRoof({ width, depth, height, color, kind }: { width: number; dept
 }
 
 /**
+ * Motoros tetőárnyékoló üveg- vagy polikarbonát tetőhöz. Tető feletti: kazetta a fal felőli végen,
+ * oldalsó vezetősínek a bordák fölött tartókon, a ponyva az üveg felett fut. Tető alatti: a bordázat alatt,
+ * a keretgerendákon belül. A ponyva árnyékot vet (az üveg nem), így az árnyékelemzés is mutatja a hatását.
+ */
+function RoofShadeModel({ width, depth, height, kind, fabric, color, out, night, onToggle }: { width: number; depth: number; height: number; kind: 'above' | 'below'; fabric: string; color: string; out: number; night: boolean; onToggle: () => void }) {
+  const above = kind === 'above'
+  const y = above ? height + 0.33 : height + 0.105
+  const railX = width / 2 - (above ? 0.09 : 0.2)
+  const fabricWidth = railX * 2 - 0.05
+  const start = -depth / 2 + (above ? 0.24 : 0.3)
+  const end = depth / 2 - (above ? 0.1 : 0.22)
+  const fabricRef = useRef<THREE.Mesh>(null)
+  const barRef = useRef<THREE.Group>(null)
+  const current = useRef(out / 100)
+  const invalidate = useThree((state) => state.invalidate)
+  const gl = useThree((state) => state.gl)
+  const apply = useCallback((t: number) => {
+    const length = Math.max(0.002, (end - start) * t)
+    if (fabricRef.current) { fabricRef.current.scale.z = length; fabricRef.current.position.z = start + length / 2; fabricRef.current.visible = t > 0.01 }
+    if (barRef.current) barRef.current.position.z = start + length
+  }, [start, end])
+  useLayoutEffect(() => { apply(current.current) }, [apply])
+  useFrame((_, delta) => {
+    const target = out / 100
+    if (Math.abs(current.current - target) < 0.0015) return
+    current.current = REDUCED ? target : THREE.MathUtils.damp(current.current, target, 2.6, delta)
+    if (Math.abs(current.current - target) < 0.0015) current.current = target
+    apply(current.current)
+    refreshShadows(gl)
+    invalidate()
+  })
+  const railLength = end - start + 0.12
+  const strutCount = above ? Math.max(2, Math.ceil(depth / 1.3) + 1) : 0
+  return <group name={`roof-shade-${kind}`} onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>
+    {/* Kazetta (motor és feltekert ponyva) */}
+    <RoundedBox args={[railX * 2 + 0.06, above ? 0.13 : 0.1, above ? 0.16 : 0.12]} position={[0, y + (above ? 0.02 : -0.012), start - (above ? 0.085 : 0.065)]} radius={0.02} smoothness={3} castShadow><PowderCoat color={color} /></RoundedBox>
+    {/* Vezetősínek */}
+    {[-1, 1].map((side) => <Beam key={side} args={[0.045, 0.05, railLength]} position={[side * railX, y - 0.01, (start + end) / 2]} color={color} radius={0.005} />)}
+    {/* Tető feletti változatnál tartók a bordázatról a sínekig */}
+    {Array.from({ length: strutCount }, (_, index) => {
+      const z = start + (index / (strutCount - 1)) * (end - start)
+      return [-1, 1].map((side) => <mesh key={`${index}-${side}`} position={[side * railX, height + 0.275, z]} castShadow><boxGeometry args={[0.03, 0.09, 0.03]} /><PowderCoat color={color} /></mesh>)
+    })}
+    {/* Ponyva: 1 m mély doboz, a kihúzottság szerint nyújtva */}
+    <mesh ref={fabricRef} position={[0, y, start + 0.5]} castShadow receiveShadow>
+      <boxGeometry args={[fabricWidth, 0.006, 1]} />
+      {/* Nappal a ponyva áttetszik: alulról nézve a rajta átszűrődő fény világosítja (emisszív közelítés). */}
+      <meshStandardMaterial color={fabric} roughness={0.93} metalness={0} side={THREE.DoubleSide} envMapIntensity={0.45} emissive={fabric} emissiveIntensity={night ? 0 : 0.42} />
+    </mesh>
+    {/* Végprofil */}
+    <group ref={barRef} position={[0, y, end]}>
+      <RoundedBox args={[fabricWidth + 0.03, 0.036, 0.055]} radius={0.01} smoothness={3} castShadow><PowderCoat color={color} /></RoundedBox>
+    </group>
+  </group>
+}
+
+/**
  * Behúzható textiltető: a futósínek között harmonikaszerűen redőzött, vízzáró ponyva.
  * A ponyvatartó profilok behúzáskor a hátsó (fal felőli) végre gyűlnek össze;
  * a ponyva a profilok között a távolságtól függően belóg.
@@ -705,6 +763,7 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     <group ref={louverGroup}>{(roof === 'louvered' || roof === 'retractable') && Array.from({ length: louverCount }, (_, index) => { const z = -depth / 2 + 0.2 + index * ((depth - 0.3) / louverCount); return <group key={index} position={[0, height + 0.15, z]}><mesh geometry={geometry} castShadow receiveShadow><PowderCoat color={roofColor} roughness={0.38} /></mesh><mesh position={[0, -0.026, 0.078]}><boxGeometry args={[width - 0.22, 0.012, 0.014]} /><meshStandardMaterial color="#111718" roughness={0.92} /></mesh>{[-1, 1].map((side) => <mesh key={side} position={[side * (width / 2 - 0.085), 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.034, 0.034, 0.014, 12]} /><meshStandardMaterial color={roofColor} metalness={0.35} roughness={0.4} /></mesh>)}</group> })}</group>
     {roof === 'fixed' && <group><mesh position={[0, height + 0.14, 0]} castShadow receiveShadow><boxGeometry args={[width - 0.12, 0.09, depth - 0.12]} /><PowderCoat color={roofColor} /></mesh>{Array.from({ length: fixedSeamCount }, (_, index) => { const z = -depth / 2 + (index + 1) * depth / (fixedSeamCount + 1); return <Beam key={index} args={[width - 0.16, 0.018, 0.025]} position={[0, height + 0.192, z]} color={roofColor} radius={0.003} /> })}</group>}
     {isGlazedRoof(roof) && <GlazedRoof width={width} depth={depth} height={height} color={roofColor} kind={roof === 'glass' ? 'glass' : 'polycarbonate'} />}
+    {isGlazedRoof(roof) && config.roofShade && <RoofShadeModel width={width} depth={depth} height={height} kind={config.roofShade} fabric={findShadeFabric(config.shadeFabric).hex} color={color} out={scene.shadeOut} night={night} onToggle={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })} />}
     {roof === 'fabric' && <FabricRoof width={width} depth={depth} height={height} color={roofColor} openness={openness} />}
     {roof === 'fixed' && config.solar && <SolarPanels config={config} />}
     {scene.winter && !winterFabric && <RoofSnow config={config} />}

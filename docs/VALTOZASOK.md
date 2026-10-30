@@ -1,5 +1,25 @@
 # Változások
 
+## 3.14 — Motoros tetőárnyékoló üveg- és polikarbonát tetőhöz (2026. 10. 30.)
+
+**Miért:** üvegtető alatt nyáron gyorsan meleg lesz — ez a vásárló első kérdése, és a gyártónak jó felár.
+
+- **Csak üveg- (Lumen) és polikarbonát (Opal) tetőnél** jelenik meg, a Tető panelen (Oldalak lépés) és az
+  Extrák lépés „Hő és légmozgás” részében. Más tetőnél, vagy tetőcserénél automatikusan elmarad.
+- **Három választás:** árnyékoló nélkül / **tető feletti** (kívül, a napot még az üveg előtt fogja meg) /
+  **tető alatti** (belül, védett, kedvezőbb). Mindegyiken a bruttó árkülönbség.
+- **Ponyva színe:** fehér, homok, szürke, antracit.
+- **3D:** kazetta a fal felőli végen, oldalsó vezetősínek (tető felettinél tartókon a bordázat fölött),
+  végprofil; a ponyva **kihúzható/behúzható** gombbal vagy a 3D-ben kattintással, animálva. A ponyva árnyékot vet
+  (az üveg nem), így az árnyékelemzésben is látszik a hatása; nappal alulról áttetsző.
+- **Ár:** m²-enként, külön a tető feletti és tető alatti (demó: 52 000 / 38 000 Ft/m² nettó), a gyártói
+  árbeállításokban szerkeszthető; a szerver is ezzel számol.
+- **Mindenhol megjelenik:** tételes ár, megosztó link (`a`/`b` + ponyvaszín), konfigurációs kód (`-SA` / `-SB`),
+  anyaglista, PDF tető-táblázat, gyártói e-mail, szöveges összegzés. Ha van szél-/esőszenzor vagy okosotthon,
+  a panel jelzi, hogy automatikusan is vezérelhető.
+- **Költségkeret-tervező:** előbb tető alattira vált (olcsóbb), csak utána hagyja el.
+- **Javítás:** a tervező „minden extra nélkül” alsó becslése eddig a később hozzáadott opciókat is tartalmazhatta.
+
 ## 3.13 — A házad: homlokzat színe és nyílászárók (2026. 10. 30.)
 
 **Miért:** a vásárló akkor dönt magabiztosan a pergola színéről, ha a saját házán látja. Eddig a

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 're
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, CloudRain, Columns3, Gauge, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
 import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, wallLabel } from '@/lib/mount'
 import { formatHuf, formatNumber } from '@/lib/pricing'
-import { FanOption, RgbOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
+import { FanOption, RgbOption, RoofShadeOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
 import { enabledRoofs, presetConfig, tenantPrice } from '@/tenants/rules'
 import { ROOF_INFO } from '@/lib/roofs'
 import { useTenant } from '@/tenants/TenantContext'
@@ -12,6 +12,7 @@ import { estimateSolar } from '@/lib/solar'
 import FurniturePicker from '@/components/FurniturePicker'
 import HouseLook, { WindowMatch } from '@/components/HouseLook'
 import { finishPreview, houseSummary, wallColorHex } from '@/lib/house'
+import { supportsRoofShade } from '@/lib/roofShade'
 import ColorPicker from '@/components/ColorPicker'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
 
@@ -339,6 +340,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               <div className="selected-side-head"><strong>Tetőrendszer</strong><span>{roofLabelsFor(config.roof)}</span></div>
               <RoofPicker config={config} prices={prices} onChange={onChange} />
               <RoofControl config={config} onChange={onChange} />
+              <RoofShadeOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
               {config.roof === 'fixed' && <div className="extra-grid roof-solar"><SolarToggle config={config} prices={prices} onChange={onChange} /></div>}
             </> : sideSettings(selectedSide)}
             <div className="interaction-hint"><Move size={17} /><p>A tolóüveg és az oldallamella a 3D-ben kattintásra, illetve a fenti gombbal is mozgatható. Egy oldal két részre is osztható, például fele tolóüveg, fele lécfal.</p></div>
@@ -351,7 +353,8 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               <RgbOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
               {tenant.extras.speakers && <Toggle label="Bluetooth hangrendszer" description="Egy pár beépített hangszóró" icon={Zap} price={formatHuf(prices.speakerPairNet)} checked={config.speakers} onChange={(speakers) => onChange({ speakers })} />}
             </div>
-            <SectionTitle title="Hő és légmozgás" hint="Fűtés a hűvös estékre, ventilátor a nyári hőségre." />
+            <SectionTitle title="Hő és légmozgás" hint={supportsRoofShade(config.roof) && tenant.extras.roofShade ? 'Árnyékoló a nyári napra, ventilátor a hőségre, fűtés a hűvös estékre.' : 'Fűtés a hűvös estékre, ventilátor a nyári hőségre.'} />
+            <RoofShadeOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
             {limits.maxHeaters > 0 && <div className="stepper-row"><span><strong>Infravörös teraszfűtés</strong><small>{formatHuf(prices.heaterUnitNet)} / db</small></span><div className="stepper"><button type="button" aria-label="Fűtőpanel csökkentése" disabled={config.heaters === 0} onClick={() => onChange({ heaters: Math.max(0, config.heaters - 1) })}><Minus size={15} /></button><span>{config.heaters} db</span><button type="button" aria-label="Fűtőpanel növelése" disabled={config.heaters >= limits.maxHeaters} onClick={() => onChange({ heaters: Math.min(limits.maxHeaters, config.heaters + 1) })}><Plus size={15} /></button></div></div>}
             <FanOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
             <SectionTitle title="Vezérlés és energia" hint="Automatika, egy appból irányítható rendszer és napelem." />

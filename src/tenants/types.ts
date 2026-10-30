@@ -82,6 +82,8 @@ export interface Tenant {
     rgb?: boolean
     fans?: boolean
     smartHome?: boolean
+    /** Motoros tetőárnyékoló üveg- és polikarbonát tetőhöz. */
+    roofShade?: boolean
   }
   /** Az üzemeltetési költség becsléséhez: a kínált fűtőpanel névleges teljesítménye (W). */
   energy?: { heaterWatts: number }

@@ -40,6 +40,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   ledLevel: 80,
   ledKelvin: 2700,
   heatersOn: true,
+  shadeOut: 100,
 }
 
 const RAL_COLORS: Record<string, string> = {

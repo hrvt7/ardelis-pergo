@@ -1,13 +1,14 @@
 // Oldalzárás-választó (8 típus, félbe osztás) és a komfort-opciók (RGB LED, ventilátor,
 // okosotthon) felülete. Az árkülönbség mindig a teljes bruttó irányár változása.
 import { Fan, House, Layers3, Minus, Move, Palette, Plus, Power, SplitSquareHorizontal, Square } from 'lucide-react'
-import { formatHuf } from '@/lib/pricing'
+import { formatHuf, formatNumber } from '@/lib/pricing'
+import { DEFAULT_SHADE_FABRIC, ROOF_SHADE_INFO, ROOF_SHADES, roofShadeArea, SHADE_FABRICS, supportsRoofShade } from '@/lib/roofShade'
 import { HALF_NAMES, SIDE_INFO, sideSegments } from '@/lib/sides'
 import { RGB_SWATCHES, smartHomeTargets } from '@/lib/comfort'
 import { FAN_MIN_HEIGHT } from '@/lib/fans'
 import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
-import type { PergolaConfig, PriceSettings, SceneSettings, SideKey, SideType } from '@/types/pergola'
+import type { PergolaConfig, PriceSettings, RoofShade, SceneSettings, SideKey, SideType } from '@/types/pergola'
 
 const signed = (value: number) => (Math.abs(value) < 500 ? '±0 Ft' : `${value > 0 ? '+' : '−'}${formatHuf(Math.abs(value))}`)
 
@@ -159,3 +160,51 @@ export function SmartHomeOption({ config, prices, onChange }: Omit<ComfortProps,
   </>
 }
 
+
+/** Kis oldalnézeti jel: üvegtető bordázattal, felette vagy alatta a ponyva. */
+function ShadeIcon({ kind }: { kind: RoofShade | 'none' }) {
+  return <svg viewBox="0 0 40 28" width="40" height="28" aria-hidden="true" className="shade-icon">
+    <path d="M4 22V12M36 22V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity=".55" />
+    <path d="M3 12h34" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    <path d="M6 14.5h28" stroke="#9fd0dc" strokeWidth="1.6" strokeLinecap="round" opacity=".9" />
+    {kind === 'above' && <path d="M5 7.5h30" stroke="var(--accent-primary)" strokeWidth="2.6" strokeLinecap="round" />}
+    {kind === 'below' && <path d="M7 18h26" stroke="var(--accent-primary)" strokeWidth="2.6" strokeLinecap="round" />}
+    {kind !== 'none' && <rect x={kind === 'above' ? 2 : 4} y={kind === 'above' ? 5 : 15.6} width="4" height="5" rx="1" fill="currentColor" opacity=".8" />}
+  </svg>
+}
+
+/** Motoros tetőárnyékoló üveg- és polikarbonát tetőhöz: nincs / tető feletti / tető alatti, ponyvaszín, mozgatás. */
+export function RoofShadeOption({ config, scene, prices, onChange, onSceneChange }: ComfortProps) {
+  const { tenant } = useTenant()
+  if (!tenant.extras.roofShade || !supportsRoofShade(config.roof)) return null
+  const current = tenantPrice(tenant, config, prices).totalGross
+  const delta = (kind: RoofShade | undefined) => tenantPrice(tenant, { ...config, roofShade: kind, shadeFabric: kind ? config.shadeFabric ?? DEFAULT_SHADE_FABRIC : undefined }, prices).totalGross - current
+  const glass = config.roof === 'glass'
+  const options: { id: RoofShade | 'none'; label: string; description: string }[] = [
+    { id: 'none', label: 'Árnyékoló nélkül', description: glass ? 'Teljes napfény — nyáron délben meleg lehet alatta' : 'Opál, szórt fény, árnyékoló nélkül' },
+    ...ROOF_SHADES.map((kind) => ({ id: kind, label: ROOF_SHADE_INFO[kind].label, description: ROOF_SHADE_INFO[kind].benefit })),
+  ]
+  const selected = config.roofShade ?? 'none'
+  return <div className="roof-shade-option">
+    <div className="roof-shade-head"><strong>Motoros árnyékoló</strong><small>{glass ? 'Üvegtető alatt nyáron gyorsan meleg lesz: a ponyva a napot megfogja, esőben az üveg véd.' : 'A polikarbonát szórt fényt ad; a ponyvával teljes árnyékot kapsz, amikor kell.'}</small></div>
+    <div className="side-type-grid roof-shade-grid" role="radiogroup" aria-label="Tetőárnyékoló">
+      {options.map((option) => {
+        const on = selected === option.id
+        const kind = option.id === 'none' ? undefined : option.id
+        return <button type="button" role="radio" aria-checked={on} key={option.id} className={`side-type-card${on ? ' selected' : ''}`} onClick={() => onChange({ roofShade: kind, shadeFabric: kind ? config.shadeFabric ?? DEFAULT_SHADE_FABRIC : undefined })}>
+          <ShadeIcon kind={option.id} />
+          <span className="side-type-text"><strong>{option.label}</strong><small>{option.description}</small></span>
+          <em>{on ? 'Kiválasztva' : signed(delta(kind))}</em>
+        </button>
+      })}
+    </div>
+    {config.roofShade && <>
+      <div className="roof-shade-fabrics" role="radiogroup" aria-label="Ponyva színe">
+        <span>Ponyva</span>
+        {SHADE_FABRICS.map((fabric) => <button type="button" role="radio" aria-checked={config.shadeFabric === fabric.id} key={fabric.id} className={config.shadeFabric === fabric.id ? 'selected' : ''} title={fabric.name} onClick={() => onChange({ shadeFabric: fabric.id })}><i style={{ background: fabric.hex }} /><small>{fabric.name}</small></button>)}
+      </div>
+      <button type="button" className="side-motion-control" aria-pressed={scene.shadeOut > 50} onClick={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })}><Move size={17} /><span>{scene.shadeOut > 50 ? 'Árnyékoló behúzása' : 'Árnyékoló kihúzása'}</span></button>
+      <p className="split-note">{formatHuf(prices[ROOF_SHADE_INFO[config.roofShade].priceKey])} / m² nettó · {formatNumber(roofShadeArea(config), 2)} m² · távirányítóval{config.smartHome ? ', az okosotthon-appból is' : ''}{config.sensors ? '; a szélérzékelő erős szélben automatikusan behúzza' : ''}.</p>
+    </>}
+  </div>
+}

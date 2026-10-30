@@ -8,6 +8,7 @@
 //    újraszámolja — a böngészőből érkező összeget nem fogadja el;
 // 3. elmenti Supabase-be (ha be van állítva), e-mailt küld a gyártónak és
 //    visszaigazolást az ügyfélnek (Resenddel, ha be van állítva).
+import { roofShadeSummary } from '../src/lib/roofShade'
 import { z } from 'zod'
 import { isWallSide, MOUNT_LABELS, wallLabel } from '../src/lib/mount'
 import { formatHuf, formatNumber, SIDE_NAMES } from '../src/lib/pricing'
@@ -113,7 +114,7 @@ export function describeConfig(tenant: Tenant, config: PergolaConfig, price: Pri
   const labels = roofLabels(tenant)
   const color = colorSummary(tenant, config)
   const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => `${SIDE_NAMES[side]}: ${isWallSide(config.mount, side) ? wallLabel(side).toLowerCase() : sideSummary(config, side)}`).join(' · ')
-  const extras = [config.led && (config.ledRgb ? 'színváltós RGB+W LED' : 'periméter LED'), config.heaters > 0 && `${config.heaters} db fűtés`, config.speakers && 'hangrendszer', config.sensors && 'eső- és szélszenzor', Boolean(config.fans) && `${config.fans} db mennyezeti ventilátor`, config.smartHome && 'okosotthon-vezérlés', config.solar && 'napelemes tető'].filter(Boolean).join(', ')
+  const extras = [config.led && (config.ledRgb ? 'színváltós RGB+W LED' : 'periméter LED'), config.heaters > 0 && `${config.heaters} db fűtés`, config.speakers && 'hangrendszer', config.sensors && 'eső- és szélszenzor', Boolean(config.fans) && `${config.fans} db mennyezeti ventilátor`, config.smartHome && 'okosotthon-vezérlés', config.roofShade && roofShadeSummary(config), config.solar && 'napelemes tető'].filter(Boolean).join(', ')
   return [
     ['Tetőrendszer', labels[config.roof]],
     ['Méret (sz × m × m)', `${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} × ${formatNumber(config.height, 2)} m · ${formatNumber(price.area)} m²`],

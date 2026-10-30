@@ -4,6 +4,7 @@
 //   500_400_260_L_l_a_g00z_35_65_1_1_0_1
 // Kb. 40 karakter a régi ~400 helyett → olvasható QR-kód, SMS-be is fér.
 // A régi formátum (#k=… base64 JSON) továbbra is beolvasható.
+import { findShadeFabric, ROOF_SHADE_INFO, SHADE_FABRICS } from './roofShade'
 import type { FrameColor, MountType, PergolaConfig, RoofType, SideType } from '../types/pergola'
 import { ROOF_INFO, ROOF_TYPES } from './roofs'
 import { SIDE_INFO, SIDE_TYPES } from './sides'
@@ -37,6 +38,7 @@ export function configToCompact(config: PergolaConfig) {
   if (config.ledRgb) flags.push('r')
   if (config.fans) flags.push(`v${config.fans}`)
   if (config.smartHome) flags.push('h')
+  if (config.roofShade) flags.push(`${ROOF_SHADE_INFO[config.roofShade].share}${findShadeFabric(config.shadeFabric).share}`)
   if (config.roofColor) flags.push(`t${COLOR[config.roofColor]}${config.roofColor === 'custom' && config.roofRal ? encodeCode(config.roofRal) : ''}`)
   if (config.split && SIDE_KEYS.some((side) => config.split?.[side])) flags.push(`s${SIDE_KEYS.map((side) => { const type = config.split?.[side]; return type ? SIDE[type] : '.' }).join('')}`)
   if (ral || flags.length) parts.push(ral)
@@ -68,6 +70,10 @@ function parseFlags(text: string, sideMap: Record<string, SideType>) {
     if (flag === 'p') result.solar = true
     else if (flag === 'r') result.ledRgb = true
     else if (flag === 'h') result.smartHome = true
+    else if (/^[ab][a-z]$/.test(flag)) {
+      result.roofShade = flag[0] === 'a' ? 'above' : 'below'
+      result.shadeFabric = SHADE_FABRICS.find((item) => item.share === flag[1])?.id ?? 'white'
+    }
     else if (/^t[a-z]/.test(flag) && COLOR_BY_CHAR[flag[1]]) {
       result.roofColor = COLOR_BY_CHAR[flag[1]]
       if (flag.length > 2) result.roofRal = safeDecode(flag.slice(2))

@@ -1,5 +1,6 @@
 // A PDF-összefoglaló dokumentumdefiníciója (pdfmake). DOM nélküli, ezért tesztből és
 // szerveren is felépíthető. Négy oldal: borító, konfiguráció + anyaglista, ár + teendők, műszaki rajz.
+import { findShadeFabric, ROOF_SHADE_INFO } from './roofShade'
 import type { Content, ContentTable, TDocumentDefinitions, TableCell } from 'pdfmake/interfaces'
 import { drawingLevels, POST, technicalDrawing } from './drawing'
 import { isWallSide, MOUNT_LABELS, postPositions, wallLabel } from './mount'
@@ -183,6 +184,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     ['Eső- és szélérzékelő', config.sensors ? 'automatikus zárással' : '—'],
     ...(config.fans ? [['Mennyezeti ventilátor', `${config.fans} db, kültéri DC motorral`] as [string, string]] : []),
     ...(config.smartHome ? [['Okosotthon-vezérlés', 'app, időzítés, jelenetek, hangvezérlés'] as [string, string]] : []),
+    ...(config.roofShade ? [['Tetőárnyékoló', `${ROOF_SHADE_INFO[config.roofShade].label.toLowerCase()}, motoros · ${findShadeFabric(config.shadeFabric).name.toLowerCase()} ponyva`] as [string, string]] : []),
   ]
 
   // Sok tételnél (osztott oldalak, sok opció) tömörebb tördelés, hogy az ár egy lapon maradjon.

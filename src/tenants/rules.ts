@@ -1,6 +1,7 @@
 // A gyártói szabályok alkalmazása egy konfigurációra.
 // Böngészőben és szerveren is fut: a szerver ugyanezzel normalizálja és
 // számolja újra a beérkező leadet, így a kliens által küldött ár nem számít.
+import { DEFAULT_SHADE_FABRIC, SHADE_FABRICS, supportsRoofShade } from '../lib/roofShade'
 import { z } from 'zod'
 import { calculatePrice } from '../lib/pricing'
 import { ROOF_TYPES } from '../lib/roofs'
@@ -33,6 +34,8 @@ export const pergolaConfigSchema = z.object({
   ledRgb: z.boolean().optional(),
   fans: z.number().int().min(0).max(9).optional(),
   smartHome: z.boolean().optional(),
+  roofShade: z.enum(['above', 'below']).optional(),
+  shadeFabric: z.enum(['white', 'sand', 'grey', 'anthracite']).optional(),
 })
 
 export const priceSettingsSchema = z.object({
@@ -61,6 +64,8 @@ export const priceSettingsSchema = z.object({
   ledRgbPerMeterNet: z.number().min(0).max(500000).default(4000),
   fanUnitNet: z.number().min(0).max(2000000).default(130000),
   smartHomeNet: z.number().min(0).max(2000000).default(120000),
+  roofShadeAbovePerM2Net: z.number().min(0).max(1000000).default(52000),
+  roofShadeBelowPerM2Net: z.number().min(0).max(1000000).default(38000),
   customColorRate: z.number().min(0).max(1),
   woodColorRate: z.number().min(0).max(1).default(0.18),
   installationRate: z.number().min(0).max(1),
@@ -144,6 +149,8 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     ledRgb: led && tenant.extras.rgb && config.ledRgb ? true : undefined,
     fans: tenant.extras.fans && config.fans ? Math.round(clamp(config.fans, [0, 2])) || undefined : undefined,
     smartHome: tenant.extras.smartHome && config.smartHome ? true : undefined,
+    // Tetőárnyékoló csak üveg-/polikarbonát tetőhöz, ha a gyártó kínálja; tetőcserénél elmarad.
+    ...(tenant.extras.roofShade && config.roofShade && supportsRoofShade(roof) ? { roofShade: config.roofShade, shadeFabric: SHADE_FABRICS.some((item) => item.id === config.shadeFabric) ? config.shadeFabric : DEFAULT_SHADE_FABRIC } : { roofShade: undefined, shadeFabric: undefined }),
     ...(tenant.extras.solar && config.solar && (roofs.includes(config.roof) ? config.roof : roofs[0]) === 'fixed' ? { solar: true } : { solar: undefined }),
   }
 }

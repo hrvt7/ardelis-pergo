@@ -1,3 +1,4 @@
+import { findShadeFabric, ROOF_SHADE_INFO, roofShadeArea, supportsRoofShade } from './roofShade'
 import { PANEL, panelLayout } from './solar'
 import { describeColor, roofPartName, type ColorInfo } from './colors'
 
@@ -34,6 +35,8 @@ export const DEFAULT_PRICES: PriceSettings = {
   ledRgbPerMeterNet: 4000,
   fanUnitNet: 130000,
   smartHomeNet: 120000,
+  roofShadeAbovePerM2Net: 52000,
+  roofShadeBelowPerM2Net: 38000,
   customColorRate: 0.06,
   woodColorRate: 0.18,
   installationRate: 0.1,
@@ -215,6 +218,17 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
       label: 'Okosotthon-vezérlés',
       detail: 'Wi-Fi központ · telefonos app, időzítés, jelenetek, hangvezérlés',
       amountNet: round(prices.smartHomeNet),
+    })
+  }
+
+  if (config.roofShade && supportsRoofShade(config.roof)) {
+    const info = ROOF_SHADE_INFO[config.roofShade]
+    const shadeArea = roofShadeArea(config)
+    lines.push({
+      id: 'roof-shade',
+      label: `${info.label} · motoros`,
+      detail: `${findShadeFabric(config.shadeFabric).name} ponyva · ${formatNumber(shadeArea, 2)} m² · ${formatHuf(prices[info.priceKey])} / m², távirányítóval`,
+      amountNet: round(shadeArea * prices[info.priceKey]),
     })
   }
 

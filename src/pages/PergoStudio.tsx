@@ -51,7 +51,7 @@ const CAMERA_VIEWS: { id: CameraView; label: string; icon: typeof View }[] = [
 ]
 
 const CHANGE_LABELS: Record<string, string> = {
-  width: 'Szélesség', depth: 'Mélység', height: 'Magasság', mount: 'Rögzítés', roof: 'Tetőrendszer', frameColor: 'Szerkezetszín', customRal: 'Egyedi szín', roofColor: 'Tető / lamellák színe', roofRal: 'Tető / lamellák színe', sides: 'Oldalkialakítás', louverAngle: 'Lamellaszög', screenOpen: 'ZIP nyitottság', led: 'Periméter LED', heaters: 'Teraszfűtés', speakers: 'Hangrendszer', sensors: 'Szenzorcsomag', solar: 'Napelemes tető', split: 'Osztott oldal', ledRgb: 'Színváltós LED', fans: 'Mennyezeti ventilátor', smartHome: 'Okosotthon-vezérlés',
+  width: 'Szélesség', depth: 'Mélység', height: 'Magasság', mount: 'Rögzítés', roof: 'Tetőrendszer', frameColor: 'Szerkezetszín', customRal: 'Egyedi szín', roofColor: 'Tető / lamellák színe', roofRal: 'Tető / lamellák színe', sides: 'Oldalkialakítás', louverAngle: 'Lamellaszög', screenOpen: 'ZIP nyitottság', led: 'Periméter LED', heaters: 'Teraszfűtés', speakers: 'Hangrendszer', sensors: 'Szenzorcsomag', solar: 'Napelemes tető', split: 'Osztott oldal', ledRgb: 'Színváltós LED', fans: 'Mennyezeti ventilátor', smartHome: 'Okosotthon-vezérlés', roofShade: 'Tetőárnyékoló', shadeFabric: 'Árnyékoló színe'
 }
 
 const savedKey = (tenant: Tenant) => `pergo-atelier-saved-v3:${tenant.id}`
@@ -147,6 +147,8 @@ export default function PergoStudio() {
     const sides = (['front', 'back', 'left', 'right'] as SideKey[]).find((side) => before.sides[side] !== after.sides[side] || before.split?.[side] !== after.split?.[side])
     if (sides) { setView('perspective'); focusSide(sides); return }
     if ((after.fans ?? 0) > (before.fans ?? 0)) { setView('interior'); return }
+    // Új tetőárnyékoló: kihúzva, áttekintő nézetből mutatjuk (alulról a kameragombsorral nézhető).
+    if (after.roofShade && after.roofShade !== before.roofShade) { setScene((value) => ({ ...value, shadeOut: 100 })); overview(); return }
     if (before.frameColor !== after.frameColor || before.customRal !== after.customRal || before.roofColor !== after.roofColor || before.roofRal !== after.roofRal) { overview(); return }
     if (before.mount !== after.mount || before.roof !== after.roof) overview()
     const lightsOn = (!before.led && after.led) || (!before.ledRgb && after.ledRgb) || (before.heaters === 0 && after.heaters > 0)
@@ -162,7 +164,7 @@ export default function PergoStudio() {
     if (JSON.stringify(next) === JSON.stringify(config)) return
     const nextPrice = calculatePrice(next, prices, ROOF_LABELS)
     // Az összetartozó mezők (szín + kód) egy módosításnak számítanak.
-    const PAIRED: Record<string, string> = { customRal: 'frameColor', roofRal: 'roofColor', ledRgb: 'led' }
+    const PAIRED: Record<string, string> = { customRal: 'frameColor', roofRal: 'roofColor', ledRgb: 'led', shadeFabric: 'roofShade' }
     const changedKeys = [...new Set(Object.keys(nextOrPatch).filter((key) => key !== 'louverAngle' && key !== 'screenOpen' && JSON.stringify((next as unknown as Record<string, unknown>)[key]) !== JSON.stringify((config as unknown as Record<string, unknown>)[key])).map((key) => (PAIRED[key] && key in nextOrPatch && PAIRED[key] in nextOrPatch ? PAIRED[key] : key)))]
     const changed = changedKeys[0]
     const label = changedKeys.length > 1 ? 'Több módosítás' : changed ? CHANGE_LABELS[changed] ?? 'Konfiguráció' : 'Beállítás'

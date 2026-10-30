@@ -87,7 +87,7 @@ export function energyLines(config: PergolaConfig, usage: EnergyUsage, heaterWat
   if (config.speakers) lines.push({ id: 'speakers', label: 'Hangrendszer', detail: `${SPEAKER_W} W átlag · ${SPEAKER_HOURS} óra/év`, kwh: (SPEAKER_W * SPEAKER_HOURS) / 1000 })
   // Készenlét: vezérlő/tápegység/rádióvevő folyamatosan (Somfy TaHoma 0,92 W, io vevők ~0,4–0,5 W).
   if (config.fans) lines.push({ id: 'fans', label: 'Mennyezeti ventilátor', detail: `${config.fans} × ${FAN_W} W (DC) · ${FAN_HOURS} óra/nap, ${FAN_DAYS} nyári nap`, kwh: (config.fans * FAN_W * FAN_HOURS * FAN_DAYS) / 1000 })
-  const standbyW = (config.smartHome ? SMART_HOME_W : 0) + (config.fans ? 0.3 * config.fans : 0) + (roofMotor ? 1 : 0) + zipCount * 0.45 + (config.sensors ? 1.2 : 0) + (config.led ? 0.5 : 0) + (config.speakers ? 0.5 : 0) + (config.heaters > 0 ? 0.3 : 0)
+  const standbyW = (config.smartHome ? SMART_HOME_W : 0) + (config.roofShade ? 0.4 : 0) + (config.fans ? 0.3 * config.fans : 0) + (roofMotor ? 1 : 0) + zipCount * 0.45 + (config.sensors ? 1.2 : 0) + (config.led ? 0.5 : 0) + (config.speakers ? 0.5 : 0) + (config.heaters > 0 ? 0.3 : 0)
   if (standbyW > 0) lines.push({ id: 'standby', label: 'Készenlét', detail: `${standbyW.toLocaleString('hu-HU', { maximumFractionDigits: 1 })} W folyamatosan (vezérlő, tápegység, vevők)`, kwh: (standbyW * 8760) / 1000 })
   return lines
 }

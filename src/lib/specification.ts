@@ -1,3 +1,4 @@
+import { findShadeFabric, ROOF_SHADE_INFO, roofShadeArea, roofShadeSummary } from './roofShade'
 import { furnitureFit } from './furniture'
 import { PANEL, panelLayout } from './solar'
 import { ROOF_INFO, isGlazedRoof } from './roofs'
@@ -28,7 +29,7 @@ export function getSpecCode(config: PergolaConfig) {
   const color = colorCode(config.frameColor, config.customRal) + (config.roofColor ? `/${colorCode(config.roofColor, config.roofRal)}` : '')
   // Oldalanként egy betű; félbe osztott oldalnál a két fél zárójelben, pl. „(G/Z)”.
   const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => (isWallSide(config.mount, side) ? 'W' : (() => { const codes = sideSegments(config, side).map((segment) => SIDE_INFO[segment.type].spec); return codes.length > 1 ? `(${codes.join('/')})` : codes[0] })())).join('')
-  const options = [config.solar ? 'PV' : '', config.smartHome ? 'SH' : '', config.fans ? `F${config.fans}` : '', config.led && config.ledRgb ? 'RGB' : ''].filter(Boolean)
+  const options = [config.solar ? 'PV' : '', config.smartHome ? 'SH' : '', config.fans ? `F${config.fans}` : '', config.led && config.ledRgb ? 'RGB' : '', config.roofShade ? ROOF_SHADE_INFO[config.roofShade].spec : ''].filter(Boolean)
   return `PG-${roof}-${Math.round(config.width * 100)}${Math.round(config.depth * 100)}-${mount}-${color}-${sides}${options.map((option) => `-${option}`).join('')}`
 }
 
@@ -51,6 +52,7 @@ export function getBom(config: PergolaConfig): BomLine[] {
     ...(runs('slatWood').length ? [{ label: 'Fa lécfal (hőkezelt)', value: `${runText('slatWood')} · ${slatCount('slatWood')} léc / mező, 20 mm hézag` }] : []),
     ...(profiles ? [{ label: 'Osztóprofil (félbe osztott oldal)', value: `${profiles} db · ${formatNumber(config.height, 2)} m` }] : []),
     ...(config.fans ? [{ label: 'Mennyezeti ventilátor', value: `${config.fans} db · tartógerendával, fali kapcsolóval` }] : []),
+    ...(config.roofShade ? [{ label: 'Motoros tetőárnyékoló', value: `${ROOF_SHADE_INFO[config.roofShade].short} · ${formatNumber(roofShadeArea(config), 2)} m² · ${findShadeFabric(config.shadeFabric).name.toLowerCase()} ponyva, vezetősínnel, rádiós motorral` }] : []),
   ]
   const posts = postPositions(config).length
   const middlePosts = config.width > 6 ? 1 : 0
@@ -111,6 +113,7 @@ export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, 
     config.sensors ? 'eső- és szélszenzor' : null,
     config.fans ? `${config.fans} db mennyezeti ventilátor` : null,
     config.smartHome ? 'okosotthon-vezérlés' : null,
+    config.roofShade ? roofShadeSummary(config) : null,
     config.solar ? `napelemes tető (${formatNumber(panelLayout(config).kwp, 2)} kWp)` : null,
   ].filter((item): item is string => Boolean(item))
   return [
