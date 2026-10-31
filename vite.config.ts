@@ -16,6 +16,8 @@ function staticSeo(siteUrl: string | undefined): Plugin {
       const origin = (siteUrl || "").replace(/\/$/, "")
       const robots = `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /embed/\nDisallow: /k/\n${origin ? `\nSitemap: ${origin}/sitemap.xml\n` : ""}`
       this.emitFile({ type: "asset", fileName: "robots.txt", source: robots })
+      const llms = `# ARDELIS PERGO\n\n> Online 3D pergolatervező bioklimatikus (motoros lamellás) pergolákhoz: valós méretek, tetőrendszer, oldalzárás, világítás, tájékoztató irányár, PDF-összefoglaló és helyszíni felmérési kérelem. Magyar nyelvű.\n\n## Oldalak\n\n${origin ? `- [Nyitóoldal](${origin}/): a pergola bemutatása, színek, részletek, GYIK\n- [3D pergolatervező](${origin}/studio/pergola): a konfigurátor\n` : "- Nyitóoldal (/)\n- 3D pergolatervező (/studio/pergola)\n"}\n## Tudnivalók\n\n- Az árak tájékoztató jellegűek; a végleges ajánlat helyszíni felmérés után készül.\n- Engedélyezési és statikai kérdésekben helyi ellenőrzés szükséges.\n- Nem szerepel: carport, előtető.\n`
+      this.emitFile({ type: "asset", fileName: "llms.txt", source: llms })
       if (!origin) return
       const urls = SEO_SITEMAP_PATHS.map((pathname) => `  <url><loc>${origin}${pathname}</loc></url>`).join("\n")
       this.emitFile({ type: "asset", fileName: "sitemap.xml", source: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n` })

@@ -1,5 +1,9 @@
 # Változások
 
+## 3.21 – Visszavonva
+
+- A mozgás közbeni utófeldolgozás-szüneteltetés (regress + automatikus lépcsőzés) rontotta a képet forgatáskor (szétesett/eltűnt a kép), ezért teljesen visszacsináltuk a 3.20 állapotra.
+
 ## 3.20 — Lamellák instanced meshben, teljesítménymérő (2026. 10. 31.)
 
 - **Lamellák:** a penge, az alsó tömítősáv és a két végi csapágybetét 1-1 `InstancedMesh`. Korábban lamellánként 4 külön mesh és anyag volt

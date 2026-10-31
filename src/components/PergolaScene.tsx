@@ -754,7 +754,7 @@ function LedLighting({ width, depth, height, night, kelvin, level, rgb = null }:
     <LedStrip args={[0.018, 0.018, depth - 0.3]} position={[width / 2 - 0.12, height - 0.15, 0]} night={night} color={color} level={level} />
     {/* A fények éjjel mindig jelen vannak (0 fényerőnél 0 intenzitással): a fényforrások számának
         változása az összes anyag újrafordítását okozná, ami mobilon akadást jelent. */}
-    {night && <><pointLight position={[-width * 0.28, height - 0.4, 0]} color={color} intensity={25 * level} distance={7} decay={2} /><pointLight position={[width * 0.28, height - 0.4, 0]} color={color} intensity={25 * level} distance={7} decay={2} /></>}
+    {/* A fények mindig a jelenetben maradnak (nappal 0 intenzitással): a fényszám változása újrafordítaná az összes anyag shaderét. */}<pointLight position={[-width * 0.28, height - 0.4, 0]} color={color} intensity={night ? 25 * level : 0} distance={7} decay={2} /><pointLight position={[width * 0.28, height - 0.4, 0]} color={color} intensity={night ? 25 * level : 0} distance={7} decay={2} />
   </group>
 }
 
@@ -847,6 +847,10 @@ function prefetchSceneAssets(scene: SceneSettings) {
   try {
     getHouseAsset().catch(() => undefined)
     useEnvironment.preload({ files: hdr })
+    // A másik két napszak HDR-je tétlen időben töltődik, így a nappal/éjszaka váltás nem vár hálózatra.
+    const others = Object.values(HDR_FILES).filter((file) => file !== hdr)
+    const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 2500))
+    idle(() => { try { others.forEach((file) => useEnvironment.preload({ files: file })) } catch { /* nem kritikus */ } }, { timeout: 6000 })
     useTexture.preload((['diff', 'nor_gl', 'rough'] as const).map((map) => assetUrl(pbrPath('oak_wood_planks', map))))
     DECOR_MODELS.forEach((url) => useGLTF.preload(url))
   } catch (error) {
@@ -1000,7 +1004,7 @@ function House({ config, look, night }: { config: PergolaConfig; look: HouseLook
         <mesh position={[0, 0.96, 0]}><boxGeometry args={[0.42, 0.035, 0.46]} /><meshStandardMaterial color="#13191b" roughness={0.8} /></mesh>
       </group>
     </group>
-    {night && <><pointLight position={[0, 1.9, layout.frontZ + 0.7]} color="#ffd09a" intensity={7} distance={5.5} decay={2} /><pointLight position={[layout.width * 0.32, 1.7, layout.frontZ + 0.45]} color="#ffc382" intensity={4} distance={4} decay={2} /></>}
+    <pointLight position={[0, 1.9, layout.frontZ + 0.7]} color="#ffd09a" intensity={night ? 7 : 0} distance={5.5} decay={2} /><pointLight position={[layout.width * 0.32, 1.7, layout.frontZ + 0.45]} color="#ffc382" intensity={night ? 4 : 0} distance={4} decay={2} />
   </group>
 }
 
@@ -1715,8 +1719,23 @@ function PerfProbe({ quality }: { quality: QualitySettings }) {
     box.current = element
     return () => { element.remove(); box.current = null }
   }, [])
-  useFrame(({ gl }) => {
+  const breakdown = useRef<string>('')
+  useFrame(({ gl, scene }) => {
     const stats = frames.current
+    if (!breakdown.current && gl.info.render.frame > 40) {
+      const totals = new Map<string, number>()
+      scene.traverse((object) => {
+        const mesh = object as THREE.Mesh
+        if (!mesh.isMesh || !mesh.visible) return
+        const geometry = mesh.geometry
+        const triangles = (geometry.index ? geometry.index.count : geometry.getAttribute('position').count) / 3 * ((mesh as THREE.InstancedMesh).isInstancedMesh ? (mesh as THREE.InstancedMesh).count : 1)
+        let label = ''
+        for (let node: THREE.Object3D | null = mesh; node; node = node.parent) if (node.name) { label = node.name; break }
+        totals.set(label || '(névtelen)', (totals.get(label || '(névtelen)') ?? 0) + triangles)
+      })
+      breakdown.current = [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([name, count]) => `${name}: ${Math.round(count / 1000)}k`).join(' | ')
+      ;(window as unknown as { __perfTop?: string }).__perfTop = breakdown.current
+    }
     stats.count += 1
     const now = performance.now()
     if (!stats.last) stats.last = now

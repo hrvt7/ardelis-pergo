@@ -75,7 +75,7 @@ body:has(.cinema-page) { background: #1a1a1a; overflow: visible; }
 .cinema-line { display: block; white-space: nowrap; }
 .cinema-line.is-italic { color: var(--accent-film); font-style: italic; }
 .cinema-char-mask { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: .04em; }
-.cinema-char { display: inline-block; will-change: transform; }
+.cinema-char { display: inline-block; }
 .cinema-hero-copy > p { max-width: 470px; margin: 0; color: rgba(245,243,238,.84); font: var(--body); }
 .cinema-hero-actions { display: flex; align-items: center; gap: 26px; margin-top: 38px; }
 .oval-link { position: relative; width: 260px; height: 78px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 14px; color: var(--text-on-editorial); text-decoration: none; font: 600 14px/1 'Instrument Sans',sans-serif; }
