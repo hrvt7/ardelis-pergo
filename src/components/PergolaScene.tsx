@@ -27,6 +27,7 @@ import { findShadeFabric } from '@/lib/roofShade'
 import { sideSegments } from '@/lib/sides'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
+import HotTub from '@/components/HotTub'
 import { isGlazedRoof, isMovableRoof } from '@/lib/roofs'
 import { deckBounds } from '@/lib/deck'
 import { SolarPanels } from '@/components/SceneExtras'
@@ -1206,19 +1207,6 @@ function LoungeSet() {
   </group>
 }
 
-/** Jacuzzi (2 × 2 m): burkolt szekrény, fehér akrilperem, víztükör, lépcső. Éjjel a víz enyhén világít. */
-function HotTub() {
-  const water = useMemo(() => new THREE.MeshPhysicalMaterial({ color: '#4fa9b8', roughness: 0.06, metalness: 0, transmission: 0, transparent: true, opacity: 0.88, emissive: '#2a8fa3', emissiveIntensity: 0.28 }), [])
-  useEffect(() => () => water.dispose(), [water])
-  return <group>
-    <RoundedBox args={[2.04, 0.84, 2.04]} position={[0, 0.43, 0]} radius={0.07} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#4a4036" roughness={0.82} /></RoundedBox>
-    {[[0, -0.97, 2.0, 0.2], [0, 0.97, 2.0, 0.2], [-0.97, 0, 0.2, 1.74], [0.97, 0, 0.2, 1.74]].map(([x, z, w, d]) => <RoundedBox key={`${x}${z}`} args={[w, 0.1, d]} position={[x, 0.87, z]} radius={0.04} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#e6e8e5" roughness={0.38} /></RoundedBox>)}
-    <mesh position={[0, 0.806, 0]} rotation={[-Math.PI / 2, 0, 0]} material={water}><planeGeometry args={[1.74, 1.74]} /></mesh>
-    <mesh position={[0, 0.7, 0]}><boxGeometry args={[1.76, 0.2, 1.76]} /><meshStandardMaterial color="#0f3d48" roughness={0.9} /></mesh>
-    <RoundedBox args={[0.9, 0.2, 0.34]} position={[0, 0.1, 1.2]} radius={0.04} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#4a4036" roughness={0.82} /></RoundedBox>
-  </group>
-}
-
 function DiningChair({ position, rotation }: { position: [number, number, number]; rotation: number }) {
   return <group position={position} rotation={[0, rotation, 0]}>
     <RoundedBox args={[0.46, 0.05, 0.46]} position={[0, 0.45, 0]} radius={0.02} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></RoundedBox>
@@ -1248,7 +1236,7 @@ function Furniture({ config, scene, hideZone = false }: { config: PergolaConfig;
   const fit = furnitureFit(set, config)!
   const [zoneLong, zoneShort] = FURNITURE_SETS[set].zone
   const content = FURNITURE_SETS[set].parts.map((part) => <group key={part.kind} position={[part.x, 0, 0]}>
-    {part.kind === 'lounge' ? <LoungeSet /> : part.kind === 'dining6' ? <DiningSet seats={6} /> : part.kind === 'dining8' ? <DiningSet seats={8} /> : <HotTub />}
+    {part.kind === 'lounge' ? <LoungeSet /> : part.kind === 'dining6' ? <DiningSet seats={6} /> : part.kind === 'dining8' ? <DiningSet seats={8} /> : <HotTub night={getLighting(scene).night} />}
   </group>)
   const zoneColor = fit.level === 'comfortable' ? '#9be26a' : fit.level === 'tight' ? '#ffc24a' : '#ff5b4a'
   const half = [zoneLong / 2, zoneShort / 2]
