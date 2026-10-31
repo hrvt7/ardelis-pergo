@@ -1413,6 +1413,9 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
   const destination = useRef(new THREE.Vector3(12, 7, 14))
   const target = useRef(new THREE.Vector3())
   const transitioning = useRef(true)
+  // Kameramozgás: időalapú, ívelt (a célpont körül forgó) átmenet, hogy ne csússzon át a szerkezeten.
+  const move = useRef({ p: 0, started: false, dur: 1.2, from: new THREE.Vector3(), fromTarget: new THREE.Vector3(), fromDir: new THREE.Vector3(), toDir: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), tmp: new THREE.Vector3(), tmpT: new THREE.Vector3() })
+  const beginMove = useCallback(() => { move.current.p = 0; move.current.started = false; transitioning.current = true }, [])
   // Első megjelenés: lassú, drónszerű berepülés magasról a nézetbe.
   const firstFlight = useRef(!REDUCED)
   const idle = useRef(0)
@@ -1462,13 +1465,22 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
       transitioning.current = false
     } else {
       if (window.innerWidth < 820 && view !== 'interior') destination.current.sub(target.current).multiplyScalar(1.45).add(target.current)
-      transitioning.current = true
+      beginMove()
     }
     invalidate()
-  }, [view, config.width, config.depth, config.height, config.mount, furniture, camera, invalidate])
+  }, [view, config.width, config.depth, config.height, config.mount, furniture, camera, invalidate, beginMove])
   useEffect(() => { applyView() }, [applyView])
 
   useEffect(() => { if (revealed) invalidate() }, [revealed, invalidate])
+
+  // Ha a felhasználó megfogja a kamerát, az automatikus mozgás azonnal átadja az irányítást.
+  useEffect(() => {
+    const c = controls.current
+    if (!c) return
+    const takeOver = () => { if (!firstFlight.current) transitioning.current = false }
+    c.addEventListener('start', takeOver)
+    return () => c.removeEventListener('start', takeOver)
+  }, [view])
 
   // Mobilon a félig nyitott alsó lap mögé ne kerüljön a pergola: a képet feljebb toljuk (nézet-eltolás).
   const size = useThree((state) => state.size)
@@ -1506,7 +1518,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     target.current.copy(center).multiplyScalar(0.62).setY(h * 0.45)
     destination.current.copy(center).addScaledVector(normal, distance).addScaledVector(tangent, distance * 0.38)
     destination.current.y = h * 1.05 + 1.3
-    transitioning.current = true
+    beginMove()
     invalidate()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- csak új fókuszkérésre fusson
   }, [focusId])
@@ -1580,9 +1592,26 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     if (transitioning.current) {
       if (REDUCED) { camera.position.copy(destination.current); controls.current.target.copy(target.current); transitioning.current = false }
       else {
-        const alpha = 1 - Math.exp(-Math.min(delta, 0.25) * (firstFlight.current ? 1.6 : 3.7))
-        camera.position.lerp(destination.current, alpha); controls.current.target.lerp(target.current, alpha)
-        if (camera.position.distanceTo(destination.current) < 0.025) { transitioning.current = false; firstFlight.current = false }
+        const m = move.current
+        if (!m.started) {
+          m.from.copy(camera.position); m.fromTarget.copy(controls.current.target)
+          m.dur = firstFlight.current ? 3.4 : THREE.MathUtils.clamp(0.8 + m.from.distanceTo(destination.current) * 0.045, 0.9, 1.7)
+          m.fromDir.copy(m.from).sub(m.fromTarget)
+          m.started = true
+        }
+        // Egy akadó képkocka ne ugorjon: a lépés felső korláttal lassít, nem ugrik.
+        m.p = Math.min(1, m.p + Math.min(delta, 0.04) / m.dur)
+        const t = m.p
+        const e = firstFlight.current ? 1 - Math.pow(1 - t, 3) : t * t * t * (t * (t * 6 - 15) + 10)
+        controls.current.target.copy(m.fromTarget).lerp(target.current, e)
+        m.toDir.copy(destination.current).sub(target.current)
+        const r0 = m.fromDir.length(); const r1 = m.toDir.length()
+        m.tmp.copy(m.fromDir).normalize(); m.tmpT.copy(m.toDir).normalize()
+        m.q.setFromUnitVectors(m.tmp, m.tmpT)
+        const slerped = m.q2.identity().slerp(m.q, e)
+        m.tmp.applyQuaternion(slerped).multiplyScalar(r0 + (r1 - r0) * e)
+        camera.position.copy(controls.current.target).add(m.tmp)
+        if (m.p >= 1) { camera.position.copy(destination.current); controls.current.target.copy(target.current); transitioning.current = false; firstFlight.current = false }
       }
       camera.position.set(camera.position.x, Math.max(0.28, camera.position.y), camera.position.z)
       controls.current.update(); invalidate()

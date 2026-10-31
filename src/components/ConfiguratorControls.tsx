@@ -21,7 +21,7 @@ const STEPS: { id: ConfigStep; label: string; short: string }[] = [
   { id: 'size', label: 'Pergola', short: 'Csomag és méret' },
   { id: 'mount', label: 'Rögzítés', short: 'Szerkezet' },
   { id: 'color', label: 'Szín', short: 'Felület' },
-  { id: 'sides', label: 'Tető és oldalak', short: 'Tető, zárás' },
+  { id: 'sides', label: 'Oldalak', short: 'Tető és zárás' },
   { id: 'extras', label: 'Extrák', short: 'Komfort' },
   { id: 'summary', label: 'Összegzés', short: 'Felmérés' },
 ]
