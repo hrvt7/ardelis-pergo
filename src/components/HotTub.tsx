@@ -1,15 +1,14 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useEffect, useMemo } from 'react'
+import { useFrame } from '@react-three/fiber'
 import { RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
-import { useQuality } from '@/lib/quality'
 
-// Jacuzzi 2 × 2 m: termofa burkolatú szekrény, ívelt akrilperem, belső héj fúvókákkal, animált víztükör és
-// felszálló, a felszínen kipattanó buborékok. Minden egyedi elem egy-egy egyesített hálóban van (kevés draw call).
+// Jacuzzi 2 × 2 m: termofa burkolatú szekrény, ívelt akrilperem, belső héj fúvókákkal, mozdulatlan, buborékos víztükör.
+// Nincs animáció: állókép, így nem terheli a megjelenítést. Minden egyedi elem egy-egy egyesített hálóban van (kevés draw call).
 
 /** Közös shader-uniformok: egyetlen jacuzzi van a jelenetben, így modulszintű objektum elég (nincs hook által védett érték módosítása). */
-const SHARED = { time: { value: 1.3 }, night: { value: 0 }, height: { value: 800 } }
+const SHARED = { time: { value: 1.3 }, night: { value: 0 } }
 
 const HALF = 1.02
 const RIM_Y = 0.83
@@ -131,74 +130,8 @@ const WATER_FRAGMENT = /* glsl */ `
     #include <colorspace_fragment>
   }
 `
-const BUBBLE_VERTEX = /* glsl */ `
-  uniform float uTime;
-  uniform float uHeight;
-  attribute vec4 aBubble; // x, z kiindulás, seed, típus (0 = vízalatti, 1 = felszín feletti)
-  varying float vAlpha;
-  varying float vKind;
-  void main() {
-    float seed = aBubble.z;
-    float life = fract(uTime * (0.32 + seed * 0.4) + seed * 13.0);
-    vec3 p = vec3(aBubble.x, 0.0, aBubble.y);
-    float size;
-    if (aBubble.w < 0.5) {
-      p.y = 0.3 + life * 0.49;
-      p.x += sin(uTime * 2.0 + seed * 30.0) * 0.02;
-      p.z += cos(uTime * 1.7 + seed * 20.0) * 0.02;
-      size = 0.018 + 0.02 * seed + life * 0.012;
-      vAlpha = sin(life * 3.14159) * 0.75;
-    } else {
-      float hop = sin(life * 3.14159);
-      p.y = 0.8 + hop * (0.045 + seed * 0.05);
-      p.x += (life - 0.5) * 0.06 * (seed - 0.5);
-      size = 0.01 + 0.012 * seed;
-      vAlpha = hop * 0.95;
-    }
-    vKind = aBubble.w;
-    vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    gl_PointSize = max(1.5, size * projectionMatrix[1][1] * uHeight * 0.5 / -mv.z);
-    gl_Position = projectionMatrix * mv;
-  }
-`
-const BUBBLE_FRAGMENT = /* glsl */ `
-  varying float vAlpha;
-  varying float vKind;
-  void main() {
-    vec2 c = gl_PointCoord - 0.5;
-    float d = length(c);
-    if (d > 0.5) discard;
-    float rim = smoothstep(0.28, 0.5, d);
-    float spec = 1.0 - smoothstep(0.0, 0.2, length(c - vec2(-0.12, -0.12)));
-    vec3 color = mix(vec3(0.82, 0.94, 1.0), vec3(1.0), spec);
-    float alpha = vAlpha * (0.25 + rim * 0.55 + spec * 0.6);
-    gl_FragColor = vec4(color, alpha);
-  }
-`
-
-/** Az animáció csak addig fut, amíg a jacuzzi tényleg látszik (a képernyőn renderelődik), és legfeljebb 30 fps-sel. */
-function useBubbling(animated: boolean) {
-  const invalidate = useThree((state) => state.invalidate)
-  const lastSeen = useRef(0)
-  const lastTick = useRef(0)
-  const mark = useMemo(() => () => { lastSeen.current = performance.now() }, [])
-  useFrame(({ clock }) => {
-    if (!animated) return
-    if (performance.now() - lastSeen.current > 250) return
-    if (clock.elapsedTime - lastTick.current < 1 / 30) return
-    lastTick.current = clock.elapsedTime
-    SHARED.time.value = clock.elapsedTime
-    invalidate()
-  })
-  return mark
-}
-
 export default function HotTub({ night = false }: { night?: boolean }) {
-  const { tier } = useQuality()
-  const animated = tier !== 'low'
   const geometry = useTubGeometry()
-  const size = useThree((state) => state.size)
-  const gl = useThree((state) => state.gl)
 
   const water = useMemo(() => new THREE.ShaderMaterial({
     vertexShader: WATER_VERTEX,
@@ -207,34 +140,11 @@ export default function HotTub({ night = false }: { night?: boolean }) {
     depthWrite: false,
     uniforms: { uTime: SHARED.time, uNight: SHARED.night, uDeep: { value: new THREE.Color('#0d6e86') }, uShallow: { value: new THREE.Color('#4fc3d4') } },
   }), [])
-  const bubbleGeometry = useMemo(() => {
-    const underwater = tier === 'low' ? 24 : 70
-    const surface = tier === 'low' ? 14 : 44
-    const data = new Float32Array((underwater + surface) * 4)
-    const spot = (index: number, salt: number) => (rand(index, salt) - 0.5) * 1.5
-    for (let i = 0; i < underwater + surface; i++) {
-      data.set([spot(i, 1), spot(i, 2), rand(i, 3), i < underwater ? 0 : 1], i * 4)
-    }
-    const bufferGeometry = new THREE.BufferGeometry()
-    bufferGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array((underwater + surface) * 3), 3))
-    bufferGeometry.setAttribute('aBubble', new THREE.BufferAttribute(data, 4))
-    bufferGeometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0.8, 0), 1.3)
-    return bufferGeometry
-  }, [tier])
-  const bubbleMaterial = useMemo(() => new THREE.ShaderMaterial({
-    vertexShader: BUBBLE_VERTEX,
-    fragmentShader: BUBBLE_FRAGMENT,
-    transparent: true,
-    depthWrite: false,
-    uniforms: { uTime: SHARED.time, uHeight: SHARED.height },
-  }), [])
-  const markSeen = useBubbling(animated)
   // A beállítások a képkocka elején kerülnek a shaderbe (nem a renderelés közben módosított objektumba).
   useFrame(() => {
-    SHARED.height.value = size.height * gl.getPixelRatio()
     SHARED.night.value = night ? 1 : 0
   })
-  useEffect(() => () => { water.dispose(); bubbleMaterial.dispose(); bubbleGeometry.dispose() }, [water, bubbleMaterial, bubbleGeometry])
+  useEffect(() => () => { water.dispose() }, [water])
   useEffect(() => () => Object.values(geometry).forEach((item) => item.dispose()), [geometry])
 
   return <group name="hot-tub">
@@ -254,8 +164,7 @@ export default function HotTub({ night = false }: { night?: boolean }) {
     <RoundedBox args={[0.22, 0.02, 0.12]} position={[0.62, RIM_Y + 0.085, 0.92]} radius={0.01} smoothness={2}><meshStandardMaterial color="#0a0c0d" roughness={0.2} metalness={0.4} /></RoundedBox>
     <mesh position={[0.62, RIM_Y + 0.097, 0.92]}><boxGeometry args={[0.07, 0.003, 0.02]} /><meshStandardMaterial color="#05161a" emissive="#37d4ee" emissiveIntensity={1.6} toneMapped={false} /></mesh>
     {/* Víz és buborékok. */}
-    <mesh geometry={geometry.surface} position={[0, WATER_Y, 0]} material={water} renderOrder={2} onBeforeRender={markSeen} />
-    <points geometry={bubbleGeometry} material={bubbleMaterial} renderOrder={3} frustumCulled={false} />
+    <mesh geometry={geometry.surface} position={[0, WATER_Y, 0]} material={water} renderOrder={2} />
     {/* Lépcső. */}
     <RoundedBox args={[0.9, 0.2, 0.34]} position={[0, 0.1, 1.2]} radius={0.04} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#3d342b" roughness={0.82} /></RoundedBox>
   </group>
