@@ -8,16 +8,21 @@ export interface FurnitureSpec {
   description: string
   /** Helyigény bútorral és mozgástérrel együtt, méterben: [hossz, mélység]. */
   zone: [number, number]
+  /** Az elemek a zónában, a hosszanti tengely mentén (m a középponttól): a 3D és a kanapé-nézet ebből dolgozik. */
+  parts: { kind: 'lounge' | 'dining6' | 'dining8' | 'spa'; x: number }[]
 }
 
 export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec> = {
-  lounge: { label: 'Pihenősarok', people: '4–5 fő', description: '3 személyes kanapé, dohányzóasztal', zone: [3.0, 2.6] },
-  dining6: { label: 'Étkező 6 főre', people: '6 fő', description: '180 × 90 cm asztal, 6 szék', zone: [3.0, 2.4] },
-  dining8: { label: 'Étkező 8 főre', people: '8 fő', description: '220 × 100 cm asztal, 8 szék', zone: [3.7, 2.5] },
-  combo: { label: 'Pihenő + étkező', people: '6 fő', description: 'Kanapé és 6 fős étkező egymás mellett', zone: [6.0, 2.6] },
+  lounge: { label: 'Pihenősarok', people: '4–5 fő', description: '3 személyes kanapé, dohányzóasztal', zone: [3.0, 2.6], parts: [{ kind: 'lounge', x: 0 }] },
+  dining6: { label: 'Étkező 6 főre', people: '6 fő', description: '180 × 90 cm asztal, 6 szék', zone: [3.0, 2.4], parts: [{ kind: 'dining6', x: 0 }] },
+  dining8: { label: 'Étkező 8 főre', people: '8 fő', description: '220 × 100 cm asztal, 8 szék', zone: [3.7, 2.5], parts: [{ kind: 'dining8', x: 0 }] },
+  combo: { label: 'Pihenő + étkező', people: '6 fő', description: 'Kanapé és 6 fős étkező egymás mellett', zone: [6.0, 2.6], parts: [{ kind: 'lounge', x: -1.5 }, { kind: 'dining6', x: 1.5 }] },
+  spa: { label: 'Jacuzzi', people: '5–6 fős', description: '2 × 2 m-es jacuzzi lépcsővel, körben 30–60 cm szabad hellyel', zone: [2.6, 2.6], parts: [{ kind: 'spa', x: 0 }] },
+  loungeSpa: { label: 'Pihenő + jacuzzi', people: 'kanapé + jacuzzi', description: '3 személyes kanapé, dohányzóasztal és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'lounge', x: -1.3 }, { kind: 'spa', x: 1.5 }] },
+  diningSpa: { label: 'Étkező + jacuzzi', people: '6 fő + jacuzzi', description: '180 × 90 cm asztal 6 székkel és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'dining6', x: -1.3 }, { kind: 'spa', x: 1.5 }] },
 }
 
-export const FURNITURE_ORDER: FurnitureSet[] = ['lounge', 'dining6', 'dining8', 'combo', 'none']
+export const FURNITURE_ORDER: FurnitureSet[] = ['lounge', 'dining6', 'dining8', 'combo', 'spa', 'loungeSpa', 'diningSpa', 'none']
 
 /** Az oszlopok és a keret miatt a hasznos belső méret ennyivel kisebb. */
 const FRAME = 0.2

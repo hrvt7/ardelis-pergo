@@ -96,7 +96,7 @@ export interface SceneSettings {
   fanOn: boolean
 }
 
-export type FurnitureSet = 'none' | 'lounge' | 'dining6' | 'dining8' | 'combo'
+export type FurnitureSet = 'none' | 'lounge' | 'dining6' | 'dining8' | 'combo' | 'spa' | 'loungeSpa' | 'diningSpa'
 
 export interface SunSite {
   postalCode: string

@@ -1206,6 +1206,19 @@ function LoungeSet() {
   </group>
 }
 
+/** Jacuzzi (2 × 2 m): burkolt szekrény, fehér akrilperem, víztükör, lépcső. Éjjel a víz enyhén világít. */
+function HotTub() {
+  const water = useMemo(() => new THREE.MeshPhysicalMaterial({ color: '#4fa9b8', roughness: 0.06, metalness: 0, transmission: 0, transparent: true, opacity: 0.88, emissive: '#2a8fa3', emissiveIntensity: 0.28 }), [])
+  useEffect(() => () => water.dispose(), [water])
+  return <group>
+    <RoundedBox args={[2.04, 0.84, 2.04]} position={[0, 0.43, 0]} radius={0.07} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#4a4036" roughness={0.82} /></RoundedBox>
+    {[[0, -0.97, 2.0, 0.2], [0, 0.97, 2.0, 0.2], [-0.97, 0, 0.2, 1.74], [0.97, 0, 0.2, 1.74]].map(([x, z, w, d]) => <RoundedBox key={`${x}${z}`} args={[w, 0.1, d]} position={[x, 0.87, z]} radius={0.04} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#e6e8e5" roughness={0.38} /></RoundedBox>)}
+    <mesh position={[0, 0.806, 0]} rotation={[-Math.PI / 2, 0, 0]} material={water}><planeGeometry args={[1.74, 1.74]} /></mesh>
+    <mesh position={[0, 0.7, 0]}><boxGeometry args={[1.76, 0.2, 1.76]} /><meshStandardMaterial color="#0f3d48" roughness={0.9} /></mesh>
+    <RoundedBox args={[0.9, 0.2, 0.34]} position={[0, 0.1, 1.2]} radius={0.04} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#4a4036" roughness={0.82} /></RoundedBox>
+  </group>
+}
+
 function DiningChair({ position, rotation }: { position: [number, number, number]; rotation: number }) {
   return <group position={position} rotation={[0, rotation, 0]}>
     <RoundedBox args={[0.46, 0.05, 0.46]} position={[0, 0.45, 0]} radius={0.02} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></RoundedBox>
@@ -1234,10 +1247,9 @@ function Furniture({ config, scene, hideZone = false }: { config: PergolaConfig;
   if (set === 'none') return null
   const fit = furnitureFit(set, config)!
   const [zoneLong, zoneShort] = FURNITURE_SETS[set].zone
-  const content = set === 'lounge' ? <LoungeSet /> : set === 'dining6' ? <DiningSet seats={6} /> : set === 'dining8' ? <DiningSet seats={8} /> : <>
-    <group position={[-zoneLong / 4, 0, 0]}><LoungeSet /></group>
-    <group position={[zoneLong / 4, 0, 0]}><DiningSet seats={6} /></group>
-  </>
+  const content = FURNITURE_SETS[set].parts.map((part) => <group key={part.kind} position={[part.x, 0, 0]}>
+    {part.kind === 'lounge' ? <LoungeSet /> : part.kind === 'dining6' ? <DiningSet seats={6} /> : part.kind === 'dining8' ? <DiningSet seats={8} /> : <HotTub />}
+  </group>)
   const zoneColor = fit.level === 'comfortable' ? '#9be26a' : fit.level === 'tight' ? '#ffc24a' : '#ff5b4a'
   const half = [zoneLong / 2, zoneShort / 2]
   const outline: [number, number, number][] = [[-half[0], 0.035, -half[1]], [half[0], 0.035, -half[1]], [half[0], 0.035, half[1]], [-half[0], 0.035, half[1]], [-half[0], 0.035, -half[1]]]
@@ -1403,7 +1415,8 @@ function Rain({ config, quality }: { config: PergolaConfig; quality: QualitySett
 function seatPosition(config: Pick<PergolaConfig, 'width' | 'depth'>, furniture: FurnitureSet): [number, number] {
   if (furniture === 'none') return [0, -config.depth * 0.17 - 0.195]
   const fit = furnitureFit(furniture, config)!
-  const local: [number, number] = furniture === 'lounge' ? [0, -0.7] : furniture === 'combo' ? [-FURNITURE_SETS.combo.zone[0] / 4, -0.7] : [0, -(furniture === 'dining8' ? 0.72 : 0.67)]
+  const first = FURNITURE_SETS[furniture].parts[0]
+  const local: [number, number] = [first.x, first.kind === 'dining8' ? -0.72 : first.kind === 'dining6' ? -0.67 : first.kind === 'spa' ? -1.25 : -0.7]
   return fit.alongWidth ? local : [local[1], -local[0]]
 }
 

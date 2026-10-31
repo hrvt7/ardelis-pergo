@@ -77,3 +77,17 @@ describe('költségkeret', () => {
     if (result.status === 'impossible') expect(result.minimumGross).toBeGreaterThan(500000)
   })
 })
+
+describe('jacuzzis csomagok', () => {
+  it('a jacuzzi önmagában kis pergolában is elfér, a kombinált csomag nagyobb helyet kér', () => {
+    expect(furnitureFit('spa', { width: 3, depth: 3 })?.level).toBe('comfortable')
+    expect(furnitureFit('loungeSpa', { width: 3, depth: 3 })?.level).not.toBe('comfortable')
+    expect(furnitureFit('diningSpa', { width: 6, depth: 3 })?.level).toBe('comfortable')
+  })
+  it('a javasolt méret a kombinált csomagnál is kényelmesen elfér', () => {
+    const limits = { width: [2.5, 8] as [number, number], depth: [2.5, 6] as [number, number] }
+    const fit = furnitureFit('loungeSpa', { width: 3, depth: 3 }, limits)!
+    expect(fit.suggestion).not.toBeNull()
+    expect(furnitureFit('loungeSpa', fit.suggestion!, limits)?.level).toBe('comfortable')
+  })
+})
