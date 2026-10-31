@@ -108,8 +108,6 @@ const WATER_FRAGMENT = /* glsl */ `
   varying vec3 vWorld;
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   void main() {
-    // Hullámok: három keresztező, lassú hullám.
-    float w = sin(vPos.x * 9.0 + uTime * 1.7) * 0.5 + sin(vPos.y * 11.0 - uTime * 1.3) * 0.5 + sin((vPos.x + vPos.y) * 15.0 + uTime * 2.4) * 0.35;
     // Forrás: a medence közepe felé erősebb mozgás, a felszínen cellánként kipattanó buborékgyűrűk.
     vec2 q = vPos * 8.0;
     vec2 cell = floor(q);
@@ -119,15 +117,15 @@ const WATER_FRAGMENT = /* glsl */ `
     float ring = (1.0 - smoothstep(0.0, 0.06, abs(length(f - (vec2(hash(cell + 3.1), hash(cell + 7.7)) - 0.5) * 0.4) - phase * 0.34))) * (1.0 - phase);
     float foam = ring * step(0.35, h);
     float edge = max(abs(vPos.x), abs(vPos.y)) / 0.85;
-    float rimFoam = smoothstep(0.86, 1.0, edge) * (0.55 + 0.45 * sin(vPos.x * 40.0 + vPos.y * 33.0 + uTime * 3.0));
-    float depthMix = clamp(0.35 + 0.28 * w * 0.5 + (1.0 - edge) * 0.25, 0.0, 1.0);
+    float rimFoam = smoothstep(0.86, 1.0, edge) * 0.6;
+    float depthMix = clamp(0.35 + (1.0 - edge) * 0.25, 0.0, 1.0);
     vec3 color = mix(uDeep, uShallow, depthMix);
     // Fresnel: laposabb szögből világosabb, az égboltot tükrözi.
     vec3 viewDir = normalize(cameraPosition - vWorld);
     float fresnel = pow(1.0 - clamp(viewDir.y, 0.0, 1.0), 3.0);
     color = mix(color, vec3(0.78, 0.9, 0.95), fresnel * 0.55);
     color += vec3(0.85, 0.95, 1.0) * (foam * 0.7 + rimFoam * 0.18);
-    color += uNight * vec3(0.05, 0.42, 0.55) * (0.55 + 0.25 * w);
+    color += uNight * vec3(0.05, 0.42, 0.55) * 0.65;
     gl_FragColor = vec4(color, 0.9);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
