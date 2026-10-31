@@ -1,5 +1,25 @@
 # Változások
 
+## 3.18 — Központi 3D-minőségkezelő (1. lépés a minőség/teljesítmény tervből) (2026. 10. 31.)
+
+- **`src/lib/quality.ts`:** négy szint (low / medium / high / ultra), egyetlen igazságforrás az árnyéktérkép méretének, a renderfelbontásnak
+  (dpr), az utófeldolgozásnak, a kontaktárnyék felbontásának, a textúrafelbontásnak, a lamellaszegmenseknek, az anizotrópiának,
+  a növényzetnek és az esőcseppeknek. A jelenet komponensei `QualityContext`-en át olvassák.
+- **Automatikus besorolás:** mobil és gyenge hardver → low/medium; szoftveres GPU → low; laptop → high; erős asztali gép → ultra.
+  Felülírható a 3D-beállításokban (Automatikus / Ultra / Magas / Közepes / Alacsony) és a `?quality=low|medium|high|ultra` címparaméterrel;
+  a `?effects=0` továbbra is kikapcsolja az utófeldolgozást. A régi „mobil” érték az „alacsony” szintnek felel meg.
+- **Rákötve:** árnyéktérkép, dpr, kontaktárnyék, utófeldolgozás (csak high+), esőcseppek, extra fa (csak medium+).
+- **Döntés:** a sebesség és a stabil fps az elsőbbség; az árnyéktérkép mérete nem nőtt (low/medium 1024, high/ultra 2048, mint eddig).
+- **Még hátra (a terv következő lépései):** textúra-felbontás és anizotrópia kötése, lamellák, teraszdeszkák, motorház és vízgyűjtő, több növény.
+- Tesztek: `tests/quality.test.ts` (106 teszt).
+
+## 3.17 — Prémium főoldal saját 3D-renderekkel (2026. 10. 31.)
+
+- A főoldal minden képe a saját 3D stúdióból készült (11 render, webp, 1920 és 960 px).
+- Új: futószalag, számlálók, hero parallax, négy képes görgetett film, interaktív színváltó szekció, bento rács a stúdió
+  funkcióiról, rajzolódó folyamatvonal, éjszakai záró jelenet, fejezet-index.
+- Olvashatóság: a 6–9 px-es betűk 11–17 px-esek; a zavaró „AR-azonosító” szöveg eltűnt; mozgáscsökkentéshez külön statikus változat.
+
 ## 3.16 — Átrendezett, ismétlésmentes felépítés; téli nézet kivéve (2026. 10. 30.)
 
 **Lépések most:** 1. **Pergola** (típus és méret) → 2. Rögzítés → 3. Szín (Pergola / A házad) → 4. Oldalak → 5. Extrák → 6. Összegzés.

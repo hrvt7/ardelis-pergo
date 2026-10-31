@@ -5,7 +5,7 @@ import { useEffect, useMemo } from 'react'
 import { Bloom, EffectComposer, N8AO, SMAA, ToneMapping } from '@react-three/postprocessing'
 import { ShaderPass, ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
-import type { QualityLevel } from '@/types/pergola'
+
 
 /**
  * Védőlépcső a bloom előtt. Egy tükröző felületen (pl. üveg, szenzorlencse) a
@@ -33,8 +33,7 @@ function createClampPass() {
   return new ShaderPass(material, 'inputBuffer')
 }
 
-export default function SceneEffects({ quality, night }: { quality: QualityLevel; night: boolean }) {
-  const ultra = quality === 'ultra'
+export default function SceneEffects({ ultra, night }: { ultra: boolean; night: boolean }) {
   const clampPass = useMemo(() => createClampPass(), [])
   useEffect(() => () => clampPass.dispose(), [clampPass])
   return (

@@ -405,7 +405,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               <Toggle label="Automata forgatás" description="Koppintásra megáll" checked={scene.autoRotate} onChange={(autoRotate) => onSceneChange({ autoRotate })} />
               <Toggle label="Követő kamera" description="A választáshoz fordul (oldal, szín, ventilátor)" checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
             </div>
-            <label className="select-field"><span>3D minőség</span><select value={scene.quality} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="mobile">Mobil</option></select></label>
+            <label className="select-field"><span>3D minőség</span><select value={scene.quality} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="medium">Közepes</option><option value="low">Alacsony</option></select></label>
             <div className="photo-mode">
               <div><Image size={18} /><span><strong>Előnézet saját fotóval</strong><small>A kép csak ebben a böngészőben jelenik meg.</small></span></div>
               <label className="upload-button"><Upload size={15} />Fotó feltöltése<input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoUpload(file); event.target.value = '' }} /></label>

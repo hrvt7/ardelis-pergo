@@ -8,7 +8,7 @@ export type SideKey = 'front' | 'back' | 'left' | 'right'
 export type FrameColor = 'anthracite' | 'black' | 'white' | 'bronze' | 'custom'
 export type TimeOfDay = 'day' | 'sunset' | 'night'
 export type GroundType = 'terrace' | 'garden'
-export type QualityLevel = 'auto' | 'ultra' | 'high' | 'mobile'
+export type QualityLevel = 'auto' | 'ultra' | 'high' | 'medium' | 'low' | 'mobile'
 
 export interface PergolaConfig {
   width: number

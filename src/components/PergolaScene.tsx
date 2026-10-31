@@ -5,7 +5,8 @@ import { ContactShadows, Environment, Html, Line, OrbitControls, RoundedBox, use
 import * as THREE from 'three'
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
-import type { CameraFocus, CameraView, PergolaConfig, QualityLevel, SceneSettings, SideKey, SideType } from '@/types/pergola'
+import type { CameraFocus, CameraView, PergolaConfig, SceneSettings, SideKey, SideType } from '@/types/pergola'
+import { QualityContext, detectQualityTier, qualitySettings, resolveQualityTier, type QualitySettings } from '@/lib/quality'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
 import { setActiveScene } from '@/lib/sceneRegistry'
@@ -1220,14 +1221,14 @@ function Tree({ position, scale = 1, wind, bare = false }: { position: [number, 
   return <group ref={group}><RealisticAsset url={assetUrl('/assets/models/tree_small_02/optimized.gltf')} position={position} height={4.8 * scale} rotation={position[0] * 0.43} shadows={false} bare={bare} /></group>
 }
 
-function Garden({ config, scene, quality }: { config: PergolaConfig; scene: SceneSettings; quality: QualityLevel }) {
+function Garden({ config, scene, quality }: { config: PergolaConfig; scene: SceneSettings; quality: QualitySettings }) {
   const house = getHouseLayout(config)
   const sideX = house.width / 2 + 2.1
   const rearZ = house.frontZ - house.depth - 0.85
   return <group>
     <Tree position={[-sideX, -0.05, house.frontZ - 1.5]} scale={1.12} wind={scene.wind} />
     <Tree position={[sideX, -0.05, house.frontZ - 2.1]} scale={1.28} wind={scene.wind} />
-    {quality !== 'mobile' && <Tree position={[sideX + 1.4, -0.05, 4.6]} scale={0.86} wind={scene.wind} />}
+    {quality.enableExtraPlants && <Tree position={[sideX + 1.4, -0.05, 4.6]} scale={0.86} wind={scene.wind} />}
     {[-0.32, 0, 0.32].map((fraction, index) => <RealisticAsset key={fraction} url={assetUrl('/assets/models/shrub_04/model.gltf')} position={[house.width * fraction, -0.04, rearZ]} height={0.95 + index * 0.08} rotation={index * 0.8} shadows={false} />)}
     {/* Oldalfal esetén a dézsák a fal végéhez, a terasz elejére kerülnek. */}
     <PlantPot position={isWallSide(config.mount, 'left') ? [-config.width / 2 + 0.38, 0.01, config.depth / 2 + 0.62] : [-config.width / 2 - 0.75, 0.01, config.depth / 2]} scale={1.25} />
@@ -1297,8 +1298,8 @@ function Stars() {
   return <points><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry><pointsMaterial color="#dce8ef" size={0.07} transparent opacity={0.8} sizeAttenuation depthWrite={false} /></points>
 }
 
-function Rain({ config, quality }: { config: PergolaConfig; quality: QualityLevel }) {
-  const count = quality === 'mobile' ? 180 : quality === 'ultra' ? 650 : 320
+function Rain({ config, quality }: { config: PergolaConfig; quality: QualitySettings }) {
+  const count = quality.rainDrops
   const points = useRef<THREE.Points>(null)
   const splashes = useRef<THREE.Group>(null)
   const resetCycle = useRef(0)
@@ -1641,7 +1642,7 @@ function SceneRegistration() {
   return null
 }
 
-function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualityLevel; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
+function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const lighting = getLighting(scene)
   const houseLook = useMemo<HouseLook>(() => ({ wallFinish: scene.wallFinish, wallColor: scene.wallColor, windowColor: scene.windowColor }), [scene.wallFinish, scene.wallColor, scene.windowColor])
   useFrame(({ gl }) => { if (gl.toneMappingExposure !== lighting.exposure) gl.toneMappingExposure = lighting.exposure })
@@ -1649,18 +1650,18 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}|${scene.wallColor}|${scene.windowColor}`} />
     {!scene.photoMode && <><fog attach="fog" args={[lighting.fog, 20, 43]} /><FogFollow /></>}
-    <ambientLight intensity={lighting.ambient} /><hemisphereLight args={['#c8d8e2', '#51483e', lighting.hemisphere]} /><directionalLight key={lighting.shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={quality === 'mobile' ? [1024, 1024] : [2048, 2048]} shadow-camera-left={-lighting.shadowExtent} shadow-camera-right={lighting.shadowExtent} shadow-camera-top={lighting.shadowExtent} shadow-camera-bottom={-lighting.shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
+    <ambientLight intensity={lighting.ambient} /><hemisphereLight args={['#c8d8e2', '#51483e', lighting.hemisphere]} /><directionalLight key={lighting.shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={[quality.shadowMapSize, quality.shadowMapSize]} shadow-camera-left={-lighting.shadowExtent} shadow-camera-right={lighting.shadowExtent} shadow-camera-top={lighting.shadowExtent} shadow-camera-bottom={-lighting.shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
     {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment} environmentRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
     {!scene.photoMode && <Ground scene={scene} />}
     {!scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} look={houseLook} night={lighting.night} />}
     {!scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} look={houseLook} night={lighting.night} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
     {pergola}
-    {!scene.photoMode && <ContactShadows key={`${config.width}-${config.depth}-${config.height}-${config.mount}`} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality === 'mobile' ? 256 : 512} frames={1} color="#10171d" />}
+    {!scene.photoMode && <ContactShadows key={`${config.width}-${config.depth}-${config.height}-${config.mount}`} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality.contactShadowResolution} frames={1} color="#10171d" />}
     {scene.rain && <Rain config={config} quality={quality} />}
     {scene.sunStudy && !scene.photoMode && <CompassRose config={config} facing={scene.facing} />}
     {scene.sunStudy && !scene.photoMode && !coreOnly && onShade && <SceneAssetBoundary name="shade analysis"><Suspense fallback={null}><ShadeProbe config={config} scene={scene} onResult={onShade} /></Suspense></SceneAssetBoundary>}
-    {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && (quality === 'high' || quality === 'ultra') && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects quality={quality} night={lighting.night} /></Suspense></SceneAssetBoundary>}
+    {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} /></Suspense></SceneAssetBoundary>}
     <CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} />
   </>
 }
@@ -1720,8 +1721,8 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
   const [attempt, setAttempt] = useState(0)
   const [contextLost, setContextLost] = useState(false)
   const [coreOnly, setCoreOnly] = useState(false)
-  const automaticQuality: QualityLevel = window.innerWidth < 760 || /Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'high'
-  const quality = scene.quality === 'auto' ? automaticQuality : scene.quality
+  const detectedTier = useMemo(() => detectQualityTier(), [])
+  const quality = useMemo(() => qualitySettings(resolveQualityTier(scene.quality, detectedTier)), [scene.quality, detectedTier])
   useEffect(() => { prefetchSceneAssets(scene) }, [scene])
   const onReady = useMemo(() => () => setReady(true), [])
   const onContextLost = useMemo(() => () => { setReady(false); setContextLost(true) }, [])
@@ -1753,7 +1754,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
         key={`canvas-${attempt}`}
         frameloop="demand"
         shadows={{ type: THREE.PCFShadowMap }}
-        dpr={quality === 'mobile' ? [1, 1.25] : quality === 'ultra' ? [1, 1.8] : [1, 1.5]}
+        dpr={quality.dpr}
         camera={{ position: REDUCED ? [12, 7, 14] : [30, 21, 34], fov: window.innerWidth < 820 ? 48 : 38, near: 0.1, far: 90 }}
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' }}
         performance={{ min: 0.55 }}
@@ -1769,7 +1770,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
       >
         <WebGLContextGuard onLost={onContextLost} />
         <SceneRegistration />
-        <Suspense fallback={null}>
+        <QualityContext.Provider value={quality}><Suspense fallback={null}>
           <SceneContent
             config={config}
             scene={coreScene ? { ...scene, showPerson: false } : scene}
@@ -1783,7 +1784,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
             onSceneChange={onSceneChange}
             onShade={onShade}
           />
-        </Suspense>
+        </Suspense></QualityContext.Provider>
         <FirstFrameReady onReady={onReady} />
       </Canvas>
     </SceneErrorBoundary>
