@@ -1,5 +1,14 @@
 # Változások
 
+## 3.19 — Anyagok első köre: teraszburkolat egy hálóban, minőséghez kötött anizotrópia (2026. 10. 31.)
+
+- **Teraszburkolat:** a ~28 külön deszkamesh (és anyag) egyetlen egyesített hálóra cserélve: 1 draw call. Minden deszka egyedi
+  UV-eltolást és enyhe színeltérést kap (vertex color, lineáris térben a korábbi tónusokhoz igazítva), a fuga alatt sötét alap ad mélységet.
+- **Textúra-anizotrópia** a PBR textúrákon a minőségi szintből jön (low 2 / medium 4 / high 8 / ultra 16), nem fixen 8.
+- **Porszórt alumínium váz:** metalness 0,12 → 0,5 (a roughness-térkép, a clearcoat és az envMap marad). A 0,7–0,9-es érték
+  sötét antracitnál a HDR-től függően túl tükrözővé vagy fekete-foltossá tenné a felületet, ezért közepes értéket választottam.
+- **Még hátra:** finom normál map a vázra, deszka AO a fugákban, lamellák geometriája, motorház és vízgyűjtő, ponyva textúra.
+
 ## 3.18 — Központi 3D-minőségkezelő (1. lépés a minőség/teljesítmény tervből) (2026. 10. 31.)
 
 - **`src/lib/quality.ts`:** négy szint (low / medium / high / ultra), egyetlen igazságforrás az árnyéktérkép méretének, a renderfelbontásnak

@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import type { CameraFocus, CameraView, PergolaConfig, SceneSettings, SideKey, SideType } from '@/types/pergola'
-import { QualityContext, detectQualityTier, qualitySettings, resolveQualityTier, type QualitySettings } from '@/lib/quality'
+import { QualityContext, detectQualityTier, useQuality, qualitySettings, resolveQualityTier, type QualitySettings } from '@/lib/quality'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
 import { setActiveScene } from '@/lib/sceneRegistry'
@@ -79,6 +79,7 @@ function OptionalSceneAsset({ name, children }: SceneAssetBoundaryProps) {
 
 function usePBR(asset: string, repeat: [number, number], rotation = 0): TextureMaps {
   const [repeatX, repeatY] = repeat
+  const { maxAnisotropy } = useQuality()
   const textures = useTexture({ diff: assetUrl(pbrPath(asset, 'diff')), normal: assetUrl(pbrPath(asset, 'nor_gl')), rough: assetUrl(pbrPath(asset, 'rough')) })
   const maps = useMemo(() => {
     const result = {} as TextureMaps
@@ -87,13 +88,13 @@ function usePBR(asset: string, repeat: [number, number], rotation = 0): TextureM
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping
       texture.repeat.set(repeatX, repeatY)
       if (rotation) { texture.center.set(0.5, 0.5); texture.rotation = rotation }
-      texture.anisotropy = 8
+      texture.anisotropy = maxAnisotropy
       if (key === 'diff') texture.colorSpace = THREE.SRGBColorSpace
       texture.needsUpdate = true
       result[key] = texture
     })
     return result
-  }, [textures, repeatX, repeatY, rotation])
+  }, [textures, repeatX, repeatY, rotation, maxAnisotropy])
   useEffect(() => () => Object.values(maps).forEach((texture) => texture.dispose()), [maps])
   return maps
 }
@@ -197,7 +198,7 @@ function getWoodTexture() {
 
 function PowderCoat({ color, roughness = 0.4 }: { color: string; roughness?: number }) {
   if (WOOD_HEXES.has(color)) return <meshPhysicalMaterial color={lightenForWood(color)} map={getWoodTexture()} metalness={0.02} roughness={0.62} clearcoat={0.08} clearcoatRoughness={0.6} envMapIntensity={0.7} />
-  return <meshPhysicalMaterial color={color} metalness={0.12} roughness={roughness} roughnessMap={getPowderCoatTexture()} clearcoat={0.1} clearcoatRoughness={0.48} specularIntensity={0.55} envMapIntensity={0.82} />
+  return <meshPhysicalMaterial color={color} metalness={0.5} roughness={roughness} roughnessMap={getPowderCoatTexture()} clearcoat={0.1} clearcoatRoughness={0.48} specularIntensity={0.55} envMapIntensity={0.82} />
 }
 
 function Beam({ args, position, color, radius = 0.012 }: { args: [number, number, number]; position: [number, number, number]; color: string; radius?: number }) {
@@ -1210,7 +1211,32 @@ function Deck({ config }: { config: PergolaConfig }) {
   // Oldalfalnál a burkolat a fal belső síkjáig tart, különben kifut a pergola mellé.
   const { width, depth, centerX, centerZ } = deckBounds(config)
   const planks = Math.ceil(depth / 0.145)
-  return <group position={[centerX, -0.035, centerZ]}>{Array.from({ length: planks }, (_, index) => { const z = -depth / 2 + (index + 0.5) * depth / planks; return <mesh key={index} position={[0, 0, z]} receiveShadow castShadow><boxGeometry args={[width, 0.065, depth / planks - 0.009]} /><meshStandardMaterial map={wood.diff} normalMap={wood.normal} normalScale={[0.38, 0.38]} roughnessMap={wood.rough} color={index % 4 === 0 ? '#bbb1a3' : '#d0c6b8'} roughness={0.78} /></mesh> })}</group>
+  // Egyetlen egyesített háló: ~28 külön mesh és anyag helyett 1 draw call. A deszkák egyedi UV-eltolást
+  // és enyhe színeltérést (vertex color) kapnak, a fuga alatt sötét alap adja a mélységet.
+  const geometry = useMemo(() => {
+    const pitch = depth / planks
+    const parts = Array.from({ length: planks }, (_, index) => {
+      const box = new THREE.BoxGeometry(width, 0.065, pitch - 0.009)
+      const uv = box.getAttribute('uv')
+      const offsetU = seeded(index, 11)
+      const offsetV = seeded(index, 23)
+      for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) + offsetU, uv.getY(k) + offsetV)
+      // A vertex color lineáris térben értelmezett: a korábbi #bbb1a3 / #d0c6b8 sRGB színeknek ~0,48 / ~0,62 felel meg.
+      const tint = (index % 4 === 0 ? 0.48 : 0.62) + (seeded(index, 7) - 0.5) * 0.08
+      const colors = new Float32Array(box.getAttribute('position').count * 3).fill(tint)
+      box.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+      box.translate(0, 0, -depth / 2 + (index + 0.5) * pitch)
+      return box
+    })
+    const merged = mergeGeometries(parts, false)
+    parts.forEach((part) => part.dispose())
+    return merged
+  }, [width, depth, planks])
+  useEffect(() => () => geometry.dispose(), [geometry])
+  return <group position={[centerX, -0.035, centerZ]}>
+    <mesh position={[0, -0.02, 0]} receiveShadow><boxGeometry args={[width - 0.02, 0.05, depth - 0.02]} /><meshStandardMaterial color="#1b1612" roughness={1} /></mesh>
+    <mesh geometry={geometry} receiveShadow castShadow><meshStandardMaterial map={wood.diff} normalMap={wood.normal} normalScale={[0.45, 0.45]} roughnessMap={wood.rough} vertexColors roughness={0.78} /></mesh>
+  </group>
 }
 
 function Tree({ position, scale = 1, wind, bare = false }: { position: [number, number, number]; scale?: number; wind: boolean; bare?: boolean }) {
