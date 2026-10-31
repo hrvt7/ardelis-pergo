@@ -582,7 +582,7 @@ function Hotspots({ config, posts }: { config: PergolaConfig; posts: [number, nu
 
 function Person({ config }: { config: PergolaConfig }) {
   const position: [number, number, number] = [-config.width / 2 + 0.68, 0.035, config.depth * 0.18]
-  return <group><RealisticAsset url={assetUrl('/assets/models/scale_person/person.glb')} position={position} height={1.8} rotation={0.28} /><Html position={[position[0], 1.94, position[2]]} center className="person-label">180 cm</Html></group>
+  return <group><RealisticAsset url={assetUrl('/assets/models/scale_person/person.glb')} position={position} height={1.8} rotation={0.28} /></group>
 }
 
 /**
@@ -1778,13 +1778,14 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
   </>
 }
 
-function ScenePoster({ message, onRetry }: { message?: string; onRetry?: () => void }) {
-  const { progress } = useProgress()
+function ScenePoster({ message, onRetry, percent, leaving = false }: { message?: string; onRetry?: () => void; percent?: number; leaving?: boolean }) {
+  const { progress: loaderProgress } = useProgress()
+  const progress = percent ?? loaderProgress
   const { tenant } = useTenant()
   const failed = Boolean(onRetry)
-  return <div className={`scene-poster${failed ? ' is-error' : ''}`} role={failed ? 'alert' : 'status'} aria-live="polite">
+  return <div className={`scene-poster${failed ? ' is-error' : ''}${leaving ? ' is-leaving' : ''}`} role={failed ? 'alert' : 'status'} aria-live="polite">
     {failed ? <img className="scene-poster-image" src={assetUrl('/assets/pergo-hero.webp')} alt={`${tenant.brand.name} pergola statikus előnézete`} /> : <div className="poster-skeleton"><span /><span /><span /><span /></div>}
-    <div className="branded-loader"><div className="loader-brand">{tenant.brand.name}{tenant.brand.suffix && <small> / {tenant.brand.suffix}</small>}</div>{!failed && <div className="loader-track"><span style={{ width: `${Math.max(8, progress)}%` }} /></div>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
+    <div className="branded-loader"><div className="loader-brand">{tenant.brand.name}{tenant.brand.suffix && <small> / {tenant.brand.suffix}</small>}</div>{!failed && <div className="loader-track"><span style={{ width: `${Math.max(2, progress)}%` }} /></div>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
   </div>
 }
 
@@ -1830,6 +1831,12 @@ function FirstFrameReady({ onReady }: { onReady: () => void }) {
 export default memo(function PergolaScene({ config, scene, view, focus = null, viewShift = 0, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const [ready, setReady] = useState(false)
   const [decorativeReady, setDecorativeReady] = useState(false)
+  // A nézet csak akkor tárul fel, ha a ház és a környezet is betöltött: addig 0–100% töltőképernyő fedi a jelenetet.
+  const { active: assetsLoading, progress: assetProgress } = useProgress()
+  const [houseReady, setHouseReady] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const [posterGone, setPosterGone] = useState(false)
+  const [shownProgress, setShownProgress] = useState(0)
   const [attempt, setAttempt] = useState(0)
   const [contextLost, setContextLost] = useState(false)
   const [coreOnly, setCoreOnly] = useState(false)
@@ -1837,17 +1844,21 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
   const quality = useMemo(() => qualitySettings(resolveQualityTier(scene.quality, detectedTier)), [scene.quality, detectedTier])
   useEffect(() => { prefetchSceneAssets(scene) }, [scene])
   const onReady = useMemo(() => () => setReady(true), [])
-  const onContextLost = useMemo(() => () => { setReady(false); setContextLost(true) }, [])
+  const onContextLost = useMemo(() => () => { setReady(false); setLoaded(false); setPosterGone(false); setContextLost(true) }, [])
   const onFatal = useMemo(() => () => {
     if (coreOnly) return
     setCoreOnly(true)
     setReady(false)
+    setLoaded(false)
+    setPosterGone(false)
     setDecorativeReady(false)
     setAttempt((value) => value + 1)
   }, [coreOnly])
   const retry = useMemo(() => () => {
     setCoreOnly(false)
     setReady(false)
+    setLoaded(false)
+    setPosterGone(false)
     setDecorativeReady(false)
     setContextLost(false)
     setAttempt((value) => value + 1)
@@ -1857,9 +1868,31 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
     const timer = window.setTimeout(() => setDecorativeReady(true), 180)
     return () => window.clearTimeout(timer)
   }, [ready, decorativeReady, contextLost])
+  useEffect(() => {
+    let alive = true
+    getHouseAsset().then(() => { if (alive) setHouseReady(true) }, () => { if (alive) setHouseReady(true) })
+    return () => { alive = false }
+  }, [])
+  useEffect(() => {
+    if (!ready || !decorativeReady || !houseReady || assetsLoading || loaded) return
+    const timer = window.setTimeout(() => setLoaded(true), 600)
+    return () => window.clearTimeout(timer)
+  }, [ready, decorativeReady, houseReady, assetsLoading, loaded])
+  useEffect(() => {
+    if (!ready || loaded) return
+    const timer = window.setTimeout(() => setLoaded(true), 25000)
+    return () => window.clearTimeout(timer)
+  }, [ready, loaded])
+  useEffect(() => {
+    if (!loaded) return
+    const timer = window.setTimeout(() => setPosterGone(true), 800)
+    return () => window.clearTimeout(timer)
+  }, [loaded])
+  const progressTarget = Math.min(99, Math.round(assetProgress))
+  if (progressTarget > shownProgress) setShownProgress(progressTarget)
   const coreScene = coreOnly || !decorativeReady
-  return <div className="scene-canvas-wrap" data-scene-ready={ready}>
-    {!ready && !contextLost && <ScenePoster />}
+  return <div className="scene-canvas-wrap" data-scene-ready={loaded}>
+    {!posterGone && !contextLost && <ScenePoster percent={loaded ? 100 : shownProgress} leaving={loaded} />}
     {contextLost && <ScenePoster message="A grafikai kapcsolat megszakadt. A konfigurációd megmaradt." onRetry={retry} />}
     <SceneErrorBoundary key={`boundary-${attempt}`} onRetry={retry} onFatal={onFatal}>
       <Canvas
@@ -1890,7 +1923,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
             view={view}
             focus={focus}
             viewShift={viewShift}
-            revealed={ready}
+            revealed={loaded}
             quality={quality}
             coreOnly={coreScene}
             onSideSelect={onSideSelect}

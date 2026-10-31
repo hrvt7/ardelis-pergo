@@ -355,7 +355,7 @@ export default function Home() {
         <div className="intro-heading" data-reveal-item><h2>Nem egy tető.<br /><em>Egy új tér.</em></h2></div>
         <div className="intro-copy" data-reveal-item><p>A bioklimatikus pergola az időjáráshoz és a terasz használatához igazodik. A dönthető lamellákkal szabályozod a napfényt és a szellőzést, a rejtett világítással este is kellemes marad a tér.</p><Link className="text-arrow-link" to="/studio/pergola">Kipróbálom a 3D stúdiót <MoveRight /></Link></div>
         <div className="intro-facts" data-reveal-item>
-          <div><strong><b data-count="90">90</b>°</strong><span>-ig dönthető lamellák</span></div>
+          <div><strong><b data-count="90">90</b>°</strong><span>a lamellák legnagyobb dőlésszöge</span></div>
           <div><strong><b data-count={FACADE_COUNT}>{FACADE_COUNT}</b></strong><span>homlokzati szín a házadhoz</span></div>
           <div><strong><b data-count={WINDOW_COLORS.length}>{WINDOW_COLORS.length}</b></strong><span>nyílászáró-szín</span></div>
           <div><strong><b data-count="1">1</b></strong><span>terv: 3D, PDF és felmérés</span></div>
@@ -377,16 +377,16 @@ export default function Home() {
           <div className="film-topline"><span>ARDELIS / PERGO</span><span>MINDEN KÉP A 3D STÚDIÓBÓL</span></div>
           <div className="film-beats">
             <article className="film-beat beat-form"><span className="film-beat-index">01 / A FORMA</span><h2>A vonal,<br />ami <em>helyet</em><br />teremt.</h2><p>Oszlop, gerenda és lamella egyetlen arányos szerkezetben — a te házad előtt, a te homlokzatszíneddel.</p></article>
-            <article className="film-beat beat-measure"><span className="film-beat-index">02 / A MÉRET</span><h2>Nem „kb.”<br /><em>Centiméter.</em></h2><p>Szélesség, mélység és magasság centiméterre. A méretcímkék és a 180 cm-es figura megmutatják, mekkora tér lesz valójában.</p></article>
-            <article className="film-beat beat-light"><span className="film-beat-index">03 / A FÉNY</span><h2>A nap<br /><em>alkalmazkodik.</em></h2><p>Lamellatető, üvegtető vagy polikarbonát — üveg alá és fölé motoros árnyékolóval. A fényt te szabod meg.</p></article>
-            <article className="film-beat beat-evening"><span className="film-beat-index">04 / AZ ESTE</span><h2>Este sem<br /><em>vége a napnak.</em></h2><p>Periméter LED, infra fűtés, hangszórók és oldalzárás. Az éjszakai nézetben pontosan látod, milyen lesz.</p><Link to="/studio/pergola">Tervezd meg a sajátod <ArrowUpRight /></Link></article>
+            <article className="film-beat beat-measure"><span className="film-beat-index">02 / A MÉRET</span><h2>Nem „körülbelül”.<br /><em>Centiméterre.</em></h2><p>Szélesség, mélység és magasság centiméterre. A méretcímkék és az emberi léptékű figura megmutatják, mekkora lesz valójában a tér.</p></article>
+            <article className="film-beat beat-light"><span className="film-beat-index">03 / A FÉNY</span><h2>A fény<br /><em>a te kezedben.</em></h2><p>Lamellatető, üvegtető vagy polikarbonát — üveg alá és fölé motoros árnyékolóval. A fényt te szabod meg.</p></article>
+            <article className="film-beat beat-evening"><span className="film-beat-index">04 / AZ ESTE</span><h2>Napnyugta után is<br /><em>a tiéd a terasz.</em></h2><p>Periméter LED, infra fűtés, hangszórók és oldalzárás. Az éjszakai nézetben pontosan látod, milyen lesz.</p><Link to="/studio/pergola">Tervezd meg a sajátod <ArrowUpRight /></Link></article>
           </div>
           <div className="film-bottomline"><div className="film-chapters"><span>FORMA</span><span>MÉRET</span><span>FÉNY</span><span>ESTE</span></div><div className="film-track"><i /></div><span className="film-counter"><b ref={filmProgress}>00</b> / 100</span></div>
           <div className="film-handoff" aria-hidden="true" />
         </div>
         <div className="film-reduced">
-          <article><Shot name="dims" alt="Pergola méretcímkékkel és 180 cm-es emberi figurával" /><h2>Centiméterre pontos.</h2><p>Szélesség, mélység és magasság centiméterre, méretcímkékkel és emberi figurával.</p></article>
-          <article><Shot name="night" alt="Pergola éjszaka, bekapcsolt LED világítással" /><h2>Este sem vége a napnak.</h2><p>Periméter LED, infra fűtés és oldalzárás — az éjszakai nézetben is.</p></article>
+          <article><Shot name="dims" alt="Pergola méretcímkékkel és emberi léptékű figurával" /><h2>Centiméterre pontos.</h2><p>Szélesség, mélység és magasság centiméterre, méretcímkékkel és emberi figurával.</p></article>
+          <article><Shot name="night" alt="Pergola éjszaka, bekapcsolt LED világítással" /><h2>Napnyugta után is a tiéd a terasz.</h2><p>Periméter LED, infra fűtés és oldalzárás — az éjszakai nézetben is.</p></article>
         </div>
       </section>
 
@@ -412,7 +412,7 @@ export default function Home() {
       </section>
 
       <section className="craft-run" id="reszletek" ref={craft} aria-label="PERGO műszaki részletei">
-        <div className="craft-heading"><span>03 — RÉSZLETEK</span><h2>A szépség<br /><em>a rendszerben van.</em></h2><p>A tetőmozgás, az árnyékolás és az oldalzárás nem díszlet: a terasz mindennapi használhatóságát határozzák meg. Mindegyik ki- és bekapcsolható a 3D-ben.</p></div>
+        <div className="craft-heading"><span>03 — RÉSZLETEK</span><h2>A szépség<br /><em>a részletekben van.</em></h2><p>A tetőmozgás, az árnyékolás és az oldalzárás nem díszítőelem: a terasz mindennapi használhatóságát határozzák meg. Mindegyik ki- és bekapcsolható a 3D-ben.</p></div>
         <div className="craft-track" ref={craftTrack}>
           {DETAILS.map((detail) => <article className="craft-panel" key={detail.id}>
             <div className="craft-art"><Shot name={detail.image} alt={detail.title} sizes="(max-width: 820px) 100vw, 45vw" /><strong>{detail.metric}</strong></div>
@@ -423,7 +423,7 @@ export default function Home() {
       </section>
 
       <section className="cinema-bento" id="studio" aria-labelledby="studio-title" data-cinema-reveal>
-        <div className="bento-heading" data-reveal-item><div className="cinema-section-index">04 — A STÚDIÓ</div><h2 id="studio-title">Ne képzeld el.<br /><em>Forgasd meg.</em></h2><p>Egy tervezőasztal, ami a vásárló nyelvén beszél: amit beállítasz, azt azonnal látod — és tudod, mennyibe kerül.</p></div>
+        <div className="bento-heading" data-reveal-item><div className="cinema-section-index">04 — A STÚDIÓ</div><h2 id="studio-title">Ne csak képzeld el.<br /><em>Forgasd meg.</em></h2><p>Egy tervezőasztal, ami a vásárló nyelvén beszél: amit beállítasz, azt azonnal látod — és tudod, mennyibe kerül.</p></div>
         <div className="bento-grid">
           {FEATURES.map((feature) => { const Icon = feature.icon; return <article key={feature.title} className={'wide' in feature && feature.wide ? 'is-wide' : ''} data-reveal-item>
             {'image' in feature && feature.image && <div className="bento-media"><Shot name={feature.image} alt="" sizes="(max-width: 820px) 100vw, 50vw" /></div>}
@@ -438,15 +438,15 @@ export default function Home() {
         <div className="cinema-process-heading" data-reveal-item><h2>Egy terv.<br /><em>Négy egyszerű lépés.</em></h2><p>A tervhez műszaki összefoglaló tartozik, így a felmérésig mindenki ugyanazt a konfigurációt látja: te, a családod és a szakember.</p></div>
         <div className="process-line" aria-hidden="true"><i /></div>
         <div className="cinema-process-steps">{[
-          ['01', 'Konfigurálsz', 'Méret, tetőrendszer, szín, oldalzárás és komfort — a saját házad előtt, valós 3D-ben.'],
+          ['01', 'Megtervezed', 'Méret, tetőrendszer, szín, oldalzárás és komfort — a saját házad előtt, valós 3D-ben.'],
           ['02', 'Elmented', 'PDF-et és megosztható linket készítesz, hogy a család is lássa ugyanazt a tervet.'],
           ['03', 'Felmérést kérsz', 'A tervet a neved és elérhetőséged mellé csatolva egy kattintással elküldöd a gyártónak.'],
-          ['04', 'Egyeztettek', 'A szakember a terved alapján keres. A végleges ár a helyszíni felmérés után készül.'],
+          ['04', 'Egyeztettek', 'A szakember a terved alapján keres meg. A végleges ár a helyszíni felmérés után készül.'],
         ].map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}</div>
       </section>
 
       <section className="cinema-knowledge" id="utmutato" aria-labelledby="guide-title" data-cinema-reveal>
-        <div className="knowledge-heading" data-reveal-item><div className="cinema-section-index">06 — TERVEZÉSI ÚTMUTATÓ</div><h2 id="guide-title">Mire figyelj,<br /><em>ha pergolát tervezel?</em></h2><p>A jó pergola nem csak a terasz méretéhez passzol. A rögzítés, a vízelvezetés, a nyílászárók és a mindennapi használat együtt határozza meg a megfelelő kialakítást.</p></div>
+        <div className="knowledge-heading" data-reveal-item><div className="cinema-section-index">06 — TERVEZÉSI ÚTMUTATÓ</div><h2 id="guide-title">Mire figyelj,<br /><em>ha pergolát tervezel?</em></h2><p>A jó pergola nemcsak a terasz méretéhez passzol. A rögzítés, a vízelvezetés, a nyílászárók és a mindennapi használat együtt határozza meg a megfelelő kialakítást.</p></div>
         <div className="knowledge-grid" data-reveal-item>
           <article><span>01 / MÉRET ÉS ELHELYEZÉS</span><h3>A külső méret csak a kezdet.</h3><p>A tervezéshez a rendelkezésre álló felületen kívül a nyílászárók, az eresz, a burkolat és a kerti mozgás is számít. A konfigurátor külső szerkezeti méreteket kezel; a pontos rögzítési pontokat helyszínen kell ellenőrizni.</p></article>
           <article><span>02 / TETŐ ÉS OLDALZÁRÁS</span><h3>A használat választja ki a rendszert.</h3><p>A dönthető lamellák a fényt és a szellőzést szabályozzák, az üvegtető alá vagy fölé motoros árnyékoló kerülhet, a ZIP screen és a tolóüveg oldalirányú védelmet ad.</p></article>

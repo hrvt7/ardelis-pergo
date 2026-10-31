@@ -457,7 +457,7 @@ function ScalePerson({ show, config }: { show: boolean; config: OutdoorConfig })
   }
   return <group position={position}>
     <primitive object={object} />
-    <Html position={[0, 1.94, 0]} center className="person-label">180 cm</Html>
+    
   </group>
 }
 
