@@ -18,10 +18,10 @@ import ColorPicker from '@/components/ColorPicker'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
 
 const STEPS: { id: ConfigStep; label: string; short: string }[] = [
-  { id: 'size', label: 'Pergola', short: 'Típus és méret' },
+  { id: 'size', label: 'Pergola', short: 'Csomag és méret' },
   { id: 'mount', label: 'Rögzítés', short: 'Szerkezet' },
   { id: 'color', label: 'Szín', short: 'Felület' },
-  { id: 'sides', label: 'Oldalak', short: 'Zárás' },
+  { id: 'sides', label: 'Tető és oldalak', short: 'Tető, zárás' },
   { id: 'extras', label: 'Extrák', short: 'Komfort' },
   { id: 'summary', label: 'Összegzés', short: 'Felmérés' },
 ]
@@ -312,8 +312,6 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
             <SectionTitle title="Kiinduló csomagok" hint="Egy koppintással indulhatsz, utána minden szabadon módosítható." />
             <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
-            <SectionTitle title="Tetőrendszer" hint="A pergola típusa: ez határozza meg az árnyékolást, az esővédelmet és az árat." />
-            <RoofPicker config={config} prices={prices} onChange={onChange} />
             <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
             <SliderField label="Szélesség" value={config.width} min={limits.width[0]} max={limits.width[1]} step={0.05} unit="m" metric onChange={(width) => onChange({ width })} />
             <SliderField label="Mélység" value={config.depth} min={limits.depth[0]} max={limits.depth[1]} step={0.05} unit="m" metric onChange={(depth) => onChange({ depth })} />
@@ -355,13 +353,14 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           </>}
 
           {step === 'sides' && <>
-            <SectionTitle title="Melyik oldalt zárod?" hint="Koppints egy oldalra a felülnézeten vagy a 3D modellen. A középső mező a tető mozgatását mutatja." />
+            <SectionTitle title="Melyik oldalt zárod?" hint="Koppints egy oldalra a felülnézeten vagy a 3D modellen. A középső mező a tetőrendszert mutatja: itt választhatsz tetőtípust is." />
             <SideDiagram config={config} selected={selectedSide} roofName={tenant.roofs[config.roof]?.name ?? ''} onSelect={onSideSelect} />
             {selectedSide === 'roof' ? <>
               <div className="selected-side-head"><strong>Tetőrendszer</strong><span>{roofLabelsFor(config.roof)}</span></div>
+              <SectionTitle title="Tetőrendszer kiválasztása" hint="A pergola típusa: ez határozza meg az árnyékolást, az esővédelmet és az árat." />
+              <RoofPicker config={config} prices={prices} onChange={onChange} />
               <RoofControl config={config} onChange={onChange} />
               {ROOF_INFO[config.roof].motion === 'none' && <p className="split-note">Fix tető: nincs mozgatható része.</p>}
-              <button type="button" className="roof-change-link" onClick={() => onStepChange('size')}>Tetőtípus módosítása<ArrowRight size={15} /></button>
               {(supportsRoofShade(config.roof) && tenant.extras.roofShade) || (config.roof === 'fixed' && tenant.extras.solar) ? <p className="split-note">{config.roof === 'fixed' ? 'Napelemes tető' : 'Motoros árnyékoló'} az Extrák lépésben választható.</p> : null}
             </> : sideSettings(selectedSide)}
             <div className="interaction-hint"><Move size={17} /><p>A tolóüveg és az oldallamella a 3D-ben kattintásra, illetve a fenti gombbal is mozgatható. Egy oldal két részre is osztható, például fele tolóüveg, fele lécfal.</p></div>
