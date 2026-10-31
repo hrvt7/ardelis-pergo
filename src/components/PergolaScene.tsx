@@ -473,14 +473,72 @@ function DimensionGuides({ config }: { config: PergolaConfig }) {
   return <group><Line points={[[-width / 2, 0.06, depth / 2 + 0.55], [width / 2, 0.06, depth / 2 + 0.55]]} color={color} lineWidth={1.2} /><Line points={[[-width / 2, 0.06, depth / 2 + 0.42], [-width / 2, 0.06, depth / 2 + 0.68]]} color={color} /><Line points={[[width / 2, 0.06, depth / 2 + 0.42], [width / 2, 0.06, depth / 2 + 0.68]]} color={color} /><Html position={[0, 0.09, depth / 2 + 0.57]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(width)}</Html><Line points={[[depthX, 0.06, -depth / 2], [depthX, 0.06, depth / 2]]} color={color} lineWidth={1.2} /><Html position={[depthX + Math.sign(depthX) * 0.01, 0.09, 0]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(depth)}</Html><Line points={[[heightX, 0.05, heightZ], [heightX, height + 0.25, heightZ]]} color={color} lineWidth={1.2} /><Html position={[heightX, height / 2, heightZ]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(height)}</Html></group>
 }
 
+/**
+ * A lamellák egyetlen InstancedMesh-ként: a penge, az alsó tömítősáv és a két végi csapágybetét 1-1 draw call
+ * (korábban lamellánként 4 külön mesh és anyag). A forgás és az eltolódás a korábbi csillapított animációt követi.
+ */
+const LOUVER_STRIP = new THREE.Matrix4().makeTranslation(0, -0.026, 0.078)
+function LouverBlades({ geometry, width, depth, height, count, retractable, angle, color }: { geometry: THREE.BufferGeometry; width: number; depth: number; height: number; count: number; retractable: boolean; angle: number; color: string }) {
+  const { louvreSegments } = useQuality()
+  const blades = useRef<THREE.InstancedMesh>(null)
+  const strips = useRef<THREE.InstancedMesh>(null)
+  const caps = useRef<THREE.InstancedMesh>(null)
+  const gl = useThree((state) => state.gl)
+  const invalidate = useThree((state) => state.invalidate)
+  const introStart = useRef(0)
+  const state = useMemo(() => ({ rotation: new Float32Array(count), z: Float32Array.from({ length: count }, (_, index) => -depth / 2 + 0.2 + index * ((depth - 0.3) / count)) }), [count, depth])
+  const tools = useMemo(() => ({ base: new THREE.Matrix4(), part: new THREE.Matrix4(), position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), scale: new THREE.Vector3(1, 1, 1), axisX: new THREE.Vector3(1, 0, 0), caps: [-1, 1].map((side) => new THREE.Matrix4().makeTranslation(side * (width / 2 - 0.085), 0, 0).multiply(new THREE.Matrix4().makeRotationZ(Math.PI / 2))) }), [width])
+  const write = useCallback(() => {
+    if (!blades.current || !strips.current || !caps.current) return
+    const { base, part, position, quaternion, scale, axisX } = tools
+    for (let index = 0; index < count; index++) {
+      position.set(0, height + 0.15, state.z[index])
+      quaternion.setFromAxisAngle(axisX, state.rotation[index])
+      base.compose(position, quaternion, scale)
+      blades.current.setMatrixAt(index, base)
+      strips.current.setMatrixAt(index, part.multiplyMatrices(base, LOUVER_STRIP))
+      tools.caps.forEach((cap, side) => caps.current!.setMatrixAt(index * 2 + side, part.multiplyMatrices(base, cap)))
+    }
+    blades.current.instanceMatrix.needsUpdate = true
+    strips.current.instanceMatrix.needsUpdate = true
+    caps.current.instanceMatrix.needsUpdate = true
+  }, [count, height, state, tools])
+  useLayoutEffect(() => { write(); refreshShadows(gl); invalidate() }, [write, gl, invalidate])
+  useFrame(({ clock }, delta) => {
+    if (!introStart.current) introStart.current = clock.elapsedTime
+    const openness = angle / 90
+    const target = THREE.MathUtils.degToRad(retractable ? angle * 0.18 : angle)
+    // A fix lamellás tetőn a lamellák mindig a teljes felületet fedik (csak forognak); az eltolhatónál összetolódnak.
+    const spacing = ((depth - 0.3) / count) * (retractable ? 1 - openness * 0.84 : 1)
+    let moving = false
+    for (let index = 0; index < count; index++) {
+      const wave = REDUCED ? 1 : THREE.MathUtils.clamp((clock.elapsedTime - introStart.current - index * 0.045) / 1.25, 0, 1)
+      const waveTarget = target * (wave * wave * (3 - 2 * wave))
+      if (Math.abs(state.rotation[index] + waveTarget) > 0.001 || wave < 1) moving = true
+      state.rotation[index] = REDUCED ? -waveTarget : THREE.MathUtils.damp(state.rotation[index], -waveTarget, 8, delta)
+      const targetZ = -depth / 2 + 0.2 + index * spacing
+      if (Math.abs(state.z[index] - targetZ) > 0.001) moving = true
+      state.z[index] = REDUCED ? targetZ : THREE.MathUtils.damp(state.z[index], targetZ, 8, delta)
+    }
+    if (moving) { write(); refreshShadows(gl); invalidate() }
+  })
+  const radial = Math.max(6, Math.min(12, louvreSegments))
+  return <group>
+    <instancedMesh ref={blades} args={[geometry, undefined, count]} frustumCulled={false} castShadow receiveShadow><PowderCoat color={color} roughness={0.38} /></instancedMesh>
+    <instancedMesh ref={strips} args={[undefined, undefined, count]} frustumCulled={false}><boxGeometry args={[width - 0.22, 0.012, 0.014]} /><meshStandardMaterial color="#111718" roughness={0.92} /></instancedMesh>
+    <instancedMesh ref={caps} args={[undefined, undefined, count * 2]} frustumCulled={false}><cylinderGeometry args={[0.034, 0.034, 0.014, radial]} /><meshStandardMaterial color={color} metalness={0.35} roughness={0.4} /></instancedMesh>
+  </group>
+}
+
 function useAerofoilGeometry(width: number) {
+  const { louvreSegments } = useQuality()
   const geometry = useMemo(() => {
     const shape = new THREE.Shape()
     shape.moveTo(-0.095, 0)
     shape.bezierCurveTo(-0.085, 0.042, -0.025, 0.055, 0.055, 0.028)
     shape.bezierCurveTo(0.095, 0.012, 0.1, -0.008, 0.065, -0.024)
     shape.bezierCurveTo(0.005, -0.052, -0.065, -0.035, -0.095, 0)
-    const result = new THREE.ExtrudeGeometry(shape, { depth: Math.max(0.2, width - 0.18), bevelEnabled: false, curveSegments: 16 })
+    const result = new THREE.ExtrudeGeometry(shape, { depth: Math.max(0.2, width - 0.18), bevelEnabled: false, curveSegments: louvreSegments })
     result.rotateY(Math.PI / 2)
     result.translate(-(width - 0.18) / 2, 0, 0)
     result.deleteAttribute('normal')
@@ -489,7 +547,7 @@ function useAerofoilGeometry(width: number) {
     smoothed.computeVertexNormals()
     result.dispose()
     return smoothed
-  }, [width])
+  }, [width, louvreSegments])
   useEffect(() => () => geometry.dispose(), [geometry])
   return geometry
 }
@@ -708,7 +766,6 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
   const roofBase = config.roofColor ? getFrameColorHex({ frameColor: config.roofColor, customRal: config.roofRal }, tenant.colors) : color
   const roofIsWhite = (config.roofColor ?? config.frameColor) === 'white'
   const roofColor = roofIsWhite ? '#d4d6d1' : roofBase
-  const louverGroup = useRef<THREE.Group>(null)
   const model = useRef<THREE.Group>(null)
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
@@ -730,23 +787,6 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
       model.current.scale.y = REDUCED ? 1 : THREE.MathUtils.damp(model.current.scale.y, 1, 6, delta)
       if (Math.abs(model.current.scale.y - 1) > 0.001) { refreshShadows(gl); invalidate() }
     }
-    if (!louverGroup.current || roof === 'fixed') return
-    const target = THREE.MathUtils.degToRad(roof === 'retractable' ? effectiveAngle * 0.18 : effectiveAngle)
-    let moving = false
-    louverGroup.current.children.forEach((child, index) => {
-      const wave = REDUCED ? 1 : THREE.MathUtils.clamp((clock.elapsedTime - introStart.current - index * 0.045) / 1.25, 0, 1)
-      const waveTarget = target * (wave * wave * (3 - 2 * wave))
-      if (Math.abs(child.rotation.x + waveTarget) > 0.001 || wave < 1) moving = true
-      const nextRotation = REDUCED ? -waveTarget : THREE.MathUtils.damp(child.rotation.x, -waveTarget, 8, delta)
-      child.rotation.x = nextRotation
-      // A fix lamellás tetőn a lamellák mindig a teljes felületet fedik (csak forognak);
-      // az eltolhatónál összetolódnak. Tetőcsere után így a fix lamellák visszaállnak.
-      const spacing = ((depth - 0.3) / louverCount) * (roof === 'retractable' ? 1 - openness * 0.84 : 1)
-      const targetZ = -depth / 2 + 0.2 + index * spacing
-      if (Math.abs(child.position.z - targetZ) > 0.001) moving = true
-      child.position.z = REDUCED ? targetZ : THREE.MathUtils.damp(child.position.z, targetZ, 8, delta)
-    })
-    if (moving) { refreshShadows(gl); invalidate() }
   })
   const night = scene.time === 'night'
   return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={height} color={color} />)}<StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[width / 2, height, 0]} color={color} />
@@ -761,7 +801,7 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     {drainPost && <mesh position={[drainPost[0], 0.14, drainPost[1] + 0.095]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.08, 0.025, 8, 20, Math.PI / 2]} /><PowderCoat color={color} /></mesh>}
     <RoundedBox args={[0.28, 0.19, 0.34]} position={[width / 2 - 0.02, height + 0.12, depth / 2 - 0.25]} radius={0.035} smoothness={4} castShadow><PowderCoat color={color} /></RoundedBox>
     <group position={[-width / 2 + 0.2, height + 0.32, -depth / 2 + 0.2]}><mesh><cylinderGeometry args={[0.045, 0.055, 0.12, 16]} /><meshStandardMaterial color="#31383a" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, 0.075, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.034, 16]} /><meshPhysicalMaterial color="#8aa0a4" roughness={0.1} clearcoat={1} /></mesh></group>
-    <group ref={louverGroup}>{(roof === 'louvered' || roof === 'retractable') && Array.from({ length: louverCount }, (_, index) => { const z = -depth / 2 + 0.2 + index * ((depth - 0.3) / louverCount); return <group key={index} position={[0, height + 0.15, z]}><mesh geometry={geometry} castShadow receiveShadow><PowderCoat color={roofColor} roughness={0.38} /></mesh><mesh position={[0, -0.026, 0.078]}><boxGeometry args={[width - 0.22, 0.012, 0.014]} /><meshStandardMaterial color="#111718" roughness={0.92} /></mesh>{[-1, 1].map((side) => <mesh key={side} position={[side * (width / 2 - 0.085), 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.034, 0.034, 0.014, 12]} /><meshStandardMaterial color={roofColor} metalness={0.35} roughness={0.4} /></mesh>)}</group> })}</group>
+    {(roof === 'louvered' || roof === 'retractable') && <LouverBlades key={louverCount} geometry={geometry} width={width} depth={depth} height={height} count={louverCount} retractable={roof === 'retractable'} angle={effectiveAngle} color={roofColor} />}
     {roof === 'fixed' && <group><mesh position={[0, height + 0.14, 0]} castShadow receiveShadow><boxGeometry args={[width - 0.12, 0.09, depth - 0.12]} /><PowderCoat color={roofColor} /></mesh>{Array.from({ length: fixedSeamCount }, (_, index) => { const z = -depth / 2 + (index + 1) * depth / (fixedSeamCount + 1); return <Beam key={index} args={[width - 0.16, 0.018, 0.025]} position={[0, height + 0.192, z]} color={roofColor} radius={0.003} /> })}</group>}
     {isGlazedRoof(roof) && <GlazedRoof width={width} depth={depth} height={height} color={roofColor} kind={roof === 'glass' ? 'glass' : 'polycarbonate'} />}
     {isGlazedRoof(roof) && config.roofShade && <RoofShadeModel width={width} depth={depth} height={height} kind={config.roofShade} fabric={findShadeFabric(config.shadeFabric).hex} color={color} out={scene.shadeOut} night={night} onToggle={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })} />}
@@ -1662,6 +1702,33 @@ function FogFollow() {
   return null
 }
 
+// ?debug=1 → teljesítménymérő: rajzolási hívások, háromszögek, textúrák, geometriák és a renderelt képkockák (fps) a nézet sarkában.
+const PERF_DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1'
+function PerfProbe({ quality }: { quality: QualitySettings }) {
+  const box = useRef<HTMLDivElement | null>(null)
+  const frames = useRef({ count: 0, last: 0, fps: 0 })
+  useEffect(() => {
+    const element = document.createElement('div')
+    element.dataset.perfProbe = 'true'
+    element.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99;padding:6px 9px;border-radius:6px;background:rgba(0,0,0,.78);color:#9ff;font:11px/1.45 ui-monospace,monospace;pointer-events:none;white-space:pre'
+    document.body.appendChild(element)
+    box.current = element
+    return () => { element.remove(); box.current = null }
+  }, [])
+  useFrame(({ gl }) => {
+    const stats = frames.current
+    stats.count += 1
+    const now = performance.now()
+    if (!stats.last) stats.last = now
+    if (now - stats.last >= 500) { stats.fps = Math.round((stats.count * 1000) / (now - stats.last)); stats.count = 0; stats.last = now }
+    const { render, memory } = gl.info
+    const data = { tier: quality.tier, fps: stats.fps, calls: render.calls, triangles: render.triangles, textures: memory.textures, geometries: memory.geometries }
+    ;(window as unknown as { __perf?: typeof data }).__perf = data
+    if (box.current) box.current.textContent = `${data.tier} · ${data.fps} fps\ncalls ${data.calls} · tri ${(data.triangles / 1000).toFixed(0)}k\ntex ${data.textures} · geo ${data.geometries}`
+  })
+  return null
+}
+
 function SceneRegistration() {
   const scene = useThree((state) => state.scene)
   useEffect(() => { setActiveScene(scene); return () => setActiveScene(null) }, [scene])
@@ -1796,6 +1863,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
       >
         <WebGLContextGuard onLost={onContextLost} />
         <SceneRegistration />
+        {PERF_DEBUG && <PerfProbe quality={quality} />}
         <QualityContext.Provider value={quality}><Suspense fallback={null}>
           <SceneContent
             config={config}

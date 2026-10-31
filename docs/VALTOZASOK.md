@@ -1,5 +1,16 @@
 # Változások
 
+## 3.20 — Lamellák instanced meshben, teljesítménymérő (2026. 10. 31.)
+
+- **Lamellák:** a penge, az alsó tömítősáv és a két végi csapágybetét 1-1 `InstancedMesh`. Korábban lamellánként 4 külön mesh és anyag volt
+  (5 × 4 m-es tetőnél 18 lamella ≈ 72 draw call); most 3 az egész tetőre, azaz kb. 70 draw call-lal kevesebb. A kinézet és az animáció
+  (hullámos indulás, csillapított dőlés, eltolható tetőnél összetolódás) változatlan; az előtte/utána render azonos.
+- **A lamellaprofil finomsága** a minőségi szinthez kötött (`louvreSegments`: 6 / 8 / 12 / 16).
+- **AR-export:** az `InstancedMesh` példányait önálló hálókra bontja (a Quick Look és a Scene Viewer nem ismeri az instancing kiterjesztést).
+- **Teljesítménymérő:** `?debug=1` → draw call, háromszög, textúra, geometria és fps a sarokban (`window.__perf` is). Mért alap
+  (medium, 5 × 4 m): 224 draw call, ~557 ezer háromszög. A háromszögszám magas; a forrásait (ház, fák, növények) a következő lépésben mérem fel.
+- **Hiba javítva:** a `?quality=` paraméter és a mérő most a tényleges szintet mutatja.
+
 ## 3.19 — Anyagok első köre: teraszburkolat egy hálóban, minőséghez kötött anizotrópia (2026. 10. 31.)
 
 - **Teraszburkolat:** a ~28 külön deszkamesh (és anyag) egyetlen egyesített hálóra cserélve: 1 draw call. Minden deszka egyedi

@@ -33,6 +33,27 @@ function toPortableMaterial(source: THREE.Material): THREE.MeshStandardMaterial 
   return material
 }
 
+/** Az AR-nézők (Quick Look, Scene Viewer) nem ismerik az EXT_mesh_gpu_instancing kiterjesztést: a példányokat önálló hálókra bontjuk. */
+function expandInstances(root: THREE.Object3D) {
+  const instanced: THREE.InstancedMesh[] = []
+  root.traverse((child) => { if ((child as THREE.InstancedMesh).isInstancedMesh) instanced.push(child as THREE.InstancedMesh) })
+  const matrix = new THREE.Matrix4()
+  instanced.forEach((source) => {
+    const parent = source.parent
+    if (!parent) return
+    for (let index = 0; index < source.count; index++) {
+      source.getMatrixAt(index, matrix)
+      const mesh = new THREE.Mesh(source.geometry, source.material)
+      mesh.name = source.name
+      mesh.castShadow = source.castShadow
+      mesh.matrix.copy(source.matrix).multiply(matrix)
+      mesh.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale)
+      parent.add(mesh)
+    }
+    source.removeFromParent()
+  })
+}
+
 export function buildArObject(): THREE.Object3D {
   const scene = getActiveScene()
   const source = scene?.getObjectByName('pergola-model')
@@ -41,6 +62,7 @@ export function buildArObject(): THREE.Object3D {
   clone.position.set(0, 0, 0)
   clone.rotation.set(0, 0, 0)
   clone.scale.set(1, 1, 1)
+  expandInstances(clone)
   const remove: THREE.Object3D[] = []
   clone.traverse((child) => { if (child !== clone && isAuxiliary(child)) remove.push(child) })
   remove.forEach((child) => child.removeFromParent())
