@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { assetUrl } from '@/lib/assetUrl'
-import { ArrowDown, ArrowRight, ArrowUpRight, Check, MoveRight } from 'lucide-react'
+import { ArrowDown, ArrowRight, ArrowUpRight, Armchair, Check, FileText, Home as HomeIcon, MoveRight, Ruler, Share2, SunMedium, Wallet } from 'lucide-react'
 import { Link } from 'react-router'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -8,19 +8,57 @@ import Lenis from 'lenis'
 import SiteHeader, { SiteFooter } from '@/components/SiteChrome'
 import { PERGOLA_FAQS } from '@contracts/seo'
 import { usePageSeo } from '@/lib/usePageSeo'
+import { WALL_COLORS, WINDOW_COLORS } from '@/lib/house'
 import '@/home-film.css'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const details = [
-  { id: '01', title: 'Szabályozható fény.', label: 'AERO / BIOKLIMATIKUS TETŐ', text: 'A motoros alumínium lamellák 0–90° között dönthetők. Így a napfény, az árnyék és a szellőzés a terasz használatához igazítható.', metric: '0—90°', art: 'louvers' },
-  { id: '02', title: 'Rejtett vízelvezetés.', label: 'INTEGRÁLT VÍZELVEZETÉS', text: 'A vízgyűjtő a gerendákba, a lefolyó pedig az oszlopba integrálható. A csapadékvíz elvezetése így nem rontja el a pergola letisztult arányait.', metric: '360°', art: 'section' },
-  { id: '03', title: 'Esti komfort.', label: 'KOMFORT / FÉNY / VÉDELEM', text: 'Periméter LED, ZIP screen, tolóüveg, infravörös fűtés és szenzorok is konfigurálhatók. A kiválasztott kiegészítők azonnal megjelennek a modellen.', metric: '24 / 7', art: 'light' },
+/** Saját 3D stúdiónkból renderelt képek (public/assets/home). */
+const shot = (name: string) => assetUrl(`/assets/home/${name}.webp`)
+const shotSet = (name: string) => `${assetUrl(`/assets/home/${name}-960.webp`)} 960w, ${shot(name)} 1920w`
+
+function Shot({ name, alt, className, eager = false, sizes = '100vw' }: { name: string; alt: string; className?: string; eager?: boolean; sizes?: string }) {
+  return <img className={className} src={shot(name)} srcSet={shotSet(name)} sizes={sizes} alt={alt} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : undefined} decoding="async" />
+}
+
+const FACADE_COUNT = Object.values(WALL_COLORS).reduce((sum, list) => sum + list.length, 0)
+
+const CHAPTERS = [
+  ['elmeny', 'Élmény'],
+  ['film', 'Forma'],
+  ['szinek', 'Színek'],
+  ['reszletek', 'Részletek'],
+  ['studio', 'Stúdió'],
+  ['folyamat', 'Folyamat'],
+  ['gyik', 'Kérdések'],
+] as const
+
+const PALETTE = [
+  { id: 'anthracite', label: 'Antracit', code: 'RAL 7016', swatch: '#383e42', image: 'hero', note: 'A legkeresettebb: modern, vakolt homlokzathoz és sötét ablakkerethez.' },
+  { id: 'white', label: 'Fehér', code: 'RAL 9016', swatch: '#f1f0ea', image: 'color-white', note: 'Világos, könnyed hatás. Sötét homlokzat előtt kiemeli a szerkezetet.' },
+  { id: 'black', label: 'Mélyfekete', code: 'RAL 9005', swatch: '#141618', image: 'color-black', note: 'Grafikus, határozott vonal. Fekete nyílászárókkal egy rendszert alkot.' },
+  { id: 'wood', label: 'Aranytölgy', code: 'Fa hatású', swatch: '#a8743d', image: 'color-wood', note: 'Meleg, természetes tónus fa hatású ablakokhoz és kerti környezethez.' },
+] as const
+
+const DETAILS = [
+  { id: '01', image: 'detail', title: 'Szabályozható fény.', label: 'BIOKLIMATIKUS LAMELLATETŐ', text: 'A motoros alumínium lamellák 0–90° között dönthetők. A napfény, az árnyék és a szellőzés a nap minden órájában a terasz használatához igazítható.', metric: '0–90°' },
+  { id: '02', image: 'glass-shade', title: 'Üveg alatt is árnyék.', label: 'ÜVEGTETŐ + MOTOROS ÁRNYÉKOLÓ', text: 'Üveg- és polikarbonát tetőhöz tető feletti vagy tető alatti motoros ponyva választható, négy színben. A 3D-ben egy kattintással ki- és behúzható.', metric: '2 típus' },
+  { id: '03', image: 'sides', title: 'Zárd, ahol kell.', label: 'ZIP SCREEN / TOLÓÜVEG / LAMELLAFAL', text: 'Minden oldal külön zárható ZIP screennel, tolóüveggel vagy fix lamellafallal. A modell és az irányár minden változtatást azonnal követ.', metric: '4 oldal' },
 ]
+
+const FEATURES = [
+  { icon: HomeIcon, title: 'A saját házad előtt', text: `${FACADE_COUNT} homlokzati szín vakolt, tégla és fa felülettel, ${WINDOW_COLORS.length} nyílászáró-szín — vagy szín egy fotóról.`, wide: true, image: 'color-white' },
+  { icon: Ruler, title: 'Centiméterre pontos', text: 'Méretcímkék és 180 cm-es emberi figura a valós arányokhoz.' },
+  { icon: SunMedium, title: 'Napállás és este', text: 'Nappal, aranyórában vagy éjjel, LED-del: úgy látod, ahogy élni fogod.' },
+  { icon: Wallet, title: 'Költségkeret-tervező', text: 'Megadod a keretet, a stúdió megmutatja, mit érdemes elhagyni vagy cserélni.' },
+  { icon: Share2, title: 'Megosztható terv', text: 'Link és kép a családnak — ugyanazt a tervet látja mindenki.' },
+  { icon: FileText, title: 'PDF összefoglaló', text: 'Méretek, anyaglista, irányár és a ház leírása egy dokumentumban.' },
+  { icon: Armchair, title: 'Ülj le benne', text: 'Kanapé-nézet: a terasz belülről, a lamellák alól.', wide: true, image: 'sofa' },
+] as const
 
 function SplitLine({ children, italic = false }: { children: string; italic?: boolean }) {
   return <span className={`cinema-line${italic ? ' is-italic' : ''}`} aria-hidden="true">
-    {Array.from(children).map((character, index) => <span className="cinema-char-mask" key={`${character}-${index}`}><span className="cinema-char">{character === ' ' ? '\u00A0' : character}</span></span>)}
+    {Array.from(children).map((character, index) => <span className="cinema-char-mask" key={`${character}-${index}`}><span className="cinema-char">{character === ' ' ? ' ' : character}</span></span>)}
   </span>
 }
 
@@ -29,12 +67,6 @@ function OvalLink({ to, children, dark = false }: { to: string; children: string
     <svg viewBox="0 0 240 76" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="120" cy="38" rx="116" ry="34" /></svg>
     <span>{children}</span><ArrowRight size={18} />
   </Link>
-}
-
-function TechnicalArt({ type }: { type: string }) {
-  if (type === 'louvers') return <svg viewBox="0 0 640 360" aria-hidden="true"><defs><linearGradient id="film-blade" x1="0" x2="1"><stop stopColor="#666b67"/><stop offset=".48" stopColor="#f5f5f5"/><stop offset="1" stopColor="#414642"/></linearGradient></defs><g transform="translate(74 50)">{Array.from({ length: 7 }, (_, i) => <g key={i} transform={`translate(0 ${i * 39})`}><path d="M0 24 374 0l112 28-382 29Z" fill="url(#film-blade)" stroke="#1a1a1a" strokeOpacity=".25"/><path d="m104 57 12 8 382-29-12-8" fill="#343934"/></g>)}<path d="M0 24v242m486-238v242" stroke="#1a1a1a" strokeWidth="7"/></g></svg>
-  if (type === 'section') return <svg viewBox="0 0 640 360" aria-hidden="true"><g fill="none" stroke="currentColor"><path d="M158 42h318v54H202v214h-44Z" strokeWidth="3"/><path d="M178 61h280v16H202" strokeWidth="1"/><path d="M190 103v187" strokeWidth="1" strokeDasharray="5 6"/><path d="m196 116 12 18-12 18m0 28 12 18-12 18m0 28 12 18-12 18" strokeWidth="2"/><path d="M90 310h425M90 302v16m425-16v16"/><path d="M488 42v54h-24" strokeWidth="7"/></g><circle cx="196" cy="116" r="6" fill="currentColor"/><text x="92" y="337" fill="currentColor" fontSize="11" letterSpacing="3">REJTETT FOLYÓKA / OSZLOPBAN FUTÓ LEFOLYÓ</text></svg>
-  return <svg viewBox="0 0 640 360" aria-hidden="true"><defs><radialGradient id="film-glow"><stop stopColor="#f6e3b4" stopOpacity=".85"/><stop offset="1" stopColor="#f6e3b4" stopOpacity="0"/></radialGradient></defs><ellipse cx="326" cy="215" rx="250" ry="134" fill="url(#film-glow)"/><g fill="none" stroke="#f5f5f5"><path d="M109 261V99l216-58 215 60v160M109 99l216 62 215-60M325 161v102" strokeWidth="3"/><path d="m125 106 200 57 199-56" stroke="#e9c988" strokeWidth="5"/><path d="M71 263h510" strokeOpacity=".45"/></g></svg>
 }
 
 function Blueprint() {
@@ -48,6 +80,8 @@ function Blueprint() {
   </svg>
 }
 
+const MARQUEE = ['Bioklimatikus lamella', 'Üvegtető', 'Motoros árnyékoló', 'ZIP screen', 'Tolóüveg', 'Periméter LED', 'Infra fűtés', 'Napelem', 'Okosotthon', 'Szenzorok']
+
 export default function Home() {
   usePageSeo('/')
   const root = useRef<HTMLDivElement>(null)
@@ -57,6 +91,9 @@ export default function Home() {
   const craftTrack = useRef<HTMLDivElement>(null)
   const filmProgress = useRef<HTMLSpanElement>(null)
   const pageProgress = useRef<HTMLElement>(null)
+  const [color, setColor] = useState<(typeof PALETTE)[number]['id']>('anthracite')
+  const [chapter, setChapter] = useState('')
+  const active = PALETTE.find((item) => item.id === color)!
 
   useLayoutEffect(() => {
     const element = root.current
@@ -100,67 +137,123 @@ export default function Home() {
     if (reduced) element.classList.add('reduced-motion')
 
     const context = gsap.context(() => {
-      if (!reduced) {
-        if (jump === null) {
-          const entrance = gsap.timeline({ defaults: { ease: 'power4.out' } })
-          entrance
-            .fromTo('.cinema-char', { yPercent: 120 }, { yPercent: 0, duration: 1.15, stagger: 0.018 }, 0.12)
-            .fromTo('.cinema-hero-visual', { clipPath: 'polygon(0 0, 100% 0, 100% 0, 0 0)' }, { clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)', duration: 1.35 }, 0)
-            .fromTo('.cinema-hero-visual img', { scale: 1.13 }, { scale: 1.02, duration: 1.7 }, 0)
-            .fromTo('.hero-intro-item', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.75, stagger: 0.09 }, 0.52)
-            .fromTo('.hero-ghost', { opacity: 0 }, { opacity: 0.14, duration: 1.2 }, 0.65)
-        }
+      // Aktív fejezet (oldalsó index) — mozgáscsökkentésnél is működik.
+      CHAPTERS.forEach(([id]) => {
+        const section = document.getElementById(id)
+        if (section) ScrollTrigger.create({ trigger: section, start: 'top 55%', end: 'bottom 55%', onToggle: (self) => { if (self.isActive) setChapter(id) } })
+      })
+      ScrollTrigger.create({ trigger: '.cinema-hero', start: 'top top', end: 'bottom 55%', onToggle: (self) => { if (self.isActive) setChapter('') } })
 
-        lenis = new Lenis({ lerp: 0.09, smoothWheel: true, anchors: true })
-        lenis.on('scroll', ScrollTrigger.update)
-        ticker = (time: number) => lenis?.raf(time * 1000)
-        gsap.ticker.add(ticker)
-        gsap.ticker.lagSmoothing(0)
+      if (reduced) return
 
-        if (film.current && filmStage.current) {
-          const beats = gsap.utils.toArray<HTMLElement>('.film-beat', film.current)
-          const paths = gsap.utils.toArray<SVGPathElement>('.film-blueprint path', film.current)
-          gsap.set(beats.slice(1), { autoAlpha: 0 })
-          gsap.set(paths, { strokeDasharray: 1, strokeDashoffset: 1 })
-
-          const story = gsap.timeline({
-            scrollTrigger: {
-              trigger: film.current,
-              start: 'top top',
-              end: () => `+=${window.innerHeight * 4.2}`,
-              pin: filmStage.current,
-              scrub: 1,
-              anticipatePin: 1,
-              invalidateOnRefresh: true,
-              onUpdate: (self) => {
-                film.current?.style.setProperty('--film-progress', `${self.progress}`)
-                if (filmProgress.current) filmProgress.current.textContent = `${Math.round(self.progress * 100)}`.padStart(2, '0')
-              },
-            },
-          })
-
-          story
-            .to('.film-media', { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.65, ease: 'power2.inOut' }, 0)
-            .to('.film-media img', { scale: 1.02, duration: 1, ease: 'none' }, 0)
-            .to(paths, { strokeDashoffset: 0, duration: 0.72, stagger: 0.06, ease: 'none' }, 0.05)
-            .to('.film-grid', { opacity: 0, duration: 0.45 }, 0.42)
-            .to('.hero-film-word', { xPercent: -9, opacity: 0.09, duration: 3.8, ease: 'none' }, 0)
-            .to(beats[0], { autoAlpha: 0, y: -42, duration: 0.25 }, 0.67)
-            .to('.film-blueprint', { opacity: 0, duration: 0.35 }, 0.82)
-            .fromTo(beats[1], { autoAlpha: 0, y: 52 }, { autoAlpha: 1, y: 0, duration: 0.3 }, 0.98)
-            .to('.film-media img', { scale: 1.075, xPercent: -1.5, duration: 1, ease: 'none' }, 1)
-            .to('.film-lamella-shadow', { opacity: 0.32, xPercent: 9, duration: 1, ease: 'none' }, 1)
-            .to(beats[1], { autoAlpha: 0, y: -42, duration: 0.25 }, 1.67)
-            .fromTo(beats[2], { autoAlpha: 0, y: 52 }, { autoAlpha: 1, y: 0, duration: 0.3 }, 1.86)
-            .to('.film-night', { opacity: 0.83, duration: 1, ease: 'none' }, 2)
-            .to('.film-warm-light', { opacity: 1, duration: 0.75 }, 2.24)
-            .to('.film-lamella-shadow', { opacity: 0.08, duration: 0.7 }, 2.18)
-            .to(beats[2], { autoAlpha: 0, y: -42, duration: 0.25 }, 2.56)
-            .fromTo(beats[3], { autoAlpha: 0, y: 52 }, { autoAlpha: 1, y: 0, duration: 0.32 }, 2.78)
-            .to('.film-media img', { scale: 1.025, xPercent: 0, duration: 1, ease: 'none' }, 2.78)
-            .to('.film-handoff', { opacity: 1, duration: 0.45 }, 3.35)
-        }
+      if (jump === null) {
+        const entrance = gsap.timeline({ defaults: { ease: 'power4.out' } })
+        entrance
+          .fromTo('.cinema-char', { yPercent: 120 }, { yPercent: 0, duration: 1.15, stagger: 0.018 }, 0.12)
+          .fromTo('.cinema-hero-visual', { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: 1.35 }, 0)
+          .fromTo('.cinema-hero-visual img', { scale: 1.16 }, { scale: 1.04, duration: 1.8 }, 0)
+          .fromTo('.hero-intro-item', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.75, stagger: 0.09 }, 0.52)
+          .fromTo('.hero-ghost', { opacity: 0 }, { opacity: 0.1, duration: 1.2 }, 0.65)
       }
+
+      // Hero: a kép lassabban mozog, a szöveg elhalványul görgetéskor.
+      gsap.to('.cinema-hero-visual img', { yPercent: 12, ease: 'none', scrollTrigger: { trigger: '.cinema-hero', start: 'top top', end: 'bottom top', scrub: true } })
+      gsap.to('.cinema-hero-copy', { yPercent: -18, opacity: 0.15, ease: 'none', scrollTrigger: { trigger: '.cinema-hero', start: 'top top', end: 'bottom top', scrub: true } })
+
+      lenis = new Lenis({ lerp: 0.09, smoothWheel: true, anchors: true })
+      lenis.on('scroll', ScrollTrigger.update)
+      ticker = (time: number) => lenis?.raf(time * 1000)
+      gsap.ticker.add(ticker)
+      gsap.ticker.lagSmoothing(0)
+
+      // Futószalag: görgetési sebességtől függő dőlés és gyorsulás.
+      const marquee = element.querySelector<HTMLElement>('.cinema-marquee-track')
+      if (marquee) {
+        const loop = gsap.to(marquee, { xPercent: -50, duration: 38, ease: 'none', repeat: -1 })
+        const skew = gsap.quickTo(marquee, 'skewX', { duration: 0.5, ease: 'power3' })
+        ScrollTrigger.create({
+          trigger: '.cinema-marquee', start: 'top bottom', end: 'bottom top',
+          onUpdate: (self) => {
+            const velocity = gsap.utils.clamp(-1, 1, self.getVelocity() / 2400)
+            skew(velocity * -7)
+            loop.timeScale(1 + Math.abs(velocity) * 5)
+          },
+        })
+      }
+
+      // Számlálók.
+      gsap.utils.toArray<HTMLElement>('[data-count]', element).forEach((counter) => {
+        const target = Number(counter.dataset.count)
+        const state = { value: 0 }
+        gsap.to(state, { value: target, duration: 1.6, ease: 'power3.out', scrollTrigger: { trigger: counter, start: 'top 85%', once: true }, onUpdate: () => { counter.textContent = String(Math.round(state.value)) } })
+      })
+
+      // Képek: belépéskor kinyíló maszk + finom parallaxis.
+      gsap.utils.toArray<HTMLElement>('[data-clip]', element).forEach((frame) => {
+        gsap.fromTo(frame, { clipPath: 'inset(14% 10% 14% 10%)' }, { clipPath: 'inset(0% 0% 0% 0%)', ease: 'power2.out', scrollTrigger: { trigger: frame, start: 'top 92%', end: 'top 35%', scrub: 0.6 } })
+      })
+      gsap.utils.toArray<HTMLElement>('[data-parallax]', element).forEach((image) => {
+        const amount = Number(image.dataset.parallax) || 10
+        gsap.fromTo(image, { yPercent: -amount }, { yPercent: amount, ease: 'none', scrollTrigger: { trigger: image.parentElement, start: 'top bottom', end: 'bottom top', scrub: true } })
+      })
+
+      if (film.current && filmStage.current) {
+        const beats = gsap.utils.toArray<HTMLElement>('.film-beat', film.current)
+        const shots = gsap.utils.toArray<HTMLElement>('.film-shot', film.current)
+        const paths = gsap.utils.toArray<SVGPathElement>('.film-blueprint path', film.current)
+        gsap.set(beats.slice(1), { autoAlpha: 0 })
+        gsap.set(shots.slice(1), { autoAlpha: 0 })
+        gsap.set(paths, { strokeDasharray: 1, strokeDashoffset: 1 })
+
+        const story = gsap.timeline({
+          scrollTrigger: {
+            trigger: film.current,
+            start: 'top top',
+            end: () => `+=${window.innerHeight * 4.2}`,
+            pin: filmStage.current,
+            scrub: 1,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              film.current?.style.setProperty('--film-progress', `${self.progress}`)
+              film.current?.style.setProperty('--film-chapter', `${Math.min(3, Math.floor(self.progress * 4))}`)
+              if (filmProgress.current) filmProgress.current.textContent = `${Math.round(self.progress * 100)}`.padStart(2, '0')
+            },
+          },
+        })
+
+        const swap = (index: number, at: number) => {
+          story
+            .to(beats[index - 1], { autoAlpha: 0, y: -42, duration: 0.25 }, at - 0.3)
+            .fromTo(shots[index], { autoAlpha: 0, scale: 1.12 }, { autoAlpha: 1, scale: 1.02, duration: 0.55, ease: 'power2.inOut' }, at - 0.28)
+            .fromTo(beats[index], { autoAlpha: 0, y: 52 }, { autoAlpha: 1, y: 0, duration: 0.3 }, at)
+        }
+
+        story
+          .to('.film-media', { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.65, ease: 'power2.inOut' }, 0)
+          .to(shots[0], { scale: 1.02, duration: 1, ease: 'none' }, 0)
+          .to(paths, { strokeDashoffset: 0, duration: 0.72, stagger: 0.06, ease: 'none' }, 0.05)
+          .to('.film-grid', { opacity: 0, duration: 0.45 }, 0.42)
+          .to('.hero-film-word', { xPercent: -9, opacity: 0.06, duration: 3.8, ease: 'none' }, 0)
+          .to('.film-blueprint', { opacity: 0, duration: 0.35 }, 0.82)
+        swap(1, 1)
+        story.to(shots[1], { scale: 1.08, xPercent: -1.5, duration: 0.9, ease: 'none' }, 1.1)
+        swap(2, 1.9)
+        story.to(shots[2], { scale: 1.08, xPercent: 1.5, duration: 0.9, ease: 'none' }, 2)
+        swap(3, 2.8)
+        story
+          .to(shots[3], { scale: 1.06, duration: 0.9, ease: 'none' }, 2.9)
+          .to('.film-handoff', { opacity: 1, duration: 0.45 }, 3.35)
+      }
+
+      // Folyamat: a vonal a görgetéssel rajzolódik ki.
+      gsap.fromTo('.process-line i', { scaleX: 0 }, { scaleX: 1, ease: 'none', scrollTrigger: { trigger: '.cinema-process-steps', start: 'top 80%', end: 'bottom 55%', scrub: true } })
+      gsap.utils.toArray<HTMLElement>('.cinema-process-steps article', element).forEach((step, index) => {
+        gsap.fromTo(step, { opacity: 0.18 }, { opacity: 1, scrollTrigger: { trigger: '.cinema-process-steps', start: `top ${80 - index * 7}%`, end: `top ${66 - index * 7}%`, scrub: true } })
+      })
+
+      // Záró blokk: a kép lassan közelít.
+      gsap.fromTo('.cinema-final-media img', { scale: 1.18 }, { scale: 1, ease: 'none', scrollTrigger: { trigger: '.cinema-final', start: 'top bottom', end: 'bottom bottom', scrub: true } })
     }, element)
 
     const media = gsap.matchMedia()
@@ -180,13 +273,14 @@ export default function Home() {
             scrub: 1,
             anticipatePin: 1,
             invalidateOnRefresh: true,
+            onUpdate: (self) => craft.current?.style.setProperty('--craft-progress', `${self.progress}`),
           },
         })
-        gsap.utils.toArray<HTMLElement>('.craft-art', track).forEach((art) => {
-          gsap.fromTo(art, { xPercent: -4 }, {
-            xPercent: 4,
+        gsap.utils.toArray<HTMLElement>('.craft-art img', track).forEach((image) => {
+          gsap.fromTo(image, { xPercent: -6 }, {
+            xPercent: 6,
             ease: 'none',
-            scrollTrigger: { trigger: art, containerAnimation: horizontal, start: 'left right', end: 'right left', scrub: true },
+            scrollTrigger: { trigger: image.parentElement, containerAnimation: horizontal, start: 'left right', end: 'right left', scrub: true },
           })
         })
       })
@@ -203,11 +297,11 @@ export default function Home() {
 
         gsap.utils.toArray<HTMLElement>('[data-cinema-reveal]', element).forEach((section) => {
           const children = section.querySelectorAll('[data-reveal-item]')
-          gsap.fromTo(children, { opacity: 0, y: 34 }, {
+          gsap.fromTo(children, { opacity: 0, y: 40 }, {
             opacity: 1,
             y: 0,
-            duration: 0.9,
-            stagger: 0.09,
+            duration: 1,
+            stagger: 0.1,
             ease: 'power3.out',
             scrollTrigger: { trigger: section, start: 'top 78%', once: true },
           })
@@ -232,98 +326,144 @@ export default function Home() {
   return <div className="marketing-page cinema-page" ref={root}>
     <SiteHeader action={<Link className="header-studio-link" to="/studio/pergola">Megnyitom a stúdiót <ArrowUpRight size={15} /></Link>} />
     <div className="cinema-page-progress" aria-hidden="true"><i ref={pageProgress} /></div>
+    <nav className={`chapter-rail${chapter ? ' is-visible' : ''}`} aria-label="Fejezetek">
+      {CHAPTERS.map(([id, label], index) => <a key={id} href={`#${id}`} className={chapter === id ? 'is-active' : ''} aria-current={chapter === id ? 'true' : undefined}><span>{String(index + 1).padStart(2, '0')}</span><b>{label}</b></a>)}
+    </nav>
     <main>
       <section className="cinema-hero" aria-labelledby="home-title">
         <div className="hero-ghost" aria-hidden="true">PERGO</div>
         <div className="cinema-hero-copy">
           <div className="cinema-overline hero-intro-item"><span>ARDELIS ATELIER</span><i />BIOKLIMATIKUS PERGOLA</div>
           <h1 id="home-title" aria-label="A teraszod. Újragondolva."><SplitLine>A teraszod.</SplitLine><SplitLine italic>Újragondolva.</SplitLine></h1>
-          <p className="hero-intro-item">Tervezd meg a pergolát a saját teraszod méreteihez. Állítsd be a tetőrendszert, az oldalzárást és a világítást, majd nézd meg az eredményt valós idejű 3D-ben.</p>
+          <p className="hero-intro-item">Tervezd meg a pergolát a saját teraszod méreteire, a saját házad színei elé. Tetőrendszer, oldalzárás, árnyékolás és fény — valós idejű 3D-ben, azonnali irányárral.</p>
           <div className="cinema-hero-actions hero-intro-item"><OvalLink to="/studio/pergola">Saját pergola tervezése</OvalLink><a className="cinema-text-link" href="#elmeny">Fedezd fel <ArrowDown size={15} /></a></div>
-          <div className="cinema-hero-proof hero-intro-item"><span><Check size={13} />Valós idejű 3D előnézet</span><span><Check size={13} />Azonnali irányár</span><span><Check size={13} />Felmérési kérelem a tervvel</span></div>
+          <div className="cinema-hero-proof hero-intro-item"><span><Check size={14} />Valós idejű 3D</span><span><Check size={14} />Azonnali irányár</span><span><Check size={14} />PDF és felmérés</span></div>
         </div>
         <div className="cinema-hero-visual">
-          <img src={assetUrl('/assets/pergo-hero.webp')} alt="Modern, antracit alumínium PERGO pergola egy otthon teraszán" fetchPriority="high" decoding="async" />
+          <Shot name="hero-golden" alt="Antracit bioklimatikus pergola egy vakolt családi ház teraszán, aranyórában" eager sizes="(max-width: 820px) 100vw, 60vw" />
           <div className="cinema-hero-shade" />
           <span className="hero-edition">PERGO®<small>ATELIER SERIES / 01</small></span>
-          <span className="hero-material-note">PORSZINTEREZETT ALUMÍNIUM<br />PARAMÉTERES VALÓSÁG</span>
+          <span className="hero-material-note">A KÉP A 3D STÚDIÓBAN KÉSZÜLT<br />5,4 × 4,0 M · RAL 7016</span>
         </div>
         <div className="hero-scroll-cue" aria-hidden="true"><span>GÖRGESS</span><i /></div>
       </section>
 
+      <div className="cinema-marquee" aria-hidden="true"><div className="cinema-marquee-track">{[...MARQUEE, ...MARQUEE].map((item, index) => <span key={index}>{item}<i>✦</i></span>)}</div></div>
+
       <section className="cinema-intro" id="elmeny" data-cinema-reveal>
-        <div className="intro-index" data-reveal-item>ARDELIS / 01<br />VALÓS MÉRETEK. ÁTLÁTHATÓ TERVEZÉS.</div>
+        <div className="intro-index" data-reveal-item>ARDELIS / 01<br />VALÓS MÉRETEK.<br />ÁTLÁTHATÓ TERVEZÉS.</div>
         <div className="intro-heading" data-reveal-item><h2>Nem egy tető.<br /><em>Egy új tér.</em></h2></div>
-        <div className="intro-copy" data-reveal-item><p>A bioklimatikus pergola az időjáráshoz és a terasz használatához igazodik. A dönthető lamellákkal szabályozhatod a napfényt és a szellőzést, a rejtett világítással pedig este is kellemes marad a tér.</p><Link className="text-arrow-link" to="/studio/pergola">Kipróbálom a 3D stúdiót <MoveRight /></Link></div>
-        <div className="intro-facts" data-reveal-item><div><strong>0—90°</strong><span>dönthető lamellák</span></div><div><strong>180 cm</strong><span>méretarányos emberi figura</span></div><div><strong>1 terv</strong><span>3D, PDF és felmérési kérelem</span></div></div>
+        <div className="intro-copy" data-reveal-item><p>A bioklimatikus pergola az időjáráshoz és a terasz használatához igazodik. A dönthető lamellákkal szabályozod a napfényt és a szellőzést, a rejtett világítással este is kellemes marad a tér.</p><Link className="text-arrow-link" to="/studio/pergola">Kipróbálom a 3D stúdiót <MoveRight /></Link></div>
+        <div className="intro-facts" data-reveal-item>
+          <div><strong><b data-count="90">90</b>°</strong><span>-ig dönthető lamellák</span></div>
+          <div><strong><b data-count={FACADE_COUNT}>{FACADE_COUNT}</b></strong><span>homlokzati szín a házadhoz</span></div>
+          <div><strong><b data-count={WINDOW_COLORS.length}>{WINDOW_COLORS.length}</b></strong><span>nyílászáró-szín</span></div>
+          <div><strong><b data-count="1">1</b></strong><span>terv: 3D, PDF és felmérés</span></div>
+        </div>
       </section>
 
-      <section className="cinema-film" ref={film} aria-label="A PERGO forma, méret és fény jelenete">
+      <section className="cinema-film" id="film" ref={film} aria-label="A PERGO forma, méret, fény és este jelenete">
         <div className="film-stage" ref={filmStage}>
           <div className="hero-film-word" aria-hidden="true">PERGO</div>
           <div className="film-media" aria-hidden="true">
-            <img src={assetUrl('/assets/pergo-hero.webp')} alt="" loading="lazy" decoding="async" />
+            <Shot className="film-shot" name="hero" alt="" />
+            <Shot className="film-shot" name="dims" alt="" />
+            <Shot className="film-shot" name="glass-shade" alt="" />
+            <Shot className="film-shot" name="night" alt="" />
             <div className="film-day-grade" />
-            <div className="film-lamella-shadow" />
-            <div className="film-night" />
-            <div className="film-warm-light" />
           </div>
           <div className="film-grid" aria-hidden="true" />
           <Blueprint />
-          <div className="film-topline"><span>ARDELIS / PERGO</span><span>ATELIER SERIES — 01</span></div>
+          <div className="film-topline"><span>ARDELIS / PERGO</span><span>MINDEN KÉP A 3D STÚDIÓBÓL</span></div>
           <div className="film-beats">
-            <article className="film-beat beat-form"><span className="film-beat-index">01 / A FORMA</span><h2>A vonal,<br />ami <em>helyet</em><br />teremt.</h2><p>Az oszlopok, a gerendák és a tetőlamellák egyetlen arányos szerkezetet alkotnak.</p></article>
-            <article className="film-beat beat-measure"><span className="film-beat-index">02 / A MÉRET</span><h2>Nem „kb.”<br /><em>Milliméter.</em></h2><p>A szélességet, a mélységet és az oszlopmagasságot centiméterben adhatod meg; a modell minden módosításnál követi a méreteket.</p></article>
-            <article className="film-beat beat-light"><span className="film-beat-index">03 / A FÉNY</span><h2>A nap<br /><em>veled mozog.</em></h2><p>A motoros lamellák 0–90° között dönthetők, így a napfény, az árnyék és a szellőzés egyszerűen szabályozható.</p></article>
-            <article className="film-beat beat-evening"><span className="film-beat-index">04 / AZ ÉLMÉNY</span><h2>Este sem<br /><em>vége a napnak.</em></h2><p>A ZIP screen, a tolóüveg és a periméter LED külön is konfigurálható. A terasz így az esti órákban is kényelmesen használható.</p><Link to="/studio/pergola">Tervezd meg a sajátod <ArrowUpRight /></Link></article>
+            <article className="film-beat beat-form"><span className="film-beat-index">01 / A FORMA</span><h2>A vonal,<br />ami <em>helyet</em><br />teremt.</h2><p>Oszlop, gerenda és lamella egyetlen arányos szerkezetben — a te házad előtt, a te homlokzatszíneddel.</p></article>
+            <article className="film-beat beat-measure"><span className="film-beat-index">02 / A MÉRET</span><h2>Nem „kb.”<br /><em>Centiméter.</em></h2><p>Szélesség, mélység és magasság centiméterre. A méretcímkék és a 180 cm-es figura megmutatják, mekkora tér lesz valójában.</p></article>
+            <article className="film-beat beat-light"><span className="film-beat-index">03 / A FÉNY</span><h2>A nap<br /><em>alkalmazkodik.</em></h2><p>Lamellatető, üvegtető vagy polikarbonát — üveg alá és fölé motoros árnyékolóval. A fényt te szabod meg.</p></article>
+            <article className="film-beat beat-evening"><span className="film-beat-index">04 / AZ ESTE</span><h2>Este sem<br /><em>vége a napnak.</em></h2><p>Periméter LED, infra fűtés, hangszórók és oldalzárás. Az éjszakai nézetben pontosan látod, milyen lesz.</p><Link to="/studio/pergola">Tervezd meg a sajátod <ArrowUpRight /></Link></article>
           </div>
-          <div className="film-bottomline"><div className="film-chapters"><span>FORMA</span><span>MÉRET</span><span>FÉNY</span><span>ÉLMÉNY</span></div><div className="film-track"><i /></div><span className="film-counter"><b ref={filmProgress}>00</b> / 100</span></div>
+          <div className="film-bottomline"><div className="film-chapters"><span>FORMA</span><span>MÉRET</span><span>FÉNY</span><span>ESTE</span></div><div className="film-track"><i /></div><span className="film-counter"><b ref={filmProgress}>00</b> / 100</span></div>
           <div className="film-handoff" aria-hidden="true" />
         </div>
-        <div className="film-reduced"><article><h2>A forma. A méret. A fény.</h2><p>Tiszta arányok, milliméterre állítható szerkezet és 0–90° között dönthető lamellák.</p></article><article><h2>Este sem vége a napnak.</h2><p>Rejtett vízelvezetés, oldalzárás és meleg fény — a saját teraszodra tervezve.</p></article></div>
+        <div className="film-reduced">
+          <article><Shot name="dims" alt="Pergola méretcímkékkel és 180 cm-es emberi figurával" /><h2>Centiméterre pontos.</h2><p>Szélesség, mélység és magasság centiméterre, méretcímkékkel és emberi figurával.</p></article>
+          <article><Shot name="night" alt="Pergola éjszaka, bekapcsolt LED világítással" /><h2>Este sem vége a napnak.</h2><p>Periméter LED, infra fűtés és oldalzárás — az éjszakai nézetben is.</p></article>
+        </div>
       </section>
 
-      <section className="craft-run" ref={craft} aria-label="PERGO műszaki részletei">
-        <div className="craft-heading"><span>ARDELIS / MŰSZAKI RÉSZLETEK</span><h2>A szépség<br /><em>a rendszerben van.</em></h2><p>A tetőmozgás, a vízelvezetés és az oldalzárás nem egyszerű látványelemek: a terasz mindennapi használhatóságát határozzák meg.</p></div>
+      <section className="cinema-colors" id="szinek" aria-labelledby="colors-title" data-cinema-reveal>
+        <div className="colors-copy" data-reveal-item>
+          <div className="cinema-section-index">02 — SZÍN ÉS HÁZ</div>
+          <h2 id="colors-title">Illik<br /><em>a házadhoz?</em></h2>
+          <p>A stúdióban a mintaház homlokzatát és ablakait a saját házadra állítod — vakolt, tégla vagy fa felület, a leggyakoribb színekkel, vagy egy fotóról vett árnyalattal. Utána a pergola színe egy kattintással igazítható a nyílászárókhoz.</p>
+          <div className="colors-picker" role="radiogroup" aria-label="Pergola színe">
+            {PALETTE.map((item) => <button key={item.id} type="button" role="radio" aria-checked={color === item.id} className={color === item.id ? 'is-active' : ''} onClick={() => setColor(item.id)}>
+              <i style={{ background: item.swatch }} /><span><strong>{item.label}</strong><small>{item.code}</small></span>
+            </button>)}
+          </div>
+          <p className="colors-note" aria-live="polite">{active.note}</p>
+        </div>
+        <div className="colors-stage" data-reveal-item>
+          <div className="colors-frame" data-clip>
+            {PALETTE.map((item) => <Shot key={item.id} className={color === item.id ? 'is-active' : ''} name={item.image} alt={item.id === color ? `${item.label} pergola a 3D stúdióban` : ''} sizes="(max-width: 820px) 100vw, 58vw" />)}
+            <span className="colors-tag"><i style={{ background: active.swatch }} />{active.label} · {active.code}</span>
+          </div>
+          <div className="colors-house" aria-hidden="true">{Object.values(WALL_COLORS).flat().slice(0, 12).map((item) => <i key={item.hex} style={{ background: item.hex }} />)}<span>+ fotóról</span></div>
+        </div>
+      </section>
+
+      <section className="craft-run" id="reszletek" ref={craft} aria-label="PERGO műszaki részletei">
+        <div className="craft-heading"><span>03 — RÉSZLETEK</span><h2>A szépség<br /><em>a rendszerben van.</em></h2><p>A tetőmozgás, az árnyékolás és az oldalzárás nem díszlet: a terasz mindennapi használhatóságát határozzák meg. Mindegyik ki- és bekapcsolható a 3D-ben.</p></div>
         <div className="craft-track" ref={craftTrack}>
-          {details.map((detail) => <article className={`craft-panel craft-${detail.art}`} key={detail.id}>
-            <div className="craft-art"><TechnicalArt type={detail.art} /><strong>{detail.metric}</strong></div>
+          {DETAILS.map((detail) => <article className="craft-panel" key={detail.id}>
+            <div className="craft-art"><Shot name={detail.image} alt={detail.title} sizes="(max-width: 820px) 100vw, 45vw" /><strong>{detail.metric}</strong></div>
             <div className="craft-copy"><span>{detail.id} / {detail.label}</span><h3>{detail.title}</h3><p>{detail.text}</p></div>
           </article>)}
         </div>
+        <div className="craft-progress" aria-hidden="true"><i /></div>
       </section>
 
-      <section className="studio-cinema" data-cinema-reveal>
-        <div className="studio-cinema-visual" data-reveal-item><span aria-hidden="true">PERGO</span><img src={assetUrl('/assets/pergo-hero.webp')} alt="PERGO pergola a konfigurátor vizuális környezetében" loading="lazy" decoding="async" /><Blueprint /></div>
-        <div className="studio-cinema-copy" data-reveal-item><div className="cinema-section-index">02 — A STÚDIÓ</div><h2>Ne képzeld el.<br /><em>Forgasd meg.</em></h2><p>Add meg a méreteket, válaszd ki a tetőrendszert és az oldalzárást. Nézd meg a pergolát nappal, esőben vagy éjszaka — akár a kanapé nézőpontjából is.</p><ul><li><span>01</span>Valós méretarány és 180 cm-es emberi figura</li><li><span>02</span>PDF műszaki összefoglaló és megosztható terv</li><li><span>03</span>Nettó, ÁFA és bruttó irányár egy nézetben</li></ul><OvalLink to="/studio/pergola">Belépek a konfigurátorba</OvalLink></div>
+      <section className="cinema-bento" id="studio" aria-labelledby="studio-title" data-cinema-reveal>
+        <div className="bento-heading" data-reveal-item><div className="cinema-section-index">04 — A STÚDIÓ</div><h2 id="studio-title">Ne képzeld el.<br /><em>Forgasd meg.</em></h2><p>Egy tervezőasztal, ami a vásárló nyelvén beszél: amit beállítasz, azt azonnal látod — és tudod, mennyibe kerül.</p></div>
+        <div className="bento-grid">
+          {FEATURES.map((feature) => { const Icon = feature.icon; return <article key={feature.title} className={'wide' in feature && feature.wide ? 'is-wide' : ''} data-reveal-item>
+            {'image' in feature && feature.image && <div className="bento-media"><Shot name={feature.image} alt="" sizes="(max-width: 820px) 100vw, 50vw" /></div>}
+            <div className="bento-copy"><Icon size={22} strokeWidth={1.4} /><h3>{feature.title}</h3><p>{feature.text}</p></div>
+          </article> })}
+        </div>
+        <div className="bento-cta" data-reveal-item><OvalLink to="/studio/pergola">Belépek a stúdióba</OvalLink></div>
       </section>
 
       <section className="cinema-process" id="folyamat" data-cinema-reveal>
-        <div className="cinema-section-index" data-reveal-item>03 — A TERVTŐL A FELMÉRÉSIG</div>
-        <div className="cinema-process-heading" data-reveal-item><h2>Egy terv.<br /><em>Négy egyszerű lépés.</em></h2><p>A tervhez műszaki összefoglaló és egyedi projektazonosító tartozik, így a felmérésig ugyanazt a konfigurációt használjuk.</p></div>
-        <div className="cinema-process-steps" data-reveal-item>{[
-          ['01','Konfigurálsz','Méret, tetőrendszer, szín, oldalzárás és komfort — valós 3D-ben.'],
-          ['02','Elmented','PDF-et és megosztható hivatkozást készítesz ugyanarról a tervről.'],
-          ['03','Felmérést kérsz','A tervet a kapcsolati adataiddal együtt, valós projektkérelemként elküldöd.'],
-          ['04','Egyeztetünk','Az AR-azonosítóval követheted a kérésed. A végleges ár felmérés után készül.'],
-        ].map(([number,title,text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}</div>
+        <div className="cinema-section-index" data-reveal-item>05 — A TERVTŐL A FELMÉRÉSIG</div>
+        <div className="cinema-process-heading" data-reveal-item><h2>Egy terv.<br /><em>Négy egyszerű lépés.</em></h2><p>A tervhez műszaki összefoglaló tartozik, így a felmérésig mindenki ugyanazt a konfigurációt látja: te, a családod és a szakember.</p></div>
+        <div className="process-line" aria-hidden="true"><i /></div>
+        <div className="cinema-process-steps">{[
+          ['01', 'Konfigurálsz', 'Méret, tetőrendszer, szín, oldalzárás és komfort — a saját házad előtt, valós 3D-ben.'],
+          ['02', 'Elmented', 'PDF-et és megosztható linket készítesz, hogy a család is lássa ugyanazt a tervet.'],
+          ['03', 'Felmérést kérsz', 'A tervet a neved és elérhetőséged mellé csatolva egy kattintással elküldöd a gyártónak.'],
+          ['04', 'Egyeztettek', 'A szakember a terved alapján keres. A végleges ár a helyszíni felmérés után készül.'],
+        ].map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}</div>
       </section>
 
       <section className="cinema-knowledge" id="utmutato" aria-labelledby="guide-title" data-cinema-reveal>
-        <div className="knowledge-heading" data-reveal-item><div className="cinema-section-index">04 — TERVEZÉSI ÚTMUTATÓ</div><h2 id="guide-title">Mire figyelj<br /><em>pergolát tervezel?</em></h2><p>A jó pergola nem csak a terasz méretéhez passzol. A rögzítés, a vízelvezetés, a nyílászárók és a mindennapi használat együtt határozza meg a megfelelő kialakítást.</p></div>
+        <div className="knowledge-heading" data-reveal-item><div className="cinema-section-index">06 — TERVEZÉSI ÚTMUTATÓ</div><h2 id="guide-title">Mire figyelj,<br /><em>ha pergolát tervezel?</em></h2><p>A jó pergola nem csak a terasz méretéhez passzol. A rögzítés, a vízelvezetés, a nyílászárók és a mindennapi használat együtt határozza meg a megfelelő kialakítást.</p></div>
         <div className="knowledge-grid" data-reveal-item>
           <article><span>01 / MÉRET ÉS ELHELYEZÉS</span><h3>A külső méret csak a kezdet.</h3><p>A tervezéshez a rendelkezésre álló felületen kívül a nyílászárók, az eresz, a burkolat és a kerti mozgás is számít. A konfigurátor külső szerkezeti méreteket kezel; a pontos rögzítési pontokat helyszínen kell ellenőrizni.</p></article>
-          <article><span>02 / TETŐ ÉS OLDALZÁRÁS</span><h3>A használat választja ki a rendszert.</h3><p>A dönthető lamellák a fényt és a szellőzést szabályozzák, a ZIP screen oldalirányú védelmet adhat, a tolóüveg pedig zártabb teret alkothat. A tető és az oldalzárás együtt határozza meg, hogy a terasz milyen időjárásban lesz kényelmes.</p></article>
-          <article><span>03 / IRÁNYÁR ÉS FELMÉRÉS</span><h3>A kalkulációt felmérés követi.</h3><p>A konfigurátor a beállításaidból és szerkeszthető mintaárakból számol tájékoztató irányárat. A végleges műszaki tartalom és ár a rögzítési felületek, a vízelvezetés, az elektromos csatlakozások és a kiegészítők helyszíni ellenőrzése után készül.</p></article>
+          <article><span>02 / TETŐ ÉS OLDALZÁRÁS</span><h3>A használat választja ki a rendszert.</h3><p>A dönthető lamellák a fényt és a szellőzést szabályozzák, az üvegtető alá vagy fölé motoros árnyékoló kerülhet, a ZIP screen és a tolóüveg oldalirányú védelmet ad.</p></article>
+          <article><span>03 / IRÁNYÁR ÉS FELMÉRÉS</span><h3>A kalkulációt felmérés követi.</h3><p>A konfigurátor a beállításaidból tájékoztató irányárat számol. A végleges műszaki tartalom és ár a rögzítési felületek, a vízelvezetés, az elektromos csatlakozások és a kiegészítők helyszíni ellenőrzése után készül.</p></article>
         </div>
       </section>
 
       <section className="cinema-faq" id="gyik" aria-labelledby="faq-title" data-cinema-reveal>
-        <div className="faq-heading" data-reveal-item><div className="cinema-section-index">05 — GYAKORI KÉRDÉSEK</div><h2 id="faq-title">Rövid válaszok<br /><em>a pergolatervezésről.</em></h2><p>Az alábbi válaszok a tervezés legfontosabb kérdéseit foglalják össze. A konkrét műszaki megoldás mindig a helyszíntől és a végleges kivitelezéstől függ.</p></div>
+        <div className="faq-heading" data-reveal-item><div className="cinema-section-index">07 — GYAKORI KÉRDÉSEK</div><h2 id="faq-title">Rövid válaszok<br /><em>a pergolatervezésről.</em></h2><p>Az alábbi válaszok a tervezés legfontosabb kérdéseit foglalják össze. A konkrét műszaki megoldás mindig a helyszíntől és a végleges kivitelezéstől függ.</p></div>
         <div className="faq-list" data-reveal-item>{PERGOLA_FAQS.map((item, index) => <details key={item.question}><summary><span>{String(index + 1).padStart(2, '0')}</span><strong>{item.question}</strong><i aria-hidden="true" /></summary><p>{item.answer}</p></details>)}</div>
       </section>
 
-      <section className="cinema-final" data-cinema-reveal><div data-reveal-item><span>ARDELIS / PERGO</span><h2>Kezdd el a saját<br /><em>pergolád tervezését.</em></h2></div><Link to="/studio/pergola" aria-label="Pergola tervezés indítása" data-reveal-item><span>KEZDD EL</span><ArrowUpRight /></Link></section>
+      <section className="cinema-final" aria-labelledby="final-title">
+        <div className="cinema-final-media" aria-hidden="true"><Shot name="night" alt="" /></div>
+        <div className="cinema-final-copy"><span>ARDELIS / PERGO</span><h2 id="final-title">Kezdd el a saját<br /><em>pergolád tervezését.</em></h2><p>Öt perc, és látod a teraszod — nappal és este, a saját házad előtt.</p></div>
+        <Link className="cinema-final-button" to="/studio/pergola" aria-label="Pergola tervezés indítása"><span>KEZDD EL</span><ArrowUpRight /></Link>
+      </section>
     </main>
     <SiteFooter />
   </div>
