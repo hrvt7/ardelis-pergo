@@ -3,8 +3,11 @@ import "@/lib/previewShim";
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, MemoryRouter } from 'react-router'
+import { injectSpeedInsights } from '@vercel/speed-insights';
 import './index.css'
 import App from './App.tsx'
+
+injectSpeedInsights();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
