@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { handleAdminLogin, handleAdminSettings, handleTenantRequest, resetAdminRateLimit, signToken, verifyToken } from '../server/tenantAdmin'
+import { handleAdminLeads, handleAdminLogin, handleAdminSettings, handleTenantRequest, resetAdminRateLimit, signToken, verifyToken } from '../server/tenantAdmin'
 import { applyOverrides, parseOverrides } from '../src/tenants/overrides'
 import { calculatePrice } from '../src/lib/pricing'
 import { demoTenant } from '../src/tenants/demo'
@@ -73,6 +73,25 @@ describe('admin háttér', () => {
     const body = await response.json()
     expect(body.overrides.prices.vatRate).toBe(0.2)
     expect(JSON.stringify(body)).not.toContain('titkos@ceg.hu')
+    vi.unstubAllGlobals()
+  })
+})
+
+describe('admin érdeklődők', () => {
+  it('token nélkül 401; tokennel csak a saját tenant leadjeit kéri, státuszt validál', async () => {
+    expect((await handleAdminLeads(new Request('https://t.test/api/admin-leads'), env)).status).toBe(401)
+    const auth = { Authorization: `Bearer ${await signToken('titok', 'demo')}` }
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify([{ ref: 'DEMO-1', customer_name: 'Teszt' }]), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const list = await handleAdminLeads(new Request('https://t.test/api/admin-leads', { headers: auth }), env)
+    expect((await list.json()).leads).toHaveLength(1)
+    expect(String((fetchMock.mock.calls as unknown as unknown[][])[0][0])).toContain('tenant_id=eq.demo')
+    const bad = await handleAdminLeads(new Request('https://t.test/api/admin-leads', { method: 'PATCH', headers: auth, body: JSON.stringify({ ref: 'DEMO-1', status: 'torles' }) }), env)
+    expect(bad.status).toBe(422)
+    fetchMock.mockClear()
+    const good = await handleAdminLeads(new Request('https://t.test/api/admin-leads', { method: 'PATCH', headers: auth, body: JSON.stringify({ ref: 'DEMO-1', status: 'won' }) }), env)
+    expect(good.status).toBe(200)
+    expect(String((fetchMock.mock.calls as unknown as unknown[][])[0][0])).toContain('tenant_id=eq.demo')
     vi.unstubAllGlobals()
   })
 })

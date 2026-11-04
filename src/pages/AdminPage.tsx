@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
+import AdminLeads from '@/pages/AdminLeads'
+import AdminOverview from '@/pages/AdminOverview'
+import { useLeads } from '@/lib/adminLeads'
 import NotFound from '@/pages/NotFound'
 import { MOUNT_LABELS, MOUNT_TYPES } from '@/lib/mount'
 import { ROOF_INFO, ROOF_TYPES } from '@/lib/roofs'
@@ -88,8 +91,9 @@ function AdminForTenant({ base }: { base: Tenant }) {
 
   if (overrides === undefined) return <main className="admin-page"><p className="admin-card" role="status">Betöltés…</p></main>
 
-  return <AdminEditor base={base} initial={overrides} storage={storage} saving={saving} message={message} onLogout={logout}
-    onSave={async (next) => {
+  return <AdminShell base={base} token={token} onExpired={logout} onLogout={logout}>
+    <AdminEditor base={base} initial={overrides} storage={storage} saving={saving} message={message}
+      onSave={async (next) => {
       setSaving(true); setMessage(null)
       try {
         const response = await fetch('/api/admin-settings', { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(next) })
@@ -100,9 +104,40 @@ function AdminForTenant({ base }: { base: Tenant }) {
       } catch { setMessage({ kind: 'error', text: 'A szerver nem érhető el. A módosításaid még nincsenek mentve.' }) }
       finally { setSaving(false) }
     }} />
+  </AdminShell>
 }
 
-function AdminEditor({ base, initial, storage, saving, message, onSave, onLogout }: { base: Tenant; initial: TenantOverrides | null; storage: boolean; saving: boolean; message: { kind: 'ok' | 'error'; text: string } | null; onSave: (next: TenantOverrides) => void; onLogout: () => void }) {
+type AdminTab = 'overview' | 'leads' | 'settings'
+const TABS: [AdminTab, string, string][] = [['overview', 'Áttekintés', '#attekintes'], ['leads', 'Érdeklődők', '#erdeklodok'], ['settings', 'Beállítások', '#beallitasok']]
+
+/** Közös keret: oldalsáv (mobilon felső sáv) + Áttekintés / Érdeklődők / Beállítások. Az űrlap fül nem veszti el a szerkesztést váltáskor. */
+function AdminShell({ base, token, onExpired, onLogout, children }: { base: Tenant; token: string; onExpired: () => void; onLogout: () => void; children: ReactNode }) {
+  const [tab, setTab] = useState<AdminTab>(() => TABS.find(([, , hash]) => hash === window.location.hash)?.[0] ?? 'overview')
+  const { leads, error, reload, setStatus } = useLeads(token, onExpired)
+  const choose = (next: AdminTab) => { setTab(next); window.history.replaceState(null, '', TABS.find(([key]) => key === next)![2]) }
+  const fresh = leads?.filter((lead) => lead.status === 'new').length ?? 0
+  const title = TABS.find(([key]) => key === tab)![1]
+  return <main className="admin-page">
+    <div className="admin-layout">
+      <aside className="admin-side">
+        <div className="admin-brand"><span className="admin-eyebrow">Gyártói admin</span><strong>{base.brand.name}{base.brand.suffix && <small> {base.brand.suffix}</small>}</strong></div>
+        <nav className="admin-nav" aria-label="Admin részek">
+          {TABS.map(([key, label]) => <button type="button" key={key} className={tab === key ? 'is-on' : ''} onClick={() => choose(key)} aria-current={tab === key ? 'page' : undefined}>{label}{key === 'leads' && fresh > 0 && <em>{fresh}</em>}</button>)}
+        </nav>
+        <div className="admin-side-foot"><Link to={`/k/${base.id}`} target="_blank" rel="noopener">Konfigurátor megnyitása</Link><button type="button" className="admin-link" onClick={onLogout}>Kilépés</button></div>
+      </aside>
+      <section className="admin-main">
+        <h1>{title}</h1>
+        {tab !== 'settings' && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
+        {tab === 'overview' && leads && <>{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} onOpenLeads={() => choose('leads')} /></>}
+        {tab === 'leads' && leads && <AdminLeads leads={leads} error={error} onReload={() => void reload()} onStatus={(ref, status) => void setStatus(ref, status)} />}
+        <div hidden={tab !== 'settings'}>{children}</div>
+      </section>
+    </div>
+  </main>
+}
+
+function AdminEditor({ base, initial, storage, saving, message, onSave }: { base: Tenant; initial: TenantOverrides | null; storage: boolean; saving: boolean; message: { kind: 'ok' | 'error'; text: string } | null; onSave: (next: TenantOverrides) => void }) {
   // Az űrlap a kód + eddigi felülírások együttes (érvényes) állapotából indul.
   const effective = useMemo(() => (initial ? applyOverrides(base, initial) : base), [base, initial])
   const [brand, setBrand] = useState<Brand>(() => Object.fromEntries(BRAND_FIELDS.map(([key]) => [key, effective.brand[key] ?? ''])) as Brand)
@@ -142,12 +177,7 @@ function AdminEditor({ base, initial, storage, saving, message, onSave, onLogout
     onSave(checked.data)
   }
 
-  return <main className="admin-page">
-    <form className="admin-card" onSubmit={submit}>
-      <header className="admin-head">
-        <div><span className="admin-eyebrow">{base.brand.name} · gyártói admin</span><h1>Beállítások</h1></div>
-        <div className="admin-head-actions"><Link to={`/k/${base.id}`} target="_blank" rel="noopener">Konfigurátor megnyitása</Link><button type="button" className="admin-link" onClick={onLogout}>Kilépés</button></div>
-      </header>
+  return <form className="admin-form" onSubmit={submit}>
       {!storage && <p className="admin-message is-error" role="alert">Az adattár (Supabase) nincs beállítva a szerveren, ezért a mentés nem működik.</p>}
 
       <Section title="Cég és kapcsolat">
@@ -189,6 +219,5 @@ function AdminEditor({ base, initial, storage, saving, message, onSave, onLogout
       {formError && <p className="admin-message is-error" role="alert">{formError}</p>}
       {message && <p className={`admin-message is-${message.kind}`} role={message.kind === 'error' ? 'alert' : 'status'}>{message.text}</p>}
       <div className="admin-savebar"><button className="admin-save" type="submit" disabled={saving || !storage}>{saving ? 'Mentés…' : 'Mentés'}</button></div>
-    </form>
-  </main>
+  </form>
 }

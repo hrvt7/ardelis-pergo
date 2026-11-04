@@ -2,13 +2,14 @@
 import 'dotenv/config'
 import { Hono } from 'hono'
 import { handleLeadRequest } from './lead'
-import { handleAdminLogin, handleAdminSettings, handleTenantRequest } from './tenantAdmin'
+import { handleAdminLeads, handleAdminLogin, handleAdminSettings, handleTenantRequest } from './tenantAdmin'
 
 const app = new Hono()
 app.post('/api/lead', (c) => handleLeadRequest(c.req.raw, process.env))
 app.get('/api/tenant', (c) => handleTenantRequest(c.req.raw, process.env))
 app.post('/api/admin-login', (c) => handleAdminLogin(c.req.raw, process.env))
 app.on(['GET', 'PUT'], '/api/admin-settings', (c) => handleAdminSettings(c.req.raw, process.env))
+app.on(['GET', 'PATCH'], '/api/admin-leads', (c) => handleAdminLeads(c.req.raw, process.env))
 app.all('/api/*', (c) => c.json({ ok: false, error: 'Nem található.' }, 404))
 
 export default app

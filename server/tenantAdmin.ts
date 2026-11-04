@@ -166,3 +166,38 @@ export async function handleAdminSettings(request: Request, env: AdminEnv): Prom
   }
   return json(200, { ok: true })
 }
+
+const LEAD_STATUSES = ['new', 'contacted', 'offered', 'won', 'lost'] as const
+const LEAD_COLUMNS = 'ref,customer_name,email,phone,postal_code,city,region,address,notes,estimate_gross,config_url,status,source,created_at,config'
+const statusSchema = z.object({ ref: z.string().trim().min(3).max(60), status: z.enum(LEAD_STATUSES) })
+
+/** GET /api/admin-leads → a gyártó érdeklődői (legfrissebb elöl); PATCH { ref, status } → státusz módosítása. Csak a saját tenant. */
+export async function handleAdminLeads(request: Request, env: AdminEnv): Promise<Response> {
+  if (request.method !== 'GET' && request.method !== 'PATCH') return json(405, { ok: false, error: 'Nem engedélyezett metódus.' })
+  const auth = await authorize(request, env)
+  if (auth instanceof Response) return auth
+  if (!storeConfigured(env)) return json(503, { ok: false, error: 'Az adattár (Supabase) nincs beállítva, az érdeklődők nem érhetők el.' })
+  const base = `${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/leads`
+  const tenantId = encodeURIComponent(auth.tenant.id)
+
+  try {
+    if (request.method === 'GET') {
+      const response = await fetch(`${base}?tenant_id=eq.${tenantId}&select=${LEAD_COLUMNS}&order=created_at.desc&limit=200`, { headers: storeHeaders(env), signal: AbortSignal.timeout(5000) })
+      if (!response.ok) throw new Error(`Supabase ${response.status}`)
+      return json(200, { ok: true, leads: await response.json() })
+    }
+    const parsed = statusSchema.safeParse(await request.json().catch(() => null))
+    if (!parsed.success) return json(422, { ok: false, error: 'Érvénytelen státusz.' })
+    const response = await fetch(`${base}?ref=eq.${encodeURIComponent(parsed.data.ref)}&tenant_id=eq.${tenantId}`, {
+      method: 'PATCH',
+      headers: { ...storeHeaders(env), Prefer: 'return=minimal' },
+      body: JSON.stringify({ status: parsed.data.status }),
+      signal: AbortSignal.timeout(5000),
+    })
+    if (!response.ok) throw new Error(`Supabase ${response.status}`)
+    return json(200, { ok: true })
+  } catch (error) {
+    console.error('[tenant] Érdeklődők kezelése sikertelen', auth.tenant.id, error)
+    return json(502, { ok: false, error: 'Az érdeklődők most nem érhetők el. Próbáld újra.' })
+  }
+}
