@@ -107,10 +107,12 @@ export async function handleTenantRequest(request: Request, env: AdminEnv): Prom
 
 const loginSchema = z.object({ tenantId: z.string().trim().min(1).max(64), password: z.string().max(200).default('') })
 
-/** A token aláírókulcsa: ADMIN_TOKEN_SECRET, ennek hiányában a (titkos) Supabase service key. */
-const tokenSecret = (env: AdminEnv) => env.ADMIN_TOKEN_SECRET || env.SUPABASE_SERVICE_ROLE_KEY
-/** Nyitott demó: jelszó nélkül csak a `demo` tenant, és csak amíg nincs hozzá ADMIN_PASSWORD_DEMO beállítva. */
-const isOpenDemo = (tenantId: string, env: AdminEnv) => tenantId === 'demo' && !env[passwordEnvKey(tenantId)]
+/** Demó-alapértelmezések: a `demo` tenant jelszava 1111, amíg ADMIN_PASSWORD_DEMO nincs beállítva. Más gyártóra nem érvényes. */
+const DEMO_PASSWORD = '1111'
+const DEMO_SECRET = 'ardelis-demo-only-token-secret'
+/** A token aláírókulcsa: ADMIN_TOKEN_SECRET, ennek hiányában a Supabase service key; végső esetben a demó-kulcs (csak a demo tenantra). */
+const tokenSecret = (env: AdminEnv) => env.ADMIN_TOKEN_SECRET || env.SUPABASE_SERVICE_ROLE_KEY || DEMO_SECRET
+const expectedPassword = (tenantId: string, env: AdminEnv) => env[passwordEnvKey(tenantId)] || (tenantId === 'demo' ? DEMO_PASSWORD : undefined)
 
 /** POST /api/admin/login — { tenantId, password } → { token } */
 export async function handleAdminLogin(request: Request, env: AdminEnv): Promise<Response> {
@@ -119,10 +121,9 @@ export async function handleAdminLogin(request: Request, env: AdminEnv): Promise
   if (!parsed.success) return json(400, { ok: false, error: 'Add meg a jelszót.' })
   const { tenantId, password } = parsed.data
   const tenant = getTenant(tenantId)
-  const expected = tenant ? env[passwordEnvKey(tenant.id)] : undefined
+  const expected = tenant ? expectedPassword(tenant.id, env) : undefined
   const secret = tokenSecret(env)
-  const open = Boolean(tenant) && isOpenDemo(tenant!.id, env)
-  if (!secret || (!expected && !open)) return json(503, { ok: false, error: 'Az admin belépés ehhez a gyártóhoz még nincs beállítva.' })
+  if (!tenant || !expected || (secret === DEMO_SECRET && tenant.id !== 'demo')) return json(503, { ok: false, error: 'Az admin belépés ehhez a gyártóhoz még nincs beállítva.' })
 
   const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown'
   const key = `${forwarded}|${tenant!.id}`
@@ -131,17 +132,16 @@ export async function handleAdminLogin(request: Request, env: AdminEnv): Promise
   if (recent.length >= LOGIN_MAX) return json(429, { ok: false, error: 'Túl sok próbálkozás. Próbáld újra néhány perc múlva.' })
   attempts.set(key, [...recent, now])
 
-  if (!open && !(await safeEqual(password, expected!))) return json(401, { ok: false, error: 'Hibás jelszó.' })
+  if (!(await safeEqual(password, expected))) return json(401, { ok: false, error: 'Hibás jelszó.' })
   attempts.delete(key)
-  return json(200, { ok: true, open, token: await signToken(secret, tenant!.id, now) })
+  return json(200, { ok: true, token: await signToken(secret, tenant.id, now) })
 }
 
 export async function authorize(request: Request, env: AdminEnv): Promise<{ tenant: Tenant } | Response> {
   const secret = tokenSecret(env)
-  if (!secret) return json(503, { ok: false, error: 'Az admin belépés nincs beállítva.' })
   const header = request.headers.get('authorization') ?? ''
   const tenantId = header.startsWith('Bearer ') ? await verifyToken(secret, header.slice(7)) : null
-  const tenant = tenantId ? getTenant(tenantId) : undefined
+  const tenant = tenantId && (secret !== DEMO_SECRET || tenantId === 'demo') ? getTenant(tenantId) : undefined
   if (!tenant) return json(401, { ok: false, error: 'A munkamenet lejárt. Jelentkezz be újra.' })
   return { tenant }
 }

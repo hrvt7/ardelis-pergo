@@ -48,13 +48,9 @@ describe('admin háttér', () => {
     expect(ok.status).toBe(200)
     expect((await ok.json()).token).toBeTruthy()
     expect((await handleAdminLogin(post('/api/admin-login', { tenantId: 'demo', password: 'rossz' }), env)).status).toBe(401)
-    // Nyitott demó: jelszó beállítása nélkül a demo tenant jelszó nélkül lép be (a service key írja alá a tokent).
-    const open = await handleAdminLogin(post('/api/admin-login', { tenantId: 'demo' }), { SUPABASE_SERVICE_ROLE_KEY: 'titkos' })
-    expect(open.status).toBe(200)
-    expect((await open.json()).open).toBe(true)
-    // Beállított jelszó mellett nincs nyitott mód; titok nélkül sincs belépés.
-    expect((await handleAdminLogin(post('/api/admin-login', { tenantId: 'demo' }), env)).status).toBe(401)
-    expect((await handleAdminLogin(post('/api/admin-login', { tenantId: 'demo' }), {})).status).toBe(503)
+    // Demó-alapértelmezés: jelszó beállítása nélkül a demo jelszava 1111, titok nélkül is működik; más tenantra nem.
+    expect((await handleAdminLogin(post('/api/admin-login', { tenantId: 'demo', password: '1111' }), {})).status).toBe(200)
+    expect((await handleAdminLogin(post('/api/admin-login', { tenantId: 'demo', password: '1111' }), env)).status).toBe(401)
     for (let i = 0; i < 6; i++) await handleAdminLogin(post('/api/admin-login', { tenantId: 'demo', password: 'rossz' }), env)
     expect((await handleAdminLogin(post('/api/admin-login', { tenantId: 'demo', password: 'jelszo123' }), env)).status).toBe(429)
   })
