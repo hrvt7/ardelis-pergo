@@ -2,6 +2,7 @@
 // AR-hez. Az origó a pergola alapterületének közepe a talajon, egység: méter.
 import * as THREE from 'three'
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js'
+import { USDZExporter } from 'three/addons/exporters/USDZExporter.js'
 import { getActiveScene } from '@/lib/sceneRegistry'
 
 /** Ami nem a termék része: méretvonalak, 180 cm-es figura, súgópontok, fények, címkék. */
@@ -54,6 +55,25 @@ function expandInstances(root: THREE.Object3D) {
   })
 }
 
+/**
+ * A lekerekített dobozok (drei RoundedBox → letört élű ExtrudeGeometry) egyenként ~3000 csúcspontot adnak;
+ * valós méretben (1–2 cm-es lekerekítés) ez az AR-ben nem látszik, a fájlt viszont sokszorosára növeli.
+ * Az AR-modellben ugyanakkora sima doboz helyettesíti őket.
+ */
+function isRoundedBox(geometry: THREE.BufferGeometry) {
+  const parameters = (geometry as THREE.BufferGeometry & { parameters?: { options?: { bevelEnabled?: boolean } } }).parameters
+  return geometry.type === 'ExtrudeGeometry' && parameters?.options?.bevelEnabled === true
+}
+function boxFromBounds(geometry: THREE.BufferGeometry) {
+  geometry.computeBoundingBox()
+  const box = geometry.boundingBox!
+  const size = box.getSize(new THREE.Vector3())
+  const center = box.getCenter(new THREE.Vector3())
+  const result = new THREE.BoxGeometry(size.x, size.y, size.z)
+  result.translate(center.x, center.y, center.z)
+  return result
+}
+
 export function buildArObject(): THREE.Object3D {
   const scene = getActiveScene()
   const source = scene?.getObjectByName('pergola-model')
@@ -68,13 +88,24 @@ export function buildArObject(): THREE.Object3D {
   remove.forEach((child) => child.removeFromParent())
   // Azonos megjelenésű anyagok összevonása: kisebb fájl, kevesebb rajzolási hívás az AR-nézőben.
   const materials = new Map<string, THREE.MeshStandardMaterial>()
+  // Ugyanaz a forrásgeometria (pl. 20 lamella) egyetlen másolatot kap: az exporter így egyszer írja ki → kisebb fájl.
+  const geometries = new Map<THREE.BufferGeometry, THREE.BufferGeometry>()
+  const portableGeometry = (source: THREE.BufferGeometry) => {
+    const existing = geometries.get(source)
+    if (existing) return existing
+    // Saját másolat UV nélkül (textúra nincs), hogy az élő jelenet érintetlen maradjon.
+    const copy = isRoundedBox(source) ? boxFromBounds(source) : source.clone()
+    if (copy.getAttribute('uv')) copy.deleteAttribute('uv')
+    if (copy.getAttribute('uv1')) copy.deleteAttribute('uv1')
+    if (!copy.getAttribute('normal')) copy.computeVertexNormals()
+    geometries.set(source, copy)
+    return copy
+  }
   clone.traverse((child) => {
     const mesh = child as THREE.Mesh
     if (!mesh.isMesh) return
     mesh.castShadow = true
-    // Saját geometriamásolat UV nélkül (textúra nincs), hogy az élő jelenet érintetlen maradjon.
-    mesh.geometry = mesh.geometry.clone()
-    if (mesh.geometry.getAttribute('uv')) mesh.geometry.deleteAttribute('uv')
+    mesh.geometry = portableGeometry(mesh.geometry)
     const convert = (material: THREE.Material) => {
       const portable = toPortableMaterial(material)
       const key = [portable.color.getHexString(), portable.metalness.toFixed(2), portable.roughness.toFixed(2), portable.opacity.toFixed(2), portable.transparent, portable.emissive.getHexString(), portable.side].join('|')
@@ -92,15 +123,56 @@ export function buildArObject(): THREE.Object3D {
   return root
 }
 
-export async function exportPergolaGlb(): Promise<Blob> {
-  const object = buildArObject()
+export async function exportPergolaGlb(object: THREE.Object3D = buildArObject()): Promise<Blob> {
   const exporter = new GLTFExporter()
   const result = await exporter.parseAsync(object, { binary: true, onlyVisible: true })
   if (!(result instanceof ArrayBuffer)) throw new Error('A GLB export nem sikerült.')
   return new Blob([result], { type: 'model/gltf-binary' })
 }
 
+/**
+ * USDZ közvetlenül iPhone/iPad AR Quick Look-hoz (méter egység, Y felfelé, vízszintes síkra horgonyozva).
+ * Előre elkészítjük, így a gombnyomás azonnal megnyitja a Quick Look-ot (nincs gombnyomás utáni konverzió,
+ * ami iOS-en elveszítheti a felhasználói gesztust és „semmi sem történik”).
+ */
+export async function exportPergolaUsdz(object: THREE.Object3D = buildArObject()): Promise<Blob> {
+  const exporter = new USDZExporter()
+  const result = await exporter.parseAsync(object, {
+    quickLookCompatible: true,
+    includeAnchoringProperties: true,
+    ar: { anchoring: { type: 'plane' }, planeAnchoring: { alignment: 'horizontal' } },
+  })
+  return new Blob([result as BlobPart], { type: 'model/vnd.usdz+zip' })
+}
+
+/** A legutóbbi export (konfigurációnként): az AR-ablak újranyitásakor nem kell újra exportálni. */
+const cache = new Map<string, Promise<Blob>>()
+export function cachedExport(kind: 'glb' | 'usdz', key: string): Promise<Blob> {
+  const id = `${kind}|${key}`
+  const hit = cache.get(id)
+  if (hit) return hit
+  if (cache.size > 6) cache.clear()
+  const job = (kind === 'glb' ? exportPergolaGlb() : exportPergolaUsdz()).catch((error) => { cache.delete(id); throw error })
+  cache.set(id, job)
+  return job
+}
+
 // Hibakereséshez és automatikus teszthez: ?arDebug=1 mellett elérhető a konzolból.
 if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('arDebug') === '1') {
   (window as Window & { __exportPergolaGlb?: () => Promise<ArrayBuffer> }).__exportPergolaGlb = async () => (await exportPergolaGlb()).arrayBuffer()
+  ;(window as Window & { __arStats?: () => unknown }).__arStats = () => {
+    const object = buildArObject()
+    const geometries = new Map<THREE.BufferGeometry, { vertices: number; uses: number; name: string }>()
+    object.traverse((child) => {
+      const mesh = child as THREE.Mesh
+      if (!mesh.isMesh) return
+      let name = ''
+      for (let node: THREE.Object3D | null = mesh; node; node = node.parent) if (node.name && node.name !== 'Pergola') { name = node.name; break }
+      const entry = geometries.get(mesh.geometry) ?? { vertices: mesh.geometry.getAttribute('position').count, uses: 0, name: `${name}:${mesh.geometry.type}:${mesh.geometry.index ? 'idx' : 'noidx'}` }
+      entry.uses += 1
+      geometries.set(mesh.geometry, entry)
+    })
+    const list = [...geometries.values()]
+    return { meshes: list.reduce((sum, item) => sum + item.uses, 0), uniqueGeometries: list.length, uniqueVertices: list.reduce((sum, item) => sum + item.vertices, 0), top: list.sort((a, b) => b.vertices - a.vertices).slice(0, 12), byType: list.reduce<Record<string, number>>((acc, item) => { const key = item.name.split(':')[1]; acc[key] = (acc[key] ?? 0) + item.uses; return acc }, {}) }
+  }
 }

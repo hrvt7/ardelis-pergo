@@ -569,3 +569,9 @@ működést, az eladhatóságot és a hibákat érintik.
 - Admin → Beállítások: táblázatos ármátrix-szerkesztő (tetőnként, sor hozzáadás/törlés, Excel-beillesztés, mentéskori validáció: pozitív szám, duplikált méretpár, 30 m / 400 sor korlát). Az adatszerkezet és a számolás változatlan.
 - Mobil admin: kártyás lead lista, alulról felcsúszó részletező rögzített Hívás / E-mail / Terv gombokkal, 16 px-es mezők, mentés sáv az alsó navigáció fölött.
 - Admin grafikon: monoton görbe (nem bukik a tengely alá); KPI-sparkline nem takarja a feliratot.
+
+## 3.25 — Fotóba helyezés és megbízhatóbb AR
+- Fotóba helyezés: „Fotó” gomb a 3D nézetben; JPG/PNG/WebP, max. 10 MB (HEIC-re útmutató). A fotó HTML-háttér az átlátszó vászon mögött (nincs textúra/GPU-memória, a színkezelés érintetlen). Húzás = mozgatás, görgő/két ujj = méret és forgatás, Shift/jobb gomb + húzás = forgatás, nézőszög-csúszka, árnyékfogó sík (a pergola árnyéka a fotó talaján). Visszaállítás, Csere, Törlés, Kész; „FOTÓ MÓD” jelzés. Gesztus közben a 3D objektum közvetlenül mozog, elengedéskor egyszer mentjük az állapotot.
+- A fotó és az elhelyezés csak a böngészőben marad (IndexedDB + localStorage), újranyitáskor visszatöltődik; a PDF-be és a megosztott képbe a fotós látvány kerül (háttér + 3D egymásra rajzolva). A link nem viszi a fotót (adatvédelem).
+- AR: iOS-en előre elkészített USDZ + közvetlen `<a rel="ar">` (allowsContentScaling=0 → valós méret); Androidon WebXR (model-viewer); nem támogatott telefonon nincs AR-gomb, a QR-ről érkezőknek érthető ok + alternatíva (fotóba helyezés, link). Asztalon QR + fotó-alternatíva. Első használatkor 3 lépéses útmutató.
+- AR-export: a lekerekített dobozok sima dobozra cserélve, a közös geometriák egyszer exportálva: csúcspontok ~70 000 → ~3 100, USDZ ~5,7 MB → ~0,4 MB, GLB ~1,7 MB → ~0,17 MB (demókonfiguráció).
