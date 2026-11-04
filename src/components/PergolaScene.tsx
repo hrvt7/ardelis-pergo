@@ -54,6 +54,9 @@ const HDR_FILES = {
   golden: assetUrl('/assets/hdr/evening_museum_courtyard.hdr'),
   night: assetUrl('/assets/hdr/courtyard_night.hdr'),
 } as const
+/** Alacsony és közepes szinten (mobil) a 512×256-os égbolt elég a fényhez, és kb. negyedannyi letöltés. */
+const smallHdr = (file: string) => file.replace(/\.hdr$/, '-512.hdr')
+const wantsSmallHdr = (tier: string) => tier === 'low' || tier === 'medium'
 
 type TextureMaps = { diff: THREE.Texture; normal: THREE.Texture; rough: THREE.Texture }
 
@@ -855,14 +858,16 @@ let prefetchedHdr = ''
  * A betöltők gyorsítótárát tölti, így a későbbi megjelenítés azonnal kész.
  */
 function prefetchSceneAssets(scene: SceneSettings) {
-  const hdr = getLighting(scene).hdr
+  const small = wantsSmallHdr(detectQualityTier())
+  const pick = (file: string) => (small ? smallHdr(file) : file)
+  const hdr = pick(getLighting(scene).hdr)
   if (scene.photoMode || prefetchedHdr === hdr) return
   prefetchedHdr = hdr
   try {
     getHouseAsset().catch(() => undefined)
     useEnvironment.preload({ files: hdr })
     // A másik két napszak HDR-je tétlen időben töltődik, így a nappal/éjszaka váltás nem vár hálózatra.
-    const others = Object.values(HDR_FILES).filter((file) => file !== hdr)
+    const others = Object.values(HDR_FILES).map(pick).filter((file) => file !== hdr)
     const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 2500))
     idle(() => { try { others.forEach((file) => useEnvironment.preload({ files: file })) } catch { /* nem kritikus */ } }, { timeout: 6000 })
     useTexture.preload((['diff', 'nor_gl', 'rough'] as const).map((map) => assetUrl(pbrPath('oak_wood_planks', map))))
@@ -1799,15 +1804,17 @@ function SceneRegistration() {
 
 function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const lighting = getLighting(scene)
+  // Az árnyékkamera a pergolára és a közvetlen környezetére illeszkedik: ugyanazon a felbontáson élesebb árnyék.
+  const shadowExtent = scene.sunStudy ? lighting.shadowExtent : Math.min(lighting.shadowExtent, Math.max(7, Math.max(config.width, config.depth) / 2 + 4.5))
   const houseLook = useMemo<HouseLook>(() => ({ wallFinish: scene.wallFinish, wallColor: scene.wallColor, windowColor: scene.windowColor }), [scene.wallFinish, scene.wallColor, scene.windowColor])
   useFrame(({ gl }) => { if (gl.toneMappingExposure !== lighting.exposure) gl.toneMappingExposure = lighting.exposure })
   const pergola = <group position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} hideZone={view === 'sofa'} /></OptionalSceneAsset>}</group>
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}|${scene.wallColor}|${scene.windowColor}`} />
     {!scene.photoMode && <><fog attach="fog" args={[lighting.fog, 20, 43]} /><FogFollow /></>}
-    <ambientLight intensity={lighting.ambient} /><hemisphereLight args={['#c8d8e2', '#51483e', lighting.hemisphere]} /><directionalLight key={lighting.shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={[quality.shadowMapSize, quality.shadowMapSize]} shadow-camera-left={-lighting.shadowExtent} shadow-camera-right={lighting.shadowExtent} shadow-camera-top={lighting.shadowExtent} shadow-camera-bottom={-lighting.shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
+    <ambientLight intensity={lighting.ambient} /><hemisphereLight args={['#c8d8e2', '#51483e', lighting.hemisphere]} /><directionalLight key={shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={[quality.shadowMapSize, quality.shadowMapSize]} shadow-camera-left={-shadowExtent} shadow-camera-right={shadowExtent} shadow-camera-top={shadowExtent} shadow-camera-bottom={-shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
-    {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment} environmentRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
+    {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={wantsSmallHdr(quality.tier) ? smallHdr(lighting.hdr) : lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment} environmentRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
     {!scene.photoMode && <Ground scene={scene} />}
     {!scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} look={houseLook} night={lighting.night} />}
     {!scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} look={houseLook} night={lighting.night} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
@@ -1828,7 +1835,7 @@ function ScenePoster({ message, onRetry, percent, leaving = false }: { message?:
   const failed = Boolean(onRetry)
   return <div className={`scene-poster${failed ? ' is-error' : ''}${leaving ? ' is-leaving' : ''}`} role={failed ? 'alert' : 'status'} aria-live="polite">
     {failed ? <img className="scene-poster-image" src={assetUrl('/assets/pergo-hero.webp')} alt={`${tenant.brand.name} pergola statikus előnézete`} /> : <div className="poster-skeleton"><span /><span /><span /><span /></div>}
-    <div className="branded-loader"><div className="loader-brand">{tenant.brand.name}{tenant.brand.suffix && <small> / {tenant.brand.suffix}</small>}</div>{!failed && <div className="loader-track"><span style={{ width: `${Math.max(2, progress)}%` }} /></div>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
+    <div className="branded-loader"><div className="loader-brand">{tenant.brand.name}{tenant.brand.suffix && <small> {tenant.brand.suffix}</small>}</div>{!failed && <div className="loader-track"><span style={{ width: `${Math.max(2, progress)}%` }} /></div>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
   </div>
 }
 

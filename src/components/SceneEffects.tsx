@@ -43,7 +43,7 @@ export default function SceneEffects({ ultra, night }: { ultra: boolean; night: 
         aoRadius={0.75}
         distanceFalloff={0.55}
         intensity={night ? 1.7 : 2.6}
-        aoSamples={ultra ? 24 : 12}
+        aoSamples={ultra ? 24 : 10}
         denoiseSamples={ultra ? 8 : 4}
         denoiseRadius={ultra ? 10 : 12}
         quality={ultra ? 'high' : 'medium'}
