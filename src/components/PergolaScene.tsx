@@ -28,7 +28,6 @@ import { sideSegments } from '@/lib/sides'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
 import HotTub from '@/components/HotTub'
-import { technicalDrawing } from '@/lib/drawing'
 import { getSpecCode } from '@/lib/specification'
 import { isGlazedRoof, isMovableRoof } from '@/lib/roofs'
 import { deckBounds } from '@/lib/deck'
@@ -203,12 +202,18 @@ function getWoodTexture() {
 }
 
 /** Közös, gyorsítótárazott anyagok: színenként és érdességenként egy példány (kevesebb anyag, egy helyen hangolható). */
-const coatCache = new Map<string, THREE.MeshPhysicalMaterial>()
+const coatCache = new Map<string, THREE.MeshStandardMaterial>()
+/** Gyengébb eszközön (low/medium) sima Standard anyag: nincs lakkréteg, gyorsabb shader-fordítás és kisebb GPU-terhelés. */
+let lightCoat: boolean | undefined
+const wantsLightCoat = () => (lightCoat ??= ['low', 'medium'].includes(detectQualityTier()))
 function getCoat(color: string, roughness: number) {
   const key = `${color}|${roughness}`
   let material = coatCache.get(key)
   if (!material) {
-    if (WOOD_HEXES.has(color)) material = new THREE.MeshPhysicalMaterial({ color: lightenForWood(color), map: getWoodTexture(), metalness: 0.02, roughness: 0.6, clearcoat: 0.12, clearcoatRoughness: 0.5, envMapIntensity: 0.7 })
+    if (wantsLightCoat()) material = WOOD_HEXES.has(color)
+      ? new THREE.MeshStandardMaterial({ color: lightenForWood(color), map: getWoodTexture(), metalness: 0.02, roughness: 0.6, envMapIntensity: 0.7 })
+      : new THREE.MeshStandardMaterial({ color, metalness: 0.3, roughness, roughnessMap: getPowderCoatTexture(), envMapIntensity: 0.9 })
+    else if (WOOD_HEXES.has(color)) material = new THREE.MeshPhysicalMaterial({ color: lightenForWood(color), map: getWoodTexture(), metalness: 0.02, roughness: 0.6, clearcoat: 0.12, clearcoatRoughness: 0.5, envMapIntensity: 0.7 })
     // Festett (porszórt) alumínium: alacsony fémesség, vékony lakkréteg — az éleken éles, valódi csillanás.
     else material = new THREE.MeshPhysicalMaterial({ color, metalness: 0.2, roughness, roughnessMap: getPowderCoatTexture(), clearcoat: 0.35, clearcoatRoughness: 0.28, specularIntensity: 1, envMapIntensity: 0.9 })
     coatCache.set(key, material)
@@ -1846,10 +1851,14 @@ function webglSupported() {
 /** 3D nélküli tartalék: a konfigurált pergola méretarányos rajza (a PDF-rajzzal azonos adatból). */
 function FallbackDrawing({ config }: { config: PergolaConfig }) {
   const { tenant } = useTenant()
-  const svg = useMemo(() => {
-    try {
-      return technicalDrawing(config, { brand: tenant.brand.name, contact: '', title: 'Pergola – méretarányos rajz', code: getSpecCode(config), date: new Date().toLocaleDateString('hu-HU'), notes: [] }).svg
-    } catch { return '' }
+  const [svg, setSvg] = useState('')
+  useEffect(() => {
+    let alive = true
+    // A rajzoló csak hibánál töltődik be: a normál indulást nem terheli.
+    import('@/lib/drawing').then(({ technicalDrawing }) => {
+      if (alive) setSvg(technicalDrawing(config, { brand: tenant.brand.name, contact: '', title: 'Pergola – méretarányos rajz', code: getSpecCode(config), date: new Date().toLocaleDateString('hu-HU'), notes: [] }).svg)
+    }).catch(() => { if (alive) setSvg('') })
+    return () => { alive = false }
   }, [config, tenant.brand.name])
   if (!svg) return null
   return <div className="fallback-drawing" aria-label="A konfigurált pergola méretarányos rajza" dangerouslySetInnerHTML={{ __html: svg }} />
