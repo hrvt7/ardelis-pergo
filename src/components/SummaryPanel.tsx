@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, Camera, Check, ChevronRight, Clipboard, Clock3, Code2, Gauge, GitCompareArrows, LoaderCircle, PackageCheck, PencilLine, Save, Share2, Wallet } from 'lucide-react'
+import { getAdvice } from '@/lib/advice'
+import { FileDown, MessageCircle, ArrowRight, Camera, Check, ChevronRight, Clipboard, Clock3, Code2, Gauge, GitCompareArrows, LoaderCircle, PackageCheck, PencilLine, Save, Share2, Wallet } from 'lucide-react'
 import PriceMix from '@/components/PriceMix'
 import { captureScene, renderShareCard, shareOrDownload } from '@/lib/showcase'
 import { colorSummary } from '@/lib/colors'
@@ -28,9 +29,12 @@ interface Props {
   onProjectName: (name: string) => void
   /** A vásárló házának leírása (a 3D beállításból) — a kérelemhez és a PDF-hez. */
   house?: string
+  onExport?: () => void
+  exporting?: boolean
+  shareUrl?: string
 }
 
-export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, projectName, onProjectName, house }: Props) {
+export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, projectName, onProjectName, house, onExport, exporting, shareUrl }: Props) {
   const { tenant, labels: ROOF_LABELS } = useTenant()
   const [thumbnail, setThumbnail] = useState('')
   const bom = getBom(config)
@@ -72,8 +76,17 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
     try { await copyShareUrl(createTextSummary(config, price, ROOF_LABELS, tenant.brand.name, tenant)); onNotify('Az összefoglaló a vágólapra másolva.') }
     catch { onNotify('A másolás nem sikerült ebben a böngészőben.') }
   }
+  const advice = getAdvice(config)
+  const goLead = () => document.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${projectName.trim() || 'Pergola tervem'} – ${formatHuf(price.totalGross)} bruttó irányár\n${shareUrl ?? window.location.href}`)}`
   return (
     <div className="summary-panel">
+      <div className="summary-cta">
+        <button type="button" className="cta-primary" onClick={goLead}><PackageCheck size={18} />Felmérést kérek</button>
+        {onExport && <button type="button" onClick={onExport} disabled={exporting}>{exporting ? <LoaderCircle className="spin" size={18} /> : <FileDown size={18} />}PDF letöltése</button>}
+        <a href={whatsapp} target="_blank" rel="noopener noreferrer"><MessageCircle size={18} />WhatsApp</a>
+      </div>
+      {advice.length > 0 && <ul className="advice-list" aria-label="Szakértői megjegyzések">{advice.map((item) => <li key={item.id} className={item.level}>{item.text}</li>)}</ul>}
       <section className="showroom">
         <div className="showroom-image">
           {thumbnail ? <img src={thumbnail} alt="A konfigurált pergola képe" /> : <div className="showroom-skeleton"><LoaderCircle size={22} className="spin" /><span>A kép a körbeforgás közben elkészül…</span></div>}

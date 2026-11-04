@@ -1669,3 +1669,20 @@ button.diagram-core.selected span { color: var(--accent-primary); }
   .studio-shell:not(:has(.price-panel.is-collapsed)) .summary-panel .showroom .price-mix,
   .studio-shell:not(:has(.price-panel.is-collapsed)) .controls-panel .energy-trigger { display: none; }
 }
+
+/* 3D tartalék: méretarányos rajz a poszter alatt */
+.fallback-drawing{position:absolute;inset:auto 12px 12px;max-height:46%;display:flex;justify-content:center;pointer-events:none}
+.fallback-drawing svg{max-width:100%;max-height:100%;height:auto;border-radius:10px;background:#f4f1ea}
+.fallback-note{margin:6px 0 0;font-size:.82rem;line-height:1.4;opacity:.85;max-width:34ch;text-align:center}
+
+/* Összegzés: mindig elérhető fő műveletek (felmérés, PDF, WhatsApp) */
+.summary-cta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.summary-cta>*{min-height:48px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 8px;border:1px solid var(--surface-border);border-radius:8px;background:transparent;color:var(--text-primary);font:600 13px/1.2 inherit;text-decoration:none;text-align:center}
+.summary-cta .cta-primary{background:var(--accent-primary);color:#10170f;border-color:transparent}
+.summary-cta>*:disabled{opacity:.6}
+.mobile-price-bar .mobile-pdf{margin-left:auto;width:44px;padding:0;justify-content:center;border:1px solid var(--surface-border);border-radius:8px}
+@media (max-width:480px){.summary-cta{grid-template-columns:1fr 1fr}.summary-cta .cta-primary{grid-column:1/-1}}
+
+.advice-list{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:7px}
+.advice-list li{padding:10px 12px;border-radius:8px;border:1px solid var(--surface-border);font-size:13px;line-height:1.5;color:var(--text-secondary)}
+.advice-list li.warn{border-color:rgba(255,196,87,.55);color:var(--text-primary);background:rgba(255,196,87,.07)}

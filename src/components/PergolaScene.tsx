@@ -28,6 +28,8 @@ import { sideSegments } from '@/lib/sides'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
 import HotTub from '@/components/HotTub'
+import { technicalDrawing } from '@/lib/drawing'
+import { getSpecCode } from '@/lib/specification'
 import { isGlazedRoof, isMovableRoof } from '@/lib/roofs'
 import { deckBounds } from '@/lib/deck'
 import { SolarPanels } from '@/components/SceneExtras'
@@ -1828,18 +1830,44 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
   </>
 }
 
-function ScenePoster({ message, onRetry, percent, leaving = false }: { message?: string; onRetry?: () => void; percent?: number; leaving?: boolean }) {
+/** WebGL elérhetősége: egy eldobható vásznon próbáljuk (egyszer, gyorsítótárazva). */
+let webglOk: boolean | undefined
+function webglSupported() {
+  if (webglOk !== undefined) return webglOk
+  try {
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl')
+    webglOk = Boolean(gl)
+    gl?.getExtension('WEBGL_lose_context')?.loseContext()
+  } catch { webglOk = false }
+  return webglOk
+}
+
+/** 3D nélküli tartalék: a konfigurált pergola méretarányos rajza (a PDF-rajzzal azonos adatból). */
+function FallbackDrawing({ config }: { config: PergolaConfig }) {
+  const { tenant } = useTenant()
+  const svg = useMemo(() => {
+    try {
+      return technicalDrawing(config, { brand: tenant.brand.name, contact: '', title: 'Pergola – méretarányos rajz', code: getSpecCode(config), date: new Date().toLocaleDateString('hu-HU'), notes: [] }).svg
+    } catch { return '' }
+  }, [config, tenant.brand.name])
+  if (!svg) return null
+  return <div className="fallback-drawing" aria-label="A konfigurált pergola méretarányos rajza" dangerouslySetInnerHTML={{ __html: svg }} />
+}
+
+function ScenePoster({ message, onRetry, percent, leaving = false, config }: { message?: string; onRetry?: () => void; percent?: number; leaving?: boolean; config?: PergolaConfig }) {
   const { progress: loaderProgress } = useProgress()
   const progress = percent ?? loaderProgress
   const { tenant } = useTenant()
-  const failed = Boolean(onRetry)
+  const failed = Boolean(onRetry) || Boolean(config)
   return <div className={`scene-poster${failed ? ' is-error' : ''}${leaving ? ' is-leaving' : ''}`} role={failed ? 'alert' : 'status'} aria-live="polite">
     {failed ? <img className="scene-poster-image" src={assetUrl('/assets/pergo-hero.webp')} alt={`${tenant.brand.name} pergola statikus előnézete`} /> : <div className="poster-skeleton"><span /><span /><span /><span /></div>}
-    <div className="branded-loader"><div className="loader-brand">{tenant.brand.name}{tenant.brand.suffix && <small> {tenant.brand.suffix}</small>}</div>{!failed && <div className="loader-track"><span style={{ width: `${Math.max(2, progress)}%` }} /></div>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
+    <div className="branded-loader"><div className="loader-brand">{tenant.brand.name}{tenant.brand.suffix && <small> {tenant.brand.suffix}</small>}</div>{!failed && <div className="loader-track"><span style={{ width: `${Math.max(2, progress)}%` }} /></div>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{failed && <p className="fallback-note">A konfigurálás, az árkalkuláció, a PDF és a felmérési kérelem 3D nélkül is teljes értékűen működik.</p>}{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
+    {failed && config && <FallbackDrawing config={config} />}
   </div>
 }
 
-class SceneErrorBoundary extends Component<{ children: ReactNode; onRetry: () => void; onFatal: () => void }, { failed: boolean }> {
+class SceneErrorBoundary extends Component<{ children: ReactNode; onRetry: () => void; onFatal: () => void; config: PergolaConfig }, { failed: boolean }> {
   state = { failed: false }
   static getDerivedStateFromError() { return { failed: true } }
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -1847,7 +1875,7 @@ class SceneErrorBoundary extends Component<{ children: ReactNode; onRetry: () =>
     this.props.onFatal()
   }
   render() {
-    if (this.state.failed) return <ScenePoster message="A 3D nézet nem indult el. A konfigurációd megmaradt." onRetry={this.props.onRetry} />
+    if (this.state.failed) return <ScenePoster message="A 3D nézet ezen az eszközön most nem érhető el. A konfigurációd megmaradt." onRetry={this.props.onRetry} config={this.props.config} />
     return this.props.children
   }
 }
@@ -1941,10 +1969,11 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
   const progressTarget = Math.min(99, Math.round(assetProgress))
   if (progressTarget > shownProgress) setShownProgress(progressTarget)
   const coreScene = coreOnly || !decorativeReady
+  if (!webglSupported()) return <div className="scene-canvas-wrap" data-scene-ready="false"><ScenePoster message="Ez az eszköz nem támogatja a 3D nézetet. A konfigurálás, az ár és az ajánlatkérés így is teljes értékű." config={config} /></div>
   return <div className="scene-canvas-wrap" data-scene-ready={loaded}>
     {!posterGone && !contextLost && <ScenePoster percent={loaded ? 100 : shownProgress} leaving={loaded} />}
-    {contextLost && <ScenePoster message="A grafikai kapcsolat megszakadt. A konfigurációd megmaradt." onRetry={retry} />}
-    <SceneErrorBoundary key={`boundary-${attempt}`} onRetry={retry} onFatal={onFatal}>
+    {contextLost && <ScenePoster message="A grafikai kapcsolat megszakadt. A konfigurációd megmaradt." onRetry={retry} config={config} />}
+    <SceneErrorBoundary key={`boundary-${attempt}`} onRetry={retry} onFatal={onFatal} config={config}>
       <Canvas
         key={`canvas-${attempt}`}
         frameloop="demand"

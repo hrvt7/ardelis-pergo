@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Armchair, Box, Check, ChevronRight, CloudRain, Image, Info, Maximize2, Moon, Presentation, Redo2, Rotate3d, RotateCcw, Scan, ShieldCheck, Sun, SunMedium, Undo2, View, WandSparkles, X } from 'lucide-react'
+import { Armchair, FileDown, Box, Check, ChevronRight, CloudRain, Image, Info, Maximize2, Moon, Presentation, Redo2, Rotate3d, RotateCcw, Scan, ShieldCheck, Sun, SunMedium, Undo2, View, WandSparkles, X } from 'lucide-react'
 import { Link } from 'react-router'
 import ConfiguratorControls from '@/components/ConfiguratorControls'
 import { InfoDialog, PriceSettingsDialog, ResetDialog } from '@/components/Dialogs'
@@ -305,7 +305,7 @@ export default function PergoStudio() {
     })
     setToast(`Konfiguráció ${slot} elmentve ebben a böngészőben.`)
   }
-  const summary = <SummaryPanel config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={() => setModal('energy')} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} />
+  const summary = <SummaryPanel onExport={handleExport} exporting={exporting} shareUrl={createShareUrl(config)} config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={() => setModal('energy')} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} />
 
   return (
     <div className={`app-shell ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>
@@ -344,7 +344,7 @@ export default function PergoStudio() {
         <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={admin ? () => setModal('prices') : undefined} onExport={handleExport} onShare={handleShare} onBudget={() => setModal('budget')} collapsed={priceCollapsed} onToggleCollapse={togglePrice} energyCost={energyCost} onEnergy={() => setModal('energy')} />
       </main>
 
-      <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong data-value={price.totalGross}><AnimatedPrice value={price.totalGross} /></strong></div><button type="button" onClick={() => { goStep(step === 'summary' ? 'size' : 'summary'); setMobileControlsOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>
+      <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong data-value={price.totalGross}><AnimatedPrice value={price.totalGross} /></strong></div><button type="button" className="mobile-pdf" aria-label="PDF letöltése" disabled={exporting} onClick={handleExport}><FileDown size={19} /></button><button type="button" onClick={() => { goStep(step === 'summary' ? 'size' : 'summary'); setMobileControlsOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>
       {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label="Értesítés bezárása" onClick={() => setToast('')}><X size={16} /></button></div>}
       {modal === 'prices' && admin && <PriceSettingsDialog prices={prices} onChange={setPrices} onReset={() => { setPrices(tenant.prices); setToast('A gyártói árlista visszaállt.') }} onClose={() => setModal(null)} />}
       {modal === 'info' && <InfoDialog onClose={() => setModal(null)} />}
