@@ -575,3 +575,9 @@ működést, az eladhatóságot és a hibákat érintik.
 - A fotó és az elhelyezés csak a böngészőben marad (IndexedDB + localStorage), újranyitáskor visszatöltődik; a PDF-be és a megosztott képbe a fotós látvány kerül (háttér + 3D egymásra rajzolva). A link nem viszi a fotót (adatvédelem).
 - AR: iOS-en előre elkészített USDZ + közvetlen `<a rel="ar">` (allowsContentScaling=0 → valós méret); Androidon WebXR (model-viewer); nem támogatott telefonon nincs AR-gomb, a QR-ről érkezőknek érthető ok + alternatíva (fotóba helyezés, link). Asztalon QR + fotó-alternatíva. Első használatkor 3 lépéses útmutató.
 - AR-export: a lekerekített dobozok sima dobozra cserélve, a közös geometriák egyszer exportálva: csúcspontok ~70 000 → ~3 100, USDZ ~5,7 MB → ~0,4 MB, GLB ~1,7 MB → ~0,17 MB (demókonfiguráció).
+
+## 3.26 — Lamelix márka és új előny-kártyák
+- A platform neve Lamelix (a „PERGO Studio” helyett: a Pergo bejegyzett padlómárka). Logó: B2B oldal fejléce és lábléce, böngészőikon (favicon.ico/svg, Apple-ikon, webmanifest, PWA-ikonok), megosztási kép (`/assets/lamelix-og.png`), SEO-címek és strukturált adat, gyártói admin (belépés: „Működteti: Lamelix”, oldalsáv alja, fül címe).
+- White-label: a gyártói felületeken a gyártó márkája marad elsődleges; diszkrét „Lamelix” jelzés a konfigurátor 3D nézetében, a PDF láblécén és a gyártónak küldött lead e-mailben. `tenant.platformCredit = false` kikapcsolja (Partnerhálózat csomag). Ha a gyártónak van `logoUrl`-je, a konfigurátor fülén az ő ikonja látszik.
+- Logófájlok: `public/brand/` (SVG mesterfájlok, e-mailes PNG-k); kódban `LamelixLogo` komponens és `lamelixBrand.ts`.
+- Előnyök: öt élő kártya animált mini-termékrészlettel (csúszka + irányár, valódi QR-kód, beérkező leadek, admin-grafikon, ármátrix interpolációval), forgó fénykeret; csak látható állapotban animál, mozgáscsökkentésnél állókép.

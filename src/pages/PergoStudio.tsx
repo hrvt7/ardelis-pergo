@@ -21,6 +21,7 @@ import type { CameraFocus, CameraView, ConfigStep, PergolaConfig, PriceSettings,
 import { usePageSeo } from '@/lib/usePageSeo'
 import { detectArPath, type ArPath } from '@/lib/arSupport'
 import PhotoBar from '@/components/PhotoBar'
+import LamelixLogo from '@/components/LamelixLogo'
 import { DEFAULT_PLACEMENT, PHOTO_ACCEPT, validatePhotoFile, type PhotoPlacement } from '@/lib/photoPlacement'
 import { clearPlacement, deletePhoto, loadPhoto, loadPlacement, savePhoto, savePlacement } from '@/lib/photoStore'
 import type { ShadeResult } from '@/components/ShadeProbe'
@@ -110,6 +111,15 @@ export default function PergoStudio() {
   const [saved, setSaved] = useState<SavedConfiguration[]>(() => loadSaved(tenant))
   const history = useRef<{ past: PergolaConfig[]; future: PergolaConfig[] }>({ past: [], future: [] })
   const photoUrl = useRef<string | null>(null)
+  // White-label: a gyártói konfigurátor fülén a gyártó logója legyen (ha van), ne a platformé.
+  useEffect(() => {
+    const logo = tenant.brand.logoUrl
+    if (!logo) return
+    const icons = [...document.head.querySelectorAll<HTMLLinkElement>('link[rel="icon"]')]
+    const previous = icons.map((icon) => icon.href)
+    icons.forEach((icon) => { icon.href = logo })
+    return () => icons.forEach((icon, index) => { icon.href = previous[index] })
+  }, [tenant.brand.logoUrl])
   // AR-képesség: nem támogatott telefonon nem kínálunk AR-t (a QR-ről érkezőknek a párbeszéd elmagyarázza, miért).
   const [arPath, setArPath] = useState<ArPath | null>(null)
   useEffect(() => { let alive = true; void detectArPath().then((path) => { if (alive) setArPath(path) }); return () => { alive = false } }, [])
@@ -384,7 +394,7 @@ export default function PergoStudio() {
             <strong>{change.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(change.amount))}</strong><span>{change.label}</span>
             <button type="button" onClick={() => { undo(); setChange(null) }}><Undo2 size={14} />Visszavonás</button>
           </div>}
-          <div className="viewer-footer"><span>{scene.photoMode ? 'HELYI FOTÓS ELŐNÉZET' : '1 egység = 1 méter'}</span><span>{price.area.toFixed(1).replace('.', ',')} m²</span></div>
+          <div className="viewer-footer"><span>{scene.photoMode ? 'HELYI FOTÓS ELŐNÉZET' : '1 egység = 1 méter'}</span><span>{price.area.toFixed(1).replace('.', ',')} m²</span>{tenant.platformCredit !== false && <a className="platform-credit" href="/" target="_blank" rel="noopener" title="3D konfigurátor: Lamelix"><LamelixLogo variant="symbol" tone="onDark" height={11} title={null} />Lamelix</a>}</div>
         </section>
 
         <ConfiguratorControls config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={goStep} onSideSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} onPhotoUpload={handlePhoto} sheet={sheet} onSheetChange={setSheet} onAdvisor={() => setModal('advisor')} energyCost={energyCost} onEnergy={() => setModal('energy')} />

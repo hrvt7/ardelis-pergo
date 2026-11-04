@@ -1,4 +1,4 @@
-// PERGO Studio (B2B) árazás — egy helyen, hogy az oldal, a strukturált adat és a tesztek ugyanazt mutassák.
+// Lamelix (B2B) árazás — egy helyen, hogy az oldal, a strukturált adat és a tesztek ugyanazt mutassák.
 // Nettó árak, +27% ÁFA. Piaci viszonyítás (2026): Configurix pergola-konfigurátor ~499 USD/hó,
 // középkategóriás 3D konfigurátor SaaS 500–2000 EUR/hó + 2–8 ezer EUR bevezetés, egyedi fejlesztés 30–60 ezer USD.
 

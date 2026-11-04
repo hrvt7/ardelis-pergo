@@ -1,13 +1,15 @@
-// PERGO Studio — B2B nyitóoldal pergola- és outdoor-gyártóknak. Cél: demókérés.
+// Lamelix — B2B nyitóoldal pergola- és outdoor-gyártóknak. Cél: demókérés.
 // Látvány: 3D-ben dőlő termékképernyő, görgetésre kiegyenesedik; szövegfelfedés; rögzített bemutató
 // (konfigurátor → lead → statisztika → mobil); a gyártói képek a saját termékből készültek (demóadatokkal).
 import { useLayoutEffect, useRef, useState, type FormEvent, type PointerEvent, type ReactNode } from 'react'
-import { ArrowRight, ArrowUpRight, Box, Calculator, Check, ChevronDown, Code2, Copy, LayoutDashboard, Mail, Palette, QrCode, Send, Smartphone, Table2, Upload, Users } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Box, Check, ChevronDown, Code2, Copy, Mail, Palette, QrCode, Send, Smartphone, Table2, Upload } from 'lucide-react'
 import { Link } from 'react-router'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { assetUrl } from '@/lib/assetUrl'
+import LamelixLogo from '@/components/LamelixLogo'
+import BenefitCards from '@/components/platform/BenefitCards'
 import { usePageSeo } from '@/lib/usePageSeo'
 import { formatFt, monthlyPrice, PLANS, SETUP_FEE, SETUP_INCLUDES, type PlanId } from '@/lib/platformPricing'
 import '@/platform.css'
@@ -23,24 +25,12 @@ function Shot({ name, alt, eager = false, sizes = '(max-width: 900px) 100vw, 60v
   return <img src={img(name)} srcSet={imgSet(name)} sizes={sizes} alt={alt} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : undefined} decoding="async" width={1600} height={1000} />
 }
 
-function Mark() {
-  return <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M4 27V9l13-5 13 5v18M4 15h26M10 27V15m14 12V15M4 27h26" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
-}
-
 function Browser({ children, url = 'konfigurator.ceged.hu' }: { children: ReactNode; url?: string }) {
   return <div className="pf-browser">
     <div className="pf-browser-bar" aria-hidden="true"><i /><i /><i /><span>{url}</span></div>
     <div className="pf-browser-body">{children}</div>
   </div>
 }
-
-const BENEFITS = [
-  { icon: Calculator, title: 'Azonnali irányár', text: 'A vevő méretet, tetőt, oldalzárást és extrákat választ — az ár a saját árazása szerint, nettó/bruttó, telepítéssel, másodpercek alatt.', wide: true },
-  { icon: QrCode, title: 'QR-kódos terv', text: 'Minden terv egy linken és QR-kódon él tovább: a vevő megosztja a családdal, Ön egy kattintással megnyitja.' },
-  { icon: Users, title: 'Lead pipeline', text: 'A felmérési kérelem a teljes konfigurációval, PDF-fel és elérhetőséggel azonnal beérkezik — e-mailben és az adminban.' },
-  { icon: LayoutDashboard, title: 'Gyártói admin', text: 'Érdeklődők státusszal és belső megjegyzéssel, látogatói tölcsér, CSV export. Asztalon és telefonon is.' },
-  { icon: Table2, title: 'Ármátrix', text: 'Tetőtípusonként méretpár → nettó ár táblázat, akár Excelből bemásolva. A köztes méreteket a rendszer interpolálja.' },
-] as const
 
 const BEATS = [
   { id: 'konfigurator', index: '01', title: 'A vevő megtervezi.', text: 'Valós méretek, a saját háza színei, nappal és este — 3D-ben, a böngészőben, telepítés nélkül. Közben végig látja az irányárat.', image: 'studio', alt: 'A 3D pergola-konfigurátor tervező felülete irányárral' },
@@ -196,7 +186,7 @@ export default function Platform() {
 
       // Belépő elemek.
       gsap.utils.toArray<HTMLElement>('[data-pf-reveal]', element).forEach((section) => {
-        gsap.fromTo(section.querySelectorAll('[data-pf-item]'), { opacity: 0, y: 46, rotateX: 8 }, { opacity: 1, y: 0, rotateX: 0, duration: 1, stagger: 0.09, ease: 'power3.out', scrollTrigger: { trigger: section, start: 'top 80%', once: true } })
+        gsap.fromTo(section.querySelectorAll('[data-pf-item]'), { opacity: 0, y: 46, rotateX: 8 }, { opacity: 1, y: 0, rotateX: 0, duration: 1, stagger: 0.09, ease: 'power3.out', clearProps: 'transform', scrollTrigger: { trigger: section, start: 'top 80%', once: true } })
       })
 
       // Lépések: a vonal kirajzolódik.
@@ -257,7 +247,7 @@ export default function Platform() {
 
   return <div className="pf-page" ref={root}>
     <header className={`pf-header${scrolled ? ' is-scrolled' : ''}`}>
-      <a className="pf-brand" href="#top" aria-label="PERGO Studio — az oldal teteje"><Mark /><span><strong>PERGO</strong> Studio</span><small>gyártóknak</small></a>
+      <a className="pf-brand" href="#top" aria-label="Lamelix — az oldal teteje"><LamelixLogo className="pf-logo" height={30} title={null} /><small>gyártóknak</small></a>
       <nav aria-label="Fő navigáció"><a href="#elonyok">Előnyök</a><a href="#bemutato">Bemutató</a><a href="#mukodes">Működés</a><a href="#arak">Árak</a><a href="#gyik">GYIK</a></nav>
       <div className="pf-header-actions"><Link className="pf-link-quiet" to={DEMO_PATH}>Élő demó</Link><a className="pf-btn pf-btn-primary pf-btn-sm" href="#demo">Kérek demót</a></div>
     </header>
@@ -292,11 +282,7 @@ export default function Platform() {
 
       <section className="pf-section" id="elonyok" aria-labelledby="elonyok-title" data-pf-reveal>
         <div className="pf-head" data-pf-item><p className="pf-eyebrow">01 — Előnyök</p><h2 id="elonyok-title">Minden, ami az <em>érdeklődéstől</em> a felmérésig kell.</h2></div>
-        <div className="pf-bento">
-          {BENEFITS.map(({ icon: Icon, title, text, ...rest }) => <article key={title} className={`pf-card${'wide' in rest && rest.wide ? ' is-wide' : ''}`} data-pf-item onPointerMove={tilt} onPointerLeave={untilt}>
-            <span className="pf-card-icon"><Icon size={22} /></span><h3>{title}</h3><p>{text}</p>
-          </article>)}
-        </div>
+        <BenefitCards />
       </section>
 
       <section className="pf-show" id="bemutato" aria-labelledby="bemutato-title">
@@ -377,10 +363,10 @@ export default function Platform() {
     </main>
 
     <footer className="pf-footer">
-      <a className="pf-brand" href="#top"><Mark /><span><strong>PERGO</strong> Studio</span></a>
+      <a className="pf-brand" href="#top" aria-label="Lamelix — az oldal teteje"><LamelixLogo className="pf-logo" height={28} title={null} /></a>
       <p>White-label 3D konfigurátor és lead rendszer pergola- és outdoor-gyártóknak.</p>
       <nav aria-label="Lábléc"><Link to={DEMO_PATH}>Élő demó</Link><Link to="/ardelis">Mintaoldal (ARDELIS)</Link><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></nav>
-      <small>© {new Date().getFullYear()} PERGO Studio</small>
+      <small>© {new Date().getFullYear()} Lamelix</small>
     </footer>
   </div>
 }

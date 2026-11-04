@@ -47,13 +47,13 @@ function limited(key: string, now: number) {
   return false
 }
 
-function emailHtml(input: DemoRequest, ref: string) {
+function emailHtml(input: DemoRequest, ref: string, origin = '') {
   const rows: [string, string][] = [
     ['Név', input.name], ['Cég', input.company], ['E-mail', input.email], ['Telefon', input.phone || '—'],
     ['Weboldal', input.website || '—'], ['Termék', PRODUCT_LABEL[input.product]], ['Érdeklő csomag', PLAN_LABEL[input.plan]],
   ]
   return `<!doctype html><html lang="hu"><body style="margin:0;background:#f3f4f1;font-family:Arial,sans-serif;color:#141816">
-<div style="max-width:620px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:14px;padding:26px">
+<div style="max-width:620px;margin:0 auto;padding:24px">${origin ? `<p style="margin:0 0 14px"><img src="${escapeHtml(origin)}/brand/lamelix-email-light.png" width="110" height="32" alt="Lamelix" style="border:0"></p>` : ''}<div style="background:#fff;border-radius:14px;padding:26px">
 <p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;color:#6b766f">ÚJ DEMÓKÉRÉS · ${escapeHtml(ref)}</p>
 <h1 style="margin:0 0 18px;font-size:22px">${escapeHtml(input.company)}</h1>
 <table style="width:100%;border-collapse:collapse;font-size:14px">${rows.map(([key, value]) => `<tr><td style="padding:8px 0;color:#6b766f;width:140px;border-top:1px solid #eceee9">${key}</td><td style="padding:8px 0;border-top:1px solid #eceee9">${escapeHtml(value)}</td></tr>`).join('')}</table>
@@ -100,7 +100,7 @@ export async function handleDemoRequest(request: Request, env: DemoEnv): Promise
         from: env.LEAD_FROM_EMAIL || 'Konfigurátor <onboarding@resend.dev>',
         to,
         subject: oneLine(`Demókérés: ${input.company} – ${input.name} (${PLAN_LABEL[input.plan]})`),
-        html: emailHtml(input, ref),
+        html: emailHtml(input, ref, (() => { try { return new URL(request.url).origin } catch { return '' } })()),
         reply_to: input.email,
       }),
     }).then(async (response) => { if (!response.ok) throw new Error(`Resend ${response.status}: ${(await response.text()).slice(0, 200)}`) }) : Promise.resolve(),

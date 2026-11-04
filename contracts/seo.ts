@@ -41,7 +41,7 @@ const SEO_PAGES: Record<string, SeoPage> = {
   '/': {
     key: 'platform',
     path: '/',
-    title: '3D pergola-konfigurátor és lead rendszer gyártóknak | PERGO Studio',
+    title: 'Lamelix — 3D pergola-konfigurátor és lead rendszer gyártóknak',
     description: 'White-label 3D pergola-konfigurátor gyártóknak és forgalmazóknak: azonnali irányár, ármátrix, QR-kódos terv, érdeklődők kezelése és gyártói admin. Kérjen demót.',
     robots: INDEX_ROBOTS,
     indexable: true,
@@ -142,7 +142,8 @@ export function buildStructuredData(pathname: string, origin: string) {
       {
         '@type': 'SoftwareApplication',
         '@id': `${origin}/#software`,
-        name: 'PERGO Studio — 3D pergola-konfigurátor gyártóknak',
+        name: 'Lamelix — 3D pergola-konfigurátor gyártóknak',
+        brand: { '@type': 'Brand', name: 'Lamelix' },
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web browser',
         inLanguage: 'hu-HU',

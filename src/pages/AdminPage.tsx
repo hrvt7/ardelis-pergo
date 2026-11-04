@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNo
 import { ExternalLink, LayoutDashboard, LogOut, SlidersHorizontal, Users } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import AdminLeads from '@/pages/AdminLeads'
+import LamelixLogo from '@/components/LamelixLogo'
 import AdminOverview from '@/pages/AdminOverview'
 import { useLeads } from '@/lib/adminLeads'
 import { useStats } from '@/lib/adminStats'
@@ -43,6 +44,7 @@ function AdminForTenant({ base }: { base: Tenant }) {
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
   const [saving, setSaving] = useState(false)
 
+  useEffect(() => { document.title = `Gyártói admin · ${base.brand.name} | Lamelix` }, [base.brand.name])
   const logout = useCallback(() => { try { sessionStorage.removeItem(tokenKey) } catch { /* privát mód */ } setToken(''); setOverrides(undefined) }, [tokenKey])
 
   useEffect(() => {
@@ -79,6 +81,7 @@ function AdminForTenant({ base }: { base: Tenant }) {
       <label><span>Jelszó</span><input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required autoFocus /></label>
       {loginError && <p className="admin-message is-error" role="alert">{loginError}</p>}
       <button className="admin-save" type="submit">Belépés</button>
+      <a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><span>Működteti:</span><LamelixLogo height={18} title={null} /></a>
     </form></main>
   }
 
@@ -124,7 +127,7 @@ function AdminShell({ base, token, onExpired, onLogout, children }: { base: Tena
         <nav className="admin-nav" aria-label="Admin részek">
           {TABS.map(([key, label]) => <button type="button" key={key} className={tab === key ? 'is-on' : ''} onClick={() => choose(key)} aria-current={tab === key ? 'page' : undefined}>{TAB_INFO[key].icon}<span>{label}</span>{key === 'leads' && fresh > 0 && <em>{fresh}</em>}</button>)}
         </nav>
-        <div className="admin-side-foot"><Link to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor megnyitása</Link><button type="button" onClick={onLogout}><LogOut size={15} />Kilépés</button></div>
+        <div className="admin-side-foot"><Link to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor megnyitása</Link><button type="button" onClick={onLogout}><LogOut size={15} />Kilépés</button><a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><LamelixLogo height={16} title={null} /></a></div>
       </aside>
       <section className="admin-main">
         <header className="admin-top"><div><h1>{title}</h1><p>{TAB_INFO[tab].subtitle}</p></div><Link className="btn" to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor</Link></header>

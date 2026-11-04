@@ -3,6 +3,8 @@ import { assetUrl } from '@/lib/assetUrl'
 import { buildStructuredData, getSeoPage } from '@contracts/seo'
 
 const SOCIAL_IMAGE = assetUrl('/assets/ardelis-og.jpg')
+/** A platform (Lamelix) saját megosztási képe; a gyártói/demó oldalak a sajátjukat használják. */
+const PLATFORM_IMAGE = assetUrl('/assets/lamelix-og.png')
 
 function setMeta(attribute: 'name' | 'property', key: string, content: string) {
   let element = document.head.querySelector<HTMLMetaElement>(`meta[${attribute}="${key}"]`)
@@ -37,7 +39,9 @@ export function usePageSeo(pathname: string, options: { noindex?: boolean; title
     const page = { ...base, title: title ?? base.title, robots: noindex ? 'noindex,nofollow' : base.robots }
     const origin = window.location.origin
     const canonical = noindex ? '' : `${origin}${page.path === '/' ? '/' : page.path}`
-    const socialImage = SOCIAL_IMAGE.startsWith('http') ? SOCIAL_IMAGE : `${origin}${SOCIAL_IMAGE}`
+    const platform = page.key === 'platform'
+    const image = platform ? PLATFORM_IMAGE : SOCIAL_IMAGE
+    const socialImage = image.startsWith('http') ? image : `${origin}${image}`
 
     document.documentElement.lang = 'hu'
     document.title = page.title
@@ -45,7 +49,7 @@ export function usePageSeo(pathname: string, options: { noindex?: boolean; title
     setMeta('name', 'robots', page.robots)
     setMeta('name', 'googlebot', page.robots)
     setMeta('property', 'og:locale', 'hu_HU')
-    setMeta('property', 'og:site_name', 'ARDELIS Atelier / PERGO')
+    setMeta('property', 'og:site_name', platform ? 'Lamelix' : 'ARDELIS Atelier / PERGO')
     setMeta('property', 'og:type', 'website')
     setMeta('property', 'og:title', page.title)
     setMeta('property', 'og:description', page.description)
@@ -53,7 +57,7 @@ export function usePageSeo(pathname: string, options: { noindex?: boolean; title
     setMeta('property', 'og:image', socialImage)
     setMeta('property', 'og:image:width', '1200')
     setMeta('property', 'og:image:height', '630')
-    setMeta('property', 'og:image:alt', 'ARDELIS PERGO bioklimatikus pergola egy modern otthon teraszán')
+    setMeta('property', 'og:image:alt', platform ? 'Lamelix — 3D konfigurátor és lead rendszer pergolagyártóknak' : 'ARDELIS PERGO bioklimatikus pergola egy modern otthon teraszán')
     setMeta('name', 'twitter:card', 'summary_large_image')
     setMeta('name', 'twitter:title', page.title)
     setMeta('name', 'twitter:description', page.description)

@@ -54,6 +54,11 @@ export interface Tenant {
     /** Adatkezelési tájékoztató URL — éles gyártónál kötelező megadni. */
     privacyUrl?: string
   }
+  /**
+   * Diszkrét „Lamelix” jelzés a konfigurátorban, a PDF láblécén és a gyártói e-mailben (alapértelmezés: igen).
+   * A Partnerhálózat csomagban kikapcsolható (teljes white-label).
+   */
+  platformCredit?: boolean
   currency: 'HUF'
   /** Nettó egységárak; a szerver is ebből számol. */
   prices: PriceSettings

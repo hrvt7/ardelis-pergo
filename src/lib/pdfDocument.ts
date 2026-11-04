@@ -12,6 +12,7 @@ import { estimateSolar, PANEL } from './solar'
 import { SIDE_INFO, sideSegments, HALF_NAMES } from './sides'
 import { colorLabel, colorSummary, frameColorInfo, roofColorInfo, roofPartName, type ColorInfo } from './colors'
 import type { Tenant } from '../tenants/types'
+import { lamelixSvg } from './lamelixBrand'
 import type { PergolaConfig, PriceBreakdown, RoofType, SideKey, SideType } from '../types/pergola'
 
 export const PDF_FONT_FILES = { regular: 'Manrope-400.ttf', semi: 'Manrope-600.ttf', bold: 'Manrope-700.ttf', heavy: 'Manrope-800.ttf' } as const
@@ -321,8 +322,11 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
       margin: [40, 14, 40, 0],
       columns: [
         { text: `${tenant.brand.legalName} · tájékoztató irányár, nem ajánlattétel`, fontSize: 7, color: MUTED },
-        { text: `${page} / ${pages}`, fontSize: 7, color: MUTED, alignment: 'right', font: 'ManropeSemi' },
+        // Diszkrét platform-jelzés (white-label csomagban kikapcsolható: tenant.platformCredit = false).
+        ...(tenant.platformCredit !== false ? [{ width: 'auto', columns: [{ svg: lamelixSvg('symbol', 'onLight'), width: 7, margin: [0, 0.5, 0, 0] }, { text: 'Lamelix konfigurátor', fontSize: 6.5, color: MUTED, margin: [3, 0.5, 0, 0], width: 'auto' }], columnGap: 0 } as Content] : []),
+        { text: `${page} / ${pages}`, fontSize: 7, color: MUTED, alignment: 'right', font: 'ManropeSemi', width: 40 },
       ],
+      columnGap: 14,
     }),
     content: [
       ...cover,

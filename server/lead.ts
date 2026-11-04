@@ -154,7 +154,15 @@ function managerEmailHtml(record: LeadRecord) {
 <p style="margin:6px 0 0;font-size:12px;color:#62727a">A szerver a(z) ${escapeHtml(tenant.brand.name)} árlistájával számolta újra.</p></div>
 <div style="background:#fff;border-radius:8px;padding:16px 20px"><h2 style="font-size:15px;margin:0 0 8px">Tájékoztató anyaglista</h2><table style="border-collapse:collapse;font-size:13px">${rows(bom)}</table></div>
 <p style="font-size:11px;color:#8a979d;margin-top:16px">Forrás: ${escapeHtml(input.source)}${input.pageUrl ? ` · ${escapeHtml(input.pageUrl)}` : ''} · ${escapeHtml(record.createdAt.toISOString())}</p>
+${tenant.platformCredit !== false ? platformFooter(record.configUrl) : ''}
 </div></body></html>`
+}
+
+/** Diszkrét platform-jelzés a gyártói levél alján (PNG, mert sok levelező nem jelenít meg SVG-t). */
+function platformFooter(configUrl: string) {
+  let origin = ''
+  try { origin = new URL(configUrl).origin } catch { return '' }
+  return `<p style="margin:18px 0 0;font-size:11px;color:#8a979d"><a href="${escapeHtml(origin)}/" style="text-decoration:none;color:#8a979d"><img src="${escapeHtml(origin)}/brand/lamelix-email-light.png" width="72" height="21" alt="Lamelix" style="vertical-align:middle;border:0;margin-right:6px">3D konfigurátor és lead rendszer</a></p>`
 }
 
 function customerEmailHtml(record: LeadRecord) {
