@@ -107,7 +107,14 @@ export interface SunSite {
   timeZone: string
 }
 
+/** Egy sor a gyártói ármátrixban: ekkora (m) szerkezet nettó ára Ft-ban. */
+export interface PriceMatrixPoint { width: number; depth: number; netPrice: number }
+/** Tetőtípusonként külön ármátrix; ahol nincs, ott a m²-alapú ár érvényes. */
+export type PriceMatrix = Partial<Record<RoofType, PriceMatrixPoint[]>>
+
 export interface PriceSettings {
+  /** Opcionális: szélesség × mélység ármátrix tetőtípusonként. A felárak (fal, LED, oldalak…) a mátrix mellett is a meglévő tételekből jönnek. */
+  priceMatrix?: PriceMatrix
   louveredPerM2Net: number
   retractablePerM2Net: number
   fixedPerM2Net: number

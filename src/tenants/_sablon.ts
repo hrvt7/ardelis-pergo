@@ -22,7 +22,16 @@ export const sablonTenant: Tenant = {
     privacyUrl: 'https://www.gyarto.hu/adatkezeles',
   },
   prices: {
-    ...demoTenant.prices,               // ← a gyártó NETTÓ árai kerüljenek ide
+    ...demoTenant.prices,
+    // OPCIONÁLIS ármátrix, tetőtípusonként (louvered, retractable, fabric, glass, polycarbonate, fixed).
+    // Ha egy tetőtípusra megadod, a m²-ár helyett ez érvényes: { width (m), depth (m), netPrice (Ft, nettó) }.
+    // Nem kell minden méretet kitölteni: a köztes méretet a rendszer interpolálja. Törölheted, ha m²-árral dolgozol.
+    // priceMatrix: {
+    //   louvered: [
+    //     { width: 3.0, depth: 3.0, netPrice: 1450000 }, { width: 3.0, depth: 4.0, netPrice: 1820000 },
+    //     { width: 4.0, depth: 3.0, netPrice: 1830000 }, { width: 4.0, depth: 4.0, netPrice: 2310000 },
+    //   ],
+    // },               // ← a gyártó NETTÓ árai kerüljenek ide
   },
   limits: { width: [3, 6], depth: [3, 4.5], height: [2.4, 3], maxHeaters: 2 },
   // Elérhető: 'wall', 'corner-left', 'corner-right', 'niche', 'freestanding'

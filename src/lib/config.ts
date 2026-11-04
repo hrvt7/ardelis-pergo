@@ -93,7 +93,8 @@ export function loadInitialConfig(tenant: Tenant): PergolaConfig {
 export function loadPrices(tenant: Tenant, admin: boolean): PriceSettings {
   if (!admin) return tenant.prices
   const parsed = priceSettingsSchema.safeParse(readStored(priceKey(tenant)))
-  return parsed.success ? parsed.data : tenant.prices
+  // A mátrix a gyártó adata (a felületen nem szerkeszthető): mindig a tenantból jön.
+  return parsed.success ? { ...parsed.data, priceMatrix: tenant.prices.priceMatrix } : tenant.prices
 }
 
 export function persistConfig(tenant: Tenant, config: PergolaConfig) {

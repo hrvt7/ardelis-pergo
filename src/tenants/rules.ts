@@ -38,7 +38,18 @@ export const pergolaConfigSchema = z.object({
   shadeFabric: z.enum(['white', 'sand', 'grey', 'anthracite']).optional(),
 })
 
+const matrixPointSchema = z.object({ width: z.number().positive().max(30), depth: z.number().positive().max(30), netPrice: z.number().positive().max(200000000) })
+const priceMatrixSchema = z.object({
+  louvered: z.array(matrixPointSchema).max(400).optional(),
+  retractable: z.array(matrixPointSchema).max(400).optional(),
+  fabric: z.array(matrixPointSchema).max(400).optional(),
+  glass: z.array(matrixPointSchema).max(400).optional(),
+  polycarbonate: z.array(matrixPointSchema).max(400).optional(),
+  fixed: z.array(matrixPointSchema).max(400).optional(),
+})
+
 export const priceSettingsSchema = z.object({
+  priceMatrix: priceMatrixSchema.optional(),
   louveredPerM2Net: z.number().min(0).max(2000000),
   retractablePerM2Net: z.number().min(0).max(2000000),
   fixedPerM2Net: z.number().min(0).max(2000000),

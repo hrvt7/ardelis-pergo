@@ -6,6 +6,7 @@ import { describeColor, roofPartName, type ColorInfo } from './colors'
 const COLORLESS = { colors: [] as { id: never; name: string; detail: string; hex: string }[] }
 import { HALF_NAMES, SIDE_INFO, SIDE_LABELS, sideLength, sideSegments, splitProfiles } from './sides'
 import { ROOF_INFO, ROOF_TYPES } from './roofs'
+import { getMatrixPrice } from './priceMatrix'
 import { omittedPosts, sideWalls } from './mount'
 import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, RoofType, SideKey } from '../types/pergola'
 
@@ -79,11 +80,15 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
 
   const roofRate = prices[ROOF_INFO[config.roof].priceKey]
 
-  const structure = area * roofRate
+  // Gyártói ármátrix (ha van az adott tetőre), különben a m²-alapú ár.
+  const matrixPrice = getMatrixPrice(config.width, config.depth, prices.priceMatrix?.[config.roof])
+  const structure = matrixPrice ? matrixPrice.netPrice : area * roofRate
   lines.push({
     id: 'structure',
     label: roofLabels[config.roof],
-    detail: `${formatNumber(area)} m² × ${formatHuf(roofRate)} / m²`,
+    detail: matrixPrice
+      ? `${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} m · ${matrixPrice.exact ? 'gyártói ármátrix' : 'ármátrix, interpolált'}`
+      : `${formatNumber(area)} m² × ${formatHuf(roofRate)} / m²`,
     amountNet: round(structure),
   })
 

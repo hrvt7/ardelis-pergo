@@ -20,6 +20,18 @@ export const demoTenant: Tenant = {
   // (5 × 2,6 m nettó 1,4 M Ft), kulcsrakész napelem 300–350e Ft/kWp nettó. Éles gyártónál a saját
   // árlistája kerül ide.
   prices: {
+    // ÁRMÁTRIX (opcionális, tetőtípusonként): szélesség × mélység (m) → nettó szerkezeti ár (Ft).
+    // Ahol van mátrix, az váltja ki a m²-árat; két megadott méret között a rendszer interpolál,
+    // a tartományon kívül a szélső ár a területtel arányosan skálázódik. A felárak (fal, oszlop,
+    // oldalak, LED, szín…) a mátrix mellett az alábbi egységárakból jönnek.
+    // Példa (kikommentezve, hogy a demó m²-árakkal számoljon): polikarbonát tető, a nagyobb méretnél kedvezőbb m²-árral.
+    // priceMatrix: {
+    //   polycarbonate: [
+    //     { width: 3, depth: 3, netPrice: 650000 }, { width: 3, depth: 4, netPrice: 830000 },
+    //     { width: 4, depth: 3, netPrice: 830000 }, { width: 4, depth: 4, netPrice: 1060000 },
+    //     { width: 6, depth: 3, netPrice: 1150000 }, { width: 6, depth: 4, netPrice: 1480000 },
+    //   ],
+    // },
     louveredPerM2Net: 165000,
     retractablePerM2Net: 240000,
     fixedPerM2Net: 85000,

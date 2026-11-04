@@ -37,7 +37,7 @@ export function Modal({ title, eyebrow, onClose, children, className = '' }: { t
   )
 }
 
-const MONEY_FIELDS: { key: keyof PriceSettings; label: string; unit: string }[] = [
+const MONEY_FIELDS: { key: Exclude<keyof PriceSettings, "priceMatrix">; label: string; unit: string }[] = [
   { key: 'freestandingSurchargeNet', label: 'Önálló kivitel felára', unit: 'Ft' },
   { key: 'sideWallAttachPerMeterNet', label: 'Oldalfali rögzítés (sarok, fülke)', unit: 'Ft/fm' },
   { key: 'postNet', label: 'Elmaradó oszlop jóváírása', unit: 'Ft/db' },
@@ -63,7 +63,7 @@ const MONEY_FIELDS: { key: keyof PriceSettings; label: string; unit: string }[] 
 
 export function PriceSettingsDialog({ prices, onChange, onReset, onClose }: { prices: PriceSettings; onChange: (prices: PriceSettings) => void; onReset: () => void; onClose: () => void }) {
   const { tenant } = useTenant()
-  const roofFields: { key: keyof PriceSettings; label: string; unit: string }[] = ROOF_TYPES.filter((roof) => tenant.roofs[roof]).map((roof) => ({ key: ROOF_INFO[roof].priceKey, label: `${tenant.roofs[roof]!.name} ${tenant.roofs[roof]!.short} alapár`, unit: 'Ft/m²' }))
+  const roofFields: { key: Exclude<keyof PriceSettings, "priceMatrix">; label: string; unit: string }[] = ROOF_TYPES.filter((roof) => tenant.roofs[roof]).map((roof) => ({ key: ROOF_INFO[roof].priceKey, label: `${tenant.roofs[roof]!.name} ${tenant.roofs[roof]!.short} alapár`, unit: 'Ft/m²' }))
   return (
     <Modal title="Mintaárak szerkesztése" eyebrow="SZERKESZTHETŐ MINTAÁRAK" onClose={onClose} className="price-settings-modal">
       <p className="modal-intro">Minden érték nettó forintban értendő, kivéve a százalékos mezőket. A módosítások azonnal újraszámolják a konfigurációt, és csak ebben a böngészőben mentődnek — a beküldött érdeklődőnél a szerver a gyártói árlistával számol.</p>
