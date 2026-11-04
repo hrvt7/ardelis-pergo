@@ -556,3 +556,9 @@ működést, az eladhatóságot és a hibákat érintik.
 - Böngészőben: demó, `/k/`, `/embed/`, ismeretlen gyártó (404), admin mód,
   mobil, teljes lead-folyamat, PDF-letöltés, korlátozott kínálatú gyártó.
   Konzolhiba nélkül.
+
+## 3.23 — Teljesítmény és lamellahiba
+- Lamellák: a geometriacsere már nem építi újra a példányokat (vékony csíkok betöltéskor).
+- Modellek egyszerűsítve (növény, fa, bokor): ~556k → ~179k háromszög.
+- Automatikus szint: Apple/integrált GPU legfeljebb magas; futásidejű védőháló (38 fps alatt eggyel lejjebb, eszközön megjegyezve).
+- Utófeldolgozás: MSAA 2× magas szinten.

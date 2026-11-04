@@ -69,7 +69,8 @@ export function detectQualityTier(): QualityTier {
   if (mobile) return memory <= 3 || cores <= 4 ? 'low' : 'medium'
   const gpu = readGpuName()
   if (SOFTWARE_GPU.test(gpu)) return 'low'
-  if (cores >= 8 && memory >= 8 && STRONG_GPU.test(gpu)) return 'ultra'
+  // Ultra csak különálló (asztali) videókártyán; az Apple-chip és az integrált GPU legfeljebb magas szintet kap automatikusan.
+  if (cores >= 8 && memory >= 8 && STRONG_GPU.test(gpu) && !/Apple/i.test(gpu)) return 'ultra'
   if (WEAK_GPU.test(gpu) && !STRONG_GPU.test(gpu)) return 'medium'
   // Ismeretlen GPU-név (elrejtett böngészői adat): csak erős processzor mellett merjük a nehéz szintet.
   if (!gpu && cores < 8) return 'medium'
@@ -90,3 +91,14 @@ export const qualitySettings = (tier: QualityTier): QualitySettings => QUALITY_P
 
 export const QualityContext = createContext<QualitySettings>(QUALITY_PROFILES.high)
 export const useQuality = () => useContext(QualityContext)
+
+export const tierRank = (tier: QualityTier) => ORDER.indexOf(tier)
+
+const TIER_CAP_KEY = 'pergola-tier-cap'
+/** A futásidejű védőháló által megjegyzett, az eszközön még simán futó legmagasabb szint. */
+export function readTierCap(): QualityTier | null {
+  try { const value = window.localStorage.getItem(TIER_CAP_KEY); return isTier(value) ? value : null } catch { return null }
+}
+export function writeTierCap(tier: QualityTier) {
+  try { window.localStorage.setItem(TIER_CAP_KEY, tier) } catch { /* privát mód: csak erre a munkamenetre érvényes */ }
+}

@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import type { CameraFocus, CameraView, PergolaConfig, SceneSettings, SideKey, SideType } from '@/types/pergola'
-import { QualityContext, detectQualityTier, useQuality, qualitySettings, resolveQualityTier, type QualitySettings } from '@/lib/quality'
+import { QualityContext, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
 import { setActiveScene } from '@/lib/sceneRegistry'
@@ -527,7 +527,8 @@ function LouverBlades({ geometry, width, depth, height, count, retractable, angl
     strips.current.instanceMatrix.needsUpdate = true
     caps.current.instanceMatrix.needsUpdate = true
   }, [count, height, state, tools])
-  useLayoutEffect(() => { write(); refreshShadows(gl); invalidate() }, [write, gl, invalidate])
+  // A geometria cseréje (szélesség/minőség) NEM építi újra a példányokat (primitive attach), a mátrixok megmaradnak; a write() így is lefut minden méretváltásnál.
+  useLayoutEffect(() => { write(); refreshShadows(gl); invalidate() }, [write, geometry, gl, invalidate])
   useFrame(({ clock }, delta) => {
     if (!introStart.current) introStart.current = clock.elapsedTime
     const openness = angle / 90
@@ -548,7 +549,7 @@ function LouverBlades({ geometry, width, depth, height, count, retractable, angl
   })
   const radial = Math.max(6, Math.min(12, louvreSegments))
   return <group>
-    <instancedMesh ref={blades} args={[geometry, undefined, count]} frustumCulled={false} castShadow receiveShadow><PowderCoat color={color} roughness={0.38} /></instancedMesh>
+    <instancedMesh ref={blades} args={[undefined, undefined, count]} frustumCulled={false} castShadow receiveShadow><primitive object={geometry} attach="geometry" /><PowderCoat color={color} roughness={0.38} /></instancedMesh>
     <instancedMesh ref={strips} args={[undefined, undefined, count]} frustumCulled={false}><boxGeometry args={[width - 0.22, 0.012, 0.014]} /><meshStandardMaterial color="#111718" roughness={0.92} /></instancedMesh>
     <instancedMesh ref={caps} args={[undefined, undefined, count * 2]} frustumCulled={false}><cylinderGeometry args={[0.034, 0.034, 0.014, radial]} /><meshStandardMaterial color={color} metalness={0.35} roughness={0.4} /></instancedMesh>
   </group>
@@ -1904,6 +1905,33 @@ function WebGLContextGuard({ onLost }: { onLost: () => void }) {
   return null
 }
 
+/**
+ * Futásidejű védőháló: ha a megjelenítés tartósan lassabb ~38 fps-nél (forgatás/animáció közben), automatikus
+ * minőségnél egy szinttel lejjebb lép (az utófeldolgozás, a felbontás és az árnyék is könnyebb lesz). Csak lefelé
+ * lép, és megjegyzi az eszközön, így a következő megnyitásnál már a jó szinten indul. Állóképnél (nincs képkocka) nem mér.
+ */
+function FrameGovernor({ enabled, onSlow }: { enabled: boolean; onSlow: () => void }) {
+  const window_ = useRef({ sum: 0, count: 0, slow: 0, since: 0 })
+  useFrame(({ clock }, delta) => {
+    if (!enabled) return
+    const w = window_.current
+    if (!w.since) w.since = clock.elapsedTime
+    // Az első másodpercekben shader-fordítás és berepülés zajlik: ezt nem mérjük.
+    if (clock.elapsedTime - w.since < 3) return
+    // Hosszú szünet (állókép, háttérfül) után az első képkocka nem számít.
+    if (delta > 0.25) { w.sum = 0; w.count = 0; return }
+    w.sum += delta
+    w.count += 1
+    if (w.count < 45) return
+    const average = w.sum / w.count
+    w.sum = 0
+    w.count = 0
+    w.slow = average > 0.026 ? w.slow + 1 : 0
+    if (w.slow >= 2) { w.slow = 0; onSlow() }
+  })
+  return null
+}
+
 function FirstFrameReady({ onReady }: { onReady: () => void }) {
   const reported = useRef(false)
   useFrame(() => {
@@ -1928,7 +1956,19 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
   const [contextLost, setContextLost] = useState(false)
   const [coreOnly, setCoreOnly] = useState(false)
   const detectedTier = useMemo(() => detectQualityTier(), [])
-  const quality = useMemo(() => qualitySettings(resolveQualityTier(scene.quality, detectedTier)), [scene.quality, detectedTier])
+  const [degradedTier, setDegradedTier] = useState<QualityTier | null>(() => readTierCap())
+  const baseTier = resolveQualityTier(scene.quality, detectedTier)
+  // Csak automatikus minőségnél: a kézzel választott szintet nem írjuk felül.
+  const activeTier = scene.quality === 'auto' && degradedTier && tierRank(degradedTier) < tierRank(baseTier) ? degradedTier : baseTier
+  const quality = useMemo(() => qualitySettings(activeTier), [activeTier])
+  const onSlow = useCallback(() => {
+    if (scene.quality !== 'auto') return
+    const next = lowerTier(activeTier)
+    if (next === activeTier) return
+    log.warn('Pergola scene too slow, lowering quality', { from: activeTier, to: next })
+    writeTierCap(next)
+    setDegradedTier(next)
+  }, [scene.quality, activeTier])
   useEffect(() => { prefetchSceneAssets(scene) }, [scene])
   const onReady = useMemo(() => () => setReady(true), [])
   const onContextLost = useMemo(() => () => { setReady(false); setLoaded(false); setPosterGone(false); setContextLost(true) }, [])
@@ -2019,6 +2059,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
             onShade={onShade}
           />
         </Suspense></QualityContext.Provider>
+        <FrameGovernor enabled={loaded && scene.quality === 'auto'} onSlow={onSlow} />
         <FirstFrameReady onReady={onReady} />
       </Canvas>
     </SceneErrorBoundary>

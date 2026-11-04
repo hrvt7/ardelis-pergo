@@ -1,1 +1,390 @@
-{"asset":{"generator":"glTF-Transform v4.5.1","version":"2.0"},"accessors":[{"type":"SCALAR","componentType":5123,"count":15552,"normalized":false,"byteOffset":0,"bufferView":0},{"type":"VEC3","componentType":5122,"count":2840,"max":[32767,23230,32767],"min":[-32767,-23230,-32767],"normalized":true,"byteOffset":0,"bufferView":1},{"type":"VEC3","componentType":5120,"count":2840,"normalized":true,"byteOffset":0,"bufferView":2},{"type":"VEC2","componentType":5123,"count":2840,"normalized":true,"byteOffset":0,"bufferView":3},{"type":"SCALAR","componentType":5123,"count":32076,"normalized":false,"byteOffset":31104,"bufferView":0},{"type":"VEC3","componentType":5122,"count":7348,"max":[32767,29563,30059],"min":[-32767,-29563,-30059],"normalized":true,"byteOffset":0,"bufferView":4},{"type":"VEC3","componentType":5120,"count":7348,"normalized":true,"byteOffset":0,"bufferView":5},{"type":"VEC2","componentType":5123,"count":7348,"normalized":true,"byteOffset":0,"bufferView":6},{"type":"SCALAR","componentType":5123,"count":161790,"normalized":false,"byteOffset":95256,"bufferView":0},{"type":"VEC3","componentType":5122,"count":34606,"max":[32767,3472,32503],"min":[-32767,-3472,-32503],"normalized":true,"byteOffset":0,"bufferView":7},{"type":"VEC3","componentType":5120,"count":34606,"normalized":true,"byteOffset":0,"bufferView":8},{"type":"VEC2","componentType":5123,"count":34606,"normalized":true,"byteOffset":0,"bufferView":9}],"bufferViews":[{"buffer":1,"byteOffset":0,"byteLength":418836,"target":34963,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":0,"byteLength":76887,"mode":"TRIANGLES","byteStride":2,"count":209418}}},{"buffer":1,"byteOffset":418836,"byteLength":22720,"target":34962,"byteStride":8,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":76888,"byteLength":14718,"mode":"ATTRIBUTES","byteStride":8,"count":2840}}},{"buffer":1,"byteOffset":441556,"byteLength":11360,"target":34962,"byteStride":4,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":91608,"byteLength":4975,"mode":"ATTRIBUTES","filter":"OCTAHEDRAL","byteStride":4,"count":2840}}},{"buffer":1,"byteOffset":452916,"byteLength":11360,"target":34962,"byteStride":4,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":96584,"byteLength":7637,"mode":"ATTRIBUTES","byteStride":4,"count":2840}}},{"buffer":1,"byteOffset":464276,"byteLength":58784,"target":34962,"byteStride":8,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":104224,"byteLength":34777,"mode":"ATTRIBUTES","byteStride":8,"count":7348}}},{"buffer":1,"byteOffset":523060,"byteLength":29392,"target":34962,"byteStride":4,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":139004,"byteLength":14479,"mode":"ATTRIBUTES","filter":"OCTAHEDRAL","byteStride":4,"count":7348}}},{"buffer":1,"byteOffset":552452,"byteLength":29392,"target":34962,"byteStride":4,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":153484,"byteLength":24953,"mode":"ATTRIBUTES","byteStride":4,"count":7348}}},{"buffer":1,"byteOffset":581844,"byteLength":276848,"target":34962,"byteStride":8,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":178440,"byteLength":162018,"mode":"ATTRIBUTES","byteStride":8,"count":34606}}},{"buffer":1,"byteOffset":858692,"byteLength":138424,"target":34962,"byteStride":4,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":340460,"byteLength":71360,"mode":"ATTRIBUTES","filter":"OCTAHEDRAL","byteStride":4,"count":34606}}},{"buffer":1,"byteOffset":997116,"byteLength":138424,"target":34962,"byteStride":4,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":411820,"byteLength":105123,"mode":"ATTRIBUTES","byteStride":4,"count":34606}}}],"samplers":[{"magFilter":9729,"minFilter":9987,"wrapS":10497,"wrapT":10497}],"textures":[{"sampler":0,"extensions":{"EXT_texture_webp":{"source":1}}},{"source":0,"sampler":0},{"sampler":0,"extensions":{"EXT_texture_webp":{"source":2}}},{"source":4,"sampler":0},{"source":3,"sampler":0},{"sampler":0,"extensions":{"EXT_texture_webp":{"source":5}}}],"images":[{"name":"potted_plant_02_pot_nor_gl","mimeType":"image/jpeg","uri":"textures/potted_plant_02_pot_nor_gl_1k.jpg"},{"name":"potted_plant_02_pot_diff","mimeType":"image/webp","uri":"textures/potted_plant_02_pot_diff_1k.webp"},{"name":"potted_plant_02_pot_rough","mimeType":"image/webp","uri":"textures/potted_plant_02_pot_rough_1k.webp"},{"name":"potted_plant_02_leaves_nor_gl","mimeType":"image/jpeg","uri":"textures/potted_plant_02_leaves_nor_gl_1k.jpg"},{"name":"potted_plant_02_leaves_diff","mimeType":"image/jpeg","uri":"textures/potted_plant_02_leaves_diff_1k.jpg"},{"name":"potted_plant_02_leaves_rough","mimeType":"image/webp","uri":"textures/potted_plant_02_leaves_rough_1k.webp"}],"buffers":[{"uri":"potted_plant_02.bin","byteLength":516944},{"byteLength":1135540,"extensions":{"EXT_meshopt_compression":{"fallback":true}}}],"materials":[{"name":"potted_plant_02_pot","doubleSided":true,"pbrMetallicRoughness":{"metallicFactor":0,"baseColorTexture":{"index":0},"metallicRoughnessTexture":{"index":2}},"normalTexture":{"index":1}},{"name":"potted_plant_02_leaves","alphaMode":"MASK","alphaCutoff":0.5,"doubleSided":true,"pbrMetallicRoughness":{"metallicFactor":0,"baseColorTexture":{"index":3},"metallicRoughnessTexture":{"index":5}},"normalTexture":{"index":4}}],"meshes":[{"name":"Circle","primitives":[{"attributes":{"POSITION":1,"NORMAL":2,"TEXCOORD_0":3},"mode":4,"material":0,"indices":0}]},{"name":"Circle.001","primitives":[{"attributes":{"POSITION":5,"NORMAL":6,"TEXCOORD_0":7},"mode":4,"material":1,"indices":4}]},{"name":"low.008","primitives":[{"attributes":{"POSITION":9,"NORMAL":10,"TEXCOORD_0":11},"mode":4,"material":0,"indices":8}]}],"nodes":[{"name":"potted_plant_02_pot","translation":[0,0.16812393364307354,7.450580596923828e-9],"scale":[0.23707397282123566,0.23707397282123566,0.23707397282123566],"mesh":0},{"name":"potted_plant_02_leaves","translation":[-0.04608152247965336,0.5249447599053383,-0.09870093764038756],"scale":[0.35057851672172546,0.35057851672172546,0.35057851672172546],"mesh":1},{"name":"potted_plant_02_dirt","translation":[-0.0005193985998630524,0.3188231373205781,-0.0024895966053009033],"scale":[0.20709030702710152,0.20709030702710152,0.20709030702710152],"mesh":2}],"scenes":[{"name":"Scene","nodes":[0,1,2]}],"scene":0,"extensionsUsed":["EXT_meshopt_compression","EXT_texture_webp","KHR_mesh_quantization"],"extensionsRequired":["EXT_meshopt_compression","EXT_texture_webp","KHR_mesh_quantization"]}
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 3108,
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 6297,
+      "bufferView": 0,
+      "byteOffset": 6216
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 32358,
+      "bufferView": 0,
+      "byteOffset": 18812
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 617,
+      "max": [
+        32591,
+        23230,
+        32767
+      ],
+      "min": [
+        -32591,
+        -23150,
+        -32767
+      ],
+      "normalized": true,
+      "bufferView": 1,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5120,
+      "count": 617,
+      "normalized": true,
+      "bufferView": 1,
+      "byteOffset": 8
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 617,
+      "normalized": true,
+      "bufferView": 1,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 1990,
+      "max": [
+        32767,
+        29459,
+        30059
+      ],
+      "min": [
+        -32743,
+        -29511,
+        -30059
+      ],
+      "normalized": true,
+      "bufferView": 2,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5120,
+      "count": 1990,
+      "normalized": true,
+      "bufferView": 2,
+      "byteOffset": 8
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 1990,
+      "normalized": true,
+      "bufferView": 2,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 9189,
+      "max": [
+        32731,
+        3472,
+        32503
+      ],
+      "min": [
+        -32767,
+        -3472,
+        -32503
+      ],
+      "normalized": true,
+      "bufferView": 3,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5120,
+      "count": 9189,
+      "normalized": true,
+      "bufferView": 3,
+      "byteOffset": 8
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 9189,
+      "normalized": true,
+      "bufferView": 3,
+      "byteOffset": 12
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 83528,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 83528,
+      "byteLength": 9872,
+      "byteStride": 16,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 93400,
+      "byteLength": 31840,
+      "byteStride": 16,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 125240,
+      "byteLength": 147024,
+      "byteStride": 16,
+      "target": 34962
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "source": 0,
+      "sampler": 0
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    },
+    {
+      "source": 4,
+      "sampler": 0
+    },
+    {
+      "source": 3,
+      "sampler": 0
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 5
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "potted_plant_02_pot_nor_gl",
+      "mimeType": "image/jpeg",
+      "uri": "textures/potted_plant_02_pot_nor_gl_1k.jpg"
+    },
+    {
+      "name": "potted_plant_02_pot_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/potted_plant_02_pot_diff_1k.webp"
+    },
+    {
+      "name": "potted_plant_02_pot_rough",
+      "mimeType": "image/webp",
+      "uri": "textures/potted_plant_02_pot_rough_1k.webp"
+    },
+    {
+      "name": "potted_plant_02_leaves_nor_gl",
+      "mimeType": "image/jpeg",
+      "uri": "textures/potted_plant_02_leaves_nor_gl_1k.jpg"
+    },
+    {
+      "name": "potted_plant_02_leaves_diff",
+      "mimeType": "image/jpeg",
+      "uri": "textures/potted_plant_02_leaves_diff_1k.jpg"
+    },
+    {
+      "name": "potted_plant_02_leaves_rough",
+      "mimeType": "image/webp",
+      "uri": "textures/potted_plant_02_leaves_rough_1k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "potted_plant_02.bin",
+      "byteLength": 272264
+    }
+  ],
+  "materials": [
+    {
+      "name": "potted_plant_02_pot",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      },
+      "normalTexture": {
+        "index": 1
+      }
+    },
+    {
+      "name": "potted_plant_02_leaves",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.5,
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 3
+        },
+        "metallicRoughnessTexture": {
+          "index": 5
+        }
+      },
+      "normalTexture": {
+        "index": 4
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Circle",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 3,
+            "NORMAL": 4,
+            "TEXCOORD_0": 5
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 0
+        }
+      ]
+    },
+    {
+      "name": "Circle.001",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 6,
+            "NORMAL": 7,
+            "TEXCOORD_0": 8
+          },
+          "mode": 4,
+          "material": 1,
+          "indices": 1
+        }
+      ]
+    },
+    {
+      "name": "low.008",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 9,
+            "NORMAL": 10,
+            "TEXCOORD_0": 11
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 2
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "potted_plant_02_pot",
+      "translation": [
+        0,
+        0.16812393364307354,
+        7.450580596923828e-9
+      ],
+      "scale": [
+        0.23707397282123566,
+        0.23707397282123566,
+        0.23707397282123566
+      ],
+      "mesh": 0
+    },
+    {
+      "name": "potted_plant_02_leaves",
+      "translation": [
+        -0.04608152247965336,
+        0.5249447599053383,
+        -0.09870093764038756
+      ],
+      "scale": [
+        0.35057851672172546,
+        0.35057851672172546,
+        0.35057851672172546
+      ],
+      "mesh": 1
+    },
+    {
+      "name": "potted_plant_02_dirt",
+      "translation": [
+        -0.0005193985998630524,
+        0.3188231373205781,
+        -0.0024895966053009033
+      ],
+      "scale": [
+        0.20709030702710152,
+        0.20709030702710152,
+        0.20709030702710152
+      ],
+      "mesh": 2
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0,
+        1,
+        2
+      ]
+    }
+  ],
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
+  ],
+  "extensionsRequired": [
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
+  ]
+}

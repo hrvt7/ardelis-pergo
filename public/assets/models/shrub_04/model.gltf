@@ -1,1 +1,191 @@
-{"asset":{"generator":"glTF-Transform v4.5.1","version":"2.0"},"accessors":[{"type":"SCALAR","componentType":5123,"count":81981,"normalized":false,"byteOffset":0,"bufferView":0},{"type":"VEC3","componentType":5122,"count":18285,"max":[32767,12305,8201],"min":[-32767,-12305,-8201],"normalized":true,"byteOffset":0,"bufferView":1},{"type":"VEC2","componentType":5123,"count":18285,"normalized":true,"byteOffset":0,"bufferView":2},{"type":"VEC3","componentType":5120,"count":18285,"normalized":true,"byteOffset":0,"bufferView":3}],"bufferViews":[{"buffer":1,"byteOffset":0,"byteLength":163962,"target":34963,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":0,"byteLength":27946,"mode":"TRIANGLES","byteStride":2,"count":81981}}},{"buffer":1,"byteOffset":163964,"byteLength":146280,"target":34962,"byteStride":8,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":27948,"byteLength":77883,"mode":"ATTRIBUTES","byteStride":8,"count":18285}}},{"buffer":1,"byteOffset":310244,"byteLength":73140,"target":34962,"byteStride":4,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":105832,"byteLength":62590,"mode":"ATTRIBUTES","byteStride":4,"count":18285}}},{"buffer":1,"byteOffset":383384,"byteLength":73140,"target":34962,"byteStride":4,"extensions":{"EXT_meshopt_compression":{"buffer":0,"byteOffset":168424,"byteLength":37148,"mode":"ATTRIBUTES","filter":"OCTAHEDRAL","byteStride":4,"count":18285}}}],"samplers":[{"magFilter":9729,"minFilter":9987,"wrapS":10497,"wrapT":10497}],"textures":[{"sampler":0,"extensions":{"EXT_texture_webp":{"source":1}}},{"sampler":0,"extensions":{"EXT_texture_webp":{"source":0}}},{"sampler":0,"extensions":{"EXT_texture_webp":{"source":2}}}],"images":[{"name":"shrub_04_nor_gl","mimeType":"image/webp","uri":"textures/shrub_04_nor_gl_1k.webp"},{"name":"shrub_04_diff","mimeType":"image/webp","uri":"textures/shrub_04_diff_1k.webp"},{"name":"shrub_04_rough","mimeType":"image/webp","uri":"textures/shrub_04_arm_1k.webp"}],"buffers":[{"uri":"shrub_04.bin","byteLength":205572},{"byteLength":456524,"extensions":{"EXT_meshopt_compression":{"fallback":true}}}],"materials":[{"name":"shrub_04","alphaMode":"MASK","alphaCutoff":0.5,"doubleSided":true,"pbrMetallicRoughness":{"metallicFactor":0,"baseColorTexture":{"index":0},"metallicRoughnessTexture":{"index":2}},"normalTexture":{"index":1}}],"meshes":[{"name":"Plane.063","primitives":[{"attributes":{"POSITION":1,"TEXCOORD_0":2,"NORMAL":3},"mode":4,"material":0,"indices":0}]}],"nodes":[{"name":"shrub_04","translation":[0.2673984281718731,0.10366259864531457,-0.0019609257578849792],"scale":[0.29184509441256523,0.29184509441256523,0.29184509441256523],"mesh":0}],"scenes":[{"name":"Scene","nodes":[0]}],"scene":0,"extensionsUsed":["EXT_meshopt_compression","EXT_texture_webp","KHR_mesh_quantization"],"extensionsRequired":["EXT_meshopt_compression","EXT_texture_webp","KHR_mesh_quantization"]}
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 24399,
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 7284,
+      "max": [
+        32767,
+        12305,
+        8201
+      ],
+      "min": [
+        -32767,
+        -12305,
+        -8201
+      ],
+      "normalized": true,
+      "bufferView": 1,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 7284,
+      "normalized": true,
+      "bufferView": 1,
+      "byteOffset": 8
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5120,
+      "count": 7284,
+      "normalized": true,
+      "bufferView": 1,
+      "byteOffset": 12
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 48800,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 48800,
+      "byteLength": 116544,
+      "byteStride": 16,
+      "target": 34962
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "shrub_04_nor_gl",
+      "mimeType": "image/webp",
+      "uri": "textures/shrub_04_nor_gl_1k.webp"
+    },
+    {
+      "name": "shrub_04_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/shrub_04_diff_1k.webp"
+    },
+    {
+      "name": "shrub_04_rough",
+      "mimeType": "image/webp",
+      "uri": "textures/shrub_04_arm_1k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "shrub_04.bin",
+      "byteLength": 165344
+    }
+  ],
+  "materials": [
+    {
+      "name": "shrub_04",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.5,
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      },
+      "normalTexture": {
+        "index": 1
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Plane.063",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 1,
+            "TEXCOORD_0": 2,
+            "NORMAL": 3
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 0
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "shrub_04",
+      "translation": [
+        0.2673984281718731,
+        0.10366259864531457,
+        -0.0019609257578849792
+      ],
+      "scale": [
+        0.29184509441256523,
+        0.29184509441256523,
+        0.29184509441256523
+      ],
+      "mesh": 0
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
+  ],
+  "extensionsRequired": [
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
+  ]
+}

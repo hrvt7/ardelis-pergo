@@ -38,7 +38,7 @@ export default function SceneEffects({ ultra, night }: { ultra: boolean; night: 
   useEffect(() => () => clampPass.dispose(), [clampPass])
   // Natív MSAA a HDR pufferen: éles élek 100%-os Windows-skálázású (dpr 1) képernyőn is; az SMAA önmagában „pixeles” képet adott.
   return (
-    <EffectComposer multisampling={ultra ? 8 : 4} enableNormalPass={false}>
+    <EffectComposer multisampling={ultra ? 8 : 2} enableNormalPass={false}>
       <primitive object={clampPass} dispose={null} />
       <N8AO
         aoRadius={0.75}
