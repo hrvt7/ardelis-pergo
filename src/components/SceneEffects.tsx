@@ -1,6 +1,6 @@
 // Utófeldolgozás asztali gépen: ambient occlusion (árnyék a sarkokban, a
 // lamellák között, a bútor alatt), bloom (a LED és a fűtés tényleg világít) és
-// filmes tónusleképezés. Mobilon és fotós előnézetben nem töltődik be.
+// színhű (Khronos Neutral) tónusleképezés. Mobilon és fotós előnézetben nem töltődik be.
 import { useEffect, useMemo } from 'react'
 import { Bloom, EffectComposer, N8AO, SMAA, ToneMapping } from '@react-three/postprocessing'
 import { ShaderPass, ToneMappingMode } from 'postprocessing'
@@ -51,7 +51,7 @@ export default function SceneEffects({ ultra, night }: { ultra: boolean; night: 
         depthAwareUpsampling
       />
       <Bloom mipmapBlur luminanceThreshold={1} luminanceSmoothing={0.25} intensity={night ? 0.85 : 0.18} radius={0.72} />
-      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      <ToneMapping mode={ToneMappingMode.NEUTRAL} />
       <SMAA />
     </EffectComposer>
   )

@@ -154,7 +154,7 @@ function getPowderCoatTexture() {
   const size = 64
   const data = new Uint8Array(size * size * 4)
   for (let index = 0; index < size * size; index++) {
-    const grain = Math.round(178 + seeded(index, 31) * 68)
+    const grain = Math.round(214 + seeded(index, 31) * 41)
     data[index * 4] = grain
     data[index * 4 + 1] = grain
     data[index * 4 + 2] = grain
@@ -197,9 +197,22 @@ function getWoodTexture() {
   return woodTexture
 }
 
+/** Közös, gyorsítótárazott anyagok: színenként és érdességenként egy példány (kevesebb anyag, egy helyen hangolható). */
+const coatCache = new Map<string, THREE.MeshPhysicalMaterial>()
+function getCoat(color: string, roughness: number) {
+  const key = `${color}|${roughness}`
+  let material = coatCache.get(key)
+  if (!material) {
+    if (WOOD_HEXES.has(color)) material = new THREE.MeshPhysicalMaterial({ color: lightenForWood(color), map: getWoodTexture(), metalness: 0.02, roughness: 0.6, clearcoat: 0.12, clearcoatRoughness: 0.5, envMapIntensity: 0.7 })
+    // Festett (porszórt) alumínium: alacsony fémesség, vékony lakkréteg — az éleken éles, valódi csillanás.
+    else material = new THREE.MeshPhysicalMaterial({ color, metalness: 0.2, roughness, roughnessMap: getPowderCoatTexture(), clearcoat: 0.35, clearcoatRoughness: 0.28, specularIntensity: 1, envMapIntensity: 0.9 })
+    coatCache.set(key, material)
+  }
+  return material
+}
+
 function PowderCoat({ color, roughness = 0.4 }: { color: string; roughness?: number }) {
-  if (WOOD_HEXES.has(color)) return <meshPhysicalMaterial color={lightenForWood(color)} map={getWoodTexture()} metalness={0.02} roughness={0.62} clearcoat={0.08} clearcoatRoughness={0.6} envMapIntensity={0.7} />
-  return <meshPhysicalMaterial color={color} metalness={0.5} roughness={roughness} roughnessMap={getPowderCoatTexture()} clearcoat={0.1} clearcoatRoughness={0.48} specularIntensity={0.55} envMapIntensity={0.82} />
+  return <primitive object={getCoat(color, roughness)} attach="material" dispose={null} />
 }
 
 function Beam({ args, position, color, radius = 0.012 }: { args: [number, number, number]; position: [number, number, number]; color: string; radius?: number }) {
@@ -610,7 +623,7 @@ function GlazedRoof({ width, depth, height, color, kind }: { width: number; dept
       return <mesh key={index} position={[x, height + 0.211, 0]} castShadow={!glass} receiveShadow renderOrder={glass ? 2 : 0}>
         <boxGeometry args={[bay - 0.05, glass ? 0.012 : 0.016, length - 0.02]} />
         {glass
-          ? <meshPhysicalMaterial color="#cfe2e4" metalness={0.02} roughness={0.04} transparent opacity={0.24} clearcoat={1} clearcoatRoughness={0.03} envMapIntensity={2} depthWrite={false} side={THREE.DoubleSide} />
+          ? <meshPhysicalMaterial color="#cfe2e4" metalness={0.02} roughness={0.04} transparent opacity={0.24} ior={1.45} clearcoat={1} clearcoatRoughness={0.03} envMapIntensity={1.2} depthWrite={false} />
           : <meshPhysicalMaterial color="#f3f1ea" roughness={0.55} transmission={0} transparent opacity={0.78} sheen={0.2} side={THREE.DoubleSide} />}
       </mesh>
     })}
@@ -1934,7 +1947,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' }}
         performance={{ min: 0.55 }}
         onCreated={({ gl }) => {
-          gl.toneMapping = THREE.ACESFilmicToneMapping
+          gl.toneMapping = THREE.NeutralToneMapping
           gl.toneMappingExposure = 0.88
           gl.shadowMap.autoUpdate = false
           refreshShadows(gl)
