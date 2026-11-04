@@ -26,7 +26,7 @@ export const PERGOLA_FAQS = [
 ] as const
 
 export type SeoPage = {
-  key: 'home' | 'studio' | 'track' | 'partners' | 'admin' | 'login' | 'notFound'
+  key: 'platform' | 'home' | 'studio' | 'track' | 'partners' | 'admin' | 'login' | 'notFound'
   path: string
   title: string
   description: string
@@ -39,8 +39,16 @@ const PRIVATE_ROBOTS = 'noindex,follow,noarchive'
 
 const SEO_PAGES: Record<string, SeoPage> = {
   '/': {
-    key: 'home',
+    key: 'platform',
     path: '/',
+    title: '3D pergola-konfigurátor és lead rendszer gyártóknak | PERGO Studio',
+    description: 'White-label 3D pergola-konfigurátor gyártóknak és forgalmazóknak: azonnali irányár, ármátrix, QR-kódos terv, érdeklődők kezelése és gyártói admin. Kérjen demót.',
+    robots: INDEX_ROBOTS,
+    indexable: true,
+  },
+  '/ardelis': {
+    key: 'home',
+    path: '/ardelis',
     title: 'Bioklimatikus pergola 3D tervezése | ARDELIS PERGO',
     description: 'Tervezd meg bioklimatikus pergoládat valós idejű 3D-ben: méret, tetőrendszer, oldalzárás és világítás, azonnali irányárral és felmérési kérelemmel.',
     robots: INDEX_ROBOTS,
@@ -88,7 +96,7 @@ const SEO_PAGES: Record<string, SeoPage> = {
   },
 }
 
-export const SEO_SITEMAP_PATHS = ['/', '/studio/pergola'] as const
+export const SEO_SITEMAP_PATHS = ['/', '/ardelis', '/studio/pergola'] as const
 
 export function normalizeSeoPath(pathname: string) {
   if (!pathname || pathname === '/') return '/'
@@ -128,23 +136,40 @@ export function buildStructuredData(pathname: string, origin: string) {
     publisher: { '@id': organizationId },
   }
 
+  if (page.key === 'platform') {
+    return [
+      website,
+      {
+        '@type': 'SoftwareApplication',
+        '@id': `${origin}/#software`,
+        name: 'PERGO Studio — 3D pergola-konfigurátor gyártóknak',
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web browser',
+        inLanguage: 'hu-HU',
+        url: `${origin}/`,
+        description: page.description,
+        offers: { '@type': 'Offer', priceCurrency: 'HUF', price: '59000', description: 'Havi előfizetés, nettó ár' },
+      },
+    ]
+  }
+
   if (page.key === 'home') {
     return [
       organization,
       website,
       {
         '@type': 'Service',
-        '@id': `${origin}/#pergola-service`,
+        '@id': `${origin}/ardelis#pergola-service`,
         name: 'Bioklimatikus pergola tervezése és helyszíni felmérése',
         serviceType: 'Bioklimatikus pergola tervezése',
         description: 'Paraméteres pergolatervezés valós idejű 3D előnézettel, tájékoztató árkalkulációval és helyszíni felmérési kérelemmel.',
         provider: { '@id': organizationId },
         areaServed: { '@type': 'Country', name: 'Magyarország' },
-        url: `${origin}/`,
+        url: `${origin}/ardelis`,
       },
       {
         '@type': 'FAQPage',
-        '@id': `${origin}/#gyik`,
+        '@id': `${origin}/ardelis#gyik`,
         inLanguage: 'hu-HU',
         mainEntity: PERGOLA_FAQS.map((item) => ({
           '@type': 'Question',
@@ -180,7 +205,7 @@ export function buildStructuredData(pathname: string, origin: string) {
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'ARDELIS PERGO', item: `${origin}/` },
+          { '@type': 'ListItem', position: 1, name: 'ARDELIS PERGO', item: `${origin}/ardelis` },
           { '@type': 'ListItem', position: 2, name: '3D pergolatervező', item: `${origin}/studio/pergola` },
         ],
       },

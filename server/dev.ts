@@ -2,11 +2,13 @@
 import 'dotenv/config'
 import { Hono } from 'hono'
 import { handleLeadRequest } from './lead'
+import { handleDemoRequest } from './demoRequest'
 import { handleAdminStats, handleTrack } from './analytics'
 import { handleAdminLeads, handleAdminLogin, handleAdminSettings, handleTenantRequest } from './tenantAdmin'
 
 const app = new Hono()
 app.post('/api/lead', (c) => handleLeadRequest(c.req.raw, process.env))
+app.post('/api/demo-request', (c) => handleDemoRequest(c.req.raw, process.env))
 app.get('/api/tenant', (c) => handleTenantRequest(c.req.raw, process.env))
 app.post('/api/admin-login', (c) => handleAdminLogin(c.req.raw, process.env))
 app.on(['GET', 'PUT'], '/api/admin-settings', (c) => handleAdminSettings(c.req.raw, process.env))

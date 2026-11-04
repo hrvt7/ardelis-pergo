@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router'
 
 export function Brand({ compact = false }: { compact?: boolean }) {
-  return <Link className={`site-brand ${compact ? 'compact' : ''}`} to="/" aria-label="ARDELIS Atelier kezdőlap">
+  return <Link className={`site-brand ${compact ? 'compact' : ''}`} to="/ardelis" aria-label="ARDELIS Atelier kezdőlap">
     <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M4 27V9l13-5 13 5v18M4 15h26M10 27V15m14 12V15M4 27h26" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
     <span><strong>ARDELIS</strong><small>/ PERGO</small></span>
   </Link>
@@ -18,7 +18,7 @@ export default function SiteHeader({ action }: { action?: ReactNode }) {
     <button className="site-menu-toggle" type="button" aria-label={open ? 'Menü bezárása' : 'Menü megnyitása'} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
     <nav className={open ? 'is-open' : ''} aria-label="Fő navigáció" onClick={() => setOpen(false)}>
       <NavLink to="/studio/pergola">Pergo stúdió</NavLink>
-      {location.pathname === '/' ? <a href="#folyamat">Folyamat</a> : <Link to="/#folyamat">Folyamat</Link>}
+      {location.pathname === '/ardelis' ? <a href="#folyamat">Folyamat</a> : <Link to="/ardelis#folyamat">Folyamat</Link>}
       <div className="site-mobile-action">{action ?? defaultAction}</div>
     </nav>
     <div className="site-header-action">{action ?? defaultAction}</div>

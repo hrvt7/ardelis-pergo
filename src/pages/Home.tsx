@@ -83,7 +83,7 @@ function Blueprint() {
 const MARQUEE = ['Bioklimatikus lamella', 'Üvegtető', 'Motoros árnyékoló', 'ZIP screen', 'Tolóüveg', 'Periméter LED', 'Infra fűtés', 'Napelem', 'Okosotthon', 'Szenzorok']
 
 export default function Home() {
-  usePageSeo('/')
+  usePageSeo('/ardelis')
   const root = useRef<HTMLDivElement>(null)
   const film = useRef<HTMLElement>(null)
   const filmStage = useRef<HTMLDivElement>(null)

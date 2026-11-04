@@ -562,3 +562,10 @@ működést, az eladhatóságot és a hibákat érintik.
 - Modellek egyszerűsítve (növény, fa, bokor): ~556k → ~179k háromszög.
 - Automatikus szint: Apple/integrált GPU legfeljebb magas; futásidejű védőháló (38 fps alatt eggyel lejjebb, eszközön megjegyezve).
 - Utófeldolgozás: MSAA 2× magas szinten.
+
+## 3.24 — B2B nyitóoldal, ármátrix-szerkesztő, mobil admin
+- `/` mostantól a gyártóknak szóló B2B oldal (PERGO Studio): előnyök, rögzített bemutató, működés, árazás (Start 59 000 / Pro 119 000 Ft/hó, bevezetés 490 000 Ft, nettó), demókérő űrlap, GYIK. A lakossági ARDELIS oldal: `/ardelis`.
+- Demókérés: `POST /api/demo-request` → e-mail (Resend) a `DEMO_REQUEST_EMAIL` címre (alapértelmezés: hrvtadam.7@icloud.com), opcionálisan Supabase `demo_requests` (supabase/demo_requests.sql). Kézbesítés nélkül az űrlap a közvetlen e-mail-címet mutatja.
+- Admin → Beállítások: táblázatos ármátrix-szerkesztő (tetőnként, sor hozzáadás/törlés, Excel-beillesztés, mentéskori validáció: pozitív szám, duplikált méretpár, 30 m / 400 sor korlát). Az adatszerkezet és a számolás változatlan.
+- Mobil admin: kártyás lead lista, alulról felcsúszó részletező rögzített Hívás / E-mail / Terv gombokkal, 16 px-es mezők, mentés sáv az alsó navigáció fölött.
+- Admin grafikon: monoton görbe (nem bukik a tengely alá); KPI-sparkline nem takarja a feliratot.

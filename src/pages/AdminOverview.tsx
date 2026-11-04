@@ -10,13 +10,28 @@ const compactHuf = (value: number) => (value >= 1_000_000 ? `${(value / 1_000_00
 const shortDate = (day: string) => new Date(`${day}T12:00:00`).toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' })
 const STATUS_LABEL = Object.fromEntries(LEAD_STATUSES) as Record<string, string>
 
-/** Sima (Catmull-Rom → Bézier) görbe a pontokon át. */
+/**
+ * Sima, monoton görbe a pontokon át (Fritsch–Carlson): nem lő túl a pontokon,
+ * így nulla napnál sem bukik a tengely alá, és csúcsot sem talál ki.
+ */
 function smoothPath(points: [number, number][]) {
-  if (points.length < 2) return ''
+  const n = points.length
+  if (n < 2) return ''
+  const dx = points.slice(1).map((point, i) => point[0] - points[i][0])
+  const slope = points.slice(1).map((point, i) => (point[1] - points[i][1]) / (dx[i] || 1))
+  const tangent = points.map((_, i) => {
+    if (i === 0) return slope[0]
+    if (i === n - 1) return slope[n - 2]
+    const a = slope[i - 1]
+    const b = slope[i]
+    return a * b <= 0 ? 0 : (3 * (dx[i - 1] + dx[i])) / ((2 * dx[i] + dx[i - 1]) / a + (dx[i] + 2 * dx[i - 1]) / b)
+  })
   let path = `M${points[0][0]},${points[0][1]}`
-  for (let i = 0; i < points.length - 1; i++) {
-    const [p0, p1, p2, p3] = [points[i - 1] ?? points[i], points[i], points[i + 1], points[i + 2] ?? points[i + 1]]
-    path += ` C${p1[0] + (p2[0] - p0[0]) / 6},${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6},${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]},${p2[1]}`
+  for (let i = 0; i < n - 1; i++) {
+    const [x0, y0] = points[i]
+    const [x1, y1] = points[i + 1]
+    const h = dx[i] / 3
+    path += ` C${x0 + h},${y0 + tangent[i] * h} ${x1 - h},${y1 - tangent[i + 1] * h} ${x1},${y1}`
   }
   return path
 }
