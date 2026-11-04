@@ -54,3 +54,21 @@ Sikeres felméréskérés után a konfigurátor üzenetet küld a befoglaló old
   });
 </script>
 ```
+
+## Gyártói admin felület (`/k/{gyarto}/admin`)
+
+A gyártó a legfontosabb beállításait (cég- és kapcsolati adatok, lead-címzettek, árak, ármátrix, tetők, oldalfalak,
+rögzítések, extrák) maga szerkeszti, kód nélkül. A kódban lévő tenant (pl. `demo.ts`) az **alap**; a mentett
+beállítások csak felülírják azt (`src/tenants/overrides.ts`), ami hiányzik, a kódból jön.
+
+Bekapcsolás:
+1. Supabase SQL Editor: futtasd a `supabase/tenant_settings.sql` fájlt (a `leads.sql` mellé).
+2. Vercel környezeti változók (csak szerveroldal):
+   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (már a leadekhez is kell),
+   - `ADMIN_TOKEN_SECRET` — hosszú, véletlen karakterlánc (a munkamenet-token aláírásához),
+   - `ADMIN_PASSWORD_<GYARTO>` — a gyártó jelszava, pl. `ADMIN_PASSWORD_DEMO` (kötőjel helyett `_`, csupa nagybetű).
+3. A gyártó a `https://…/k/{gyarto}/admin` címen lép be; csak a saját beállításait látja és módosítja.
+
+Működés: mentés után a konfigurátor (`/api/tenant`) és a szerver (lead, árazás) is azonnal az új adatot használja. A lead-fogadó
+e-mail címek nem kerülnek a böngészőbe. Belépési kísérletek korlátozottak, a munkamenet 8 óráig él.
+Később a jelszavas belépés Supabase Auth-ra cserélhető (csak `server/tenantAdmin.ts` `authorize`/`login` része változik).

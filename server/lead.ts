@@ -16,7 +16,7 @@ import { sideSummary } from '../src/lib/sides'
 import { colorSummary } from '../src/lib/colors'
 import { shareHash } from '../src/lib/shareCode'
 import { getBom, getSpecCode } from '../src/lib/specification'
-import { getTenant } from '../src/tenants'
+import { resolveTenant } from './tenantAdmin'
 import { parseConfig, roofLabels, tenantPrice } from '../src/tenants/rules'
 import type { Tenant } from '../src/tenants/types'
 import type { PergolaConfig, PriceBreakdown, SideKey } from '../src/types/pergola'
@@ -242,7 +242,7 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
     return json(422, { ok: false, error: 'Kérlek, ellenőrizd a megadott adatokat.', field })
   }
   const input = parsed.data
-  const tenant = getTenant(input.tenantId)
+  const tenant = await resolveTenant(env, input.tenantId)
   if (!tenant) return json(404, { ok: false, error: 'Ismeretlen konfigurátor.' })
   if (!tenant.regions.includes(input.customer.region)) return json(422, { ok: false, error: 'Kérlek, válassz régiót a listából.', field: 'customer.region' })
 

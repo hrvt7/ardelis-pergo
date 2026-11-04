@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { ExternalLink, RotateCcw, X } from 'lucide-react'
 import { useTenant } from '@/tenants/TenantContext'
+import { MONEY_FIELDS, type PriceKey } from '@/tenants/priceFields'
 import { ROOF_INFO, ROOF_TYPES } from '@/lib/roofs'
 import type { PriceSettings } from '@/types/pergola'
 
@@ -37,33 +38,10 @@ export function Modal({ title, eyebrow, onClose, children, className = '' }: { t
   )
 }
 
-const MONEY_FIELDS: { key: Exclude<keyof PriceSettings, "priceMatrix">; label: string; unit: string }[] = [
-  { key: 'freestandingSurchargeNet', label: 'Önálló kivitel felára', unit: 'Ft' },
-  { key: 'sideWallAttachPerMeterNet', label: 'Oldalfali rögzítés (sarok, fülke)', unit: 'Ft/fm' },
-  { key: 'postNet', label: 'Elmaradó oszlop jóváírása', unit: 'Ft/db' },
-  { key: 'zipPerM2Net', label: 'ZIP screen', unit: 'Ft/m²' },
-  { key: 'glassPerM2Net', label: 'Keret nélküli tolóüveg', unit: 'Ft/m²' },
-  { key: 'glassFramedPerM2Net', label: 'Keretes tolóüveg', unit: 'Ft/m²' },
-  { key: 'glassFixedPerM2Net', label: 'Fix üvegfal', unit: 'Ft/m²' },
-  { key: 'louverWallPerM2Net', label: 'Lamellafal', unit: 'Ft/m²' },
-  { key: 'slatAluPerM2Net', label: 'Alumínium lécfal', unit: 'Ft/m²' },
-  { key: 'slatWoodPerM2Net', label: 'Fa lécfal', unit: 'Ft/m²' },
-  { key: 'splitProfileNet', label: 'Osztóprofil (félbe osztott oldal)', unit: 'Ft/db' },
-  { key: 'ledPerMeterNet', label: 'Periméter LED', unit: 'Ft/fm' },
-  { key: 'ledRgbPerMeterNet', label: 'RGB+W LED felár', unit: 'Ft/fm' },
-  { key: 'fanUnitNet', label: 'Mennyezeti ventilátor', unit: 'Ft/db' },
-  { key: 'smartHomeNet', label: 'Okosotthon-vezérlés', unit: 'Ft' },
-  { key: 'roofShadeAbovePerM2Net', label: 'Tető feletti árnyékoló', unit: 'Ft/m²' },
-  { key: 'roofShadeBelowPerM2Net', label: 'Tető alatti árnyékoló', unit: 'Ft/m²' },
-  { key: 'heaterUnitNet', label: 'Teraszfűtés', unit: 'Ft/db' },
-  { key: 'speakerPairNet', label: 'Hangrendszer', unit: 'Ft/pár' },
-  { key: 'sensorsNet', label: 'Szenzorcsomag', unit: 'Ft' },
-  { key: 'solarPerKwpNet', label: 'Napelemes tető', unit: 'Ft/kWp' },
-]
 
 export function PriceSettingsDialog({ prices, onChange, onReset, onClose }: { prices: PriceSettings; onChange: (prices: PriceSettings) => void; onReset: () => void; onClose: () => void }) {
   const { tenant } = useTenant()
-  const roofFields: { key: Exclude<keyof PriceSettings, "priceMatrix">; label: string; unit: string }[] = ROOF_TYPES.filter((roof) => tenant.roofs[roof]).map((roof) => ({ key: ROOF_INFO[roof].priceKey, label: `${tenant.roofs[roof]!.name} ${tenant.roofs[roof]!.short} alapár`, unit: 'Ft/m²' }))
+  const roofFields: { key: PriceKey; label: string; unit: string }[] = ROOF_TYPES.filter((roof) => tenant.roofs[roof]).map((roof) => ({ key: ROOF_INFO[roof].priceKey, label: `${tenant.roofs[roof]!.name} ${tenant.roofs[roof]!.short} alapár`, unit: 'Ft/m²' }))
   return (
     <Modal title="Mintaárak szerkesztése" eyebrow="SZERKESZTHETŐ MINTAÁRAK" onClose={onClose} className="price-settings-modal">
       <p className="modal-intro">Minden érték nettó forintban értendő, kivéve a százalékos mezőket. A módosítások azonnal újraszámolják a konfigurációt, és csak ebben a böngészőben mentődnek — a beküldött érdeklődőnél a szerver a gyártói árlistával számol.</p>

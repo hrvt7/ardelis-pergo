@@ -1,0 +1,28 @@
+// A gyártó által szerkeszthető (nem tetőtípusos) nettó egységárak — az árszerkesztő és az admin felület közös listája.
+import type { PriceSettings } from '../types/pergola'
+
+export type PriceKey = Exclude<keyof PriceSettings, 'priceMatrix'>
+
+export const MONEY_FIELDS: { key: PriceKey; label: string; unit: string }[] = [
+  { key: 'freestandingSurchargeNet', label: 'Önálló kivitel felára', unit: 'Ft' },
+  { key: 'sideWallAttachPerMeterNet', label: 'Oldalfali rögzítés (sarok, fülke)', unit: 'Ft/fm' },
+  { key: 'postNet', label: 'Elmaradó oszlop jóváírása', unit: 'Ft/db' },
+  { key: 'zipPerM2Net', label: 'ZIP screen', unit: 'Ft/m²' },
+  { key: 'glassPerM2Net', label: 'Keret nélküli tolóüveg', unit: 'Ft/m²' },
+  { key: 'glassFramedPerM2Net', label: 'Keretes tolóüveg', unit: 'Ft/m²' },
+  { key: 'glassFixedPerM2Net', label: 'Fix üvegfal', unit: 'Ft/m²' },
+  { key: 'louverWallPerM2Net', label: 'Lamellafal', unit: 'Ft/m²' },
+  { key: 'slatAluPerM2Net', label: 'Alumínium lécfal', unit: 'Ft/m²' },
+  { key: 'slatWoodPerM2Net', label: 'Fa lécfal', unit: 'Ft/m²' },
+  { key: 'splitProfileNet', label: 'Osztóprofil (félbe osztott oldal)', unit: 'Ft/db' },
+  { key: 'ledPerMeterNet', label: 'Periméter LED', unit: 'Ft/fm' },
+  { key: 'ledRgbPerMeterNet', label: 'RGB+W LED felár', unit: 'Ft/fm' },
+  { key: 'fanUnitNet', label: 'Mennyezeti ventilátor', unit: 'Ft/db' },
+  { key: 'smartHomeNet', label: 'Okosotthon-vezérlés', unit: 'Ft' },
+  { key: 'roofShadeAbovePerM2Net', label: 'Tető feletti árnyékoló', unit: 'Ft/m²' },
+  { key: 'roofShadeBelowPerM2Net', label: 'Tető alatti árnyékoló', unit: 'Ft/m²' },
+  { key: 'heaterUnitNet', label: 'Teraszfűtés', unit: 'Ft/db' },
+  { key: 'speakerPairNet', label: 'Hangrendszer', unit: 'Ft/pár' },
+  { key: 'sensorsNet', label: 'Szenzorcsomag', unit: 'Ft' },
+  { key: 'solarPerKwpNet', label: 'Napelemes tető', unit: 'Ft/kWp' },
+]
