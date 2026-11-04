@@ -6,6 +6,7 @@
 - Áttekintés: KPI-k, napi grafikon, státuszmegoszlás, népszerű tetők, települések, legfrissebb érdeklődők.
 - Érdeklődők: szűrés státusz szerint + keresés, egykattintásos státusz, hívás/e-mail link és másolás, konfiguráció link + QR, belső megjegyzés, CSV export.
 - Névtelen konverziómérés (süti és azonosító nélkül, DNT-tisztelő): megnyitás → tervezés → űrlap látva → kitöltés indult → felmérési kérés; tölcsér az Áttekintésben.
+- Nyitott demó: amíg nincs `ADMIN_PASSWORD_DEMO`, a `demo` admin jelszó nélkül nyílik (csak a demo tenant; másik gyártóhoz mindig jelszó kell). A token aláírására a `ADMIN_TOKEN_SECRET` hiányában a Supabase service key szolgál.
 - Új Supabase teendők: `supabase/events.sql`, és a meglévő `leads` táblához `alter table … add column owner_note` (lásd `supabase/leads.sql`).
 
 ## 3.21 – Visszavonva

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import AdminLeads from '@/pages/AdminLeads'
 import AdminOverview from '@/pages/AdminOverview'
@@ -67,21 +67,25 @@ function AdminForTenant({ base }: { base: Tenant }) {
     return () => { alive = false }
   }, [token, logout])
 
-  const login = async (event: FormEvent) => {
-    event.preventDefault()
+  const login = async (event?: FormEvent, silent = false) => {
+    event?.preventDefault()
     setLoginError('')
     try {
       const response = await fetch('/api/admin-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: base.id, password }) })
       const data = await response.json() as { ok: boolean; token?: string; error?: string }
-      if (!response.ok || !data.token) { setLoginError(data.error ?? 'A belépés nem sikerült.'); return }
+      if (!response.ok || !data.token) { if (!silent) setLoginError(data.error ?? 'A belépés nem sikerült.'); return }
       try { sessionStorage.setItem(tokenKey, data.token) } catch { /* privát mód */ }
       setPassword('')
       setToken(data.token)
-    } catch { setLoginError('A szerver nem érhető el. Próbáld újra.') }
+    } catch { if (!silent) setLoginError('A szerver nem érhető el. Próbáld újra.') }
   }
 
+  // Nyitott demó (nincs beállított jelszó): jelszó nélkül belép; egyébként marad a jelszavas űrlap.
+  const autoTried = useRef(false)
+  useEffect(() => { if (!token && !autoTried.current) { autoTried.current = true; void login(undefined, true) } }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!token) {
-    return <main className="admin-page"><form className="admin-card admin-login" onSubmit={login}>
+    return <main className="admin-page"><form className="admin-card admin-login" onSubmit={(event) => void login(event)}>
       <span className="admin-eyebrow">{base.brand.name} · gyártói admin</span>
       <h1>Belépés</h1>
       <label><span>Jelszó</span><input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required autoFocus /></label>
