@@ -1798,3 +1798,17 @@ button.diagram-core.selected span { color: var(--accent-primary); }
   .dash-kpi:last-child:nth-child(odd){grid-column:1/-1}
   .dash-recent li{grid-template-columns:1fr auto}.dash-recent li .dash-pill{display:none}
 }
+
+/* Lead nézet: gyors státusz, másolás, QR, belső megjegyzés */
+.lead-search{flex:1 1 200px;min-width:0;padding:7px 12px;border-radius:99px;border:1px solid var(--surface-border);background:rgba(255,255,255,.04);color:inherit;font:inherit;font-size:13px}
+.lead-statuses{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.lead-statuses button{padding:5px 11px;border-radius:99px;border:1px solid var(--surface-border);background:transparent;color:var(--text-soft);font:inherit;font-size:12px;cursor:pointer}
+.lead-statuses button.is-on{background:color-mix(in srgb,var(--pill) 22%,transparent);border-color:var(--pill);color:inherit;font-weight:600}
+.lead-contact{display:inline-flex;align-items:center;gap:6px;position:relative}
+.lead-icon{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;border:1px solid var(--surface-border);background:transparent;color:var(--text-soft);cursor:pointer;padding:0}
+.lead-qr img{position:absolute;z-index:5;top:30px;left:0;padding:6px;background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.lead-qr{position:static}
+.lead-note{display:grid;gap:4px;margin-top:10px;font-size:11px;color:var(--text-soft)}
+.lead-note textarea{width:100%;box-sizing:border-box;padding:8px 10px;border-radius:10px;border:1px solid var(--surface-border);background:rgba(255,255,255,.04);color:inherit;font:inherit;font-size:13px;resize:vertical}
+.dash-funnel strong small{font-weight:400;color:var(--text-soft);margin-left:4px}
+.dash-funnel li{grid-template-columns:minmax(120px,200px) 1fr 70px}

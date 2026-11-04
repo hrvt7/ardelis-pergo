@@ -1,4 +1,5 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { track } from '@/lib/analytics'
 import { ArrowRight, CheckCircle2, LockKeyhole, MapPin, ShieldCheck } from 'lucide-react'
 import { PRODUCT_LABELS, type ProductFamily } from '@contracts/catalog'
 import { useTenant } from '@/tenants/TenantContext'
@@ -30,6 +31,14 @@ const FIELD_NAMES: Record<string, string> = {
 export default function LeadForm({ productFamily, config, house }: Props) {
   const { tenant, embed } = useTenant()
   const startedAt = useRef(Date.now())
+  const formRef = useRef<HTMLFormElement>(null)
+  useEffect(() => {
+    const node = formRef.current
+    if (!node || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver((entries) => { if (entries.some((entry) => entry.isIntersecting)) { track(tenant.id, 'lead_view'); observer.disconnect() } }, { threshold: 0.4 })
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [tenant.id])
   const [consent, setConsent] = useState(false)
   const [pending, setPending] = useState(false)
   const [result, setResult] = useState<{ publicRef: string } | null>(null)
@@ -94,7 +103,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
 
   if (result) return <div className="thank-you real-lead-success" role="status"><CheckCircle2 size={30} /><div><span>KÉRELEM RÖGZÍTVE</span><h4>A felmérési kérelmedet megkaptuk.</h4><p>Azonosító: <strong>{result.publicRef}</strong></p><p>Az adataid és a konfigurációd alapján {tenant.brand.name} felveszi veled a kapcsolatot a részletek egyeztetéséhez. Érdemes megőrizni az azonosítót.</p>{import.meta.env.VITE_PREVIEW_MODE === '1' && <p><strong>Előnézeti mód:</strong> a kérelem nem lett elküldve, csak a folyamatot mutatja.</p>}<small>Az irányár nem minősül kötelező érvényű árajánlatnak. A végleges műszaki tartalom helyszíni felmérés után készül.</small></div></div>
 
-  return <form className="real-lead-form" onSubmit={submit}>
+  return <form ref={formRef} className="real-lead-form" onSubmit={submit} onFocus={() => track(tenant.id, 'lead_start')}>
     <div className="lead-form-intro"><span><MapPin size={16} />{PRODUCT_LABELS[productFamily]}</span><p>A konfigurációt és az irányárat a kérelmedhez csatoljuk, hogy a felmérés egyeztetése konkrét műszaki elképzelésből induljon.</p></div>
     <div className="lead-grid">
       <label><span>Név *</span><input name="customerName" autoComplete="name" required minLength={2} maxLength={120} placeholder="Teljes név" /></label>

@@ -18,7 +18,7 @@ const attempts = new Map<string, number[]>()
 /** Tesztekhez: a belépési próbálkozások számlálójának törlése. */
 export function resetAdminRateLimit() { attempts.clear() }
 
-const json = (status: number, body: unknown, extra: Record<string, string> = {}) => new Response(JSON.stringify(body), {
+export const json = (status: number, body: unknown, extra: Record<string, string> = {}) => new Response(JSON.stringify(body), {
   status,
   headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...extra },
 })
@@ -57,8 +57,8 @@ export async function verifyToken(secret: string, token: string, now = Date.now(
 }
 
 // ── Tárolás (Supabase REST, csak szerveroldalon, service role kulccsal) ──
-const storeConfigured = (env: AdminEnv) => Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY)
-const storeHeaders = (env: AdminEnv) => ({ apikey: env.SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json' })
+export const storeConfigured = (env: AdminEnv) => Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY)
+export const storeHeaders = (env: AdminEnv) => ({ apikey: env.SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json' })
 const storeUrl = (env: AdminEnv) => `${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/tenant_settings`
 
 /** A tárolt felülírások; ha nincs adattár vagy hiba van, null (az alap-tenant érvényes). */
@@ -129,7 +129,7 @@ export async function handleAdminLogin(request: Request, env: AdminEnv): Promise
   return json(200, { ok: true, token: await signToken(env.ADMIN_TOKEN_SECRET, tenant!.id, now) })
 }
 
-async function authorize(request: Request, env: AdminEnv): Promise<{ tenant: Tenant } | Response> {
+export async function authorize(request: Request, env: AdminEnv): Promise<{ tenant: Tenant } | Response> {
   if (!env.ADMIN_TOKEN_SECRET) return json(503, { ok: false, error: 'Az admin belépés nincs beállítva.' })
   const header = request.headers.get('authorization') ?? ''
   const tenantId = header.startsWith('Bearer ') ? await verifyToken(env.ADMIN_TOKEN_SECRET, header.slice(7)) : null
@@ -168,8 +168,9 @@ export async function handleAdminSettings(request: Request, env: AdminEnv): Prom
 }
 
 const LEAD_STATUSES = ['new', 'contacted', 'offered', 'won', 'lost'] as const
-const LEAD_COLUMNS = 'ref,customer_name,email,phone,postal_code,city,region,address,notes,estimate_gross,config_url,status,source,created_at,config'
-const statusSchema = z.object({ ref: z.string().trim().min(3).max(60), status: z.enum(LEAD_STATUSES) })
+const LEAD_COLUMNS = 'ref,customer_name,email,phone,postal_code,city,region,address,notes,estimate_gross,config_url,status,source,created_at,config,owner_note'
+const statusSchema = z.object({ ref: z.string().trim().min(3).max(60), status: z.enum(LEAD_STATUSES).optional(), ownerNote: z.string().max(2000).optional() })
+  .refine((value) => value.status !== undefined || value.ownerNote !== undefined, { message: 'Nincs módosítandó adat.' })
 
 /** GET /api/admin-leads → a gyártó érdeklődői (legfrissebb elöl); PATCH { ref, status } → státusz módosítása. Csak a saját tenant. */
 export async function handleAdminLeads(request: Request, env: AdminEnv): Promise<Response> {
@@ -187,11 +188,11 @@ export async function handleAdminLeads(request: Request, env: AdminEnv): Promise
       return json(200, { ok: true, leads: await response.json() })
     }
     const parsed = statusSchema.safeParse(await request.json().catch(() => null))
-    if (!parsed.success) return json(422, { ok: false, error: 'Érvénytelen státusz.' })
+    if (!parsed.success) return json(422, { ok: false, error: 'Érvénytelen módosítás.' })
     const response = await fetch(`${base}?ref=eq.${encodeURIComponent(parsed.data.ref)}&tenant_id=eq.${tenantId}`, {
       method: 'PATCH',
       headers: { ...storeHeaders(env), Prefer: 'return=minimal' },
-      body: JSON.stringify({ status: parsed.data.status }),
+      body: JSON.stringify({ ...(parsed.data.status !== undefined && { status: parsed.data.status }), ...(parsed.data.ownerNote !== undefined && { owner_note: parsed.data.ownerNote.trim() || null }) }),
       signal: AbortSignal.timeout(5000),
     })
     if (!response.ok) throw new Error(`Supabase ${response.status}`)

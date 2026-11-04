@@ -1,6 +1,7 @@
 import { formatHuf } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
 import { computeLeadStats, STATUS_COLORS, type LeadRow } from '@/lib/adminLeads'
+import { computeFunnel, type EventRow } from '@/lib/adminStats'
 import type { RoofType } from '@/types/pergola'
 
 const compactHuf = (value: number) => (value >= 1_000_000 ? `${(value / 1_000_000).toLocaleString('hu-HU', { maximumFractionDigits: 1 })} M Ft` : formatHuf(value))
@@ -57,9 +58,20 @@ function HBars({ items, empty }: { items: { key: string; count: number }[]; empt
   return <ul className="dash-hbars">{items.map((item) => <li key={item.key}><span>{item.key}</span><div><i style={{ width: `${(item.count / max) * 100}%` }} /></div><strong>{item.count}</strong></li>)}</ul>
 }
 
-export default function AdminOverview({ leads, onOpenLeads }: { leads: LeadRow[]; onOpenLeads: () => void }) {
+function FunnelCard({ events, recent }: { events: EventRow[] | null; recent: number }) {
+  if (events === null) return <p className="admin-hint">Betöltés…</p>
+  const funnel = computeFunnel(events, recent)
+  if (funnel.steps[0].count === 0) return <p className="admin-hint">Még nincs látogatottsági adat. A mérés a konfigurátor első megnyitásától indul (futtasd a supabase/events.sql-t, ha még nem tetted).</p>
+  const max = funnel.steps[0].count
+  return <>
+    <ul className="dash-hbars dash-funnel">{funnel.steps.map((step) => <li key={step.key}><span>{step.label}</span><div><i style={{ width: `${Math.max(2, (step.count / max) * 100)}%` }} /></div><strong>{step.count}{step.rate !== null && <small> {Math.round(step.rate * 100)}%</small>}</strong></li>)}</ul>
+    <p className="admin-hint">Névtelen, süti nélküli mérés, az elmúlt 30 nap. Összesített konverzió: <strong>{funnel.conversion === null ? '—' : `${(funnel.conversion * 100).toLocaleString('hu-HU', { maximumFractionDigits: 1 })}%`}</strong> (megnyitásból felmérési kérés).</p>
+  </>
+}
+
+export default function AdminOverview({ leads, events, onOpenLeads }: { leads: LeadRow[]; events: EventRow[] | null; onOpenLeads: () => void }) {
   const stats = computeLeadStats(leads)
-  if (leads.length === 0) return <div className="dash-empty"><strong>Még nem érkezett érdeklődő.</strong><p>Amint valaki felmérést kér a konfigurátorban, itt jelennek meg a mutatók és a grafikonok.</p></div>
+  if (leads.length === 0) return <div className="dash"><div className="dash-empty"><strong>Még nem érkezett érdeklődő.</strong><p>Amint valaki felmérést kér a konfigurátorban, itt jelennek meg a mutatók és a grafikonok.</p></div><section className="dash-card"><h3>Látogatói tölcsér</h3><FunnelCard events={events} recent={stats.last30} /></section></div>
   const recent = leads.slice(0, 5)
   return <div className="dash">
     <div className="dash-kpis">
@@ -72,6 +84,7 @@ export default function AdminOverview({ leads, onOpenLeads }: { leads: LeadRow[]
     <div className="dash-grid-2">
       <section className="dash-card dash-wide"><h3>Érdeklődők az elmúlt 30 napban</h3><DailyBars daily={stats.daily} /></section>
       <section className="dash-card"><h3>Státuszok</h3><StatusDonut items={stats.byStatus} total={stats.total} /></section>
+      <section className="dash-card dash-wide"><h3>Látogatói tölcsér</h3><FunnelCard events={events} recent={stats.last30} /></section>
       <section className="dash-card"><h3>Népszerű tetőtípusok</h3><HBars items={stats.byRoof.map((item) => ({ key: ROOF_INFO[item.key as RoofType]?.name ?? item.key, count: item.count }))} empty="Nincs adat." /></section>
       <section className="dash-card"><h3>Települések</h3><HBars items={stats.byPlace} empty="Nincs adat." /></section>
       <section className="dash-card"><h3>Legfrissebb érdeklődők <button type="button" className="admin-link" onClick={onOpenLeads}>Mind megtekintése</button></h3>

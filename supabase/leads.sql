@@ -28,3 +28,6 @@ create index if not exists leads_tenant_created_idx on public.leads (tenant_id, 
 
 -- A táblát csak a service role írja/olvassa; a böngészőből nem érhető el.
 alter table public.leads enable row level security;
+
+-- Gyártói belső megjegyzés az érdeklődőkhöz (admin lead nézet). Meglévő táblához is futtasd:
+alter table public.leads add column if not exists owner_note text;

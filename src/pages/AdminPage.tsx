@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 import AdminLeads from '@/pages/AdminLeads'
 import AdminOverview from '@/pages/AdminOverview'
 import { useLeads } from '@/lib/adminLeads'
+import { useStats } from '@/lib/adminStats'
 import NotFound from '@/pages/NotFound'
 import { MOUNT_LABELS, MOUNT_TYPES } from '@/lib/mount'
 import { ROOF_INFO, ROOF_TYPES } from '@/lib/roofs'
@@ -113,7 +114,8 @@ const TABS: [AdminTab, string, string][] = [['overview', 'Áttekintés', '#attek
 /** Közös keret: oldalsáv (mobilon felső sáv) + Áttekintés / Érdeklődők / Beállítások. Az űrlap fül nem veszti el a szerkesztést váltáskor. */
 function AdminShell({ base, token, onExpired, onLogout, children }: { base: Tenant; token: string; onExpired: () => void; onLogout: () => void; children: ReactNode }) {
   const [tab, setTab] = useState<AdminTab>(() => TABS.find(([, , hash]) => hash === window.location.hash)?.[0] ?? 'overview')
-  const { leads, error, reload, setStatus } = useLeads(token, onExpired)
+  const { leads, error, reload, update } = useLeads(token, onExpired)
+  const events = useStats(token)
   const choose = (next: AdminTab) => { setTab(next); window.history.replaceState(null, '', TABS.find(([key]) => key === next)![2]) }
   const fresh = leads?.filter((lead) => lead.status === 'new').length ?? 0
   const title = TABS.find(([key]) => key === tab)![1]
@@ -129,8 +131,8 @@ function AdminShell({ base, token, onExpired, onLogout, children }: { base: Tena
       <section className="admin-main">
         <h1>{title}</h1>
         {tab !== 'settings' && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
-        {tab === 'overview' && leads && <>{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} onOpenLeads={() => choose('leads')} /></>}
-        {tab === 'leads' && leads && <AdminLeads leads={leads} error={error} onReload={() => void reload()} onStatus={(ref, status) => void setStatus(ref, status)} />}
+        {tab === 'overview' && leads && <>{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} /></>}
+        {tab === 'leads' && leads && <AdminLeads leads={leads} error={error} onReload={() => void reload()} onUpdate={(ref, patch) => void update(ref, patch)} />}
         <div hidden={tab !== 'settings'}>{children}</div>
       </section>
     </div>

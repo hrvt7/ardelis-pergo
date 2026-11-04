@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 export interface LeadRow {
   ref: string; customer_name: string; email: string; phone: string; postal_code: string | null; city: string; region: string
   address: string | null; notes: string | null; estimate_gross: number; config_url: string; status: string; source: string
-  created_at: string; config?: { roof?: string } | null
+  created_at: string; config?: { roof?: string } | null; owner_note?: string | null
 }
 
 export const LEAD_STATUSES: [string, string][] = [['new', 'Új'], ['contacted', 'Kapcsolatba léptünk'], ['offered', 'Ajánlat kiment'], ['won', 'Megnyert'], ['lost', 'Elveszett']]
@@ -14,6 +14,7 @@ export interface LeadStats {
   total: number
   fresh: number
   last7: number
+  last30: number
   averageGross: number
   openValue: number
   winRate: number | null
@@ -37,11 +38,13 @@ export function computeLeadStats(leads: LeadRow[], now = Date.now(), days = 30):
   let gross = 0
   let open = 0
   let last7 = 0
+  let last30 = 0
   for (const lead of leads) {
     const created = new Date(lead.created_at).getTime()
     const key = dayKey(created)
     if (perDay.has(key)) perDay.set(key, (perDay.get(key) ?? 0) + 1)
     if (now - created < 7 * DAY) last7 += 1
+    if (now - created < 30 * DAY) last30 += 1
     gross += lead.estimate_gross
     if (['new', 'contacted', 'offered'].includes(lead.status)) open += lead.estimate_gross
     const roof = lead.config?.roof
@@ -54,6 +57,7 @@ export function computeLeadStats(leads: LeadRow[], now = Date.now(), days = 30):
     total: leads.length,
     fresh: leads.filter((lead) => lead.status === 'new').length,
     last7,
+    last30,
     averageGross: leads.length ? Math.round(gross / leads.length) : 0,
     openValue: open,
     winRate: won + lost > 0 ? won / (won + lost) : null,
@@ -81,14 +85,24 @@ export function useLeads(token: string, onExpired: () => void) {
   }, [token, onExpired])
   useEffect(() => { void load() }, [load])
 
-  const setStatus = useCallback(async (ref: string, status: string) => {
+  const update = useCallback(async (ref: string, patch: { status?: string; ownerNote?: string }) => {
     let previous: LeadRow[] | null = null
-    setLeads((rows) => { previous = rows; return rows?.map((row) => (row.ref === ref ? { ...row, status } : row)) ?? null })
+    setLeads((rows) => { previous = rows; return rows?.map((row) => (row.ref === ref ? { ...row, ...(patch.status !== undefined && { status: patch.status }), ...(patch.ownerNote !== undefined && { owner_note: patch.ownerNote.trim() || null }) } : row)) ?? null })
     try {
-      const response = await fetch('/api/admin-leads', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ref, status }) })
+      const response = await fetch('/api/admin-leads', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ref, ...patch }) })
       if (!response.ok) throw new Error('save')
-    } catch { setLeads(previous); setError('A státusz mentése nem sikerült.') }
+    } catch { setLeads(previous); setError('A mentés nem sikerült.') }
   }, [token])
 
-  return { leads, error, reload: load, setStatus }
+  return { leads, error, reload: load, update }
+}
+
+const csvCell = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`
+
+/** CSV az érdeklődőkről (Excel-barát: pontosvessző, UTF-8 BOM). */
+export function leadsToCsv(leads: LeadRow[]): string {
+  const statusLabel = Object.fromEntries(LEAD_STATUSES)
+  const header = ['Azonosító', 'Dátum', 'Név', 'Telefon', 'E-mail', 'Irányítószám', 'Település', 'Megye', 'Cím', 'Bruttó irányár', 'Státusz', 'Vevő megjegyzése', 'Belső megjegyzés', 'Konfiguráció']
+  const rows = leads.map((lead) => [lead.ref, lead.created_at.slice(0, 10), lead.customer_name, lead.phone, lead.email, lead.postal_code, lead.city, lead.region, lead.address, lead.estimate_gross, statusLabel[lead.status] ?? lead.status, lead.notes, lead.owner_note, lead.config_url])
+  return `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(';')).join('\r\n')}`
 }

@@ -6,6 +6,7 @@ import { InfoDialog, PriceSettingsDialog, ResetDialog } from '@/components/Dialo
 import PergolaScene from '@/components/PergolaScene'
 import PricePanel, { AnimatedPrice } from '@/components/PricePanel'
 import SummaryPanel from '@/components/SummaryPanel'
+import { track } from '@/lib/analytics'
 import { copyShareUrl, exportPergolaPdf } from '@/lib/exportPdf'
 import { shareHash } from '@/lib/shareCode'
 import { captureScene } from '@/lib/showcase'
@@ -111,6 +112,10 @@ export default function PergoStudio() {
   const energyCost = energy.hasElectrics ? roundCost(energy.cost) : null
 
   useEffect(() => persistConfig(tenant, config), [tenant, config])
+  // Névtelen konverziómérés: megnyitás és az első érdemi módosítás (csak vásárlói nézetben).
+  const firstConfig = useRef(config)
+  useEffect(() => { if (!admin) track(tenant.id, 'open') }, [tenant.id, admin])
+  useEffect(() => { if (!admin && config !== firstConfig.current) track(tenant.id, 'configure') }, [tenant.id, admin, config])
   // Ha az oldal megosztott linkkel nyílt, a címsor linkje kövesse a módosításokat — különben
   // frissítéskor a régi link felülírná a vásárló közben végzett változtatásait.
   useEffect(() => {

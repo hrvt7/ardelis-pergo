@@ -1,5 +1,13 @@
 # Változások
 
+## 3.22 — Gyártói admin: lead nézet, dashboard, konverziómérés (2026. 11. 04.)
+
+- Gyártói admin (`/k/{gyarto}/admin`): belépés tenant-jelszóval, beállítások, árak, ármátrix, ki/be kapcsolók, lead-címzettek.
+- Áttekintés: KPI-k, napi grafikon, státuszmegoszlás, népszerű tetők, települések, legfrissebb érdeklődők.
+- Érdeklődők: szűrés státusz szerint + keresés, egykattintásos státusz, hívás/e-mail link és másolás, konfiguráció link + QR, belső megjegyzés, CSV export.
+- Névtelen konverziómérés (süti és azonosító nélkül, DNT-tisztelő): megnyitás → tervezés → űrlap látva → kitöltés indult → felmérési kérés; tölcsér az Áttekintésben.
+- Új Supabase teendők: `supabase/events.sql`, és a meglévő `leads` táblához `alter table … add column owner_note` (lásd `supabase/leads.sql`).
+
 ## 3.21 – Visszavonva
 
 - A mozgás közbeni utófeldolgozás-szüneteltetés (regress + automatikus lépcsőzés) rontotta a képet forgatáskor (szétesett/eltűnt a kép), ezért teljesen visszacsináltuk a 3.20 állapotra.
