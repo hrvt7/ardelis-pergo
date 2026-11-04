@@ -25,6 +25,8 @@ export interface ShareCardInput {
   priceNote: string
   footer: string
   accent: string
+  /** Ha megadott, QR-kód kerül a kártya jobb alsó sarkába (a terv megnyitásához). */
+  qrUrl?: string
 }
 
 const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
@@ -113,6 +115,16 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob> {
   context.textAlign = 'right'
   context.fillText(fitText(context, input.footer, 420), width - left, priceY + 54)
   context.textAlign = 'left'
+  if (input.qrUrl) {
+    try {
+      const { default: QRCode } = await import('qrcode')
+      const qr = await loadImage(await QRCode.toDataURL(input.qrUrl, { margin: 1, width: 260, errorCorrectionLevel: 'L' }))
+      const size = 150
+      context.fillStyle = '#ffffff'
+      context.fillRect(width - left - size - 10, priceY - 92 - size, size + 20, size + 20)
+      context.drawImage(qr, width - left - size, priceY - 82 - size, size, size)
+    } catch { /* a QR-kód elhagyható, a kártya nélküle is teljes */ }
+  }
 
   return new Promise((resolve, reject) => canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('blob'))), 'image/png'))
 }

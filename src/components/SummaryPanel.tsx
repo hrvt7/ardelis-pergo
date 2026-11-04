@@ -65,6 +65,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
         price: formatHuf(price.totalGross),
         priceNote: 'bruttó irányár, telepítéssel',
         footer: window.location.host,
+        qrUrl: shareUrl,
         accent: getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim() || '#d8ff72',
       })
       const result = await shareOrDownload(blob, `${(projectName.trim() || 'pergola').replace(/[^\p{L}\p{N}]+/gu, '-').toLowerCase()}.png`, title)
