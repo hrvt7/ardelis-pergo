@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 export interface LeadRow {
   ref: string; customer_name: string; email: string; phone: string; postal_code: string | null; city: string; region: string
   address: string | null; notes: string | null; estimate_gross: number; config_url: string; status: string; source: string
-  created_at: string; config?: { roof?: string } | null; owner_note?: string | null
+  created_at: string; config?: { roof?: string; width?: number; depth?: number } | null; owner_note?: string | null
 }
 
 export const LEAD_STATUSES: [string, string][] = [['new', 'Új'], ['contacted', 'Kapcsolatba léptünk'], ['offered', 'Ajánlat kiment'], ['won', 'Megnyert'], ['lost', 'Elveszett']]
@@ -15,6 +15,7 @@ export interface LeadStats {
   fresh: number
   last7: number
   last30: number
+  prev7: number
   averageGross: number
   openValue: number
   winRate: number | null
@@ -39,12 +40,14 @@ export function computeLeadStats(leads: LeadRow[], now = Date.now(), days = 30):
   let open = 0
   let last7 = 0
   let last30 = 0
+  let prev7 = 0
   for (const lead of leads) {
     const created = new Date(lead.created_at).getTime()
     const key = dayKey(created)
     if (perDay.has(key)) perDay.set(key, (perDay.get(key) ?? 0) + 1)
     if (now - created < 7 * DAY) last7 += 1
     if (now - created < 30 * DAY) last30 += 1
+    if (now - created >= 7 * DAY && now - created < 14 * DAY) prev7 += 1
     gross += lead.estimate_gross
     if (['new', 'contacted', 'offered'].includes(lead.status)) open += lead.estimate_gross
     const roof = lead.config?.roof
@@ -58,6 +61,7 @@ export function computeLeadStats(leads: LeadRow[], now = Date.now(), days = 30):
     fresh: leads.filter((lead) => lead.status === 'new').length,
     last7,
     last30,
+    prev7,
     averageGross: leads.length ? Math.round(gross / leads.length) : 0,
     openValue: open,
     winRate: won + lost > 0 ? won / (won + lost) : null,
@@ -105,4 +109,17 @@ export function leadsToCsv(leads: LeadRow[]): string {
   const header = ['Azonosító', 'Dátum', 'Név', 'Telefon', 'E-mail', 'Irányítószám', 'Település', 'Megye', 'Cím', 'Bruttó irányár', 'Státusz', 'Vevő megjegyzése', 'Belső megjegyzés', 'Konfiguráció']
   const rows = leads.map((lead) => [lead.ref, lead.created_at.slice(0, 10), lead.customer_name, lead.phone, lead.email, lead.postal_code, lead.city, lead.region, lead.address, lead.estimate_gross, statusLabel[lead.status] ?? lead.status, lead.notes, lead.owner_note, lead.config_url])
   return `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(';')).join('\r\n')}`
+}
+
+/** A név monogramja az avatarhoz. */
+export const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '?'
+
+/** „2 órája”, „tegnap”, „3 napja” — a lista olvashatóságáért. */
+export function timeAgo(iso: string, now: number): string {
+  const minutes = Math.max(0, Math.round((now - new Date(iso).getTime()) / 60_000))
+  if (minutes < 1) return 'most'
+  if (minutes < 60) return `${minutes} perce`
+  if (minutes < 1440) return `${Math.round(minutes / 60)} órája`
+  const days = Math.round(minutes / 1440)
+  return days === 1 ? 'tegnap' : days < 31 ? `${days} napja` : new Date(iso).toLocaleDateString('hu-HU')
 }

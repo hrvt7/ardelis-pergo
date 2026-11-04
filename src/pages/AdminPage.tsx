@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { ExternalLink, LayoutDashboard, LogOut, SlidersHorizontal, Users } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import AdminLeads from '@/pages/AdminLeads'
 import AdminOverview from '@/pages/AdminOverview'
@@ -82,8 +83,9 @@ function AdminForTenant({ base }: { base: Tenant }) {
 
   if (!token) {
     return <main className="admin-page"><form className="admin-card admin-login" onSubmit={login}>
-      <span className="admin-eyebrow">{base.brand.name} · gyártói admin</span>
-      <h1>Belépés</h1>
+      <span className="brand-mark">{base.brand.name.slice(0, 1)}</span>
+      <div><span className="admin-eyebrow">{base.brand.name} · gyártói admin</span>
+      <h1>Üdv újra!</h1><p className="admin-hint">Add meg a jelszót a belépéshez.</p></div>
       <label><span>Jelszó</span><input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required autoFocus /></label>
       {loginError && <p className="admin-message is-error" role="alert">{loginError}</p>}
       <button className="admin-save" type="submit">Belépés</button>
@@ -111,7 +113,13 @@ function AdminForTenant({ base }: { base: Tenant }) {
 type AdminTab = 'overview' | 'leads' | 'settings'
 const TABS: [AdminTab, string, string][] = [['overview', 'Áttekintés', '#attekintes'], ['leads', 'Érdeklődők', '#erdeklodok'], ['settings', 'Beállítások', '#beallitasok']]
 
-/** Közös keret: oldalsáv (mobilon felső sáv) + Áttekintés / Érdeklődők / Beállítások. Az űrlap fül nem veszti el a szerkesztést váltáskor. */
+const TAB_INFO: Record<AdminTab, { icon: ReactNode; subtitle: string }> = {
+  overview: { icon: <LayoutDashboard size={18} />, subtitle: 'Érdeklődők, látogatottság és értékesítési csatorna egy helyen.' },
+  leads: { icon: <Users size={18} />, subtitle: 'Kezeld a beérkező felmérési kérelmeket: státusz, megjegyzés, hívás.' },
+  settings: { icon: <SlidersHorizontal size={18} />, subtitle: 'Árak, ármátrix, elérhető opciók és az értesítések címzettjei.' },
+}
+
+/** Közös keret: oldalsáv (mobilon alsó fülsáv) + sticky fejléc + Áttekintés / Érdeklődők / Beállítások. Az űrlap fül nem veszti el a szerkesztést váltáskor. */
 function AdminShell({ base, token, onExpired, onLogout, children }: { base: Tenant; token: string; onExpired: () => void; onLogout: () => void; children: ReactNode }) {
   const [tab, setTab] = useState<AdminTab>(() => TABS.find(([, , hash]) => hash === window.location.hash)?.[0] ?? 'overview')
   const { leads, error, reload, update } = useLeads(token, onExpired)
@@ -122,14 +130,14 @@ function AdminShell({ base, token, onExpired, onLogout, children }: { base: Tena
   return <main className="admin-page">
     <div className="admin-layout">
       <aside className="admin-side">
-        <div className="admin-brand"><span className="admin-eyebrow">Gyártói admin</span><strong>{base.brand.name}{base.brand.suffix && <small> {base.brand.suffix}</small>}</strong></div>
+        <div className="admin-brand"><span className="brand-mark">{base.brand.name.slice(0, 1)}</span><div><strong>{base.brand.name}{base.brand.suffix && <small> {base.brand.suffix}</small>}</strong><span>Gyártói admin</span></div></div>
         <nav className="admin-nav" aria-label="Admin részek">
-          {TABS.map(([key, label]) => <button type="button" key={key} className={tab === key ? 'is-on' : ''} onClick={() => choose(key)} aria-current={tab === key ? 'page' : undefined}>{label}{key === 'leads' && fresh > 0 && <em>{fresh}</em>}</button>)}
+          {TABS.map(([key, label]) => <button type="button" key={key} className={tab === key ? 'is-on' : ''} onClick={() => choose(key)} aria-current={tab === key ? 'page' : undefined}>{TAB_INFO[key].icon}<span>{label}</span>{key === 'leads' && fresh > 0 && <em>{fresh}</em>}</button>)}
         </nav>
-        <div className="admin-side-foot"><Link to={`/k/${base.id}`} target="_blank" rel="noopener">Konfigurátor megnyitása</Link><button type="button" className="admin-link" onClick={onLogout}>Kilépés</button></div>
+        <div className="admin-side-foot"><Link to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor megnyitása</Link><button type="button" onClick={onLogout}><LogOut size={15} />Kilépés</button></div>
       </aside>
       <section className="admin-main">
-        <h1>{title}</h1>
+        <header className="admin-top"><div><h1>{title}</h1><p>{TAB_INFO[tab].subtitle}</p></div><Link className="btn" to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor</Link></header>
         {tab !== 'settings' && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
         {tab === 'overview' && leads && <>{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} /></>}
         {tab === 'leads' && leads && <AdminLeads leads={leads} error={error} onReload={() => void reload()} onUpdate={(ref, patch) => void update(ref, patch)} />}

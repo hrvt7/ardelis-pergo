@@ -1,6 +1,6 @@
 # Változások
 
-## 3.22 — Gyártói admin: lead nézet, dashboard, konverziómérés (2026. 11. 04.)
+## 3.22 — Gyártói admin: modern felület, lead nézet, konverziómérés (2026. 11. 04.)
 
 - Gyártói admin (`/k/{gyarto}/admin`): belépés tenant-jelszóval, beállítások, árak, ármátrix, ki/be kapcsolók, lead-címzettek.
 - Áttekintés: KPI-k, napi grafikon, státuszmegoszlás, népszerű tetők, települések, legfrissebb érdeklődők.
