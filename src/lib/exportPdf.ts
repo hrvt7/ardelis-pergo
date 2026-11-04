@@ -1,4 +1,5 @@
 import type { EnergyUsage } from '@/lib/energy'
+import { snapshotViewer } from '@/lib/showcase'
 import type { Tenant } from '@/tenants/types'
 import type { PergolaConfig, PriceBreakdown, RoofType } from '@/types/pergola'
 
@@ -13,11 +14,12 @@ export async function exportPergolaPdf(config: PergolaConfig, price: PriceBreakd
   pdfMake.setFonts(PDF_FONTS)
   await enableSvgFonts(pdfMake as never)
 
-  const canvas = document.querySelector<HTMLCanvasElement>('canvas[data-pergola-canvas="true"]')
+  // Fotó módban a háttérfotó + 3D együtt kerül a PDF-be (snapshotViewer).
+  const snapshot = snapshotViewer(2000)
   let image: string | undefined
   let imageAspect: number | undefined
   try {
-    if (canvas && canvas.width > 0) { image = canvas.toDataURL('image/jpeg', 0.9); imageAspect = canvas.width / canvas.height }
+    if (snapshot && snapshot.width > 0) { image = snapshot.toDataURL('image/jpeg', 0.9); imageAspect = snapshot.width / snapshot.height }
   } catch {
     // A PDF képernyőkép nélkül is elkészül, ha a GPU nem engedi a kiolvasást.
   }

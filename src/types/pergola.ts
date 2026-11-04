@@ -70,6 +70,10 @@ export interface SceneSettings {
   photoX: number
   photoY: number
   photoScale: number
+  /** Fotó módban: elforgatás a függőleges tengely körül (fok). */
+  photoRotation: number
+  /** Fotó módban: a nézőpont magassága (fok). */
+  photoTilt: number
   /** Árnyékelemzés: valós napállás a megadott helyen, napon és időpontban. */
   sunStudy: boolean
   /** A vizsgált nap (ÉÉÉÉ-HH-NN); üresen a mai nap. */

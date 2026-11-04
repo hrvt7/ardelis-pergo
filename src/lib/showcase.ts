@@ -1,19 +1,36 @@
 // Bemutató-kép: a 3D jelenet pillanatképe és a megosztható, márkázott kép (1080 × 1350,
 // Instagram/WhatsApp-barát álló formátum) a terv nevével, méretével, színével és árával.
+import { coverCrop } from './photoPlacement'
 
-/** A 3D vászon aktuális képe (a jelenet `preserveDrawingBuffer`-rel fut, így olvasható). */
-export function captureScene(maxWidth = 1600, quality = 0.86): string | null {
+/**
+ * A 3D nézet aktuális képe egy (2D) vásznon. Fotó módban a háttérfotó (object-fit: cover vágással)
+ * és fölötte az átlátszó 3D vászon kerül egymásra — így a PDF-ben és a megosztott képen is a
+ * saját teraszos látvány szerepel. A jelenet `preserveDrawingBuffer`-rel fut, így olvasható.
+ */
+export function snapshotViewer(maxWidth = 1600): HTMLCanvasElement | null {
   const canvas = document.querySelector<HTMLCanvasElement>('canvas[data-pergola-canvas="true"]')
   if (!canvas || !canvas.width) return null
   const scale = Math.min(1, maxWidth / canvas.width)
-  if (scale === 1) return canvas.toDataURL('image/jpeg', quality)
   const copy = document.createElement('canvas')
   copy.width = Math.round(canvas.width * scale)
   copy.height = Math.round(canvas.height * scale)
   const context = copy.getContext('2d')
   if (!context) return null
+  const photo = document.querySelector<HTMLImageElement>('img.photo-backdrop')
+  if (photo?.complete && photo.naturalWidth > 0) {
+    const crop = coverCrop(photo.naturalWidth, photo.naturalHeight, copy.width, copy.height)
+    context.drawImage(photo, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, copy.width, copy.height)
+  } else {
+    // Átlátszó részek JPEG-ben feketék lennének: sötét háttér alá.
+    context.fillStyle = '#0d1210'
+    context.fillRect(0, 0, copy.width, copy.height)
+  }
   context.drawImage(canvas, 0, 0, copy.width, copy.height)
-  return copy.toDataURL('image/jpeg', quality)
+  return copy
+}
+
+export function captureScene(maxWidth = 1600, quality = 0.86): string | null {
+  try { return snapshotViewer(maxWidth)?.toDataURL('image/jpeg', quality) ?? null } catch { return null }
 }
 
 export interface ShareCardInput {

@@ -29,6 +29,8 @@ export const DEFAULT_SCENE: SceneSettings = {
   photoX: 0,
   photoY: 0,
   photoScale: 1,
+  photoRotation: -25,
+  photoTilt: 14,
   sunStudy: false,
   sunDate: '',
   sunHour: 15,

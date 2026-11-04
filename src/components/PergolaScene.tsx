@@ -6,6 +6,8 @@ import * as THREE from 'three'
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import type { CameraFocus, CameraView, PergolaConfig, SceneSettings, SideKey, SideType } from '@/types/pergola'
+import PhotoRig, { ShadowCatcher } from '@/components/PhotoRig'
+import { PHOTO_GROUP } from '@/lib/photoScene'
 import { QualityContext, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
@@ -1813,10 +1815,13 @@ function SceneRegistration() {
 function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const lighting = getLighting(scene)
   // Az árnyékkamera a pergolára és a közvetlen környezetére illeszkedik: ugyanazon a felbontáson élesebb árnyék.
-  const shadowExtent = scene.sunStudy ? lighting.shadowExtent : Math.min(lighting.shadowExtent, Math.max(7, Math.max(config.width, config.depth) / 2 + 4.5))
+  const shadowExtent = scene.sunStudy || scene.photoMode ? lighting.shadowExtent : Math.min(lighting.shadowExtent, Math.max(7, Math.max(config.width, config.depth) / 2 + 4.5))
   const houseLook = useMemo<HouseLook>(() => ({ wallFinish: scene.wallFinish, wallColor: scene.wallColor, windowColor: scene.windowColor }), [scene.wallFinish, scene.wallColor, scene.windowColor])
   useFrame(({ gl }) => { if (gl.toneMappingExposure !== lighting.exposure) gl.toneMappingExposure = lighting.exposure })
-  const pergola = <group position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} hideZone={view === 'sofa'} /></OptionalSceneAsset>}</group>
+  // Fotó módban a pergola csoportját a PhotoRig mozgatja (húzás, csippentés, forgatás); itt csak a kiinduló értékek.
+  const { photoX, photoY, photoScale, photoRotation, photoTilt } = scene
+  const placement = useMemo(() => ({ photoX, photoY, photoScale, photoRotation, photoTilt }), [photoX, photoY, photoScale, photoRotation, photoTilt])
+  const pergola = <group name={PHOTO_GROUP} position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} rotation={[0, scene.photoMode ? THREE.MathUtils.degToRad(scene.photoRotation) : 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{scene.photoMode && <ShadowCatcher size={Math.max(config.width, config.depth) + 6} opacity={lighting.night ? 0.25 : 0.42} />}{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} hideZone={view === 'sofa'} /></OptionalSceneAsset>}</group>
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}|${scene.wallColor}|${scene.windowColor}`} />
     {!scene.photoMode && <><fog attach="fog" args={[lighting.fog, 20, 43]} /><FogFollow /></>}
@@ -1832,7 +1837,9 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     {scene.sunStudy && !scene.photoMode && <CompassRose config={config} facing={scene.facing} />}
     {scene.sunStudy && !scene.photoMode && !coreOnly && onShade && <SceneAssetBoundary name="shade analysis"><Suspense fallback={null}><ShadeProbe config={config} scene={scene} onResult={onShade} /></Suspense></SceneAssetBoundary>}
     {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} /></Suspense></SceneAssetBoundary>}
-    <CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} />
+    {scene.photoMode
+      ? <PhotoRig config={config} placement={placement} onCommit={(next) => onSceneChange(next)} />
+      : <CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} />}
   </>
 }
 

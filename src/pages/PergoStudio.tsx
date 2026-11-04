@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Armchair, FileDown, Box, Check, ChevronRight, CloudRain, Image, Info, Maximize2, Moon, Presentation, Redo2, Rotate3d, RotateCcw, Scan, ShieldCheck, Sun, SunMedium, Undo2, View, WandSparkles, X } from 'lucide-react'
+import { Armchair, FileDown, Box, ImagePlus, Check, ChevronRight, CloudRain, Image, Info, Maximize2, Moon, Presentation, Redo2, Rotate3d, RotateCcw, Scan, ShieldCheck, Sun, SunMedium, Undo2, View, WandSparkles, X } from 'lucide-react'
 import { Link } from 'react-router'
 import ConfiguratorControls from '@/components/ConfiguratorControls'
 import { InfoDialog, PriceSettingsDialog, ResetDialog } from '@/components/Dialogs'
@@ -19,6 +19,9 @@ import { useTenant } from '@/tenants/TenantContext'
 import type { SheetState } from '@/components/ConfiguratorControls'
 import type { CameraFocus, CameraView, ConfigStep, PergolaConfig, PriceSettings, SavedConfiguration, SceneSettings, SideKey } from '@/types/pergola'
 import { usePageSeo } from '@/lib/usePageSeo'
+import PhotoBar from '@/components/PhotoBar'
+import { DEFAULT_PLACEMENT, PHOTO_ACCEPT, validatePhotoFile, type PhotoPlacement } from '@/lib/photoPlacement'
+import { clearPlacement, deletePhoto, loadPhoto, loadPlacement, savePhoto, savePlacement } from '@/lib/photoStore'
 import type { ShadeResult } from '@/components/ShadeProbe'
 import { studySun } from '@/lib/sunSite'
 import { isMovableRoof } from '@/lib/roofs'
@@ -134,6 +137,22 @@ export default function PergoStudio() {
     return () => window.clearTimeout(timer)
   }, [toast])
   useEffect(() => () => { if (photoUrl.current) URL.revokeObjectURL(photoUrl.current) }, [])
+  // Korábban feltöltött fotó visszatöltése (csak ebben a böngészőben tárolva); a fotó mód nem kapcsol be magától.
+  useEffect(() => {
+    let alive = true
+    void loadPhoto(tenant.id).then((blob) => {
+      if (!alive || !blob || photoUrl.current) return
+      const url = URL.createObjectURL(blob)
+      photoUrl.current = url
+      setScene((current) => ({ ...current, ...(loadPlacement(tenant.id) ?? DEFAULT_PLACEMENT), photoUrl: url }))
+    })
+    return () => { alive = false }
+  }, [tenant.id])
+  // Az elhelyezés mentése (PDF-hez és következő megnyitáshoz).
+  useEffect(() => {
+    if (!scene.photoUrl) return
+    savePlacement(tenant.id, { photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt })
+  }, [tenant.id, scene.photoUrl, scene.photoX, scene.photoY, scene.photoScale, scene.photoRotation, scene.photoTilt])
   useEffect(() => {
     if (!presentation) return
     const exit = (event: KeyboardEvent) => { if (event.key === 'Escape') setPresentation(false) }
@@ -283,24 +302,41 @@ export default function PergoStudio() {
     catch (error) { console.error(error); setToast('A PDF nem készült el. Próbáld újra, vagy frissítsd az oldalt.') }
     finally { setExporting(false) }
   }
+  const photoKey = tenant.id
+  const showPhoto = (url: string, placement: PhotoPlacement, active: boolean) => {
+    if (photoUrl.current && photoUrl.current !== url) URL.revokeObjectURL(photoUrl.current)
+    photoUrl.current = url
+    setScene((current) => ({ ...current, ...placement, photoUrl: url, photoMode: active, sunStudy: active ? false : current.sunStudy }))
+  }
   const handlePhoto = (file: File) => {
-    if (!file.type.startsWith('image/') && !/\.(jpe?g|png|webp|gif|heic|heif|avif)$/i.test(file.name)) { setToast('Kérlek, képfájlt válassz.'); return }
+    const problem = validatePhotoFile(file)
+    if (problem) { setToast(problem); return }
     const url = URL.createObjectURL(file)
-    // Előbb ellenőrizzük, hogy a böngésző meg tudja-e jeleníteni (pl. iPhone HEIC fotó nem minden böngészőben megy).
+    // Előbb ellenőrizzük, hogy a böngésző tényleg meg tudja-e jeleníteni (sérült vagy nem támogatott kép).
     const probe = new window.Image()
     probe.onload = () => {
-      if (photoUrl.current) URL.revokeObjectURL(photoUrl.current)
-      photoUrl.current = url
-      setScene((current) => ({ ...current, photoUrl: url, photoMode: true, sunStudy: false }))
-      setView('perspective')
-      setToast('A fotó csak helyben nyílt meg. Állítsd be a pergola pozícióját és méretét.')
+      showPhoto(url, DEFAULT_PLACEMENT, true)
+      setPresentation(false)
+      savePlacement(photoKey, DEFAULT_PLACEMENT)
+      void savePhoto(photoKey, file)
+      setToast('Fotó mód: húzd a pergolát a helyére, majd állítsd a méretét és a forgatást. A kép nem hagyja el az eszközödet.')
     }
     probe.onerror = () => {
       URL.revokeObjectURL(url)
-      setToast('Ezt a képet a böngésző nem tudja megnyitni (pl. HEIC). Kérlek, JPG vagy PNG fotót válassz.')
+      setToast('Ezt a képet a böngésző nem tudja megnyitni. Kérlek, JPG, PNG vagy WebP fotót válassz.')
     }
     probe.src = url
   }
+  const deleteUserPhoto = () => {
+    if (photoUrl.current) URL.revokeObjectURL(photoUrl.current)
+    photoUrl.current = null
+    void deletePhoto(photoKey)
+    clearPlacement(photoKey)
+    setScene((current) => ({ ...current, ...DEFAULT_PLACEMENT, photoUrl: undefined, photoMode: false }))
+    setToast('A fotó törölve. Vissza a 3D jelenethez.')
+  }
+  const photoInput = useRef<HTMLInputElement>(null)
+  const openPhotoPicker = () => photoInput.current?.click()
   const saveSlot = (slot: 'A' | 'B') => {
     const image = captureScene(640, 0.72) ?? undefined
     const item: SavedConfiguration = { id: slot, name: `Konfiguráció ${slot}`, config: JSON.parse(JSON.stringify(config)) as PergolaConfig, savedAt: Date.now(), ...(image ? { image } : {}) }
@@ -326,13 +362,14 @@ export default function PergoStudio() {
           <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheet === 'half' && isNarrow ? 0.2 : 0} onSideSelect={handleSideSelect} onSceneChange={updateScene} onShade={setShade} />
           <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1>{ROOF_LABELS[config.roof].split(' · ')[0]} <i>/</i> {config.width.toFixed(1).replace('.', ',')}<small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>
           <div className="viewer-live"><i />VALÓS IDEJŰ 3D</div>
-          <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások"><button type="button" className={scene.rain ? 'selected' : ''} aria-pressed={scene.rain} title="Eső be- és kikapcsolása" onClick={() => updateScene({ rain: !scene.rain })}><CloudRain size={17} /><span>Eső</span></button><button type="button" className={scene.time === 'night' ? 'selected' : ''} title="Nappal és éjszaka váltása" onClick={() => { setMoodHidden(false); updateScene(scene.time === 'night' ? { time: 'day', dayTime: 13, sunStudy: false } : { time: 'night', dayTime: 22, sunStudy: false }) }}>{scene.time === 'night' ? <Sun size={17} /> : <Moon size={17} />}<span>{scene.time === 'night' ? 'Nappal' : 'Éjszaka'}</span></button>{scene.photoUrl && <button type="button" className={scene.photoMode ? 'selected' : ''} title="Fotós előnézet" onClick={() => updateScene({ photoMode: !scene.photoMode })}><Image size={17} /><span>Fotó</span></button>}<button type="button" className={scene.sunStudy ? 'selected' : ''} aria-pressed={scene.sunStudy} title="Árnyékelemzés: valós napállás a saját helyszíneden" onClick={toggleSunStudy}><SunMedium size={17} /><span>Árnyék</span></button><button type="button" className="ar-launch" title="Nézd meg valós méretben a saját kertedben (AR)" onClick={() => { if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') }}><Rotate3d size={17} /><span>AR</span></button></div>
+          <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások"><button type="button" className={scene.rain ? 'selected' : ''} aria-pressed={scene.rain} title="Eső be- és kikapcsolása" onClick={() => updateScene({ rain: !scene.rain })}><CloudRain size={17} /><span>Eső</span></button><button type="button" className={scene.time === 'night' ? 'selected' : ''} title="Nappal és éjszaka váltása" onClick={() => { setMoodHidden(false); updateScene(scene.time === 'night' ? { time: 'day', dayTime: 13, sunStudy: false } : { time: 'night', dayTime: 22, sunStudy: false }) }}>{scene.time === 'night' ? <Sun size={17} /> : <Moon size={17} />}<span>{scene.time === 'night' ? 'Nappal' : 'Éjszaka'}</span></button><button type="button" className={scene.photoMode ? 'selected' : ''} aria-pressed={scene.photoMode} title={scene.photoUrl ? 'Pergola a saját fotódon' : 'Saját fotó feltöltése: helyezd a pergolát a teraszod képére'} onClick={() => { if (!scene.photoUrl) openPhotoPicker(); else updateScene({ photoMode: !scene.photoMode, sunStudy: false }) }}>{scene.photoUrl ? <Image size={17} /> : <ImagePlus size={17} />}<span>Fotó</span></button><button type="button" className={scene.sunStudy ? 'selected' : ''} aria-pressed={scene.sunStudy} title="Árnyékelemzés: valós napállás a saját helyszíneden" onClick={toggleSunStudy}><SunMedium size={17} /><span>Árnyék</span></button><button type="button" className="ar-launch" title="Nézd meg valós méretben a saját kertedben (AR)" onClick={() => { if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') }}><Rotate3d size={17} /><span>AR</span></button></div>
           {scene.rain && config.sensors && isMovableRoof(config.roof) && <div className="automation-status" role="status"><ShieldCheck size={16} /><span><strong>Esőautomata aktív</strong>{config.roof === 'retractable' ? 'A tolótető biztonságos, zárt pozícióban.' : 'A tetőlamellák biztonságos, zárt pozícióban.'}</span></div>}
           {scene.time === 'night' && !scene.sunStudy && !moodHidden && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot is-mood${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MoodPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onClose={() => setMoodHidden(true)} /></div></Suspense>}
           {scene.sunStudy && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><SunStudyPanel scene={scene} shade={shade} onChange={updateScene} onClose={toggleSunStudy} /></div></Suspense>}
           {view === 'sofa' && <div className="pov-note" role="status"><Armchair size={16} /><span><strong>Kanapé panoráma</strong>Húzd a képet a körbenézéshez · a nyilakkal is forgatható</span></div>}
           {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
-          <div className="camera-toolbar" aria-label="Kamera nézetek">{CAMERA_VIEWS.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} aria-pressed={view === id} onClick={() => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} title={`${label} nézet`}><Icon size={16} /><span>{label}</span></button>)}</div>
+          {scene.photoMode ? <PhotoBar placement={{ photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt }} coarse={isNarrow || window.matchMedia('(pointer: coarse)').matches} onChange={(next) => updateScene(next)} onReset={() => updateScene({ ...DEFAULT_PLACEMENT })} onReplace={openPhotoPicker} onDelete={deleteUserPhoto} onDone={() => updateScene({ photoMode: false })} />
+            : <div className="camera-toolbar" aria-label="Kamera nézetek">{CAMERA_VIEWS.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} aria-pressed={view === id} onClick={() => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} title={`${label} nézet`}><Icon size={16} /><span>{label}</span></button>)}</div>}
           {welcomeBack && <div className="welcome-back" role="status">
             <span><strong>Üdv újra!</strong>Ott folytatod, ahol abbahagytad: {config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {formatHuf(price.totalGross)}</span>
             <button type="button" className="welcome-primary" onClick={() => setWelcomeBack(false)}>Folytatom</button>
@@ -356,6 +393,7 @@ export default function PergoStudio() {
       {modal === 'budget' && <Suspense fallback={null}><BudgetDialog config={config} prices={prices} furniture={scene.furniture} currentGross={price.totalGross} onApply={(next) => { updateConfig(next); setModal(null); setToast('A terv a keretösszegedhez igazítva. Visszavonás: ↶') }} onClose={() => setModal(null)} /></Suspense>}
       {modal === 'advisor' && <Suspense fallback={null}><AdvisorDialog prices={prices} onApply={applyAdvice} onClose={() => setModal(null)} /></Suspense>}
       {modal === 'energy' && <Suspense fallback={null}><EnergyDialog config={config} prices={prices} usage={energyUsage} onUsageChange={setEnergyUsage} onConfigChange={updateConfig} onClose={() => setModal(null)} /></Suspense>}
+      <input ref={photoInput} className="visually-hidden-input" type="file" accept={PHOTO_ACCEPT} tabIndex={-1} aria-hidden="true" onChange={(event) => { const file = event.target.files?.[0]; if (file) handlePhoto(file); event.target.value = '' }} />
       {modal === 'ar' && <Suspense fallback={null}><ArDialog shareUrl={buildArUrl(config)} onClose={() => setModal(null)} /></Suspense>}
       {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(tenant.defaultConfig); setScene((current) => ({ ...DEFAULT_SCENE, wallFinish: current.wallFinish, wallColor: current.wallColor, windowColor: current.windowColor })); setView('perspective'); setStep('size'); setToast('Az alapkonfiguráció visszaállt.') }} onClose={() => setModal(null)} />}
       {homeHref && (homeHref.startsWith('/') ? <Link className="studio-home-link" to={homeHref}>Kezdőlap</Link> : <a className="studio-home-link" href={homeHref} target="_top" rel="noreferrer">Kezdőlap</a>)}
