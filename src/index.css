@@ -1686,3 +1686,7 @@ button.diagram-core.selected span { color: var(--accent-primary); }
 .advice-list{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:7px}
 .advice-list li{padding:10px 12px;border-radius:8px;border:1px solid var(--surface-border);font-size:13px;line-height:1.5;color:var(--text-secondary)}
 .advice-list li.warn{border-color:rgba(255,196,87,.55);color:var(--text-primary);background:rgba(255,196,87,.07)}
+
+.lead-more{margin:10px 0 4px;border-top:1px solid var(--surface-border);padding-top:10px}
+.lead-more>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--accent-primary);font-size:13.5px}
+.lead-more .lead-grid{margin-top:8px}

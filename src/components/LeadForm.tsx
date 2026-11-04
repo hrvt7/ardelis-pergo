@@ -100,12 +100,14 @@ export default function LeadForm({ productFamily, config, house }: Props) {
       <label><span>Név *</span><input name="customerName" autoComplete="name" required minLength={2} maxLength={120} placeholder="Teljes név" /></label>
       <label><span>Telefon *</span><input name="phone" type="tel" autoComplete="tel" required minLength={6} maxLength={40} pattern="[+0-9 \(\)\/\-]{6,40}" title="Csak számjegy, szóköz és + - / ( ) karakter" placeholder="+36 30 123 4567" /></label>
       <label><span>E-mail *</span><input name="email" type="email" autoComplete="email" required maxLength={320} pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Pl. nev@email.hu" placeholder="nev@email.hu" /></label>
-      <label><span>Megye *</span><select name="county" autoComplete="address-level1" required defaultValue={tenant.regions.includes('Vas') ? 'Vas' : tenant.regions[0]}>{tenant.regions.map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
       <label><span>Település *</span><input name="city" autoComplete="address-level2" required minLength={2} maxLength={120} placeholder="Település" /></label>
-      <label><span>Irányítószám *</span><input name="postalCode" autoComplete="postal-code" required minLength={4} maxLength={12} inputMode="numeric" placeholder="9600" /></label>
+    </div>
+    <details className="lead-more"><summary>További adatok (nem kötelező)</summary><div className="lead-grid">
+      <label><span>Megye *</span><select name="county" autoComplete="address-level1" required defaultValue={tenant.regions.includes('Vas') ? 'Vas' : tenant.regions[0]}>{tenant.regions.map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
+      <label><span>Irányítószám</span><input name="postalCode" autoComplete="postal-code" maxLength={12} inputMode="numeric" placeholder="9600" /></label>
       <label className="lead-wide"><span>Cím / helyszín</span><input name="address" autoComplete="street-address" maxLength={220} placeholder="Utca, házszám" /></label>
       <label className="lead-wide"><span>Megjegyzés</span><textarea name="notes" rows={3} maxLength={2000} placeholder="Pl. várható kezdés, meglévő szerkezet, megközelítés…" /></label>
-    </div>
+    </div></details>
     <label className="honeypot" aria-hidden="true">Weboldal<input name="website" tabIndex={-1} autoComplete="off" /></label>
     <label className="consent-row"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} required /><span><ShieldCheck size={16} />Hozzájárulok, hogy a felmérési kérelem egyeztetéséhez {tenant.brand.legalName} kezelje a megadott adataimat.{tenant.brand.privacyUrl && <> <a href={tenant.brand.privacyUrl} target="_blank" rel="noreferrer">Adatkezelési tájékoztató</a>.</>} A kérelem nem minősül megrendelésnek.</span></label>
     {error && <p className="form-error" role="alert">{error}</p>}

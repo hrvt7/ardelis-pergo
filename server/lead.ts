@@ -33,7 +33,7 @@ const leadSchema = z.object({
     name: z.string().trim().min(2).max(120),
     email: z.string().trim().email().max(320),
     phone: z.string().trim().min(6).max(40).regex(/^[+0-9 ()/-]+$/, 'Érvénytelen telefonszám'),
-    postalCode: z.string().trim().min(4).max(12),
+    postalCode: z.string().trim().max(12).default(''),
     city: z.string().trim().min(2).max(120),
     region: z.string().trim().min(2).max(60),
     address: z.string().trim().max(220).optional().default(''),
