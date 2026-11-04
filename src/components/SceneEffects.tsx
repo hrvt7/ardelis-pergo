@@ -2,7 +2,7 @@
 // lamellák között, a bútor alatt), bloom (a LED és a fűtés tényleg világít) és
 // színhű (Khronos Neutral) tónusleképezés. Mobilon és fotós előnézetben nem töltődik be.
 import { useEffect, useMemo } from 'react'
-import { Bloom, EffectComposer, N8AO, SMAA, ToneMapping } from '@react-three/postprocessing'
+import { Bloom, EffectComposer, N8AO, ToneMapping } from '@react-three/postprocessing'
 import { ShaderPass, ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
 
@@ -36,8 +36,9 @@ function createClampPass() {
 export default function SceneEffects({ ultra, night }: { ultra: boolean; night: boolean }) {
   const clampPass = useMemo(() => createClampPass(), [])
   useEffect(() => () => clampPass.dispose(), [clampPass])
+  // Natív MSAA a HDR pufferen: éles élek 100%-os Windows-skálázású (dpr 1) képernyőn is; az SMAA önmagában „pixeles” képet adott.
   return (
-    <EffectComposer multisampling={0} enableNormalPass={false}>
+    <EffectComposer multisampling={ultra ? 8 : 4} enableNormalPass={false}>
       <primitive object={clampPass} dispose={null} />
       <N8AO
         aoRadius={0.75}
@@ -52,7 +53,6 @@ export default function SceneEffects({ ultra, night }: { ultra: boolean; night: 
       />
       <Bloom mipmapBlur luminanceThreshold={1} luminanceSmoothing={0.25} intensity={night ? 0.85 : 0.18} radius={0.72} />
       <ToneMapping mode={ToneMappingMode.NEUTRAL} />
-      <SMAA />
     </EffectComposer>
   )
 }

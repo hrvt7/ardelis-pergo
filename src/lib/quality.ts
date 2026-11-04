@@ -28,12 +28,14 @@ export interface QualitySettings {
 export const QUALITY_PROFILES: Record<QualityTier, QualitySettings> = {
   low: { tier: 'low', shadowMapSize: 1024, dpr: [1, 1.1], enablePostprocessing: false, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 256, textureResolution: '1k', louvreSegments: 6, environmentIntensity: 0.9, maxAnisotropy: 2, enableGrassDetail: false, enableExtraPlants: false, rainDrops: 160 },
   medium: { tier: 'medium', shadowMapSize: 1024, dpr: [1, 1.35], enablePostprocessing: false, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 256, textureResolution: '1k', louvreSegments: 8, environmentIntensity: 1, maxAnisotropy: 4, enableGrassDetail: false, enableExtraPlants: true, rainDrops: 260 },
-  high: { tier: 'high', shadowMapSize: 2048, dpr: [1, 1.5], enablePostprocessing: true, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 12, environmentIntensity: 1, maxAnisotropy: 8, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 320 },
-  ultra: { tier: 'ultra', shadowMapSize: 2048, dpr: [1, 1.8], enablePostprocessing: true, ultraEffects: true, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 16, environmentIntensity: 1, maxAnisotropy: 16, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 650 },
+  high: { tier: 'high', shadowMapSize: 2048, dpr: [1.25, 1.5], enablePostprocessing: true, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 12, environmentIntensity: 1, maxAnisotropy: 8, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 320 },
+  ultra: { tier: 'ultra', shadowMapSize: 2048, dpr: [1.5, 1.8], enablePostprocessing: true, ultraEffects: true, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 16, environmentIntensity: 1, maxAnisotropy: 16, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 650 },
 }
 
 const ORDER: QualityTier[] = ['low', 'medium', 'high', 'ultra']
 const SOFTWARE_GPU = /swiftshader|llvmpipe|software|basic render/i
+/** Integrált / mobil GPU: az utófeldolgozás (AO + bloom) itt akadozást okoz, ezért közepes szint (natív MSAA, éles él). */
+const WEAK_GPU = /Intel.*(UHD|Iris|HD Graphics|Graphics)|Radeon(\(TM\))? (Graphics|Vega|[0-9]{3}M)|Vega \d|Adreno|Mali|PowerVR|Microsoft Basic/i
 const STRONG_GPU = /RTX|GTX 1[0-9]|RX [5-9]\d{2}|Radeon (Pro|VII)|Apple M[1-9]|Arc A[5-9]/i
 
 type NavigatorHints = Navigator & { deviceMemory?: number }
@@ -68,6 +70,9 @@ export function detectQualityTier(): QualityTier {
   const gpu = readGpuName()
   if (SOFTWARE_GPU.test(gpu)) return 'low'
   if (cores >= 8 && memory >= 8 && STRONG_GPU.test(gpu)) return 'ultra'
+  if (WEAK_GPU.test(gpu) && !STRONG_GPU.test(gpu)) return 'medium'
+  // Ismeretlen GPU-név (elrejtett böngészői adat): csak erős processzor mellett merjük a nehéz szintet.
+  if (!gpu && cores < 8) return 'medium'
   return cores <= 2 ? 'medium' : 'high'
 }
 
