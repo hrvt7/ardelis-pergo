@@ -13,24 +13,14 @@ import { getTenant } from '@/tenants'
 import { applyOverrides, parseOverrides, type TenantOverrides } from '@/tenants/overrides'
 import { MONEY_FIELDS } from '@/tenants/priceFields'
 import type { Tenant } from '@/tenants/types'
-import type { PriceMatrixPoint, RoofType } from '@/types/pergola'
+import type { RoofType } from '@/types/pergola'
+import PriceMatrixEditor, { type MatrixDraft, type MatrixErrors } from '@/components/admin/PriceMatrixEditor'
+import { pointsToRows, validateMatrixRows } from '@/lib/priceMatrixEdit'
 
 const RATE_FIELDS = [['customColorRate', 'Egyedi RAL felár'], ['woodColorRate', 'Fa hatású bevonat felára'], ['installationRate', 'Telepítési arány'], ['vatRate', 'ÁFA kulcs']] as const
 const EXTRA_FIELDS = [['led', 'LED-világítás'], ['speakers', 'Hangrendszer'], ['sensors', 'Szenzorcsomag'], ['solar', 'Napelemes tető'], ['rgb', 'RGB LED'], ['fans', 'Mennyezeti ventilátor'], ['smartHome', 'Okosotthon'], ['roofShade', 'Tetőárnyékoló']] as const
 const BRAND_FIELDS = [['name', 'Megjelenített név', 'text'], ['legalName', 'Cégnév (jogi)', 'text'], ['logoUrl', 'Logó URL', 'url'], ['website', 'Weboldal', 'url'], ['email', 'Kapcsolattartó e-mail', 'email'], ['phone', 'Telefon', 'tel'], ['address', 'Cím', 'text'], ['privacyUrl', 'Adatkezelési tájékoztató URL', 'url']] as const
 type Brand = Record<(typeof BRAND_FIELDS)[number][0], string>
-
-const matrixToText = (points: PriceMatrixPoint[] | undefined) => (points ?? []).map((point) => `${point.width}; ${point.depth}; ${point.netPrice}`).join('\n')
-function textToMatrix(value: string): PriceMatrixPoint[] | string {
-  const points: PriceMatrixPoint[] = []
-  for (const [index, line] of value.split('\n').map((item) => item.trim()).entries()) {
-    if (!line) continue
-    const parts = line.split(/[;\t]/).map((item) => Number(item.trim().replace(/\s/g, '').replace(',', '.')))
-    if (parts.length !== 3 || parts.some((item) => !Number.isFinite(item) || item <= 0)) return `${index + 1}. sor hibás — formátum: szélesség; mélység; nettó ár (pl. 4; 3; 1830000)`
-    points.push({ width: parts[0], depth: parts[1], netPrice: parts[2] })
-  }
-  return points
-}
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return <section className="admin-section"><h2>{title}</h2><div className="admin-grid">{children}</div></section>
@@ -158,7 +148,9 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
   const [extras, setExtras] = useState<Record<string, boolean>>(() => Object.fromEntries(EXTRA_FIELDS.map(([key]) => [key, Boolean(effective.extras[key])])))
   const [recipients, setRecipients] = useState(effective.lead.recipients.join('\n'))
   const [subjectPrefix, setSubjectPrefix] = useState(effective.lead.subjectPrefix)
-  const [matrix, setMatrix] = useState<Partial<Record<RoofType, string>>>(() => Object.fromEntries(ROOF_TYPES.map((roof) => [roof, matrixToText(effective.prices.priceMatrix?.[roof])])))
+  const [matrix, setMatrix] = useState<MatrixDraft>(() => Object.fromEntries(ROOF_TYPES.map((roof) => [roof, pointsToRows(effective.prices.priceMatrix?.[roof])])))
+  const [matrixErrors, setMatrixErrors] = useState<MatrixErrors>({})
+  const [matrixRoof, setMatrixRoof] = useState<RoofType | null>(null)
   const [formError, setFormError] = useState('')
 
   const toggle = <T,>(list: T[], item: T, on: boolean) => (on ? [...list.filter((entry) => entry !== item), item] : list.filter((entry) => entry !== item))
@@ -167,10 +159,21 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
     event.preventDefault()
     setFormError('')
     const priceMatrix: NonNullable<TenantOverrides['priceMatrix']> = {}
+    const nextErrors: MatrixErrors = {}
     for (const roof of ROOF_TYPES) {
-      const parsed = textToMatrix(matrix[roof] ?? '')
-      if (typeof parsed === 'string') { setFormError(`${ROOF_INFO[roof].name} ármátrix: ${parsed}`); return }
-      if (parsed.length) priceMatrix[roof] = parsed
+      const { points, errors } = validateMatrixRows(matrix[roof] ?? [])
+      if (errors.length && roofs.includes(roof)) { nextErrors[roof] = errors; continue }
+      // A kikapcsolt tetők mátrixa is megmarad (visszakapcsoláskor ne vesszen el); hibás szerkesztésnél az utolsó mentett.
+      const kept = errors.length ? effective.prices.priceMatrix?.[roof] ?? [] : points
+      if (kept.length) priceMatrix[roof] = kept
+    }
+    setMatrixErrors(nextErrors)
+    const broken = ROOF_TYPES.find((roof) => nextErrors[roof])
+    if (broken) {
+      setMatrixRoof(broken)
+      setFormError(`${ROOF_INFO[broken].name} ármátrix: ${nextErrors[broken]![0].message} Javítsd a pirossal jelölt mezőket.`)
+      document.getElementById('armatrix')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
     }
     const next: TenantOverrides = {
       brand,
@@ -211,10 +214,12 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
         {RATE_FIELDS.map(([key, label]) => <label key={key}><span>{label} <small>%</small></span><input type="number" min="0" max="100" step="1" value={Math.round(prices[key] * 100)} onChange={(event) => setPrices({ ...prices, [key]: Math.min(100, Math.max(0, Number(event.target.value) || 0)) / 100 })} /></label>)}
       </Section>
 
-      <Section title="Ármátrix (opcionális, tetőtípusonként)">
-        <p className="admin-hint admin-wide">Soronként: <code>szélesség; mélység; nettó ár</code> (méter, Ft). Ahol van mátrix, az váltja ki a m²-árat; a köztes méreteket a rendszer interpolálja. Üresen hagyva a m²-ár érvényes.</p>
-        {ROOF_TYPES.filter((roof) => roofs.includes(roof)).map((roof) => <label className="admin-wide" key={roof}><span>{ROOF_INFO[roof].name}</span><textarea rows={4} value={matrix[roof] ?? ''} onChange={(event) => setMatrix({ ...matrix, [roof]: event.target.value })} placeholder="4; 3; 1830000" spellCheck={false} /></label>)}
-      </Section>
+      <section className="admin-section" id="armatrix">
+        <h2>Ármátrix <small className="admin-h2-note">opcionális, tetőtípusonként</small></h2>
+        <p className="admin-hint matrix-intro">Méretpáronként a nettó szerkezeti ár (m, Ft). Ahol van mátrix, az váltja ki a m²-árat; a köztes méreteket a rendszer interpolálja. Üres táblázatnál a m²-ár érvényes.</p>
+        <PriceMatrixEditor roofs={ROOF_TYPES.filter((roof) => roofs.includes(roof))} value={matrix} errors={matrixErrors} active={matrixRoof} onActiveChange={setMatrixRoof}
+          onChange={(roof, rows) => { setMatrix((current) => ({ ...current, [roof]: rows })); if (matrixErrors[roof]) setMatrixErrors((current) => ({ ...current, [roof]: undefined })) }} />
+      </section>
 
       <Section title="Oldalfalak">
         {SIDE_TYPES.filter((type) => type !== 'none').map((type) => <label className="admin-check" key={type}><input type="checkbox" checked={sides.includes(type as never)} onChange={(event) => setSides(toggle(sides, type as never, event.target.checked))} />{SIDE_LABELS[type]}</label>)}

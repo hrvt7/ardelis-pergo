@@ -31,13 +31,16 @@ function Drawer({ lead, now, onClose, onUpdate }: { lead: LeadRow; now: number; 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    // Nyitott panel alatt a háttér ne görögjön (mobilon különösen zavaró).
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = previous }
   }, [onClose])
   const phone = lead.phone.replace(/[^+0-9]/g, '')
   const size = lead.config?.width && lead.config?.depth ? `${lead.config.width} × ${lead.config.depth} m` : null
   return <>
     <div className="drawer-scrim" onClick={onClose} />
-    <aside className="drawer" role="dialog" aria-label={`${lead.customer_name} részletei`} style={{ ['--pill' as string]: STATUS_COLORS[lead.status] }}>
+    <aside className="drawer" role="dialog" aria-modal="true" aria-label={`${lead.customer_name} részletei`} style={{ ['--pill' as string]: STATUS_COLORS[lead.status] }}>
       <header>
         <span className="avatar big">{initials(lead.customer_name)}</span>
         <div><h2>{lead.customer_name}</h2><small>{lead.ref} · {timeAgo(lead.created_at, now)}</small></div>
@@ -51,10 +54,6 @@ function Drawer({ lead, now, onClose, onUpdate }: { lead: LeadRow; now: number; 
           {LEAD_STATUSES.map(([key, label]) => <button type="button" key={key} className={lead.status === key ? 'is-on' : ''} style={{ ['--pill' as string]: STATUS_COLORS[key] }} aria-pressed={lead.status === key} onClick={() => lead.status !== key && onUpdate(lead.ref, { status: key })}>{label}</button>)}
         </div>
 
-        <div className="contact-actions">
-          <a className="btn primary" href={`tel:${phone}`}><Phone size={15} />Hívás</a>
-          <a className="btn" href={`mailto:${lead.email}`}><Mail size={15} />E-mail</a>
-        </div>
         <dl className="facts">
           <div><dt>Telefon</dt><dd>{lead.phone}<CopyButton value={lead.phone} label="Telefonszám" /></dd></div>
           <div><dt>E-mail</dt><dd>{lead.email}<CopyButton value={lead.email} label="E-mail-cím" /></dd></div>
@@ -74,6 +73,12 @@ function Drawer({ lead, now, onClose, onUpdate }: { lead: LeadRow; now: number; 
           <div><a className="btn" href={lead.config_url} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} />Megnyitás</a><p>Olvasd be telefonnal, vagy nyisd meg a vevő pontos tervét.</p></div>
         </div>
       </div>
+      {/* Gyorsműveletek: mobilon a hüvelykujj alatt, mindig látszanak. */}
+      <footer className="drawer-actions">
+        <a className="btn primary" href={`tel:${phone}`}><Phone size={16} />Hívás</a>
+        <a className="btn" href={`mailto:${lead.email}`}><Mail size={16} />E-mail</a>
+        <a className="btn" href={lead.config_url} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} />Terv</a>
+      </footer>
     </aside>
   </>
 }
@@ -108,7 +113,7 @@ export default function AdminLeads({ leads, error, onReload, onUpdate }: { leads
       <div className="card table" role="table">
         <div className="tr th" role="row"><span>Ügyfél</span><span>Település</span><span>Tető</span><span className="num">Irányár</span><span>Státusz</span><span className="num">Érkezett</span></div>
         {shown.map((lead) => <button type="button" role="row" key={lead.ref} className={`tr${openRef === lead.ref ? ' is-open' : ''}`} onClick={() => setOpenRef(lead.ref)}>
-          <span className="who"><span className="avatar">{initials(lead.customer_name)}</span><span><b>{lead.customer_name}</b><small>{lead.ref}</small></span></span>
+          <span className="who"><span className="avatar">{initials(lead.customer_name)}</span><span><b>{lead.customer_name}</b><small className="only-wide">{lead.ref}</small><small className="only-narrow">{[lead.city, roofName(lead), timeAgo(lead.created_at, now)].filter((part) => part && part !== '—').join(' · ')}</small></span></span>
           <span className="muted">{lead.city}</span>
           <span className="muted">{roofName(lead)}</span>
           <span className="num strong">{formatHuf(lead.estimate_gross)}</span>
