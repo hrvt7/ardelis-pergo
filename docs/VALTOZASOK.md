@@ -601,3 +601,4 @@ működést, az eladhatóságot és a hibákat érintik.
 - SEO: angol title/description/OG, `html lang`, hreflang (hu-HU, en, x-default), sitemap, JSON-LD nyelv.
 - Demókérő űrlap: az oldal nyelve megy a szerverre (angol hibaüzenetek; a tulajdonosnak szóló e-mail jelzi, ha EN).
 - A konfigurátor és a mintaoldal felülete egyelőre magyar.
+- A főoldal termékképei (konfigurátor, admin áttekintés, érdeklődők, mobil) újrafotózva a Lamelix arculattal; a régi „ARDELIS / PERGO” jelzés eltűnt.
