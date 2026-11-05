@@ -593,3 +593,11 @@ működést, az eladhatóságot és a hibákat érintik.
 ## 3.28 – Rövid demó-link
 - Az élő demó új címe: `/konfigurator` (korábban `/k/demo`, `/studio/pergola`). A régi címek átirányítanak, így a kiküldött linkek és QR-kódok tovább működnek.
 - Frissítve: B2B oldal gombjai, QR-kód a funkciókártyán, mintaoldal linkjei, llms.txt.
+
+## 3.29 – Angol nyelvű főoldal és nyelvváltó
+- Új útvonal: `/en` (angol főoldal), a magyar marad a `/`-en. A fejlécben HU / EN váltó, a horgony (pl. `#arak`) váltáskor megmarad.
+- Szövegtár: `src/i18n/platformCopy.ts` (magyar + angol, azonos szerkezet, teszt őrzi); `useCopy()` / `LangProvider`.
+- Árak és kalkulátor az oldal nyelvén (`HUF 5,648,000` / `5 648 000 Ft`); az árlista továbbra is forintban.
+- SEO: angol title/description/OG, `html lang`, hreflang (hu-HU, en, x-default), sitemap, JSON-LD nyelv.
+- Demókérő űrlap: az oldal nyelve megy a szerverre (angol hibaüzenetek; a tulajdonosnak szóló e-mail jelzi, ha EN).
+- A konfigurátor és a mintaoldal felülete egyelőre magyar.

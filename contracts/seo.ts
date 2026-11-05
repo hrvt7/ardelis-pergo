@@ -46,6 +46,14 @@ const SEO_PAGES: Record<string, SeoPage> = {
     robots: INDEX_ROBOTS,
     indexable: true,
   },
+  '/en': {
+    key: 'platform',
+    path: '/en',
+    title: 'Lamelix – 3D pergola configurator and quote-request system for manufacturers',
+    description: 'White-label 3D pergola configurator for manufacturers and dealers: instant guide price, AR view, photo placement, price matrix, QR-coded designs and a manufacturer admin. Request a demo!',
+    robots: INDEX_ROBOTS,
+    indexable: true,
+  },
   '/minta': {
     key: 'home',
     path: '/minta',
@@ -96,7 +104,7 @@ const SEO_PAGES: Record<string, SeoPage> = {
   },
 }
 
-export const SEO_SITEMAP_PATHS = ['/', '/minta', '/studio/pergola'] as const
+export const SEO_SITEMAP_PATHS = ['/', '/en', '/minta', '/studio/pergola'] as const
 
 export function normalizeSeoPath(pathname: string) {
   if (!pathname || pathname === '/') return '/'
@@ -137,19 +145,20 @@ export function buildStructuredData(pathname: string, origin: string) {
   }
 
   if (page.key === 'platform') {
+    const english = page.path === '/en'
     return [
-      website,
+      { ...website, inLanguage: english ? 'en' : 'hu-HU', url: `${origin}${english ? '/en' : '/'}` },
       {
         '@type': 'SoftwareApplication',
         '@id': `${origin}/#software`,
-        name: 'Lamelix – 3D pergola-konfigurátor gyártóknak',
+        name: english ? 'Lamelix – 3D pergola configurator for manufacturers' : 'Lamelix – 3D pergola-konfigurátor gyártóknak',
         brand: { '@type': 'Brand', name: 'Lamelix' },
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web browser',
-        inLanguage: 'hu-HU',
-        url: `${origin}/`,
+        inLanguage: english ? 'en' : 'hu-HU',
+        url: `${origin}${english ? '/en' : '/'}`,
         description: page.description,
-        offers: { '@type': 'Offer', priceCurrency: 'HUF', price: '59000', description: 'Havi előfizetés, nettó ár' },
+        offers: { '@type': 'Offer', priceCurrency: 'HUF', price: '59000', description: english ? 'Monthly subscription, net price' : 'Havi előfizetés, nettó ár' },
       },
     ]
   }

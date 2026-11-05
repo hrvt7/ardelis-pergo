@@ -5,6 +5,8 @@
 // Felépítés: a vevői élmény (3D, irányár, AR, fotóba helyezés, PDF, QR) MINDEN csomagban azonos, a csomagok
 // a gyártó üzleti igényeiben különböznek (statisztika, beágyazások száma, márkák, white-label, támogatás).
 
+import type { Lang } from '@/i18n/lang'
+
 export type PlanId = 'start' | 'pro' | 'partner'
 
 export interface Plan {
@@ -75,7 +77,18 @@ export const PLANS: Plan[] = [
 ]
 
 const huf = new Intl.NumberFormat('hu-HU', { maximumFractionDigits: 0 })
+const hufEn = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 export const formatFt = (value: number) => `${huf.format(value)} Ft`
+/** Összeg az oldal nyelvén: „5 648 000 Ft” / „HUF 5,648,000”. */
+export const formatMoney = (value: number, lang: Lang = 'hu') => (lang === 'en' ? `HUF ${hufEn.format(value)}` : formatFt(value))
+/** Rövid összeg a kalkulátorhoz: „5,6 M Ft” / „HUF 5.6M”. */
+export function compactMoney(value: number, lang: Lang = 'hu') {
+  if (Math.abs(value) >= 1_000_000) {
+    const millions = value / 1_000_000
+    return lang === 'en' ? `HUF ${millions.toLocaleString('en-US', { maximumFractionDigits: 1 })}M` : `${millions.toLocaleString('hu-HU', { maximumFractionDigits: 1 })} M Ft`
+  }
+  return formatMoney(Math.round(value / 1000) * 1000, lang)
+}
 
 /** Havi díj a választott fizetési ütem szerint (éves: 10 hónap ára 12 hónapra elosztva, ezresre kerekítve). */
 export function monthlyPrice(plan: Plan, annual: boolean): number | null {

@@ -12,7 +12,11 @@ import LamelixLogo from '@/components/LamelixLogo'
 import BenefitCards from '@/components/platform/BenefitCards'
 import { CustomerFeatures, Faq, ProcessTimeline, RoiCalculator } from '@/components/platform/LandingSections'
 import { usePageSeo } from '@/lib/usePageSeo'
-import { EVERY_PLAN, formatFt, monthlyPrice, PLANS, SETUP_FEE, SETUP_INCLUDES, type PlanId } from '@/lib/platformPricing'
+import { formatMoney, monthlyPrice, PLANS, SETUP_FEE, type PlanId } from '@/lib/platformPricing'
+import { LangProvider, type Lang } from '@/i18n/lang'
+import { useCopy } from '@/i18n/useCopy'
+import { Em } from '@/i18n/Em'
+import LangSwitch from '@/i18n/LangSwitch'
 import '@/platform.css'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -26,25 +30,25 @@ function Shot({ name, alt, eager = false, sizes = '(max-width: 900px) 100vw, 60v
   return <img src={img(name)} srcSet={imgSet(name)} sizes={sizes} alt={alt} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : undefined} decoding="async" width={1600} height={1000} />
 }
 
-function Browser({ children, url = 'konfigurator.ceged.hu' }: { children: ReactNode; url?: string }) {
+function Browser({ children, url }: { children: ReactNode; url?: string }) {
   return <div className="pf-browser">
     <div className="pf-browser-bar" aria-hidden="true"><i /><i /><i /><span>{url}</span></div>
     <div className="pf-browser-body">{children}</div>
   </div>
 }
 
-const ADMIN_URL = 'Lamelix · gyártói admin'
-
 const BEATS = [
-  { id: 'konfigurator', index: '01', title: 'A vevő megtervezi.', text: 'Valós méretek, a saját háza színei, nappali és esti nézet – 3D-ben, a böngészőben, letöltés nélkül. Közben végig látja az irányárat.', image: 'studio', alt: 'A 3D pergola-konfigurátor tervezőfelülete irányárral' },
-  { id: 'lead', index: '02', title: 'Ön kész ajánlatkérést kap.', text: 'Név, telefonszám, település, a pontos konfiguráció és az irányár. Hívás, e-mail, státusz és a terv megnyitása egyetlen panelen.', image: 'admin-leads', alt: 'Érdeklődő részletei a gyártói adminban: irányár, státusz, elérhetőség' },
-  { id: 'meres', index: '03', title: 'Látja, mi működik.', text: 'Hányan nyitották meg, hányan módosítottak a terven, hányan kértek felmérést – és mekkora nyitott érték vár lezárásra.', image: 'admin-overview', alt: 'A gyártói admin áttekintése: érdeklődők, nyitott érték, látogatói tölcsér' },
-  { id: 'mobil', index: '04', title: 'Terepen is kéznél.', text: 'Az érdeklődők listája és a részletek telefonra optimalizálva: egy koppintással hívhat, státuszt válthat, és megnyithatja a tervet.', image: 'admin-mobile', alt: 'Érdeklődő részletei telefonon, hívás, e-mail és terv gombokkal', phone: true },
+  { id: 'konfigurator', index: '01', image: 'studio' },
+  { id: 'lead', index: '02', image: 'admin-leads' },
+  { id: 'meres', index: '03', image: 'admin-overview' },
+  { id: 'mobil', index: '04', image: 'admin-mobile', phone: true },
 ] as const
 
 type FormState = { status: 'idle' | 'sending' | 'sent' | 'error'; message?: string; ref?: string; fallback?: string }
 
 function DemoForm({ plan, onPlan }: { plan: PlanId | 'unsure'; onPlan: (plan: PlanId | 'unsure') => void }) {
+  const { lang, c } = useCopy()
+  const f = c.form
   const [state, setState] = useState<FormState>({ status: 'idle' })
   const [copied, setCopied] = useState(false)
   const [opened] = useState(() => Date.now())
@@ -57,48 +61,54 @@ function DemoForm({ plan, onPlan }: { plan: PlanId | 'unsure'; onPlan: (plan: Pl
       const response = await fetch('/api/demo-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: value('name'), company: value('company'), email: value('email'), phone: value('phone'), website: value('website'), product: value('product') || 'pergola', plan, message: value('message'), consent: form.get('consent') === 'on', fax: value('fax'), elapsedMs: Date.now() - opened }),
+        body: JSON.stringify({ name: value('name'), company: value('company'), email: value('email'), phone: value('phone'), website: value('website'), product: value('product') || 'pergola', plan, lang, message: value('message'), consent: form.get('consent') === 'on', fax: value('fax'), elapsedMs: Date.now() - opened }),
       })
       const data = await response.json().catch(() => null) as { ok?: boolean; ref?: string; error?: string; fallbackEmail?: string } | null
       if (response.ok && data?.ok) { setState({ status: 'sent', ref: data.ref }); return }
-      setState({ status: 'error', message: data?.error ?? 'A küldés nem sikerült.', fallback: response.status === 400 ? undefined : data?.fallbackEmail ?? CONTACT_EMAIL })
+      setState({ status: 'error', message: data?.error ?? f.failed, fallback: response.status === 400 ? undefined : data?.fallbackEmail ?? CONTACT_EMAIL })
     } catch {
-      setState({ status: 'error', message: 'Nincs kapcsolat a szerverrel.', fallback: CONTACT_EMAIL })
+      setState({ status: 'error', message: f.offline, fallback: CONTACT_EMAIL })
     }
   }
   if (state.status === 'sent') return <div className="pf-form-done" role="status">
     <span className="pf-done-mark"><Check size={26} /></span>
-    <h3>Köszönjük, megkaptuk!</h3>
-    <p>Egy munkanapon belül jelentkezünk egy időpont-javaslattal. A demót már az Ön logójával és termékével mutatjuk meg.</p>
-    {state.ref && <small>Azonosító: {state.ref}</small>}
+    <h3>{f.doneTitle}</h3>
+    <p>{f.doneText}</p>
+    {state.ref && <small>{f.ref}{state.ref}</small>}
   </div>
   return <form className="pf-form" onSubmit={submit} noValidate={false}>
     <div className="pf-form-grid">
-      <label><span>Név *</span><input name="name" required minLength={2} maxLength={120} autoComplete="name" /></label>
-      <label><span>Cég *</span><input name="company" required minLength={2} maxLength={160} autoComplete="organization" /></label>
-      <label><span>E-mail *</span><input name="email" type="email" required maxLength={320} autoComplete="email" /></label>
-      <label><span>Telefon</span><input name="phone" type="tel" maxLength={40} pattern="[+0-9 ()/\-]*" autoComplete="tel" /></label>
-      <label><span>Weboldal</span><input name="website" maxLength={300} placeholder="ceged.hu" autoComplete="url" /></label>
-      <label><span>Termék</span><select name="product" defaultValue="pergola"><option value="pergola">Pergola</option><option value="pergola+outdoor">Pergola + egyéb outdoor termék</option><option value="carport">Carport / előtető</option><option value="other">Egyéb</option></select></label>
+      <label><span>{f.name}</span><input name="name" required minLength={2} maxLength={120} autoComplete="name" /></label>
+      <label><span>{f.company}</span><input name="company" required minLength={2} maxLength={160} autoComplete="organization" /></label>
+      <label><span>{f.email}</span><input name="email" type="email" required maxLength={320} autoComplete="email" /></label>
+      <label><span>{f.phone}</span><input name="phone" type="tel" maxLength={40} pattern="[+0-9 ()/\-]*" autoComplete="tel" /></label>
+      <label><span>{f.website}</span><input name="website" maxLength={300} placeholder={f.websitePlaceholder} autoComplete="url" /></label>
+      <label><span>{f.product}</span><select name="product" defaultValue="pergola">{(Object.keys(f.products) as (keyof typeof f.products)[]).map((key) => <option key={key} value={key}>{f.products[key]}</option>)}</select></label>
     </div>
     <fieldset className="pf-plan-pick">
-      <legend>Melyik csomag érdekli?</legend>
-      {([...PLANS.map((item) => [item.id, item.name] as const), ['unsure', 'Még nem tudom'] as const]).map(([id, label]) => <label key={id} className={plan === id ? 'is-on' : ''}><input type="radio" name="plan" value={id} checked={plan === id} onChange={() => onPlan(id)} />{label}</label>)}
+      <legend>{f.planLegend}</legend>
+      {([...PLANS.map((item) => [item.id, c.pricing.plans[item.id].name] as const), ['unsure', f.planUnsure] as const]).map(([id, label]) => <label key={id} className={plan === id ? 'is-on' : ''}><input type="radio" name="plan" value={id} checked={plan === id} onChange={() => onPlan(id)} />{label}</label>)}
     </fieldset>
-    <label className="pf-wide"><span>Üzenet</span><textarea name="message" rows={3} maxLength={2000} placeholder="Például: milyen termékeik vannak, és mikor indulnának?" /></label>
+    <label className="pf-wide"><span>{f.message}</span><textarea name="message" rows={3} maxLength={2000} placeholder={f.messagePlaceholder} /></label>
     <input className="pf-hp" name="fax" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-    <label className="pf-consent"><input type="checkbox" name="consent" required /><span>Hozzájárulok, hogy a megadott adataimat a demó egyeztetéséhez felhasználják.</span></label>
+    <label className="pf-consent"><input type="checkbox" name="consent" required /><span>{f.consent}</span></label>
     {state.status === 'error' && <div className="pf-form-error" role="alert">
-      <p>{state.message}{state.fallback ? ' Írjon nekünk közvetlenül, ugyanilyen gyorsan válaszolunk:' : ''}</p>
-      {state.fallback && <div className="pf-fallback"><a href={`mailto:${state.fallback}?subject=${encodeURIComponent('Demókérés – Lamelix')}`}>{state.fallback}</a><button type="button" onClick={() => { void navigator.clipboard?.writeText(state.fallback!).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1500) }).catch(() => undefined) }}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? 'Másolva' : 'Másolás'}</button></div>}
+      <p>{state.message}{state.fallback ? f.fallback : ''}</p>
+      {state.fallback && <div className="pf-fallback"><a href={`mailto:${state.fallback}?subject=${encodeURIComponent(f.mailSubject)}`}>{state.fallback}</a><button type="button" onClick={() => { void navigator.clipboard?.writeText(state.fallback!).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1500) }).catch(() => undefined) }}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? f.copied : f.copy}</button></div>}
     </div>}
-    <button className="pf-btn pf-btn-primary pf-submit" type="submit" disabled={state.status === 'sending'}>{state.status === 'sending' ? 'Küldés…' : <>Demót kérek <Send size={17} /></>}</button>
-    <p className="pf-form-note">Egy munkanapon belül válaszolunk. Az adatait nem adjuk tovább.</p>
+    <button className="pf-btn pf-btn-primary pf-submit" type="submit" disabled={state.status === 'sending'}>{state.status === 'sending' ? f.sending : <>{f.submit} <Send size={17} /></>}</button>
+    <p className="pf-form-note">{f.note}</p>
   </form>
 }
 
-export default function Platform() {
-  usePageSeo('/')
+/** A főoldal két nyelven: / (magyar) és /en (angol). */
+export default function Platform({ lang = 'hu' }: { lang?: Lang }) {
+  return <LangProvider value={lang}><PlatformPage /></LangProvider>
+}
+
+function PlatformPage() {
+  const { lang, c } = useCopy()
+  usePageSeo(lang === 'en' ? '/en' : '/')
   const root = useRef<HTMLDivElement>(null)
   const [annual, setAnnual] = useState(false)
   const [plan, setPlan] = useState<PlanId | 'unsure'>('unsure')
@@ -231,114 +241,119 @@ export default function Platform() {
     }
   }, [])
 
-  const statement = 'A vevő este tizenegykor tervez – a saját teraszára, az Ön áraival. Ön reggel egy kész, beárazott tervet kap, telefonszámmal együtt.'
+  const statement = c.statement.text
 
+  const n = c.nav
+  const h = c.hero
+  const pr = c.pricing
   return <div className="pf-page" ref={root}>
     <header className={`pf-header${scrolled ? ' is-scrolled' : ''}`}>
-      <a className="pf-brand" href="#top" aria-label="Lamelix – az oldal teteje"><LamelixLogo className="pf-logo" height={30} title={null} /><small>gyártóknak</small></a>
-      <nav aria-label="Fő navigáció"><a href="#elonyok">Előnyök</a><a href="#bemutato">Bemutató</a><a href="#funkciok">Funkciók</a><a href="#mukodes">Működés</a><a href="#arak">Árak</a><a href="#gyik">GYIK</a></nav>
-      <div className="pf-header-actions"><Link className="pf-link-quiet" to={DEMO_PATH}>Élő demó</Link><a className="pf-btn pf-btn-primary pf-btn-sm" href="#demo">Kérek demót</a></div>
+      <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={30} title={null} /><small>{n.brandSmall}</small></a>
+      <nav aria-label={n.mainAria}><a href="#elonyok">{n.benefits}</a><a href="#bemutato">{n.showcase}</a><a href="#funkciok">{n.features}</a><a href="#mukodes">{n.how}</a><a href="#arak">{n.pricing}</a><a href="#gyik">{n.faq}</a></nav>
+      <div className="pf-header-actions"><LangSwitch /><Link className="pf-link-quiet" to={DEMO_PATH}>{n.liveDemo}</Link><a className="pf-btn pf-btn-primary pf-btn-sm" href="#demo">{n.requestDemo}</a></div>
     </header>
 
     <main id="top">
       <section className="pf-hero" aria-labelledby="pf-title">
         <div className="pf-hero-glow" aria-hidden="true" />
         <div className="pf-hero-copy">
-          <p className="pf-eyebrow pf-hero-fade"><span className="pf-pulse" />Saját márkás 3D konfigurátor · pergola és árnyékolás</p>
-          <h1 id="pf-title"><span className="pf-hero-line"><span>3D konfigurátor</span></span><span className="pf-hero-line"><span><em>+ ajánlatkérés</em></span></span><span className="pf-hero-line"><span>pergola{'\u00ad'}gyártóknak.</span></span></h1>
-          <p className="pf-lead pf-hero-fade">A vevő az Ön weboldalán 3D-ben megtervezi a pergoláját, azonnal látja az irányárat, és felmérést kér. Ön a teljes tervet, az elérhetőségét és az árat egyben kapja meg – a saját arculatával és a saját áraival.</p>
-          <div className="pf-hero-actions pf-hero-fade"><a className="pf-btn pf-btn-primary" href="#demo">Kérek demót <ArrowRight size={18} /></a><Link className="pf-btn pf-btn-ghost" to={DEMO_PATH}>Kipróbálom élőben <ArrowUpRight size={17} /></Link></div>
-          <ul className="pf-proof pf-hero-fade"><li><Check size={15} />A vevőnek semmit sem kell telepítenie</li><li><Check size={15} />Indulás 5–10 munkanapon belül</li><li><Check size={15} />Nincs hűségidő</li></ul>
+          <p className="pf-eyebrow pf-hero-fade"><span className="pf-pulse" />{h.eyebrow}</p>
+          <h1 id="pf-title"><span className="pf-hero-line"><span>{h.line1}</span></span><span className="pf-hero-line"><span><em>{h.line2}</em></span></span><span className="pf-hero-line"><span>{h.line3}</span></span></h1>
+          <p className="pf-lead pf-hero-fade">{h.lead}</p>
+          <div className="pf-hero-actions pf-hero-fade"><a className="pf-btn pf-btn-primary" href="#demo">{h.ctaDemo} <ArrowRight size={18} /></a><Link className="pf-btn pf-btn-ghost" to={DEMO_PATH}>{h.ctaLive} <ArrowUpRight size={17} /></Link></div>
+          <ul className="pf-proof pf-hero-fade">{h.proof.map((item) => <li key={item}><Check size={15} />{item}</li>)}</ul>
         </div>
         <div className="pf-scene" aria-hidden="false">
           <div className="pf-stage">
             <div className="pf-tilt">
-              <Browser><Shot name="studio" alt="A konfigurátor: 3D pergola, méretek és azonnali bruttó irányár" eager sizes="(max-width: 900px) 100vw, 58vw" /></Browser>
-              <div className="pf-chip pf-chip-a"><span>Bruttó irányár</span><strong>5 648 000 Ft</strong><small>telepítéssel, 27% áfával</small></div>
-              <div className="pf-chip pf-chip-b"><i className="pf-chip-dot" /><div><span>Új érdeklődő · most</span><strong>Kovács Péter · Sárvár</strong><small>Aero 5,0 × 4,0 m · falhoz</small></div></div>
-              <div className="pf-chip pf-chip-c"><QrCode size={30} /><div><strong>QR-kódos terv</strong><small>egy kattintással a vevő tervéhez</small></div></div>
+              <Browser url={h.browserUrl}><Shot name="studio" alt={h.imgAlt} eager sizes="(max-width: 900px) 100vw, 58vw" /></Browser>
+              <div className="pf-chip pf-chip-a"><span>{h.chipA.label}</span><strong>{h.chipA.value}</strong><small>{h.chipA.sub}</small></div>
+              <div className="pf-chip pf-chip-b"><i className="pf-chip-dot" /><div><span>{h.chipB.label}</span><strong>{h.chipB.name}</strong><small>{h.chipB.detail}</small></div></div>
+              <div className="pf-chip pf-chip-c"><QrCode size={30} /><div><strong>{h.chipC.title}</strong><small>{h.chipC.sub}</small></div></div>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="pf-marquee" aria-hidden="true"><div className="pf-marquee-track">{[0, 1].map((copy) => <span key={copy}>{['Bioklimatikus lamella', 'Eltolható tető', 'Üvegtető', 'ZIP screen', 'Tolóüveg', 'LED és fűtés', 'AR-nézet', 'Fotóba helyezés', 'Árnyékelemzés', 'Ármátrix', 'PDF-összefoglaló', 'QR-kód', 'Gyártói admin'].map((item) => <b key={item}>{item}<i>✦</i></b>)}</span>)}</div></div>
+      <div className="pf-marquee" aria-hidden="true"><div className="pf-marquee-track">{[0, 1].map((copy) => <span key={copy}>{c.marquee.map((item) => <b key={item}>{item}<i>✦</i></b>)}</span>)}</div></div>
 
-      <section className="pf-statement" aria-label="Miért">
+      <section className="pf-statement" aria-label={c.statement.aria}>
         <p>{statement.split(' ').map((word, index) => <span className="pf-word" key={index}>{word} </span>)}</p>
       </section>
 
       <section className="pf-section" id="elonyok" aria-labelledby="elonyok-title" data-pf-reveal>
-        <div className="pf-head" data-pf-item><p className="pf-eyebrow">01 – Előnyök</p><h2 id="elonyok-title">Minden, ami az <em>érdeklődéstől</em> a felmérésig kell.</h2></div>
-        <BenefitCards />
+        <div className="pf-head" data-pf-item><p className="pf-eyebrow">{c.benefits.eyebrow}</p><h2 id="elonyok-title"><Em parts={c.benefits.title} /></h2></div>
+        <BenefitCards demoPath={DEMO_PATH} />
       </section>
 
       <section className="pf-show" id="bemutato" aria-labelledby="bemutato-title">
         <div className="pf-show-pin">
           <div className="pf-show-copy">
-            <p className="pf-eyebrow">02 – Bemutató</p>
-            <h2 id="bemutato-title" className="sr-only">Hogyan néz ki a gyakorlatban</h2>
+            <p className="pf-eyebrow">{c.showcase.eyebrow}</p>
+            <h2 id="bemutato-title" className="sr-only">{c.showcase.srTitle}</h2>
             <div className="pf-beats">
-              {BEATS.map((beat) => <article className="pf-beat" key={beat.id}>
-                <span className="pf-beat-index">{beat.index} / 04</span><h3>{beat.title}</h3><p>{beat.text}</p>
-                <div className="pf-beat-media">{'phone' in beat ? <div className="pf-phone"><img src={img(beat.image)} alt={beat.alt} loading="lazy" decoding="async" width={520} height={1126} /></div> : <Browser url={beat.id === 'konfigurator' ? 'konfigurator.ceged.hu' : ADMIN_URL}><Shot name={beat.image} alt={beat.alt} /></Browser>}</div>
-              </article>)}
+              {BEATS.map((beat, index) => { const text = c.showcase.beats[index]; return <article className="pf-beat" key={beat.id}>
+                <span className="pf-beat-index">{beat.index} / 04</span><h3>{text.title}</h3><p>{text.text}</p>
+                <div className="pf-beat-media">{'phone' in beat ? <div className="pf-phone"><img src={img(beat.image)} alt={text.alt} loading="lazy" decoding="async" width={520} height={1126} /></div> : <Browser url={beat.id === 'konfigurator' ? h.browserUrl : h.adminUrl}><Shot name={beat.image} alt={text.alt} /></Browser>}</div>
+              </article> })}
             </div>
             <div className="pf-show-dots" aria-hidden="true">{BEATS.map((beat) => <i key={beat.id} />)}</div>
-            <Link className="pf-btn pf-btn-ghost pf-show-cta" to={DEMO_PATH}>Nyissa meg az élő demót <ArrowUpRight size={17} /></Link>
+            <Link className="pf-btn pf-btn-ghost pf-show-cta" to={DEMO_PATH}>{c.showcase.cta} <ArrowUpRight size={17} /></Link>
           </div>
           <div className="pf-show-stage" aria-hidden="true">
-            {BEATS.map((beat) => <div className="pf-show-frame" key={beat.id}>{'phone' in beat ? <div className="pf-phone"><img src={img(beat.image)} alt="" loading="lazy" decoding="async" width={520} height={1126} /></div> : <Browser url={beat.id === 'konfigurator' ? 'konfigurator.ceged.hu' : ADMIN_URL}><Shot name={beat.image} alt="" /></Browser>}</div>)}
+            {BEATS.map((beat) => <div className="pf-show-frame" key={beat.id}>{'phone' in beat ? <div className="pf-phone"><img src={img(beat.image)} alt="" loading="lazy" decoding="async" width={520} height={1126} /></div> : <Browser url={beat.id === 'konfigurator' ? h.browserUrl : h.adminUrl}><Shot name={beat.image} alt="" /></Browser>}</div>)}
           </div>
         </div>
       </section>
 
       <section className="pf-section" id="funkciok" aria-labelledby="funkciok-title" data-pf-reveal>
         <div className="pf-head pf-head-row" data-pf-item>
-          <div><p className="pf-eyebrow">03 – Funkciók</p><h2 id="funkciok-title">A vevő nemcsak árat lát – <em>döntést</em> hoz.</h2></div>
-          <p className="pf-sub">Ezek az eszközök minden csomagban benne vannak. A cél, hogy a vevő magabiztosan, a családdal egyeztetve kérjen felmérést.</p>
+          <div><p className="pf-eyebrow">{c.features.eyebrow}</p><h2 id="funkciok-title"><Em parts={c.features.title} /></h2></div>
+          <p className="pf-sub">{c.features.sub}</p>
         </div>
         <CustomerFeatures />
       </section>
 
       <section className="pf-section" id="mukodes" aria-labelledby="mukodes-title" data-pf-reveal>
-        <div className="pf-head" data-pf-item><p className="pf-eyebrow">04 – Működés</p><h2 id="mukodes-title">Négy lépés, és <em>él</em> a konfigurátor.</h2></div>
+        <div className="pf-head" data-pf-item><p className="pf-eyebrow">{c.how.eyebrow}</p><h2 id="mukodes-title"><Em parts={c.how.title} /></h2></div>
         <ProcessTimeline />
       </section>
 
       <section className="pf-section" id="arak" aria-labelledby="arak-title" data-pf-reveal>
         <div className="pf-head pf-head-row" data-pf-item>
-          <div><p className="pf-eyebrow">05 – Árak</p><h2 id="arak-title">Néhány plusz megrendelés <em>kifizeti</em> az évet.</h2><p className="pf-sub">Egy pergolaprojekt jellemzően 3–6 millió forint. A csomagok a gyártó igényeiben különböznek, a vevői élmény mindegyikben teljes.</p></div>
-          <div className="pf-billing" role="group" aria-label="Fizetési ütem"><button type="button" className={annual ? '' : 'is-on'} aria-pressed={!annual} onClick={() => setAnnual(false)}>Havi</button><button type="button" className={annual ? 'is-on' : ''} aria-pressed={annual} onClick={() => setAnnual(true)}>Éves <em>−2 hónap</em></button></div>
+          <div><p className="pf-eyebrow">{pr.eyebrow}</p><h2 id="arak-title"><Em parts={pr.title} /></h2><p className="pf-sub">{pr.sub}</p></div>
+          <div className="pf-billing" role="group" aria-label={pr.billingAria}><button type="button" className={annual ? '' : 'is-on'} aria-pressed={!annual} onClick={() => setAnnual(false)}>{pr.monthly}</button><button type="button" className={annual ? 'is-on' : ''} aria-pressed={annual} onClick={() => setAnnual(true)}>{pr.annual} <em>{pr.annualBadge}</em></button></div>
         </div>
-        <ul className="pf-every" data-pf-item aria-label="Minden csomagban benne van"><li className="pf-every-label">Minden csomagban:</li>{EVERY_PLAN.map((item) => <li key={item}><Check size={14} />{item}</li>)}</ul>
+        <ul className="pf-every" data-pf-item aria-label={pr.everyAria}><li className="pf-every-label">{pr.everyLabel}</li>{pr.everyPlan.map((item) => <li key={item}><Check size={14} />{item}</li>)}</ul>
         <div className="pf-plans">
           {PLANS.map((item) => {
             const price = monthlyPrice(item, annual)
+            const text = pr.plans[item.id]
             return <article key={item.id} className={`pf-plan${item.featured ? ' is-featured' : ''}`} data-pf-item onPointerMove={tilt} onPointerLeave={untilt}>
-              {item.featured && <span className="pf-plan-badge">Legnépszerűbb</span>}
-              <h3>{item.name}</h3><p className="pf-plan-tag">{item.tagline}</p>
-              <div className="pf-price">{price === null ? <strong>Egyedi ajánlat</strong> : <><strong>{formatFt(price)}</strong><span>/ hó</span></>}</div>
-              <p className="pf-price-note">{price === null ? 'A márkák és a viszonteladók számától függően' : annual ? `éves fizetéssel: ${formatFt(price * 12)} / év` : 'havi fizetéssel, a hónap végére felmondható'}</p>
-              <ul>{item.features.map((feature) => <li key={feature}><Check size={16} />{feature}</li>)}</ul>
-              <button type="button" className={`pf-btn ${item.featured ? 'pf-btn-primary' : 'pf-btn-ghost'}`} onClick={() => choosePlan(item.id)}>{item.monthly === null ? 'Ajánlatot kérek' : 'Demót kérek'} <ArrowRight size={17} /></button>
+              {item.featured && <span className="pf-plan-badge">{pr.badge}</span>}
+              <h3>{text.name}</h3><p className="pf-plan-tag">{text.tagline}</p>
+              <div className="pf-price">{price === null ? <strong>{pr.custom}</strong> : <><strong>{formatMoney(price, lang)}</strong><span>{pr.perMonth}</span></>}</div>
+              <p className="pf-price-note">{price === null ? pr.customNote : annual ? pr.annualNote(formatMoney(price * 12, lang)) : pr.monthlyNote}</p>
+              <ul>{text.features.map((feature) => <li key={feature}><Check size={16} />{feature}</li>)}</ul>
+              <button type="button" className={`pf-btn ${item.featured ? 'pf-btn-primary' : 'pf-btn-ghost'}`} onClick={() => choosePlan(item.id)}>{item.monthly === null ? pr.ctaQuote : pr.ctaDemo} <ArrowRight size={17} /></button>
             </article>
           })}
         </div>
         <div className="pf-setup" data-pf-item>
-          <div><span className="pf-setup-icon"><Box size={22} /></span><div><strong>Egyszeri bevezetés: {formatFt(SETUP_FEE)}</strong><p>Minden csomagnál egyszer fizetendő. Tartalma:</p></div></div>
-          <ul>{SETUP_INCLUDES.map((item) => <li key={item}><Check size={15} />{item}</li>)}</ul>
+          <div><span className="pf-setup-icon"><Box size={22} /></span><div><strong>{pr.setupTitle(formatMoney(SETUP_FEE, lang))}</strong><p>{pr.setupLead}</p></div></div>
+          <ul>{pr.setupIncludes.map((item) => <li key={item}><Check size={15} />{item}</li>)}</ul>
         </div>
         <RoiCalculator annual={annual} />
-        <p className="pf-fineprint" data-pf-item>Az árak nettó árak, a 27% áfa ezeken felül fizetendő. Egyedi 3D profil vagy új termékcsalád modellezése külön ajánlat alapján.</p>
+        <p className="pf-fineprint" data-pf-item>{pr.fineprint}</p>
       </section>
 
       <section className="pf-section pf-demo" id="demo" aria-labelledby="demo-title" data-pf-reveal>
         <div className="pf-demo-copy" data-pf-item>
-          <p className="pf-eyebrow">06 – Demó</p>
-          <h2 id="demo-title">Nézze meg a <em>saját</em> termékével.</h2>
-          <p className="pf-sub">20 perces online bemutató: a konfigurátort már az Ön logójával és egy termékével mutatjuk meg, és átbeszéljük, mi kell az induláshoz.</p>
-          <ul className="pf-demo-points"><li><Smartphone size={18} />Kipróbálhatja telefonon is</li><li><Table2 size={18} />Hozza magával az árlistáját, és megmutatjuk az ármátrixban</li><li><Mail size={18} />Vagy írjon: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li></ul>
+          <p className="pf-eyebrow">{c.demo.eyebrow}</p>
+          <h2 id="demo-title"><Em parts={c.demo.title} /></h2>
+          <p className="pf-sub">{c.demo.sub}</p>
+          <ul className="pf-demo-points"><li><Smartphone size={18} />{c.demo.points[0]}</li><li><Table2 size={18} />{c.demo.points[1]}</li><li><Mail size={18} />{c.demo.writeUs}<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li></ul>
+          {c.demo.liveNote && <p className="pf-demo-note">{c.demo.liveNote}</p>}
         </div>
         <div className="pf-demo-form" data-pf-item><DemoForm plan={plan} onPlan={setPlan} /></div>
       </section>
@@ -349,19 +364,18 @@ export default function Platform() {
 
       <section className="pf-final" aria-labelledby="final-title">
         <div className="pf-final-inner">
-          <h2 id="final-title">Beszéljünk a <em>következő</em> szezonról.</h2>
-          <p>Ha most indul, tavaszra a vevői már a konfigurátorban terveznek és árat látnak – miközben máshol még az árlistára várnak.</p>
-          <div className="pf-hero-actions"><a className="pf-btn pf-btn-primary" href="#demo">Kérek demót <ArrowRight size={18} /></a><Link className="pf-btn pf-btn-ghost" to={DEMO_PATH}>Élő demó <ArrowUpRight size={17} /></Link></div>
+          <h2 id="final-title"><Em parts={c.final.title} /></h2>
+          <p>{c.final.text}</p>
+          <div className="pf-hero-actions"><a className="pf-btn pf-btn-primary" href="#demo">{n.requestDemo} <ArrowRight size={18} /></a><Link className="pf-btn pf-btn-ghost" to={DEMO_PATH}>{n.liveDemo} <ArrowUpRight size={17} /></Link></div>
         </div>
       </section>
     </main>
 
     <footer className="pf-footer">
-      <a className="pf-brand" href="#top" aria-label="Lamelix – az oldal teteje"><LamelixLogo className="pf-logo" height={28} title={null} /></a>
-      <p>Saját márkás 3D konfigurátor és ajánlatkérő rendszer pergola- és árnyékolástechnikai gyártóknak.</p>
-      <nav aria-label="Lábléc"><Link to={DEMO_PATH}>Élő demó</Link><Link to="/minta">Mintaoldal</Link><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></nav>
+      <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={28} title={null} /></a>
+      <p>{c.footer.text}</p>
+      <nav aria-label={n.footerAria}><Link to={DEMO_PATH}>{n.liveDemo}</Link>{c.footer.sample && <Link to="/minta">{c.footer.sample}</Link>}<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></nav>
       <small>© {new Date().getFullYear()} Lamelix</small>
     </footer>
   </div>
 }
-

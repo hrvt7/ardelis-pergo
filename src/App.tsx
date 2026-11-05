@@ -9,6 +9,7 @@ const Home = lazy(() => import('@/pages/Home'))
 export default function App() {
   return <Routes>
     <Route path="/" element={<Platform />} />
+    <Route path="/en" element={<Platform lang="en" />} />
     {/* A demó gyártó (Lamelix) lakossági mintaoldala */}
     <Route path="/minta" element={<Suspense fallback={null}><Home /></Suspense>} />
     <Route path="/ardelis" element={<Navigate to="/minta" replace />} />
