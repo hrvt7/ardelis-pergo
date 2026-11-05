@@ -1,10 +1,16 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router'
+import { Navigate, Route, Routes, useLocation } from 'react-router'
 import Platform from '@/pages/Platform'
 import NotFound from '@/pages/NotFound'
 import TenantStudio from '@/pages/TenantStudio'
 const AdminPage = lazy(() => import('@/pages/AdminPage'))
 const Home = lazy(() => import('@/pages/Home'))
+
+/** Átirányítás, ami megtartja a lekérdezést és a #hash-t (megosztott konfigurációs linkek). */
+function Redirect({ to }: { to: string }) {
+  const { search, hash } = useLocation()
+  return <Navigate to={`${to}${search}${hash}`} replace />
+}
 
 export default function App() {
   return <Routes>
@@ -12,10 +18,10 @@ export default function App() {
     <Route path="/en" element={<Platform lang="en" />} />
     {/* A demó gyártó (Lamelix) lakossági mintaoldala */}
     <Route path="/minta" element={<Suspense fallback={null}><Home /></Suspense>} />
-    <Route path="/ardelis" element={<Navigate to="/minta" replace />} />
+    <Route path="/ardelis" element={<Redirect to="/minta" />} />
     <Route path="/konfigurator" element={<TenantStudio mode="demo" />} />
-    <Route path="/studio/pergola" element={<Navigate to="/konfigurator" replace />} />
-    <Route path="/k/demo" element={<Navigate to="/konfigurator" replace />} />
+    <Route path="/studio/pergola" element={<Redirect to="/konfigurator" />} />
+    <Route path="/k/demo" element={<Redirect to="/konfigurator" />} />
     <Route path="/k/:tenantId/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
     <Route path="/k/:tenantId" element={<TenantStudio mode="standalone" />} />
     <Route path="/embed/:tenantId" element={<TenantStudio mode="embed" />} />

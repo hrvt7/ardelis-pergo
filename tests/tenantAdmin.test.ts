@@ -69,6 +69,21 @@ describe('admin háttér', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     vi.unstubAllGlobals()
   })
+  it('az alapértelmezett demó-jelszóval a demó beállításai nem menthetők', async () => {
+    const open = { ADMIN_TOKEN_SECRET: 'titok', SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'k' }
+    const fetchMock = vi.fn(async () => new Response(null, { status: 201 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const auth = { Authorization: `Bearer ${await signToken('titok', 'demo')}` }
+    const response = await handleAdminSettings(new Request('https://t.test/api/admin-settings', { method: 'PUT', headers: auth, body: JSON.stringify({ prices: { vatRate: 0.2 } }) }), open)
+    expect(response.status).toBe(403)
+    expect(fetchMock).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+  it('túl nagy törzs 413, a Content-Length fejléc nélkül is', async () => {
+    const auth = { Authorization: `Bearer ${await signToken('titok', 'demo')}` }
+    const response = await handleAdminSettings(new Request('https://t.test/api/admin-settings', { method: 'PUT', headers: auth, body: JSON.stringify({ pad: 'x'.repeat(130_000) }) }), env)
+    expect(response.status).toBe(413)
+  })
   it('a nyilvános végpont nem adja ki a lead-címzetteket', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([{ data: { prices: { vatRate: 0.2 }, lead: { recipients: ['titkos@ceg.hu'] } } }]), { status: 200 })))
     const response = await handleTenantRequest(new Request('https://t.test/api/tenant?id=demo'), env)

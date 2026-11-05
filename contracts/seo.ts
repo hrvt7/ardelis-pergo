@@ -62,9 +62,9 @@ const SEO_PAGES: Record<string, SeoPage> = {
     robots: INDEX_ROBOTS,
     indexable: true,
   },
-  '/studio/pergola': {
+  '/konfigurator': {
     key: 'studio',
-    path: '/studio/pergola',
+    path: '/konfigurator',
     title: '3D pergolatervező és árkalkulátor | Lamelix',
     description: 'Online 3D pergolatervező valós méretekkel, motoros lamellákkal, oldalzárással és kiegészítőkkel. Azonnali irányár, PDF és felmérési kérelem.',
     robots: INDEX_ROBOTS,
@@ -104,7 +104,7 @@ const SEO_PAGES: Record<string, SeoPage> = {
   },
 }
 
-export const SEO_SITEMAP_PATHS = ['/', '/en', '/minta', '/studio/pergola'] as const
+export const SEO_SITEMAP_PATHS = ['/', '/en', '/minta', '/konfigurator'] as const
 
 export function normalizeSeoPath(pathname: string) {
   if (!pathname || pathname === '/') return '/'
@@ -195,9 +195,9 @@ export function buildStructuredData(pathname: string, origin: string) {
       organization,
       {
         '@type': 'WebApplication',
-        '@id': `${origin}/studio/pergola#application`,
+        '@id': `${origin}/konfigurator#application`,
         name: 'PERGO 3D pergolatervező',
-        url: `${origin}/studio/pergola`,
+        url: `${origin}/konfigurator`,
         applicationCategory: 'DesignApplication',
         operatingSystem: 'Web browser',
         browserRequirements: 'JavaScript és WebGL támogatás szükséges.',
@@ -216,7 +216,7 @@ export function buildStructuredData(pathname: string, origin: string) {
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Lamelix', item: `${origin}/minta` },
-          { '@type': 'ListItem', position: 2, name: '3D pergolatervező', item: `${origin}/studio/pergola` },
+          { '@type': 'ListItem', position: 2, name: '3D pergolatervező', item: `${origin}/konfigurator` },
         ],
       },
     ]

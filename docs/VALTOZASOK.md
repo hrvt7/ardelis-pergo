@@ -602,3 +602,10 @@ működést, az eladhatóságot és a hibákat érintik.
 - Demókérő űrlap: az oldal nyelve megy a szerverre (angol hibaüzenetek; a tulajdonosnak szóló e-mail jelzi, ha EN).
 - A konfigurátor és a mintaoldal felülete egyelőre magyar.
 - A főoldal termékképei (konfigurátor, admin áttekintés, érdeklődők, mobil) újrafotózva a Lamelix arculattal; a régi „ARDELIS / PERGO” jelzés eltűnt.
+
+## 3.30 – Hibakeresés és javítások
+- Sitemap, canonical és strukturált adat a valós `/konfigurator` címre mutat (korábban az átirányító `/studio/pergola`-ra).
+- A `/k/demo`, `/studio/pergola`, `/ardelis` átirányítás megtartja a `?lekérdezést` és a `#hash`-t – a megosztott konfigurációs linkek nem vesztik el a tervet.
+- Demó admin: az alapértelmezett (`1111`) jelszóval a demó beállításai nem menthetők, így a nyilvános demót nem lehet átírni; `ADMIN_PASSWORD_DEMO` beállításakor újra menthető.
+- Admin mentés: a törzsméret-korlát Content-Length nélkül is érvényesül.
+- Függőségek: zod 4.6.7 (DoS javítás), lodash 4.18.1, használatlan `@hono/node-server` eltávolítva; `npm audit --omit=dev`: 0 sérülékenység.

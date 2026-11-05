@@ -75,7 +75,7 @@ function loadSaved(tenant: Tenant): SavedConfiguration[] {
 
 export default function PergoStudio() {
   const { tenant, labels: ROOF_LABELS, admin, embed, homeHref } = useTenant()
-  usePageSeo('/studio/pergola', { noindex: embed || !tenant.demo, title: tenant.demo ? undefined : `${tenant.brand.name} · pergola konfigurátor` })
+  usePageSeo('/konfigurator', { noindex: embed || !tenant.demo, title: tenant.demo ? undefined : `${tenant.brand.name} · pergola konfigurátor` })
   const [config, setConfig] = useState<PergolaConfig>(() => loadInitialConfig(tenant))
   // Visszatérő látogató: ha piszkozatból (nem linkből) indultunk, és az nem az alapterv, felajánljuk a folytatást.
   const [welcomeBack, setWelcomeBack] = useState(() => !window.location.hash && JSON.stringify(config) !== JSON.stringify(normalizeConfig(tenant, tenant.defaultConfig)) && hasStoredDraft(tenant))

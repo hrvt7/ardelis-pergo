@@ -156,8 +156,11 @@ export async function handleAdminSettings(request: Request, env: AdminEnv): Prom
   if (request.method === 'GET') return json(200, { ok: true, storage: storeConfigured(env), overrides: await loadOverrides(env, tenant.id) })
 
   if (!storeConfigured(env)) return json(503, { ok: false, error: 'Az adattár (Supabase) nincs beállítva, a mentés nem lehetséges.' })
-  if (Number(request.headers.get('content-length') ?? 0) > MAX_BODY_BYTES) return json(413, { ok: false, error: 'A kérés túl nagy.' })
-  const body = await request.json().catch(() => null)
+  // Az alapértelmezett (nyilvános) demó-jelszóval a demó beállításai nem írhatók: különben bárki átírhatná a nyilvános demót.
+  if (tenant.id === 'demo' && !env[passwordEnvKey('demo')]) return json(403, { ok: false, error: 'A demó beállításai nem menthetők (csak kipróbálható). Saját gyártói fiókkal minden menthető.' })
+  const raw = await request.text()
+  if (raw.length > MAX_BODY_BYTES) return json(413, { ok: false, error: 'A kérés túl nagy.' })
+  const body: unknown = (() => { try { return JSON.parse(raw) } catch { return null } })()
   const checked = parseOverrides(body)
   if (!checked.ok) return json(422, { ok: false, error: checked.error })
 
