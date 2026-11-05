@@ -1,5 +1,13 @@
 # Változások
 
+## 3.27 – B2B oldal: funkciók, idővonal, megtérülés-kalkulátor, GYIK, lektorálás (2026. 11. 05.)
+
+- Új „Funkciók” blokk: AR-nézet, fotóba helyezés, árnyékelemzés, költségkeret-tervező, tanácsadó, esti hangulat, energia, PDF – élő CSS-illusztrációkkal.
+- „Működés”: idővonal négy kártyával (mini-animációk, ütemezés munkanapokban), mobilon függőleges.
+- Árak: „Minden csomagban” sáv, átrendezett csomagok (ármátrix a Startban is; Partnerhálózat: több márka, viszonteladók, Lamelix-jelzés nélkül), interaktív megtérülés-kalkulátor (`estimateRoi`).
+- GYIK: kétoszlopos, animált lenyitás, 8 kérdés.
+- Teljes szöveglektorálás: magázás következetesen, gondolatjel (–), áfa, „lead” helyett ajánlatkérés/érdeklődő; SEO-címek és szerverüzenetek is.
+
 ## 3.22 — Gyártói admin: modern felület, lead nézet, konverziómérés (2026. 11. 04.)
 
 - Gyártói admin (`/k/{gyarto}/admin`): belépés tenant-jelszóval, beállítások, árak, ármátrix, ki/be kapcsolók, lead-címzettek.

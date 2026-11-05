@@ -57,7 +57,7 @@ export function usePageSeo(pathname: string, options: { noindex?: boolean; title
     setMeta('property', 'og:image', socialImage)
     setMeta('property', 'og:image:width', '1200')
     setMeta('property', 'og:image:height', '630')
-    setMeta('property', 'og:image:alt', platform ? 'Lamelix — 3D konfigurátor és lead rendszer pergolagyártóknak' : 'ARDELIS PERGO bioklimatikus pergola egy modern otthon teraszán')
+    setMeta('property', 'og:image:alt', platform ? 'Lamelix – 3D konfigurátor és ajánlatkérő rendszer pergolagyártóknak' : 'ARDELIS PERGO bioklimatikus pergola egy modern otthon teraszán')
     setMeta('name', 'twitter:card', 'summary_large_image')
     setMeta('name', 'twitter:title', page.title)
     setMeta('name', 'twitter:description', page.description)

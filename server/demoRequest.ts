@@ -14,8 +14,8 @@ export const DEMO_PRODUCTS = ['pergola', 'pergola+outdoor', 'carport', 'other'] 
 export const DEMO_PLANS = ['start', 'pro', 'partner', 'unsure'] as const
 
 const demoSchema = z.object({
-  name: z.string().trim().min(2, 'Add meg a neved.').max(120),
-  company: z.string().trim().min(2, 'Add meg a cég nevét.').max(160),
+  name: z.string().trim().min(2, 'Adja meg a nevét.').max(120),
+  company: z.string().trim().min(2, 'Adja meg a cég nevét.').max(160),
   email: z.string().trim().email('Érvénytelen e-mail-cím.').max(320),
   phone: z.string().trim().max(40).regex(/^[+0-9 ()/-]*$/, 'Érvénytelen telefonszám.').optional().default(''),
   website: z.string().trim().max(300).optional().default(''),
@@ -50,7 +50,7 @@ function limited(key: string, now: number) {
 function emailHtml(input: DemoRequest, ref: string, origin = '') {
   const rows: [string, string][] = [
     ['Név', input.name], ['Cég', input.company], ['E-mail', input.email], ['Telefon', input.phone || '—'],
-    ['Weboldal', input.website || '—'], ['Termék', PRODUCT_LABEL[input.product]], ['Érdeklő csomag', PLAN_LABEL[input.plan]],
+    ['Weboldal', input.website || '—'], ['Termék', PRODUCT_LABEL[input.product]], ['Választott csomag', PLAN_LABEL[input.plan]],
   ]
   return `<!doctype html><html lang="hu"><body style="margin:0;background:#f3f4f1;font-family:Arial,sans-serif;color:#141816">
 <div style="max-width:620px;margin:0 auto;padding:24px">${origin ? `<p style="margin:0 0 14px"><img src="${escapeHtml(origin)}/brand/lamelix-email-light.png" width="110" height="32" alt="Lamelix" style="border:0"></p>` : ''}<div style="background:#fff;border-radius:14px;padding:26px">
@@ -76,7 +76,7 @@ export async function handleDemoRequest(request: Request, env: DemoEnv): Promise
   // Robot: sikert lát, de semmi nem megy ki.
   if (input.fax || (input.elapsedMs !== undefined && input.elapsedMs < MIN_FILL_MS)) return json(200, { ok: true, ref })
   const client = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local'
-  if (limited(client, now) || limited(`email:${input.email.toLowerCase()}`, now)) return json(429, { ok: false, error: 'Túl sok kérés rövid idő alatt. Próbáld újra később, vagy írj e-mailt.' })
+  if (limited(client, now) || limited(`email:${input.email.toLowerCase()}`, now)) return json(429, { ok: false, error: 'Túl sok kérés rövid idő alatt. Próbálja újra később, vagy írjon e-mailt.' })
 
   const to = (env.DEMO_REQUEST_EMAIL || DEMO_REQUEST_EMAIL).split(',').map((item) => item.trim()).filter(Boolean)
   const canEmail = Boolean(env.RESEND_API_KEY)
@@ -97,7 +97,7 @@ export async function handleDemoRequest(request: Request, env: DemoEnv): Promise
       method: 'POST',
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: env.LEAD_FROM_EMAIL || 'Konfigurátor <onboarding@resend.dev>',
+        from: env.LEAD_FROM_EMAIL || 'Lamelix <onboarding@resend.dev>',
         to,
         subject: oneLine(`Demókérés: ${input.company} – ${input.name} (${PLAN_LABEL[input.plan]})`),
         html: emailHtml(input, ref, (() => { try { return new URL(request.url).origin } catch { return '' } })()),

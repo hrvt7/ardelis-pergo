@@ -3,7 +3,7 @@
 
 export const LAMELIX = {
   name: 'Lamelix',
-  tagline: '3D konfigurátor + lead rendszer pergolagyártóknak',
+  tagline: '3D konfigurátor + ajánlatkérés pergolagyártóknak',
   colors: { ink: '#0B1210', lime: '#D8FF72', bone: '#F3F2EC', limeDark: '#5E8C0A' },
 } as const
 

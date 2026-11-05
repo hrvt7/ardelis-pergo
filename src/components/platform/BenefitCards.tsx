@@ -1,20 +1,8 @@
-// Lamelix B2B oldal — „Előnyök” kártyák élő mini-termékrészletekkel. Az animációk CSS-ből futnak,
-// és csak akkor, amikor a kártya látszik (is-live osztály) — mozgáscsökkentésnél állóképek.
-import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+// Lamelix B2B oldal – „Előnyök” kártyák élő mini-termékrészletekkel. Az animációk CSS-ből futnak,
+// és csak akkor, amikor a kártya látszik (is-live osztály); mozgáscsökkentésnél állóképek.
+import { useEffect, useState, type PointerEvent, type ReactNode } from 'react'
+import { useLive } from './useLive'
 import { ArrowUpRight, Calculator, LayoutDashboard, QrCode, Table2, Users } from 'lucide-react'
-
-function useLive<T extends HTMLElement>() {
-  const ref = useRef<T>(null)
-  const [live, setLive] = useState(() => typeof IntersectionObserver === 'undefined')
-  useEffect(() => {
-    const element = ref.current
-    if (!element || typeof IntersectionObserver === 'undefined') return
-    const observer = new IntersectionObserver(([entry]) => setLive(entry.isIntersecting), { threshold: 0.25 })
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [])
-  return [ref, live] as const
-}
 
 function tilt(event: PointerEvent<HTMLElement>) {
   if (event.pointerType !== 'mouse') return
@@ -69,11 +57,11 @@ function QrVisual() {
       <span className="vq-scan" />
       <span className="vq-corner a" /><span className="vq-corner b" /><span className="vq-corner c" /><span className="vq-corner d" />
     </div>
-    <span className="vq-hint">Olvasd be — ez az élő demó <ArrowUpRight size={13} /></span>
+    <span className="vq-hint">Olvassa be – ez az élő demó <ArrowUpRight size={13} /></span>
   </div>
 }
 
-/** Lead pipeline: értesítések érkeznek egymás után. */
+/** Beérkező kérelmek: értesítések érkeznek egymás után. */
 function LeadVisual() {
   const leads = [['KP', 'Kovács Péter', 'Sárvár · Aero 5,0 × 4,0 m', '5,6 M Ft'], ['NA', 'Nagy Anna', 'Győr · Glide 6,0 × 4,5 m', '7,2 M Ft'], ['SG', 'Szabó Gábor', 'Kőszeg · Velum 4,0 × 3,0 m', '3,9 M Ft']]
   return <div className="vl">{leads.map(([initials, name, detail, price], index) => <div className="vl-item" key={name} style={{ ['--i' as string]: index }}>
@@ -111,10 +99,10 @@ function MatrixVisual() {
 
 export default function BenefitCards() {
   return <div className="bx-grid">
-    <Card className="bx-price is-wide" index="01" icon={<Calculator size={14} />} title="Azonnali irányár" text="A vevő méretet, tetőt, oldalzárást és extrákat választ — az ár az Ön árazásával, nettó és bruttó, telepítéssel együtt, azonnal frissül."><PriceVisual /></Card>
-    <Card className="bx-qr" index="02" icon={<QrCode size={14} />} title="QR-kódos terv" text="Minden terv linken és QR-kódon él tovább: a vevő megosztja a családdal, Ön egy kattintással megnyitja."><QrVisual /></Card>
-    <Card className="bx-lead" index="03" icon={<Users size={14} />} title="Lead pipeline" text="A felmérési kérelem a teljes konfigurációval, PDF-fel és elérhetőséggel azonnal beérkezik — e-mailben és az adminban."><LeadVisual /></Card>
-    <Card className="bx-admin" index="04" icon={<LayoutDashboard size={14} />} title="Gyártói admin" text="Érdeklődők státusszal és belső megjegyzéssel, látogatói tölcsér, CSV export — asztalon és telefonon is."><AdminVisual /></Card>
-    <Card className="bx-matrix" index="05" icon={<Table2 size={14} />} title="Ármátrix" text="Tetőtípusonként méretpár → nettó ár, akár Excelből bemásolva. A köztes méreteket a rendszer interpolálja."><MatrixVisual /></Card>
+    <Card className="bx-price is-wide" index="01" icon={<Calculator size={14} />} title="Azonnali irányár" text="A vevő méretet, tetőt, oldalzárást és extrákat választ, az ár pedig azonnal frissül – az Ön árazásával, nettóban és bruttóban, telepítéssel együtt."><PriceVisual /></Card>
+    <Card className="bx-qr" index="02" icon={<QrCode size={14} />} title="QR-kódos terv" text="Minden terv saját linket és QR-kódot kap: a vevő megosztja a családdal, Ön pedig egy kattintással megnyitja."><QrVisual /></Card>
+    <Card className="bx-lead" index="03" icon={<Users size={14} />} title="Beérkező kérelmek" text="A felmérési kérelem a teljes konfigurációval, a PDF-összefoglalóval és az elérhetőségekkel azonnal megérkezik – e-mailben és az adminfelületen is."><LeadVisual /></Card>
+    <Card className="bx-admin" index="04" icon={<LayoutDashboard size={14} />} title="Gyártói admin" text="Érdeklődők státusszal és belső megjegyzéssel, látogatói tölcsér, CSV-export – számítógépen és telefonon is."><AdminVisual /></Card>
+    <Card className="bx-matrix" index="05" icon={<Table2 size={14} />} title="Ármátrix" text="Tetőtípusonként szélesség és mélység szerinti nettó árak, akár Excelből bemásolva. A köztes méretek árát a rendszer arányosan számolja."><MatrixVisual /></Card>
   </div>
 }
