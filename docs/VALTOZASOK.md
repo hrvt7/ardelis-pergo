@@ -619,3 +619,7 @@ működést, az eladhatóságot és a hibákat érintik.
 - A fa telefonon 512 px-es textúrás változatot használ (−1,9 MB), a megjelenés alig változik.
 - A deszka roughness-textúra újratömörítve (−0,24 MB, szabad szemmel nem látszik).
 - Maradék legnagyobb tétel: a ház (3,5 MB). 5–6 MB-hoz könnyített mobilház kellene.
+
+## 3.33 – Telefon fekvő (landscape) nézet
+- Fekvő telefonon (érintőképernyő, ≤ 520 px magas) a konfigurátor két oszlopos: balra a 3D jelenet (kameragombok oldalt), jobbra az állandóan nyitott vezérlősáv és alatta az ár/Összegzés. Korábban az alsó lap eltakarta a pergolát.
+- Álló telefonon egyszer megjelenik egy tipp a telefon elfordításáról. Az álló és az asztali elrendezés változatlan.

@@ -107,8 +107,22 @@ export default function PergoStudio() {
   const lastBuzz = useRef(0)
   const eveningShown = useRef(false)
   const sceneRef = useRef<SceneSettings>(DEFAULT_SCENE)
-  const [isNarrow, setIsNarrow] = useState(() => window.innerWidth <= 820)
-  useEffect(() => { const query = window.matchMedia('(max-width: 820px)'); const update = () => setIsNarrow(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update) }, [])
+  const LANDSCAPE_PHONE = '(orientation: landscape) and (max-height: 520px) and (pointer: coarse)'
+  const [isNarrow, setIsNarrow] = useState(() => window.matchMedia(`(max-width: 820px), ${LANDSCAPE_PHONE}`).matches)
+  useEffect(() => { const query = window.matchMedia(`(max-width: 820px), ${LANDSCAPE_PHONE}`); const update = () => setIsNarrow(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update) }, [])
+  // Telefon fekvő nézetben a vezérlők állandóan nyitott oldalsávban vannak (nincs alsó lap).
+  const [landscapePhone, setLandscapePhone] = useState(() => window.matchMedia(LANDSCAPE_PHONE).matches)
+  useEffect(() => { const query = window.matchMedia(LANDSCAPE_PHONE); const update = () => setLandscapePhone(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update) }, [])
+  const sheetView: SheetState = landscapePhone ? 'half' : sheet
+  // Álló telefonon egyszer jelezzük, hogy fekvő nézetben nagyobb a 3D kép és kényelmesebb a tervezés.
+  useEffect(() => {
+    try {
+      if (!window.matchMedia('(max-width: 600px) and (orientation: portrait) and (pointer: coarse)').matches || window.sessionStorage.getItem('lamelix-rotate-hint')) return
+      window.sessionStorage.setItem('lamelix-rotate-hint', '1')
+      const timer = window.setTimeout(() => setToast('Tipp: fordítsd el a telefont fekvőre – nagyobb a 3D kép, kényelmesebb a tervezés.'), 6000)
+      return () => window.clearTimeout(timer)
+    } catch { /* tárolás nélkül nincs tipp */ }
+  }, [])
   const [saved, setSaved] = useState<SavedConfiguration[]>(() => loadSaved(tenant))
   const history = useRef<{ past: PergolaConfig[]; future: PergolaConfig[] }>({ past: [], future: [] })
   const photoUrl = useRef<string | null>(null)
@@ -375,7 +389,7 @@ export default function PergoStudio() {
       <main className="studio-shell" id="top">
         <section className={`viewer-panel ${scene.photoMode ? 'photo-preview' : ''}`} aria-label="3D előnézet">
           {scene.photoMode && scene.photoUrl && <img className="photo-backdrop" src={scene.photoUrl} alt="A feltöltött teraszfotó háttere" />}
-          <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheet === 'half' && isNarrow ? 0.2 : 0} onSideSelect={handleSideSelect} onSceneChange={updateScene} onShade={setShade} />
+          <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={handleSideSelect} onSceneChange={updateScene} onShade={setShade} />
           <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1>{ROOF_LABELS[config.roof].split(' · ')[0]} <i>/</i> {config.width.toFixed(1).replace('.', ',')}<small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>
           <div className="viewer-live"><i />VALÓS IDEJŰ 3D</div>
           <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások"><button type="button" className={scene.rain ? 'selected' : ''} aria-pressed={scene.rain} title="Eső be- és kikapcsolása" onClick={() => updateScene({ rain: !scene.rain })}><CloudRain size={17} /><span>Eső</span></button><button type="button" className={scene.time === 'night' ? 'selected' : ''} title="Nappal és éjszaka váltása" onClick={() => { setMoodHidden(false); updateScene(scene.time === 'night' ? { time: 'day', dayTime: 13, sunStudy: false } : { time: 'night', dayTime: 22, sunStudy: false }) }}>{scene.time === 'night' ? <Sun size={17} /> : <Moon size={17} />}<span>{scene.time === 'night' ? 'Nappal' : 'Éjszaka'}</span></button><button type="button" className={scene.photoMode ? 'selected' : ''} aria-pressed={scene.photoMode} title={scene.photoUrl ? 'Pergola a saját fotódon' : 'Saját fotó feltöltése: helyezd a pergolát a teraszod képére'} onClick={() => { if (!scene.photoUrl) openPhotoPicker(); else updateScene({ photoMode: !scene.photoMode, sunStudy: false }) }}>{scene.photoUrl ? <Image size={17} /> : <ImagePlus size={17} />}<span>Fotó</span></button><button type="button" className={scene.sunStudy ? 'selected' : ''} aria-pressed={scene.sunStudy} title="Árnyékelemzés: valós napállás a saját helyszíneden" onClick={toggleSunStudy}><SunMedium size={17} /><span>Árnyék</span></button>{!arHidden && <button type="button" className="ar-launch" title={arPath === 'desktop' ? 'Nézd meg a kertedben valós méretben — telefonon (QR-kód)' : 'Nézd meg valós méretben a saját kertedben (AR)'} onClick={() => { if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') }}><Rotate3d size={17} /><span>AR</span></button>}</div>
@@ -398,7 +412,7 @@ export default function PergoStudio() {
           <div className="viewer-footer"><span>{scene.photoMode ? 'HELYI FOTÓS ELŐNÉZET' : '1 egység = 1 méter'}</span><span>{price.area.toFixed(1).replace('.', ',')} m²</span>{tenant.platformCredit !== false && <a className="platform-credit" href="/" target="_blank" rel="noopener" title="3D konfigurátor: Lamelix"><LamelixLogo variant="symbol" tone="onDark" height={11} title={null} />Lamelix</a>}</div>
         </section>
 
-        <ConfiguratorControls config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={goStep} onSideSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} onPhotoUpload={handlePhoto} sheet={sheet} onSheetChange={setSheet} onAdvisor={() => setModal('advisor')} energyCost={energyCost} onEnergy={() => setModal('energy')} />
+        <ConfiguratorControls config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={goStep} onSideSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} onPhotoUpload={handlePhoto} sheet={sheetView} onSheetChange={setSheet} onAdvisor={() => setModal('advisor')} energyCost={energyCost} onEnergy={() => setModal('energy')} />
         <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={admin ? () => setModal('prices') : undefined} onExport={handleExport} onShare={handleShare} onBudget={() => setModal('budget')} collapsed={priceCollapsed} onToggleCollapse={togglePrice} energyCost={energyCost} onEnergy={() => setModal('energy')} />
       </main>
 
