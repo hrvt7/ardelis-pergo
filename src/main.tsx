@@ -11,7 +11,7 @@ createRoot(document.getElementById('root')!).render(
     {import.meta.env.VITE_ROUTER === 'memory'
       // Előnézeti (artifact) build: az oldal nem a domain gyökerén fut, ezért belső útválasztás.
       // A kezdő nézet a ?route= paraméterrel választható (alapból a konfigurátor).
-      ? <MemoryRouter initialEntries={[`${new URLSearchParams(window.location.search).get('route') ?? '/studio/pergola'}${window.location.search}`]}><App /></MemoryRouter>
+      ? <MemoryRouter initialEntries={[`${new URLSearchParams(window.location.search).get('route') ?? '/konfigurator'}${window.location.search}`]}><App /></MemoryRouter>
       : <BrowserRouter><App /></BrowserRouter>}
   </StrictMode>,
 )

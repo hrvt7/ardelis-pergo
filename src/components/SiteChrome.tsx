@@ -12,12 +12,12 @@ export function Brand({ compact = false }: { compact?: boolean }) {
 export default function SiteHeader({ action }: { action?: ReactNode }) {
   const [open, setOpen] = useState(false)
   const location = useLocation()
-  const defaultAction = <Link className="header-studio-link" to="/studio/pergola">Tervezés indítása <ArrowUpRight size={15} /></Link>
+  const defaultAction = <Link className="header-studio-link" to="/konfigurator">Tervezés indítása <ArrowUpRight size={15} /></Link>
   return <header className="site-header">
     <Brand />
     <button className="site-menu-toggle" type="button" aria-label={open ? 'Menü bezárása' : 'Menü megnyitása'} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
     <nav className={open ? 'is-open' : ''} aria-label="Fő navigáció" onClick={() => setOpen(false)}>
-      <NavLink to="/studio/pergola">3D stúdió</NavLink>
+      <NavLink to="/konfigurator">3D stúdió</NavLink>
       {location.pathname === '/minta' ? <a href="#folyamat">Folyamat</a> : <Link to="/minta#folyamat">Folyamat</Link>}
       <div className="site-mobile-action">{action ?? defaultAction}</div>
     </nav>
@@ -26,5 +26,5 @@ export default function SiteHeader({ action }: { action?: ReactNode }) {
 }
 
 export function SiteFooter() {
-  return <footer className="site-footer"><Brand compact /><p>Paraméteres pergolatervezés, valós idejű vizualizáció és műszaki összefoglaló.</p><div><Link to="/studio/pergola">3D stúdió</Link></div><small>© {new Date().getFullYear()} Lamelix · Az irányárak nem minősülnek ajánlattételnek.</small></footer>
+  return <footer className="site-footer"><Brand compact /><p>Paraméteres pergolatervezés, valós idejű vizualizáció és műszaki összefoglaló.</p><div><Link to="/konfigurator">3D stúdió</Link></div><small>© {new Date().getFullYear()} Lamelix · Az irányárak nem minősülnek ajánlattételnek.</small></footer>
 }

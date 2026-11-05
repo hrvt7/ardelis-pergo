@@ -12,7 +12,9 @@ export default function App() {
     {/* A demó gyártó (Lamelix) lakossági mintaoldala */}
     <Route path="/minta" element={<Suspense fallback={null}><Home /></Suspense>} />
     <Route path="/ardelis" element={<Navigate to="/minta" replace />} />
-    <Route path="/studio/pergola" element={<TenantStudio mode="demo" />} />
+    <Route path="/konfigurator" element={<TenantStudio mode="demo" />} />
+    <Route path="/studio/pergola" element={<Navigate to="/konfigurator" replace />} />
+    <Route path="/k/demo" element={<Navigate to="/konfigurator" replace />} />
     <Route path="/k/:tenantId/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
     <Route path="/k/:tenantId" element={<TenantStudio mode="standalone" />} />
     <Route path="/embed/:tenantId" element={<TenantStudio mode="embed" />} />

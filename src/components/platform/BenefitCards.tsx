@@ -47,7 +47,7 @@ function QrVisual() {
   const [svg, setSvg] = useState('')
   useEffect(() => {
     let alive = true
-    const url = `${window.location.origin}/k/demo`
+    const url = `${window.location.origin}/konfigurator`
     void import('qrcode').then(({ toString }) => toString(url, { type: 'svg', margin: 0, errorCorrectionLevel: 'M', color: { dark: '#0B1210', light: '#00000000' } })).then((markup) => { if (alive) setSvg(markup) }).catch(() => undefined)
     return () => { alive = false }
   }, [])

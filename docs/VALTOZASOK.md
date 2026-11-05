@@ -589,3 +589,7 @@ működést, az eladhatóságot és a hibákat érintik.
 - White-label: a gyártói felületeken a gyártó márkája marad elsődleges; diszkrét „Lamelix” jelzés a konfigurátor 3D nézetében, a PDF láblécén és a gyártónak küldött lead e-mailben. `tenant.platformCredit = false` kikapcsolja (Partnerhálózat csomag). Ha a gyártónak van `logoUrl`-je, a konfigurátor fülén az ő ikonja látszik.
 - Logófájlok: `public/brand/` (SVG mesterfájlok, e-mailes PNG-k); kódban `LamelixLogo` komponens és `lamelixBrand.ts`.
 - Előnyök: öt élő kártya animált mini-termékrészlettel (csúszka + irányár, valódi QR-kód, beérkező leadek, admin-grafikon, ármátrix interpolációval), forgó fénykeret; csak látható állapotban animál, mozgáscsökkentésnél állókép.
+
+## 3.28 – Rövid demó-link
+- Az élő demó új címe: `/konfigurator` (korábban `/k/demo`, `/studio/pergola`). A régi címek átirányítanak, így a kiküldött linkek és QR-kódok tovább működnek.
+- Frissítve: B2B oldal gombjai, QR-kód a funkciókártyán, mintaoldal linkjei, llms.txt.

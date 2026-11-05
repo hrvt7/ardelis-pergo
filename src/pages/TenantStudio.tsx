@@ -42,7 +42,7 @@ function useEffectiveTenant(base: Tenant | undefined): Tenant | undefined | null
 
 /**
  * Egy gyártó konfigurátora.
- * - /studio/pergola        → bemutató (demo) gyártó, a saját nyitóoldaladdal
+ * - /konfigurator           → bemutató (demo) gyártó, a saját nyitóoldaladdal
  * - /k/:tenantId           → önálló oldal egy gyártónak (hirdetésekbe, e-mailbe)
  * - /embed/:tenantId       → a gyártó weboldalába ágyazható változat (iframe)
  * Bármelyikhez ?admin=1 → árszerkesztő gomb (csak helyi kipróbáláshoz).
