@@ -612,3 +612,10 @@ működést, az eladhatóságot és a hibákat érintik.
 
 ## 3.31 – Robbantott nézet
 - Új „Robbantott nézet” kapcsoló (Beállítások → jelenet): a tetőlamellák, gerendák, vízelvezetés felfelé, az oldalfalak kifelé animáltan szétválnak, feliratokkal (Oszlopok, Gerendák, Vízelvezetés, Tető). Csak látvány: méret, ár és konfiguráció nem változik. Csökkentett mozgásnál azonnal vált.
+
+## 3.32 – Mobil betöltés csökkentése
+- Mért első betöltés telefonon (iPhone 13 emuláció, valós hálózati méret): **10,85 MB → ~8,3 MB**.
+- Telefonon a másik két égbolt-HDR (nappal/aranyóra/éjszaka) csak váltáskor töltődik (−0,65 MB).
+- A fa telefonon 512 px-es textúrás változatot használ (−1,9 MB), a megjelenés alig változik.
+- A deszka roughness-textúra újratömörítve (−0,24 MB, szabad szemmel nem látszik).
+- Maradék legnagyobb tétel: a ház (3,5 MB). 5–6 MB-hoz könnyített mobilház kellene.

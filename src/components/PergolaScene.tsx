@@ -876,7 +876,10 @@ function getHouseAsset() {
   return houseAssetPromise
 }
 
-const DECOR_MODELS = ['tree_small_02/optimized.gltf', 'shrub_04/model.gltf', 'potted_plant_02/model.gltf', 'modern_coffee_table_01/model.gltf'].map((path) => assetUrl(`/assets/models/${path}`))
+/** Telefonon a fa 512 px-es textúrákkal töltődik (kb. 2,2 MB → 0,3 MB), a megjelenés alig változik. */
+const MOBILE_VIEW = typeof window !== 'undefined' && window.innerWidth < 760
+const TREE_MODEL = assetUrl(`/assets/models/tree_small_02/${MOBILE_VIEW ? 'optimized-512' : 'optimized'}.gltf`)
+const DECOR_MODELS = [TREE_MODEL, ...['shrub_04/model.gltf', 'potted_plant_02/model.gltf', 'modern_coffee_table_01/model.gltf'].map((path) => assetUrl(`/assets/models/${path}`))]
 let prefetchedHdr = ''
 /**
  * Előtöltés: amíg a böngésző az első képkockát (shadereket) készíti, a háttér
@@ -895,7 +898,8 @@ function prefetchSceneAssets(scene: SceneSettings) {
     // A másik két napszak HDR-je tétlen időben töltődik, így a nappal/éjszaka váltás nem vár hálózatra.
     const others = Object.values(HDR_FILES).map(pick).filter((file) => file !== hdr)
     const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 2500))
-    idle(() => { try { others.forEach((file) => useEnvironment.preload({ files: file })) } catch { /* nem kritikus */ } }, { timeout: 6000 })
+    // Telefonon a másik két égbolt csak váltáskor töltődik (kb. 0,65 MB megtakarítás).
+    if (!small) idle(() => { try { others.forEach((file) => useEnvironment.preload({ files: file })) } catch { /* nem kritikus */ } }, { timeout: 6000 })
     useTexture.preload((['diff', 'nor_gl', 'rough'] as const).map((map) => assetUrl(pbrPath('oak_wood_planks', map))))
     DECOR_MODELS.forEach((url) => useGLTF.preload(url))
   } catch (error) {
@@ -1332,7 +1336,7 @@ function Tree({ position, scale = 1, wind, bare = false }: { position: [number, 
   const lastUpdate = useRef(0)
   const invalidate = useThree((state) => state.invalidate)
   useFrame(({ clock }) => { if (group.current) { group.current.rotation.z = wind ? Math.sin(clock.elapsedTime * 0.65 + position[0]) * 0.004 : 0; if (wind && clock.elapsedTime - lastUpdate.current >= 1 / 30) { lastUpdate.current = clock.elapsedTime; invalidate() } } })
-  return <group ref={group}><RealisticAsset url={assetUrl('/assets/models/tree_small_02/optimized.gltf')} position={position} height={4.8 * scale} rotation={position[0] * 0.43} shadows={false} bare={bare} /></group>
+  return <group ref={group}><RealisticAsset url={TREE_MODEL} position={position} height={4.8 * scale} rotation={position[0] * 0.43} shadows={false} bare={bare} /></group>
 }
 
 function Garden({ config, scene, quality }: { config: PergolaConfig; scene: SceneSettings; quality: QualitySettings }) {
