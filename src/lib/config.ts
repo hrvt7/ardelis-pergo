@@ -19,6 +19,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   wind: false,
   showPerson: false,
   showHotspots: false,
+  exploded: false,
   glassOpen: false,
   wallLouverOpen: false,
   quality: 'auto',

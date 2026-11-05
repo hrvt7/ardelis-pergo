@@ -2063,3 +2063,7 @@ button.tr.is-open{background:rgba(216,255,114,.07);box-shadow:inset 0 0 0 1px rg
 .site-brand.compact svg { height: 24px; }
 .loader-brand svg { display: block; margin: 0 auto; width: auto; height: 30px; }
 @media (max-width: 620px) { .brand svg.tenant-mark-lamelix { height: 22px; } }
+
+.explode-label { display: inline-block; padding: 4px 10px; border-radius: 999px; background: rgba(11,18,16,.82); color: #D8FF72; font: 600 12px/1.2 system-ui, sans-serif; letter-spacing: .02em; white-space: nowrap; border: 1px solid rgba(216,255,114,.35); backdrop-filter: blur(4px); animation: explode-in .5s ease both; }
+@keyframes explode-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .explode-label { animation: none; } }

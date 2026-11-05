@@ -786,6 +786,13 @@ function LedLighting({ width, depth, height, night, kelvin, level, rgb = null }:
   </group>
 }
 
+/** Robbantott nézet: az alkatrész a közös `ex` (0–1) értékkel arányosan elmozdul; a címke csak szétszedve látszik. */
+function ExplodePart({ ex, dx = 0, dy = 0, dz = 0, label, labelAt, show = false, children }: { ex: { current: number }; dx?: number; dy?: number; dz?: number; label?: string; labelAt?: [number, number, number]; show?: boolean; children: ReactNode }) {
+  const ref = useRef<THREE.Group>(null)
+  useFrame(() => { if (ref.current) { const e = ex.current * ex.current * (3 - 2 * ex.current); ref.current.position.set(dx * e, dy * e, dz * e) } })
+  return <group ref={ref}>{children}{label && show && <Html center position={labelAt ?? [0, dy > 0 ? 0.35 : 0.1, 0]} zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">{label}</span></Html>}</group>
+}
+
 function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
   const { width, depth, height, roof, mount } = config
   const { tenant } = useTenant()
@@ -809,19 +816,25 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
   const openness = effectiveAngle / 90
   const fixedSeamCount = Math.max(2, Math.floor(depth / 0.65))
   const introStart = useRef(0)
+  const ex = useRef(scene.exploded && REDUCED ? 1 : 0)
   useFrame(({ clock }, delta) => {
     if (!introStart.current) introStart.current = clock.elapsedTime
+    const target = scene.exploded ? 1 : 0
+    if (Math.abs(ex.current - target) > 0.0005) { ex.current = REDUCED ? target : THREE.MathUtils.damp(ex.current, target, 4.5, delta); if (Math.abs(ex.current - target) < 0.0005) ex.current = target; refreshShadows(gl); invalidate() }
     if (model.current) {
       model.current.scale.y = REDUCED ? 1 : THREE.MathUtils.damp(model.current.scale.y, 1, 6, delta)
       if (Math.abs(model.current.scale.y - 1) > 0.001) { refreshShadows(gl); invalidate() }
     }
   })
   const night = scene.time === 'night'
-  return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={height} color={color} />)}<StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[width / 2, height, 0]} color={color} />
+  const x = scene.exploded
+  return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={height} color={color} />)}{x && postPositions[0] && <Html position={[postPositions[0][0], height / 2, postPositions[0][1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">Oszlopok</span></Html>}<ExplodePart ex={ex} dy={0.55} label="Gerendák" labelAt={[width / 2 - 0.2, height + 0.3, depth / 2]} show={x}><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[width / 2, height, 0]} color={color} /></ExplodePart>
+    <ExplodePart ex={ex} dy={1.0} label="Vízelvezetés" labelAt={[-width / 2 + 0.4, height + 0.3, depth / 2]} show={x}>
     <GutterChannel length={width - 0.18} position={[0, height + 0.04, depth / 2 - 0.105]} color={color} />
     <GutterChannel length={width - 0.18} position={[0, height + 0.04, -depth / 2 + 0.105]} color={color} />
     <GutterChannel length={depth - 0.2} position={[-width / 2 + 0.105, height + 0.04, 0]} rotation={Math.PI / 2} color={color} />
     <GutterChannel length={depth - 0.2} position={[width / 2 - 0.105, height + 0.04, 0]} rotation={Math.PI / 2} color={color} />
+    </ExplodePart>
     {hasBackWall(mount) && <WallAttachment config={config} color={color} />}
     {sideWallList.map((side) => <SideWallAttachment key={side} config={config} side={side} color={color} />)}
     {!drainPost && <group name="wall-downpipe" position={[width / 2 + 0.05, 0, depth / 2 - 0.06]}><mesh position={[0, height / 2 + 0.05, 0]} castShadow><cylinderGeometry args={[0.04, 0.04, height + 0.1, 18]} /><PowderCoat color={color} /></mesh><mesh position={[-0.02, 0.06, 0.04]} rotation={[0.9, 0, 0]}><cylinderGeometry args={[0.04, 0.04, 0.14, 18]} /><PowderCoat color={color} /></mesh></group>}
@@ -829,13 +842,15 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     {drainPost && <mesh position={[drainPost[0], 0.14, drainPost[1] + 0.095]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.08, 0.025, 8, 20, Math.PI / 2]} /><PowderCoat color={color} /></mesh>}
     <RoundedBox args={[0.28, 0.19, 0.34]} position={[width / 2 - 0.02, height + 0.12, depth / 2 - 0.25]} radius={0.035} smoothness={4} castShadow><PowderCoat color={color} /></RoundedBox>
     <group position={[-width / 2 + 0.2, height + 0.32, -depth / 2 + 0.2]}><mesh><cylinderGeometry args={[0.045, 0.055, 0.12, 16]} /><meshStandardMaterial color="#31383a" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, 0.075, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.034, 16]} /><meshPhysicalMaterial color="#8aa0a4" roughness={0.1} clearcoat={1} /></mesh></group>
+    <ExplodePart ex={ex} dy={1.6} label={roof === 'fabric' ? 'Textiltető' : isGlazedRoof(roof) ? 'Üvegtető' : roof === 'fixed' ? 'Fix tető' : 'Tetőlamellák'} labelAt={[0, height + 0.5, -depth / 4]} show={x}>
     {(roof === 'louvered' || roof === 'retractable') && <LouverBlades key={louverCount} geometry={geometry} width={width} depth={depth} height={height} count={louverCount} retractable={roof === 'retractable'} angle={effectiveAngle} color={roofColor} />}
     {roof === 'fixed' && <group><mesh position={[0, height + 0.14, 0]} castShadow receiveShadow><boxGeometry args={[width - 0.12, 0.09, depth - 0.12]} /><PowderCoat color={roofColor} /></mesh>{Array.from({ length: fixedSeamCount }, (_, index) => { const z = -depth / 2 + (index + 1) * depth / (fixedSeamCount + 1); return <Beam key={index} args={[width - 0.16, 0.018, 0.025]} position={[0, height + 0.192, z]} color={roofColor} radius={0.003} /> })}</group>}
     {isGlazedRoof(roof) && <GlazedRoof width={width} depth={depth} height={height} color={roofColor} kind={roof === 'glass' ? 'glass' : 'polycarbonate'} />}
     {isGlazedRoof(roof) && config.roofShade && <RoofShadeModel width={width} depth={depth} height={height} kind={config.roofShade} fabric={findShadeFabric(config.shadeFabric).hex} color={color} out={scene.shadeOut} night={night} onToggle={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })} />}
     {roof === 'fabric' && <FabricRoof width={width} depth={depth} height={height} color={roofColor} openness={openness} />}
     {roof === 'fixed' && config.solar && <SolarPanels config={config} />}
-    {(() => { const labelled = new Set<string>(); return (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <SidePlacement key={side} side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} labelled={labelled} />) })()}
+    </ExplodePart>
+    {(() => { const labelled = new Set<string>(); return (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <ExplodePart key={side} ex={ex} dx={side === 'left' ? -1.1 : side === 'right' ? 1.1 : 0} dz={side === 'front' ? 1.1 : side === 'back' ? -1.1 : 0}><SidePlacement side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} labelled={labelled} /></ExplodePart>) })()}
     {config.led && <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={scene.ledLevel / 100} rgb={config.ledRgb ? scene.ledColor : null} />}
     {(config.fans ?? 0) > 0 && <CeilingFans config={config} color={color} spinning={scene.fanOn} />}
     {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <group key={index} position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={scene.heatersOn ? (night ? 3 : 0.15) : 0} toneMapped={false} /></mesh>{night && <pointLight position={[0, -0.25, 0.25]} color="#ff8a4a" intensity={scene.heatersOn ? 3.2 : 0} distance={3.2} decay={2} />}</group> })}

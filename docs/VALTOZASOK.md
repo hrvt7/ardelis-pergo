@@ -609,3 +609,6 @@ működést, az eladhatóságot és a hibákat érintik.
 - Demó admin: az alapértelmezett (`1111`) jelszóval a demó beállításai nem menthetők, így a nyilvános demót nem lehet átírni; `ADMIN_PASSWORD_DEMO` beállításakor újra menthető.
 - Admin mentés: a törzsméret-korlát Content-Length nélkül is érvényesül.
 - Függőségek: zod 4.6.7 (DoS javítás), lodash 4.18.1, használatlan `@hono/node-server` eltávolítva; `npm audit --omit=dev`: 0 sérülékenység.
+
+## 3.31 – Robbantott nézet
+- Új „Robbantott nézet” kapcsoló (Beállítások → jelenet): a tetőlamellák, gerendák, vízelvezetés felfelé, az oldalfalak kifelé animáltan szétválnak, feliratokkal (Oszlopok, Gerendák, Vízelvezetés, Tető). Csak látvány: méret, ár és konfiguráció nem változik. Csökkentett mozgásnál azonnal vált.

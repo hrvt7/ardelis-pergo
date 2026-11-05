@@ -401,6 +401,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               <Toggle label="180 cm-es figura" description="A méretek szemléltetéséhez" checked={scene.showPerson} onChange={(showPerson) => onSceneChange({ showPerson })} />
               <Toggle label="Méretcímkék" description="Aktuális méretek centiméterben" checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
               <Toggle label="Műszaki jelölések" description="Részletek a 3D modellen" checked={scene.showHotspots} onChange={(showHotspots) => onSceneChange({ showHotspots })} />
+              <Toggle label="Robbantott nézet" description="A szerkezet elemei szétválasztva" checked={scene.exploded} onChange={(exploded) => onSceneChange({ exploded })} />
               <Toggle label="Automata forgatás" description="Koppintásra megáll" checked={scene.autoRotate} onChange={(autoRotate) => onSceneChange({ autoRotate })} />
               <Toggle label="Követő kamera" description="A választáshoz fordul (oldal, szín, ventilátor)" checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
             </div>

@@ -56,6 +56,8 @@ export interface SceneSettings {
   wind: boolean
   showPerson: boolean
   showHotspots: boolean
+  /** Robbantott nézet: a szerkezeti elemek szétválnak (csak látvány). */
+  exploded: boolean
   glassOpen: boolean
   wallLouverOpen: boolean
   quality: QualityLevel
