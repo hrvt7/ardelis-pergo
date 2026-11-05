@@ -55,7 +55,7 @@ export default function TenantStudio({ mode }: { mode: 'demo' | 'standalone' | '
   if (!base) return <NotFound />
   if (!tenant) return <PageLoading />
   const embed = mode === 'embed'
-  const homeHref = embed ? null : tenant.demo ? '/ardelis' : tenant.brand.website ?? null
+  const homeHref = embed ? null : tenant.demo ? '/minta' : tenant.brand.website ?? null
   return (
     <TenantProvider key={tenant.id} tenant={tenant} admin={search.get('admin') === '1'} embed={embed} homeHref={homeHref}>
       <Suspense fallback={<PageLoading />}><PergoStudio /></Suspense>

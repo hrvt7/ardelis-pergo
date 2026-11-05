@@ -46,10 +46,10 @@ const SEO_PAGES: Record<string, SeoPage> = {
     robots: INDEX_ROBOTS,
     indexable: true,
   },
-  '/ardelis': {
+  '/minta': {
     key: 'home',
-    path: '/ardelis',
-    title: 'Bioklimatikus pergola 3D tervezése | ARDELIS PERGO',
+    path: '/minta',
+    title: 'Bioklimatikus pergola 3D tervezése | Lamelix',
     description: 'Tervezd meg bioklimatikus pergoládat valós idejű 3D-ben: méret, tetőrendszer, oldalzárás és világítás, azonnali irányárral és felmérési kérelemmel.',
     robots: INDEX_ROBOTS,
     indexable: true,
@@ -57,7 +57,7 @@ const SEO_PAGES: Record<string, SeoPage> = {
   '/studio/pergola': {
     key: 'studio',
     path: '/studio/pergola',
-    title: '3D pergolatervező és árkalkulátor | ARDELIS PERGO',
+    title: '3D pergolatervező és árkalkulátor | Lamelix',
     description: 'Online 3D pergolatervező valós méretekkel, motoros lamellákkal, oldalzárással és kiegészítőkkel. Azonnali irányár, PDF és felmérési kérelem.',
     robots: INDEX_ROBOTS,
     indexable: true,
@@ -65,7 +65,7 @@ const SEO_PAGES: Record<string, SeoPage> = {
   '/keresett': {
     key: 'track',
     path: '/keresett',
-    title: 'Felmérési kérelem követése | ARDELIS',
+    title: 'Felmérési kérelem követése | Lamelix',
     description: 'Felmérési kérelem állapotának biztonságos lekérdezése projektazonosítóval és e-mail-címmel.',
     robots: PRIVATE_ROBOTS,
     indexable: false,
@@ -73,30 +73,30 @@ const SEO_PAGES: Record<string, SeoPage> = {
   '/partnerek': {
     key: 'partners',
     path: '/partnerek',
-    title: 'Partneri munkatér | ARDELIS Atelier',
-    description: 'Jogosultsághoz kötött ARDELIS partneri munkatér.',
+    title: 'Partneri munkatér | Lamelix',
+    description: 'Jogosultsághoz kötött Lamelix partneri munkatér.',
     robots: PRIVATE_ROBOTS,
     indexable: false,
   },
   '/admin': {
     key: 'admin',
     path: '/admin',
-    title: 'Adminisztráció | ARDELIS Atelier',
-    description: 'Jogosultsághoz kötött ARDELIS adminisztrációs felület.',
+    title: 'Adminisztráció | Lamelix',
+    description: 'Jogosultsághoz kötött Lamelix adminisztrációs felület.',
     robots: PRIVATE_ROBOTS,
     indexable: false,
   },
   '/login': {
     key: 'login',
     path: '/login',
-    title: 'Partneri belépés | ARDELIS Atelier',
-    description: 'Biztonságos belépés az ARDELIS partneri felületre.',
+    title: 'Partneri belépés | Lamelix',
+    description: 'Biztonságos belépés az Lamelix partneri felületre.',
     robots: PRIVATE_ROBOTS,
     indexable: false,
   },
 }
 
-export const SEO_SITEMAP_PATHS = ['/', '/ardelis', '/studio/pergola'] as const
+export const SEO_SITEMAP_PATHS = ['/', '/minta', '/studio/pergola'] as const
 
 export function normalizeSeoPath(pathname: string) {
   if (!pathname || pathname === '/') return '/'
@@ -108,8 +108,8 @@ export function getSeoPage(pathname: string): SeoPage {
   return SEO_PAGES[normalized] ?? {
     key: 'notFound',
     path: normalized,
-    title: 'A keresett oldal nem található | ARDELIS',
-    description: 'A keresett oldal nem érhető el. Térj vissza az ARDELIS PERGO nyitóoldalára vagy indítsd el a 3D pergolatervezőt.',
+    title: 'A keresett oldal nem található | Lamelix',
+    description: 'A keresett oldal nem érhető el. Térj vissza az Lamelix nyitóoldalára vagy indítsd el a 3D pergolatervezőt.',
     robots: 'noindex,follow',
     indexable: false,
   }
@@ -122,7 +122,7 @@ export function buildStructuredData(pathname: string, origin: string) {
   const organization = {
     '@type': 'Organization',
     '@id': organizationId,
-    name: 'ARDELIS Atelier',
+    name: 'Lamelix',
     url: `${origin}/`,
     brand: { '@type': 'Brand', name: 'PERGO' },
     areaServed: { '@type': 'Country', name: 'Magyarország' },
@@ -130,7 +130,7 @@ export function buildStructuredData(pathname: string, origin: string) {
   const website = {
     '@type': 'WebSite',
     '@id': websiteId,
-    name: 'ARDELIS Atelier / PERGO',
+    name: 'Lamelix',
     url: `${origin}/`,
     inLanguage: 'hu-HU',
     publisher: { '@id': organizationId },
@@ -160,17 +160,17 @@ export function buildStructuredData(pathname: string, origin: string) {
       website,
       {
         '@type': 'Service',
-        '@id': `${origin}/ardelis#pergola-service`,
+        '@id': `${origin}/minta#pergola-service`,
         name: 'Bioklimatikus pergola tervezése és helyszíni felmérése',
         serviceType: 'Bioklimatikus pergola tervezése',
         description: 'Paraméteres pergolatervezés valós idejű 3D előnézettel, tájékoztató árkalkulációval és helyszíni felmérési kérelemmel.',
         provider: { '@id': organizationId },
         areaServed: { '@type': 'Country', name: 'Magyarország' },
-        url: `${origin}/ardelis`,
+        url: `${origin}/minta`,
       },
       {
         '@type': 'FAQPage',
-        '@id': `${origin}/ardelis#gyik`,
+        '@id': `${origin}/minta#gyik`,
         inLanguage: 'hu-HU',
         mainEntity: PERGOLA_FAQS.map((item) => ({
           '@type': 'Question',
@@ -206,7 +206,7 @@ export function buildStructuredData(pathname: string, origin: string) {
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'ARDELIS PERGO', item: `${origin}/ardelis` },
+          { '@type': 'ListItem', position: 1, name: 'Lamelix', item: `${origin}/minta` },
           { '@type': 'ListItem', position: 2, name: '3D pergolatervező', item: `${origin}/studio/pergola` },
         ],
       },

@@ -1,5 +1,6 @@
 import type { TDocumentDefinitions, TableCell } from 'pdfmake/interfaces'
 import { FAMILY_META, LABELS, outdoorSpecCode } from '@/lib/catalog'
+import { lamelixSvg } from '@/lib/lamelixBrand'
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import type { OutdoorConfig } from '@/types/catalog'
 import type { PriceBreakdown } from '@/types/pergola'
@@ -23,7 +24,7 @@ export async function exportCatalogPdf(config: OutdoorConfig, price: PriceBreakd
   ]
   const body: TableCell[][] = [[{ text: 'Tétel', style: 'tableHeader' }, { text: 'Nettó', style: 'tableHeader', alignment: 'right' }], ...price.lines.map((line) => [{ text: line.label, style: 'tableCell' }, { text: formatHuf(line.amountNet), alignment: 'right' as const, style: 'tableCell' }]), [{ text: 'Telepítési mintatétel' }, { text: formatHuf(price.installationNet), alignment: 'right' }]]
   const content: TDocumentDefinitions['content'] = [
-    { text: `ARDELIS / ${FAMILY_META[config.family].name.toUpperCase()}`, style: 'brand' },
+    { columns: [{ svg: lamelixSvg('horizontal', 'onLight'), width: 104 }, { text: FAMILY_META[config.family].name.toUpperCase(), style: 'brandFamily', alignment: 'right' }], columnGap: 12 },
     { text: `${FAMILY_META[config.family].title} · műszaki és árösszefoglaló`, style: 'title' },
     { text: outdoorSpecCode(config), style: 'subtitle' },
   ]
@@ -39,8 +40,8 @@ export async function exportCatalogPdf(config: OutdoorConfig, price: PriceBreakd
   )
   const definition: TDocumentDefinitions = {
     pageSize: 'A4', pageMargins: [42, 42, 42, 42], defaultStyle: { font: 'Roboto', fontSize: 10, color: '#25302c' }, content,
-    styles: { brand: { fontSize: 15, bold: true, characterSpacing: 1 }, title: { fontSize: 23, bold: true, margin: [0, 20, 0, 4] }, subtitle: { fontSize: 10, color: '#64706c' }, sectionTitle: { fontSize: 14, bold: true, margin: [0, 20, 0, 10] }, tableHeader: { bold: true, color: '#ffffff' }, tableCell: { fontSize: 9, margin: [0, 5, 0, 5] }, total: { fontSize: 12, bold: true, margin: [0, 18, 0, 0] }, disclaimer: { fontSize: 8.5, color: '#64706c' } },
+    styles: { brandFamily: { fontSize: 11, bold: true, characterSpacing: 1.4, color: '#64706c', margin: [0, 6, 0, 0] }, title: { fontSize: 23, bold: true, margin: [0, 20, 0, 4] }, subtitle: { fontSize: 10, color: '#64706c' }, sectionTitle: { fontSize: 14, bold: true, margin: [0, 20, 0, 10] }, tableHeader: { bold: true, color: '#ffffff' }, tableCell: { fontSize: 9, margin: [0, 5, 0, 5] }, total: { fontSize: 12, bold: true, margin: [0, 18, 0, 0] }, disclaimer: { fontSize: 8.5, color: '#64706c' } },
   }
   const url = URL.createObjectURL(await pdfMake.createPdf(definition).getBlob())
-  const link = document.createElement('a'); link.href = url; link.download = `ARDELIS-${FAMILY_META[config.family].name}-${outdoorSpecCode(config)}.pdf`; document.body.appendChild(link); link.click(); link.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  const link = document.createElement('a'); link.href = url; link.download = `Lamelix-${FAMILY_META[config.family].name}-${outdoorSpecCode(config)}.pdf`; document.body.appendChild(link); link.click(); link.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }

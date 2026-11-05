@@ -145,7 +145,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     // Kapcsolat a borítón: itt van hely, és az első oldalon a legfontosabb.
     {
       columns: [
-        { width: 'auto', stack: [eyebrow('Kapcsolat', ACCENT), { text: brandLine, font: 'ManropeHeavy', fontSize: 11, color: INK, margin: [0, 3, 0, 0] }] },
+        { width: 'auto', stack: [eyebrow('Kapcsolat', ACCENT), tenant.demo ? { svg: lamelixSvg('horizontal', 'onLight'), width: 86, margin: [0, 5, 0, 0] } : { text: brandLine, font: 'ManropeHeavy', fontSize: 11, color: INK, margin: [0, 3, 0, 0] }] },
         { width: '*', stack: [{ text: tenant.demo ? 'Bemutató konfiguráció — a gyártó adatai éles használatban itt jelennek meg.' : contact, fontSize: 8, color: BODY, lineHeight: 1.35 }, { text: `Hivatkozz erre a kódra: ${code}`, font: 'ManropeSemi', fontSize: 7.5, color: MUTED, margin: [0, 3, 0, 0] }], margin: [0, 1, 0, 0] },
       ],
       columnGap: 18,
@@ -314,7 +314,9 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     header: (page: number, _pages: number, size: { orientation?: string }) => size.orientation === 'landscape' ? null : ({
       margin: [40, 20, 40, 0],
       columns: [
-        { text: [{ text: brand.toUpperCase(), font: 'ManropeHeavy', characterSpacing: 1.6 }, { text: tenant.brand.suffix ? `  ${tenant.brand.suffix}` : '', color: MUTED }], fontSize: 9, color: INK },
+        tenant.demo
+          ? { svg: lamelixSvg('horizontal', 'onLight'), width: 74 }
+          : { text: [{ text: brand.toUpperCase(), font: 'ManropeHeavy', characterSpacing: 1.6 }, { text: tenant.brand.suffix ? `  ${tenant.brand.suffix}` : '', color: MUTED }], fontSize: 9, color: INK },
         { text: page === 1 ? 'KONFIGURÁCIÓS ÖSSZEFOGLALÓ' : `${roofName.toUpperCase()} · ${m2(config.width)} × ${m2(config.depth)} M`, font: 'ManropeSemi', fontSize: 7, characterSpacing: 1.2, color: MUTED, alignment: 'right', margin: [0, 1.5, 0, 0] },
       ],
     }),

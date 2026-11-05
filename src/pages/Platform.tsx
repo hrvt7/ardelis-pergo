@@ -359,7 +359,7 @@ export default function Platform() {
     <footer className="pf-footer">
       <a className="pf-brand" href="#top" aria-label="Lamelix – az oldal teteje"><LamelixLogo className="pf-logo" height={28} title={null} /></a>
       <p>Saját márkás 3D konfigurátor és ajánlatkérő rendszer pergola- és árnyékolástechnikai gyártóknak.</p>
-      <nav aria-label="Lábléc"><Link to={DEMO_PATH}>Élő demó</Link><Link to="/ardelis">Mintaoldal (ARDELIS)</Link><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></nav>
+      <nav aria-label="Lábléc"><Link to={DEMO_PATH}>Élő demó</Link><Link to="/minta">Mintaoldal</Link><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></nav>
       <small>© {new Date().getFullYear()} Lamelix</small>
     </footer>
   </div>

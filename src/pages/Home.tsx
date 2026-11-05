@@ -83,7 +83,7 @@ function Blueprint() {
 const MARQUEE = ['Bioklimatikus lamella', 'Üvegtető', 'Motoros árnyékoló', 'ZIP screen', 'Tolóüveg', 'Periméter LED', 'Infra fűtés', 'Napelem', 'Okosotthon', 'Szenzorok']
 
 export default function Home() {
-  usePageSeo('/ardelis')
+  usePageSeo('/minta')
   const root = useRef<HTMLDivElement>(null)
   const film = useRef<HTMLElement>(null)
   const filmStage = useRef<HTMLDivElement>(null)
@@ -333,7 +333,7 @@ export default function Home() {
       <section className="cinema-hero" aria-labelledby="home-title">
         <div className="hero-ghost" aria-hidden="true">PERGO</div>
         <div className="cinema-hero-copy">
-          <div className="cinema-overline hero-intro-item"><span>ARDELIS ATELIER</span><i />BIOKLIMATIKUS PERGOLA</div>
+          <div className="cinema-overline hero-intro-item"><span>LAMELIX</span><i />BIOKLIMATIKUS PERGOLA</div>
           <h1 id="home-title" aria-label="A teraszod. Újragondolva."><SplitLine>A teraszod.</SplitLine><SplitLine italic>Újragondolva.</SplitLine></h1>
           <p className="hero-intro-item">Tervezd meg a pergolát a saját teraszod méreteire, a saját házad színei elé. Tetőrendszer, oldalzárás, árnyékolás és fény — valós idejű 3D-ben, azonnali irányárral.</p>
           <div className="cinema-hero-actions hero-intro-item"><OvalLink to="/studio/pergola">Saját pergola tervezése</OvalLink><a className="cinema-text-link" href="#elmeny">Fedezd fel <ArrowDown size={15} /></a></div>
@@ -351,7 +351,7 @@ export default function Home() {
       <div className="cinema-marquee" aria-hidden="true"><div className="cinema-marquee-track">{[...MARQUEE, ...MARQUEE].map((item, index) => <span key={index}>{item}<i>✦</i></span>)}</div></div>
 
       <section className="cinema-intro" id="elmeny" data-cinema-reveal>
-        <div className="intro-index" data-reveal-item>ARDELIS / 01<br />VALÓS MÉRETEK.<br />ÁTLÁTHATÓ TERVEZÉS.</div>
+        <div className="intro-index" data-reveal-item>LAMELIX / 01<br />VALÓS MÉRETEK.<br />ÁTLÁTHATÓ TERVEZÉS.</div>
         <div className="intro-heading" data-reveal-item><h2>Nem egy tető.<br /><em>Egy új tér.</em></h2></div>
         <div className="intro-copy" data-reveal-item><p>A bioklimatikus pergola az időjáráshoz és a terasz használatához igazodik. A dönthető lamellákkal szabályozod a napfényt és a szellőzést, a rejtett világítással este is kellemes marad a tér.</p><Link className="text-arrow-link" to="/studio/pergola">Kipróbálom a 3D stúdiót <MoveRight /></Link></div>
         <div className="intro-facts" data-reveal-item>
@@ -374,7 +374,7 @@ export default function Home() {
           </div>
           <div className="film-grid" aria-hidden="true" />
           <Blueprint />
-          <div className="film-topline"><span>ARDELIS / PERGO</span><span>MINDEN KÉP A 3D STÚDIÓBÓL</span></div>
+          <div className="film-topline"><span>LAMELIX / PERGOLA</span><span>MINDEN KÉP A 3D STÚDIÓBÓL</span></div>
           <div className="film-beats">
             <article className="film-beat beat-form"><span className="film-beat-index">01 / A FORMA</span><h2>A vonal,<br />ami <em>helyet</em><br />teremt.</h2><p>Oszlop, gerenda és lamella egyetlen arányos szerkezetben — a te házad előtt, a te homlokzatszíneddel.</p></article>
             <article className="film-beat beat-measure"><span className="film-beat-index">02 / A MÉRET</span><h2>Nem „körülbelül”.<br /><em>Centiméterre.</em></h2><p>Szélesség, mélység és magasság centiméterre. A méretcímkék és az emberi léptékű figura megmutatják, mekkora lesz valójában a tér.</p></article>
@@ -461,7 +461,7 @@ export default function Home() {
 
       <section className="cinema-final" aria-labelledby="final-title">
         <div className="cinema-final-media" aria-hidden="true"><Shot name="night" alt="" /></div>
-        <div className="cinema-final-copy"><span>ARDELIS / PERGO</span><h2 id="final-title">Kezdd el a saját<br /><em>pergolád tervezését.</em></h2><p>Öt perc, és látod a teraszod — nappal és este, a saját házad előtt.</p></div>
+        <div className="cinema-final-copy"><span>LAMELIX / PERGOLA</span><h2 id="final-title">Kezdd el a saját<br /><em>pergolád tervezését.</em></h2><p>Öt perc, és látod a teraszod — nappal és este, a saját házad előtt.</p></div>
         <Link className="cinema-final-button" to="/studio/pergola" aria-label="Pergola tervezés indítása"><span>KEZDD EL</span><ArrowUpRight /></Link>
       </section>
     </main>

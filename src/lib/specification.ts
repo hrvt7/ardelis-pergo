@@ -104,7 +104,7 @@ export function getSizeRecommendation(config: PergolaConfig) {
   return '2–4 főnek ajánlott · kompakt étkező vagy kisebb pihenősarok'
 }
 
-export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, roofLabels: Record<RoofType, string> = ROOF_LABELS, brandName = 'ARDELIS', colors: Pick<Tenant, 'colors'> = DEFAULT_COLORS) {
+export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, roofLabels: Record<RoofType, string> = ROOF_LABELS, brandName = 'Lamelix', colors: Pick<Tenant, 'colors'> = DEFAULT_COLORS) {
   const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => `${SIDE_NAMES[side]}: ${isWallSide(config.mount, side) ? wallLabel(side).toLowerCase() : sideSummary(config, side)}`).join(', ')
   const extras = [
     config.led ? (config.ledRgb ? 'színváltós RGB+W LED' : 'periméter LED') : null,

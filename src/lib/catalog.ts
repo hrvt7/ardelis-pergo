@@ -62,10 +62,10 @@ export const OUTDOOR_PRICE_DEFAULTS: OutdoorPriceSettings = {
 }
 
 export const FAMILY_META: Record<OutdoorFamily, { name: string; series: string; title: string; description: string }> = {
-  canopy: { name: 'Cover', series: 'ARDELIS / COVER', title: 'Előtető', description: 'Konzolos vagy oszlopos, falhoz illesztett bejárati és terasz-előtető.' },
-  carport: { name: 'Drive', series: 'ARDELIS / DRIVE', title: 'Autóbeálló', description: 'Egy- vagy kétállásos, vízelvezetett és EV-előkészíthető autóbeálló.' },
-  fence: { name: 'Fence', series: 'ARDELIS / FENCE', title: 'Kerítés', description: 'Alumínium, acél, kovácsoltvas, fa vagy WPC telekhatároló rendszer.' },
-  gate: { name: 'Gate', series: 'ARDELIS / GATE', title: 'Kapu', description: 'Kiskapu, nyíló-, toló- és úszókapu, azonos kerítésarculattal.' },
+  canopy: { name: 'Cover', series: 'LAMELIX / COVER', title: 'Előtető', description: 'Konzolos vagy oszlopos, falhoz illesztett bejárati és terasz-előtető.' },
+  carport: { name: 'Drive', series: 'LAMELIX / DRIVE', title: 'Autóbeálló', description: 'Egy- vagy kétállásos, vízelvezetett és EV-előkészíthető autóbeálló.' },
+  fence: { name: 'Fence', series: 'LAMELIX / FENCE', title: 'Kerítés', description: 'Alumínium, acél, kovácsoltvas, fa vagy WPC telekhatároló rendszer.' },
+  gate: { name: 'Gate', series: 'LAMELIX / GATE', title: 'Kapu', description: 'Kiskapu, nyíló-, toló- és úszókapu, azonos kerítésarculattal.' },
 }
 
 export const COLOR_HEX: Record<OutdoorColor, string> = {

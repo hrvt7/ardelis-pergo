@@ -1,3 +1,4 @@
+import LamelixLogo from '@/components/LamelixLogo'
 import { Component, Suspense, createContext, memo, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Html, Line, OrbitControls, RoundedBox, useGLTF, useProgress, useTexture } from '@react-three/drei'
@@ -553,7 +554,7 @@ function ScenePoster({ message = 'Paraméteres építészeti jelenet' }: { messa
   const { progress } = useProgress()
   return <div className="scene-poster" role="status">
     <div className="poster-skeleton"><span /><span /><span /><span /></div>
-    <div className="branded-loader"><div className="loader-brand">ARDELIS <small>/ ATELIER</small></div><div className="loader-track"><span style={{ width: `${Math.max(8, progress)}%` }} /></div><div><span>{message}</span><strong>{Math.round(progress)}%</strong></div></div>
+    <div className="branded-loader"><div className="loader-brand"><LamelixLogo height={30} title={null} /></div><div className="loader-track"><span style={{ width: `${Math.max(8, progress)}%` }} /></div><div><span>{message}</span><strong>{Math.round(progress)}%</strong></div></div>
   </div>
 }
 

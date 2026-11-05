@@ -1,3 +1,4 @@
+import LamelixLogo from '@/components/LamelixLogo'
 import { Component, Suspense, lazy, memo, use, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
 import { assetUrl } from '@/lib/assetUrl'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
@@ -1879,7 +1880,7 @@ function ScenePoster({ message, onRetry, percent, leaving = false, config }: { m
   const failed = Boolean(onRetry) || Boolean(config)
   return <div className={`scene-poster${failed ? ' is-error' : ''}${leaving ? ' is-leaving' : ''}`} role={failed ? 'alert' : 'status'} aria-live="polite">
     {failed ? <img className="scene-poster-image" src={assetUrl('/assets/pergo-hero.webp')} alt={`${tenant.brand.name} pergola statikus előnézete`} /> : <div className="poster-skeleton"><span /><span /><span /><span /></div>}
-    <div className="branded-loader"><div className="loader-brand">{tenant.brand.name}{tenant.brand.suffix && <small> {tenant.brand.suffix}</small>}</div>{!failed && <div className="loader-track"><span style={{ width: `${Math.max(2, progress)}%` }} /></div>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{failed && <p className="fallback-note">A konfigurálás, az árkalkuláció, a PDF és a felmérési kérelem 3D nélkül is teljes értékűen működik.</p>}{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
+    <div className="branded-loader"><div className="loader-brand">{tenant.demo ? <LamelixLogo height={30} title={null} /> : <>{tenant.brand.name}{tenant.brand.suffix && <small> {tenant.brand.suffix}</small>}</>}</div>{!failed && <div className="loader-track"><span style={{ width: `${Math.max(2, progress)}%` }} /></div>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{failed && <p className="fallback-note">A konfigurálás, az árkalkuláció, a PDF és a felmérési kérelem 3D nélkül is teljes értékűen működik.</p>}{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
     {failed && config && <FallbackDrawing config={config} />}
   </div>
 }

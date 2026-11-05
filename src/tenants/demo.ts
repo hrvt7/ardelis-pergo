@@ -8,10 +8,11 @@ export const demoTenant: Tenant = {
   id: 'demo',
   demo: true,
   brand: {
-    name: 'ARDELIS',
-    suffix: '/ PERGO',
-    legalName: 'ARDELIS Atelier (bemutató)',
+    name: 'Lamelix',
+    legalName: 'Lamelix (bemutató)',
   },
+  // A bemutató gyártó maga a Lamelix: a diszkrét platform-jelzés itt felesleges.
+  platformCredit: false,
   currency: 'HUF',
   // Bemutató árak — 2026. októberi magyar piaci középkategória (nettó, telepítés nélkül; a
   // telepítést az installationRate adja hozzá). Források: hazai gyártói árlisták (pl. 6×4 m

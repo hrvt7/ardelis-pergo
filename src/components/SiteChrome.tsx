@@ -1,11 +1,11 @@
 import { ArrowUpRight, Menu, X } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router'
+import LamelixLogo from '@/components/LamelixLogo'
 
 export function Brand({ compact = false }: { compact?: boolean }) {
-  return <Link className={`site-brand ${compact ? 'compact' : ''}`} to="/ardelis" aria-label="ARDELIS Atelier kezdőlap">
-    <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M4 27V9l13-5 13 5v18M4 15h26M10 27V15m14 12V15M4 27h26" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
-    <span><strong>ARDELIS</strong><small>/ PERGO</small></span>
+  return <Link className={`site-brand ${compact ? 'compact' : ''}`} to="/minta" aria-label="Lamelix – mintaoldal kezdőlap">
+    <LamelixLogo height={compact ? 24 : 28} title={null} />
   </Link>
 }
 
@@ -17,8 +17,8 @@ export default function SiteHeader({ action }: { action?: ReactNode }) {
     <Brand />
     <button className="site-menu-toggle" type="button" aria-label={open ? 'Menü bezárása' : 'Menü megnyitása'} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
     <nav className={open ? 'is-open' : ''} aria-label="Fő navigáció" onClick={() => setOpen(false)}>
-      <NavLink to="/studio/pergola">Pergo stúdió</NavLink>
-      {location.pathname === '/ardelis' ? <a href="#folyamat">Folyamat</a> : <Link to="/ardelis#folyamat">Folyamat</Link>}
+      <NavLink to="/studio/pergola">3D stúdió</NavLink>
+      {location.pathname === '/minta' ? <a href="#folyamat">Folyamat</a> : <Link to="/minta#folyamat">Folyamat</Link>}
       <div className="site-mobile-action">{action ?? defaultAction}</div>
     </nav>
     <div className="site-header-action">{action ?? defaultAction}</div>
@@ -26,5 +26,5 @@ export default function SiteHeader({ action }: { action?: ReactNode }) {
 }
 
 export function SiteFooter() {
-  return <footer className="site-footer"><Brand compact /><p>Paraméteres pergolatervezés, valós idejű vizualizáció és műszaki összefoglaló.</p><div><Link to="/studio/pergola">3D stúdió</Link></div><small>© {new Date().getFullYear()} ARDELIS Atelier · Az irányárak nem minősülnek ajánlattételnek.</small></footer>
+  return <footer className="site-footer"><Brand compact /><p>Paraméteres pergolatervezés, valós idejű vizualizáció és műszaki összefoglaló.</p><div><Link to="/studio/pergola">3D stúdió</Link></div><small>© {new Date().getFullYear()} Lamelix · Az irányárak nem minősülnek ajánlattételnek.</small></footer>
 }

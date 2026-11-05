@@ -9,8 +9,9 @@ const Home = lazy(() => import('@/pages/Home'))
 export default function App() {
   return <Routes>
     <Route path="/" element={<Platform />} />
-    {/* A demó gyártó (ARDELIS) lakossági mintaoldala */}
-    <Route path="/ardelis" element={<Suspense fallback={null}><Home /></Suspense>} />
+    {/* A demó gyártó (Lamelix) lakossági mintaoldala */}
+    <Route path="/minta" element={<Suspense fallback={null}><Home /></Suspense>} />
+    <Route path="/ardelis" element={<Navigate to="/minta" replace />} />
     <Route path="/studio/pergola" element={<TenantStudio mode="demo" />} />
     <Route path="/k/:tenantId/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
     <Route path="/k/:tenantId" element={<TenantStudio mode="standalone" />} />
