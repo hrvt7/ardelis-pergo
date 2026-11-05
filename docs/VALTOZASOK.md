@@ -623,3 +623,7 @@ működést, az eladhatóságot és a hibákat érintik.
 ## 3.33 – Telefon fekvő (landscape) nézet
 - Fekvő telefonon (érintőképernyő, ≤ 520 px magas) a konfigurátor két oszlopos: balra a 3D jelenet (kameragombok oldalt), jobbra az állandóan nyitott vezérlősáv és alatta az ár/Összegzés. Korábban az alsó lap eltakarta a pergolát.
 - Álló telefonon egyszer megjelenik egy tipp a telefon elfordításáról. Az álló és az asztali elrendezés változatlan.
+
+## 3.34 – Beépülő oldalelem-animáció
+- Új oldalelem (ZIP screen, tolóüveg, fix üveg, lamellafal, lécfal) kapcsolásakor az elem fentről lefelé „leereszkedik" (0,8 s, ease-out). Ugyanígy, ha az oldal típusát váltod.
+- Teljesítmény: csak a kapcsolás pillanatában fut, imperatív (nincs React újrarenderelés), csak a mozgás alatt kér képkockát és árnyékfrissítést; a betöltéskor és a megosztott linkeknél nem animál; csökkentett mozgásnál kihagyja.

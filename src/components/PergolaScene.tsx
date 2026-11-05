@@ -421,7 +421,27 @@ function SideSegmentWall({ type, length, height, color, config, scene, onSceneCh
   return null
 }
 
-function SidePlacement({ side, config, scene, color, onSelect, onSceneChange, labelled }: { side: SideKey; config: PergolaConfig; scene: SceneSettings; color: string; onSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; labelled: Set<string> }) {
+/** Új oldalelem felépülése: fentről lefelé „leereszkedik" (0,8 s, ease-out). Csak a kapcsolás pillanatában fut, közben nincs újrarenderelés. */
+function BuildIn({ height, settled, children }: { height: number; settled: { current: boolean }; children: ReactNode }) {
+  const ref = useRef<THREE.Group>(null)
+  const [animate] = useState(() => settled.current && !REDUCED)
+  const t = useRef(animate ? 0 : 1)
+  const { gl, invalidate } = useThree((state) => ({ gl: state.gl, invalidate: state.invalidate }))
+  useFrame((_, delta) => {
+    if (t.current >= 1 || !ref.current) return
+    t.current = Math.min(1, t.current + Math.min(delta, 0.05) / 0.8)
+    const eased = 1 - Math.pow(1 - t.current, 3)
+    const scale = 0.02 + 0.98 * eased
+    ref.current.scale.y = scale
+    ref.current.position.y = height * (1 - scale)
+    refreshShadows(gl)
+    invalidate()
+  })
+  const start = animate ? 0.02 : 1
+  return <group ref={ref} scale={[1, start, 1]} position={[0, height * (1 - start), 0]}>{children}</group>
+}
+
+function SidePlacement({ side, config, scene, color, onSelect, onSceneChange, labelled, settled }: { side: SideKey; settled: { current: boolean }; config: PergolaConfig; scene: SceneSettings; color: string; onSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; labelled: Set<string> }) {
   const { width, depth, height } = config
   if (isWallSide(config.mount, side)) return null
   const isHorizontal = side === 'front' || side === 'back'
@@ -443,7 +463,7 @@ function SidePlacement({ side, config, scene, color, onSelect, onSceneChange, la
       const key = segment.type === 'glassFramed' ? 'glass' : segment.type
       const label = !labelled.has(key)
       if (label) labelled.add(key)
-      return <group key={index} position={[x, 0, 0]}><SideSegmentWall type={segment.type} length={segmentLength} height={height} color={color} config={config} scene={scene} onSceneChange={onSceneChange} label={label} /></group>
+      return <group key={`${index}-${segment.type}`} position={[x, 0, 0]}><BuildIn height={height} settled={settled}><SideSegmentWall type={segment.type} length={segmentLength} height={height} color={color} config={config} scene={scene} onSceneChange={onSceneChange} label={label} /></BuildIn></group>
     })}
     {split && !midPost && <Beam args={[MULLION, height - 0.1, 0.09]} position={[0, (height - 0.1) / 2, 0]} color={color} radius={0.008} />}
   </group>
@@ -817,6 +837,9 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
   const fixedSeamCount = Math.max(2, Math.floor(depth / 0.65))
   const introStart = useRef(0)
   const ex = useRef(scene.exploded && REDUCED ? 1 : 0)
+  // Az első betöltéskor nem animálunk: csak a későbbi kapcsolásoknál épül fel látványosan az oldalelem.
+  const settled = useRef(false)
+  useEffect(() => { const id = window.setTimeout(() => { settled.current = true }, 2500); return () => window.clearTimeout(id) }, [])
   useFrame(({ clock }, delta) => {
     if (!introStart.current) introStart.current = clock.elapsedTime
     const target = scene.exploded ? 1 : 0
@@ -850,7 +873,7 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     {roof === 'fabric' && <FabricRoof width={width} depth={depth} height={height} color={roofColor} openness={openness} />}
     {roof === 'fixed' && config.solar && <SolarPanels config={config} />}
     </ExplodePart>
-    {(() => { const labelled = new Set<string>(); return (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <ExplodePart key={side} ex={ex} dx={side === 'left' ? -1.1 : side === 'right' ? 1.1 : 0} dz={side === 'front' ? 1.1 : side === 'back' ? -1.1 : 0}><SidePlacement side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} labelled={labelled} /></ExplodePart>) })()}
+    {(() => { const labelled = new Set<string>(); return (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <ExplodePart key={side} ex={ex} dx={side === 'left' ? -1.1 : side === 'right' ? 1.1 : 0} dz={side === 'front' ? 1.1 : side === 'back' ? -1.1 : 0}><SidePlacement side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} labelled={labelled} settled={settled} /></ExplodePart>) })()}
     {config.led && <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={scene.ledLevel / 100} rgb={config.ledRgb ? scene.ledColor : null} />}
     {(config.fans ?? 0) > 0 && <CeilingFans config={config} color={color} spinning={scene.fanOn} />}
     {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <group key={index} position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={scene.heatersOn ? (night ? 3 : 0.15) : 0} toneMapped={false} /></mesh>{night && <pointLight position={[0, -0.25, 0.25]} color="#ff8a4a" intensity={scene.heatersOn ? 3.2 : 0} distance={3.2} decay={2} />}</group> })}
