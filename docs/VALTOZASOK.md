@@ -1,5 +1,10 @@
 # Változások
 
+## 3.52 – A ház mérete független a tető dőlésétől
+
+- A 3D ház léptéke már nem függ a tetődőléstől: 0°–12° között a ház mérete azonos marad, a pergola hátsó (fali) éle emelkedik a homlokzaton.
+- Az oldalszárny magassága csak a dőlés felével növekszik, így nem nő aránytalanul.
+
 ## 3.51 – Ajtók, klíma, üvegtető-típusok, hibajavítások
 
 - **Tolóajtó**: a szárny csukva is a fal közepén állt (az animáció felülírta a kiindulási helyét), nyitáskor kilógott. Most a fal végén áll csukva, a fix tábla mögé csúszik, a falszakaszon belül marad.

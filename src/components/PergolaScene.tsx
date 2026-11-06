@@ -1344,7 +1344,9 @@ const HOUSE_RAW = { width: 18.22, depth: 6.79, eave: 2.947, facadeInset: 0.573 }
  */
 function getHouseLayout(config: PergolaConfig) {
   const attached = hasBackWall(config.mount)
-  const scale = Math.max(Math.max(17, config.width + 6) / HOUSE_RAW.width, (config.height + roofRise(config) + 0.32) / HOUSE_RAW.eave)
+  // A ház léptéke a pergola szélességétől és az oszlopmagasságtól függ, a tető dőlésétől NEM:
+  // a dőlés csak a hátsó (fali) élt emeli, a ház mérete nem változhat vele (arányos marad).
+  const scale = Math.max(Math.max(17, config.width + 6) / HOUSE_RAW.width, (config.height + 0.32) / HOUSE_RAW.eave)
   const frontZ = attached ? -config.depth / 2 - 0.185 : -config.depth / 2 - 4.6 - HOUSE_RAW.facadeInset * scale
   return { frontZ, attached, width: HOUSE_RAW.width * scale, scale, depth: HOUSE_RAW.depth * scale }
 }
@@ -1496,7 +1498,7 @@ function getWingSpecs(config: PergolaConfig): WingSpec[] {
   const layout = getHouseLayout(config)
   const zBack = layout.frontZ - 0.9
   const zFront = layout.frontZ + Math.max(config.depth + 1.5, 5.2)
-  const height = Math.max(RAW_STOREY * layout.scale + 0.42, config.height + roofRise(config) + 0.66)
+  const height = Math.max(RAW_STOREY * layout.scale + 0.42, config.height + roofRise(config) * 0.5 + 0.5)
   return sideWalls(config.mount).map((side) => {
     const sx = side === 'left' ? -1 : 1
     const inner = sx * (config.width / 2 + 0.125)
