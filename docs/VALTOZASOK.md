@@ -673,3 +673,8 @@ működést, az eladhatóságot és a hibákat érintik.
 - Fejléc gomb: teljes képernyő (Android, iPad, asztal); iPhone Safariban súgó a kezdőképernyőre tételhez.
 - Telepíthető (PWA) beállítások: apple-mobile-web-app-capable, viewport-fit=cover, manifest display_override fullscreen, start_url /konfigurator.
 - Biztonságos sávok (kamera-kivágás) fekvő tájolásban.
+
+## 3.43 – Tetődőlés és tetőburkolat-variánsok
+- Új „Tetődőlés” csúszka (0–12°): a tető hátsó (fali) éle emelkedik, a hátsó oszlopok/oldal magasabbak, a ház magassága igazodik. Az elülső érték továbbra is az oszlopmagasság.
+- Tetőburkolat: üveg → tiszta / matt / hővisszaverő; polikarbonát → opál / tiszta / hővisszaverő. 3D anyag, felár (Ft/m², admin árszerkesztőben állítható), összegzés, PDF, megosztó link (i, u jelölők).
+- Teszt: tests/pitch-glazing.test.ts. Ismert korlát: a műszaki rajz oldalnézete még vízszintes tetőt mutat; a dőlés a PDF táblázatában szerepel.

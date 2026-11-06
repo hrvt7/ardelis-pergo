@@ -5,7 +5,7 @@ import type { Content, ContentTable, TDocumentDefinitions, TableCell } from 'pdf
 import { drawingLevels, POST, technicalDrawing } from './drawing'
 import { isWallSide, MOUNT_LABELS, postPositions, wallLabel } from './mount'
 import { formatHuf, formatNumber } from './pricing'
-import { ROOF_INFO } from './roofs'
+import { ROOF_INFO, GLAZING_INFO, effectiveGlazing, roofRise } from './roofs'
 import { getBom, getDeliveryEstimate, getSpecCode } from './specification'
 import { DEFAULT_USAGE, estimateEnergy, roundCost, TARIFF, type EnergyUsage } from './energy'
 import { estimateSolar, PANEL } from './solar'
@@ -183,6 +183,8 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     ['Teraszfűtés', config.heaters ? `${config.heaters} db infravörös` : '—'],
     ['Hangrendszer', config.speakers ? 'Bluetooth, beépített' : '—'],
     ['Eső- és szélérzékelő', config.sensors ? 'automatikus zárással' : '—'],
+    ...(config.pitch ? [['Tetődőlés', `${config.pitch}° (hátsó él +${roofRise(config).toFixed(2).replace('.', ',')} m)`] as [string, string]] : []),
+    ...(effectiveGlazing(config) ? [['Tetőburkolat', `${GLAZING_INFO[effectiveGlazing(config)!].label.toLowerCase()}`] as [string, string]] : []),
     ...(config.fans ? [['Mennyezeti ventilátor', `${config.fans} db, kültéri DC motorral`] as [string, string]] : []),
     ...(config.smartHome ? [['Okosotthon-vezérlés', 'app, időzítés, jelenetek, hangvezérlés'] as [string, string]] : []),
     ...(config.roofShade ? [['Tetőárnyékoló', `${ROOF_SHADE_INFO[config.roofShade].label.toLowerCase()}, motoros · ${findShadeFabric(config.shadeFabric).name.toLowerCase()} ponyva`] as [string, string]] : []),

@@ -21,6 +21,8 @@ export const MONEY_FIELDS: { key: PriceKey; label: string; unit: string }[] = [
   { key: 'smartHomeNet', label: 'Okosotthon-vezérlés', unit: 'Ft' },
   { key: 'roofShadeAbovePerM2Net', label: 'Tető feletti árnyékoló', unit: 'Ft/m²' },
   { key: 'roofShadeBelowPerM2Net', label: 'Tető alatti árnyékoló', unit: 'Ft/m²' },
+  { key: 'glazingSatinPerM2Net', label: 'Matt üveg felár', unit: 'Ft/m²' },
+  { key: 'glazingHeatPerM2Net', label: 'Hővisszaverő burkolat felár', unit: 'Ft/m²' },
   { key: 'heaterUnitNet', label: 'Teraszfűtés', unit: 'Ft/db' },
   { key: 'speakerPairNet', label: 'Hangrendszer', unit: 'Ft/pár' },
   { key: 'sensorsNet', label: 'Szenzorcsomag', unit: 'Ft' },

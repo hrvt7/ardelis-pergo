@@ -1,3 +1,4 @@
+import { effectiveGlazing, GLAZING_INFO } from './roofs'
 import { findShadeFabric, ROOF_SHADE_INFO, roofShadeArea, supportsRoofShade } from './roofShade'
 import { PANEL, panelLayout } from './solar'
 import { describeColor, roofPartName, type ColorInfo } from './colors'
@@ -38,6 +39,8 @@ export const DEFAULT_PRICES: PriceSettings = {
   smartHomeNet: 120000,
   roofShadeAbovePerM2Net: 52000,
   roofShadeBelowPerM2Net: 38000,
+  glazingSatinPerM2Net: 12000,
+  glazingHeatPerM2Net: 22000,
   customColorRate: 0.06,
   woodColorRate: 0.18,
   installationRate: 0.1,
@@ -223,6 +226,18 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
       label: 'Okosotthon-vezérlés',
       detail: 'Wi-Fi központ · telefonos app, időzítés, jelenetek, hangvezérlés',
       amountNet: round(prices.smartHomeNet),
+    })
+  }
+
+  const glazing = effectiveGlazing(config)
+  const glazingKey = glazing ? GLAZING_INFO[glazing].priceKey : null
+  if (glazing && glazingKey && prices[glazingKey] > 0) {
+    const glazingArea = Math.round(config.width * config.depth * 100) / 100
+    lines.push({
+      id: 'glazing',
+      label: `${config.roof === 'glass' ? 'Üvegtető' : 'Polikarbonát tető'} · ${GLAZING_INFO[glazing].label.toLowerCase()} burkolat`,
+      detail: `${formatNumber(glazingArea, 2)} m² × ${formatHuf(prices[glazingKey])} / m² felár`,
+      amountNet: round(glazingArea * prices[glazingKey]),
     })
   }
 

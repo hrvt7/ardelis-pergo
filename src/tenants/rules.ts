@@ -4,7 +4,7 @@
 import { DEFAULT_SHADE_FABRIC, SHADE_FABRICS, supportsRoofShade } from '../lib/roofShade'
 import { z } from 'zod'
 import { calculatePrice } from '../lib/pricing'
-import { ROOF_TYPES } from '../lib/roofs'
+import { defaultGlazing, glazingOptions, PITCH_RANGE, ROOF_TYPES } from '../lib/roofs'
 import { normalizeColorCode, pickCatalogColor, supportsTwoTone } from '../lib/colors'
 import type { PergolaConfig, PriceBreakdown, PriceSettings, RoofType, SideKey } from '../types/pergola'
 import type { Tenant } from './types'
@@ -24,6 +24,8 @@ export const pergolaConfigSchema = z.object({
   roofRal: z.string().max(24).optional(),
   sides: z.object({ front: sideEnum, back: sideEnum, left: sideEnum, right: sideEnum }),
   louverAngle: z.number().finite().min(0).max(90),
+  pitch: z.number().finite().min(0).max(30).optional(),
+  glazing: z.enum(['clear', 'satin', 'opal', 'heat']).optional(),
   screenOpen: z.number().finite().min(0).max(100),
   led: z.boolean(),
   heaters: z.number().int().min(0).max(20),
@@ -77,6 +79,8 @@ export const priceSettingsSchema = z.object({
   smartHomeNet: z.number().min(0).max(2000000).default(120000),
   roofShadeAbovePerM2Net: z.number().min(0).max(1000000).default(52000),
   roofShadeBelowPerM2Net: z.number().min(0).max(1000000).default(38000),
+  glazingSatinPerM2Net: z.number().min(0).max(1000000).default(12000),
+  glazingHeatPerM2Net: z.number().min(0).max(1000000).default(22000),
   customColorRate: z.number().min(0).max(1),
   woodColorRate: z.number().min(0).max(1).default(0.18),
   installationRate: z.number().min(0).max(1),
@@ -150,6 +154,9 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     roofRal: twoTone ? twoTone.custom : undefined,
     sides,
     louverAngle: clamp(config.louverAngle, [0, 90]),
+    // Dőlés egész fokban; 0 = vízszintes (a mező ilyenkor el is marad). A burkolat az alapkivitelnél szintén elmarad.
+    pitch: Math.round(clamp(config.pitch ?? 0, PITCH_RANGE)) || undefined,
+    glazing: config.glazing && glazingOptions(roof).includes(config.glazing) && config.glazing !== defaultGlazing(roof) ? config.glazing : undefined,
     screenOpen: clamp(config.screenOpen, [0, 100]),
     led,
     speakers: tenant.extras.speakers && config.speakers,

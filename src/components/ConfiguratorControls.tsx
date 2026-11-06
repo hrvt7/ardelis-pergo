@@ -4,7 +4,7 @@ import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES,
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import { FanOption, RgbOption, RoofShadeOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
 import { enabledRoofs, presetConfig, tenantPrice } from '@/tenants/rules'
-import { ROOF_INFO } from '@/lib/roofs'
+import { defaultGlazing, effectiveGlazing, GLAZING_INFO, glazingOptions, PITCH_RANGE, ROOF_INFO, roofRise } from '@/lib/roofs'
 import { useTenant } from '@/tenants/TenantContext'
 import { getSizeRecommendation } from '@/lib/specification'
 import { closedSegments } from '@/lib/sides'
@@ -177,6 +177,23 @@ function RoofControl({ config, onChange }: { config: PergolaConfig; onChange: (p
   return <SliderField label="Tetőnyitás" value={Math.round(config.louverAngle / 0.9)} min={0} max={100} step={1} unit="%" onChange={(open) => onChange({ louverAngle: Math.round(open * 9) / 10 })} />
 }
 
+/** Tetőburkolat-választó (üveg: tiszta / matt / hővisszaverő; polikarbonát: opál / tiszta / hővisszaverő). */
+function GlazingPicker({ config, prices, onChange }: { config: PergolaConfig; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void }) {
+  const options = glazingOptions(config.roof)
+  if (!options.length) return null
+  const current = effectiveGlazing(config)
+  return <div className="glazing-picker">
+    <SectionTitle title="Tetőburkolat" hint={config.roof === 'glass' ? 'Az üveg fényáteresztését és a hőterhelést befolyásolja.' : 'A polikarbonát fényáteresztését és a hőterhelést befolyásolja.'} />
+    <div className="glazing-chips" role="radiogroup" aria-label="Tetőburkolat">{options.map((id) => {
+      const info = GLAZING_INFO[id]
+      const price = info.priceKey ? prices[info.priceKey] : 0
+      return <button type="button" key={id} role="radio" aria-checked={current === id} className={`glazing-chip glazing-${id}${current === id ? ' selected' : ''}`} onClick={() => onChange({ glazing: id === defaultGlazing(config.roof) ? undefined : id })}>
+        <span className="glazing-swatch" aria-hidden="true" /><strong>{info.label}</strong><small>{info.short}</small><em>{price > 0 ? `+${formatHuf(price)} / m²` : 'Alapkivitel'}</em>
+      </button>
+    })}</div>
+  </div>
+}
+
 /** Tetőrendszer-választó: név, rövid leírás, tulajdonságok és az árkülönbség a jelenlegi tervhez képest. */
 function RoofPicker({ config, prices, onChange }: { config: PergolaConfig; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void }) {
   const { tenant } = useTenant()
@@ -342,10 +359,13 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
             <SectionTitle title="Tetőrendszer" hint="A pergola típusa határozza meg az árnyékolást, az esővédelmet és az árat. Az oldalak lépésében is módosítható." />
             <RoofPicker config={config} prices={prices} onChange={onChange} />
+            <GlazingPicker config={config} prices={prices} onChange={onChange} />
             <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
             <SliderField label="Szélesség" value={config.width} min={limits.width[0]} max={limits.width[1]} step={0.05} unit="m" metric onChange={(width) => onChange({ width })} />
             <SliderField label="Mélység" value={config.depth} min={limits.depth[0]} max={limits.depth[1]} step={0.05} unit="m" metric onChange={(depth) => onChange({ depth })} />
             <SliderField label="Oszlopmagasság" value={config.height} min={limits.height[0]} max={limits.height[1]} step={0.05} unit="m" metric onChange={(height) => onChange({ height })} />
+            <SliderField label="Tetődőlés" value={config.pitch ?? 0} min={PITCH_RANGE[0]} max={PITCH_RANGE[1]} step={1} unit="°" onChange={(pitch) => onChange({ pitch: pitch || undefined })} />
+            {(config.pitch ?? 0) > 0 && <p className="split-note">A tető hátsó (fali) éle {roofRise(config).toFixed(2).replace('.', ',')} m-rel magasabb az elülső oszlopmagasságnál, így a csapadék előre folyik le.</p>}
             {config.width > 6 && <div className="smart-warning"><Columns3 size={18} /><p><strong>Középoszlop javasolt</strong>600 cm felett a műszaki ellenőrzés és egy középoszlop szükséges lehet.</p></div>}
             <div className="smart-helper"><Sparkles size={18} /><p><strong>{getSizeRecommendation(config).split(' · ')[0]}</strong>{getSizeRecommendation(config).split(' · ')[1]}</p></div>
             <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />

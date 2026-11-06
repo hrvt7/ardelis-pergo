@@ -60,6 +60,8 @@ export const demoTenant: Tenant = {
     smartHomeNet: 120000,
     roofShadeAbovePerM2Net: 52000,
     roofShadeBelowPerM2Net: 38000,
+    glazingSatinPerM2Net: 12000,
+    glazingHeatPerM2Net: 22000,
     customColorRate: 0.06,
     woodColorRate: 0.18,
     installationRate: 0.1,

@@ -6,7 +6,7 @@
 // A régi formátum (#k=… base64 JSON) továbbra is beolvasható.
 import { findShadeFabric, ROOF_SHADE_INFO, SHADE_FABRICS } from './roofShade'
 import type { FrameColor, MountType, PergolaConfig, RoofType, SideType } from '../types/pergola'
-import { ROOF_INFO, ROOF_TYPES } from './roofs'
+import { GLAZING_INFO, ROOF_INFO, ROOF_TYPES } from './roofs'
 import { SIDE_INFO, SIDE_TYPES } from './sides'
 
 const MOUNT: Record<MountType, string> = { wall: 'W', 'corner-left': 'L', 'corner-right': 'R', niche: 'N', freestanding: 'F' }
@@ -38,6 +38,8 @@ export function configToCompact(config: PergolaConfig) {
   if (config.ledRgb) flags.push('r')
   if (config.fans) flags.push(`v${config.fans}`)
   if (config.smartHome) flags.push('h')
+  if (config.pitch) flags.push(`i${Math.round(config.pitch)}`)
+  if (config.glazing) flags.push(`u${GLAZING_INFO[config.glazing].share}`)
   if (config.roofShade) flags.push(`${ROOF_SHADE_INFO[config.roofShade].share}${findShadeFabric(config.shadeFabric).share}`)
   if (config.roofColor) flags.push(`t${COLOR[config.roofColor]}${config.roofColor === 'custom' && config.roofRal ? encodeCode(config.roofRal) : ''}`)
   if (config.split && SIDE_KEYS.some((side) => config.split?.[side])) flags.push(`s${SIDE_KEYS.map((side) => { const type = config.split?.[side]; return type ? SIDE[type] : '.' }).join('')}`)
@@ -70,6 +72,8 @@ function parseFlags(text: string, sideMap: Record<string, SideType>) {
     if (flag === 'p') result.solar = true
     else if (flag === 'r') result.ledRgb = true
     else if (flag === 'h') result.smartHome = true
+    else if (/^i\d{1,2}$/.test(flag)) result.pitch = Number(flag.slice(1))
+    else if (/^u[csoh]$/.test(flag)) result.glazing = (Object.entries(GLAZING_INFO).find(([, info]) => info.share === flag[1])?.[0]) as PergolaConfig['glazing']
     else if (/^[ab][a-z]$/.test(flag)) {
       result.roofShade = flag[0] === 'a' ? 'above' : 'below'
       result.shadeFabric = SHADE_FABRICS.find((item) => item.share === flag[1])?.id ?? 'white'

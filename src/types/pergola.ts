@@ -1,6 +1,8 @@
 export type MountType = 'freestanding' | 'wall' | 'corner-left' | 'corner-right' | 'niche'
 export type WallFinish = 'plaster' | 'brick' | 'cedar'
 export type RoofShade = 'above' | 'below'
+/** Üveg-/polikarbonát tető burkolata: tiszta, matt (szatinált), opál (csak polikarbonát), hővisszaverő. */
+export type RoofGlazing = 'clear' | 'satin' | 'opal' | 'heat'
 export type ShadeFabric = 'white' | 'sand' | 'grey' | 'anthracite'
 export type RoofType = 'louvered' | 'retractable' | 'fabric' | 'glass' | 'polycarbonate' | 'fixed'
 export type SideType = 'none' | 'zip' | 'glass' | 'glassFramed' | 'glassFixed' | 'louver' | 'slatAlu' | 'slatWood'
@@ -25,6 +27,10 @@ export interface PergolaConfig {
   /** Félbe osztott oldalak második felének típusa (az első fél a `sides`-ban). */
   split?: Partial<Record<SideKey, SideType>>
   louverAngle: number
+  /** Tetődőlés fokban (0 = vízszintes). A hátsó (fali) oldal emelkedik, az elülső magasság a `height`. */
+  pitch?: number
+  /** Üveg-/polikarbonát tető burkolata (nincs megadva = alapkivitel: tiszta üveg / opál polikarbonát). */
+  glazing?: RoofGlazing
   screenOpen: number
   led: boolean
   heaters: number
@@ -163,6 +169,10 @@ export interface PriceSettings {
   /** Motoros tetőárnyékoló nettó ára m²-enként. */
   roofShadeAbovePerM2Net: number
   roofShadeBelowPerM2Net: number
+  /** Matt (szatinált) üveg felára m²-enként az alapkivitelhez képest. */
+  glazingSatinPerM2Net: number
+  /** Hővisszaverő (napvédő) burkolat felára m²-enként. */
+  glazingHeatPerM2Net: number
   customColorRate: number
   /** Fa hatású (szublimációs) bevonat felára a szerkezeti árhoz képest. */
   woodColorRate: number

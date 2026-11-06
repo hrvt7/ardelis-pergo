@@ -1,7 +1,7 @@
 import { findShadeFabric, ROOF_SHADE_INFO, roofShadeArea, roofShadeSummary } from './roofShade'
 import { furnitureFit } from './furniture'
 import { PANEL, panelLayout } from './solar'
-import { ROOF_INFO, isGlazedRoof } from './roofs'
+import { ROOF_INFO, isGlazedRoof, GLAZING_INFO, effectiveGlazing, roofRise } from './roofs'
 import { isWallSide, MOUNT_CODES, MOUNT_LABELS, postPositions, sideWalls, wallLabel } from './mount'
 import { formatHuf, formatNumber, ROOF_LABELS, SIDE_NAMES } from './pricing'
 import { colorSummary } from './colors'
@@ -51,6 +51,8 @@ export function getBom(config: PergolaConfig): BomLine[] {
     ...(runs('slatAlu').length ? [{ label: 'Alumínium lécfal', value: `${runText('slatAlu')} · ${slatCount('slatAlu')} léc / mező, 25 mm hézag` }] : []),
     ...(runs('slatWood').length ? [{ label: 'Fa lécfal (hőkezelt)', value: `${runText('slatWood')} · ${slatCount('slatWood')} léc / mező, 20 mm hézag` }] : []),
     ...(profiles ? [{ label: 'Osztóprofil (félbe osztott oldal)', value: `${profiles} db · ${formatNumber(config.height, 2)} m` }] : []),
+    ...(config.pitch ? [{ label: 'Tetődőlés', value: `${config.pitch}° · hátsó él +${formatNumber(roofRise(config), 2)} m` }] : []),
+    ...(effectiveGlazing(config) ? [{ label: 'Tetőburkolat', value: GLAZING_INFO[effectiveGlazing(config)!].label + ' · ' + GLAZING_INFO[effectiveGlazing(config)!].short.toLowerCase() }] : []),
     ...(config.fans ? [{ label: 'Mennyezeti ventilátor', value: `${config.fans} db · tartógerendával, fali kapcsolóval` }] : []),
     ...(config.roofShade ? [{ label: 'Motoros tetőárnyékoló', value: `${ROOF_SHADE_INFO[config.roofShade].short} · ${formatNumber(roofShadeArea(config), 2)} m² · ${findShadeFabric(config.shadeFabric).name.toLowerCase()} ponyva, vezetősínnel, rádiós motorral` }] : []),
   ]

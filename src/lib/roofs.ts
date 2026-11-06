@@ -1,6 +1,6 @@
 // Tetőrendszerek: egyetlen igazságforrás a 3D-hez, az árhoz, a linkhez, az anyaglistához
 // és a választóhoz. A gyártó (tenant) dönti el, melyiket kínálja és milyen néven.
-import type { PriceSettings, RoofType } from '../types/pergola'
+import type { PergolaConfig, PriceSettings, RoofGlazing, RoofType } from '../types/pergola'
 
 export interface RoofInfo {
   /** Rövid kód a megosztó linkben (egy karakter, nem változhat). */
@@ -38,3 +38,22 @@ export const ROOF_INFO: Record<RoofType, RoofInfo> = {
 export const isMovableRoof = (roof: RoofType) => ROOF_INFO[roof].motion !== 'none'
 /** Bordázott (üveg / polikarbonát) tető. */
 export const isGlazedRoof = (roof: RoofType) => roof === 'glass' || roof === 'polycarbonate'
+
+/** Tetődőlés tartománya fokban (az emelkedés a mélységgel nő; 12° felett már műszaki egyeztetés kell). */
+export const PITCH_RANGE: [number, number] = [0, 12]
+
+/** A burkolatok adatai: név, rövid leírás, felár-kulcs és a 3D anyaga. */
+export const GLAZING_INFO: Record<RoofGlazing, { label: string; short: string; share: string; priceKey: keyof Pick<PriceSettings, 'glazingSatinPerM2Net' | 'glazingHeatPerM2Net'> | null }> = {
+  clear: { label: 'Tiszta', short: 'Átlátszó, maximális fény', share: 'c', priceKey: null },
+  satin: { label: 'Matt', short: 'Szatinált, szórt fény, takarás', share: 's', priceKey: 'glazingSatinPerM2Net' },
+  opal: { label: 'Opál', short: 'Tejszerű, szórt, világos', share: 'o', priceKey: null },
+  heat: { label: 'Hővisszaverő', short: 'Napvédő bevonat, kevesebb hőterhelés', share: 'h', priceKey: 'glazingHeatPerM2Net' },
+}
+
+/** Egy tetőtípushoz választható burkolatok; az első az alapkivitel. Üres, ha nincs választás. */
+export const glazingOptions = (roof: RoofType): RoofGlazing[] => roof === 'glass' ? ['clear', 'satin', 'heat'] : roof === 'polycarbonate' ? ['opal', 'clear', 'heat'] : []
+export const defaultGlazing = (roof: RoofType): RoofGlazing | undefined => glazingOptions(roof)[0]
+export const effectiveGlazing = (config: Pick<PergolaConfig, 'roof' | 'glazing'>): RoofGlazing | undefined => (config.glazing && glazingOptions(config.roof).includes(config.glazing)) ? config.glazing : defaultGlazing(config.roof)
+
+/** A tető hátsó élének emelkedése méterben (a dőlésből és a mélységből). */
+export const roofRise = (config: Pick<PergolaConfig, 'pitch' | 'depth'>) => Math.round(Math.tan((config.pitch ?? 0) * Math.PI / 180) * config.depth * 100) / 100
