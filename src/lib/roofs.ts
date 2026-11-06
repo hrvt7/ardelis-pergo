@@ -42,16 +42,27 @@ export const isGlazedRoof = (roof: RoofType) => roof === 'glass' || roof === 'po
 /** Tetődőlés tartománya fokban (az emelkedés a mélységgel nő; 12° felett már műszaki egyeztetés kell). */
 export const PITCH_RANGE: [number, number] = [0, 12]
 
-/** A burkolatok adatai: név, rövid leírás, felár-kulcs és a 3D anyaga. */
-export const GLAZING_INFO: Record<RoofGlazing, { label: string; short: string; share: string; priceKey: keyof Pick<PriceSettings, 'glazingSatinPerM2Net' | 'glazingHeatPerM2Net'> | null }> = {
-  clear: { label: 'Tiszta', short: 'Átlátszó, maximális fény', share: 'c', priceKey: null },
-  satin: { label: 'Matt', short: 'Szatinált, szórt fény, takarás', share: 's', priceKey: 'glazingSatinPerM2Net' },
-  opal: { label: 'Opál', short: 'Tejszerű, szórt, világos', share: 'o', priceKey: null },
-  heat: { label: 'Hővisszaverő', short: 'Napvédő bevonat, kevesebb hőterhelés', share: 'h', priceKey: 'glazingHeatPerM2Net' },
+/** A burkolatok adatai: név, rövid leírás, tájékoztató fény- és hőáteresztés, valamint a 3D anyaga. */
+export type GlazingInfo = { label: string; short: string; share: string; light: string; solar: string }
+export const GLAZING_INFO: Record<RoofGlazing, GlazingInfo> = {
+  clear: { label: 'Tiszta', short: 'Átlátszó, maximális fény', share: 'c', light: '~88%', solar: '~78%' },
+  satin: { label: 'Matt', short: 'Szatinált, szórt fény, takarás', share: 's', light: '~72%', solar: '~70%' },
+  opal: { label: 'Opál', short: 'Tejszerű, szórt, világos', share: 'o', light: '~55%', solar: '~58%' },
+  heat: { label: 'Hővisszaverő', short: 'Napvédő bevonat, kevesebb hőterhelés', share: 'h', light: '~62%', solar: '~35%' },
+  tinted: { label: 'Füstös', short: 'Színezett, tompított fény és tűző nap', share: 'f', light: '~40%', solar: '~48%' },
+}
+
+/** A burkolat felárának kulcsa az adott tetőtípuson (polikarbonátnál az opál az alapkivitel, ott nincs felár). */
+export function glazingPriceKey(roof: RoofType, glazing: RoofGlazing): keyof Pick<PriceSettings, 'glazingSatinPerM2Net' | 'glazingHeatPerM2Net' | 'glazingOpalPerM2Net' | 'glazingTintedPerM2Net'> | null {
+  if (glazing === 'satin') return 'glazingSatinPerM2Net'
+  if (glazing === 'heat') return 'glazingHeatPerM2Net'
+  if (glazing === 'tinted') return 'glazingTintedPerM2Net'
+  if (glazing === 'opal') return roof === 'glass' ? 'glazingOpalPerM2Net' : null
+  return null
 }
 
 /** Egy tetőtípushoz választható burkolatok; az első az alapkivitel. Üres, ha nincs választás. */
-export const glazingOptions = (roof: RoofType): RoofGlazing[] => roof === 'glass' ? ['clear', 'satin', 'heat'] : roof === 'polycarbonate' ? ['opal', 'clear', 'heat'] : []
+export const glazingOptions = (roof: RoofType): RoofGlazing[] => roof === 'glass' ? ['clear', 'satin', 'opal', 'heat', 'tinted'] : roof === 'polycarbonate' ? ['opal', 'clear', 'heat', 'tinted'] : []
 export const defaultGlazing = (roof: RoofType): RoofGlazing | undefined => glazingOptions(roof)[0]
 export const effectiveGlazing = (config: Pick<PergolaConfig, 'roof' | 'glazing'>): RoofGlazing | undefined => (config.glazing && glazingOptions(config.roof).includes(config.glazing)) ? config.glazing : defaultGlazing(config.roof)
 

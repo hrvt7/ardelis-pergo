@@ -10,7 +10,7 @@ import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import type { PergolaConfig, PriceSettings } from '@/types/pergola'
 
-const LINE_ICONS: Record<EnergyLine['id'], LucideIcon> = { heaters: Flame, led: Lightbulb, motors: Zap, speakers: Speaker, fans: Fan, standby: Radio }
+const LINE_ICONS: Record<EnergyLine['id'], LucideIcon> = { heaters: Flame, led: Lightbulb, motors: Zap, speakers: Speaker, fans: Fan, climate: Flame, standby: Radio }
 const kwhText = (value: number) => `${formatNumber(value, value < 10 ? 1 : 0)} kWh`
 const ftPerKwh = (value: number) => `${value.toLocaleString('hu-HU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ft/kWh`
 

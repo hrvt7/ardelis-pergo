@@ -1,4 +1,4 @@
-import { effectiveGlazing, GLAZING_INFO } from './roofs'
+import { effectiveGlazing, GLAZING_INFO, glazingPriceKey } from './roofs'
 import { findShadeFabric, ROOF_SHADE_INFO, roofShadeArea, supportsRoofShade } from './roofShade'
 import { PANEL, panelLayout } from './solar'
 import { describeColor, roofPartName, type ColorInfo } from './colors'
@@ -42,6 +42,8 @@ export const DEFAULT_PRICES: PriceSettings = {
   roofShadeBelowPerM2Net: 38000,
   glazingSatinPerM2Net: 12000,
   glazingHeatPerM2Net: 22000,
+  glazingOpalPerM2Net: 16000,
+  glazingTintedPerM2Net: 18000,
   pitchPerDegreePerMeterNet: 1800,
   customColorRate: 0.06,
   woodColorRate: 0.18,
@@ -280,7 +282,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
   }
 
   const glazing = effectiveGlazing(config)
-  const glazingKey = glazing ? GLAZING_INFO[glazing].priceKey : null
+  const glazingKey = glazing ? glazingPriceKey(config.roof, glazing) : null
   if (glazing && glazingKey && prices[glazingKey] > 0) {
     const glazingArea = Math.round(config.width * config.depth * 100) / 100
     lines.push({

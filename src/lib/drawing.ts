@@ -7,7 +7,7 @@ import { glassPanels } from './glass'
 import { hasBackWall, postPositions, wallSides } from './mount'
 import { isGlazedRoof, roofRise } from './roofs'
 import { PANEL, panelLayout } from './solar'
-import { sideSegments, type SideSegment } from './sides'
+import { doorLeafWidth, sideSegments, type SideSegment } from './sides'
 import { FAN_DIAMETER, fanLayout } from './fans'
 import type { PergolaConfig, SideKey, SideType } from '../types/pergola'
 
@@ -361,7 +361,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
         svg.rect(a, bottom - 0.4, b - a, 0.4, { width: 0.13, fill: MID })
       } else if (type === 'door' || type === 'doorSliding') {
         const len = (b - a) / k
-        const leaf = Math.min(len, type === 'door' ? 0.95 : Math.max(1.0, len / 2)) * k
+        const leaf = doorLeafWidth(type, len) * k
         const fixedW = (b - a) - leaf
         if (fixedW > 0.3 * k) {
           const count = Math.max(1, Math.round(fixedW / k / 1.5))
@@ -372,7 +372,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
         svg.rect(lx + 0.1, top + 0.2, leaf - 0.2, bottom - top - 0.4, { stroke: INK, width: 0.3, fill: '#ffffff' })
         svg.rect(lx + 0.1 + 0.05 * k, top + 0.2 + 0.05 * k, leaf - 0.2 - 0.1 * k, bottom - top - 0.4 - 0.1 * k, { stroke: MID, width: 0.13, fill: '#eef3f3' })
         const mid = (top + bottom) / 2
-        if (type === 'door') svg.line(lx + 0.1 + 0.07 * k, mid - 1.6, lx + 0.1 + 0.07 * k, mid + 1.6, 0.5, INK)
+        if (type === 'door') svg.line(lx + leaf - 0.1 - 0.07 * k, mid - 1.6, lx + leaf - 0.1 - 0.07 * k, mid + 1.6, 0.5, INK)
         else { svg.line(lx + 1.5, mid, lx + leaf - 1.5, mid, 0.2, MID); svg.line(lx + leaf - 3, mid - 0.9, lx + leaf - 1.5, mid, 0.2, MID); svg.line(lx + leaf - 3, mid + 0.9, lx + leaf - 1.5, mid, 0.2, MID) }
         svg.rect(a, bottom - 0.4, b - a, 0.4, { width: 0.13, fill: MID })
       } else if (type === 'louver') {
@@ -507,18 +507,18 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       const count = Math.max(1, Math.round(length / 1.5))
       for (let p = 1; p < count; p += 1) seg(start + (p * length) / count - 0.02, start + (p * length) / count + 0.02, 0, 0.9, INK)
     } else if (type === 'door' || type === 'doorSliding') {
-      const leaf = Math.min(length, type === 'door' ? 0.95 : Math.max(1.0, length / 2))
+      const leaf = doorLeafWidth(type, length)
       seg(start, start + length - (type === 'door' ? leaf : 0), 0, 0.35, INK)
       if (type === 'door') {
-        // Ajtószárny 90°-ban kinyitva és a nyitási ív.
-        const hinge = start + length
+        // Ajtószárny 90°-ban kinyitva és a nyitási ív: a zsanér a fix tábla felőli oldalon van, az ajtó a tér belsejébe nyílik.
+        const hinge = start + length - leaf
         const [hx, hy] = P(hinge, 0)
         const [ex, ey] = P(hinge, leaf)
         svg.line(hx, hy, ex, ey, 0.45, INK, undefined, 'd-leaf')
-        let previous = P(hinge - leaf, 0)
+        let previous = P(hinge + leaf, 0)
         for (let step = 1; step <= 6; step += 1) {
           const t = (step / 6) * (Math.PI / 2)
-          const next = P(hinge - leaf * Math.cos(t), leaf * Math.sin(t))
+          const next = P(hinge + leaf * Math.cos(t), leaf * Math.sin(t))
           svg.line(previous[0], previous[1], next[0], next[1], 0.1, SOFT, undefined, `d-arc a${step}`)
           previous = next
         }

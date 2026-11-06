@@ -27,7 +27,7 @@ import { WOOD_HEXES } from '@/lib/colors'
 import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
 import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
-import { sideSegments } from '@/lib/sides'
+import { doorLeafWidth, sideSegments } from '@/lib/sides'
 import { hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
@@ -483,13 +483,14 @@ function getSpillTexture() {
 }
 
 /**
- * Üvegfal ajtóval: egy fix táblás rész és egy ajtószárny a fal végén.
- * Nyíló: a szárny a zsanér körül fordul 80°-ot; toló: a szárny a fix tábla mögé csúszik.
- * A nyitást a `scene.doorOpen` vezérli (kattintásra vált), a mozgás csillapított, és a szárny nyitáskor enyhén „megrebben".
+ * Üvegfal ajtóval: fix táblák és egy ajtószárny a fal végén. Mindkét típus a tér belseje felé mozog (oldalanként számolt irány).
+ * Nyíló: a szárny a fix tábla felőli zsanér körül ~86°-ot fordul; toló: a szárny a fix tábla mögé csúszik a falszakaszon belül.
+ * A nyitást a `scene.doorOpen` vezérli (kattintásra vált), a mozgás csillapított.
  */
-function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow }: { length: number; height: number; color: string; sliding: boolean; opened: boolean; onToggle: () => void; look: { tint: string; opacity: number }; glow: number }) {
+function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow, inward }: { length: number; height: number; color: string; sliding: boolean; opened: boolean; onToggle: () => void; look: { tint: string; opacity: number }; glow: number; inward: 1 | -1 }) {
   const usableHeight = height - 0.27
-  const leafWidth = sliding ? Math.min(length - 0.1, Math.max(1.0, length / 2)) : Math.min(0.95, length - 0.2)
+  // Toló: a szárny legfeljebb a fal fele, hogy a fix tábla előtt végig elférjen. Nyíló: kb. 0,95 m-es szárny.
+  const leafWidth = doorLeafWidth(sliding ? 'doorSliding' : 'door', length)
   const fixedLength = Math.max(0, length - leafWidth)
   const fixedCount = fixedLength > 0.3 ? Math.max(1, Math.round(fixedLength / 1.5)) : 0
   const paneWidth = fixedCount ? fixedLength / fixedCount : 0
@@ -498,8 +499,10 @@ function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow
   const progress = useRef(opened ? 1 : 0)
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
-  const slide = Math.max(0, Math.min(leafWidth * 0.94, fixedLength > 0.3 ? fixedLength : leafWidth * 0.94))
-  const hingeX = length / 2 - 0.02
+  // A tolószárny csak a fix tábla mögé (a falszakaszon belül) csúszik, soha nem lóg ki a keretből.
+  const slide = Math.max(0, Math.min(leafWidth * 0.96, fixedLength - 0.04))
+  // Nyíló ajtó: a zsanér a fix tábla felőli oldalon van, a szabad él a sarok felé esik. Így az ajtó a tér belsejébe nyílik, nem csapódik az oldalfalhoz.
+  const hingeX = length / 2 - leafWidth + 0.01
   const leafHeight = usableHeight - 0.02
   useFrame((_, delta) => {
     const target = opened ? 1 : 0
@@ -507,38 +510,39 @@ function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow
     if (moving) progress.current = REDUCED ? target : THREE.MathUtils.damp(progress.current, target, 4.5, delta)
     else progress.current = target
     if (leaf.current) {
-      // Nyíló ajtónál enyhe túllendülés (ease-out-back jellegű), majd megáll.
-      const eased = progress.current
-      if (sliding) leaf.current.position.x = -slide * eased
-      else leaf.current.rotation.y = -eased * 1.4
+      if (sliding) leaf.current.position.x = length / 2 - leafWidth / 2 - slide * progress.current
+      else leaf.current.rotation.y = -inward * progress.current * 1.5
     }
     if (spill.current) spill.current.opacity = progress.current * glow
     if (moving) { refreshShadows(gl); invalidate() }
   })
+  const handleX = sliding ? -leafWidth / 2 + 0.06 : leafWidth / 2 - 0.09
   const leafBody = <>
     <mesh position={[0, 0, 0]} renderOrder={2}><boxGeometry args={[leafWidth - 0.1, leafHeight - 0.12, 0.012]} /><LookGlass look={look} /></mesh>
     <Beam args={[0.055, leafHeight, 0.05]} position={[-leafWidth / 2 + 0.0275, 0, 0]} color={color} radius={0.006} />
     <Beam args={[0.055, leafHeight, 0.05]} position={[leafWidth / 2 - 0.0275, 0, 0]} color={color} radius={0.006} />
     <Beam args={[leafWidth, 0.07, 0.05]} position={[0, leafHeight / 2 - 0.035, 0]} color={color} radius={0.006} />
     <Beam args={[leafWidth, 0.09, 0.05]} position={[0, -leafHeight / 2 + 0.045, 0]} color={color} radius={0.006} />
-    <mesh position={[sliding ? -leafWidth / 2 + 0.06 : -leafWidth / 2 + 0.09, 0, 0.035]} rotation={[0, 0, 0]}><boxGeometry args={[0.022, 0.2, 0.022]} /><meshStandardMaterial color="#8a9294" metalness={0.9} roughness={0.22} /></mesh>
-    <mesh position={[sliding ? -leafWidth / 2 + 0.06 : -leafWidth / 2 + 0.09, 0, -0.035]}><boxGeometry args={[0.022, 0.2, 0.022]} /><meshStandardMaterial color="#8a9294" metalness={0.9} roughness={0.22} /></mesh>
+    <mesh position={[handleX, 0, 0.035]}><boxGeometry args={[0.022, 0.2, 0.022]} /><meshStandardMaterial color="#8a9294" metalness={0.9} roughness={0.22} /></mesh>
+    <mesh position={[handleX, 0, -0.035]}><boxGeometry args={[0.022, 0.2, 0.022]} /><meshStandardMaterial color="#8a9294" metalness={0.9} roughness={0.22} /></mesh>
   </>
   const leafCenterY = usableHeight / 2 + 0.1
+  // Fényfolt a belső padlón: a belső oldal felé (inward) esik, a küszöbtől indulva.
+  const spillZ = inward * 0.95
   return <group onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>
     {Array.from({ length: fixedCount }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 0.5), leafCenterY, 0]} renderOrder={2}><boxGeometry args={[paneWidth - 0.012, usableHeight - 0.04, 0.01]} /><LookGlass look={look} /></mesh>)}
-    {Array.from({ length: Math.max(0, fixedCount - 1) }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 1), leafCenterY, 0]}><boxGeometry args={[0.008, usableHeight - 0.06, 0.016]} /><meshStandardMaterial color="#aab4b4" metalness={0.5} roughness={0.35} /></mesh>)}
+    {Array.from({ length: Math.max(0, fixedCount - 1) }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 1), leafCenterY, 0]}><boxGeometry args={[0.008, usableHeight - 0.06, 0.016]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.4} /></mesh>)}
     {sliding
-      ? <group ref={leaf} position={[length / 2 - leafWidth / 2, leafCenterY, 0.045]}>{leafBody}</group>
-      : <group position={[hingeX, leafCenterY, 0]}><group ref={leaf}><group position={[-(leafWidth - 0.02) / 2, 0, 0]}>{leafBody}</group></group></group>}
+      ? <group ref={leaf} name="door-leaf" position={[length / 2 - leafWidth / 2, leafCenterY, inward * 0.045]}>{leafBody}</group>
+      : <group position={[hingeX, leafCenterY, 0]}><group ref={leaf} name="door-leaf"><group position={[(leafWidth - 0.02) / 2, 0, 0]}>{leafBody}</group></group></group>}
     {/* Nyitott ajtónál meleg fényfolt a belső padlón (a belső tér „kinyílik"). */}
-    <mesh position={[length / 2 - leafWidth / 2, 0.05, -0.95]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1}><planeGeometry args={[leafWidth + 0.7, 1.9]} /><meshBasicMaterial ref={spill} map={getSpillTexture()} color="#ffe3b8" transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} /></mesh>
+    <mesh position={[length / 2 - leafWidth / 2, 0.05, spillZ]} rotation={[-Math.PI / 2, 0, inward > 0 ? Math.PI : 0]} renderOrder={1}><planeGeometry args={[leafWidth + 0.7, 1.9]} /><meshBasicMaterial ref={spill} map={getSpillTexture()} color="#ffe3b8" transparent opacity={0} depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} /></mesh>
     {/* Keret: küszöb, szemöldökfa, szélső oszlopprofilok. */}
     <Beam args={[length, 0.07, 0.08]} position={[0, 0.075, 0]} color={color} radius={0.006} />
     <Beam args={[length, 0.06, 0.08]} position={[0, height - 0.14, 0]} color={color} radius={0.006} />
     <Beam args={[0.04, usableHeight, 0.06]} position={[-length / 2 + 0.02, leafCenterY, 0]} color={color} radius={0.005} />
     <Beam args={[0.04, usableHeight, 0.06]} position={[length / 2 - 0.02, leafCenterY, 0]} color={color} radius={0.005} />
-    {sliding && <Beam args={[leafWidth + slide, 0.025, 0.1]} position={[length / 2 - (leafWidth + slide) / 2, 0.11, 0.045]} color={color} radius={0.004} />}
+    {sliding && <Beam args={[leafWidth + slide, 0.025, 0.1]} position={[length / 2 - (leafWidth + slide) / 2, 0.11, inward * 0.045]} color={color} radius={0.004} />}
   </group>
 }
 
@@ -563,13 +567,15 @@ function SlatWall({ length, height, color, wood }: { length: number; height: num
 
 /** Félbe osztott oldal közepén függőleges osztóprofil (ahol nincs középoszlop). */
 const MULLION = 0.06
+/** Az oldalfal helyi z tengelyének a tér belseje felé mutató előjele (az oldalak forgatása miatt oldalanként más). */
+const INWARD: Record<SideKey, 1 | -1> = { front: -1, back: 1, left: 1, right: -1 }
 
-function SideSegmentWall({ type, length, height, color, config, scene, onSceneChange, label }: { type: SideType; length: number; height: number; color: string; config: PergolaConfig; scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void; label: boolean }) {
+function SideSegmentWall({ type, length, height, color, config, scene, onSceneChange, label, inward }: { inward: 1 | -1; type: SideType; length: number; height: number; color: string; config: PergolaConfig; scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void; label: boolean }) {
   if (type === 'zip') return <ZipScreen length={length} height={height} open={config.screenOpen} color={color} wind={scene.wind} />
   if (type === 'glass' || type === 'glassFramed') return <GlassWall length={length} height={height} color={color} framed={type === 'glassFramed'} label={label} opened={scene.glassOpen} onToggle={() => onSceneChange({ glassOpen: !scene.glassOpen })} />
   const look = wallGlassLook(config.wallGlazing, config.building)
   if (type === 'glassFixed') return <FixedGlassWall length={length} height={height} color={color} look={look} />
-  if (type === 'door' || type === 'doorSliding') return <DoorWall length={length} height={height} color={color} look={look} sliding={type === 'doorSliding'} glow={scene.time === 'night' ? 0.5 : scene.time === 'sunset' ? 0.32 : 0.18} opened={scene.doorOpen} onToggle={() => onSceneChange({ doorOpen: !scene.doorOpen })} />
+  if (type === 'door' || type === 'doorSliding') return <DoorWall length={length} height={height} color={color} look={look} inward={inward} sliding={type === 'doorSliding'} glow={scene.time === 'night' ? 0.5 : scene.time === 'sunset' ? 0.32 : 0.18} opened={scene.doorOpen} onToggle={() => onSceneChange({ doorOpen: !scene.doorOpen })} />
   if (type === 'louver') return <LouverWall length={length} height={height} color={color} label={label} opened={scene.wallLouverOpen} onToggle={() => onSceneChange({ wallLouverOpen: !scene.wallLouverOpen })} />
   if (type === 'slatAlu' || type === 'slatWood') return <SlatWall length={length} height={height} color={color} wood={type === 'slatWood'} />
   return null
@@ -628,7 +634,7 @@ const COOL_HEX = '#bfe6ff'
 const HEAT_HEX = '#ffc48a'
 const PARTICLES = 22
 
-/** Légáramlás: apró részecskék áramlanak a beltéri egységből (hűtés: előre-lefelé, fűtés: erősen lefelé). */
+/** Légáramlás: apró részecskék áramlanak a mennyezeti egységből négy irányba (hűtés: távolabbra, fűtés: erősen lefelé). */
 function AirStream({ run }: { run: 'cool' | 'heat' }) {
   const mesh = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
@@ -641,7 +647,12 @@ function AirStream({ run }: { run: 'cool' | 'heat' }) {
     seeds.forEach((seed, index) => {
       const life = REDUCED ? seed.phase : (t * seed.speed * 0.5 + seed.phase) % 1
       const dist = life * 1.5
-      dummy.position.set(seed.sx * 0.8 * (0.4 + life), -0.14 - (run === 'heat' ? 0.55 : 0.2) * dist * 1.4, 0.12 + dist * (run === 'heat' ? 0.55 : 1))
+      // Négyirányú kifúvás a kazettából: oldalanként (±x, ±z) más-más irányba, hűtésnél távolabbra, fűtésnél inkább lefelé.
+      const d = index % 4
+      const dx = d === 0 ? 1 : d === 1 ? -1 : 0
+      const dz = d === 2 ? 1 : d === 3 ? -1 : 0
+      const reach = 0.34 + dist * (run === 'heat' ? 0.55 : 1)
+      dummy.position.set(dx * reach + dz * seed.sx * 0.5, -0.06 - (run === 'heat' ? 0.55 : 0.25) * dist * 1.4, dz * reach + dx * seed.sx * 0.5)
       dummy.scale.setScalar(Math.max(0.01, Math.sin(Math.PI * life)) * (0.7 + seed.speed * 0.5))
       dummy.updateMatrix()
       m.setMatrixAt(index, dummy.matrix)
@@ -655,23 +666,35 @@ function AirStream({ run }: { run: 'cool' | 'heat' }) {
   </instancedMesh>
 }
 
-/** Split klíma: beltéri egység a falon / gerendán, kültéri egység a terasz mellett. Bekapcsolva a lamella kinyílik, a kijelző színt vált, a ventilátor forog, légáramlás indul. */
-function SplitUnits({ width, depth, height, mount, run }: { width: number; depth: number; height: number; mount: PergolaConfig['mount']; run: SceneSettings['climateRun'] }) {
-  const wall = hasBackWall(mount)
+/**
+ * Klíma: mennyezeti kazettás beltéri egység a tető alatt (nem a házfalra vagy üvegre szerelve, így a ház kialakításától független),
+ * kültéri egység a terasz mellett, a háznál. Bekapcsolva a négy terelőlap kinyílik, a kijelző színt vált, a ventilátor forog, légáramlás indul.
+ */
+function SplitUnits({ config, run }: { config: PergolaConfig; run: SceneSettings['climateRun'] }) {
+  const { width, depth, height, mount } = config
   const outdoorSide = sideWalls(mount).includes('right') ? -1 : 1
   const on = run !== 'off'
-  const flap = useRef<THREE.Mesh>(null)
+  const flaps = useRef<(THREE.Mesh | null)[]>([])
   const fan = useRef<THREE.Group>(null)
   const open = useRef(0)
   const speed = useRef(0)
   const tick = useThrottledInvalidate()
   const invalidate = useThree((state) => state.invalidate)
+  // A kazetta helye: a hátsó harmadban, a mennyezeti ventilátoroktól (ha vannak) legalább 1,1 m-re.
+  const fans = fanLayout(config).positions
+  const candidates: [number, number][] = [[0, -depth * 0.28], [width * 0.28, -depth * 0.28], [-width * 0.28, -depth * 0.28], [width * 0.28, 0], [-width * 0.28, 0]]
+  const [x, z] = candidates.find(([cx, cz]) => fans.every(([fx, fz]) => Math.hypot(cx - fx, cz - fz) > 1.1)) ?? candidates[1]
+  // Dőlt tetőnél a tető alsó síkja hátrafelé emelkedik: a kazetta követi a dőlést.
+  const rise = roofRise(config)
+  const slope = rise / depth
+  // A tetőszerkezet alsó éle az oszlopmagasság felett kb. 0,13 m-re van (üvegtető gerendái); a kazetta ide akasztva lóg (a doboz fele magas: 0,14 m).
+  const ceilingY = height + 0.06 + rise * ((depth / 2 - z) / depth)
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05)
     const goal = on ? 1 : 0
     const moving = Math.abs(open.current - goal) > 0.002
     open.current = REDUCED ? goal : THREE.MathUtils.damp(open.current, goal, 3.5, dt)
-    if (flap.current) flap.current.rotation.x = -open.current * 0.75
+    flaps.current.forEach((flap, index) => { if (flap) { const a = open.current * 0.6; if (index < 2) flap.rotation.z = (index === 0 ? 1 : -1) * a; else flap.rotation.x = (index === 2 ? -1 : 1) * a } })
     speed.current = THREE.MathUtils.damp(speed.current, on ? (REDUCED ? 1 : 14) : 0, 2, dt)
     if (fan.current && speed.current > 0.01) fan.current.rotation.z += dt * speed.current
     if (moving) invalidate()
@@ -679,16 +702,25 @@ function SplitUnits({ width, depth, height, mount, run }: { width: number; depth
   })
   const led = run === 'heat' ? '#ff8a3d' : run === 'cool' ? '#59a8ff' : '#59c28a'
   return <>
-    <group position={[width * 0.22, height - 0.42, -depth / 2 + (wall ? 0.12 : 0.16)]}>
-      <RoundedBox args={[0.92, 0.29, 0.2]} radius={0.05} smoothness={4} castShadow><meshStandardMaterial color="#f1f2f0" roughness={0.42} /></RoundedBox>
-      <mesh ref={flap} position={[0, -0.12, 0.1]}><boxGeometry args={[0.8, 0.02, 0.05]} /><meshStandardMaterial color="#cfd3d1" roughness={0.5} /></mesh>
-      <mesh position={[0.34, 0.06, 0.102]}><circleGeometry args={[0.012, 12]} /><meshStandardMaterial color={led} emissive={led} emissiveIntensity={on ? 1.6 : 0.9} toneMapped={false} /></mesh>
-      {run !== 'off' && <AirStream run={run} />}
+    <group name="split-indoor" position={[x, ceilingY, z]} rotation={[Math.atan(slope), 0, 0]}>
+      <RoundedBox args={[0.62, 0.14, 0.62]} radius={0.03} smoothness={4} castShadow><meshStandardMaterial color="#f3f4f2" roughness={0.4} /></RoundedBox>
+      <mesh position={[0, -0.073, 0]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.36, 0.36]} /><meshStandardMaterial color="#dfe2e0" roughness={0.6} /></mesh>
+      {/* Négy terelőlap (az oldalélek mentén) */}
+      <mesh ref={(n) => { flaps.current[0] = n }} position={[0.31, -0.07, 0]}><boxGeometry args={[0.02, 0.025, 0.5]} /><meshStandardMaterial color="#cfd3d1" roughness={0.5} /></mesh>
+      <mesh ref={(n) => { flaps.current[1] = n }} position={[-0.31, -0.07, 0]}><boxGeometry args={[0.02, 0.025, 0.5]} /><meshStandardMaterial color="#cfd3d1" roughness={0.5} /></mesh>
+      <mesh ref={(n) => { flaps.current[2] = n }} position={[0, -0.07, 0.31]}><boxGeometry args={[0.5, 0.025, 0.02]} /><meshStandardMaterial color="#cfd3d1" roughness={0.5} /></mesh>
+      <mesh ref={(n) => { flaps.current[3] = n }} position={[0, -0.07, -0.31]}><boxGeometry args={[0.5, 0.025, 0.02]} /><meshStandardMaterial color="#cfd3d1" roughness={0.5} /></mesh>
+      <mesh position={[0.26, -0.074, 0.26]} rotation={[Math.PI / 2, 0, 0]}><circleGeometry args={[0.013, 12]} /><meshStandardMaterial color={led} emissive={led} emissiveIntensity={on ? 1.6 : 0.9} toneMapped={false} /></mesh>
+      {run !== 'off' && <group position={[0, -0.08, 0]}><AirStream run={run} /></group>}
     </group>
-    <group position={[outdoorSide * (width / 2 + 0.5), 0.3, -depth / 2 + 0.35]}>
-      <RoundedBox args={[0.82, 0.58, 0.32]} radius={0.025} smoothness={3} castShadow><meshStandardMaterial color="#d9dcda" roughness={0.55} metalness={0.15} /></RoundedBox>
-      <mesh position={[0, 0, 0.162]}><circleGeometry args={[0.2, 24]} /><meshStandardMaterial color="#202526" roughness={0.7} /></mesh>
-      <group ref={fan} position={[0, 0, 0.166]}>{[0, 1, 2].map((blade) => <mesh key={blade} rotation={[0, 0, (blade * Math.PI * 2) / 3]} position={[0, 0, 0]}><planeGeometry args={[0.07, 0.34]} /><meshStandardMaterial color="#8b9496" side={THREE.DoubleSide} /></mesh>)}</group>
+    {/* Kültéri egység: a hátsó sarokban, betonlapon, a háznál (a bejárattól és az ültetett növényektől távol). */}
+    <group name="split-outdoor" position={[outdoorSide * (width / 2 + 1.2), 0, -depth / 2 + 0.3]}>
+      <mesh position={[0, 0.02, 0]} receiveShadow><boxGeometry args={[0.95, 0.04, 0.5]} /><meshStandardMaterial color="#9a9d99" roughness={0.9} /></mesh>
+      <group position={[0, 0.34, 0]}>
+        <RoundedBox args={[0.82, 0.58, 0.32]} radius={0.025} smoothness={3} castShadow><meshStandardMaterial color="#d9dcda" roughness={0.55} metalness={0.15} /></RoundedBox>
+        <mesh position={[0, 0, 0.162]}><circleGeometry args={[0.2, 24]} /><meshStandardMaterial color="#202526" roughness={0.7} /></mesh>
+        <group ref={fan} position={[0, 0, 0.166]}>{[0, 1, 2].map((blade) => <mesh key={blade} rotation={[0, 0, (blade * Math.PI * 2) / 3]}><planeGeometry args={[0.07, 0.34]} /><meshStandardMaterial color="#555c5e" roughness={0.6} side={THREE.DoubleSide} /></mesh>)}</group>
+      </group>
     </group>
   </>
 }
@@ -806,7 +838,7 @@ function SidePlacement({ side, config, scene, color, onSelect, onSceneChange, la
       const key = segment.type === 'glassFramed' ? 'glass' : segment.type
       const label = !labelled.has(key)
       if (label) labelled.add(key)
-      return <group key={`${index}-${segment.type}`} position={[x, 0, 0]}><BuildIn height={height} settled={settled} delay={config.building ? ({ front: 0, left: 1, right: 2, back: 3 }[side]) * 0.12 + (segment.type === 'door' || segment.type === 'doorSliding' ? 0.22 : 0) : 0}><SideSegmentWall type={segment.type} length={segmentLength} height={height} color={color} config={config} scene={scene} onSceneChange={onSceneChange} label={label} /></BuildIn></group>
+      return <group key={`${index}-${segment.type}`} position={[x, 0, 0]}><BuildIn height={height} settled={settled} delay={config.building ? ({ front: 0, left: 1, right: 2, back: 3 }[side]) * 0.12 + (segment.type === 'door' || segment.type === 'doorSliding' ? 0.22 : 0) : 0}><SideSegmentWall type={segment.type} length={segmentLength} height={height} color={color} config={config} scene={scene} onSceneChange={onSceneChange} label={label} inward={INWARD[side]} /></BuildIn></group>
     })}
     {!isHorizontal && !allOpen && roofRise(config) > 0 && <GableInfill depth={depth} height={height} rise={roofRise(config)} glassy={segments.some((segment) => segment.type === 'glass' || segment.type === 'glassFramed' || segment.type === 'glassFixed')} color={color} />}
     {split && !midPost && <Beam args={[MULLION, height - 0.1, 0.09]} position={[0, (height - 0.1) / 2, 0]} color={color} radius={0.008} />}
@@ -1004,7 +1036,9 @@ function GlazedRoof({ width, depth, height, color, kind, glazing }: { width: num
         <boxGeometry args={[bay - 0.05, glass ? 0.012 : 0.016, length - 0.02]} />
         {glazing === 'heat'
           ? <GlassMaterial tint={glass ? '#7fa6b8' : '#b9c4c4'} opacity={glass ? 0.52 : 0.62} envMapIntensity={2.4} />
-          : glazing === 'satin'
+          : glazing === 'tinted'
+            ? <GlassMaterial tint={glass ? '#56656b' : '#6c7576'} opacity={glass ? 0.58 : 0.66} envMapIntensity={1.5} />
+            : glazing === 'satin'
             ? <meshPhysicalMaterial color="#e6eeee" roughness={0.62} transmission={0} transparent opacity={0.7} side={THREE.DoubleSide} />
             : glazing === 'opal'
               ? <meshPhysicalMaterial color="#f3f1ea" roughness={0.55} transmission={0} transparent opacity={0.78} sheen={0.2} side={THREE.DoubleSide} />
@@ -1241,7 +1275,7 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     {(() => { const labelled = new Set<string>(); return (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <ExplodePart key={side} ex={ex} dx={side === 'left' ? -1.1 : side === 'right' ? 1.1 : 0} dz={side === 'front' ? 1.1 : side === 'back' ? -1.1 : 0}><SidePlacement side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} labelled={labelled} settled={settled} /></ExplodePart>) })()}
     {config.led && tilt(<LedRamp settled={settled}>{(factor) => <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={(scene.ledLevel / 100) * factor} rgb={config.ledRgb ? scene.ledColor : null} />}</LedRamp>)}
     {config.foundation && <SlabRise settled={settled} width={width} depth={depth} />}
-    {hasSplitUnit(config.climate) && <DropIn settled={settled} delay={1.1}><SplitUnits width={width} depth={depth} height={height} mount={config.mount} run={scene.climateRun} /></DropIn>}
+    {hasSplitUnit(config.climate) && <DropIn settled={settled} delay={1.1}><SplitUnits config={config} run={scene.climateRun} /></DropIn>}
     {hasUnderfloor(config.climate) && <FloorGlow width={width} depth={depth} run={scene.climateRun} />}
     {(config.fans ?? 0) > 0 && <DropIn settled={settled}><CeilingFans config={rise ? { ...config, height: height + rise / 2 } : config} color={color} spinning={scene.fanOn} /></DropIn>}
     {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <DropIn key={index} settled={settled}><group position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={scene.heatersOn ? (night ? 3 : 0.15) : 0} toneMapped={false} /></mesh>{night && <pointLight position={[0, -0.25, 0.25]} color="#ff8a4a" intensity={scene.heatersOn ? 3.2 : 0} distance={3.2} decay={2} />}</group></DropIn> })}

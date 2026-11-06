@@ -1,6 +1,6 @@
 // Az élő 3D-jelenet elérése a Canvason kívülről (AR-export). A PergolaScene
 // regisztrálja magát, és leiratkozik, amikor a Canvas megszűnik.
-import type * as THREE from 'three'
+import * as THREE from 'three'
 
 let activeScene: THREE.Scene | null = null
 
@@ -27,6 +27,12 @@ if (typeof window !== 'undefined' && new URLSearchParams(window.location.search)
     const names: string[] = []
     activeScene?.traverse((object) => { if (object.name) names.push(object.name) })
     return names
+  }
+  // Világkoordinátás befoglaló dobozok név szerint (pl. ajtószárny, klíma): a geometria automatikus ellenőrzéséhez.
+  ;(window as Window & { __pergolaBoxes?: (name: string) => { min: number[]; max: number[] }[] }).__pergolaBoxes = (name) => {
+    const out: { min: number[]; max: number[] }[] = []
+    activeScene?.traverse((object) => { if (object.name === name) { const box = new THREE.Box3().setFromObject(object); out.push({ min: box.min.toArray().map((v) => Math.round(v * 100) / 100), max: box.max.toArray().map((v) => Math.round(v * 100) / 100) }) } })
+    return out
   }
   // Világkoordinátás befoglaló dobozok (pl. a ház homlokzata és a pergola hátsó gerendája közti rés méréséhez).
   ;(window as Window & { __pergolaWorldBoxes?: (filter?: string) => string[] }).__pergolaWorldBoxes = (filter = '') => {

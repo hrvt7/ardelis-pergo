@@ -21,7 +21,7 @@ describe('tetődőlés és tetőburkolat', () => {
   it('burkolat csak üveg- és polikarbonát tetőn érvényes, az alapkivitel elmarad', () => {
     expect(make({ roof: 'glass', glazing: 'satin' }).glazing).toBe('satin')
     expect(make({ roof: 'glass', glazing: 'clear' }).glazing).toBeUndefined()
-    expect(make({ roof: 'glass', glazing: 'opal' }).glazing).toBeUndefined()
+    expect(make({ roof: 'glass', glazing: 'opal' }).glazing).toBe('opal')
     expect(make({ roof: 'polycarbonate', glazing: 'opal' }).glazing).toBeUndefined()
     expect(make({ roof: 'polycarbonate', glazing: 'heat' }).glazing).toBe('heat')
     expect(make({ roof: 'louvered', glazing: 'heat' }).glazing).toBeUndefined()

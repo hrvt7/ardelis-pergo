@@ -79,6 +79,11 @@ export function sideSummary(config: Pick<PergolaConfig, 'sides' | 'split' | 'mou
 }
 
 /** A konfiguráció összes zárt szegmense (falak nélkül), a hosszával. */
+/** Az ajtószárny szélessége egy falszakaszon (m): közös a 3D-nek és a műszaki rajznak. Nyíló ~0,95 m; toló legfeljebb a szakasz fele (max. 1,3 m), hogy végig elférjen a fix tábla mögött. */
+export function doorLeafWidth(type: 'door' | 'doorSliding', length: number) {
+  return type === 'door' ? Math.max(0.3, Math.min(0.95, length - 0.2)) : Math.max(0.3, Math.min(length - 0.1, Math.max(0.6, Math.min(1.3, length / 2))))
+}
+
 export function closedSegments(config: Pick<PergolaConfig, 'sides' | 'split' | 'mount' | 'width' | 'depth'>) {
   return (['front', 'back', 'left', 'right'] as SideKey[]).flatMap((side) => sideSegments(config, side)
     .filter((segment) => segment.type !== 'none')

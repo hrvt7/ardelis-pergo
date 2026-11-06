@@ -1,8 +1,8 @@
 export type MountType = 'freestanding' | 'wall' | 'corner-left' | 'corner-right' | 'niche'
 export type WallFinish = 'plaster' | 'brick' | 'cedar'
 export type RoofShade = 'above' | 'below'
-/** Üveg-/polikarbonát tető burkolata: tiszta, matt (szatinált), opál (csak polikarbonát), hővisszaverő. */
-export type RoofGlazing = 'clear' | 'satin' | 'opal' | 'heat'
+/** Üveg-/polikarbonát tető burkolata: tiszta, matt (szatinált), opál (tejüveg), hővisszaverő (napvédő), füstös (színezett). */
+export type RoofGlazing = 'clear' | 'satin' | 'opal' | 'heat' | 'tinted'
 export type ShadeFabric = 'white' | 'sand' | 'grey' | 'anthracite'
 export type RoofType = 'louvered' | 'retractable' | 'fabric' | 'glass' | 'polycarbonate' | 'fixed'
 export type SideType = 'none' | 'zip' | 'glass' | 'glassFramed' | 'glassFixed' | 'door' | 'doorSliding' | 'louver' | 'slatAlu' | 'slatWood'
@@ -191,6 +191,10 @@ export interface PriceSettings {
   glazingSatinPerM2Net: number
   /** Hővisszaverő (napvédő) burkolat felára m²-enként. */
   glazingHeatPerM2Net: number
+  /** Opál (tejüveg) felára üvegtetőn m²-enként; polikarbonátnál az opál az alapkivitel. */
+  glazingOpalPerM2Net: number
+  /** Füstös (színezett) burkolat felára m²-enként. */
+  glazingTintedPerM2Net: number
   /** Dőlt tető felára: magasított hátsó oszlopok, ferde bekötés, oldalkitöltés. Ft / fok / szélesség-méter. */
   pitchPerDegreePerMeterNet: number
   /** Nyíló üvegajtó (egy db) felára az üvegfal m²-ára felett. */

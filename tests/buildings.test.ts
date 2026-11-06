@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { describeConfig } from '../server/lead'
 import { buildPdfDefinition } from '../src/lib/pdfDocument'
 import { technicalDrawing } from '../src/lib/drawing'
+import { glazingOptions } from '../src/lib/roofs'
+import { doorLeafWidth } from '../src/lib/sides'
+import { DEFAULT_USAGE, estimateEnergy } from '../src/lib/energy'
 import { availableBuildings, buildingIssues, buildingPatch, doorCount, effectiveWallGlazing, glassWallArea, permitNotes } from '../src/lib/buildings'
 import { calculatePrice } from '../src/lib/pricing'
 import { compactToJson, configToCompact } from '../src/lib/shareCode'
@@ -183,5 +186,56 @@ describe('PDF', () => {
     expect(text).toContain('Építmény típusa')
     expect(text).toContain('Padlófűtés + split klíma')
     expect(text).toContain('építéshatósági')
+  })
+})
+
+describe('üvegtető-burkolatok és ajtók (3.51)', () => {
+  const area = 5 * 4
+  const surcharge = (config: PergolaConfig) => calculatePrice(config, prices).lines.find((line) => line.id === 'glazing')?.amountNet ?? 0
+
+  it('üvegtetőn öt burkolat választható, polikarbonáton négy; felárak a ténylegesen választottra', () => {
+    expect(glazingOptions('glass')).toEqual(['clear', 'satin', 'opal', 'heat', 'tinted'])
+    expect(glazingOptions('polycarbonate')).toEqual(['opal', 'clear', 'heat', 'tinted'])
+    expect(surcharge({ ...base, glazing: undefined })).toBe(0)
+    expect(surcharge({ ...base, glazing: 'satin' })).toBe(area * prices.glazingSatinPerM2Net)
+    expect(surcharge({ ...base, glazing: 'opal' })).toBe(area * prices.glazingOpalPerM2Net)
+    expect(surcharge({ ...base, glazing: 'heat' })).toBe(area * prices.glazingHeatPerM2Net)
+    expect(surcharge({ ...base, glazing: 'tinted' })).toBe(area * prices.glazingTintedPerM2Net)
+    // polikarbonát: az opál az alapkivitel, nincs felár
+    expect(surcharge({ ...base, roof: 'polycarbonate', glazing: undefined })).toBe(0)
+  })
+
+  it('a füstös burkolat megy a megosztási linken és a normalizáción át', () => {
+    const config = conservatory({ glazing: 'tinted' })
+    expect(config.glazing).toBe('tinted')
+    const json = compactToJson(configToCompact(config))
+    expect(JSON.stringify(json)).toContain('tinted')
+    expect(getSpecCode(config).length).toBeGreaterThan(0)
+  })
+
+  it('rövid falszakasz ajtónak és tiszta üvegtető árnyékoló nélkül figyelmeztetést kap', () => {
+    const narrow = { ...conservatory(), depth: 1.0, sides: { front: 'glassFixed', back: 'none', left: 'door', right: 'glassFixed' } } as PergolaConfig
+    expect(buildingIssues(narrow).some((issue) => issue.level === 'warn' && issue.text.includes('szűk'))).toBe(true)
+    expect(buildingIssues(conservatory({ glazing: 'clear' })).some((issue) => issue.text.includes('felmelegedhet'))).toBe(true)
+    expect(buildingIssues(conservatory({ glazing: 'heat' })).some((issue) => issue.text.includes('felmelegedhet'))).toBe(false)
+  })
+})
+
+describe('ajtószárny és üzemeltetés (3.51)', () => {
+  it('az ajtószárny mérete a falszakaszhoz igazodik, a toló legfeljebb a szakasz fele', () => {
+    expect(doorLeafWidth('door', 5)).toBe(0.95)
+    expect(doorLeafWidth('door', 1.0)).toBeCloseTo(0.8)
+    expect(doorLeafWidth('doorSliding', 5)).toBe(1.3)
+    expect(doorLeafWidth('doorSliding', 2)).toBe(1)
+    expect(doorLeafWidth('doorSliding', 1.2)).toBe(0.6)
+    for (const length of [1.2, 1.6, 2, 3, 4, 5, 6]) expect(doorLeafWidth('doorSliding', length) * 2).toBeLessThanOrEqual(length + 0.001 + (length < 1.3 ? 0.6 : 0))
+  })
+
+  it('a klíma és a padlófűtés megjelenik az éves áramfogyasztásban', () => {
+    const kwh = (climate: PergolaConfig['climate']) => estimateEnergy({ ...conservatory(), climate, led: false, sensors: false }, DEFAULT_USAGE).lines.filter((line) => line.id === 'climate').reduce((sum, line) => sum + line.kwh, 0)
+    expect(kwh(undefined)).toBe(0)
+    expect(kwh('split')).toBe(900)
+    expect(kwh('underfloor')).toBeCloseTo((5 * 4 * 70 * 700) / 1000)
+    expect(kwh('both')).toBeCloseTo(900 + (5 * 4 * 70 * 700) / 1000)
   })
 })

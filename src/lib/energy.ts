@@ -47,7 +47,7 @@ const FAN_DAYS = 92
 /** Okosotthon-központ (Wi-Fi/Zigbee átjáró) készenléti fogyasztása. */
 const SMART_HOME_W = 0.9
 
-export interface EnergyLine { id: 'heaters' | 'led' | 'motors' | 'speakers' | 'fans' | 'standby'; label: string; detail: string; kwh: number }
+export interface EnergyLine { id: 'heaters' | 'led' | 'motors' | 'speakers' | 'fans' | 'climate' | 'standby'; label: string; detail: string; kwh: number }
 
 export interface EnergyEstimate {
   lines: EnergyLine[]
@@ -87,6 +87,14 @@ export function energyLines(config: PergolaConfig, usage: EnergyUsage, heaterWat
   if (config.speakers) lines.push({ id: 'speakers', label: 'Hangrendszer', detail: `${SPEAKER_W} W átlag · ${SPEAKER_HOURS} óra/év`, kwh: (SPEAKER_W * SPEAKER_HOURS) / 1000 })
   // Készenlét: vezérlő/tápegység/rádióvevő folyamatosan (Somfy TaHoma 0,92 W, io vevők ~0,4–0,5 W).
   if (config.fans) lines.push({ id: 'fans', label: 'Mennyezeti ventilátor', detail: `${config.fans} × ${FAN_W} W (DC) · ${FAN_HOURS} óra/nap, ${FAN_DAYS} nyári nap`, kwh: (config.fans * FAN_W * FAN_HOURS * FAN_DAYS) / 1000 })
+  // Zárt tér klímája és padlófűtése (tájékoztató átlag: split ~0,9 kW × 1 000 üzemóra, padlófűtés 70 W/m² × 700 óra).
+  if (config.climate === 'split' || config.climate === 'both') {
+    lines.push({ id: 'climate', label: 'Split klíma (fűtés + hűtés)', detail: '~0,9 kW átlag · ~1 000 üzemóra/év', kwh: 900 })
+  }
+  if (config.climate === 'underfloor' || config.climate === 'both') {
+    const area = config.width * config.depth
+    lines.push({ id: 'climate', label: 'Padlófűtés', detail: `${Math.round(area * 10) / 10} m² · ~70 W/m² · ~700 üzemóra/év`, kwh: (area * 70 * 700) / 1000 })
+  }
   const standbyW = (config.smartHome ? SMART_HOME_W : 0) + (config.roofShade ? 0.4 : 0) + (config.fans ? 0.3 * config.fans : 0) + (roofMotor ? 1 : 0) + zipCount * 0.45 + (config.sensors ? 1.2 : 0) + (config.led ? 0.5 : 0) + (config.speakers ? 0.5 : 0) + (config.heaters > 0 ? 0.3 : 0)
   if (standbyW > 0) lines.push({ id: 'standby', label: 'Készenlét', detail: `${standbyW.toLocaleString('hu-HU', { maximumFractionDigits: 1 })} W folyamatosan (vezérlő, tápegység, vevők)`, kwh: (standbyW * 8760) / 1000 })
   return lines

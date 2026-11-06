@@ -4,7 +4,7 @@ import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES,
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import { FanOption, RgbOption, RoofShadeOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
 import { enabledRoofs, presetConfig, tenantPrice } from '@/tenants/rules'
-import { defaultGlazing, effectiveGlazing, GLAZING_INFO, glazingOptions, PITCH_RANGE, ROOF_INFO, roofRise } from '@/lib/roofs'
+import { defaultGlazing, effectiveGlazing, GLAZING_INFO, glazingOptions, glazingPriceKey, PITCH_RANGE, ROOF_INFO, roofRise } from '@/lib/roofs'
 import { useTenant } from '@/tenants/TenantContext'
 import { getSizeRecommendation } from '@/lib/specification'
 import { closedSegments } from '@/lib/sides'
@@ -185,12 +185,13 @@ function GlazingPicker({ config, prices, onChange }: { config: PergolaConfig; pr
   if (!options.length) return null
   const current = effectiveGlazing(config)
   return <div className="glazing-picker">
-    <SectionTitle title="Tetőburkolat" hint={config.roof === 'glass' ? 'Az üveg fényáteresztését és a hőterhelést befolyásolja.' : 'A polikarbonát fényáteresztését és a hőterhelést befolyásolja.'} />
+    <SectionTitle title={config.roof === 'glass' ? 'Üveg típusa' : 'Polikarbonát típusa'} hint="Tiszta, matt, opál, hővisszaverő vagy füstös: ez dönti el, mennyi fény és hő jut be. A számok tájékoztató értékek." />
     <div className="glazing-chips" role="radiogroup" aria-label="Tetőburkolat">{options.map((id) => {
       const info = GLAZING_INFO[id]
-      const price = info.priceKey ? prices[info.priceKey] : 0
+      const priceKey = glazingPriceKey(config.roof, id)
+      const price = priceKey ? prices[priceKey] : 0
       return <button type="button" key={id} role="radio" aria-checked={current === id} className={`glazing-chip glazing-${id}${current === id ? ' selected' : ''}`} onClick={() => onChange({ glazing: id === defaultGlazing(config.roof) ? undefined : id })}>
-        <span className="glazing-swatch" aria-hidden="true" /><strong>{info.label}</strong><small>{info.short}</small><em>{price > 0 ? `+${formatHuf(price)} / m²` : 'Alapkivitel'}</em>
+        <span className="glazing-swatch" aria-hidden="true" /><strong>{info.label}</strong><small>{info.short}</small><small className="lt">Fény {info.light} · hő {info.solar}</small><em>{price > 0 ? `+${formatHuf(price)} / m²` : 'Alapkivitel'}</em>
       </button>
     })}</div>
   </div>
@@ -205,7 +206,7 @@ function RoofPicker({ config, prices, onChange }: { config: PergolaConfig; price
       const info = ROOF_INFO[roof]
       const brand = tenant.roofs[roof]!
       const delta = roof === config.roof ? 0 : tenantPrice(tenant, { ...config, roof }, prices).totalGross - current
-      return <button type="button" key={roof} className={`roof-card roof-${roof}${config.roof === roof ? ' selected' : ''}`} aria-pressed={config.roof === roof} onClick={() => onChange({ roof })}>
+      return <button type="button" key={roof} className={`roof-card roof-${roof}${config.roof === roof ? ' selected' : ''}`} aria-pressed={config.roof === roof} onClick={() => { onChange({ roof }); if (glazingOptions(roof).length && roof !== config.roof) window.setTimeout(() => document.querySelector('.glazing-picker:not(.wall-glazing)')?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }), 120) }}>
         <span className="roof-card-head"><RoofIcon roof={roof} /><span><strong>{brand.name}</strong><small>{brand.short}</small></span><em>{roof === config.roof ? 'Kiválasztva' : `${delta > 0 ? '+' : '−'}${formatHuf(Math.abs(delta))}`}</em></span>
         <span className="roof-card-text">{brand.description}</span>
         <span className="roof-card-props"><span><b>Árnyék</b>{info.shade}</span><span><b>Eső</b>{info.rain}</span><span><b>Mozgás</b>{info.motion === 'tilt' ? 'Forgatható lamellák' : info.motion === 'slide' ? 'Behúzható / nyitható' : 'Fix'}</span></span>
@@ -361,9 +362,9 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
             <SectionTitle title="Mit építesz?" hint="Nyitott pergola, zárt üvegezett veranda vagy egész éves télikert. A választás átállítja a tetőt és az oldalakat, utána minden módosítható." />
             <BuildingPicker config={config} prices={prices} onChange={onChange} />
-            <SectionTitle title="Kiinduló csomagok" hint="Egy koppintással indulhatsz, utána minden szabadon módosítható." />
-            <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} className={appliedPreset === preset.id ? 'applied' : undefined} onClick={() => { onPreset(presetConfig(tenant, preset.config)); setAppliedPreset(preset.id); window.setTimeout(() => setAppliedPreset((current) => (current === preset.id ? null : current)), 1400) }}><strong>{preset.name}</strong><span>{preset.description}</span>{appliedPreset === preset.id ? <Check size={15} /> : <ArrowRight size={15} />}</button>)}</div>
-            <SectionTitle title="Tetőrendszer" hint={isClosedBuilding(config.building) ? (config.building === 'conservatory' ? 'Télikerthez üveg- vagy fix (szigetelt) tető való: a mozgó tető nem zárható megfelelően.' : 'Verandához üveg-, polikarbonát vagy fix tető való.') : 'A pergola típusa határozza meg az árnyékolást, az esővédelmet és az árat. Az oldalak lépésében is módosítható.'} />
+            <SectionTitle title="Kiinduló csomagok" hint={isClosedBuilding(config.building) ? `A kiválasztott típushoz (${config.building === 'conservatory' ? 'télikert' : 'veranda'}) illő kiinduló terv. Utána minden szabadon módosítható.` : 'Egy koppintással indulhatsz, utána minden szabadon módosítható.'} />
+            <div className="preset-list">{(tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')).length ? tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')) : tenant.presets).map((preset) => <button type="button" key={preset.id} className={appliedPreset === preset.id ? 'applied' : undefined} onClick={() => { onPreset(presetConfig(tenant, preset.config)); setAppliedPreset(preset.id); window.setTimeout(() => setAppliedPreset((current) => (current === preset.id ? null : current)), 1400) }}><strong>{preset.name}</strong><span>{preset.description}</span>{appliedPreset === preset.id ? <Check size={15} /> : <ArrowRight size={15} />}</button>)}</div>
+            <SectionTitle title="Tetőrendszer" hint={isClosedBuilding(config.building) ? (config.building === 'conservatory' ? 'Télikerthez üveg- vagy fix (szigetelt) tető való: a mozgó tető nem zárható megfelelően.' : 'Verandához üveg-, polikarbonát vagy fix tető való.') : 'A pergola típusa határozza meg az árnyékolást, az esővédelmet és az árat.'} />
             <RoofPicker config={config} prices={prices} onChange={onChange} />
             <GlazingPicker config={config} prices={prices} onChange={onChange} />
             <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
@@ -409,13 +410,12 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           </>}
 
           {step === 'sides' && <>
-            <SectionTitle title="Melyik oldalt zárod?" hint="Koppints egy oldalra a felülnézeten vagy a 3D modellen. A középső mező a tetőrendszert mutatja: itt választhatsz tetőtípust is." />
+            <SectionTitle title="Melyik oldalt zárod?" hint="Koppints egy oldalra a felülnézeten vagy a 3D modellen. A középső mező a tetőt mutatja: itt a lamellák állását is beállíthatod." />
             <SideDiagram config={config} selected={selectedSide} roofName={tenant.roofs[config.roof]?.name ?? ''} onSelect={onSideSelect} />
             {selectedSide === 'roof' ? <>
               <div className="selected-side-head"><strong>Tetőrendszer</strong><span>{roofLabelsFor(config.roof)}</span></div>
-              <SectionTitle title="Tetőrendszer kiválasztása" hint="A pergola típusa: ez határozza meg az árnyékolást, az esővédelmet és az árat." />
-              <RoofPicker config={config} prices={prices} onChange={onChange} />
               <RoofControl config={config} onChange={onChange} />
+              <p className="split-note">A tetőtípus és az üveg/burkolat az 1. lépésben választható. <button type="button" className="text-link" onClick={() => onStepChange('size')}>Tető módosítása</button></p>
               {ROOF_INFO[config.roof].motion === 'none' && <p className="split-note">Fix tető: nincs mozgatható része.</p>}
               {(supportsRoofShade(config.roof) && tenant.extras.roofShade) || (config.roof === 'fixed' && tenant.extras.solar) ? <p className="split-note">{config.roof === 'fixed' ? 'Napelemes tető' : 'Motoros árnyékoló'} az Extrák lépésben választható.</p> : null}
             </> : sideSettings(selectedSide)}

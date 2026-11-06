@@ -79,7 +79,7 @@ function parseFlags(text: string, sideMap: Record<string, SideType>) {
     else if (flag === 'r') result.ledRgb = true
     else if (flag === 'h') result.smartHome = true
     else if (/^i\d{1,2}$/.test(flag)) result.pitch = Number(flag.slice(1))
-    else if (/^u[csoh]$/.test(flag)) result.glazing = (Object.entries(GLAZING_INFO).find(([, info]) => info.share === flag[1])?.[0]) as PergolaConfig['glazing']
+    else if (/^u[csohf]$/.test(flag)) result.glazing = (Object.entries(GLAZING_INFO).find(([, info]) => info.share === flag[1])?.[0]) as PergolaConfig['glazing']
     else if (/^[ab][a-z]$/.test(flag)) {
       result.roofShade = flag[0] === 'a' ? 'above' : 'below'
       result.shadeFabric = SHADE_FABRICS.find((item) => item.share === flag[1])?.id ?? 'white'

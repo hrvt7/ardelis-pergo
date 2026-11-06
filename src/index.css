@@ -2495,3 +2495,8 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
   .fallback-drawing .d-arc, .fallback-drawing .d-leaf { animation: none; stroke-dashoffset: 0; }
 }
 @media print { .quote-spec .q-in, .quote-spec .is-building, .quote-permit.q-in { animation: none !important; } }
+
+/* 3.51 – üvegtető: füstös burkolat, szöveges link */
+.glazing-tinted .glazing-swatch { background: linear-gradient(135deg, #4b5559, #7d898c 55%, #566064); }
+.glazing-chip .lt { display: block; margin-top: 2px; color: var(--text-secondary); font-size: 10.5px; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.text-link { background: none; border: 0; padding: 0; color: var(--accent, #d8ff72); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }

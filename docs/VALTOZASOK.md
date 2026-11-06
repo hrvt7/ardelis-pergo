@@ -1,5 +1,17 @@
 # Változások
 
+## 3.51 – Ajtók, klíma, üvegtető-típusok, hibajavítások
+
+- **Tolóajtó**: a szárny csukva is a fal közepén állt (az animáció felülírta a kiindulási helyét), nyitáskor kilógott. Most a fal végén áll csukva, a fix tábla mögé csúszik, a falszakaszon belül marad.
+- **Nyíló ajtó**: a zsanér a fix tábla felőli oldalon van, minden oldalon befelé nyílik, nem csapódik az oldalfalhoz. A mozgás és a fényfolt oldalanként számolt iránnyal fut. A műszaki rajz (alaprajz, homlokzat) ugyanezt mutatja; a szárnyméret közös (`doorLeafWidth`).
+- **Klíma**: mennyezeti kazettás beltéri egység a tető alatt (nem a házfalra/üvegajtóra szerelve), négy terelőlappal és négyirányú légáramlással; a kültéri egység betonlapon, a háznál, távolabb a növényektől. A mennyezeti ventilátorokat elkerüli, dőlt tetőt követ.
+- **Tetőtípus csak az 1. lépésben** választható; az Oldalak lépés tetőpanelje csak a lamellaállást mutatja, plusz hivatkozás az 1. lépéshez.
+- **Üveg típusa** (üveg- és polikarbonát tetőnél): tiszta, matt, opál (új felárral üvegtetőn), hővisszaverő, füstös (új). Fény- és hőáteresztési tájékoztató értékekkel, 3D anyaggal, árral, linkkel, PDF-fel. Tetőválasztáskor a lista a burkolathoz görget.
+- **Új figyelmeztetések**: túl rövid falszakasz ajtónak; tiszta/matt/opál üvegtető árnyékoló nélkül (nyári felmelegedés); télikert alapozás nélkül.
+- **Üzemeltetési költség**: a split klíma és a padlófűtés is bekerül az éves áramfogyasztásba.
+- **Kiinduló csomagok** a kiválasztott építménytípushoz illők (télikertnél nem a pergola „Alap/Komfort").
+- Teszt: `?arDebug=1` mellett a `__pergolaBoxes(név)` a nevesített objektumok (ajtószárny, klíma) világkoordinátás dobozát adja.
+
 ## 3.50 – Marketing szövegek: pergola, veranda, télikert
 
 - Nyitóoldal (`/minta`): hero felirat, bekezdés, CTA, bevezető (pergola/veranda/télikert különbség), címkék, alt/aria szövegek, GYIK-cím, záró CTA. Stílus és layout változatlan.
