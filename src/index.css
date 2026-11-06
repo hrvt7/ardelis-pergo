@@ -2112,3 +2112,4 @@ button.tr.is-open{background:rgba(216,255,114,.07);box-shadow:inset 0 0 0 1px rg
 @media (min-width: 821px) and (max-width: 1560px) {
   .weather-toolbar button:not(.view-toggle) span { display: none; } .weather-toolbar button:not(.view-toggle) { width: 40px; padding: 0; justify-content: center; }
 }
+.summary-actions .summary-action-link { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; border: 1px solid var(--surface-border); border-radius: 8px; color: var(--text-primary); text-decoration: none; font-size: 13px; }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getAdvice } from '@/lib/advice'
-import { FileDown, MessageCircle, ArrowRight, Camera, Check, ChevronRight, Clipboard, Clock3, Code2, Gauge, GitCompareArrows, LoaderCircle, PackageCheck, PencilLine, Save, Share2, Wallet } from 'lucide-react'
+import { MessageCircle, ArrowRight, Camera, Check, ChevronRight, Clipboard, Clock3, Code2, Gauge, GitCompareArrows, LoaderCircle, PackageCheck, PencilLine, Save, Share2, Wallet } from 'lucide-react'
 import PriceMix from '@/components/PriceMix'
 import { captureScene, renderShareCard, shareOrDownload } from '@/lib/showcase'
 import { colorSummary } from '@/lib/colors'
@@ -29,12 +29,10 @@ interface Props {
   onProjectName: (name: string) => void
   /** A vásárló házának leírása (a 3D beállításból) — a kérelemhez és a PDF-hez. */
   house?: string
-  onExport?: () => void
-  exporting?: boolean
   shareUrl?: string
 }
 
-export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, projectName, onProjectName, house, onExport, exporting, shareUrl }: Props) {
+export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, projectName, onProjectName, house, shareUrl }: Props) {
   const { tenant, labels: ROOF_LABELS } = useTenant()
   const [thumbnail, setThumbnail] = useState('')
   const bom = getBom(config)
@@ -78,15 +76,9 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
     catch { onNotify('A másolás nem sikerült ebben a böngészőben.') }
   }
   const advice = getAdvice(config)
-  const goLead = () => document.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${projectName.trim() || 'Pergola tervem'} – ${formatHuf(price.totalGross)} bruttó irányár\n${shareUrl ?? window.location.href}`)}`
   return (
     <div className="summary-panel">
-      <div className="summary-cta">
-        <button type="button" className="cta-primary" onClick={goLead}><PackageCheck size={18} />Felmérést kérek</button>
-        {onExport && <button type="button" onClick={onExport} disabled={exporting}>{exporting ? <LoaderCircle className="spin" size={18} /> : <FileDown size={18} />}PDF letöltése</button>}
-        <a href={whatsapp} target="_blank" rel="noopener noreferrer"><MessageCircle size={18} />WhatsApp</a>
-      </div>
       {advice.length > 0 && <ul className="advice-list" aria-label="Szakértői megjegyzések">{advice.map((item) => <li key={item.id} className={item.level}>{item.text}</li>)}</ul>}
       <section className="showroom">
         <div className="showroom-image">
@@ -105,7 +97,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
       </section>
       {onBudget && <button type="button" className="budget-trigger is-summary" onClick={onBudget}><Wallet size={15} /><span><strong>Van keretösszeged?</strong><small>Megmutatjuk, mi fér bele</small></span></button>}
       {onEnergy && energyCost ? <button type="button" className="energy-trigger is-summary" onClick={onEnergy}><Gauge size={15} /><span><strong>Üzemeltetés ≈ {formatHuf(energyCost)} / év</strong><small>Áramköltség valós tarifával · részletek</small></span><ChevronRight size={14} /></button> : null}
-      <div className="summary-actions"><button type="button" onClick={copy}><Clipboard size={15} />Összefoglaló másolása</button><button type="button" onClick={() => onSave('A')}><Save size={15} />Mentés A</button><button type="button" onClick={() => onSave('B')}><Save size={15} />Mentés B</button></div>
+      <div className="summary-actions"><button type="button" onClick={copy}><Clipboard size={15} />Összefoglaló másolása</button><a className="summary-action-link" href={whatsapp} target="_blank" rel="noopener noreferrer"><MessageCircle size={15} />WhatsApp</a><button type="button" onClick={() => onSave('A')}><Save size={15} />Mentés A</button><button type="button" onClick={() => onSave('B')}><Save size={15} />Mentés B</button></div>
 
       <section className="summary-section"><div className="summary-section-title"><Code2 size={17} /><h3>Specifikáció</h3></div><div className="spec-code"><span>Konfigurációs kód</span><strong>{getSpecCode(config)}</strong></div><dl className="bom-list">{bom.map((line) => <div key={line.label}><dt>{line.label}</dt><dd>{line.value}</dd></div>)}</dl><div className="delivery-estimate"><Clock3 size={18} /><span><strong>Tájékoztató átfutási idő</strong>{getDeliveryEstimate(config)}</span></div></section>
 

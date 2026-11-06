@@ -644,3 +644,9 @@ működést, az eladhatóságot és a hibákat érintik.
 ## 3.38 – „Nézet” panel, szél kapcsoló törölve
 - A „Jelenet és vizualizáció” beállítások kikerültek a lépések aljáról: a 3D-nézet eszköztárában új **Nézet** gomb nyitja őket lebegő panelként (nincs háttér-sötétítés, a napszak, méretcímkék, robbantott nézet stb. hatása közben látszik). Minden lépésben, az összegzésben is elérhető. Desktopon 1560 px alatt az eszköztár többi gombja ikon-only, hogy ne takarja a címet.
 - Az „Enyhe szél” kapcsoló törölve (alig látszott hatása); a mentett konfigurációkkal való kompatibilitás miatt a mező a modellben marad, alapból kikapcsolva.
+
+## 3.39 – Duplikációk megszüntetése
+- **Tanácsadó**: csak az 1. lépés „Nem tudod, hol kezdd?” kártyáján marad (ott van a helye), a fejlécből kikerült.
+- **Összegzés**: az első „Felmérést kérek” gomb és a „PDF letöltése” törölve — az alsó állandó „Felmérést kérek” gomb, a desktop árpanel „PDF összefoglaló” gombja és a mobil árbár PDF-ikonja viszi ugyanezt. A WhatsApp a műveletsorba költözött.
+- **Éjszaka** gyorsgomb a 3D-eszköztárból törölve: a Nézet panel napszak-választója (Nappal / Aranyóra / Éjszaka + csúszka) viszi.
+- A fejléc szövege így desktopon egy sorba fér.
