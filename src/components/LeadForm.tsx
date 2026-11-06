@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { track } from '@/lib/analytics'
-import { ArrowRight, CheckCircle2, LockKeyhole, MapPin, ShieldCheck } from 'lucide-react'
+import { ArrowRight, LockKeyhole, MapPin, ShieldCheck } from 'lucide-react'
 import { PRODUCT_LABELS, type ProductFamily } from '@contracts/catalog'
 import { useTenant } from '@/tenants/TenantContext'
 
@@ -101,7 +101,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
     }
   }
 
-  if (result) return <div className="thank-you real-lead-success" role="status"><CheckCircle2 size={30} /><div><span>KÉRELEM RÖGZÍTVE</span><h4>A felmérési kérelmedet megkaptuk.</h4><p>Azonosító: <strong>{result.publicRef}</strong></p><p>Az adataid és a konfigurációd alapján {tenant.brand.name} felveszi veled a kapcsolatot a részletek egyeztetéséhez. Érdemes megőrizni az azonosítót.</p>{import.meta.env.VITE_PREVIEW_MODE === '1' && <p><strong>Előnézeti mód:</strong> a kérelem nem lett elküldve, csak a folyamatot mutatja.</p>}<small>Az irányár nem minősül kötelező érvényű árajánlatnak. A végleges műszaki tartalom helyszíni felmérés után készül.</small></div></div>
+  if (result) return <div className="thank-you real-lead-success" role="status"><span className="success-burst" aria-hidden="true"><svg viewBox="0 0 52 52" width="44" height="44"><circle className="success-ring" cx="26" cy="26" r="23" fill="none" strokeWidth="3" /><path className="success-tick" d="M15 27.5l8 8 15-17" fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" /></svg><i /><i /><i /><i /><i /><i /></span><div><span>KÉRELEM RÖGZÍTVE</span><h4>A felmérési kérelmedet megkaptuk.</h4><p>Azonosító: <strong>{result.publicRef}</strong></p><p>Az adataid és a konfigurációd alapján {tenant.brand.name} felveszi veled a kapcsolatot a részletek egyeztetéséhez. Érdemes megőrizni az azonosítót.</p>{import.meta.env.VITE_PREVIEW_MODE === '1' && <p><strong>Előnézeti mód:</strong> a kérelem nem lett elküldve, csak a folyamatot mutatja.</p>}<small>Az irányár nem minősül kötelező érvényű árajánlatnak. A végleges műszaki tartalom helyszíni felmérés után készül.</small></div></div>
 
   return <form ref={formRef} className="real-lead-form" onSubmit={submit} onFocus={() => track(tenant.id, 'lead_start')}>
     <div className="lead-form-intro"><span><MapPin size={16} />{PRODUCT_LABELS[productFamily]}</span><p>A konfigurációt és az irányárat a kérelmedhez csatoljuk, hogy a felmérés egyeztetése konkrét műszaki elképzelésből induljon.</p></div>

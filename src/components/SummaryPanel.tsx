@@ -78,7 +78,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
   const advice = getAdvice(config)
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${projectName.trim() || 'Pergola tervem'} – ${formatHuf(price.totalGross)} bruttó irányár\n${shareUrl ?? window.location.href}`)}`
   return (
-    <div className="summary-panel">
+    <div className="summary-panel summary-animated">
       {advice.length > 0 && <ul className="advice-list" aria-label="Szakértői megjegyzések">{advice.map((item) => <li key={item.id} className={item.level}>{item.text}</li>)}</ul>}
       <section className="showroom">
         <div className="showroom-image">

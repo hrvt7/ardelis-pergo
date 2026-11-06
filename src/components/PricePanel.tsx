@@ -27,9 +27,9 @@ interface Props {
 }
 
 /** Az ár „pörögve” megy az új értékre (mozgáscsökkentésnél azonnal). */
-export function AnimatedPrice({ value }: { value: number }) {
-  const [display, setDisplay] = useState(value)
-  const previous = useRef(value)
+export function AnimatedPrice({ value, startAt, duration = 420 }: { value: number; startAt?: number; duration?: number }) {
+  const [display, setDisplay] = useState(startAt ?? value)
+  const previous = useRef(startAt ?? value)
   const [reduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   useEffect(() => {
     const from = previous.current
@@ -38,14 +38,14 @@ export function AnimatedPrice({ value }: { value: number }) {
     const started = performance.now()
     let frame = 0
     const tick = (now: number) => {
-      const progress = Math.min(1, (now - started) / 420)
+      const progress = Math.min(1, (now - started) / duration)
       const eased = 1 - Math.pow(1 - progress, 3)
       setDisplay(Math.round(from + (value - from) * eased))
       if (progress < 1) frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [value, reduced])
+  }, [value, reduced, duration])
   return <>{formatHuf(reduced ? value : display)}</>
 }
 

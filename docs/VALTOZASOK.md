@@ -650,3 +650,11 @@ működést, az eladhatóságot és a hibákat érintik.
 - **Összegzés**: az első „Felmérést kérek” gomb és a „PDF letöltése” törölve — az alsó állandó „Felmérést kérek” gomb, a desktop árpanel „PDF összefoglaló” gombja és a mobil árbár PDF-ikonja viszi ugyanezt. A WhatsApp a műveletsorba költözött.
 - **Éjszaka** gyorsgomb a 3D-eszköztárból törölve: a Nézet panel napszak-választója (Nappal / Aranyóra / Éjszaka + csúszka) viszi.
 - A fejléc szövege így desktopon egy sorba fér.
+
+## 3.40 – Animációk (tanácsadó, összegzés, ajánlatkérés, lépésváltás)
+- **Tanácsadó**: kérdésenként sorban érkező kártyák; a javaslatnál a kártya felpattan, az ár ~55%-ról számolva felpörög a végösszegre, a címkék és az indoklások egymás után jelennek meg.
+- **1. lépés**: a „Nem tudod, hol kezdd?” kártyán halk fénycsík és a varázspálca időnként megbillen.
+- **Összegzés**: a kép beúszik (töltés közben csillogó helyőrző), a tények és az ár-összetétel sorban érkezik, a színes sáv kitöltődik; az árpanel sávja is.
+- **Ajánlatkérés visszaigazolása**: a kör és a pipa kirajzolódik, gyűrű-impulzus és apró szikrák.
+- **Lépésváltás**: a cím és a tartalom egymás után csúszik be.
+- Mindez tiszta CSS (nincs új függőség), `prefers-reduced-motion` esetén kikapcsol, és a 3D-nézetet nem érinti.
