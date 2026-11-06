@@ -307,6 +307,9 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   const roofLabelsFor = (roof: RoofType) => `${tenant.roofs[roof]?.name ?? ''} · ${tenant.roofs[roof]?.short ?? ''}`
   const touchStart = useRef(0)
   const stepIndex = STEPS.findIndex((item) => item.id === step)
+  const [stepTrack, setStepTrack] = useState({ index: stepIndex, dir: 'fwd' as 'fwd' | 'back' })
+  if (stepTrack.index !== stepIndex) setStepTrack({ index: stepIndex, dir: stepIndex > stepTrack.index ? 'fwd' : 'back' })
+  const stepDir = stepTrack.dir
   const hasZip = closedSegments(config).some((segment) => segment.type === 'zip')
   const go = (index: number) => onStepChange(STEPS[Math.max(0, Math.min(STEPS.length - 1, index))].id)
   const touchEnd = (event: TouchEvent) => {
@@ -330,7 +333,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
         ))}
       </div>
       <div className="controls-scroll" ref={scrollRef}>
-        <div className="panel-content" role="tabpanel" key={step}>
+        <div className={`panel-content dir-${stepDir}`} role="tabpanel" key={step}>
           <div className="step-heading"><span>0{stepIndex + 1} · {STEPS[stepIndex].short}</span><h2>{STEPS[stepIndex].label}</h2></div>
 
           {step === 'size' && <>

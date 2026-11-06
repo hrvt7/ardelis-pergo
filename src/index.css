@@ -2171,3 +2171,68 @@ button.tr.is-open{background:rgba(216,255,114,.07);box-shadow:inset 0 0 0 1px rg
   .real-lead-success, .success-burst *, .success-burst::before { animation: none !important; }
   .success-ring, .success-tick { stroke-dashoffset: 0 !important; } .success-burst i { display: none; }
 }
+
+/* 3.41 Betöltő: felépülő pergola */
+.build-anim { display: block; width: 96px; height: 45px; margin: 0 auto 14px; overflow: visible; }
+.build-anim .ba-ground { stroke: rgba(255,255,255,.28); stroke-width: .8; stroke-dasharray: 108; animation: ba-line 2.8s ease-in-out infinite; }
+.build-anim .ba-post { fill: #e8efe9; transform-box: fill-box; transform-origin: bottom; animation: ba-post 2.8s cubic-bezier(.2,.8,.2,1) infinite both; }
+.build-anim .ba-beam { fill: var(--accent-primary); transform-box: fill-box; transform-origin: left; animation: ba-beam 2.8s cubic-bezier(.2,.8,.2,1) infinite both; }
+.build-anim .ba-louver { fill: #e8efe9; transform-box: fill-box; transform-origin: center; animation: ba-louver 2.8s ease-in-out infinite both; opacity: 0; }
+@keyframes ba-line { 0% { stroke-dashoffset: 108; } 30%, 85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes ba-post { 0% { transform: scaleY(0); } 22%, 88% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
+@keyframes ba-beam { 0%, 18% { transform: scaleX(0); } 40%, 88% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+@keyframes ba-louver { 0%, 30% { opacity: 0; transform: scaleY(.1); } 45% { opacity: 1; transform: scaleY(1); } 70%, 88% { opacity: 1; transform: scaleY(5) ; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .build-anim * { animation: none !important; opacity: 1 !important; transform: none !important; stroke-dashoffset: 0 !important; } }
+
+/* 3.41 Lépésváltás iránya + ár-delta jelzés */
+.panel-content.dir-fwd { animation: step-in-fwd 280ms cubic-bezier(.2,.7,.2,1) both; }
+.panel-content.dir-back { animation: step-in-back 280ms cubic-bezier(.2,.7,.2,1) both; }
+@keyframes step-in-fwd { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+@keyframes step-in-back { from { opacity: 0; transform: translateX(-22px); } to { opacity: 1; transform: none; } }
+.total-price, .mobile-price-bar > div:first-child { position: relative; }
+.delta-pop { position: absolute; right: 0; top: 0; padding: 3px 8px; border-radius: 999px; background: var(--accent-primary); color: #111814; font: 700 12px/1.2 'Plus Jakarta Sans', sans-serif; white-space: nowrap; pointer-events: none; animation: delta-pop 1.8s cubic-bezier(.2,.7,.2,1) both; }
+.delta-pop.negative { background: #ffb4a8; }
+.mobile-price-bar .delta-pop { right: auto; left: 100%; top: 16px; margin-left: 6px; }
+@keyframes delta-pop { 0% { opacity: 0; transform: translateY(8px) scale(.85); } 14% { opacity: 1; transform: none; } 78% { opacity: 1; transform: translateY(-4px); } 100% { opacity: 0; transform: translateY(-12px); } }
+@media (prefers-reduced-motion: reduce) { .panel-content.dir-fwd, .panel-content.dir-back, .delta-pop { animation: none; } .delta-pop { opacity: 1; } }
+
+/* 3.41 Extrák: bekapcsoláskor az ikon „felvillan”, a kártya pulzál */
+.extra-card, .sub-option, .fan-row { transition: background .25s, border-color .25s, box-shadow .35s; }
+.extra-card.is-on { animation: extra-on .55s cubic-bezier(.2,.7,.2,1); }
+.extra-card.is-on > svg { animation: extra-icon .6s cubic-bezier(.3,1.6,.5,1); filter: drop-shadow(0 0 6px rgba(216,255,114,.55)); }
+.sub-option.is-on { animation: pop-in .4s cubic-bezier(.2,.7,.2,1); }
+@keyframes extra-on { 0% { box-shadow: 0 0 0 0 rgba(216,255,114,.55); } 100% { box-shadow: 0 0 0 12px rgba(216,255,114,0); } }
+@keyframes extra-icon { 0% { transform: scale(.5) rotate(-18deg); opacity: .3; } 100% { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .extra-card.is-on, .extra-card.is-on > svg, .sub-option.is-on { animation: none; } }
+
+/* 3.41 Tetőválasztó és színválasztó */
+.roof-card { transition: background .25s, border-color .25s, transform .2s; position: relative; overflow: hidden; }
+.roof-card:active { transform: scale(.985); }
+.roof-card.selected { animation: pop-in .38s cubic-bezier(.2,.7,.2,1); }
+.roof-card.selected::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(216,255,114,.22) 50%, transparent 65%); transform: translateX(-100%); animation: roof-sheen .9s ease-out .05s 1 both; pointer-events: none; }
+.roof-card.selected .roof-card-head > svg, .roof-card.selected .roof-card-head > span:first-child svg { animation: extra-icon .55s cubic-bezier(.3,1.6,.5,1); }
+.roof-card-head em { transition: color .25s; }
+@keyframes roof-sheen { to { transform: translateX(100%); } }
+.material-swatches > button, .chip-swatch, .material-sphere { transition: transform .2s cubic-bezier(.3,1.6,.5,1), box-shadow .3s, border-color .25s; }
+.material-swatches > button:active .material-sphere { transform: scale(.92); }
+.material-swatches > button.selected .material-sphere { animation: swatch-drop .5s cubic-bezier(.3,1.6,.5,1), swatch-ring .7s ease-out; }
+.material-sphere svg, .chip-swatch svg { animation: pop-in .3s cubic-bezier(.3,1.6,.5,1) both; }
+.target-swatch { transition: background-color .45s ease; }
+@keyframes swatch-drop { 0% { transform: scale(.78); } 100% { transform: none; } }
+@keyframes swatch-ring { 0% { box-shadow: 0 0 0 0 rgba(216,255,114,.6); } 100% { box-shadow: 0 0 0 14px rgba(216,255,114,0); } }
+@media (prefers-reduced-motion: reduce) { .roof-card.selected, .roof-card.selected::after, .material-swatches > button.selected .material-sphere, .material-sphere svg, .chip-swatch svg { animation: none; } }
+
+/* 3.41 Tételes kalkuláció, PDF-gomb, ajánlatkérő űrlap */
+.price-details[open] .price-lines > * { animation: rise-in 320ms cubic-bezier(.2,.7,.2,1) both; }
+.price-details[open] .price-lines > *:nth-child(1) { animation-delay: 30ms; } .price-details[open] .price-lines > *:nth-child(2) { animation-delay: 70ms; } .price-details[open] .price-lines > *:nth-child(3) { animation-delay: 110ms; } .price-details[open] .price-lines > *:nth-child(4) { animation-delay: 150ms; } .price-details[open] .price-lines > *:nth-child(5) { animation-delay: 190ms; } .price-details[open] .price-lines > *:nth-child(n+6) { animation-delay: 230ms; }
+.price-actions .primary-action:disabled, .mobile-pdf:disabled { position: relative; overflow: hidden; }
+.price-actions .primary-action:disabled::after, .mobile-pdf:disabled::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%); transform: translateX(-100%); animation: pdf-shimmer 1.2s linear infinite; }
+@keyframes pdf-shimmer { to { transform: translateX(100%); } }
+.real-lead-form input { transition: border-color .25s, box-shadow .25s, background-color .25s; }
+.real-lead-form input:user-valid:not([type=checkbox]):not([name=website]) { border-color: rgba(216,255,114,.6); box-shadow: 0 0 0 3px rgba(216,255,114,.1); }
+.real-lead-form input:user-invalid:not([type=checkbox]) { border-color: #ff9b8a; box-shadow: 0 0 0 3px rgba(255,155,138,.14); animation: field-shake .38s ease-in-out; }
+.real-lead-form .form-error { animation: field-shake .38s ease-in-out; }
+@keyframes field-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-5px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+@media (prefers-reduced-motion: reduce) { .price-details[open] .price-lines > *, .price-actions .primary-action:disabled::after, .mobile-pdf:disabled::after, .real-lead-form input:user-invalid, .real-lead-form .form-error { animation: none; } }
+.lead-spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(17,24,20,.25); border-top-color: currentColor; animation: spin .7s linear infinite; }
+.lead-submit:not(:disabled):hover svg { transform: translateX(3px); } .lead-submit svg { transition: transform .2s; }

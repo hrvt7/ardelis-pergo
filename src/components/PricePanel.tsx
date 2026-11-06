@@ -49,6 +49,22 @@ export function AnimatedPrice({ value, startAt, duration = 420 }: { value: numbe
   return <>{formatHuf(reduced ? value : display)}</>
 }
 
+/** Ármódosításkor 1,8 mp-re felbukkanó „+120 000 Ft” / „−40 000 Ft” jelzés az összeg mellett. */
+export function PriceDeltaPop({ value }: { value: number }) {
+  const previous = useRef(value)
+  const [pop, setPop] = useState<{ amount: number; id: number } | null>(null)
+  useEffect(() => {
+    const diff = Math.round(value - previous.current)
+    previous.current = value
+    if (Math.abs(diff) < 1000) return
+    setPop((old) => ({ amount: diff, id: (old?.id ?? 0) + 1 }))
+    const timer = window.setTimeout(() => setPop(null), 1900)
+    return () => window.clearTimeout(timer)
+  }, [value])
+  if (!pop) return null
+  return <span key={pop.id} className={`delta-pop ${pop.amount < 0 ? 'negative' : ''}`} aria-hidden="true">{pop.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(pop.amount))}</span>
+}
+
 export default function PricePanel({ config, price, exporting, delta, compact = false, onEditPrices, onExport, onShare, onBudget, collapsed = false, onToggleCollapse, energyCost, onEnergy }: Props) {
   const { tenant, labels: ROOF_LABELS } = useTenant()
   const [mode, setMode] = useState<'net' | 'vat' | 'gross'>('gross')
@@ -67,7 +83,7 @@ export default function PricePanel({ config, price, exporting, delta, compact = 
       <div className="price-topline"><span>Azonnali kalkuláció</span><span className="live-indicator"><i />ÉLŐ</span>{onToggleCollapse && <button type="button" className="price-collapse" onClick={onToggleCollapse} aria-expanded="true" aria-label="Árkalkuláció összecsukása" title="Összecsukás — szabad kilátás a 3D-re"><ChevronRight size={15} /></button>}</div>
       <div className="price-product"><span>{ROOF_LABELS[config.roof].split(' · ')[0]} / {MOUNT_SHORT[config.mount]}</span><strong>{config.width.toFixed(2).replace('.', ',')} × {config.depth.toFixed(2).replace('.', ',')} m</strong><small>{formatNumber(price.area)} m² · {formatHuf(price.totalGross / price.area)} / m²</small></div>
       <div className="price-mode" aria-label="Ár megjelenítése">{(['net', 'vat', 'gross'] as const).map((id) => <button type="button" key={id} className={mode === id ? 'selected' : ''} onClick={() => setMode(id)}>{id === 'net' ? 'Nettó' : id === 'vat' ? 'ÁFA' : 'Bruttó'}</button>)}</div>
-      <div className="total-price"><span>{label}</span><strong data-value={amount}><AnimatedPrice value={amount} /></strong><small>Telepítéssel · {price.totalNet > 0 ? Math.round(price.vatNet / price.totalNet * 100) : 0}% ÁFA</small></div>
+      <div className="total-price"><span>{label}</span><strong data-value={amount}><AnimatedPrice value={amount} /></strong><PriceDeltaPop value={amount} /><small>Telepítéssel · {price.totalNet > 0 ? Math.round(price.vatNet / price.totalNet * 100) : 0}% ÁFA</small></div>
       {delta && delta.amount !== 0 && <div className={`price-delta ${delta.amount < 0 ? 'negative' : ''}`} role="status">{delta.amount > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}<span>Mi változott?</span><strong>{delta.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(delta.amount))}</strong><small>{delta.label}</small></div>}
       {tenant.installmentMonths > 0 && <div className="monthly-example"><span>{tenant.installmentMonths} havi részre bontva</span><strong>{formatHuf(price.totalGross / tenant.installmentMonths)} / hó</strong><small>A bruttó irányár {tenant.installmentMonths} egyenlő részre osztva; nem hitel- vagy finanszírozási ajánlat.</small></div>}
       {onBudget && <button type="button" className="budget-trigger" onClick={onBudget}><Wallet size={15} /><span><strong>Van keretösszeged?</strong><small>Megmutatjuk, mi fér bele</small></span></button>}

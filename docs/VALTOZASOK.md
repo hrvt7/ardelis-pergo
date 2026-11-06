@@ -658,3 +658,13 @@ működést, az eladhatóságot és a hibákat érintik.
 - **Ajánlatkérés visszaigazolása**: a kör és a pipa kirajzolódik, gyűrű-impulzus és apró szikrák.
 - **Lépésváltás**: a cím és a tartalom egymás után csúszik be.
 - Mindez tiszta CSS (nincs új függőség), `prefers-reduced-motion` esetén kikapcsol, és a 3D-nézetet nem érinti.
+
+## 3.41 – Animációk a használat fontos pontjain
+- Betöltő: felépülő pergola animáció (oszlopok, gerenda, lamellák) a logó alatt.
+- Lépésváltás: irányfüggő beúszás (előre jobbról, vissza balról).
+- Ár-delta: módosításkor „+/− X Ft” buborék az összeg mellett (asztali és mobil sáv).
+- Extrák: bekapcsoláskor ikon-felvillanás és pulzáló kártya.
+- Tetőválasztó: kiválasztáskor pop + fénycsík; színválasztó: csepp + gyűrű hatás.
+- Tételes kalkuláció: sorban becsúszó tételek; PDF-gomb készítés közben csillogás.
+- Ajánlatkérő űrlap: valid zöld / hibás piros kiemelés rázással, küldés közbeni spinner.
+- Mozgáscsökkentés (prefers-reduced-motion) mindenhol kikapcsolja.

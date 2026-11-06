@@ -5,7 +5,7 @@ import { Link } from 'react-router'
 import ConfiguratorControls, { SceneSettingsPanel } from '@/components/ConfiguratorControls'
 import { InfoDialog, PriceSettingsDialog, ResetDialog } from '@/components/Dialogs'
 import PergolaScene from '@/components/PergolaScene'
-import PricePanel, { AnimatedPrice } from '@/components/PricePanel'
+import PricePanel, { AnimatedPrice, PriceDeltaPop } from '@/components/PricePanel'
 import SummaryPanel from '@/components/SummaryPanel'
 import { track } from '@/lib/analytics'
 import { copyShareUrl, exportPergolaPdf } from '@/lib/exportPdf'
@@ -419,7 +419,7 @@ export default function PergoStudio() {
         <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={admin ? () => setModal('prices') : undefined} onExport={handleExport} onShare={handleShare} onBudget={() => setModal('budget')} collapsed={priceCollapsed} onToggleCollapse={togglePrice} energyCost={energyCost} onEnergy={() => setModal('energy')} />
       </main>
 
-      <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong data-value={price.totalGross}><AnimatedPrice value={price.totalGross} /></strong></div><button type="button" className="mobile-pdf" aria-label="PDF letöltése" disabled={exporting} onClick={handleExport}><FileDown size={19} /></button><button type="button" onClick={() => { goStep(step === 'summary' ? 'size' : 'summary'); setMobileControlsOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>
+      <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong data-value={price.totalGross}><AnimatedPrice value={price.totalGross} /></strong><PriceDeltaPop value={price.totalGross} /></div><button type="button" className="mobile-pdf" aria-label="PDF letöltése" disabled={exporting} onClick={handleExport}><FileDown size={19} /></button><button type="button" onClick={() => { goStep(step === 'summary' ? 'size' : 'summary'); setMobileControlsOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>
       {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label="Értesítés bezárása" onClick={() => setToast('')}><X size={16} /></button></div>}
       {modal === 'prices' && admin && <PriceSettingsDialog prices={prices} onChange={setPrices} onReset={() => { setPrices(tenant.prices); setToast('A gyártói árlista visszaállt.') }} onClose={() => setModal(null)} />}
       {modal === 'info' && <InfoDialog onClose={() => setModal(null)} />}

@@ -1977,6 +1977,18 @@ function FallbackDrawing({ config }: { config: PergolaConfig }) {
   return <div className="fallback-drawing" aria-label="A konfigurált pergola méretarányos rajza" dangerouslySetInnerHTML={{ __html: svg }} />
 }
 
+
+/** Felépülő pergola: oszlopok nőnek, gerenda csúszik be, lamellák sorban jelennek meg. Tiszta CSS, ismétlődő hurok. */
+function BuildAnim() {
+  return <svg className="build-anim" viewBox="0 0 120 56" aria-hidden="true">
+    <line className="ba-ground" x1="6" y1="50" x2="114" y2="50" />
+    <rect className="ba-post" x="20" y="14" width="3.4" height="36" style={{ animationDelay: '0s' }} />
+    <rect className="ba-post" x="96.6" y="14" width="3.4" height="36" style={{ animationDelay: '.15s' }} />
+    <rect className="ba-beam" x="16" y="10" width="88" height="4" />
+    {[0, 1, 2, 3, 4, 5, 6].map((i) => <rect key={i} className="ba-louver" x={26 + i * 10.2} y="14.6" width="7.4" height="1.6" style={{ animationDelay: `${.9 + i * .12}s` }} />)}
+  </svg>
+}
+
 function ScenePoster({ message, onRetry, percent, leaving = false, config }: { message?: string; onRetry?: () => void; percent?: number; leaving?: boolean; config?: PergolaConfig }) {
   const { progress: loaderProgress } = useProgress()
   const progress = percent ?? loaderProgress
@@ -1984,7 +1996,7 @@ function ScenePoster({ message, onRetry, percent, leaving = false, config }: { m
   const failed = Boolean(onRetry) || Boolean(config)
   return <div className={`scene-poster${failed ? ' is-error' : ''}${leaving ? ' is-leaving' : ''}`} role={failed ? 'alert' : 'status'} aria-live="polite">
     {failed ? <img className="scene-poster-image" src={assetUrl('/assets/pergo-hero.webp')} alt={`${tenant.brand.name} pergola statikus előnézete`} /> : <div className="poster-skeleton"><span /><span /><span /><span /></div>}
-    <div className="branded-loader"><div className="loader-brand">{tenant.demo ? <LamelixLogo height={30} title={null} /> : <>{tenant.brand.name}{tenant.brand.suffix && <small> {tenant.brand.suffix}</small>}</>}</div>{!failed && <div className="loader-track"><span style={{ width: `${Math.max(2, progress)}%` }} /></div>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{failed && <p className="fallback-note">A konfigurálás, az árkalkuláció, a PDF és a felmérési kérelem 3D nélkül is teljes értékűen működik.</p>}{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
+    <div className="branded-loader"><div className="loader-brand">{tenant.demo ? <LamelixLogo height={30} title={null} /> : <>{tenant.brand.name}{tenant.brand.suffix && <small> {tenant.brand.suffix}</small>}</>}</div>{!failed && <><BuildAnim /><div className="loader-track"><span style={{ width: `${Math.max(2, progress)}%` }} /></div></>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{failed && <p className="fallback-note">A konfigurálás, az árkalkuláció, a PDF és a felmérési kérelem 3D nélkül is teljes értékűen működik.</p>}{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
     {failed && config && <FallbackDrawing config={config} />}
   </div>
 }

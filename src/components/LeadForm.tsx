@@ -120,7 +120,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
     <label className="honeypot" aria-hidden="true">Weboldal<input name="website" tabIndex={-1} autoComplete="off" /></label>
     <label className="consent-row"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} required /><span><ShieldCheck size={16} />Hozzájárulok, hogy a felmérési kérelem egyeztetéséhez {tenant.brand.legalName} kezelje a megadott adataimat.{tenant.brand.privacyUrl && <> <a href={tenant.brand.privacyUrl} target="_blank" rel="noreferrer">Adatkezelési tájékoztató</a>.</>} A kérelem nem minősül megrendelésnek.</span></label>
     {error && <p className="form-error" role="alert">{error}</p>}
-    <button className="lead-submit" type="submit" disabled={!consent || pending}>{pending ? 'Küldés…' : 'Felmérési kérelem elküldése'}<ArrowRight size={16} /></button>
+    <button className={`lead-submit${pending ? ' is-pending' : ''}`} type="submit" disabled={!consent || pending}>{pending ? 'Küldés…' : 'Felmérési kérelem elküldése'}{pending ? <span className="lead-spinner" aria-hidden="true" /> : <ArrowRight size={16} />}</button>
     <small className="privacy-note"><LockKeyhole size={13} />A fotós helyi előnézet képe nem kerül feltöltésre. Az űrlap csak a fenti, általad megadott adatokat küldi.</small>
   </form>
 }
