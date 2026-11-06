@@ -715,3 +715,16 @@ működést, az eladhatóságot és a hibákat érintik.
 - **Animációk:** épületkártyák (belépés, kijelölési pop, a vázlat kirajzolódik, a télikert hullámzó meleg), figyelmeztetések és hatósági lista beúszik, ajtó-gomb; `prefers-reduced-motion` mellett kikapcsolva.
 - **Csomagok:** „Veranda" és „Télikert" kiinduló csomag a demó gyártónál.
 - **Fontos:** az árak demó-kalibrációjúak (a demó télikert kb. 530 000 Ft/m² bruttó), a hatósági szöveg tájékoztató. A fűtés-hűtés méretezését, a padló felépítését és a statikát a gyártó a felmérés után végzi.
+
+## 3.49 – Veranda/télikert: további animációk
+
+- **Típusváltás:** az oldalfalak lépcsőzve épülnek fel (elöl, bal, jobb, hátul), az ajtó utolsóként; az alap előbb nő ki, a klíma-egységek a végén ugranak be.
+- **Ajtónyitás:** nyitáskor meleg fényfolt ömlik a belső padlóra (éjjel erősebb, nappal finom).
+- **Klíma működése a modellen** (Extrák → „Működés a modellen": Ki / Hűtés / Fűtés, `scene.climateRun`): a beltéri lamella kinyílik, a kijelző színt vált, apró részecskék áramlanak (hűtés kékes, fűtés meleg és lefelé), a kültéri ventilátor forog; padlófűtésnél lágyan lüktető meleg derengés a padlón. Folyamatos animáció ~30 fps-re korlátozva.
+- **Ártételek kiemelése:** új tétel beúszik és felvillan, a megváltozott összeg halványan felvillan; a zárt „Tételes kalkuláció" során „+N új tétel" jelvény.
+- **Nyitott oldal télikertben:** a hiányzó fal borostyán árnyalatban háromszor felpulzál, aztán halványan marad.
+- **Oldalüvegezés:** az üveg árnyalata lágyan átúszik (nem ugrik).
+- **Ajánlatoldal:** a specifikációs sorok sorban belépnek, az „Építmény típusa" sor kiemelődik; a cím „A megrendelt pergola / veranda / télikert"; összecsukható hatósági tudnivalók (a nyilvános ajánlat-adat új `permit` mezője).
+- **Kiinduló csomagok:** kijelöléskor pop és pipa.
+- **Rajz (3D nélküli tartalék):** az ajtószárny és a nyitási ív kirajzolódik.
+- `prefers-reduced-motion` mellett mind kikapcsolva vagy azonnali; nyomtatásnál nincs animáció.

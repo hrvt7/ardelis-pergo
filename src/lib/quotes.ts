@@ -42,6 +42,8 @@ export interface PublicQuote {
   brand: { name: string; legalName: string; phone: string | null; email: string | null; address: string | null; website: string | null; logoUrl: string | null }
   customer: { name: string; address: string | null }
   spec: [string, string][]
+  /** Építési hatósági tudnivalók zárt építménynél (tájékoztató). */
+  permit?: string[]
   lines: { label: string; detail: string; amountNet: number }[]
   subtotalNet: number
   installationNet: number

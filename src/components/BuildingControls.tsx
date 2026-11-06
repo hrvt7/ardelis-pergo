@@ -5,7 +5,7 @@ import { availableBuildings, BUILDING_INFO, BUILDING_TYPES, buildingIssues, buil
 import { formatHuf } from '@/lib/pricing'
 import { enabledRoofs, normalizeConfig, tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
-import type { BuildingType, ClimateType, PergolaConfig, PriceSettings } from '@/types/pergola'
+import type { BuildingType, ClimateType, PergolaConfig, PriceSettings, SceneSettings } from '@/types/pergola'
 
 type Change = (patch: Partial<PergolaConfig>) => void
 
@@ -76,7 +76,7 @@ export function WallGlazingPicker({ config, prices, onChange }: { config: Pergol
 const CLIMATES: (ClimateType | 'none')[] = ['none', 'split', 'underfloor', 'both']
 
 /** Télikert: fűtés/hűtés és alap. Veranda: tájékoztatás, hogy a tér nem fűtött. */
-export function ClimateSection({ config, prices, onChange }: { config: PergolaConfig; prices: PriceSettings; onChange: Change }) {
+export function ClimateSection({ config, prices, onChange, scene, onSceneChange }: { config: PergolaConfig; prices: PriceSettings; onChange: Change; scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
   const { tenant } = useTenant()
   if (!isClosedBuilding(config.building)) return null
   if (config.building === 'veranda') {
@@ -94,6 +94,10 @@ export function ClimateSection({ config, prices, onChange }: { config: PergolaCo
         <span className="glazing-swatch" aria-hidden="true" /><strong>{info.label}</strong><small>{info.short}</small><em>{selected ? 'Kiválasztva' : signed(delta(id))}</em>
       </button>
     })}</div>
+    {config.climate && <div className="climate-run" role="radiogroup" aria-label="Klíma működése a modellen">
+      <span>Működés a modellen</span>
+      {(['off', 'cool', 'heat'] as const).filter((mode) => mode !== 'cool' || config.climate !== 'underfloor').map((mode) => <button type="button" key={mode} role="radio" aria-checked={scene.climateRun === mode} className={`climate-run-${mode}${scene.climateRun === mode ? ' on' : ''}`} onClick={() => onSceneChange({ climateRun: mode })}>{mode === 'off' ? 'Ki' : mode === 'cool' ? 'Hűtés' : 'Fűtés'}</button>)}
+    </div>}
     <button type="button" className={`extra-card${config.foundation ? ' is-on' : ''}`} role="switch" aria-checked={Boolean(config.foundation)} onClick={() => onChange({ foundation: config.foundation ? undefined : true })}>
       <Building2 size={20} strokeWidth={1.5} />
       <span><strong>Alap és szigetelt padló</strong><small>Alapozás, vízszigetelés, padlószerkezet</small><em>{formatHuf(prices.foundationPerM2Net)} / m²</em></span>

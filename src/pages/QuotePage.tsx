@@ -113,8 +113,9 @@ export default function QuotePage() {
 
       {quote.note && <p className="quote-notebox">{quote.note}</p>}
 
-      <h2>A megrendelt pergola</h2>
-      <dl className="quote-spec">{quote.spec.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+      <h2>{quote.spec.some(([label, value]) => label === 'Építmény típusa' && value.startsWith('Télikert')) ? 'A megrendelt télikert' : quote.spec.some(([label, value]) => label === 'Építmény típusa' && value.startsWith('Veranda')) ? 'A megrendelt veranda' : 'A megrendelt pergola'}</h2>
+      <dl className="quote-spec">{quote.spec.map(([label, value], index) => <div key={label} className={`q-in${label === 'Építmény típusa' ? ' is-building' : ''}`} style={{ ['--i' as string]: index }}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+      {quote.permit && quote.permit.length > 0 && <details className="quote-permit q-in" style={{ ['--i' as string]: quote.spec.length }}><summary>Építési hatósági tudnivalók</summary><ul>{quote.permit.map((note) => <li key={note}>{note}</li>)}</ul><p>Tájékoztató jellegű, nem jogi tanács.</p></details>}
 
       <h2>Árak</h2>
       <table className="quote-table">

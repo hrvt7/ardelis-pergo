@@ -81,6 +81,8 @@ export interface SceneSettings {
   glassOpen: boolean
   /** Az ajtók nyitva vannak-e a 3D-ben. */
   doorOpen: boolean
+  /** Klíma működése a modellen: ki / hűtés / fűtés (csak látvány). */
+  climateRun: 'off' | 'cool' | 'heat'
   wallLouverOpen: boolean
   quality: QualityLevel
   /** A ház homlokzatának anyaga (főépület és L/U-szárny; csak látvány). */

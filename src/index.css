@@ -2446,3 +2446,52 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
   .building-card.selected .bi-roof, .building-card.selected .bi-post { animation: none !important; stroke-dasharray: none; stroke-dashoffset: 0; }
   .building-card.selected .bi-heat { opacity: .8; }
 }
+
+/* ===== 3.49 Veranda/télikert: további animációk ===== */
+/* Klíma működése (segédkapcsoló) */
+.climate-run { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid var(--surface-border); border-radius: 8px; background: var(--surface-raised); }
+.climate-run > span { flex: 1; color: var(--text-secondary); font-size: 12px; }
+.climate-run button { padding: 6px 11px; border: 1px solid var(--surface-border); border-radius: 999px; background: transparent; color: var(--text-primary); font: 600 12.5px/1 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: background .2s, border-color .2s, transform .15s; }
+.climate-run button:active { transform: scale(.94); }
+.climate-run button.on { background: var(--accent-subtle); border-color: rgba(216,255,114,.6); color: var(--accent-primary); animation: pop-in .3s cubic-bezier(.2,.7,.2,1); }
+.climate-run .climate-run-cool.on { background: rgba(120,190,255,.14); border-color: rgba(140,200,255,.6); color: #9fd2ff; }
+.climate-run .climate-run-heat.on { background: rgba(255,150,80,.14); border-color: rgba(255,160,90,.6); color: #ffb176; }
+
+/* Ártétel-kiemelés a tételes kalkulációban */
+.price-line.is-new { animation: pl-new 2.4s cubic-bezier(.2,.7,.2,1) both; }
+.price-line.is-chg { animation: pl-chg 1.8s ease-out both; }
+@keyframes pl-new { 0% { opacity: 0; transform: translateX(14px); background: rgba(216,255,114,.28); } 18% { opacity: 1; transform: none; } 100% { background: rgba(216,255,114,0); } }
+@keyframes pl-chg { 0% { background: rgba(216,255,114,.22); } 100% { background: rgba(216,255,114,0); } }
+.price-details summary.has-new { animation: pl-sum 1.1s ease-out both; }
+@keyframes pl-sum { 0% { box-shadow: 0 0 0 0 rgba(216,255,114,.55); } 100% { box-shadow: 0 0 0 10px rgba(216,255,114,0); } }
+.lines-added { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--accent-primary); color: #10130d; font: 700 11px/1.4 'Plus Jakarta Sans', sans-serif; font-style: normal; animation: bld-in .35s cubic-bezier(.2,.8,.2,1.2) both; }
+
+/* Kiinduló csomag kiválasztva */
+.preset-list button { transition: transform .15s, border-color .2s, background .2s; }
+.preset-list button:active { transform: scale(.97); }
+.preset-list button.applied { border-color: rgba(216,255,114,.7); background: var(--accent-subtle); animation: bld-pop .5s cubic-bezier(.2,.8,.2,1.15); }
+.preset-list button.applied svg { color: var(--accent-primary); animation: pop-in .35s cubic-bezier(.2,.8,.2,1.4); }
+
+/* Ajánlatoldal: építmény-sorok és hatósági doboz */
+.quote-spec .q-in, .quote-permit.q-in { animation: q-row-in .45s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(.1s + var(--i, 0) * .05s); }
+.quote-spec .is-building dd { font-weight: 700; }
+.quote-spec .is-building { animation: q-row-in .45s cubic-bezier(.2,.7,.2,1) both, q-building-flash 1.6s ease-out .4s both; }
+@keyframes q-building-flash { 0% { background: rgba(0,127,174,.12); } 100% { background: transparent; } }
+.quote-permit { margin: 14px 0 0; border: 1px solid #dbe5e7; border-radius: 8px; padding: 0 12px; font-size: 13px; color: #44545b; }
+.quote-permit summary { padding: 10px 0; font-weight: 700; cursor: pointer; color: #1f2d33; }
+.quote-permit ul { margin: 0 0 6px; padding-left: 18px; line-height: 1.55; } .quote-permit li + li { margin-top: 5px; }
+.quote-permit p { margin: 0 0 10px; font-size: 12px; opacity: .8; }
+
+/* Rajz (3D nélküli tartalék): az ajtó nyitási íve kirajzolódik */
+.fallback-drawing .d-arc { stroke-dasharray: 3; stroke-dashoffset: 3; animation: d-arc-draw .35s ease-out forwards; }
+.fallback-drawing .d-arc.a1 { animation-delay: .5s } .fallback-drawing .d-arc.a2 { animation-delay: .6s } .fallback-drawing .d-arc.a3 { animation-delay: .7s }
+.fallback-drawing .d-arc.a4 { animation-delay: .8s } .fallback-drawing .d-arc.a5 { animation-delay: .9s } .fallback-drawing .d-arc.a6 { animation-delay: 1s }
+.fallback-drawing .d-leaf { stroke-dasharray: 4; stroke-dashoffset: 4; animation: d-arc-draw .4s ease-out .3s forwards; }
+@keyframes d-arc-draw { to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .price-line.is-new, .price-line.is-chg, .price-details summary.has-new, .lines-added, .preset-list button.applied, .preset-list button.applied svg, .climate-run button.on,
+  .quote-spec .q-in, .quote-spec .is-building, .quote-permit.q-in { animation: none !important; }
+  .fallback-drawing .d-arc, .fallback-drawing .d-leaf { animation: none; stroke-dashoffset: 0; }
+}
+@media print { .quote-spec .q-in, .quote-spec .is-building, .quote-permit.q-in { animation: none !important; } }

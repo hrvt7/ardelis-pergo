@@ -67,8 +67,8 @@ const FONT: Record<Weight, string> = { regular: 'font-family="Manrope"', semi: '
 class Svg {
   parts: string[] = []
   add(part: string) { this.parts.push(part) }
-  line(x1: number, y1: number, x2: number, y2: number, width: number, color = INK, dash?: string) {
-    this.add(`<line x1="${r2(x1)}" y1="${r2(y1)}" x2="${r2(x2)}" y2="${r2(y2)}" stroke="${color}" stroke-width="${width}"${dash ? ` stroke-dasharray="${dash}"` : ''} stroke-linecap="butt"/>`)
+  line(x1: number, y1: number, x2: number, y2: number, width: number, color = INK, dash?: string, cls?: string) {
+    this.add(`<line${cls ? ` class="${cls}"` : ''} x1="${r2(x1)}" y1="${r2(y1)}" x2="${r2(x2)}" y2="${r2(y2)}" stroke="${color}" stroke-width="${width}"${dash ? ` stroke-dasharray="${dash}"` : ''} stroke-linecap="butt"/>`)
   }
   rect(x: number, y: number, w: number, h: number, opts: { stroke?: string; width?: number; fill?: string; dash?: string; opacity?: number } = {}) {
     const { stroke = INK, width = 0.25, fill = 'none', dash, opacity } = opts
@@ -514,12 +514,12 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
         const hinge = start + length
         const [hx, hy] = P(hinge, 0)
         const [ex, ey] = P(hinge, leaf)
-        svg.line(hx, hy, ex, ey, 0.45, INK)
+        svg.line(hx, hy, ex, ey, 0.45, INK, undefined, 'd-leaf')
         let previous = P(hinge - leaf, 0)
         for (let step = 1; step <= 6; step += 1) {
           const t = (step / 6) * (Math.PI / 2)
           const next = P(hinge - leaf * Math.cos(t), leaf * Math.sin(t))
-          svg.line(previous[0], previous[1], next[0], next[1], 0.1, SOFT)
+          svg.line(previous[0], previous[1], next[0], next[1], 0.1, SOFT, undefined, `d-arc a${step}`)
           previous = next
         }
       } else {

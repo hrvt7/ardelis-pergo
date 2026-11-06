@@ -326,6 +326,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   const roofLabelsFor = (roof: RoofType) => `${tenant.roofs[roof]?.name ?? ''} · ${tenant.roofs[roof]?.short ?? ''}`
   const touchStart = useRef(0)
   const stepIndex = STEPS.findIndex((item) => item.id === step)
+  const [appliedPreset, setAppliedPreset] = useState<string | null>(null)
   const stepLabel = (id: ConfigStep) => (id === 'size' ? (config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : 'Pergola') : STEPS.find((item) => item.id === id)!.label)
   const [stepTrack, setStepTrack] = useState({ index: stepIndex, dir: 'fwd' as 'fwd' | 'back' })
   if (stepTrack.index !== stepIndex) setStepTrack({ index: stepIndex, dir: stepIndex > stepTrack.index ? 'fwd' : 'back' })
@@ -361,7 +362,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <SectionTitle title="Mit építesz?" hint="Nyitott pergola, zárt üvegezett veranda vagy egész éves télikert. A választás átállítja a tetőt és az oldalakat, utána minden módosítható." />
             <BuildingPicker config={config} prices={prices} onChange={onChange} />
             <SectionTitle title="Kiinduló csomagok" hint="Egy koppintással indulhatsz, utána minden szabadon módosítható." />
-            <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
+            <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} className={appliedPreset === preset.id ? 'applied' : undefined} onClick={() => { onPreset(presetConfig(tenant, preset.config)); setAppliedPreset(preset.id); window.setTimeout(() => setAppliedPreset((current) => (current === preset.id ? null : current)), 1400) }}><strong>{preset.name}</strong><span>{preset.description}</span>{appliedPreset === preset.id ? <Check size={15} /> : <ArrowRight size={15} />}</button>)}</div>
             <SectionTitle title="Tetőrendszer" hint={isClosedBuilding(config.building) ? (config.building === 'conservatory' ? 'Télikerthez üveg- vagy fix (szigetelt) tető való: a mozgó tető nem zárható megfelelően.' : 'Verandához üveg-, polikarbonát vagy fix tető való.') : 'A pergola típusa határozza meg az árnyékolást, az esővédelmet és az árat. Az oldalak lépésében is módosítható.'} />
             <RoofPicker config={config} prices={prices} onChange={onChange} />
             <GlazingPicker config={config} prices={prices} onChange={onChange} />
@@ -426,7 +427,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           {step === 'extras' && <>
             {isClosedBuilding(config.building) && <>
               <SectionTitle title={config.building === 'conservatory' ? 'Egész éves használat' : 'Zárt tér'} hint={config.building === 'conservatory' ? 'Fűtés, hűtés és az alapozott padló teszi lakótérré a télikertet.' : undefined} />
-              <ClimateSection config={config} prices={prices} onChange={onChange} />
+              <ClimateSection config={config} prices={prices} onChange={onChange} scene={scene} onSceneChange={onSceneChange} />
               <BuildingIssues config={config} />
             </>}
             <SectionTitle title="Világítás és hangulat" hint="Minden opció azonnal megjelenik a modellen és a tételes árban." />

@@ -9,6 +9,7 @@ import { shareHash } from '../src/lib/shareCode'
 import { formatHuf } from '../src/lib/pricing'
 import type { Tenant } from '../src/tenants/types'
 import type { PergolaConfig, PriceBreakdown } from '../src/types/pergola'
+import { permitNotes } from '../src/lib/buildings'
 import { describeConfig, escapeHtml, oneLine, sendEmail, siteOrigin } from './lead'
 import { authorize, json, resolveTenant, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
 
@@ -134,6 +135,7 @@ function publicView(row: QuoteRow, tenant: Tenant, now = Date.now()) {
     brand: { name: tenant.brand.name, legalName: tenant.brand.legalName, phone: tenant.brand.phone ?? null, email: tenant.brand.email ?? null, address: tenant.brand.address ?? null, website: tenant.brand.website ?? null, logoUrl: tenant.brand.logoUrl ?? null },
     customer: { name: row.customer_name, address: row.customer_address },
     spec: describeConfig(tenant, config, row.price),
+    permit: permitNotes(config.building),
     lines: row.price.lines.map((line) => ({ label: line.label, detail: line.detail, amountNet: line.amountNet })),
     subtotalNet: row.price.subtotalNet,
     installationNet: row.price.installationNet,

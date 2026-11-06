@@ -65,9 +65,35 @@ export function PriceDeltaPop({ value }: { value: number }) {
   return <span key={pop.id} className={`delta-pop ${pop.amount < 0 ? 'negative' : ''}`} aria-hidden="true">{pop.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(pop.amount))}</span>
 }
 
+/** Új vagy megváltozott ártételek rövid kiemelése: látszik, mi tette drágábbá/olcsóbbá a tervet. */
+function useLineFlash(lines: PriceBreakdown['lines']) {
+  const prev = useRef<Map<string, number> | null>(null)
+  const [flash, setFlash] = useState<{ ids: Record<string, 'new' | 'chg'>; added: number; key: number }>({ ids: {}, added: 0, key: 0 })
+  const signature = lines.map((line) => `${line.id}:${line.amountNet}`).join('|')
+  useEffect(() => {
+    const current = new Map(lines.map((line) => [line.id, line.amountNet] as const))
+    const before = prev.current
+    prev.current = current
+    if (!before) return
+    const ids: Record<string, 'new' | 'chg'> = {}
+    let added = 0
+    current.forEach((amount, id) => {
+      if (!before.has(id)) { ids[id] = 'new'; added += 1 }
+      else if (before.get(id) !== amount) ids[id] = 'chg'
+    })
+    if (!Object.keys(ids).length) return
+    setFlash((old) => ({ ids, added, key: old.key + 1 }))
+    const timer = window.setTimeout(() => setFlash((old) => ({ ...old, ids: {}, added: 0 })), 2600)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature])
+  return flash
+}
+
 export default function PricePanel({ config, price, exporting, delta, compact = false, onEditPrices, onExport, onShare, onBudget, collapsed = false, onToggleCollapse, energyCost, onEnergy }: Props) {
   const { tenant, labels: ROOF_LABELS } = useTenant()
   const [mode, setMode] = useState<'net' | 'vat' | 'gross'>('gross')
+  const flash = useLineFlash(price.lines)
   const amount = mode === 'gross' ? price.totalGross : mode === 'net' ? price.totalNet : price.vatNet
   const label = mode === 'gross' ? 'Bruttó irányár' : mode === 'net' ? 'Nettó irányár' : 'ÁFA összege'
   if (collapsed) return (
@@ -89,7 +115,7 @@ export default function PricePanel({ config, price, exporting, delta, compact = 
       {onBudget && <button type="button" className="budget-trigger" onClick={onBudget}><Wallet size={15} /><span><strong>Van keretösszeged?</strong><small>Megmutatjuk, mi fér bele</small></span></button>}
       {onEnergy && energyCost ? <button type="button" className="energy-trigger is-panel" onClick={onEnergy}><Gauge size={15} /><span><strong>Üzemeltetés ≈ {formatHuf(energyCost)} / év</strong><small>Áramköltség valós tarifával · részletek</small></span><ChevronRight size={14} /></button> : null}
       <PriceMix price={price} compact />
-      <details className="price-details"><summary><span>Tételes kalkuláció <small>{price.lines.length + 1} tétel</small></span><ChevronDown size={16} /></summary><div className="price-lines">{price.lines.map((line) => <div key={line.id} className="price-line"><div><strong>{line.label}</strong><small>{line.detail}</small></div><span>{formatHuf(line.amountNet)}</span></div>)}<div className="price-line installation"><div><strong>Telepítés és üzembe helyezés</strong><small>{tenant.demo ? 'Mintaarány a teljes nettó összegre' : `${price.subtotalNet ? Math.round(price.installationNet / price.subtotalNet * 100) : 0}% a teljes nettó összegre`}</small></div><span>{formatHuf(price.installationNet)}</span></div><div className="price-line installation"><div><strong>Nettó + ÁFA</strong><small>{formatHuf(price.totalNet)} + {formatHuf(price.vatNet)}</small></div><span>{formatHuf(price.totalGross)}</span></div></div></details>
+      <details className="price-details"><summary className={flash.added > 0 ? 'has-new' : undefined}><span>Tételes kalkuláció <small>{price.lines.length + 1} tétel</small>{flash.added > 0 && <em key={flash.key} className="lines-added">+{flash.added} új tétel</em>}</span><ChevronDown size={16} /></summary><div className="price-lines">{price.lines.map((line) => <div key={line.id} className={`price-line${flash.ids[line.id] ? ` is-${flash.ids[line.id]}` : ''}`}><div><strong>{line.label}</strong><small>{line.detail}</small></div><span>{formatHuf(line.amountNet)}</span></div>)}<div className="price-line installation"><div><strong>Telepítés és üzembe helyezés</strong><small>{tenant.demo ? 'Mintaarány a teljes nettó összegre' : `${price.subtotalNet ? Math.round(price.installationNet / price.subtotalNet * 100) : 0}% a teljes nettó összegre`}</small></div><span>{formatHuf(price.installationNet)}</span></div><div className="price-line installation"><div><strong>Nettó + ÁFA</strong><small>{formatHuf(price.totalNet)} + {formatHuf(price.vatNet)}</small></div><span>{formatHuf(price.totalGross)}</span></div></div></details>
       <div className="price-actions"><button type="button" className="primary-action" onClick={onExport} disabled={exporting}>{exporting ? <LoaderCircle size={17} className="spin" /> : <Download size={17} />}{exporting ? 'PDF készül…' : 'PDF összefoglaló'}</button><button type="button" className="secondary-action" onClick={onShare}><Link2 size={17} />Megosztás</button></div>
       {onEditPrices && <button type="button" className="tariff-button" onClick={onEditPrices}><Settings2 size={15} />{tenant.demo ? 'Mintaárak szerkesztése' : 'Árak szerkesztése (admin)'}</button>}
       <div className="price-disclaimer"><Info size={15} /><p>Tájékoztató irányár, nem ajánlattétel. A végleges ár helyszíni felmérést és műszaki jóváhagyást igényel.</p></div>
