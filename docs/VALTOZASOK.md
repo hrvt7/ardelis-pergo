@@ -668,3 +668,8 @@ működést, az eladhatóságot és a hibákat érintik.
 - Tételes kalkuláció: sorban becsúszó tételek; PDF-gomb készítés közben csillogás.
 - Ajánlatkérő űrlap: valid zöld / hibás piros kiemelés rázással, küldés közbeni spinner.
 - Mozgáscsökkentés (prefers-reduced-motion) mindenhol kikapcsolja.
+
+## 3.42 – Teljes képernyős használat
+- Fejléc gomb: teljes képernyő (Android, iPad, asztal); iPhone Safariban súgó a kezdőképernyőre tételhez.
+- Telepíthető (PWA) beállítások: apple-mobile-web-app-capable, viewport-fit=cover, manifest display_override fullscreen, start_url /konfigurator.
+- Biztonságos sávok (kamera-kivágás) fekvő tájolásban.

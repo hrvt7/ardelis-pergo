@@ -28,6 +28,7 @@ import { clearPlacement, deletePhoto, loadPhoto, loadPlacement, savePhoto, saveP
 import type { ShadeResult } from '@/components/ShadeProbe'
 import { studySun } from '@/lib/sunSite'
 import { isMovableRoof } from '@/lib/roofs'
+import FullscreenControl from '@/components/FullscreenControl'
 import { DEFAULT_USAGE, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
 import type { FurnitureSet } from '@/types/pergola'
 
@@ -385,7 +386,7 @@ export default function PergoStudio() {
       <header className="app-header">
         <a className="brand" href="#top" aria-label={`${tenant.brand.name} kezdőnézet`} onClick={(event) => { event.preventDefault(); setView('perspective') }}><TenantMark tenant={tenant} /></a>
         <div className="project-identity"><span>ÉPÍTÉSZETI KONFIGURÁTOR</span><strong>Valós méretek. Azonnali előnézet.</strong></div>
-        <div className="header-actions"><div className="history-actions"><button type="button" aria-label="Visszavonás" title="Visszavonás · Ctrl+Z" onClick={undo} disabled={!history.current.past.length}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" title="Ismétlés · Ctrl+Shift+Z" onClick={redo} disabled={!history.current.future.length}><Redo2 size={17} /></button></div><button type="button" className="header-text-button presentation-toggle" aria-label={presentation ? 'Szerkesztés' : 'Bemutató'} onClick={() => setPresentation(!presentation)}><Presentation size={16} /><span>{presentation ? 'Szerkesztés' : 'Bemutató'}</span></button><button type="button" className="header-text-button" aria-label="Tudnivalók" onClick={() => setModal('info')}><Info size={16} /><span>Tudnivalók</span></button><button type="button" className="header-text-button" aria-label="Alaphelyzet" onClick={() => setModal('reset')}><RotateCcw size={16} /><span>Alaphelyzet</span></button></div>
+        <div className="header-actions"><FullscreenControl /><div className="history-actions"><button type="button" aria-label="Visszavonás" title="Visszavonás · Ctrl+Z" onClick={undo} disabled={!history.current.past.length}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" title="Ismétlés · Ctrl+Shift+Z" onClick={redo} disabled={!history.current.future.length}><Redo2 size={17} /></button></div><button type="button" className="header-text-button presentation-toggle" aria-label={presentation ? 'Szerkesztés' : 'Bemutató'} onClick={() => setPresentation(!presentation)}><Presentation size={16} /><span>{presentation ? 'Szerkesztés' : 'Bemutató'}</span></button><button type="button" className="header-text-button" aria-label="Tudnivalók" onClick={() => setModal('info')}><Info size={16} /><span>Tudnivalók</span></button><button type="button" className="header-text-button" aria-label="Alaphelyzet" onClick={() => setModal('reset')}><RotateCcw size={16} /><span>Alaphelyzet</span></button></div>
       </header>
 
       <main className="studio-shell" id="top">
