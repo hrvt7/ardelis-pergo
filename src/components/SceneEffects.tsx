@@ -2,7 +2,7 @@
 // lamellák között, a bútor alatt), bloom (a LED és a fűtés tényleg világít) és
 // színhű (Khronos Neutral) tónusleképezés. Mobilon és fotós előnézetben nem töltődik be.
 import { useEffect, useMemo } from 'react'
-import { Bloom, EffectComposer, N8AO, ToneMapping } from '@react-three/postprocessing'
+import { Bloom, EffectComposer, HueSaturation, N8AO, ToneMapping, Vignette } from '@react-three/postprocessing'
 import { ShaderPass, ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
 
@@ -33,7 +33,7 @@ function createClampPass() {
   return new ShaderPass(material, 'inputBuffer')
 }
 
-export default function SceneEffects({ ultra, night }: { ultra: boolean; night: boolean }) {
+export default function SceneEffects({ ultra, night, vignette, bloomScale }: { ultra: boolean; night: boolean; vignette: boolean; bloomScale: number }) {
   const clampPass = useMemo(() => createClampPass(), [])
   useEffect(() => () => clampPass.dispose(), [clampPass])
   // Natív MSAA a HDR pufferen: éles élek 100%-os Windows-skálázású (dpr 1) képernyőn is; az SMAA önmagában „pixeles” képet adott.
@@ -51,8 +51,11 @@ export default function SceneEffects({ ultra, night }: { ultra: boolean; night: 
         halfRes={!ultra}
         depthAwareUpsampling
       />
-      <Bloom mipmapBlur luminanceThreshold={1} luminanceSmoothing={0.25} intensity={night ? 0.85 : 0.18} radius={0.72} />
+      <Bloom mipmapBlur luminanceThreshold={night ? 1 : 0.92} luminanceSmoothing={0.2} intensity={(night ? 0.85 : 0.2) * Math.max(bloomScale, 1)} radius={0.7} />
       <ToneMapping mode={ToneMappingMode.NEUTRAL} />
+      {/* Finom vignetta és enyhe telítettség a tónusleképezés után: a kép „fotósabb”, a figyelem a pergolára esik. */}
+      {vignette ? <Vignette eskil={false} offset={0.32} darkness={night ? 0.5 : 0.42} /> : <></>}
+      {vignette ? <HueSaturation saturation={0.05} /> : <></>}
     </EffectComposer>
   )
 }

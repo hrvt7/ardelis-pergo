@@ -174,6 +174,35 @@ function getPowderCoatTexture() {
   return powderCoatTexture
 }
 
+/** Porszórt felület finom szemcséjű normáltérképe (128 px, procedurális): a csillanás megtörik, nem tükörsima. Megosztott, élethosszig tart. */
+let grainNormal: THREE.DataTexture | null = null
+function getGrainNormal() {
+  if (grainNormal) return grainNormal
+  const size = 128
+  const height = new Float32Array(size * size)
+  for (let index = 0; index < height.length; index++) height[index] = seeded(index, 57)
+  const data = new Uint8Array(size * size * 4)
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const at = (px: number, py: number) => height[((py + size) % size) * size + ((px + size) % size)]
+    const dx = (at(x + 1, y) - at(x - 1, y)) * 0.9
+    const dy = (at(x, y + 1) - at(x, y - 1)) * 0.9
+    const length = Math.hypot(dx, dy, 1)
+    const i = (y * size + x) * 4
+    data[i] = Math.round((-dx / length * 0.5 + 0.5) * 255)
+    data[i + 1] = Math.round((-dy / length * 0.5 + 0.5) * 255)
+    data[i + 2] = Math.round((1 / length * 0.5 + 0.5) * 255)
+    data[i + 3] = 255
+  }
+  grainNormal = new THREE.DataTexture(data, size, size, THREE.RGBAFormat)
+  grainNormal.wrapS = grainNormal.wrapT = THREE.RepeatWrapping
+  grainNormal.repeat.set(14, 14)
+  grainNormal.generateMipmaps = true
+  grainNormal.minFilter = THREE.LinearMipmapLinearFilter
+  grainNormal.anisotropy = 4
+  grainNormal.needsUpdate = true
+  return grainNormal
+}
+
 /** Fa hatású (szublimációs) bevonat: hosszanti erezet, a szín a textúrát tónusozza. */
 let woodTexture: THREE.DataTexture | null = null
 function getWoodTexture() {
@@ -206,26 +235,45 @@ function getWoodTexture() {
 
 /** Közös, gyorsítótárazott anyagok: színenként és érdességenként egy példány (kevesebb anyag, egy helyen hangolható). */
 const coatCache = new Map<string, THREE.MeshStandardMaterial>()
-/** Gyengébb eszközön (low/medium) sima Standard anyag: nincs lakkréteg, gyorsabb shader-fordítás és kisebb GPU-terhelés. */
-let lightCoat: boolean | undefined
-const wantsLightCoat = () => (lightCoat ??= ['low', 'medium'].includes(detectQualityTier()))
-function getCoat(color: string, roughness: number) {
-  const key = `${color}|${roughness}`
+type MaterialDetail = 'basic' | 'enhanced' | 'ultra'
+function getCoat(color: string, roughness: number, detail: MaterialDetail) {
+  const key = `${color}|${roughness}|${detail}`
   let material = coatCache.get(key)
   if (!material) {
-    if (wantsLightCoat()) material = WOOD_HEXES.has(color)
+    const wood = WOOD_HEXES.has(color)
+    // Gyengébb eszközön (low/medium) sima Standard anyag: gyorsabb shader-fordítás, kisebb GPU-terhelés.
+    if (detail === 'basic') material = wood
       ? new THREE.MeshStandardMaterial({ color: lightenForWood(color), map: getWoodTexture(), metalness: 0.02, roughness: 0.6, envMapIntensity: 0.7 })
       : new THREE.MeshStandardMaterial({ color, metalness: 0.3, roughness, roughnessMap: getPowderCoatTexture(), envMapIntensity: 0.9 })
-    else if (WOOD_HEXES.has(color)) material = new THREE.MeshPhysicalMaterial({ color: lightenForWood(color), map: getWoodTexture(), metalness: 0.02, roughness: 0.6, clearcoat: 0.12, clearcoatRoughness: 0.5, envMapIntensity: 0.7 })
-    // Festett (porszórt) alumínium: alacsony fémesség, vékony lakkréteg — az éleken éles, valódi csillanás.
-    else material = new THREE.MeshPhysicalMaterial({ color, metalness: 0.2, roughness, roughnessMap: getPowderCoatTexture(), clearcoat: 0.35, clearcoatRoughness: 0.28, specularIntensity: 1, envMapIntensity: 0.9 })
+    else if (wood) material = new THREE.MeshPhysicalMaterial({ color: lightenForWood(color), map: getWoodTexture(), metalness: 0.02, roughness: 0.6, clearcoat: 0.12, clearcoatRoughness: 0.5, envMapIntensity: 0.7 })
+    // Festett (porszórt) alumínium: fémes alap, vékony lakkréteg és finom szemcse — az éleken éles, valódi csillanás.
+    else {
+      const ultra = detail === 'ultra'
+      material = new THREE.MeshPhysicalMaterial({
+        color, metalness: ultra ? 0.62 : 0.5, roughness: Math.max(0.26, roughness * (ultra ? 0.82 : 0.9)), roughnessMap: getPowderCoatTexture(),
+        normalMap: getGrainNormal(), normalScale: new THREE.Vector2(ultra ? 0.22 : 0.14, ultra ? 0.22 : 0.14),
+        clearcoat: ultra ? 0.3 : 0.22, clearcoatRoughness: 0.24, specularIntensity: 1, envMapIntensity: ultra ? 1.1 : 1,
+      })
+    }
     coatCache.set(key, material)
   }
   return material
 }
 
+/**
+ * Üveg: low/medium/high-on átlátszó (opacity) fizikai anyag ior 1.5-tel és vékony lakkal — olcsó és nem lassítja a jelenetet;
+ * ultra szinten valódi transzmisszió (fénytörés a mögötte lévő jeleneten, vékony lemez: thickness 0.02).
+ */
+function GlassMaterial({ tint, opacity, envMapIntensity, doubleSided = false }: { tint: string; opacity: number; envMapIntensity: number; doubleSided?: boolean }) {
+  const { materialDetail } = useQuality()
+  const side = doubleSided ? THREE.DoubleSide : THREE.FrontSide
+  if (materialDetail === 'ultra') return <meshPhysicalMaterial color={tint} metalness={0} roughness={0.08} transmission={0.92} thickness={0.02} ior={1.5} attenuationColor={tint} attenuationDistance={1.2} specularIntensity={1} clearcoat={1} clearcoatRoughness={0.04} envMapIntensity={envMapIntensity} side={side} />
+  return <meshPhysicalMaterial color={tint} metalness={0.02} roughness={materialDetail === 'enhanced' ? 0.06 : 0.04} transparent opacity={opacity} ior={1.5} clearcoat={1} clearcoatRoughness={0.04} envMapIntensity={envMapIntensity} depthWrite={false} side={side} />
+}
+
 function PowderCoat({ color, roughness = 0.4 }: { color: string; roughness?: number }) {
-  return <primitive object={getCoat(color, roughness)} attach="material" dispose={null} />
+  const { materialDetail } = useQuality()
+  return <primitive object={getCoat(color, roughness, materialDetail)} attach="material" dispose={null} />
 }
 
 function Beam({ args, position, color, radius = 0.012 }: { args: [number, number, number]; position: [number, number, number]; color: string; radius?: number }) {
@@ -381,7 +429,7 @@ function FixedGlassWall({ length, height, color }: { length: number; height: num
   const count = Math.max(1, Math.round((length - 0.1) / 1.5))
   const paneWidth = (length - 0.1) / count
   return <group>
-    {Array.from({ length: count }, (_, index) => <mesh key={index} position={[-length / 2 + 0.05 + paneWidth * (index + 0.5), usableHeight / 2 + 0.1, 0]} renderOrder={2}><boxGeometry args={[paneWidth - 0.012, usableHeight - 0.04, 0.01]} /><meshPhysicalMaterial color="#b9d0d2" metalness={0.02} roughness={0.04} transparent opacity={0.26} clearcoat={1} clearcoatRoughness={0.04} envMapIntensity={2.1} depthWrite={false} side={THREE.DoubleSide} /></mesh>)}
+    {Array.from({ length: count }, (_, index) => <mesh key={index} position={[-length / 2 + 0.05 + paneWidth * (index + 0.5), usableHeight / 2 + 0.1, 0]} renderOrder={2}><boxGeometry args={[paneWidth - 0.012, usableHeight - 0.04, 0.01]} /><GlassMaterial tint="#b9d0d2" opacity={0.26} envMapIntensity={2.1} doubleSided /></mesh>)}
     {Array.from({ length: count - 1 }, (_, index) => <mesh key={index} position={[-length / 2 + 0.05 + paneWidth * (index + 1), usableHeight / 2 + 0.1, 0]}><boxGeometry args={[0.008, usableHeight - 0.06, 0.016]} /><meshStandardMaterial color="#20282a" roughness={0.6} /></mesh>)}
     <Beam args={[length, 0.07, 0.07]} position={[0, 0.075, 0]} color={color} radius={0.006} />
     <Beam args={[length, 0.06, 0.07]} position={[0, height - 0.14, 0]} color={color} radius={0.006} />
@@ -657,7 +705,7 @@ function GlazedRoof({ width, depth, height, color, kind }: { width: number; dept
       return <mesh key={index} position={[x, height + 0.211, 0]} castShadow={!glass} receiveShadow renderOrder={glass ? 2 : 0}>
         <boxGeometry args={[bay - 0.05, glass ? 0.012 : 0.016, length - 0.02]} />
         {glass
-          ? <meshPhysicalMaterial color="#cfe2e4" metalness={0.02} roughness={0.04} transparent opacity={0.24} ior={1.45} clearcoat={1} clearcoatRoughness={0.03} envMapIntensity={1.2} depthWrite={false} />
+          ? <GlassMaterial tint="#cfe2e4" opacity={0.24} envMapIntensity={1.2} />
           : <meshPhysicalMaterial color="#f3f1ea" roughness={0.55} transmission={0} transparent opacity={0.78} sheen={0.2} side={THREE.DoubleSide} />}
       </mesh>
     })}
@@ -1714,8 +1762,8 @@ function getLighting(scene: SceneSettings) {
   return {
     night,
     hdr: night ? HDR_FILES.night : golden ? HDR_FILES.golden : HDR_FILES.day,
-    fog: night ? '#17252e' : golden ? '#a69a90' : '#c3cdce',
-    sun: night ? '#b5cff2' : golden ? '#ffe0bd' : '#ffffff',
+    fog: night ? '#17252e' : golden ? '#b09a88' : '#c3cdce',
+    sun: night ? '#b5cff2' : golden ? '#ffc890' : '#fff4e2',
     // Erős, irányított napfény és visszafogottabb szórt fény: így a pergola, az oszlopok
     // és a lamellák valódi árnyékot vetnek (korábban a szórt fény szinte eltüntette).
     intensity: night ? 0.52 : golden ? 2.5 : 1.2 + daylight * 2.9,
@@ -1868,9 +1916,9 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}|${scene.wallColor}|${scene.windowColor}`} />
     {!scene.photoMode && <><fog attach="fog" args={[lighting.fog, 20, 43]} /><FogFollow /></>}
-    <ambientLight intensity={lighting.ambient} /><hemisphereLight args={['#c8d8e2', '#51483e', lighting.hemisphere]} /><directionalLight key={shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={[quality.shadowMapSize, quality.shadowMapSize]} shadow-camera-left={-shadowExtent} shadow-camera-right={shadowExtent} shadow-camera-top={shadowExtent} shadow-camera-bottom={-shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
+    <ambientLight intensity={lighting.ambient} /><hemisphereLight args={[lighting.night ? '#9fb8d6' : '#cfdce6', lighting.night ? '#2f3338' : '#5a4d3f', lighting.hemisphere]} /><directionalLight key={shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={[quality.shadowMapSize, quality.shadowMapSize]} shadow-radius={quality.shadowRadius} shadow-blurSamples={quality.shadowRadius > 2 ? 16 : 8} shadow-camera-left={-shadowExtent} shadow-camera-right={shadowExtent} shadow-camera-top={shadowExtent} shadow-camera-bottom={-shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
-    {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={wantsSmallHdr(quality.tier) ? smallHdr(lighting.hdr) : lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment} environmentRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
+    {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={wantsSmallHdr(quality.tier) ? smallHdr(lighting.hdr) : lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment * quality.environmentIntensity} environmentRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
     {!scene.photoMode && <Ground scene={scene} />}
     {!scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} look={houseLook} night={lighting.night} />}
     {!scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} look={houseLook} night={lighting.night} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
@@ -1879,7 +1927,7 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     {scene.rain && <Rain config={config} quality={quality} />}
     {scene.sunStudy && !scene.photoMode && <CompassRose config={config} facing={scene.facing} />}
     {scene.sunStudy && !scene.photoMode && !coreOnly && onShade && <SceneAssetBoundary name="shade analysis"><Suspense fallback={null}><ShadeProbe config={config} scene={scene} onResult={onShade} /></Suspense></SceneAssetBoundary>}
-    {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} /></Suspense></SceneAssetBoundary>}
+    {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} /></Suspense></SceneAssetBoundary>}
     {scene.photoMode
       ? <PhotoRig config={config} placement={placement} onCommit={(next) => onSceneChange(next)} />
       : <CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} />}

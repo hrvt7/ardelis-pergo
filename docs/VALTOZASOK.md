@@ -627,3 +627,9 @@ működést, az eladhatóságot és a hibákat érintik.
 ## 3.34 – Beépülő oldalelem-animáció
 - Új oldalelem (ZIP screen, tolóüveg, fix üveg, lamellafal, lécfal) kapcsolásakor az elem fentről lefelé „leereszkedik" (0,8 s, ease-out). Ugyanígy, ha az oldal típusát váltod.
 - Teljesítmény: csak a kapcsolás pillanatában fut, imperatív (nincs React újrarenderelés), csak a mozgás alatt kér képkockát és árnyékfrissítést; a betöltéskor és a megosztott linkeknél nem animál; csökkentett mozgásnál kihagyja.
+
+## 3.35 – Fotórealisztikusabb render (szintenként hangolva)
+- **Anyagok** (`materialDetail`): low/medium változatlan (gyors Standard); high: fémes porszórt alumínium (metalness 0,5), lakkréteg 0,22, procedurális 128 px-es szemcse-normáltérkép; ultra: metalness 0,62, lakk 0,3, erősebb szemcse. Az üveg minden szinten ior 1,5; ultra szinten valódi transzmisszió (thickness 0,02).
+- **Fény**: melegebb napfény (nappal #fff4e2, aranyóra #ffc890), puhább árnyék (`shadow-radius` szintenként 1–4,5), a `environmentIntensity` mostantól tényleg hat (korábban nem volt bekötve).
+- **Utófeldolgozás** (high/ultra): vignetta + enyhe telítettség, a bloom küszöbe nappal 0,92 (tükröződések), ultra szinten 1,25× erősség.
+- Nincs új letöltendő fájl: minden textúra procedurális, a csomagméret változatlan.

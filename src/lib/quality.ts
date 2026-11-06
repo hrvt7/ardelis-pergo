@@ -23,13 +23,21 @@ export interface QualitySettings {
   enableGrassDetail: boolean
   enableExtraPlants: boolean
   rainDrops: number
+  /** PBR-részletesség: basic = sima Standard, enhanced = lakkréteg + finom szemcse-normáltérkép, ultra = + üveg-transzmisszió. */
+  materialDetail: 'basic' | 'enhanced' | 'ultra'
+  /** Direkt fény árnyékpuhaság (PCF kernel sugár). */
+  shadowRadius: number
+  /** Finom vignetta + enyhe színkorrekció az utófeldolgozásban. */
+  vignette: boolean
+  /** A bloom erősségének szorzója (LED-ek, tükröződések). */
+  bloomScale: number
 }
 
 export const QUALITY_PROFILES: Record<QualityTier, QualitySettings> = {
-  low: { tier: 'low', shadowMapSize: 1024, dpr: [1, 1.1], enablePostprocessing: false, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 256, textureResolution: '1k', louvreSegments: 6, environmentIntensity: 0.9, maxAnisotropy: 2, enableGrassDetail: false, enableExtraPlants: false, rainDrops: 160 },
-  medium: { tier: 'medium', shadowMapSize: 1024, dpr: [1, 1.35], enablePostprocessing: false, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 256, textureResolution: '1k', louvreSegments: 8, environmentIntensity: 1, maxAnisotropy: 4, enableGrassDetail: false, enableExtraPlants: true, rainDrops: 260 },
-  high: { tier: 'high', shadowMapSize: 2048, dpr: [1.25, 1.5], enablePostprocessing: true, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 12, environmentIntensity: 1, maxAnisotropy: 8, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 320 },
-  ultra: { tier: 'ultra', shadowMapSize: 2048, dpr: [1.5, 1.8], enablePostprocessing: true, ultraEffects: true, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 16, environmentIntensity: 1, maxAnisotropy: 16, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 650 },
+  low: { tier: 'low', shadowMapSize: 1024, dpr: [1, 1.1], enablePostprocessing: false, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 256, textureResolution: '1k', louvreSegments: 6, environmentIntensity: 0.9, maxAnisotropy: 2, enableGrassDetail: false, enableExtraPlants: false, rainDrops: 160, materialDetail: 'basic', shadowRadius: 1, vignette: false, bloomScale: 0 },
+  medium: { tier: 'medium', shadowMapSize: 1024, dpr: [1, 1.35], enablePostprocessing: false, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 256, textureResolution: '1k', louvreSegments: 8, environmentIntensity: 1, maxAnisotropy: 4, enableGrassDetail: false, enableExtraPlants: true, rainDrops: 260, materialDetail: 'basic', shadowRadius: 1.5, vignette: false, bloomScale: 0 },
+  high: { tier: 'high', shadowMapSize: 2048, dpr: [1.25, 1.5], enablePostprocessing: true, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 12, environmentIntensity: 1, maxAnisotropy: 8, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 320, materialDetail: 'enhanced', shadowRadius: 3, vignette: true, bloomScale: 1 },
+  ultra: { tier: 'ultra', shadowMapSize: 2048, dpr: [1.5, 1.8], enablePostprocessing: true, ultraEffects: true, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 16, environmentIntensity: 1.1, maxAnisotropy: 16, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 650, materialDetail: 'ultra', shadowRadius: 4.5, vignette: true, bloomScale: 1.25 },
 }
 
 const ORDER: QualityTier[] = ['low', 'medium', 'high', 'ultra']
