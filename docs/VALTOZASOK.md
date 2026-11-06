@@ -690,3 +690,9 @@ működést, az eladhatóságot és a hibákat érintik.
 - **Biztonság**: az árat a szerver számolja és az ajánlatba rögzíti (pillanatkép); a tartalom SHA-256 ujjlenyomata elfogadáskor ellenőrződik, és az aláírás mellé (név, idő, IP, böngésző) mentődik. Az elfogadás az érdeklődőt „Megnyert” státuszra állítja, a gyártó és a vevő e-mailt kap. Az aláírás **egyszerű elektronikus aláírás**, nem minősített eIDAS.
 - **Telepítés**: futtasd a `supabase/quotes.sql`-t (a `leads.sql` után). Foglaló: banki átutalás (fizetési tudnivalók az ajánlaton), online fizetés nincs.
 - API: `GET/POST /api/quote`, `GET/POST/PATCH /api/admin-quotes`.
+
+## 3.46 – Animációk: ajánlatoldal, 3D kiegészítők, admin
+- **Ajánlatoldal**: papír beúszása, tételsorok egymás utáni megjelenése, a bruttó végösszeg és a foglaló számfelfutása; elfogadáskor aláírás-pecsét (kör kirajzolódik, pipa, hullámgyűrű).
+- **3D kiegészítők**: utólag felkerülő fűtés, hangfal és ventilátor felülről „beugrik”; a LED két villanással kapcsol fel, majd lágyan felfut. Első betöltéskor és csökkentett mozgásnál nem animál.
+- **Admin**: KPI-számok felfutása, animált üres állapot (pergola-körvonal), pulzáló jelző a 24 órán belüli új érdeklődőn.
+- Minden animáció tiszteletben tartja a `prefers-reduced-motion` beállítást.

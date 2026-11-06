@@ -1,6 +1,7 @@
 // Az érdeklődő részletező paneljének „Ajánlat” blokkja: kiadott ajánlatok állapota + új ajánlat / új változat.
 import { useState, type FormEvent } from 'react'
 import { Check, Copy, Eye, FilePlus2, Send } from 'lucide-react'
+import { EmptyArt } from '@/pages/AdminLeads'
 import { formatHuf } from '@/lib/pricing'
 import { QUOTE_STATE_COLOR, QUOTE_STATE_LABEL, type AdminQuote, type QuoteDraft } from '@/lib/quotes'
 
@@ -48,7 +49,7 @@ export default function QuoteSection({ leadRef, api }: { leadRef: string; api: Q
 
   return <section className="quote-admin" aria-label="Ajánlatok">
     <div className="field-label">Árajánlat</div>
-    {mine.length === 0 && <p className="quote-admin-empty">Még nem adtál ki ajánlatot ennek az érdeklődőnek.</p>}
+    {mine.length === 0 && <div className="quote-admin-blank"><EmptyArt /><p className="quote-admin-empty">Még nem adtál ki ajánlatot ennek az érdeklődőnek.</p></div>}
     {mine.map((quote) => <div className="quote-row" key={`${quote.number}-${quote.version}`}>
       <div className="quote-row-main">
         <b>{quote.label}</b>

@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type PointerEvent } from 'react'
+import { useEffect, useId, useRef, useState, type PointerEvent } from 'react'
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import { formatHuf } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
@@ -47,10 +47,28 @@ function Sparkline({ values }: { values: number[] }) {
   </svg>
 }
 
+/** Számfelfutás a KPI-értéken („12 480 Ft”, „37”, „4,2%”): az első számcsoport fut fel, a többi marad. */
+function CountValue({ value }: { value: string }) {
+  const match = /^(\d[\d\s\u00a0]*)(.*)$/.exec(value)
+  const target = match ? Number(match[1].replace(/[\s\u00a0]/g, '')) : NaN
+  const grouped = Boolean(match && /[\s\u00a0]/.test(match[1].trim()))
+  const [shown, setShown] = useState(() => (Number.isFinite(target) && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : target))
+  useEffect(() => {
+    if (!Number.isFinite(target) || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { const id = window.setTimeout(() => setShown(target), 0); return () => window.clearTimeout(id) }
+    let frame = 0
+    const start = performance.now()
+    const tick = (now: number) => { const t = Math.min(1, (now - start) / 800); setShown(Math.round(target * (1 - Math.pow(1 - t, 3)))); if (t < 1) frame = requestAnimationFrame(tick) }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [target])
+  if (!match || !Number.isFinite(target)) return <>{value}</>
+  return <span aria-label={value}>{grouped ? shown.toLocaleString('hu-HU').replace(/\u00a0/g, ' ') : shown}{match[2]}</span>
+}
+
 function Kpi({ label, value, hint, delta, spark, ring }: { label: string; value: string; hint?: string; delta?: number | null; spark?: number[]; ring?: number | null }) {
   return <div className="kpi">
     <div className="kpi-head"><span>{label}</span>{delta != null && delta !== 0 && <em className={delta > 0 ? 'up' : 'down'}>{delta > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}{Math.abs(delta)}</em>}</div>
-    <strong>{value}</strong>
+    <strong><CountValue value={value} /></strong>
     {hint && <small>{hint}</small>}
     {spark && <Sparkline values={spark} />}
     {ring != null && <svg className="kpi-ring" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" className="kpi-ring-track" /><circle cx="18" cy="18" r="15" className="kpi-ring-fill" strokeDasharray={`${ring * 94.2} 94.2`} transform="rotate(-90 18 18)" /></svg>}

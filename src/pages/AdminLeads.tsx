@@ -10,6 +10,15 @@ const STATUS_LABEL = Object.fromEntries(LEAD_STATUSES) as Record<string, string>
 const dateFormat = new Intl.DateTimeFormat('hu-HU', { dateStyle: 'medium', timeStyle: 'short' })
 const roofName = (lead: LeadRow) => (lead.config?.roof ? ROOF_INFO[lead.config.roof as RoofType]?.name ?? lead.config.roof : '—')
 
+/** Üres állapot: a pergola körvonala kirajzolódik, majd a lamellák „bekapcsolnak”. */
+export function EmptyArt() {
+  return <svg className="empty-art" viewBox="0 0 120 64" width="132" height="70" aria-hidden="true">
+    <path className="ea-ground" d="M6 58h108" />
+    <path className="ea-frame" d="M20 58V20M100 58V20M14 20h92" />
+    {[0, 1, 2, 3, 4].map((index) => <path key={index} className="ea-louver" style={{ ['--i' as string]: index }} d={`M${26 + index * 15} 16l9 8`} />)}
+  </svg>
+}
+
 function CopyButton({ value, label }: { value: string; label: string }) {
   const [done, setDone] = useState(false)
   return <button type="button" className="icon-btn" aria-label={`${label} másolása`} title={`${label} másolása`} onClick={() => {
@@ -112,11 +121,11 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes }:
       <button type="button" className={filter === 'all' ? 'is-on' : ''} onClick={() => setFilter('all')}>Mind <b>{leads.length}</b></button>
       {LEAD_STATUSES.map(([key, label]) => <button type="button" key={key} className={filter === key ? 'is-on' : ''} onClick={() => setFilter(key)}><i style={{ background: STATUS_COLORS[key] }} />{label} <b>{count(key)}</b></button>)}
     </div>
-    {shown.length === 0 ? <div className="card empty"><strong>{leads.length === 0 ? 'Még nem érkezett érdeklődő.' : 'Nincs a szűrésnek megfelelő érdeklődő.'}</strong><p>{leads.length === 0 ? 'Amint valaki felmérést kér a konfigurátorban, itt jelenik meg.' : 'Próbálj másik státuszt vagy keresőszót.'}</p></div> :
+    {shown.length === 0 ? <div className="card empty"><EmptyArt /><strong>{leads.length === 0 ? 'Még nem érkezett érdeklődő.' : 'Nincs a szűrésnek megfelelő érdeklődő.'}</strong><p>{leads.length === 0 ? 'Amint valaki felmérést kér a konfigurátorban, itt jelenik meg.' : 'Próbálj másik státuszt vagy keresőszót.'}</p></div> :
       <div className="card table" role="table">
         <div className="tr th" role="row"><span>Ügyfél</span><span>Település</span><span>Tető</span><span className="num">Irányár</span><span>Státusz</span><span className="num">Érkezett</span></div>
         {shown.map((lead) => <button type="button" role="row" key={lead.ref} className={`tr${openRef === lead.ref ? ' is-open' : ''}`} onClick={() => setOpenRef(lead.ref)}>
-          <span className="who"><span className="avatar">{initials(lead.customer_name)}</span><span><b>{lead.customer_name}</b><small className="only-wide">{lead.ref}</small><small className="only-narrow">{[lead.city, roofName(lead), timeAgo(lead.created_at, now)].filter((part) => part && part !== '—').join(' · ')}</small></span></span>
+          <span className="who"><span className="avatar">{initials(lead.customer_name)}{lead.status === 'new' && now - new Date(lead.created_at).getTime() < 86_400_000 && <i className="new-dot" title="Új érdeklődő" />}</span><span><b>{lead.customer_name}</b><small className="only-wide">{lead.ref}</small><small className="only-narrow">{[lead.city, roofName(lead), timeAgo(lead.created_at, now)].filter((part) => part && part !== '—').join(' · ')}</small></span></span>
           <span className="muted">{lead.city}</span>
           <span className="muted">{roofName(lead)}</span>
           <span className="num strong">{formatHuf(lead.estimate_gross)}</span>

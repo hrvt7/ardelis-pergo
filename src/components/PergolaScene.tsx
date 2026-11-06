@@ -489,6 +489,42 @@ function BuildIn({ height, settled, children }: { height: number; settled: { cur
   return <group ref={ref} scale={[1, start, 1]} position={[0, height * (1 - start), 0]}>{children}</group>
 }
 
+/** Utólag felkerülő kiegészítő (fűtés, hangfal, ventilátor): felülről „beugrik” kis túllendüléssel. Első betöltéskor nem animál. */
+function DropIn({ settled, dy = 0.45, children }: { settled: { current: boolean }; dy?: number; children: ReactNode }) {
+  const ref = useRef<THREE.Group>(null)
+  const [animate] = useState(() => settled.current && !REDUCED)
+  const t = useRef(animate ? 0 : 1)
+  const invalidate = useThree((state) => state.invalidate)
+  useFrame((_, delta) => {
+    if (t.current >= 1 || !ref.current) return
+    t.current = Math.min(1, t.current + Math.min(delta, 0.05) / 0.75)
+    const x = t.current - 1
+    const back = 1 + 2.4 * x * x * x + 1.4 * x * x // easeOutBack
+    ref.current.scale.setScalar(Math.max(0.01, back))
+    ref.current.position.y = dy * (1 - back)
+    invalidate()
+  })
+  return <group ref={ref} scale={animate ? 0.01 : 1} position={[0, animate ? dy : 0, 0]}>{children}</group>
+}
+
+/** LED-fény felkapcsolása: két gyors villanás, majd lágy felfutás (csak utólagos bekapcsoláskor). */
+function LedRamp({ settled, children }: { settled: { current: boolean }; children: (factor: number) => ReactNode }) {
+  const [animate] = useState(() => settled.current && !REDUCED)
+  const [factor, setFactor] = useState(animate ? 0 : 1)
+  const t = useRef(animate ? 0 : 1)
+  const invalidate = useThree((state) => state.invalidate)
+  useFrame((_, delta) => {
+    if (t.current >= 1) return
+    t.current = Math.min(1, t.current + Math.min(delta, 0.05) / 1.3)
+    const u = t.current
+    const flicker = u < 0.3 ? (Math.sin(u * 62) > 0.2 ? 0.7 : 0.05) : 1
+    const ramp = u < 0.3 ? 1 : (u - 0.3) / 0.7
+    setFactor(u >= 1 ? 1 : flicker * (u < 0.3 ? 0.5 : 0.5 + 0.5 * (1 - Math.pow(1 - ramp, 2))))
+    invalidate()
+  })
+  return <>{children(factor)}</>
+}
+
 /** Dőlt tetőnél a zárt oldalfal fölött rögzített háromszög-kitöltés: az elülső magasságtól a ferde gerendáig. */
 function GableInfill({ depth, height, rise, glassy, color }: { depth: number; height: number; rise: number; glassy: boolean; color: string }) {
   const geometry = useMemo(() => {
@@ -962,10 +998,10 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     </>)}
     </ExplodePart>
     {(() => { const labelled = new Set<string>(); return (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <ExplodePart key={side} ex={ex} dx={side === 'left' ? -1.1 : side === 'right' ? 1.1 : 0} dz={side === 'front' ? 1.1 : side === 'back' ? -1.1 : 0}><SidePlacement side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} labelled={labelled} settled={settled} /></ExplodePart>) })()}
-    {config.led && tilt(<LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={scene.ledLevel / 100} rgb={config.ledRgb ? scene.ledColor : null} />)}
-    {(config.fans ?? 0) > 0 && <CeilingFans config={rise ? { ...config, height: height + rise / 2 } : config} color={color} spinning={scene.fanOn} />}
-    {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <group key={index} position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={scene.heatersOn ? (night ? 3 : 0.15) : 0} toneMapped={false} /></mesh>{night && <pointLight position={[0, -0.25, 0.25]} color="#ff8a4a" intensity={scene.heatersOn ? 3.2 : 0} distance={3.2} decay={2} />}</group> })}
-    {config.speakers && [-1, 1].map((direction) => <group key={direction} position={[direction * (width / 2 - 0.17), height - 0.38, depth / 2 - 0.17]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[0.082, 0.082, 0.065, 24]} /><meshStandardMaterial color="#1b2022" metalness={0.48} roughness={0.38} /></mesh><mesh position={[0, 0.035, 0]}><cylinderGeometry args={[0.065, 0.065, 0.004, 24]} /><meshStandardMaterial color="#080b0c" roughness={0.85} /></mesh></group>)}
+    {config.led && tilt(<LedRamp settled={settled}>{(factor) => <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={(scene.ledLevel / 100) * factor} rgb={config.ledRgb ? scene.ledColor : null} />}</LedRamp>)}
+    {(config.fans ?? 0) > 0 && <DropIn settled={settled}><CeilingFans config={rise ? { ...config, height: height + rise / 2 } : config} color={color} spinning={scene.fanOn} /></DropIn>}
+    {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <DropIn key={index} settled={settled}><group position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={scene.heatersOn ? (night ? 3 : 0.15) : 0} toneMapped={false} /></mesh>{night && <pointLight position={[0, -0.25, 0.25]} color="#ff8a4a" intensity={scene.heatersOn ? 3.2 : 0} distance={3.2} decay={2} />}</group></DropIn> })}
+    {config.speakers && [-1, 1].map((direction) => <DropIn key={direction} settled={settled}><group position={[direction * (width / 2 - 0.17), height - 0.38, depth / 2 - 0.17]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[0.082, 0.082, 0.065, 24]} /><meshStandardMaterial color="#1b2022" metalness={0.48} roughness={0.38} /></mesh><mesh position={[0, 0.035, 0]}><cylinderGeometry args={[0.065, 0.065, 0.004, 24]} /><meshStandardMaterial color="#080b0c" roughness={0.85} /></mesh></group></DropIn>)}
     <group name="ar-skip-overlays">{scene.showDimensions && <DimensionGuides config={config} />}{scene.showPerson && <OptionalSceneAsset name="180 cm reference person"><Person config={config} /></OptionalSceneAsset>}{scene.showHotspots && <Hotspots config={config} posts={postPositions} />}</group>
   </group>
 }

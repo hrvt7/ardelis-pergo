@@ -1,13 +1,33 @@
 // Vevői ajánlatoldal: /ajanlat/:token — a titkos link a hitelesítés. Megtekintés, elfogadás (név + nyilatkozat), elutasítás.
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
-import { Check, Clock, Printer, ShieldCheck, X } from 'lucide-react'
+import { Check, Clock, Printer, X } from 'lucide-react'
 import { formatHuf } from '@/lib/pricing'
 import { usePageSeo } from '@/lib/usePageSeo'
 import { QUOTE_STATE_LABEL, type PublicQuote } from '@/lib/quotes'
 
 const dateOnly = new Intl.DateTimeFormat('hu-HU', { dateStyle: 'long' })
 const dateTime = new Intl.DateTimeFormat('hu-HU', { dateStyle: 'long', timeStyle: 'short' })
+
+/** Számfelfutás 0-ról a célig (csökkentett mozgásnál azonnal a cél). */
+function useCountUp(target: number, delay = 0, duration = 900) {
+  const [value, setValue] = useState(() => (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? target : 0))
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { const id = window.setTimeout(() => setValue(target), 0); return () => window.clearTimeout(id) }
+    let frame = 0
+    const timer = window.setTimeout(() => {
+      const start = performance.now()
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - start) / duration)
+        setValue(Math.round(target * (1 - Math.pow(1 - t, 3))))
+        if (t < 1) frame = requestAnimationFrame(tick)
+      }
+      frame = requestAnimationFrame(tick)
+    }, delay)
+    return () => { window.clearTimeout(timer); cancelAnimationFrame(frame) }
+  }, [target, delay, duration])
+  return value
+}
 
 type Load = { kind: 'loading' } | { kind: 'error'; message: string } | { kind: 'ok'; quote: PublicQuote; newerToken: string | null }
 
@@ -21,6 +41,8 @@ export default function QuotePage() {
   const [formError, setFormError] = useState('')
   const [declining, setDeclining] = useState(false)
   const [reason, setReason] = useState('')
+  const [justSigned, setJustSigned] = useState(false)
+  const signedRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -47,9 +69,15 @@ export default function QuotePage() {
       setState({ kind: 'ok', newerToken: null, quote: action === 'accept'
         ? { ...state.quote, status: 'accepted', acceptedAt: data.acceptedAt ?? new Date().toISOString(), signerName: name.trim() }
         : { ...state.quote, status: 'declined', declinedAt: new Date().toISOString() } })
+      if (action === 'accept') setJustSigned(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch { setFormError('A szerver nem érhető el. Próbáld újra.') } finally { setBusy(false) }
   }
+
+  const grossTarget = state.kind === 'ok' ? state.quote.totalGross : 0
+  const depositTarget = state.kind === 'ok' ? state.quote.depositGross : 0
+  const gross = useCountUp(grossTarget, 500)
+  const deposit = useCountUp(depositTarget, 800)
 
   if (state.kind === 'loading') return <div className="quote-shell"><p className="quote-note" role="status">Ajánlat betöltése…</p></div>
   if (state.kind === 'error') return <div className="quote-shell"><div className="quote-paper quote-empty"><h1>Az ajánlat nem érhető el</h1><p>{state.message}</p><p>Ha a levélben kapott linket használtad, kérj újat a kivitelezőtől.</p></div></div>
@@ -58,7 +86,7 @@ export default function QuotePage() {
   const open = quote.status === 'sent'
   const vat = quote.totalGross - quote.totalNet
   return <div className="quote-shell">
-    <article className="quote-paper" aria-label={`Árajánlat ${quote.label}`}>
+    <article className={`quote-paper${justSigned ? ' is-signed-now' : ''}`} aria-label={`Árajánlat ${quote.label}`}>
       <header className="quote-head">
         <div>
           {quote.brand.logoUrl ? <img src={quote.brand.logoUrl} alt={quote.brand.name} height={34} /> : <strong className="quote-brand">{quote.brand.name}</strong>}
@@ -92,26 +120,26 @@ export default function QuotePage() {
       <table className="quote-table">
         <thead><tr><th>Tétel</th><th className="num">Nettó</th></tr></thead>
         <tbody>
-          {quote.lines.map((line, index) => <tr key={`${line.label}-${index}`}><td><b>{line.label}</b>{line.detail && <small>{line.detail}</small>}</td><td className="num">{formatHuf(line.amountNet)}</td></tr>)}
-          <tr><td>Telepítés</td><td className="num">{formatHuf(quote.installationNet)}</td></tr>
-          {quote.discountNet > 0 && <tr className="is-discount"><td>Engedmény</td><td className="num">−{formatHuf(quote.discountNet)}</td></tr>}
+          {quote.lines.map((line, index) => <tr key={`${line.label}-${index}`} className="q-in" style={{ ['--i' as string]: index }}><td><b>{line.label}</b>{line.detail && <small>{line.detail}</small>}</td><td className="num">{formatHuf(line.amountNet)}</td></tr>)}
+          <tr className="q-in" style={{ ['--i' as string]: quote.lines.length }}><td>Telepítés</td><td className="num">{formatHuf(quote.installationNet)}</td></tr>
+          {quote.discountNet > 0 && <tr className="is-discount q-in" style={{ ['--i' as string]: quote.lines.length + 1 }}><td>Engedmény</td><td className="num">−{formatHuf(quote.discountNet)}</td></tr>}
         </tbody>
         <tfoot>
           <tr><td>Nettó végösszeg</td><td className="num">{formatHuf(quote.totalNet)}</td></tr>
           <tr><td>ÁFA ({Math.round(quote.vatRate * 100)}%)</td><td className="num">{formatHuf(vat)}</td></tr>
-          <tr className="is-total"><td>Bruttó végösszeg</td><td className="num">{formatHuf(quote.totalGross)}</td></tr>
+          <tr className="is-total"><td>Bruttó végösszeg</td><td className="num" aria-label={formatHuf(quote.totalGross)}>{formatHuf(gross)}</td></tr>
         </tfoot>
       </table>
 
       <section className="quote-deposit">
-        <div><span className="quote-label">Foglaló ({quote.depositPercent}%)</span><strong>{formatHuf(quote.depositGross)}</strong><small>Fennmaradó összeg: {formatHuf(quote.totalGross - quote.depositGross)}</small></div>
+        <div><span className="quote-label">Foglaló ({quote.depositPercent}%)</span><strong aria-label={formatHuf(quote.depositGross)}>{formatHuf(deposit)}</strong><small>Fennmaradó összeg: {formatHuf(quote.totalGross - quote.depositGross)}</small></div>
         {quote.paymentInfo && <p>{quote.paymentInfo}</p>}
       </section>
 
       {quote.terms && <><h2>Feltételek</h2><p className="quote-terms">{quote.terms}</p></>}
 
-      {quote.status === 'accepted' && <section className="quote-signed" aria-live="polite">
-        <ShieldCheck size={22} />
+      {quote.status === 'accepted' && <section ref={signedRef} className={`quote-signed${justSigned ? ' is-fresh' : ''}`} aria-live="polite">
+        <span className="quote-stamp" aria-hidden="true"><svg viewBox="0 0 52 52" width="44" height="44"><circle cx="26" cy="26" r="23" /><path d="M15 27l8 8 15-17" /></svg></span>
         <div><strong>Elfogadva</strong>
           <p>{quote.signerName} · {quote.acceptedAt ? dateTime.format(new Date(quote.acceptedAt)) : ''}</p>
           <small>Egyszerű elektronikus aláírás · dokumentum-ujjlenyomat (SHA-256): {quote.hash.slice(0, 16)}…</small></div>
