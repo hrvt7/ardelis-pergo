@@ -8,6 +8,15 @@ export function setActiveScene(scene: THREE.Scene | null) {
   activeScene = scene
 }
 
+/** Nagy felbontású állókép: a jelenet kis időre élesebb pixelarányra vált, majd visszaáll (a PergolaScene regisztrálja). */
+type HiResRenderer = (pixelRatio: number) => Promise<void>
+let hiRes: HiResRenderer | null = null
+export function setHiResRenderer(renderer: HiResRenderer | null) { hiRes = renderer }
+export async function renderHiRes(pixelRatio = 2): Promise<boolean> {
+  if (!hiRes) return false
+  try { await hiRes(pixelRatio); return true } catch { return false }
+}
+
 export function getActiveScene() {
   return activeScene
 }

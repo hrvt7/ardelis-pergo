@@ -633,3 +633,6 @@ működést, az eladhatóságot és a hibákat érintik.
 - **Fény**: melegebb napfény (nappal #fff4e2, aranyóra #ffc890), puhább árnyék (`shadow-radius` szintenként 1–4,5), a `environmentIntensity` mostantól tényleg hat (korábban nem volt bekötve).
 - **Utófeldolgozás** (high/ultra): vignetta + enyhe telítettség, a bloom küszöbe nappal 0,92 (tükröződések), ultra szinten 1,25× erősség.
 - Nincs új letöltendő fájl: minden textúra procedurális, a csomagméret változatlan.
+
+## 3.36 – Éles 3D-kép a PDF-ajánlatban
+- A PDF-export előtt a jelenet rövid időre 2× pixelarányra vált (legfeljebb 3000 px széles vászon), lemásolja a képet (max. 2400 px), majd visszaáll a megszokott felbontásra. Ha az átváltás nem sikerül, a korábbi pillanatkép kerül a PDF-be.

@@ -1,5 +1,5 @@
 import type { EnergyUsage } from '@/lib/energy'
-import { snapshotViewer } from '@/lib/showcase'
+import { snapshotViewerHiRes } from '@/lib/showcase'
 import type { Tenant } from '@/tenants/types'
 import type { PergolaConfig, PriceBreakdown, RoofType } from '@/types/pergola'
 
@@ -15,7 +15,7 @@ export async function exportPergolaPdf(config: PergolaConfig, price: PriceBreakd
   await enableSvgFonts(pdfMake as never)
 
   // Fotó módban a háttérfotó + 3D együtt kerül a PDF-be (snapshotViewer).
-  const snapshot = snapshotViewer(2000)
+  const snapshot = await snapshotViewerHiRes(2400)
   let image: string | undefined
   let imageAspect: number | undefined
   try {

@@ -12,7 +12,7 @@ import { PHOTO_GROUP } from '@/lib/photoScene'
 import { QualityContext, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
-import { setActiveScene } from '@/lib/sceneRegistry'
+import { setActiveScene, setHiResRenderer } from '@/lib/sceneRegistry'
 import { useTenant } from '@/tenants/TenantContext'
 import { EMBEDDED_GRASS_RGBA, EMBEDDED_GRASS_SIZE } from '@/lib/grassTexture'
 import { log } from '@/lib/logger'
@@ -1899,7 +1899,21 @@ function PerfProbe({ quality }: { quality: QualitySettings }) {
 
 function SceneRegistration() {
   const scene = useThree((state) => state.scene)
+  const store = useThree((state) => state.get)
   useEffect(() => { setActiveScene(scene); return () => setActiveScene(null) }, [scene])
+  // Ajánlat-/PDF-kép: rövid időre 2× pixelarány (max. 3000 px széles), kirajzolás után visszaáll a megszokott felbontás.
+  useEffect(() => {
+    setHiResRenderer(async (ratio) => {
+      const { gl, size, setDpr, viewport, invalidate } = store()
+      const previous = viewport.dpr
+      const target = Math.max(previous, Math.min(ratio, 3000 / Math.max(1, size.width), 3))
+      setDpr(target)
+      refreshShadows(gl)
+      for (let frame = 0; frame < 3; frame++) { invalidate(); await new Promise<void>((resolve) => requestAnimationFrame(() => resolve())) }
+      ;(window as unknown as { __hiResRestore?: () => void }).__hiResRestore = () => setDpr(previous)
+    })
+    return () => setHiResRenderer(null)
+  }, [store])
   return null
 }
 

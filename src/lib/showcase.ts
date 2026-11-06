@@ -1,6 +1,7 @@
 // Bemutató-kép: a 3D jelenet pillanatképe és a megosztható, márkázott kép (1080 × 1350,
 // Instagram/WhatsApp-barát álló formátum) a terv nevével, méretével, színével és árával.
 import { coverCrop } from './photoPlacement'
+import { renderHiRes } from './sceneRegistry'
 
 /**
  * A 3D nézet aktuális képe egy (2D) vásznon. Fotó módban a háttérfotó (object-fit: cover vágással)
@@ -27,6 +28,17 @@ export function snapshotViewer(maxWidth = 1600): HTMLCanvasElement | null {
   }
   context.drawImage(canvas, 0, 0, copy.width, copy.height)
   return copy
+}
+
+/**
+ * Éles állókép ajánlathoz/PDF-hez: a jelenetet rövid időre 2× pixelarányon rajzolja ki, lemásolja, majd visszaállítja a felbontást.
+ * Ha a jelenet nem tud átváltani, a szokásos pillanatképet adja.
+ */
+export async function snapshotViewerHiRes(maxWidth = 2400): Promise<HTMLCanvasElement | null> {
+  const switched = await renderHiRes(2)
+  try { return snapshotViewer(maxWidth) } finally {
+    if (switched) { const restore = (window as unknown as { __hiResRestore?: () => void }).__hiResRestore; restore?.() }
+  }
 }
 
 export function captureScene(maxWidth = 1600, quality = 0.86): string | null {
