@@ -4,6 +4,7 @@ import { formatHuf } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
 import { initials, LEAD_STATUSES, leadsToCsv, STATUS_COLORS, timeAgo, type LeadRow } from '@/lib/adminLeads'
 import type { RoofType } from '@/types/pergola'
+import QuoteSection, { type QuoteApi } from '@/components/admin/QuoteSection'
 
 const STATUS_LABEL = Object.fromEntries(LEAD_STATUSES) as Record<string, string>
 const dateFormat = new Intl.DateTimeFormat('hu-HU', { dateStyle: 'medium', timeStyle: 'short' })
@@ -26,7 +27,7 @@ function Qr({ url }: { url: string }) {
   return src ? <img className="drawer-qr" src={src} width={120} height={120} alt="A konfigurációt megnyitó QR-kód" /> : null
 }
 
-function Drawer({ lead, now, onClose, onUpdate }: { lead: LeadRow; now: number; onClose: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void }) {
+function Drawer({ lead, now, quotes, onClose, onUpdate }: { lead: LeadRow; now: number; quotes?: QuoteApi; onClose: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void }) {
   const [note, setNote] = useState(lead.owner_note ?? '')
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
@@ -67,6 +68,8 @@ function Drawer({ lead, now, onClose, onUpdate }: { lead: LeadRow; now: number; 
         <label className="field-label" htmlFor="owner-note">Belső megjegyzés <small>(a vevő nem látja)</small></label>
         <textarea id="owner-note" rows={4} maxLength={2000} value={note} placeholder="pl. Hétfőn visszahívni, a kertben fa van…" onChange={(event) => setNote(event.target.value)} onBlur={() => { if (note.trim() !== (lead.owner_note ?? '')) onUpdate(lead.ref, { ownerNote: note }) }} />
 
+        {quotes && <QuoteSection leadRef={lead.ref} api={quotes} />}
+
         <div className="field-label">Konfiguráció</div>
         <div className="config-box">
           <Qr url={lead.config_url} />
@@ -83,7 +86,7 @@ function Drawer({ lead, now, onClose, onUpdate }: { lead: LeadRow; now: number; 
   </>
 }
 
-export default function AdminLeads({ leads, error, onReload, onUpdate }: { leads: LeadRow[]; error: string; onReload: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void }) {
+export default function AdminLeads({ leads, error, onReload, onUpdate, quotes }: { leads: LeadRow[]; error: string; onReload: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void; quotes?: Omit<QuoteApi, 'quotes'> & { all: QuoteApi['quotes'] } }) {
   const [filter, setFilter] = useState('all')
   const [query, setQuery] = useState('')
   const [openRef, setOpenRef] = useState<string | null>(null)
@@ -121,6 +124,6 @@ export default function AdminLeads({ leads, error, onReload, onUpdate }: { leads
           <span className="num muted">{timeAgo(lead.created_at, now)}</span>
         </button>)}
       </div>}
-    {open && <Drawer key={open.ref} lead={open} now={now} onClose={() => setOpenRef(null)} onUpdate={onUpdate} />}
+    {open && <Drawer key={open.ref} lead={open} now={now} quotes={quotes && { quotes: quotes.all.filter((quote) => quote.leadRef === open.ref), create: quotes.create, withdraw: quotes.withdraw }} onClose={() => setOpenRef(null)} onUpdate={onUpdate} />}
   </div>
 }

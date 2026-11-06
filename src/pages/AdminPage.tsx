@@ -5,6 +5,7 @@ import AdminLeads from '@/pages/AdminLeads'
 import LamelixLogo from '@/components/LamelixLogo'
 import AdminOverview from '@/pages/AdminOverview'
 import { useLeads } from '@/lib/adminLeads'
+import { useQuotes } from '@/lib/quotes'
 import { useStats } from '@/lib/adminStats'
 import NotFound from '@/pages/NotFound'
 import { MOUNT_LABELS, MOUNT_TYPES } from '@/lib/mount'
@@ -116,6 +117,7 @@ const TAB_INFO: Record<AdminTab, { icon: ReactNode; subtitle: string }> = {
 function AdminShell({ base, token, onExpired, onLogout, children }: { base: Tenant; token: string; onExpired: () => void; onLogout: () => void; children: ReactNode }) {
   const [tab, setTab] = useState<AdminTab>(() => TABS.find(([, , hash]) => hash === window.location.hash)?.[0] ?? 'overview')
   const { leads, error, reload, update } = useLeads(token, onExpired)
+  const quoteApi = useQuotes(token, onExpired)
   const events = useStats(token)
   const choose = (next: AdminTab) => { setTab(next); window.history.replaceState(null, '', TABS.find(([key]) => key === next)![2]) }
   const fresh = leads?.filter((lead) => lead.status === 'new').length ?? 0
@@ -133,7 +135,7 @@ function AdminShell({ base, token, onExpired, onLogout, children }: { base: Tena
         <header className="admin-top"><div><h1>{title}</h1><p>{TAB_INFO[tab].subtitle}</p></div><Link className="btn" to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor</Link></header>
         {tab !== 'settings' && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
         {tab === 'overview' && leads && <>{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} /></>}
-        {tab === 'leads' && leads && <AdminLeads leads={leads} error={error} onReload={() => void reload()} onUpdate={(ref, patch) => void update(ref, patch)} />}
+        {tab === 'leads' && leads && <AdminLeads leads={leads} error={error} onReload={() => void reload()} onUpdate={(ref, patch) => void update(ref, patch)} quotes={{ all: quoteApi.quotes ?? [], create: quoteApi.create, withdraw: quoteApi.withdraw }} />}
         <div hidden={tab !== 'settings'}>{children}</div>
       </section>
     </div>

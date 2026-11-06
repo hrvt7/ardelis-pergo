@@ -70,7 +70,7 @@ const json = (status: number, body: unknown) => new Response(JSON.stringify(body
 })
 
 /** Egysoros szöveg (pl. e-mail tárgy): sortörés és vezérlőkarakter nélkül. */
-const oneLine = (value: string) => Array.from(value, (character) => (character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127 ? ' ' : character)).join('').replace(/\s+/g, ' ').trim()
+export const oneLine = (value: string) => Array.from(value, (character) => (character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127 ? ' ' : character)).join('').replace(/\s+/g, ' ').trim()
 
 const RATE_WINDOW_MS = 10 * 60_000
 const RATE_MAX_PER_CLIENT = 6
@@ -96,7 +96,7 @@ function rateLimited(client: string, email: string, now: number) {
   return false
 }
 
-const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] ?? character)
+export const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] ?? character)
 
 function makeRef(tenant: Tenant, now: Date) {
   const date = now.toISOString().slice(0, 10).replace(/-/g, '')
@@ -104,7 +104,7 @@ function makeRef(tenant: Tenant, now: Date) {
   return `${tenant.id.replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase()}-${date}-${random}`
 }
 
-function siteOrigin(request: Request, env: LeadEnv) {
+export function siteOrigin(request: Request, env: LeadEnv) {
   if (env.PUBLIC_SITE_URL) return env.PUBLIC_SITE_URL.replace(/\/$/, '')
   return new URL(request.url).origin
 }
@@ -182,7 +182,7 @@ ${contact ? `<p style="font-size:12px;color:#62727a">${contact}</p>` : ''}
 </div></div></body></html>`
 }
 
-async function sendEmail(env: LeadEnv, message: { to: string[]; subject: string; html: string; replyTo?: string }) {
+export async function sendEmail(env: LeadEnv, message: { to: string[]; subject: string; html: string; replyTo?: string }) {
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },

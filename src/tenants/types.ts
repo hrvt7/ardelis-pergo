@@ -98,6 +98,13 @@ export interface Tenant {
   regions: readonly string[]
   defaultConfig: PergolaConfig
   presets: TenantPreset[]
+  /** Árajánlat-alapértékek (opcionális). */
+  quote?: {
+    /** Fizetési tudnivalók (számlaszám, kedvezményezett) — az ajánlat oldalán a foglaló mellett jelenik meg. */
+    paymentInfo?: string
+    /** Általános feltételek rövid szövege az ajánlat alján. */
+    terms?: string
+  }
   lead: {
     /** Kik kapják az érdeklődő e-mailt. Üresen a LEAD_FALLBACK_EMAIL env érvényes. */
     recipients: string[]

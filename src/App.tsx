@@ -4,6 +4,7 @@ import Platform from '@/pages/Platform'
 import NotFound from '@/pages/NotFound'
 import TenantStudio from '@/pages/TenantStudio'
 const AdminPage = lazy(() => import('@/pages/AdminPage'))
+const QuotePage = lazy(() => import('@/pages/QuotePage'))
 const Home = lazy(() => import('@/pages/Home'))
 
 /** Átirányítás, ami megtartja a lekérdezést és a #hash-t (megosztott konfigurációs linkek). */
@@ -22,6 +23,7 @@ export default function App() {
     <Route path="/konfigurator" element={<TenantStudio mode="demo" />} />
     <Route path="/studio/pergola" element={<Redirect to="/konfigurator" />} />
     <Route path="/k/demo" element={<Redirect to="/konfigurator" />} />
+    <Route path="/ajanlat/:token" element={<Suspense fallback={null}><QuotePage /></Suspense>} />
     <Route path="/k/:tenantId/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
     <Route path="/k/:tenantId" element={<TenantStudio mode="standalone" />} />
     <Route path="/embed/:tenantId" element={<TenantStudio mode="embed" />} />

@@ -683,3 +683,10 @@ működést, az eladhatóságot és a hibákat érintik.
 - Műszaki rajz: az A–A metszet ferde tetőt, magasított hátsó oszlopokat, oldalkitöltést, fali csatlakozást és külön hátsó-él méretet mutat; a homlokzaton szaggatott vonal jelöli a hátsó élt.
 - 3D: zárt bal/jobb oldal fölött háromszög alakú, rögzített kitöltés (üvegoldalnál üveg, egyébként a váz színében).
 - Ár: „Dőlt tető” tétel (Ft/°/fm, az admin árszerkesztőben állítható).
+
+## 3.45 – Számozott online ajánlat, e-aláírás, foglaló, verziózás
+- **Gyártói oldal** (Érdeklődők → részletek → „Árajánlat”): ajánlat kiadása egy érdeklődőhöz érvényességgel (alap 30 nap), foglaló-százalékkal (alap 30%), nettó engedménnyel, üzenettel és fizetési tudnivalókkal; e-mail a vevőnek a linkkel (Resend), link másolása, visszavonás. Újabb kiadásnál a függő változat „felülírt” lesz (`ARDELI-2026-0007`, `/v2`…).
+- **Vevői oldal** `/ajanlat/:token` (titkos link, noindex): specifikáció, tételes ár, ÁFA, foglaló, fizetési tudnivalók, feltételek; elfogadás névvel + nyilatkozattal, elutasítás indokkal, nyomtatás/PDF. Lejárt, visszavont, felülírt ajánlat nem fogadható el; régi változaton jelzi az újabbat.
+- **Biztonság**: az árat a szerver számolja és az ajánlatba rögzíti (pillanatkép); a tartalom SHA-256 ujjlenyomata elfogadáskor ellenőrződik, és az aláírás mellé (név, idő, IP, böngésző) mentődik. Az elfogadás az érdeklődőt „Megnyert” státuszra állítja, a gyártó és a vevő e-mailt kap. Az aláírás **egyszerű elektronikus aláírás**, nem minősített eIDAS.
+- **Telepítés**: futtasd a `supabase/quotes.sql`-t (a `leads.sql` után). Foglaló: banki átutalás (fizetési tudnivalók az ajánlaton), online fizetés nincs.
+- API: `GET/POST /api/quote`, `GET/POST/PATCH /api/admin-quotes`.
