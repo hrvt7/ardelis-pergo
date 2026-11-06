@@ -1,5 +1,10 @@
 # Változások
 
+## 3.53 – Audit: táblagép-elrendezés
+
+- 821–1180 px között a cím nem ütközik az eszköztárral, a fejléc nem csordul túl, a kamera-eszköztár ikonos lesz, a „Kezdőlap” link nem lóg rá az eszköztárra.
+- Audit eredménye: 2000 véletlen konfiguráció (normalizálás, ár, megosztó link oda-vissza, energia) hibátlan; 24 véletlen jelenet és 24 útvonal×3 szélesség konzolhiba és vízszintes túlcsordulás nélkül.
+
 ## 3.52 – A ház mérete független a tető dőlésétől
 
 - A 3D ház léptéke már nem függ a tetődőléstől: 0°–12° között a ház mérete azonos marad, a pergola hátsó (fali) éle emelkedik a homlokzaton.
