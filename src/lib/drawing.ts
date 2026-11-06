@@ -5,7 +5,7 @@
 // Vetítés: európai (E) rendszer — homlokzat fent, alatta az alaprajz, mellette a metszet.
 import { glassPanels } from './glass'
 import { hasBackWall, postPositions, wallSides } from './mount'
-import { isGlazedRoof } from './roofs'
+import { isGlazedRoof, roofRise } from './roofs'
 import { PANEL, panelLayout } from './solar'
 import { sideSegments, type SideSegment } from './sides'
 import { FAN_DIAMETER, fanLayout } from './fans'
@@ -195,7 +195,8 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
   const xMax = w / 2 + (rightWing ? WALL_T : back ? 0.35 : 0)
   const zMin = -d / 2 - (back ? WALL_T : 0)
   const zMax = d / 2 + (leftWing || rightWing ? 0.15 : 0)
-  const yTop = back || leftWing || rightWing ? levels.roofTop + 0.3 : levels.roofTop
+  const rise = roofRise(config)
+  const yTop = (back || leftWing || rightWing ? levels.roofTop + 0.3 : levels.roofTop) + rise
   const spanX = xMax - xMin
   const spanZ = zMax - zMin
 
@@ -279,7 +280,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       breakLine(fx1, fx2, Y(yTop))
       svg.text((fx1 + fx2) / 2, Y(yTop) + 3.4, 'HÁZFAL (NÉZET)', 1.7, { anchor: 'middle', color: SOFT, spacing: 0.2, weight: 'semi' })
       // Fali csatlakozó profil.
-      svg.rect(X(-w / 2 - 0.03), Y(h + 0.19), (w + 0.06) * k, 0.3 * k, { stroke: MID, width: 0.18, fill: '#e3e6e4' })
+      svg.rect(X(-w / 2 - 0.03), Y(h + rise + 0.19), (w + 0.06) * k, 0.3 * k, { stroke: MID, width: 0.18, fill: '#e3e6e4' })
     }
     // Házszárnyak (metszetben, mert a homlokzati síkban állnak).
     if (leftWing) drawWallSection(X(-w / 2 - WALL_T), Y(yTop), WALL_T * k, yTop * k)
@@ -304,6 +305,10 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     const lx = X(xMax) + 2
     levelMark(svg, lx, Y(levels.roofTop), levels.roofTop)
     levelMark(svg, lx, Y(levels.beamBottom), levels.beamBottom, 'szabad belmagasság')
+    if (rise > 0) {
+      svg.line(X(-w / 2), Y(levels.roofTop + rise), X(w / 2), Y(levels.roofTop + rise), 0.3, MID, '1.6 1')
+      levelMark(svg, lx, Y(levels.roofTop + rise), levels.roofTop + rise, 'tető hátsó éle')
+    }
     levelMark(svg, lx, Y(0), 0, 'járófelület')
   }
 
@@ -516,8 +521,8 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     if (back) {
       drawWallSection(Zs(-d / 2 - WALL_T), Ys(yTop), WALL_T * k, yTop * k)
       // Fali profil és vízvető.
-      svg.rect(Zs(-d / 2), Ys(h + 0.19), 0.035 * k, 0.3 * k, { width: 0.25, fill: INK })
-      svg.path(`M${r2(Zs(-d / 2))} ${r2(Ys(h + 0.245))} L${r2(Zs(-d / 2 + 0.3))} ${r2(Ys(h + 0.205))}`, { width: 0.45 })
+      svg.rect(Zs(-d / 2), Ys(h + rise + 0.19), 0.035 * k, 0.3 * k, { width: 0.25, fill: INK })
+      svg.path(`M${r2(Zs(-d / 2))} ${r2(Ys(h + rise + 0.245))} L${r2(Zs(-d / 2 + 0.3))} ${r2(Ys(h + rise + 0.245 - 0.3 * Math.tan((config.pitch ?? 0) * Math.PI / 180) - 0.04))}`, { width: 0.45 })
     }
     // A metszősíkon túli oldal (jobb oldal) nézetben.
     const rightPosts = posts.filter(([x]) => x > CUT(w)).map(([, z]) => z).sort((a, b) => a - b)
@@ -533,12 +538,17 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       else for (let y = top + 1.2; y < bottom - 0.4; y += 0.11 * k) svg.rect(a, y, b - a, 0.05 * k, { stroke: SOFT, width: 0.1, fill: '#eef0ee' })
     })
     if (needsMullion('right')) svg.rect(Zs(-MULLION / 2), Ys(levels.beamBottom), MULLION * k, (levels.beamBottom - 0.02) * k, { width: 0.25, fill: '#ffffff' })
-    // A metszősíkon túli oszlopok nézetben.
-    rightPosts.forEach((z) => svg.rect(Zs(z - POST / 2), Ys(levels.beamBottom), POST * k, levels.beamBottom * k, { width: 0.35, fill: '#ffffff' }))
+    // Dőlt tetőnél a zárt oldal fölött rögzített háromszög-kitöltés van (az elülső magasságtól a ferde gerendáig).
+    if (rise > 0 && segmentsOf('right').length) svg.path(`M${r2(Zs(-d / 2))} ${r2(Ys(levels.beamBottom))} L${r2(Zs(d / 2))} ${r2(Ys(levels.beamBottom))} L${r2(Zs(-d / 2))} ${r2(Ys(levels.beamBottom + rise))} Z`, { stroke: SOFT, width: 0.18, fill: '#e9eeed' })
+    // A metszősíkon túli oszlopok nézetben (a hátsók a dőlés miatt magasabbak).
+    rightPosts.forEach((z) => { const postH = levels.beamBottom + (z < 0 ? rise : 0); svg.rect(Zs(z - POST / 2), Ys(postH), POST * k, postH * k, { width: 0.35, fill: '#ffffff' }) })
+    // A tetőszintű elemek az elülső él körül elfordulnak (SVG: pozitív szög = óramutató járásával egyező, a bal/hátsó oldal emelkedik).
+    if (rise > 0) svg.add(`<g transform="rotate(${r2(config.pitch ?? 0)} ${r2(Zs(d / 2))} ${r2(Ys(h))})">`)
     // Oldalgerenda nézetben, a hossz- (elülső/hátsó) gerendák metszve.
     svg.rect(Zs(-d / 2), Ys(levels.beamTop), d * k, BEAM_H * k, { width: 0.25, fill: '#ffffff' })
     ;[-d / 2, d / 2 - BEAM_W].forEach((z) => svg.rect(Zs(z), Ys(levels.beamTop), BEAM_W * k, BEAM_H * k, { width: 0.5, fill: INK }))
     drawRoofSection()
+    if (rise > 0) svg.add('</g>')
     // Méretek: alul a mélység (oszloptengelyekkel), jobbra a magasság.
     const axisZs = Array.from(new Set(posts.map(([, z]) => r2(z)))).sort((a, b) => a - b)
     const below = groundY + 3 + 5
@@ -547,6 +557,10 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     dimChain(svg, [Zs(-d / 2), Zs(d / 2)], below + (axisZs.length ? 6.5 : 0), groundY, false, [cm(d)])
     const right = Zs(zMax) + 5
     dimChain(svg, [Ys(0), Ys(levels.beamBottom), Ys(levels.beamTop), Ys(levels.roofTop)], right, Zs(d / 2), true, [cm(levels.beamBottom), cm(BEAM_H), cm(levels.roofTop - levels.beamTop)])
+    if (rise > 0) {
+      dimChain(svg, [Ys(0), Ys(levels.roofTop + rise)], right + 6.5, Zs(d / 2), true, [cm(levels.roofTop + rise)])
+      svg.text(Zs(0), Ys(h + rise / 2 + 0.7), `Tetődőlés ${config.pitch}°`, 1.9, { anchor: 'middle', weight: 'semi', color: ACCENT })
+    }
   }
 
   function drawRoofSection() {

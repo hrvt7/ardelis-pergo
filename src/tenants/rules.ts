@@ -81,6 +81,7 @@ export const priceSettingsSchema = z.object({
   roofShadeBelowPerM2Net: z.number().min(0).max(1000000).default(38000),
   glazingSatinPerM2Net: z.number().min(0).max(1000000).default(12000),
   glazingHeatPerM2Net: z.number().min(0).max(1000000).default(22000),
+  pitchPerDegreePerMeterNet: z.number().min(0).max(100000).default(1800),
   customColorRate: z.number().min(0).max(1),
   woodColorRate: z.number().min(0).max(1).default(0.18),
   installationRate: z.number().min(0).max(1),

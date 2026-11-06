@@ -173,6 +173,8 @@ export interface PriceSettings {
   glazingSatinPerM2Net: number
   /** Hővisszaverő (napvédő) burkolat felára m²-enként. */
   glazingHeatPerM2Net: number
+  /** Dőlt tető felára: magasított hátsó oszlopok, ferde bekötés, oldalkitöltés. Ft / fok / szélesség-méter. */
+  pitchPerDegreePerMeterNet: number
   customColorRate: number
   /** Fa hatású (szublimációs) bevonat felára a szerkezeti árhoz képest. */
   woodColorRate: number

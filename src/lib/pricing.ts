@@ -41,6 +41,7 @@ export const DEFAULT_PRICES: PriceSettings = {
   roofShadeBelowPerM2Net: 38000,
   glazingSatinPerM2Net: 12000,
   glazingHeatPerM2Net: 22000,
+  pitchPerDegreePerMeterNet: 1800,
   customColorRate: 0.06,
   woodColorRate: 0.18,
   installationRate: 0.1,
@@ -226,6 +227,15 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
       label: 'Okosotthon-vezérlés',
       detail: 'Wi-Fi központ · telefonos app, időzítés, jelenetek, hangvezérlés',
       amountNet: round(prices.smartHomeNet),
+    })
+  }
+
+  if (config.pitch && prices.pitchPerDegreePerMeterNet > 0) {
+    lines.push({
+      id: 'pitch',
+      label: `Dőlt tető · ${config.pitch}°`,
+      detail: `Magasított hátsó oszlopok és oldalkitöltés · ${config.pitch}° × ${formatNumber(config.width, 2)} fm × ${formatHuf(prices.pitchPerDegreePerMeterNet)}`,
+      amountNet: round(config.pitch * config.width * prices.pitchPerDegreePerMeterNet),
     })
   }
 

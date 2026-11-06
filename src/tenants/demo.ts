@@ -62,6 +62,7 @@ export const demoTenant: Tenant = {
     roofShadeBelowPerM2Net: 38000,
     glazingSatinPerM2Net: 12000,
     glazingHeatPerM2Net: 22000,
+    pitchPerDegreePerMeterNet: 1800,
     customColorRate: 0.06,
     woodColorRate: 0.18,
     installationRate: 0.1,

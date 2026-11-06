@@ -489,6 +489,22 @@ function BuildIn({ height, settled, children }: { height: number; settled: { cur
   return <group ref={ref} scale={[1, start, 1]} position={[0, height * (1 - start), 0]}>{children}</group>
 }
 
+/** Dőlt tetőnél a zárt oldalfal fölött rögzített háromszög-kitöltés: az elülső magasságtól a ferde gerendáig. */
+function GableInfill({ depth, height, rise, glassy, color }: { depth: number; height: number; rise: number; glassy: boolean; color: string }) {
+  const geometry = useMemo(() => {
+    const half = depth / 2 - 0.1
+    const shape = new THREE.Shape()
+    shape.moveTo(-half, 0); shape.lineTo(half, 0); shape.lineTo(half, rise * (2 * half) / depth + 0.02); shape.closePath()
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.035, bevelEnabled: false })
+    geo.translate(0, 0, -0.0175)
+    return geo
+  }, [depth, rise])
+  useEffect(() => () => geometry.dispose(), [geometry])
+  return <mesh geometry={geometry} position={[0, height - 0.02, 0]} castShadow receiveShadow renderOrder={glassy ? 2 : 0}>
+    {glassy ? <GlassMaterial tint="#cfe2e4" opacity={0.28} envMapIntensity={1.2} doubleSided /> : <PowderCoat color={color} />}
+  </mesh>
+}
+
 function SidePlacement({ side, config, scene, color, onSelect, onSceneChange, labelled, settled }: { side: SideKey; settled: { current: boolean }; config: PergolaConfig; scene: SceneSettings; color: string; onSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; labelled: Set<string> }) {
   const { width, depth } = config
   // Dőlt tetőnél a hátsó oldal magasabb (a tető hátsó éléig ér).
@@ -515,6 +531,7 @@ function SidePlacement({ side, config, scene, color, onSelect, onSceneChange, la
       if (label) labelled.add(key)
       return <group key={`${index}-${segment.type}`} position={[x, 0, 0]}><BuildIn height={height} settled={settled}><SideSegmentWall type={segment.type} length={segmentLength} height={height} color={color} config={config} scene={scene} onSceneChange={onSceneChange} label={label} /></BuildIn></group>
     })}
+    {!isHorizontal && !allOpen && roofRise(config) > 0 && <GableInfill depth={depth} height={height} rise={roofRise(config)} glassy={segments.some((segment) => segment.type === 'glass' || segment.type === 'glassFramed' || segment.type === 'glassFixed')} color={color} />}
     {split && !midPost && <Beam args={[MULLION, height - 0.1, 0.09]} position={[0, (height - 0.1) / 2, 0]} color={color} radius={0.008} />}
   </group>
 }

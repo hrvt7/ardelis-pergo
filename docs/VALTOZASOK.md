@@ -677,4 +677,9 @@ működést, az eladhatóságot és a hibákat érintik.
 ## 3.43 – Tetődőlés és tetőburkolat-variánsok
 - Új „Tetődőlés” csúszka (0–12°): a tető hátsó (fali) éle emelkedik, a hátsó oszlopok/oldal magasabbak, a ház magassága igazodik. Az elülső érték továbbra is az oszlopmagasság.
 - Tetőburkolat: üveg → tiszta / matt / hővisszaverő; polikarbonát → opál / tiszta / hővisszaverő. 3D anyag, felár (Ft/m², admin árszerkesztőben állítható), összegzés, PDF, megosztó link (i, u jelölők).
-- Teszt: tests/pitch-glazing.test.ts. Ismert korlát: a műszaki rajz oldalnézete még vízszintes tetőt mutat; a dőlés a PDF táblázatában szerepel.
+- Teszt: tests/pitch-glazing.test.ts. 
+
+## 3.44 – Dőlt tető teljes körűvé tétele
+- Műszaki rajz: az A–A metszet ferde tetőt, magasított hátsó oszlopokat, oldalkitöltést, fali csatlakozást és külön hátsó-él méretet mutat; a homlokzaton szaggatott vonal jelöli a hátsó élt.
+- 3D: zárt bal/jobb oldal fölött háromszög alakú, rögzített kitöltés (üvegoldalnál üveg, egyébként a váz színében).
+- Ár: „Dőlt tető” tétel (Ft/°/fm, az admin árszerkesztőben állítható).

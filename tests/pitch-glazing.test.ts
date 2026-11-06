@@ -37,6 +37,12 @@ describe('tetődőlés és tetőburkolat', () => {
     expect(clear.lines.some((line) => line.id === 'glazing')).toBe(false)
     expect(heat.lines.some((line) => line.id === 'glazing')).toBe(true)
   })
+  it('a dőlés felára az árban szerepel, vízszintesnél nincs', () => {
+    const flat = tenantPrice(demoTenant, make({ roof: 'glass' }))
+    const tilted = tenantPrice(demoTenant, make({ roof: 'glass', pitch: 10 }))
+    expect(flat.lines.some((line) => line.id === 'pitch')).toBe(false)
+    expect(tilted.totalNet - flat.totalNet).toBeGreaterThan(0)
+  })
   it('a megosztó linken át változatlanul visszajön', () => {
     const config = make({ roof: 'polycarbonate', glazing: 'heat', pitch: 9 })
     const decoded = parseConfig(demoTenant, decodeShareHash(`#${shareHash(config)}`))
