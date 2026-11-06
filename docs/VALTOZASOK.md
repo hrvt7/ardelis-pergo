@@ -1,5 +1,9 @@
 # Változások
 
+## 3.54 – A nyíló ajtó kifelé nyílik
+
+- A nyíló teraszajtó mostantól kifelé nyílik (3D-ben és a műszaki rajz alaprajzi nyitási ívén is), így nem fut bele a kanapéba vagy a berendezésbe. 3D-ben mérésekkel ellenőrizve: nyitott állapotban a szárny a pergola alapterületén kívülre kerül.
+
 ## 3.53 – Audit: táblagép-elrendezés
 
 - 821–1180 px között a cím nem ütközik az eszköztárral, a fejléc nem csordul túl, a kamera-eszköztár ikonos lesz, a „Kezdőlap” link nem lóg rá az eszköztárra.

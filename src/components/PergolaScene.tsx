@@ -501,7 +501,7 @@ function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow
   const gl = useThree((state) => state.gl)
   // A tolószárny csak a fix tábla mögé (a falszakaszon belül) csúszik, soha nem lóg ki a keretből.
   const slide = Math.max(0, Math.min(leafWidth * 0.96, fixedLength - 0.04))
-  // Nyíló ajtó: a zsanér a fix tábla felőli oldalon van, a szabad él a sarok felé esik. Így az ajtó a tér belsejébe nyílik, nem csapódik az oldalfalhoz.
+  // Nyíló ajtó: a zsanér a fix tábla felőli oldalon van, a szabad él a sarok felé esik. Az ajtó kifelé nyílik (kültéri teraszajtóknál ez a szokásos), így nem fut bele a berendezésbe és nem csapódik az oldalfalhoz.
   const hingeX = length / 2 - leafWidth + 0.01
   const leafHeight = usableHeight - 0.02
   useFrame((_, delta) => {
@@ -511,7 +511,7 @@ function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow
     else progress.current = target
     if (leaf.current) {
       if (sliding) leaf.current.position.x = length / 2 - leafWidth / 2 - slide * progress.current
-      else leaf.current.rotation.y = -inward * progress.current * 1.5
+      else leaf.current.rotation.y = inward * progress.current * 1.5
     }
     if (spill.current) spill.current.opacity = progress.current * glow
     if (moving) { refreshShadows(gl); invalidate() }

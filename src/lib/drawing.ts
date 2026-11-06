@@ -510,15 +510,15 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       const leaf = doorLeafWidth(type, length)
       seg(start, start + length - (type === 'door' ? leaf : 0), 0, 0.35, INK)
       if (type === 'door') {
-        // Ajtószárny 90°-ban kinyitva és a nyitási ív: a zsanér a fix tábla felőli oldalon van, az ajtó a tér belsejébe nyílik.
+        // Ajtószárny 90°-ban kinyitva és a nyitási ív: a zsanér a fix tábla felőli oldalon van, az ajtó kifelé nyílik.
         const hinge = start + length - leaf
         const [hx, hy] = P(hinge, 0)
-        const [ex, ey] = P(hinge, leaf)
+        const [ex, ey] = P(hinge, -leaf)
         svg.line(hx, hy, ex, ey, 0.45, INK, undefined, 'd-leaf')
         let previous = P(hinge + leaf, 0)
         for (let step = 1; step <= 6; step += 1) {
           const t = (step / 6) * (Math.PI / 2)
-          const next = P(hinge + leaf * Math.cos(t), leaf * Math.sin(t))
+          const next = P(hinge + leaf * Math.cos(t), -leaf * Math.sin(t))
           svg.line(previous[0], previous[1], next[0], next[1], 0.1, SOFT, undefined, `d-arc a${step}`)
           previous = next
         }
