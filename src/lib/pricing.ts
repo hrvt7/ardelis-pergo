@@ -9,6 +9,7 @@ import { HALF_NAMES, SIDE_INFO, SIDE_LABELS, sideLength, sideSegments, splitProf
 import { ROOF_INFO, ROOF_TYPES } from './roofs'
 import { getMatrixPrice } from './priceMatrix'
 import { omittedPosts, sideWalls } from './mount'
+import { doorCount, effectiveWallGlazing, glassWallArea, hasSplitUnit, hasUnderfloor, WALL_GLAZING_INFO } from './buildings'
 import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, RoofType, SideKey } from '../types/pergola'
 
 export const DEFAULT_PRICES: PriceSettings = {
@@ -45,6 +46,14 @@ export const DEFAULT_PRICES: PriceSettings = {
   customColorRate: 0.06,
   woodColorRate: 0.18,
   installationRate: 0.1,
+  doorHingedNet: 260000,
+  doorSlidingNet: 480000,
+  wallGlazingDoublePerM2Net: 24000,
+  wallGlazingTriplePerM2Net: 42000,
+  thermalProfileRate: 0.14,
+  foundationPerM2Net: 38000,
+  climateSplitNet: 480000,
+  underfloorPerM2Net: 30000,
   vatRate: 0.27,
 }
 
@@ -170,6 +179,37 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
       detail: `Félbe osztott oldal középső merevítője · ${profiles} × ${formatHuf(prices.splitProfileNet)}`,
       amountNet: round(profiles * prices.splitProfileNet),
     })
+  }
+
+  // Ajtók: az üvegfal m²-ára felül a szárny/keret egységára.
+  const doors = doorCount(config)
+  if (doors.hinged > 0 && prices.doorHingedNet > 0) {
+    lines.push({ id: 'door-hinged', label: `Nyíló ajtószárny · ${doors.hinged} db`, detail: `Zsanéros ajtó zárral és kilinccsel · ${doors.hinged} × ${formatHuf(prices.doorHingedNet)}`, amountNet: round(doors.hinged * prices.doorHingedNet) })
+  }
+  if (doors.sliding > 0 && prices.doorSlidingNet > 0) {
+    lines.push({ id: 'door-sliding', label: `Toló ajtószerkezet · ${doors.sliding} db`, detail: `Síneken futó ajtószárny · ${doors.sliding} × ${formatHuf(prices.doorSlidingNet)}`, amountNet: round(doors.sliding * prices.doorSlidingNet) })
+  }
+
+  // Zárt építmény (veranda / télikert) felárai.
+  if (config.building) {
+    const wallGlazing = effectiveWallGlazing(config)
+    const wallKey = wallGlazing ? WALL_GLAZING_INFO[wallGlazing].priceKey : null
+    const wallArea = Math.round(glassWallArea(config) * 100) / 100
+    if (wallGlazing && wallKey && prices[wallKey] > 0 && wallArea > 0) {
+      lines.push({ id: 'wall-glazing', label: `Oldalüvegezés · ${WALL_GLAZING_INFO[wallGlazing].label.toLowerCase()}`, detail: `${formatNumber(wallArea, 2)} m² × ${formatHuf(prices[wallKey])} / m² felár · ${WALL_GLAZING_INFO[wallGlazing].ug}`, amountNet: round(wallArea * prices[wallKey]) })
+    }
+    if (config.building === 'conservatory' && prices.thermalProfileRate > 0) {
+      lines.push({ id: 'thermal-profile', label: 'Hőhídmentes profilrendszer', detail: `Szerkezeti ár × ${Math.round(prices.thermalProfileRate * 100)}% · szigetelt profil, csapadék- és légzárás`, amountNet: round(structure * prices.thermalProfileRate) })
+    }
+    if (config.foundation && prices.foundationPerM2Net > 0) {
+      lines.push({ id: 'foundation', label: 'Alap és szigetelt padló', detail: `${formatNumber(area)} m² × ${formatHuf(prices.foundationPerM2Net)} / m² · alapozás, vízszigetelés, padlószerkezet`, amountNet: round(area * prices.foundationPerM2Net) })
+    }
+    if (hasSplitUnit(config.climate) && prices.climateSplitNet > 0) {
+      lines.push({ id: 'climate-split', label: 'Split klíma', detail: 'Inverteres fűtő-hűtő egység, kültéri + beltéri egység', amountNet: round(prices.climateSplitNet) })
+    }
+    if (hasUnderfloor(config.climate) && prices.underfloorPerM2Net > 0) {
+      lines.push({ id: 'climate-underfloor', label: 'Padlófűtés', detail: `${formatNumber(area)} m² × ${formatHuf(prices.underfloorPerM2Net)} / m²`, amountNet: round(area * prices.underfloorPerM2Net) })
+    }
   }
 
   if (config.led) {

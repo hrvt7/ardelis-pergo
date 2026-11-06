@@ -15,6 +15,8 @@ import { findWindowColor, finishPreview, houseSummary, wallColorHex, wallColorNa
 import { describeColor } from '@/lib/colors'
 import { supportsRoofShade } from '@/lib/roofShade'
 import ColorPicker from '@/components/ColorPicker'
+import { BuildingIssues, BuildingPicker, ClimateSection, WallGlazingPicker } from '@/components/BuildingControls'
+import { BUILDING_ROOFS, isClosedBuilding } from '@/lib/buildings'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
 
 const STEPS: { id: ConfigStep; label: string; short: string }[] = [
@@ -199,7 +201,7 @@ function RoofPicker({ config, prices, onChange }: { config: PergolaConfig; price
   const { tenant } = useTenant()
   const current = tenantPrice(tenant, config, prices).totalGross
   return <div className="roof-picker">
-    {enabledRoofs(tenant).map((roof) => {
+    {enabledRoofs(tenant).filter((roof) => !isClosedBuilding(config.building) || BUILDING_ROOFS[config.building].includes(roof)).map((roof) => {
       const info = ROOF_INFO[roof]
       const brand = tenant.roofs[roof]!
       const delta = roof === config.roof ? 0 : tenantPrice(tenant, { ...config, roof }, prices).totalGross - current
@@ -324,6 +326,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   const roofLabelsFor = (roof: RoofType) => `${tenant.roofs[roof]?.name ?? ''} · ${tenant.roofs[roof]?.short ?? ''}`
   const touchStart = useRef(0)
   const stepIndex = STEPS.findIndex((item) => item.id === step)
+  const stepLabel = (id: ConfigStep) => (id === 'size' ? (config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : 'Pergola') : STEPS.find((item) => item.id === id)!.label)
   const [stepTrack, setStepTrack] = useState({ index: stepIndex, dir: 'fwd' as 'fwd' | 'back' })
   if (stepTrack.index !== stepIndex) setStepTrack({ index: stepIndex, dir: stepIndex > stepTrack.index ? 'fwd' : 'back' })
   const stepDir = stepTrack.dir
@@ -344,20 +347,22 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
       </div>
       <div className="control-tabs" role="tablist" aria-label="Konfigurációs lépések">
         {STEPS.map((item, index) => (
-          <button key={item.id} type="button" role="tab" aria-selected={step === item.id} className={`${step === item.id ? 'active' : ''} ${index < stepIndex ? 'complete' : ''}`} onClick={() => onStepChange(item.id)} title={item.label}>
-            <span className="step-dot">{index < stepIndex ? <Check size={11} /> : index + 1}</span><span>{item.label}</span>
+          <button key={item.id} type="button" role="tab" aria-selected={step === item.id} className={`${step === item.id ? 'active' : ''} ${index < stepIndex ? 'complete' : ''}`} onClick={() => onStepChange(item.id)} title={stepLabel(item.id)}>
+            <span className="step-dot">{index < stepIndex ? <Check size={11} /> : index + 1}</span><span>{stepLabel(item.id)}</span>
           </button>
         ))}
       </div>
       <div className="controls-scroll" ref={scrollRef}>
         <div className={`panel-content dir-${stepDir}`} role="tabpanel" key={step}>
-          <div className="step-heading"><span>0{stepIndex + 1} · {STEPS[stepIndex].short}</span><h2>{STEPS[stepIndex].label}</h2></div>
+          <div className="step-heading"><span>0{stepIndex + 1} · {STEPS[stepIndex].short}</span><h2>{stepLabel(step)}</h2></div>
 
           {step === 'size' && <>
             {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
+            <SectionTitle title="Mit építesz?" hint="Nyitott pergola, zárt üvegezett veranda vagy egész éves télikert. A választás átállítja a tetőt és az oldalakat, utána minden módosítható." />
+            <BuildingPicker config={config} prices={prices} onChange={onChange} />
             <SectionTitle title="Kiinduló csomagok" hint="Egy koppintással indulhatsz, utána minden szabadon módosítható." />
             <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
-            <SectionTitle title="Tetőrendszer" hint="A pergola típusa határozza meg az árnyékolást, az esővédelmet és az árat. Az oldalak lépésében is módosítható." />
+            <SectionTitle title="Tetőrendszer" hint={isClosedBuilding(config.building) ? (config.building === 'conservatory' ? 'Télikerthez üveg- vagy fix (szigetelt) tető való: a mozgó tető nem zárható megfelelően.' : 'Verandához üveg-, polikarbonát vagy fix tető való.') : 'A pergola típusa határozza meg az árnyékolást, az esővédelmet és az árat. Az oldalak lépésében is módosítható.'} />
             <RoofPicker config={config} prices={prices} onChange={onChange} />
             <GlazingPicker config={config} prices={prices} onChange={onChange} />
             <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
@@ -413,10 +418,17 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               {ROOF_INFO[config.roof].motion === 'none' && <p className="split-note">Fix tető: nincs mozgatható része.</p>}
               {(supportsRoofShade(config.roof) && tenant.extras.roofShade) || (config.roof === 'fixed' && tenant.extras.solar) ? <p className="split-note">{config.roof === 'fixed' ? 'Napelemes tető' : 'Motoros árnyékoló'} az Extrák lépésben választható.</p> : null}
             </> : sideSettings(selectedSide)}
+            {isClosedBuilding(config.building) && <WallGlazingPicker config={config} prices={prices} onChange={onChange} />}
+            <BuildingIssues config={config} />
             <div className="interaction-hint"><Move size={17} /><p>A tolóüveg és az oldallamella a 3D-ben kattintásra, illetve a fenti gombbal is mozgatható. Egy oldal két részre is osztható, például fele tolóüveg, fele lécfal.</p></div>
           </>}
 
           {step === 'extras' && <>
+            {isClosedBuilding(config.building) && <>
+              <SectionTitle title={config.building === 'conservatory' ? 'Egész éves használat' : 'Zárt tér'} hint={config.building === 'conservatory' ? 'Fűtés, hűtés és az alapozott padló teszi lakótérré a télikertet.' : undefined} />
+              <ClimateSection config={config} prices={prices} onChange={onChange} />
+              <BuildingIssues config={config} />
+            </>}
             <SectionTitle title="Világítás és hangulat" hint="Minden opció azonnal megjelenik a modellen és a tételes árban." />
             <div className="extra-grid">
               {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett, beépített világítás" icon={LampCeiling} price={`${formatHuf(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ...(led ? {} : { ledRgb: undefined }) })} />}

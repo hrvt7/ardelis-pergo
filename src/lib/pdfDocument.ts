@@ -7,6 +7,7 @@ import { isWallSide, MOUNT_LABELS, postPositions, wallLabel } from './mount'
 import { formatHuf, formatNumber } from './pricing'
 import { ROOF_INFO, GLAZING_INFO, effectiveGlazing, roofRise } from './roofs'
 import { getBom, getDeliveryEstimate, getSpecCode } from './specification'
+import { buildingSpecRows, permitNotes } from './buildings'
 import { DEFAULT_USAGE, estimateEnergy, roundCost, TARIFF, type EnergyUsage } from './energy'
 import { estimateSolar, PANEL } from './solar'
 import { SIDE_INFO, sideSegments, HALF_NAMES } from './sides'
@@ -156,6 +157,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
 
   // ---------- 2. oldal: konfiguráció + anyaglista ----------
   const structure: [string, string][] = [
+    ...buildingSpecRows(config),
     ['Kialakítás', MOUNT_LABELS[config.mount]],
     ['Külső méret', `${m2(config.width)} × ${m2(config.depth)} m`],
     ['Lefedett terület', `${formatNumber(price.area)} m²`],
@@ -231,6 +233,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
         'Ez a dokumentum tájékoztató jellegű kalkuláció és terv, nem minősül ajánlattételnek, kiviteli tervnek vagy statikai számításnak.',
         'A végleges ár a helyszíni felmérés, a statikai ellenőrzés, a rögzítési mód és az egyedi műszaki igények alapján változhat.',
         'A bejelentési vagy engedélyezési kötelezettség a kialakítástól és a helyi szabályozástól (településképi rendelet, HÉSZ) függ; kivitelezés előtt ellenőrizni kell.',
+        ...permitNotes(config.building),
         'A 3D-látványkép illusztráció; a színek a képernyőtől és a nyomtatótól függően eltérhetnek. Színmintát kérésre biztosítunk.',
       ],
       fontSize: denseDetails ? 7.5 : 8, color: BODY, lineHeight: denseDetails ? 1.3 : 1.4, markerColor: MUTED,
@@ -252,7 +255,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
   const drawing = technicalDrawing(config, {
     brand,
     contact: tenant.demo ? `${tenant.brand.legalName} · bemutató konfiguráció` : contact,
-    title: `Pergola – ${roofName} ${roofShort} · ${MOUNT_LABELS[config.mount].toLowerCase()}`,
+    title: `${config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : 'Pergola'} – ${roofName} ${roofShort} · ${MOUNT_LABELS[config.mount].toLowerCase()}`,
     code,
     date: dateText,
     notes: [

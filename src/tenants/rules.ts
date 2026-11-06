@@ -7,9 +7,10 @@ import { calculatePrice } from '../lib/pricing'
 import { defaultGlazing, glazingOptions, PITCH_RANGE, ROOF_TYPES } from '../lib/roofs'
 import { normalizeColorCode, pickCatalogColor, supportsTwoTone } from '../lib/colors'
 import type { PergolaConfig, PriceBreakdown, PriceSettings, RoofType, SideKey } from '../types/pergola'
+import { availableBuildings, BUILDING_ROOFS, CONSERVATORY_SIDE_TYPES, defaultWallGlazing, isClosedBuilding, wallGlazingOptions } from '../lib/buildings'
 import type { Tenant } from './types'
 
-const sideEnum = z.enum(['none', 'zip', 'glass', 'glassFramed', 'glassFixed', 'louver', 'slatAlu', 'slatWood'])
+const sideEnum = z.enum(['none', 'zip', 'glass', 'glassFramed', 'glassFixed', 'door', 'doorSliding', 'louver', 'slatAlu', 'slatWood'])
 
 /** Szerkezeti séma: típusokat és durva tartományt ellenőriz, gyártótól függetlenül. */
 export const pergolaConfigSchema = z.object({
@@ -38,6 +39,10 @@ export const pergolaConfigSchema = z.object({
   smartHome: z.boolean().optional(),
   roofShade: z.enum(['above', 'below']).optional(),
   shadeFabric: z.enum(['white', 'sand', 'grey', 'anthracite']).optional(),
+  building: z.enum(['veranda', 'conservatory']).optional(),
+  wallGlazing: z.enum(['single', 'double', 'triple']).optional(),
+  climate: z.enum(['split', 'underfloor', 'both']).optional(),
+  foundation: z.boolean().optional(),
 })
 
 const matrixPointSchema = z.object({ width: z.number().positive().max(30), depth: z.number().positive().max(30), netPrice: z.number().positive().max(200000000) })
@@ -82,6 +87,14 @@ export const priceSettingsSchema = z.object({
   glazingSatinPerM2Net: z.number().min(0).max(1000000).default(12000),
   glazingHeatPerM2Net: z.number().min(0).max(1000000).default(22000),
   pitchPerDegreePerMeterNet: z.number().min(0).max(100000).default(1800),
+  doorHingedNet: z.number().min(0).max(5000000).default(260000),
+  doorSlidingNet: z.number().min(0).max(5000000).default(480000),
+  wallGlazingDoublePerM2Net: z.number().min(0).max(1000000).default(24000),
+  wallGlazingTriplePerM2Net: z.number().min(0).max(1000000).default(42000),
+  thermalProfileRate: z.number().min(0).max(1).default(0.14),
+  foundationPerM2Net: z.number().min(0).max(1000000).default(38000),
+  climateSplitNet: z.number().min(0).max(5000000).default(480000),
+  underfloorPerM2Net: z.number().min(0).max(1000000).default(30000),
   customColorRate: z.number().min(0).max(1),
   woodColorRate: z.number().min(0).max(1).default(0.18),
   installationRate: z.number().min(0).max(1),
@@ -121,13 +134,20 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
   const roofs = enabledRoofs(tenant)
   const colorIds = tenant.colors.map((color) => color.id)
   const colorOk = colorIds.includes(config.frameColor) || (config.frameColor === 'custom' && tenant.customRal)
-  const sides = Object.fromEntries((['front', 'back', 'left', 'right'] as SideKey[]).map((side) => {
-    const type = config.sides[side]
-    return [side, type === 'none' || tenant.sides.includes(type) ? type : 'none']
-  })) as PergolaConfig['sides']
+  // Zárt építmény (veranda/télikert) csak ha a gyártó kínálja; ehhez illő tető és (télikertnél) üveg/ajtó oldalfal kell.
+  const allowedBuildings = availableBuildings(roofs, tenant.sides)
+  const building = isClosedBuilding(config.building) && allowedBuildings.includes(config.building) ? config.building : undefined
+  const roof = building
+    ? (BUILDING_ROOFS[building].includes(config.roof) && roofs.includes(config.roof) ? config.roof : BUILDING_ROOFS[building].find((item) => roofs.includes(item))!)
+    : roofs.includes(config.roof) ? config.roof : roofs[0]
+  // Télikertben csak üveg/ajtó engedett: más oldalfal fix üvegre cserélődik (a hőszigetelés miatt).
+  const fitSide = (type: PergolaConfig['sides'][SideKey]) => {
+    const kept = type === 'none' || tenant.sides.includes(type) ? type : 'none'
+    return building === 'conservatory' && !CONSERVATORY_SIDE_TYPES.includes(kept) ? 'glassFixed' as const : kept
+  }
+  const sides = Object.fromEntries((['front', 'back', 'left', 'right'] as SideKey[]).map((side) => [side, fitSide(config.sides[side])])) as PergolaConfig['sides']
   const frame = normalizeColorChoice(tenant, colorOk ? config.frameColor : (colorIds[0] ?? 'anthracite'), config.customRal)
   const frameColor = frame.color
-  const roof = roofs.includes(config.roof) ? config.roof : roofs[0]
   // Kéttónusú: csak alumínium tetőnél és ha a gyártó kínálja; a vázzal azonos szín nem külön tétel.
   const roofChoice = config.roofColor && tenant.twoTone && supportsTwoTone(roof) && (colorIds.includes(config.roofColor) || (config.roofColor === 'custom' && tenant.customRal))
     ? normalizeColorChoice(tenant, config.roofColor, config.roofRal)
@@ -139,7 +159,7 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
   const splitEntries = (['front', 'back', 'left', 'right'] as SideKey[]).flatMap((side) => {
     const type = config.split?.[side]
     if (!type) return []
-    return [[side, type === 'none' || tenant.sides.includes(type) ? type : 'none'] as const]
+    return [[side, fitSide(type)] as const]
   })
   const led = tenant.extras.led && config.led
   return {
@@ -149,6 +169,7 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     height: roundCm(clamp(config.height, tenant.limits.height)),
     mount,
     roof,
+    building,
     frameColor,
     customRal: frame.custom,
     roofColor: twoTone ? twoTone.color : undefined,
@@ -157,6 +178,11 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     louverAngle: clamp(config.louverAngle, [0, 90]),
     // Dőlés egész fokban; 0 = vízszintes (a mező ilyenkor el is marad). A burkolat az alapkivitelnél szintén elmarad.
     pitch: Math.round(clamp(config.pitch ?? 0, PITCH_RANGE)) || undefined,
+    // Oldalüvegezés: csak zárt építménynél, az alapkivitel (veranda: edzett, télikert: kétrétegű) nem külön tétel.
+    wallGlazing: building && config.wallGlazing && config.wallGlazing !== defaultWallGlazing(building) && wallGlazingOptions(building).includes(config.wallGlazing) ? config.wallGlazing : undefined,
+    // Klíma csak télikertben; split klíma csak ha a tenant kínálja a klímát.
+    climate: building === 'conservatory' && config.climate ? config.climate : undefined,
+    foundation: building === 'conservatory' && config.foundation ? true : undefined,
     glazing: config.glazing && glazingOptions(roof).includes(config.glazing) && config.glazing !== defaultGlazing(roof) ? config.glazing : undefined,
     screenOpen: clamp(config.screenOpen, [0, 100]),
     led,

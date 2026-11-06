@@ -28,6 +28,7 @@ import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMateri
 import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
 import { sideSegments } from '@/lib/sides'
+import { hasSplitUnit } from '@/lib/buildings'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
 import HotTub from '@/components/HotTub'
@@ -424,17 +425,79 @@ function LouverWall({ length, height, color, opened, onToggle, label = true }: {
 }
 
 /** Fix (nem nyitható) üvegfal: kb. 1,5 m-es táblák U-profilban, keskeny illesztéssel. */
-function FixedGlassWall({ length, height, color }: { length: number; height: number; color: string }) {
+/** Oldalüvegezés megjelenése: a hőszigetelő üveg a Low-E réteg miatt kissé zöldes-kékes és sötétebb. */
+function wallGlassLook(wallGlazing: PergolaConfig['wallGlazing'], building: PergolaConfig['building']) {
+  const glazing = wallGlazing ?? (building === 'conservatory' ? 'double' : 'single')
+  return glazing === 'triple' ? { tint: '#93b8bd', opacity: 0.36 } : glazing === 'double' ? { tint: '#a6c6c9', opacity: 0.31 } : { tint: '#b9d0d2', opacity: 0.26 }
+}
+
+function FixedGlassWall({ length, height, color, look }: { length: number; height: number; color: string; look: { tint: string; opacity: number } }) {
   const usableHeight = height - 0.27
   const count = Math.max(1, Math.round((length - 0.1) / 1.5))
   const paneWidth = (length - 0.1) / count
   return <group>
-    {Array.from({ length: count }, (_, index) => <mesh key={index} position={[-length / 2 + 0.05 + paneWidth * (index + 0.5), usableHeight / 2 + 0.1, 0]} renderOrder={2}><boxGeometry args={[paneWidth - 0.012, usableHeight - 0.04, 0.01]} /><GlassMaterial tint="#b9d0d2" opacity={0.26} envMapIntensity={2.1} doubleSided /></mesh>)}
+    {Array.from({ length: count }, (_, index) => <mesh key={index} position={[-length / 2 + 0.05 + paneWidth * (index + 0.5), usableHeight / 2 + 0.1, 0]} renderOrder={2}><boxGeometry args={[paneWidth - 0.012, usableHeight - 0.04, 0.01]} /><GlassMaterial tint={look.tint} opacity={look.opacity} envMapIntensity={2.1} doubleSided /></mesh>)}
     {Array.from({ length: count - 1 }, (_, index) => <mesh key={index} position={[-length / 2 + 0.05 + paneWidth * (index + 1), usableHeight / 2 + 0.1, 0]}><boxGeometry args={[0.008, usableHeight - 0.06, 0.016]} /><meshStandardMaterial color="#20282a" roughness={0.6} /></mesh>)}
     <Beam args={[length, 0.07, 0.07]} position={[0, 0.075, 0]} color={color} radius={0.006} />
     <Beam args={[length, 0.06, 0.07]} position={[0, height - 0.14, 0]} color={color} radius={0.006} />
     <Beam args={[0.04, usableHeight, 0.06]} position={[-length / 2 + 0.02, usableHeight / 2 + 0.1, 0]} color={color} radius={0.005} />
     <Beam args={[0.04, usableHeight, 0.06]} position={[length / 2 - 0.02, usableHeight / 2 + 0.1, 0]} color={color} radius={0.005} />
+  </group>
+}
+
+/**
+ * Üvegfal ajtóval: egy fix táblás rész és egy ajtószárny a fal végén.
+ * Nyíló: a szárny a zsanér körül fordul 80°-ot; toló: a szárny a fix tábla mögé csúszik.
+ * A nyitást a `scene.doorOpen` vezérli (kattintásra vált), a mozgás csillapított, és a szárny nyitáskor enyhén „megrebben".
+ */
+function DoorWall({ length, height, color, sliding, opened, onToggle, look }: { length: number; height: number; color: string; sliding: boolean; opened: boolean; onToggle: () => void; look: { tint: string; opacity: number } }) {
+  const usableHeight = height - 0.27
+  const leafWidth = sliding ? Math.min(length - 0.1, Math.max(1.0, length / 2)) : Math.min(0.95, length - 0.2)
+  const fixedLength = Math.max(0, length - leafWidth)
+  const fixedCount = fixedLength > 0.3 ? Math.max(1, Math.round(fixedLength / 1.5)) : 0
+  const paneWidth = fixedCount ? fixedLength / fixedCount : 0
+  const leaf = useRef<THREE.Group>(null)
+  const progress = useRef(opened ? 1 : 0)
+  const invalidate = useThree((state) => state.invalidate)
+  const gl = useThree((state) => state.gl)
+  const slide = Math.max(0, Math.min(leafWidth * 0.94, fixedLength > 0.3 ? fixedLength : leafWidth * 0.94))
+  const hingeX = length / 2 - 0.02
+  const leafHeight = usableHeight - 0.02
+  useFrame((_, delta) => {
+    const target = opened ? 1 : 0
+    const moving = Math.abs(progress.current - target) > 0.002
+    if (moving) progress.current = REDUCED ? target : THREE.MathUtils.damp(progress.current, target, 4.5, delta)
+    else progress.current = target
+    if (leaf.current) {
+      // Nyíló ajtónál enyhe túllendülés (ease-out-back jellegű), majd megáll.
+      const eased = progress.current
+      if (sliding) leaf.current.position.x = -slide * eased
+      else leaf.current.rotation.y = -eased * 1.4
+    }
+    if (moving) { refreshShadows(gl); invalidate() }
+  })
+  const leafBody = <>
+    <mesh position={[0, 0, 0]} renderOrder={2}><boxGeometry args={[leafWidth - 0.1, leafHeight - 0.12, 0.012]} /><GlassMaterial tint={look.tint} opacity={look.opacity} envMapIntensity={2.1} doubleSided /></mesh>
+    <Beam args={[0.055, leafHeight, 0.05]} position={[-leafWidth / 2 + 0.0275, 0, 0]} color={color} radius={0.006} />
+    <Beam args={[0.055, leafHeight, 0.05]} position={[leafWidth / 2 - 0.0275, 0, 0]} color={color} radius={0.006} />
+    <Beam args={[leafWidth, 0.07, 0.05]} position={[0, leafHeight / 2 - 0.035, 0]} color={color} radius={0.006} />
+    <Beam args={[leafWidth, 0.09, 0.05]} position={[0, -leafHeight / 2 + 0.045, 0]} color={color} radius={0.006} />
+    <mesh position={[sliding ? -leafWidth / 2 + 0.06 : -leafWidth / 2 + 0.09, 0, 0.035]} rotation={[0, 0, 0]}><boxGeometry args={[0.022, 0.2, 0.022]} /><meshStandardMaterial color="#8a9294" metalness={0.9} roughness={0.22} /></mesh>
+    <mesh position={[sliding ? -leafWidth / 2 + 0.06 : -leafWidth / 2 + 0.09, 0, -0.035]}><boxGeometry args={[0.022, 0.2, 0.022]} /><meshStandardMaterial color="#8a9294" metalness={0.9} roughness={0.22} /></mesh>
+  </>
+  const leafCenterY = usableHeight / 2 + 0.1
+  return <group onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>
+    {Array.from({ length: fixedCount }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 0.5), leafCenterY, 0]} renderOrder={2}><boxGeometry args={[paneWidth - 0.012, usableHeight - 0.04, 0.01]} /><GlassMaterial tint={look.tint} opacity={look.opacity} envMapIntensity={2.1} doubleSided /></mesh>)}
+    {Array.from({ length: Math.max(0, fixedCount - 1) }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 1), leafCenterY, 0]}><boxGeometry args={[0.008, usableHeight - 0.06, 0.016]} /><meshStandardMaterial color="#aab4b4" metalness={0.5} roughness={0.35} /></mesh>)}
+    {sliding
+      ? <group ref={leaf} position={[length / 2 - leafWidth / 2, leafCenterY, 0.045]}>{leafBody}</group>
+      : <group position={[hingeX, leafCenterY, 0]}><group ref={leaf}><group position={[-(leafWidth - 0.02) / 2, 0, 0]}>{leafBody}</group></group></group>}
+    {/* Keret: küszöb, szemöldökfa, szélső oszlopprofilok. */}
+    <Beam args={[length, 0.07, 0.08]} position={[0, 0.075, 0]} color={color} radius={0.006} />
+    <Beam args={[length, 0.06, 0.08]} position={[0, height - 0.14, 0]} color={color} radius={0.006} />
+    <Beam args={[0.04, usableHeight, 0.06]} position={[-length / 2 + 0.02, leafCenterY, 0]} color={color} radius={0.005} />
+    <Beam args={[0.04, usableHeight, 0.06]} position={[length / 2 - 0.02, leafCenterY, 0]} color={color} radius={0.005} />
+    {sliding && <Beam args={[leafWidth + slide, 0.025, 0.1]} position={[length / 2 - (leafWidth + slide) / 2, 0.11, 0.045]} color={color} radius={0.004} />}
   </group>
 }
 
@@ -463,7 +526,9 @@ const MULLION = 0.06
 function SideSegmentWall({ type, length, height, color, config, scene, onSceneChange, label }: { type: SideType; length: number; height: number; color: string; config: PergolaConfig; scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void; label: boolean }) {
   if (type === 'zip') return <ZipScreen length={length} height={height} open={config.screenOpen} color={color} wind={scene.wind} />
   if (type === 'glass' || type === 'glassFramed') return <GlassWall length={length} height={height} color={color} framed={type === 'glassFramed'} label={label} opened={scene.glassOpen} onToggle={() => onSceneChange({ glassOpen: !scene.glassOpen })} />
-  if (type === 'glassFixed') return <FixedGlassWall length={length} height={height} color={color} />
+  const look = wallGlassLook(config.wallGlazing, config.building)
+  if (type === 'glassFixed') return <FixedGlassWall length={length} height={height} color={color} look={look} />
+  if (type === 'door' || type === 'doorSliding') return <DoorWall length={length} height={height} color={color} look={look} sliding={type === 'doorSliding'} opened={scene.doorOpen} onToggle={() => onSceneChange({ doorOpen: !scene.doorOpen })} />
   if (type === 'louver') return <LouverWall length={length} height={height} color={color} label={label} opened={scene.wallLouverOpen} onToggle={() => onSceneChange({ wallLouverOpen: !scene.wallLouverOpen })} />
   if (type === 'slatAlu' || type === 'slatWood') return <SlatWall length={length} height={height} color={color} wood={type === 'slatWood'} />
   return null
@@ -487,6 +552,42 @@ function BuildIn({ height, settled, children }: { height: number; settled: { cur
   })
   const start = animate ? 0.02 : 1
   return <group ref={ref} scale={[1, start, 1]} position={[0, height * (1 - start), 0]}>{children}</group>
+}
+
+/** Alap és szigetelt padló: alulról „kinő" (0,9 s), csak utólagos bekapcsoláskor. */
+function SlabRise({ settled, width, depth }: { settled: { current: boolean }; width: number; depth: number }) {
+  const ref = useRef<THREE.Group>(null)
+  const [animate] = useState(() => settled.current && !REDUCED)
+  const t = useRef(animate ? 0 : 1)
+  const { gl, invalidate } = useThree((state) => ({ gl: state.gl, invalidate: state.invalidate }))
+  useFrame((_, delta) => {
+    if (t.current >= 1 || !ref.current) return
+    t.current = Math.min(1, t.current + Math.min(delta, 0.05) / 0.9)
+    ref.current.scale.y = 0.02 + 0.98 * (1 - Math.pow(1 - t.current, 3))
+    refreshShadows(gl)
+    invalidate()
+  })
+  return <group ref={ref} position={[0, -0.12, 0]} scale={[1, animate ? 0.02 : 1, 1]}>
+    <mesh position={[0, 0.07, 0]} receiveShadow castShadow><boxGeometry args={[width + 0.16, 0.14, depth + 0.16]} /><meshStandardMaterial color="#b9b6ae" roughness={0.92} /></mesh>
+    <mesh position={[0, 0.1405, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[width + 0.1, depth + 0.1]} /><meshStandardMaterial color="#c9c4b8" roughness={0.78} /></mesh>
+  </group>
+}
+
+/** Split klíma: beltéri egység a falon / gerendán, kültéri egység a terasz mellett. */
+function SplitUnits({ width, depth, height, mount }: { width: number; depth: number; height: number; mount: PergolaConfig['mount'] }) {
+  const wall = hasBackWall(mount)
+  const outdoorSide = sideWalls(mount).includes('right') ? -1 : 1
+  return <>
+    <group position={[width * 0.22, height - 0.42, -depth / 2 + (wall ? 0.12 : 0.16)]}>
+      <RoundedBox args={[0.92, 0.29, 0.2]} radius={0.05} smoothness={4} castShadow><meshStandardMaterial color="#f1f2f0" roughness={0.42} /></RoundedBox>
+      <mesh position={[0, -0.1, 0.101]}><boxGeometry args={[0.8, 0.03, 0.006]} /><meshStandardMaterial color="#cfd3d1" roughness={0.5} /></mesh>
+      <mesh position={[0.34, 0.06, 0.102]}><circleGeometry args={[0.012, 12]} /><meshStandardMaterial color="#59c28a" emissive="#59c28a" emissiveIntensity={0.9} toneMapped={false} /></mesh>
+    </group>
+    <group position={[outdoorSide * (width / 2 + 0.5), 0.3, -depth / 2 + 0.35]}>
+      <RoundedBox args={[0.82, 0.58, 0.32]} radius={0.025} smoothness={3} castShadow><meshStandardMaterial color="#d9dcda" roughness={0.55} metalness={0.15} /></RoundedBox>
+      <mesh position={[0, 0, 0.162]}><circleGeometry args={[0.2, 24]} /><meshStandardMaterial color="#202526" roughness={0.7} /></mesh>
+    </group>
+  </>
 }
 
 /** Utólag felkerülő kiegészítő (fűtés, hangfal, ventilátor): felülről „beugrik” kis túllendüléssel. Első betöltéskor nem animál. */
@@ -999,6 +1100,8 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     </ExplodePart>
     {(() => { const labelled = new Set<string>(); return (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <ExplodePart key={side} ex={ex} dx={side === 'left' ? -1.1 : side === 'right' ? 1.1 : 0} dz={side === 'front' ? 1.1 : side === 'back' ? -1.1 : 0}><SidePlacement side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} labelled={labelled} settled={settled} /></ExplodePart>) })()}
     {config.led && tilt(<LedRamp settled={settled}>{(factor) => <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={(scene.ledLevel / 100) * factor} rgb={config.ledRgb ? scene.ledColor : null} />}</LedRamp>)}
+    {config.foundation && <SlabRise settled={settled} width={width} depth={depth} />}
+    {hasSplitUnit(config.climate) && <DropIn settled={settled}><SplitUnits width={width} depth={depth} height={height} mount={config.mount} /></DropIn>}
     {(config.fans ?? 0) > 0 && <DropIn settled={settled}><CeilingFans config={rise ? { ...config, height: height + rise / 2 } : config} color={color} spinning={scene.fanOn} /></DropIn>}
     {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <DropIn key={index} settled={settled}><group position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={scene.heatersOn ? (night ? 3 : 0.15) : 0} toneMapped={false} /></mesh>{night && <pointLight position={[0, -0.25, 0.25]} color="#ff8a4a" intensity={scene.heatersOn ? 3.2 : 0} distance={3.2} decay={2} />}</group></DropIn> })}
     {config.speakers && [-1, 1].map((direction) => <DropIn key={direction} settled={settled}><group position={[direction * (width / 2 - 0.17), height - 0.38, depth / 2 - 0.17]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[0.082, 0.082, 0.065, 24]} /><meshStandardMaterial color="#1b2022" metalness={0.48} roughness={0.38} /></mesh><mesh position={[0, 0.035, 0]}><cylinderGeometry args={[0.065, 0.065, 0.004, 24]} /><meshStandardMaterial color="#080b0c" roughness={0.85} /></mesh></group></DropIn>)}

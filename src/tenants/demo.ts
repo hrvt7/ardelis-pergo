@@ -66,6 +66,14 @@ export const demoTenant: Tenant = {
     customColorRate: 0.06,
     woodColorRate: 0.18,
     installationRate: 0.1,
+    doorHingedNet: 260000,
+    doorSlidingNet: 480000,
+    wallGlazingDoublePerM2Net: 24000,
+    wallGlazingTriplePerM2Net: 42000,
+    thermalProfileRate: 0.14,
+    foundationPerM2Net: 38000,
+    climateSplitNet: 480000,
+    underfloorPerM2Net: 30000,
     vatRate: 0.27,
   },
   limits: {
@@ -83,7 +91,7 @@ export const demoTenant: Tenant = {
     polycarbonate: { name: 'Opal', short: 'polikarbonát tető', description: 'Opál, szórt fényt adó, kedvező árú' },
     fixed: { name: 'Line', short: 'fix alumínium', description: 'Zárt, fix alumínium tető' },
   },
-  sides: ['zip', 'glass', 'glassFramed', 'glassFixed', 'louver', 'slatAlu', 'slatWood'],
+  sides: ['zip', 'glass', 'glassFramed', 'glassFixed', 'door', 'doorSliding', 'louver', 'slatAlu', 'slatWood'],
   colors: [
     { id: 'anthracite', name: 'Antracit', detail: 'RAL 7016', hex: '#343a3d', modelHex: '#323a3d', ral: '7016' },
     { id: 'white', name: 'Fehér', detail: 'RAL 9016', hex: '#dedfd9', ral: '9016' },
@@ -120,6 +128,14 @@ export const demoTenant: Tenant = {
     {
       id: 'premium', name: 'Prémium', description: '6 × 4,5 m · üveg + fűtés + hang',
       config: { width: 6, depth: 4.5, mount: 'freestanding', frameColor: 'black', sides: { front: 'glass', back: 'louver', left: 'glass', right: 'zip' }, heaters: 2, speakers: true },
+    },
+    {
+      id: 'veranda', name: 'Veranda', description: '5 × 3,5 m · üvegfal, tolóajtó, üvegtető',
+      config: { width: 5, depth: 3.5, mount: 'wall', roof: 'glass', building: 'veranda', sides: { front: 'doorSliding', back: 'none', left: 'glassFixed', right: 'glassFixed' }, led: true, sensors: false },
+    },
+    {
+      id: 'conservatory', name: 'Télikert', description: '5 × 4 m · hőszigetelt üveg, ajtó, klíma',
+      config: { width: 5, depth: 4, mount: 'wall', roof: 'glass', building: 'conservatory', pitch: 3, climate: 'split', foundation: true, sides: { front: 'door', back: 'none', left: 'glassFixed', right: 'glassFixed' }, led: true, sensors: false },
     },
   ],
   lead: {

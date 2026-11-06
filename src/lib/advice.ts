@@ -3,7 +3,7 @@ import type { PergolaConfig, SideKey } from '@/types/pergola'
 export interface Advice { id: string; level: 'info' | 'warn'; text: string }
 
 const SIDES: SideKey[] = ['front', 'back', 'left', 'right']
-const GLASS = new Set(['glass', 'glassFramed', 'glassFixed'])
+const GLASS = new Set(['glass', 'glassFramed', 'glassFixed', 'door', 'doorSliding'])
 
 /** Beállításfüggő, magyarázó figyelmeztetések és javaslatok (tiszta függvény, nincs mellékhatás). */
 export function getAdvice(config: PergolaConfig): Advice[] {

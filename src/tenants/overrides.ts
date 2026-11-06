@@ -16,7 +16,7 @@ const optionalText = (max: number) => text(max).optional()
 const url = text(300).refine((value) => value === '' || /^https?:\/\/\S+$/i.test(value), 'Érvényes http(s) cím kell.')
 const email = text(320).refine((value) => value === '' || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value), 'Érvénytelen e-mail cím.')
 
-const RATE_KEYS = ['customColorRate', 'woodColorRate', 'installationRate', 'vatRate'] as const
+const RATE_KEYS = ['customColorRate', 'woodColorRate', 'installationRate', 'vatRate', 'thermalProfileRate'] as const
 const ROOF_PRICE_KEYS = ROOF_TYPES.map((roof) => ROOF_INFO[roof].priceKey)
 export const EDITABLE_PRICE_KEYS: string[] = [...ROOF_PRICE_KEYS, ...MONEY_FIELDS.map((field) => field.key), ...RATE_KEYS]
 

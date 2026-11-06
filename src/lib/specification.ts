@@ -6,6 +6,7 @@ import { isWallSide, MOUNT_CODES, MOUNT_LABELS, postPositions, sideWalls, wallLa
 import { formatHuf, formatNumber, ROOF_LABELS, SIDE_NAMES } from './pricing'
 import { colorSummary } from './colors'
 import type { Tenant } from '../tenants/types'
+import { CLIMATE_INFO, doorCount } from './buildings'
 import { closedSegments, SIDE_INFO, sideSegments, sideSummary, splitProfiles } from './sides'
 import type { PergolaConfig, PriceBreakdown, RoofType, SideKey } from '../types/pergola'
 
@@ -29,7 +30,7 @@ export function getSpecCode(config: PergolaConfig) {
   const color = colorCode(config.frameColor, config.customRal) + (config.roofColor ? `/${colorCode(config.roofColor, config.roofRal)}` : '')
   // Oldalanként egy betű; félbe osztott oldalnál a két fél zárójelben, pl. „(G/Z)”.
   const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => (isWallSide(config.mount, side) ? 'W' : (() => { const codes = sideSegments(config, side).map((segment) => SIDE_INFO[segment.type].spec); return codes.length > 1 ? `(${codes.join('/')})` : codes[0] })())).join('')
-  const options = [config.solar ? 'PV' : '', config.smartHome ? 'SH' : '', config.fans ? `F${config.fans}` : '', config.led && config.ledRgb ? 'RGB' : '', config.roofShade ? ROOF_SHADE_INFO[config.roofShade].spec : ''].filter(Boolean)
+  const options = [config.solar ? 'PV' : '', config.smartHome ? 'SH' : '', config.fans ? `F${config.fans}` : '', config.led && config.ledRgb ? 'RGB' : '', config.roofShade ? ROOF_SHADE_INFO[config.roofShade].spec : '', config.building === 'conservatory' ? 'TK' : config.building === 'veranda' ? 'VR' : ''].filter(Boolean)
   return `PG-${roof}-${Math.round(config.width * 100)}${Math.round(config.depth * 100)}-${mount}-${color}-${sides}${options.map((option) => `-${option}`).join('')}`
 }
 
@@ -47,6 +48,10 @@ export function getBom(config: PergolaConfig): BomLine[] {
   const optional: BomLine[] = [
     ...(framedPanes ? [{ label: 'Keretes tolóüveg elem', value: `${framedPanes} db · alumínium keret, kefés tömítés` }] : []),
     ...(fixedPanes ? [{ label: 'Fix üvegtábla', value: `${fixedPanes} db · 8 mm ESG, U-profilban` }] : []),
+    ...(() => { const doors = doorCount(config); return [
+      ...(doors.hinged ? [{ label: 'Nyíló ajtó', value: `${doors.hinged} db · 90 cm szabad szélesség, háromponton záródó zár` }] : []),
+      ...(doors.sliding ? [{ label: 'Toló ajtószerkezet', value: `${doors.sliding} db · alsó sín, kefés tömítés` }] : []),
+    ] })(),
     ...(runs('louver').length ? [{ label: 'Lamellafal', value: `${runText('louver')} · állítható lamellák` }] : []),
     ...(runs('slatAlu').length ? [{ label: 'Alumínium lécfal', value: `${runText('slatAlu')} · ${slatCount('slatAlu')} léc / mező, 25 mm hézag` }] : []),
     ...(runs('slatWood').length ? [{ label: 'Fa lécfal (hőkezelt)', value: `${runText('slatWood')} · ${slatCount('slatWood')} léc / mező, 20 mm hézag` }] : []),
@@ -119,8 +124,9 @@ export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, 
     config.solar ? `napelemes tető (${formatNumber(panelLayout(config).kwp, 2)} kWp)` : null,
   ].filter((item): item is string => Boolean(item))
   return [
-    `${brandName} / Pergola – ${roofLabels[config.roof]}`,
+    `${brandName} / ${config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : 'Pergola'} – ${roofLabels[config.roof]}`,
     `Méret: ${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} × ${formatNumber(config.height, 2)} m (${formatNumber(price.area)} m²)`,
+    ...(config.building ? [`Építmény: ${config.building === 'conservatory' ? 'télikert' : 'veranda'}${config.climate ? ` · ${CLIMATE_INFO[config.climate].label.toLowerCase()}` : ''}`] : []),
     `Kialakítás: ${MOUNT_LABELS[config.mount].toLowerCase()} · ${sides}`,
     `Szín: ${colorSummary(colors, config)}`,
     `Kiegészítők: ${extras.length ? extras.join(', ') : 'nincs kiegészítő'}`,

@@ -1,11 +1,12 @@
 // Oldalzárás-választó (8 típus, félbe osztás) és a komfort-opciók (RGB LED, ventilátor,
 // okosotthon) felülete. Az árkülönbség mindig a teljes bruttó irányár változása.
-import { Fan, House, Layers3, Minus, Move, Palette, Plus, Power, SplitSquareHorizontal, Square } from 'lucide-react'
+import { DoorOpen, Fan, House, Layers3, Minus, Move, Palette, Plus, Power, SplitSquareHorizontal, Square } from 'lucide-react'
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import { DEFAULT_SHADE_FABRIC, ROOF_SHADE_INFO, ROOF_SHADES, roofShadeArea, SHADE_FABRICS, supportsRoofShade } from '@/lib/roofShade'
 import { HALF_NAMES, SIDE_INFO, sideSegments } from '@/lib/sides'
 import { RGB_SWATCHES, smartHomeTargets } from '@/lib/comfort'
 import { FAN_MIN_HEIGHT } from '@/lib/fans'
+import { CONSERVATORY_SIDE_TYPES } from '@/lib/buildings'
 import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import type { PergolaConfig, PriceSettings, RoofShade, SceneSettings, SideKey, SideType } from '@/types/pergola'
@@ -20,6 +21,8 @@ export function SideIcon({ type }: { type: SideType }) {
     case 'glass': return <svg {...common}><rect x="3" y="3" width="13" height="16" className="pane" /><rect x="14" y="3" width="13" height="16" className="pane" /><path d="M6 13l5-6M18 13l5-6" className="glint" /><rect x="3" y="18.2" width="24" height="1.4" className="solid" /></svg>
     case 'glassFramed': return <svg {...common}><rect x="3" y="3" width="12" height="16" className="pane framed" /><rect x="15" y="3" width="12" height="16" className="pane framed" /><path d="M6.5 13l4-5M18.5 13l4-5" className="glint" /></svg>
     case 'glassFixed': return <svg {...common}><rect x="3" y="3" width="24" height="16" className="pane" /><path d="M8 14l7-8M12 15l5-6" className="glint" /><rect x="2.5" y="2" width="25" height="2" className="solid" /><rect x="2.5" y="18" width="25" height="2" className="solid" /></svg>
+    case 'door': return <svg {...common}><rect x="3" y="3" width="13" height="16" className="pane" /><rect x="16" y="3" width="11" height="16" className="pane framed" /><path d="M16 3l7 3v13l-7-0" className="glint" /><circle cx="18.2" cy="11.5" r="0.9" className="solid" /></svg>
+    case 'doorSliding': return <svg {...common}><rect x="3" y="3" width="13" height="16" className="pane" /><rect x="13" y="3" width="14" height="16" className="pane framed" /><path d="M16 11.5h8M21.5 9.5l2.5 2-2.5 2" className="glint" /></svg>
     case 'louver': return <svg {...common}>{[4, 7.4, 10.8, 14.2, 17.6].map((y) => <rect key={y} x="4" y={y} width="22" height="2" rx="1" className="solid" transform={`rotate(-8 15 ${y + 1})`} />)}</svg>
     case 'slatAlu': return <svg {...common}><rect x="2.5" y="3" width="2" height="16" className="solid" /><rect x="25.5" y="3" width="2" height="16" className="solid" />{[4, 7, 10, 13, 16].map((y) => <rect key={y} x="5" y={y} width="20" height="2.1" className="solid" />)}</svg>
     case 'slatWood': return <svg {...common}><rect x="2.5" y="3" width="2" height="16" className="solid" /><rect x="25.5" y="3" width="2" height="16" className="solid" />{[4, 7, 10, 13, 16].map((y) => <rect key={y} x="5" y={y} width="20" height="2.3" className="wood" />)}</svg>
@@ -39,7 +42,7 @@ export function SideSettings({ side, sideName, config, scene, prices, half, onHa
   onSceneChange: (patch: Partial<SceneSettings>) => void
 }) {
   const { tenant } = useTenant()
-  const types: SideType[] = ['none', ...tenant.sides]
+  const types: SideType[] = ['none', ...tenant.sides].filter((type) => config.building !== 'conservatory' || CONSERVATORY_SIDE_TYPES.includes(type as SideType)) as SideType[]
   const split = Boolean(config.split?.[side])
   const activeHalf = split ? half : 0
   const typeOf = (index: 0 | 1) => (index === 1 ? config.split?.[side] ?? config.sides[side] : config.sides[side])
@@ -93,6 +96,7 @@ export function SideSettings({ side, sideName, config, scene, prices, half, onHa
       })}
     </div>
     {hasType('glass', 'glassFramed') && <button type="button" className="side-motion-control" aria-pressed={scene.glassOpen} onClick={() => onSceneChange({ glassOpen: !scene.glassOpen })}><Move size={17} /><span>{scene.glassOpen ? 'Tolóüveg bezárása' : 'Tolóüveg eltolása'}</span></button>}
+    {hasType('door', 'doorSliding') && <button type="button" className="side-motion-control door-toggle" aria-pressed={scene.doorOpen} onClick={() => onSceneChange({ doorOpen: !scene.doorOpen })}><DoorOpen size={17} /><span>{scene.doorOpen ? 'Ajtó bezárása' : 'Ajtó kinyitása'}</span></button>}
     {hasType('louver') && <button type="button" className="side-motion-control" aria-pressed={scene.wallLouverOpen} onClick={() => onSceneChange({ wallLouverOpen: !scene.wallLouverOpen })}><Layers3 size={17} /><span>{scene.wallLouverOpen ? 'Oldallamellák zárása' : 'Oldallamellák döntése'}</span></button>}
   </div>
 }

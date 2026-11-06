@@ -699,3 +699,19 @@ működést, az eladhatóságot és a hibákat érintik.
 
 ## 3.47 – Elforgatás-tipp kivéve
 - A konfigurátor megnyitásakor álló telefonon felugró „fordítsd el a telefont fekvőre” javaslat megszűnt. A fekvő elrendezés (3.33) továbbra is automatikusan érvényesül, ha a felhasználó maga elforgatja a telefont.
+
+## 3.48 – Veranda és télikert
+
+- **Új épülettípusok** a „Pergola" lépésben (átnevezve a típus szerint: Pergola / Veranda / Télikert): `building` mező a konfigurációban. Csak akkor kínálja, ha a gyártó tetői és oldalfalai megengedik (veranda: üveg-/polikarbonát-/fix tető + üvegfal; télikert: üveg-/fix tető + fix üvegfal + ajtó).
+- **Veranda:** zárt, üvegezett, nem fűtött tér. Üveg-, polikarbonát- vagy fix tető; edzett üveg az alap, hőszigetelt üveg felárral.
+- **Télikert:** egész éves, fűtött tér. Csak üveg-/fix tető, csak üveg és ajtó oldalfal (a normalizáció a zip/lamella/lécfalat fix üvegre cseréli), hőhídmentes profilrendszer felár, kétrétegű vagy háromrétegű oldalüvegezés (Ug-értékekkel), alap és szigetelt padló, fűtés/hűtés (split klíma, padlófűtés vagy mindkettő), javasolt tetődőlés.
+- **Új oldaltípusok:** nyíló ajtós üvegfal és tolóajtós üvegfal (pergolánál is használható). Az ajtó ára = a fix üvegfal m² ára + az ajtószárny egységára; az ajtó 3D-ben nyílik/csúszik (`scene.doorOpen`, kattintásra vagy gombbal).
+- **Okos átváltás** (`buildingPatch`): típusváltáskor a tető illeszkedik, a nyitott oldalak lezáródnak, egy bejárati ajtó kerül a terv elé, télikertnél 3° dőlés, alap és split klíma az alap.
+- **Árazás:** 8 új árkulcs (ajtók, oldalüvegezés felár, hőhídmentes profil %, alap, split klíma, padlófűtés), az admin árszerkesztőben szerkeszthető; a szerver újraszámolja.
+- **Link:** új jelzők a `#c=` kódban (`ev`/`ec`, `w?`, `k?`, `q`); a régi linkek változatlanul működnek.
+- **Kimenetek:** specifikáció-kód (`VR`/`TK`), anyaglista (ajtók), szöveges összefoglaló, lead-e-mail, online ajánlat, PDF (építmény-sorok, hatósági tudnivalók), műszaki rajz (ajtók az alaprajzon nyitási ívvel, a nézeten, a metszeten).
+- **Figyelmeztetések:** nyitott oldal, hiányzó ajtó, hiányzó klíma, hiányzó dőlés (nem tiltás, a felhasználó dönt). Építési hatósági tudnivalók az összegzésben és a PDF-ben: kizárólag tájékoztató, nem jogi tanács.
+- **3D:** ajtószárny (zsanér- és tolómozgás), oldalüvegezés-árnyalat, alap (alulról kinő), split klíma kül- és beltéri egység (beugrik).
+- **Animációk:** épületkártyák (belépés, kijelölési pop, a vázlat kirajzolódik, a télikert hullámzó meleg), figyelmeztetések és hatósági lista beúszik, ajtó-gomb; `prefers-reduced-motion` mellett kikapcsolva.
+- **Csomagok:** „Veranda" és „Télikert" kiinduló csomag a demó gyártónál.
+- **Fontos:** az árak demó-kalibrációjúak (a demó télikert kb. 530 000 Ft/m² bruttó), a hatósági szöveg tájékoztató. A fűtés-hűtés méretezését, a padló felépítését és a statikát a gyártó a felmérés után végzi.

@@ -16,6 +16,7 @@ import { sideSummary } from '../src/lib/sides'
 import { colorSummary } from '../src/lib/colors'
 import { shareHash } from '../src/lib/shareCode'
 import { getBom, getSpecCode } from '../src/lib/specification'
+import { buildingSpecRows } from '../src/lib/buildings'
 import { resolveTenant } from './tenantAdmin'
 import { parseConfig, roofLabels, tenantPrice } from '../src/tenants/rules'
 import type { Tenant } from '../src/tenants/types'
@@ -117,6 +118,7 @@ export function describeConfig(tenant: Tenant, config: PergolaConfig, price: Pri
   const extras = [config.led && (config.ledRgb ? 'színváltós RGB+W LED' : 'periméter LED'), config.heaters > 0 && `${config.heaters} db fűtés`, config.speakers && 'hangrendszer', config.sensors && 'eső- és szélszenzor', Boolean(config.fans) && `${config.fans} db mennyezeti ventilátor`, config.smartHome && 'okosotthon-vezérlés', config.roofShade && roofShadeSummary(config), config.solar && 'napelemes tető'].filter(Boolean).join(', ')
   return [
     ['Tetőrendszer', labels[config.roof]],
+    ...buildingSpecRows(config),
     ['Méret (sz × m × m)', `${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} × ${formatNumber(config.height, 2)} m · ${formatNumber(price.area)} m²`],
     ['Rögzítés', MOUNT_LABELS[config.mount]],
     ['Szín', color],

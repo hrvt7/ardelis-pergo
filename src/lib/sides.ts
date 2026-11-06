@@ -20,10 +20,10 @@ export interface SideInfo {
   /** Motoros-e (energia, vezérlés). */
   motorized: boolean
   /** Elmozdítható-e a 3D-ben (tolás, döntés). */
-  movable: 'slide' | 'tilt' | 'roll' | null
+  movable: 'slide' | 'tilt' | 'roll' | 'swing' | null
 }
 
-export const SIDE_TYPES: SideType[] = ['none', 'zip', 'glass', 'glassFramed', 'glassFixed', 'louver', 'slatAlu', 'slatWood']
+export const SIDE_TYPES: SideType[] = ['none', 'zip', 'glass', 'glassFramed', 'glassFixed', 'door', 'doorSliding', 'louver', 'slatAlu', 'slatWood']
 
 export const SIDE_INFO: Record<SideType, SideInfo> = {
   none: { label: 'Nyitott', description: 'Szabad kilátás, szellős terasz', spec: '0', share: '0', priceKey: null, value: 0, motorized: false, movable: null },
@@ -31,6 +31,8 @@ export const SIDE_INFO: Record<SideType, SideInfo> = {
   glass: { label: 'Tolóüveg', description: 'Keret nélküli, 10 mm edzett üveg, félre tolható', spec: 'G', share: 'g', priceKey: 'glassPerM2Net', value: 2.4, motorized: false, movable: 'slide' },
   glassFramed: { label: 'Keretes tolóüveg', description: 'Alumínium keretes, tömített tolóelemek', spec: 'K', share: 'k', priceKey: 'glassFramedPerM2Net', value: 2.2, motorized: false, movable: 'slide' },
   glassFixed: { label: 'Fix üveg', description: 'Szélfogó üvegfal, nem nyitható', spec: 'F', share: 'f', priceKey: 'glassFixedPerM2Net', value: 1.9, motorized: false, movable: null },
+  door: { label: 'Nyíló ajtós üvegfal', description: 'Fix üvegfal középen nyíló, keretes üvegajtóval', spec: 'D', share: 'd', priceKey: 'glassFixedPerM2Net', value: 2.3, motorized: false, movable: 'swing' },
+  doorSliding: { label: 'Tolóajtós üvegfal', description: 'Fix üvegfal tolóajtóval, szűk bejárathoz is', spec: 'T', share: 't', priceKey: 'glassFixedPerM2Net', value: 2.5, motorized: false, movable: 'slide' },
   louver: { label: 'Lamellafal', description: 'Állítható alumínium lamellák, belátásvédelem', spec: 'L', share: 'l', priceKey: 'louverWallPerM2Net', value: 1.8, motorized: false, movable: 'tilt' },
   slatAlu: { label: 'Alu lécfal', description: 'Fix alumínium lécek, a szerkezet színében', spec: 'A', share: 'a', priceKey: 'slatAluPerM2Net', value: 1.3, motorized: false, movable: null },
   slatWood: { label: 'Fa lécfal', description: 'Hőkezelt fa lécek, meleg hatás', spec: 'W', share: 'w', priceKey: 'slatWoodPerM2Net', value: 1.2, motorized: false, movable: null },

@@ -21,6 +21,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   showHotspots: false,
   exploded: false,
   glassOpen: false,
+  doorOpen: false,
   wallLouverOpen: false,
   quality: 'auto',
   wallFinish: 'cedar',

@@ -5,7 +5,13 @@ export type RoofShade = 'above' | 'below'
 export type RoofGlazing = 'clear' | 'satin' | 'opal' | 'heat'
 export type ShadeFabric = 'white' | 'sand' | 'grey' | 'anthracite'
 export type RoofType = 'louvered' | 'retractable' | 'fabric' | 'glass' | 'polycarbonate' | 'fixed'
-export type SideType = 'none' | 'zip' | 'glass' | 'glassFramed' | 'glassFixed' | 'louver' | 'slatAlu' | 'slatWood'
+export type SideType = 'none' | 'zip' | 'glass' | 'glassFramed' | 'glassFixed' | 'door' | 'doorSliding' | 'louver' | 'slatAlu' | 'slatWood'
+/** Építmény-típus: a nyitott pergola mellett zárt veranda (üvegezett terasz) és egész éves télikert. */
+export type BuildingType = 'pergola' | 'veranda' | 'conservatory'
+/** Oldalfal-üvegezés: edzett (egyrétegű), kétrétegű vagy háromrétegű hőszigetelt. */
+export type WallGlazing = 'single' | 'double' | 'triple'
+/** Télikert fűtés/hűtés: split klíma, padlófűtés vagy mindkettő. */
+export type ClimateType = 'split' | 'underfloor' | 'both'
 export type SideKey = 'front' | 'back' | 'left' | 'right'
 export type FrameColor = 'anthracite' | 'black' | 'white' | 'bronze' | 'custom'
 export type TimeOfDay = 'day' | 'sunset' | 'night'
@@ -31,6 +37,14 @@ export interface PergolaConfig {
   pitch?: number
   /** Üveg-/polikarbonát tető burkolata (nincs megadva = alapkivitel: tiszta üveg / opál polikarbonát). */
   glazing?: RoofGlazing
+  /** Zárt építmény: veranda vagy télikert (nincs megadva = nyitott pergola). */
+  building?: Exclude<BuildingType, 'pergola'>
+  /** Oldalfal-üvegezés (csak zárt építménynél; nincs megadva = alapkivitel: veranda edzett, télikert kétrétegű). */
+  wallGlazing?: WallGlazing
+  /** Fűtés/hűtés (csak télikertnél). */
+  climate?: ClimateType
+  /** Alap és padlószerkezet (télikertnél mindig, verandánál választható). */
+  foundation?: boolean
   screenOpen: number
   led: boolean
   heaters: number
@@ -65,6 +79,8 @@ export interface SceneSettings {
   /** Robbantott nézet: a szerkezeti elemek szétválnak (csak látvány). */
   exploded: boolean
   glassOpen: boolean
+  /** Az ajtók nyitva vannak-e a 3D-ben. */
+  doorOpen: boolean
   wallLouverOpen: boolean
   quality: QualityLevel
   /** A ház homlokzatának anyaga (főépület és L/U-szárny; csak látvány). */
@@ -175,6 +191,22 @@ export interface PriceSettings {
   glazingHeatPerM2Net: number
   /** Dőlt tető felára: magasított hátsó oszlopok, ferde bekötés, oldalkitöltés. Ft / fok / szélesség-méter. */
   pitchPerDegreePerMeterNet: number
+  /** Nyíló üvegajtó (egy db) felára az üvegfal m²-ára felett. */
+  doorHingedNet: number
+  /** Tolóajtó (egy db) felára az üvegfal m²-ára felett. */
+  doorSlidingNet: number
+  /** Kétrétegű, hőszigetelt (Low-E) oldalüvegezés felára az üvegfal m²-ére. */
+  wallGlazingDoublePerM2Net: number
+  /** Háromrétegű hőszigetelt oldalüvegezés felára az üvegfal m²-ére. */
+  wallGlazingTriplePerM2Net: number
+  /** Télikert hőhídmentes profilrendszer felára a szerkezeti ár arányában (0–1). */
+  thermalProfileRate: number
+  /** Alap- és padlószerkezet, m²-enként. */
+  foundationPerM2Net: number
+  /** Split klíma (fűtés + hűtés), egy db. */
+  climateSplitNet: number
+  /** Padlófűtés, m²-enként. */
+  underfloorPerM2Net: number
   customColorRate: number
   /** Fa hatású (szublimációs) bevonat felára a szerkezeti árhoz képest. */
   woodColorRate: number

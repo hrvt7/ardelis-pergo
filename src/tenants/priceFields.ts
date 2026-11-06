@@ -28,4 +28,11 @@ export const MONEY_FIELDS: { key: PriceKey; label: string; unit: string }[] = [
   { key: 'speakerPairNet', label: 'Hangrendszer', unit: 'Ft/pár' },
   { key: 'sensorsNet', label: 'Szenzorcsomag', unit: 'Ft' },
   { key: 'solarPerKwpNet', label: 'Napelemes tető', unit: 'Ft/kWp' },
+  { key: 'doorHingedNet', label: 'Nyíló ajtószárny', unit: 'Ft/db' },
+  { key: 'doorSlidingNet', label: 'Toló ajtószerkezet', unit: 'Ft/db' },
+  { key: 'wallGlazingDoublePerM2Net', label: 'Kétrétegű oldalüvegezés felár', unit: 'Ft/m²' },
+  { key: 'wallGlazingTriplePerM2Net', label: 'Háromrétegű oldalüvegezés felár', unit: 'Ft/m²' },
+  { key: 'foundationPerM2Net', label: 'Alap és szigetelt padló', unit: 'Ft/m²' },
+  { key: 'climateSplitNet', label: 'Split klíma', unit: 'Ft' },
+  { key: 'underfloorPerM2Net', label: 'Padlófűtés', unit: 'Ft/m²' },
 ]

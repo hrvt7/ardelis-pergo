@@ -154,7 +154,7 @@ function viewTitle(svg: Svg, x: number, y: number, title: string, scale: number)
   svg.text(x + width + 2.5, y, `M 1:${scale}`, 2.2, { weight: 'semi', color: MID })
 }
 
-const SIDE_SHORT: Record<SideType, string> = { none: '', zip: 'ZIP screen', glass: 'tolóüveg', glassFramed: 'keretes tolóüveg', glassFixed: 'fix üveg', louver: 'lamellafal', slatAlu: 'alu lécfal', slatWood: 'fa lécfal' }
+const SIDE_SHORT: Record<SideType, string> = { none: '', zip: 'ZIP screen', glass: 'tolóüveg', glassFramed: 'keretes tolóüveg', glassFixed: 'fix üveg', door: 'nyíló ajtós fal', doorSliding: 'tolóajtós fal', louver: 'lamellafal', slatAlu: 'alu lécfal', slatWood: 'fa lécfal' }
 /** Osztóprofil szélessége (m), félbe osztott oldal közepén, ha ott nincs oszlop. */
 const MULLION = 0.06
 const WOOD = '#e6d8c0'
@@ -359,6 +359,22 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
           svg.line(px + pw * 0.25, top + (bottom - top) * 0.35, px + pw * 0.5, top + (bottom - top) * 0.15, 0.13, SOFT)
         }
         svg.rect(a, bottom - 0.4, b - a, 0.4, { width: 0.13, fill: MID })
+      } else if (type === 'door' || type === 'doorSliding') {
+        const len = (b - a) / k
+        const leaf = Math.min(len, type === 'door' ? 0.95 : Math.max(1.0, len / 2)) * k
+        const fixedW = (b - a) - leaf
+        if (fixedW > 0.3 * k) {
+          const count = Math.max(1, Math.round(fixedW / k / 1.5))
+          const pw = fixedW / count
+          for (let p = 0; p < count; p += 1) svg.rect(a + p * pw + 0.1, top + 0.2, pw - 0.2, bottom - top - 0.4, { stroke: MID, width: 0.18, fill: '#eef3f3' })
+        }
+        const lx = b - leaf
+        svg.rect(lx + 0.1, top + 0.2, leaf - 0.2, bottom - top - 0.4, { stroke: INK, width: 0.3, fill: '#ffffff' })
+        svg.rect(lx + 0.1 + 0.05 * k, top + 0.2 + 0.05 * k, leaf - 0.2 - 0.1 * k, bottom - top - 0.4 - 0.1 * k, { stroke: MID, width: 0.13, fill: '#eef3f3' })
+        const mid = (top + bottom) / 2
+        if (type === 'door') svg.line(lx + 0.1 + 0.07 * k, mid - 1.6, lx + 0.1 + 0.07 * k, mid + 1.6, 0.5, INK)
+        else { svg.line(lx + 1.5, mid, lx + leaf - 1.5, mid, 0.2, MID); svg.line(lx + leaf - 3, mid - 0.9, lx + leaf - 1.5, mid, 0.2, MID); svg.line(lx + leaf - 3, mid + 0.9, lx + leaf - 1.5, mid, 0.2, MID) }
+        svg.rect(a, bottom - 0.4, b - a, 0.4, { width: 0.13, fill: MID })
       } else if (type === 'louver') {
         for (let y = top + 1.2; y < bottom - 0.4; y += 0.11 * k) svg.rect(a, y, b - a, 0.05 * k, { stroke: MID, width: 0.13, fill: '#e9ecea' })
       } else if (type === 'slatAlu' || type === 'slatWood') {
@@ -490,6 +506,26 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       seg(start, start + length, 0, 0.35, INK)
       const count = Math.max(1, Math.round(length / 1.5))
       for (let p = 1; p < count; p += 1) seg(start + (p * length) / count - 0.02, start + (p * length) / count + 0.02, 0, 0.9, INK)
+    } else if (type === 'door' || type === 'doorSliding') {
+      const leaf = Math.min(length, type === 'door' ? 0.95 : Math.max(1.0, length / 2))
+      seg(start, start + length - (type === 'door' ? leaf : 0), 0, 0.35, INK)
+      if (type === 'door') {
+        // Ajtószárny 90°-ban kinyitva és a nyitási ív.
+        const hinge = start + length
+        const [hx, hy] = P(hinge, 0)
+        const [ex, ey] = P(hinge, leaf)
+        svg.line(hx, hy, ex, ey, 0.45, INK)
+        let previous = P(hinge - leaf, 0)
+        for (let step = 1; step <= 6; step += 1) {
+          const t = (step / 6) * (Math.PI / 2)
+          const next = P(hinge - leaf * Math.cos(t), leaf * Math.sin(t))
+          svg.line(previous[0], previous[1], next[0], next[1], 0.1, SOFT)
+          previous = next
+        }
+      } else {
+        seg(start, start + length, -0.03, 0.35, INK)
+        seg(start + length - leaf, start + length, 0.03, 0.35, INK)
+      }
     } else if (type === 'slatAlu' || type === 'slatWood') {
       seg(start, start + length, -0.025, 0.18, INK)
       seg(start, start + length, 0.025, 0.18, INK)
@@ -533,7 +569,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       const top = Ys(levels.beamBottom)
       const bottom = Ys(0.04)
       if (type === 'zip') { svg.rect(a, top, b - a, 0.13 * k, { width: 0.18, fill: '#e6e8e6' }); svg.rect(a, top + 0.13 * k, b - a, bottom - top - 0.13 * k, { stroke: SOFT, width: 0.13, fill: '#f5f6f4' }) }
-      else if (type === 'glass' || type === 'glassFramed' || type === 'glassFixed') { const count = type === 'glassFixed' ? Math.max(1, Math.round((b - a) / k / 1.5)) : glassPanels((b - a) / k).count; const pw = (b - a) / count; for (let p = 0; p < count; p += 1) svg.rect(a + p * pw + 0.15, top + 0.3, pw - 0.3, bottom - top - 0.9, { stroke: type === 'glassFramed' ? MID : SOFT, width: type === 'glassFramed' ? 0.3 : 0.13, fill: '#f1f5f5' }) }
+      else if (type === 'glass' || type === 'glassFramed' || type === 'glassFixed' || type === 'door' || type === 'doorSliding') { const count = type === 'glassFixed' || type === 'door' || type === 'doorSliding' ? Math.max(1, Math.round((b - a) / k / 1.5)) : glassPanels((b - a) / k).count; const pw = (b - a) / count; for (let p = 0; p < count; p += 1) svg.rect(a + p * pw + 0.15, top + 0.3, pw - 0.3, bottom - top - 0.9, { stroke: type === 'glassFramed' ? MID : SOFT, width: type === 'glassFramed' ? 0.3 : 0.13, fill: '#f1f5f5' }) }
       else if (type === 'slatAlu' || type === 'slatWood') { for (let y = top + 0.6; y < bottom - 0.4; y += 0.11 * k) svg.rect(a, y, b - a, 0.085 * k, { stroke: SOFT, width: 0.1, fill: type === 'slatWood' ? '#efe6d6' : '#eceeec' }) }
       else for (let y = top + 1.2; y < bottom - 0.4; y += 0.11 * k) svg.rect(a, y, b - a, 0.05 * k, { stroke: SOFT, width: 0.1, fill: '#eef0ee' })
     })
