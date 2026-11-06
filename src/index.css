@@ -326,7 +326,7 @@ a { color: inherit; } svg { flex-shrink: 0; }
   .project-identity { display: none; } .app-header { grid-template-columns: 1fr auto; } .price-panel { width: 300px; } .weather-toolbar, .automation-status { right: 330px; } .camera-toolbar button span { display: none; } .camera-toolbar button { width: 42px; justify-content: center; } .viewer-footer { display: none; }
 }
 @media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
-  :root { --header-height: 56px; }
+  :root { --header-height: 56px; --sheet-half: min(50%, 470px); }
   .app-shell { padding-bottom: 65px; }
   .app-header { grid-template-columns: 1fr auto; } .brand { padding-left: 16px; } .brand svg { width: 25px; } .header-actions { padding-right: 7px; } .header-actions .header-text-button span { display: none; } .history-actions { margin-right: 2px; padding-right: 5px; }
   .studio-shell { height: calc(100dvh - var(--header-height) - 65px); }
@@ -335,7 +335,7 @@ a { color: inherit; } svg { flex-shrink: 0; }
   .automation-status { top: 70px; right: 13px; max-width: 230px; }
   .presentation-mode { padding-bottom: 0; } .presentation-mode .studio-shell { height: calc(100dvh - var(--header-height)); } .presentation-mode .camera-toolbar { bottom: 18px; } .presentation-note { top: 74px; min-width: 260px; padding: 11px 14px; }
   .controls-panel { left: 10px; right: 10px; top: auto; bottom: 10px; width: auto; height: 104px; border-radius: 14px; transition: height 240ms ease-out; }
-  .controls-panel.sheet-half { height: min(50%, 470px); }
+  .controls-panel.sheet-half { height: var(--sheet-half); }
   .controls-panel.sheet-full { height: calc(100% - 20px); }
   .controls-panel.is-dragging { transition: none; }
   .sheet-toggle { touch-action: none; }
@@ -350,13 +350,20 @@ a { color: inherit; } svg { flex-shrink: 0; }
   .config-head { padding-top: 8px; padding-bottom: 7px; } .control-tabs { padding-bottom: 7px; } .control-tabs button { min-height: 44px; gap: 3px; } .step-dot { width: 18px; height: 18px; font-size: 11.5px; }
   .panel-content { padding: 14px 16px 22px; } .step-heading { display: flex; align-items: baseline; gap: 9px; margin-bottom: 14px; } .step-heading h2 { font-size: 23px; margin: 0; } .step-heading > span { font-size: 10.5px; }
   .step-navigation { padding: 6px 12px; } .step-navigation button { min-height: 44px; }
+  /* Alacsony (≈ 560–700 px) telefon-nézetben a félig nyitott panelből alig maradt hely a tartalomnak: itt magasabb, a fejléc és a lépéscímke elmarad (a lépés a fülön látszik). */
+  @media (max-height: 760px) and (orientation: portrait) {
+    :root { --sheet-half: min(66%, 520px); }
+    .controls-panel.sheet-half .config-head, .controls-panel.sheet-half .step-heading { display: none; }
+    .controls-panel.sheet-half .control-tabs button { min-height: 40px; }
+    .controls-panel.sheet-half .control-tabs button:not(.active) > span:last-child { display: none; }
+  }
   .price-panel { display: none; }
   .camera-toolbar { left: 50%; bottom: 124px; transition: opacity 160ms ease-out; } .camera-toolbar button { min-height: 44px; width: 44px; }
   .pov-note { bottom: 182px; padding: 8px 10px; white-space: normal; width: max-content; } .pov-note span { font-size: 10.5px; }
   .studio-shell:has(.controls-panel.sheet-full) .camera-toolbar, .studio-shell:has(.controls-panel.is-dragging) .camera-toolbar { opacity: 0; pointer-events: none; }
-  .studio-shell:has(.controls-panel.sheet-half) .camera-toolbar { bottom: calc(min(50%, 470px) + 20px); }
+  .studio-shell:has(.controls-panel.sheet-half) .camera-toolbar { bottom: calc(var(--sheet-half) + 20px); }
   .viewer-panel .change-pill { left: 50%; bottom: 180px; max-width: calc(100vw - 28px); }
-  .studio-shell:has(.controls-panel.sheet-half) .change-pill { bottom: calc(min(50%, 470px) + 76px); }
+  .studio-shell:has(.controls-panel.sheet-half) .change-pill { bottom: calc(var(--sheet-half) + 76px); }
   .studio-shell:has(.controls-panel.sheet-full) .change-pill { display: none; }
   .mobile-price-bar { position: fixed; z-index: 35; bottom: 0; left: 0; right: 0; min-height: 65px; padding: 8px 14px calc(8px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(18,23,22,.97); backdrop-filter: blur(14px); border-top: 1px solid var(--surface-border); }
   .mobile-price-bar span, .mobile-price-bar strong { display: block; } .mobile-price-bar span { color: var(--text-secondary); font-size: 11.5px; } .mobile-price-bar strong { font: 500 17.5px/1.4 'Plus Jakarta Sans', sans-serif; font-variant-numeric: tabular-nums; } .mobile-price-bar button { min-height: 44px; display: flex; align-items: center; gap: 4px; border: 0; background: transparent; color: var(--accent-primary); font-size: 13.5px; padding: 0 3px 0 10px; }
@@ -2009,7 +2016,7 @@ button.tr.is-open{background:rgba(216,255,114,.07);box-shadow:inset 0 0 0 1px rg
 @media (max-width:1220px){.photo-bar{width:min(600px,calc(100% - 700px));min-width:380px}.photo-actions button span{display:none}}
 @media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse){
   .photo-bar{left:12px;right:12px;bottom:118px;transform:none;width:auto;min-width:0;padding:9px 10px 10px}
-  .studio-shell:has(.controls-panel.sheet-half) .photo-bar{bottom:calc(min(50%, 470px) + 14px)}
+  .studio-shell:has(.controls-panel.sheet-half) .photo-bar{bottom:calc(var(--sheet-half) + 14px)}
   .studio-shell:has(.controls-panel.sheet-full) .photo-bar{opacity:0;pointer-events:none}
   .photo-hint{white-space:normal;font-size:12px;line-height:1.3}
   .photo-group button,.photo-actions button{min-width:42px;min-height:42px}

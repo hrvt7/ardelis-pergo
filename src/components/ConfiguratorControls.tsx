@@ -312,6 +312,8 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
             <SectionTitle title="Kiinduló csomagok" hint="Egy koppintással indulhatsz, utána minden szabadon módosítható." />
             <div className="preset-list">{tenant.presets.map((preset) => <button type="button" key={preset.id} onClick={() => onPreset(presetConfig(tenant, preset.config))}><strong>{preset.name}</strong><span>{preset.description}</span><ArrowRight size={15} /></button>)}</div>
+            <SectionTitle title="Tetőrendszer" hint="A pergola típusa határozza meg az árnyékolást, az esővédelmet és az árat. Az oldalak lépésében is módosítható." />
+            <RoofPicker config={config} prices={prices} onChange={onChange} />
             <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
             <SliderField label="Szélesség" value={config.width} min={limits.width[0]} max={limits.width[1]} step={0.05} unit="m" metric onChange={(width) => onChange({ width })} />
             <SliderField label="Mélység" value={config.depth} min={limits.depth[0]} max={limits.depth[1]} step={0.05} unit="m" metric onChange={(depth) => onChange({ depth })} />

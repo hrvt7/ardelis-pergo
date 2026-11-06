@@ -636,3 +636,7 @@ működést, az eladhatóságot és a hibákat érintik.
 
 ## 3.36 – Éles 3D-kép a PDF-ajánlatban
 - A PDF-export előtt a jelenet rövid időre 2× pixelarányra vált (legfeljebb 3000 px széles vászon), lemásolja a képet (max. 2400 px), majd visszaáll a megszokott felbontásra. Ha az átváltás nem sikerül, a korábbi pillanatkép kerül a PDF-be.
+
+## 3.37 – UX-audit javítások
+- A **tetőrendszer** (lamellás, fix stb.) mostantól az 1. lépésben is választható; korábban csak a 4. lépésben, az oldalas ábra közepére kattintva volt elérhető.
+- **Alacsony telefon-kijelzőn** (≤ 760 px magas, álló) a félig nyitott panel magasabb (66%), a konfigurációs fejléc és a lépéscím elmarad, a fülek tömörebbek: korábban a lépés tartalmából alig egy sor látszott.
