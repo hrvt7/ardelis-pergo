@@ -10,7 +10,7 @@ export const DEMO_REQUEST_EMAIL = 'hrvtadam.7@icloud.com'
 const MAX_BODY_BYTES = 12_000
 const MIN_FILL_MS = 2_000
 
-export const DEMO_PRODUCTS = ['pergola', 'pergola+outdoor', 'carport', 'other'] as const
+export const DEMO_PRODUCTS = ['pergola', 'veranda', 'pergola+outdoor', 'carport', 'other'] as const
 export const DEMO_PLANS = ['start', 'pro', 'partner', 'unsure'] as const
 
 const demoSchema = z.object({
@@ -30,7 +30,7 @@ const demoSchema = z.object({
 })
 export type DemoRequest = z.infer<typeof demoSchema>
 
-const PRODUCT_LABEL: Record<DemoRequest['product'], string> = { pergola: 'Pergola', 'pergola+outdoor': 'Pergola + egyéb outdoor termék', carport: 'Carport / előtető', other: 'Egyéb' }
+const PRODUCT_LABEL: Record<DemoRequest['product'], string> = { pergola: 'Pergola', veranda: 'Veranda / télikert', 'pergola+outdoor': 'Pergola + egyéb outdoor termék', carport: 'Carport / előtető', other: 'Egyéb' }
 const PLAN_LABEL: Record<DemoRequest['plan'], string> = { start: 'Start', pro: 'Pro', partner: 'Partnerhálózat', unsure: 'Még nem tudja' }
 
 /** Az űrlap magyar hibaüzenetei angolul (az oldal nyelve szerint). */

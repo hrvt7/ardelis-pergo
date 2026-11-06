@@ -333,10 +333,10 @@ export default function Home() {
       <section className="cinema-hero" aria-labelledby="home-title">
         <div className="hero-ghost" aria-hidden="true">PERGO</div>
         <div className="cinema-hero-copy">
-          <div className="cinema-overline hero-intro-item"><span>LAMELIX</span><i />BIOKLIMATIKUS PERGOLA</div>
+          <div className="cinema-overline hero-intro-item"><span>LAMELIX</span><i />PERGOLA · VERANDA · TÉLIKERT</div>
           <h1 id="home-title" aria-label="A teraszod. Újragondolva."><SplitLine>A teraszod.</SplitLine><SplitLine italic>Újragondolva.</SplitLine></h1>
-          <p className="hero-intro-item">Tervezd meg a pergolát a saját teraszod méreteire, a saját házad színei elé. Tetőrendszer, oldalzárás, árnyékolás és fény — valós idejű 3D-ben, azonnali irányárral.</p>
-          <div className="cinema-hero-actions hero-intro-item"><OvalLink to="/konfigurator">Saját pergola tervezése</OvalLink><a className="cinema-text-link" href="#elmeny">Fedezd fel <ArrowDown size={15} /></a></div>
+          <p className="hero-intro-item">Tervezd meg a pergolát, a verandát vagy a télikertet a saját teraszod méreteire, a saját házad színei elé. Tetőrendszer, oldalzárás, üvegfal, árnyékolás és fény — valós idejű 3D-ben, azonnali irányárral.</p>
+          <div className="cinema-hero-actions hero-intro-item"><OvalLink to="/konfigurator">Saját teraszfedés tervezése</OvalLink><a className="cinema-text-link" href="#elmeny">Fedezd fel <ArrowDown size={15} /></a></div>
           <div className="cinema-hero-proof hero-intro-item"><span><Check size={14} />Valós idejű 3D</span><span><Check size={14} />Azonnali irányár</span><span><Check size={14} />PDF és felmérés</span></div>
         </div>
         <div className="cinema-hero-visual">
@@ -353,7 +353,7 @@ export default function Home() {
       <section className="cinema-intro" id="elmeny" data-cinema-reveal>
         <div className="intro-index" data-reveal-item>LAMELIX / 01<br />VALÓS MÉRETEK.<br />ÁTLÁTHATÓ TERVEZÉS.</div>
         <div className="intro-heading" data-reveal-item><h2>Nem egy tető.<br /><em>Egy új tér.</em></h2></div>
-        <div className="intro-copy" data-reveal-item><p>A bioklimatikus pergola az időjáráshoz és a terasz használatához igazodik. A dönthető lamellákkal szabályozod a napfényt és a szellőzést, a rejtett világítással este is kellemes marad a tér.</p><Link className="text-arrow-link" to="/konfigurator">Kipróbálom a 3D stúdiót <MoveRight /></Link></div>
+        <div className="intro-copy" data-reveal-item><p>A bioklimatikus pergola az időjáráshoz és a terasz használatához igazodik: a dönthető lamellákkal szabályozod a napfényt és a szellőzést. A veranda fix tetővel és üvegfallal zárt, évszaktól függetlenül használható tér; a télikert hőszigetelt üvegszerkezettel fűthető-hűthető, akár egész éves nappali.</p><Link className="text-arrow-link" to="/konfigurator">Kipróbálom a 3D stúdiót <MoveRight /></Link></div>
         <div className="intro-facts" data-reveal-item>
           <div><strong><b data-count="90">90</b>°</strong><span>a lamellák legnagyobb dőlésszöge</span></div>
           <div><strong><b data-count={FACADE_COUNT}>{FACADE_COUNT}</b></strong><span>homlokzati szín a házadhoz</span></div>
@@ -374,7 +374,7 @@ export default function Home() {
           </div>
           <div className="film-grid" aria-hidden="true" />
           <Blueprint />
-          <div className="film-topline"><span>LAMELIX / PERGOLA</span><span>MINDEN KÉP A 3D STÚDIÓBÓL</span></div>
+          <div className="film-topline"><span>LAMELIX / TERASZFEDÉS</span><span>MINDEN KÉP A 3D STÚDIÓBÓL</span></div>
           <div className="film-beats">
             <article className="film-beat beat-form"><span className="film-beat-index">01 / A FORMA</span><h2>A vonal,<br />ami <em>helyet</em><br />teremt.</h2><p>Oszlop, gerenda és lamella egyetlen arányos szerkezetben — a te házad előtt, a te homlokzatszíneddel.</p></article>
             <article className="film-beat beat-measure"><span className="film-beat-index">02 / A MÉRET</span><h2>Nem „körülbelül”.<br /><em>Centiméterre.</em></h2><p>Szélesség, mélység és magasság centiméterre. A méretcímkék és az emberi léptékű figura megmutatják, mekkora lesz valójában a tér.</p></article>
@@ -385,8 +385,8 @@ export default function Home() {
           <div className="film-handoff" aria-hidden="true" />
         </div>
         <div className="film-reduced">
-          <article><Shot name="dims" alt="Pergola méretcímkékkel és emberi léptékű figurával" /><h2>Centiméterre pontos.</h2><p>Szélesség, mélység és magasság centiméterre, méretcímkékkel és emberi figurával.</p></article>
-          <article><Shot name="night" alt="Pergola éjszaka, bekapcsolt LED világítással" /><h2>Napnyugta után is a tiéd a terasz.</h2><p>Periméter LED, infra fűtés és oldalzárás — az éjszakai nézetben is.</p></article>
+          <article><Shot name="dims" alt="Teraszfedés méretcímkékkel és emberi léptékű figurával" /><h2>Centiméterre pontos.</h2><p>Szélesség, mélység és magasság centiméterre, méretcímkékkel és emberi figurával.</p></article>
+          <article><Shot name="night" alt="Teraszfedés éjszaka, bekapcsolt LED világítással" /><h2>Napnyugta után is a tiéd a terasz.</h2><p>Periméter LED, infra fűtés és oldalzárás — az éjszakai nézetben is.</p></article>
         </div>
       </section>
 
@@ -394,8 +394,8 @@ export default function Home() {
         <div className="colors-copy" data-reveal-item>
           <div className="cinema-section-index">02 — SZÍN ÉS HÁZ</div>
           <h2 id="colors-title">Illik<br /><em>a házadhoz?</em></h2>
-          <p>A stúdióban a mintaház homlokzatát és ablakait a saját házadra állítod — vakolt, tégla vagy fa felület, a leggyakoribb színekkel, vagy egy fotóról vett árnyalattal. Utána a pergola színe egy kattintással igazítható a nyílászárókhoz.</p>
-          <div className="colors-picker" role="radiogroup" aria-label="Pergola színe">
+          <p>A stúdióban a mintaház homlokzatát és ablakait a saját házadra állítod — vakolt, tégla vagy fa felület, a leggyakoribb színekkel, vagy egy fotóról vett árnyalattal. Utána a szerkezet színe egy kattintással igazítható a nyílászárókhoz.</p>
+          <div className="colors-picker" role="radiogroup" aria-label="Szerkezet színe">
             {PALETTE.map((item) => <button key={item.id} type="button" role="radio" aria-checked={color === item.id} className={color === item.id ? 'is-active' : ''} onClick={() => setColor(item.id)}>
               <i style={{ background: item.swatch }} /><span><strong>{item.label}</strong><small>{item.code}</small></span>
             </button>)}
@@ -404,7 +404,7 @@ export default function Home() {
         </div>
         <div className="colors-stage" data-reveal-item>
           <div className="colors-frame" data-clip>
-            {PALETTE.map((item) => <Shot key={item.id} className={color === item.id ? 'is-active' : ''} name={item.image} alt={item.id === color ? `${item.label} pergola a 3D stúdióban` : ''} sizes="(max-width: 820px) 100vw, 58vw" />)}
+            {PALETTE.map((item) => <Shot key={item.id} className={color === item.id ? 'is-active' : ''} name={item.image} alt={item.id === color ? `${item.label} szerkezet a 3D stúdióban` : ''} sizes="(max-width: 820px) 100vw, 58vw" />)}
             <span className="colors-tag"><i style={{ background: active.swatch }} />{active.label} · {active.code}</span>
           </div>
           <div className="colors-house" aria-hidden="true">{Object.values(WALL_COLORS).flat().slice(0, 12).map((item) => <i key={item.hex} style={{ background: item.hex }} />)}<span>+ fotóról</span></div>
@@ -446,23 +446,23 @@ export default function Home() {
       </section>
 
       <section className="cinema-knowledge" id="utmutato" aria-labelledby="guide-title" data-cinema-reveal>
-        <div className="knowledge-heading" data-reveal-item><div className="cinema-section-index">06 — TERVEZÉSI ÚTMUTATÓ</div><h2 id="guide-title">Mire figyelj,<br /><em>ha pergolát tervezel?</em></h2><p>A jó pergola nemcsak a terasz méretéhez passzol. A rögzítés, a vízelvezetés, a nyílászárók és a mindennapi használat együtt határozza meg a megfelelő kialakítást.</p></div>
+        <div className="knowledge-heading" data-reveal-item><div className="cinema-section-index">06 — TERVEZÉSI ÚTMUTATÓ</div><h2 id="guide-title">Mire figyelj,<br /><em>ha teraszfedést tervezel?</em></h2><p>A jó teraszfedés nemcsak a terasz méretéhez passzol. A rögzítés, a vízelvezetés, a nyílászárók és a mindennapi használat együtt határozza meg a megfelelő kialakítást.</p></div>
         <div className="knowledge-grid" data-reveal-item>
           <article><span>01 / MÉRET ÉS ELHELYEZÉS</span><h3>A külső méret csak a kezdet.</h3><p>A tervezéshez a rendelkezésre álló felületen kívül a nyílászárók, az eresz, a burkolat és a kerti mozgás is számít. A konfigurátor külső szerkezeti méreteket kezel; a pontos rögzítési pontokat helyszínen kell ellenőrizni.</p></article>
-          <article><span>02 / TETŐ ÉS OLDALZÁRÁS</span><h3>A használat választja ki a rendszert.</h3><p>A dönthető lamellák a fényt és a szellőzést szabályozzák, az üvegtető alá vagy fölé motoros árnyékoló kerülhet, a ZIP screen és a tolóüveg oldalirányú védelmet ad.</p></article>
+          <article><span>02 / TETŐ ÉS OLDALZÁRÁS</span><h3>A használat választja ki a rendszert.</h3><p>A dönthető lamellák a fényt és a szellőzést szabályozzák, az üvegtető alá vagy fölé motoros árnyékoló kerülhet, a ZIP screen és a tolóüveg oldalirányú védelmet ad. Verandánál és télikertnél fix vagy üvegtető, üvegfal, ajtó, hőszigetelés és klíma is a tervezés része.</p></article>
           <article><span>03 / IRÁNYÁR ÉS FELMÉRÉS</span><h3>A kalkulációt felmérés követi.</h3><p>A konfigurátor a beállításaidból tájékoztató irányárat számol. A végleges műszaki tartalom és ár a rögzítési felületek, a vízelvezetés, az elektromos csatlakozások és a kiegészítők helyszíni ellenőrzése után készül.</p></article>
         </div>
       </section>
 
       <section className="cinema-faq" id="gyik" aria-labelledby="faq-title" data-cinema-reveal>
-        <div className="faq-heading" data-reveal-item><div className="cinema-section-index">07 — GYAKORI KÉRDÉSEK</div><h2 id="faq-title">Rövid válaszok<br /><em>a pergolatervezésről.</em></h2><p>Az alábbi válaszok a tervezés legfontosabb kérdéseit foglalják össze. A konkrét műszaki megoldás mindig a helyszíntől és a végleges kivitelezéstől függ.</p></div>
+        <div className="faq-heading" data-reveal-item><div className="cinema-section-index">07 — GYAKORI KÉRDÉSEK</div><h2 id="faq-title">Rövid válaszok<br /><em>a pergola-, veranda- és télikerttervezésről.</em></h2><p>Az alábbi válaszok a tervezés legfontosabb kérdéseit foglalják össze. A konkrét műszaki megoldás mindig a helyszíntől és a végleges kivitelezéstől függ.</p></div>
         <div className="faq-list" data-reveal-item>{PERGOLA_FAQS.map((item, index) => <details key={item.question}><summary><span>{String(index + 1).padStart(2, '0')}</span><strong>{item.question}</strong><i aria-hidden="true" /></summary><p>{item.answer}</p></details>)}</div>
       </section>
 
       <section className="cinema-final" aria-labelledby="final-title">
         <div className="cinema-final-media" aria-hidden="true"><Shot name="night" alt="" /></div>
-        <div className="cinema-final-copy"><span>LAMELIX / PERGOLA</span><h2 id="final-title">Kezdd el a saját<br /><em>pergolád tervezését.</em></h2><p>Öt perc, és látod a teraszod — nappal és este, a saját házad előtt.</p></div>
-        <Link className="cinema-final-button" to="/konfigurator" aria-label="Pergola tervezés indítása"><span>KEZDD EL</span><ArrowUpRight /></Link>
+        <div className="cinema-final-copy"><span>LAMELIX / TERASZFEDÉS</span><h2 id="final-title">Kezdd el a saját<br /><em>teraszod tervezését.</em></h2><p>Öt perc, és látod a teraszod — nappal és este, a saját házad előtt.</p></div>
+        <Link className="cinema-final-button" to="/konfigurator" aria-label="Tervezés indítása"><span>KEZDD EL</span><ArrowUpRight /></Link>
       </section>
     </main>
     <SiteFooter />

@@ -8,9 +8,9 @@ export type Em = readonly [string, string, string]
 
 const hu = {
   seo: {
-    title: 'Lamelix – 3D pergola-konfigurátor és ajánlatkérő rendszer gyártóknak',
-    description: 'Saját márkás 3D pergola-konfigurátor gyártóknak és forgalmazóknak: azonnali irányár, AR-nézet, fotóba helyezés, ármátrix, QR-kódos terv és gyártói admin. Kérjen demót!',
-    ogAlt: 'Lamelix – 3D konfigurátor és ajánlatkérő rendszer pergolagyártóknak',
+    title: 'Lamelix – 3D pergola-, veranda- és télikert-konfigurátor gyártóknak',
+    description: 'Saját márkás 3D pergola-, veranda- és télikert-konfigurátor gyártóknak és forgalmazóknak: azonnali irányár, AR-nézet, fotóba helyezés, ármátrix, QR-kódos terv és gyártói admin. Kérjen demót!',
+    ogAlt: 'Lamelix – 3D konfigurátor és ajánlatkérő rendszer pergola-, veranda- és télikertgyártóknak',
   },
   nav: {
     brandAria: 'Lamelix – az oldal teteje', brandSmall: 'gyártóknak', mainAria: 'Fő navigáció', footerAria: 'Lábléc',
@@ -18,12 +18,12 @@ const hu = {
     liveDemo: 'Élő demó', requestDemo: 'Kérek demót', langAria: 'Nyelv', langName: { hu: 'Magyar', en: 'English' },
   },
   hero: {
-    eyebrow: 'Saját márkás 3D konfigurátor · pergola és árnyékolás',
-    line1: '3D konfigurátor', line2: '+ ajánlatkérés', line3: 'pergola­gyártóknak.',
-    lead: 'A vevő az Ön weboldalán 3D-ben megtervezi a pergoláját, azonnal látja az irányárat, és felmérést kér. Ön a teljes tervet, az elérhetőségét és az árat egyben kapja meg – a saját arculatával és a saját áraival.',
+    eyebrow: 'Saját márkás 3D konfigurátor · pergola, veranda, télikert',
+    line1: '3D konfigurátor', line2: '+ ajánlatkérés', line3: 'teraszfedés­gyártóknak.',
+    lead: 'A vevő az Ön weboldalán 3D-ben megtervezi a pergoláját, verandáját vagy télikertjét, azonnal látja az irányárat, és felmérést kér. Ön a teljes tervet, az elérhetőségét és az árat egyben kapja meg – a saját arculatával és a saját áraival.',
     ctaDemo: 'Kérek demót', ctaLive: 'Kipróbálom élőben',
     proof: ['A vevőnek semmit sem kell telepítenie', 'Indulás 5–10 munkanapon belül', 'Nincs hűségidő'],
-    imgAlt: 'A konfigurátor: 3D pergola, méretek és azonnali bruttó irányár',
+    imgAlt: 'A konfigurátor: 3D teraszfedés, méretek és azonnali bruttó irányár',
     chipA: { label: 'Bruttó irányár', value: '5 648 000 Ft', sub: 'telepítéssel, 27% áfával' },
     chipB: { label: 'Új érdeklődő · most', name: 'Kovács Péter · Sárvár', detail: 'Aero 5,0 × 4,0 m · falhoz' },
     chipC: { title: 'QR-kódos terv', sub: 'egy kattintással a vevő tervéhez' },
@@ -35,7 +35,7 @@ const hu = {
   showcase: {
     eyebrow: '02 – Bemutató', srTitle: 'Hogyan néz ki a gyakorlatban', cta: 'Nyissa meg az élő demót',
     beats: [
-      { title: 'A vevő megtervezi.', text: 'Valós méretek, a saját háza színei, nappali és esti nézet – 3D-ben, a böngészőben, letöltés nélkül. Közben végig látja az irányárat.', alt: 'A 3D pergola-konfigurátor tervezőfelülete irányárral' },
+      { title: 'A vevő megtervezi.', text: 'Valós méretek, a saját háza színei, nappali és esti nézet – 3D-ben, a böngészőben, letöltés nélkül. Közben végig látja az irányárat.', alt: 'A 3D konfigurátor tervezőfelülete irányárral' },
       { title: 'Ön kész ajánlatkérést kap.', text: 'Név, telefonszám, település, a pontos konfiguráció és az irányár. Hívás, e-mail, státusz és a terv megnyitása egyetlen panelen.', alt: 'Érdeklődő részletei a gyártói adminban: irányár, státusz, elérhetőség' },
       { title: 'Látja, mi működik.', text: 'Hányan nyitották meg, hányan módosítottak a terven, hányan kértek felmérést – és mekkora nyitott érték vár lezárásra.', alt: 'A gyártói admin áttekintése: érdeklődők, nyitott érték, látogatói tölcsér' },
       { title: 'Terepen is kéznél.', text: 'Az érdeklődők listája és a részletek telefonra optimalizálva: egy koppintással hívhat, státuszt válthat, és megnyithatja a tervet.', alt: 'Érdeklődő részletei telefonon, hívás, e-mail és terv gombokkal' },
@@ -45,11 +45,11 @@ const hu = {
     eyebrow: '03 – Funkciók', title: ['A vevő nemcsak árat lát – ', 'döntést', ' hoz.'] as Em,
     sub: 'Ezek az eszközök minden csomagban benne vannak. A cél, hogy a vevő magabiztosan, a családdal egyeztetve kérjen felmérést.',
     items: {
-      ar: { title: 'AR-nézet', text: 'A vevő telefonon a saját kertjébe vetíti a pergolát, valós méretben – iPhone-on és Androidon is, alkalmazás nélkül.' },
-      photo: { title: 'Fotóba helyezés', text: 'Feltölt egy fotót a házáról, és a 3D pergolát ráilleszti: elforgatja, átméretezi, a fényviszonyokhoz igazítja.' },
-      sun: { title: 'Árnyékelemzés', text: 'Valós napállás a település és a tájolás alapján: kiderül, mekkora árnyék lesz a pergola alatt egy júliusi délutánon.' },
+      ar: { title: 'AR-nézet', text: 'A vevő telefonon a saját kertjébe vetíti a pergolát, verandát vagy télikertet, valós méretben – iPhone-on és Androidon is, alkalmazás nélkül.' },
+      photo: { title: 'Fotóba helyezés', text: 'Feltölt egy fotót a házáról, és a 3D modellt ráilleszti: elforgatja, átméretezi, a fényviszonyokhoz igazítja.' },
+      sun: { title: 'Árnyékelemzés', text: 'Valós napállás a település és a tájolás alapján: kiderül, mekkora árnyék lesz a fedés alatt egy júliusi délutánon.' },
       budget: { title: 'Költségkeret-tervező', text: 'A vevő megadja, mennyit szán rá, és a rendszer megmutatja, mi fér bele – a terve lényegének megtartásával.' },
-      advisor: { title: 'Tanácsadó', text: 'Négy egyszerű kérdés után javasolt pergolát kap, indoklással – egy kattintással megnyitva a 3D-tervezőben.' },
+      advisor: { title: 'Tanácsadó', text: 'Négy egyszerű kérdés után javasolt kivitelt kap, indoklással – egy kattintással megnyitva a 3D-tervezőben.' },
       night: { title: 'Esti hangulat', text: 'Éjszakai nézet LED-világítással és fűtéssel: a vevő látja, milyen lesz a terasz este, és mennyibe kerül.' },
       energy: { title: 'Energia és üzemeltetés', text: 'Éves áramköltség a valós lakossági tarifával; napelemes tetőnél a várható termelés is látszik.' },
       pdf: { title: 'PDF és megosztás', text: 'Letölthető PDF-összefoglaló képekkel, méretekkel, árral és QR-kóddal – a döntés a családdal együtt születik meg.' },
@@ -68,7 +68,7 @@ const hu = {
   },
   pricing: {
     eyebrow: '05 – Árak', title: ['Néhány plusz megrendelés ', 'kifizeti', ' az évet.'] as Em,
-    sub: 'Egy pergolaprojekt jellemzően 3–6 millió forint. A csomagok a gyártó igényeiben különböznek, a vevői élmény mindegyikben teljes.',
+    sub: 'Egy pergola-, veranda- vagy télikertprojekt jellemzően 3–6 millió forint, a télikert gyakran afölött. A csomagok a gyártó igényeiben különböznek, a vevői élmény mindegyikben teljes.',
     billingAria: 'Fizetési ütem', monthly: 'Havi', annual: 'Éves', annualBadge: '−2 hónap',
     everyLabel: 'Minden csomagban:', everyAria: 'Minden csomagban benne van', badge: 'Legnépszerűbb',
     custom: 'Egyedi ajánlat', perMonth: '/ hó', customNote: 'A márkák és a viszonteladók számától függően',
@@ -97,7 +97,7 @@ const hu = {
   },
   form: {
     name: 'Név *', company: 'Cég *', email: 'E-mail *', phone: 'Telefon', website: 'Weboldal', websitePlaceholder: 'ceged.hu', product: 'Termék',
-    products: { pergola: 'Pergola', 'pergola+outdoor': 'Pergola + egyéb outdoor termék', carport: 'Carport / előtető', other: 'Egyéb' },
+    products: { pergola: 'Pergola', veranda: 'Veranda / télikert', 'pergola+outdoor': 'Pergola + egyéb outdoor termék', carport: 'Carport / előtető', other: 'Egyéb' },
     planLegend: 'Melyik csomag érdekli?', planUnsure: 'Még nem tudom', message: 'Üzenet', messagePlaceholder: 'Például: milyen termékeik vannak, és mikor indulnának?',
     consent: 'Hozzájárulok, hogy a megadott adataimat a demó egyeztetéséhez felhasználják.', submit: 'Demót kérek', sending: 'Küldés…',
     note: 'Egy munkanapon belül válaszolunk. Az adatait nem adjuk tovább.', failed: 'A küldés nem sikerült.', offline: 'Nincs kapcsolat a szerverrel.',
@@ -119,7 +119,7 @@ const hu = {
     ],
   },
   final: { title: ['Beszéljünk a ', 'következő', ' szezonról.'] as Em, text: 'Ha most indul, tavaszra a vevői már a konfigurátorban terveznek és árat látnak – miközben máshol még az árlistára várnak.' },
-  footer: { text: 'Saját márkás 3D konfigurátor és ajánlatkérő rendszer pergola- és árnyékolástechnikai gyártóknak.', sample: 'Mintaoldal' },
+  footer: { text: 'Saját márkás 3D konfigurátor és ajánlatkérő rendszer pergola-, veranda-, télikert- és árnyékolástechnikai gyártóknak.', sample: 'Mintaoldal' },
   cards: {
     price: { title: 'Azonnali irányár', text: 'A vevő méretet, tetőt, oldalzárást és extrákat választ, az ár pedig azonnal frissül – az Ön árazásával, nettóban és bruttóban, telepítéssel együtt.', width: 'Szélesség', sizes: ['4,0 m', '5,0 m', '6,5 m'], chips: ['Aero lamellás', 'ZIP screen', 'LED', 'Telepítéssel'], label: 'Bruttó irányár', prices: ['4 380 000', '5 648 000', '7 215 000'], currency: 'Ft', live: 'élő számítás' },
     qr: { title: 'QR-kódos terv', text: 'Minden terv saját linket és QR-kódot kap: a vevő megosztja a családdal, Ön pedig egy kattintással megnyitja.', hint: 'Olvassa be – ez az élő demó' },
@@ -133,9 +133,9 @@ export type PlatformCopy = typeof hu
 
 const en: PlatformCopy = {
   seo: {
-    title: 'Lamelix – 3D pergola configurator and quote-request system for manufacturers',
-    description: 'White-label 3D pergola configurator for manufacturers and dealers: instant guide price, AR view, photo placement, price matrix, QR-coded designs and a manufacturer admin. Request a demo!',
-    ogAlt: 'Lamelix – 3D configurator and quote-request system for pergola manufacturers',
+    title: 'Lamelix – 3D pergola, veranda and conservatory configurator for manufacturers',
+    description: 'White-label 3D pergola, veranda and conservatory configurator for manufacturers and dealers: instant guide price, AR view, photo placement, price matrix, QR-coded designs and a manufacturer admin. Request a demo!',
+    ogAlt: 'Lamelix – 3D configurator and quote-request system for pergola, veranda and conservatory manufacturers',
   },
   nav: {
     brandAria: 'Lamelix – top of the page', brandSmall: 'for manufacturers', mainAria: 'Main navigation', footerAria: 'Footer',
@@ -143,12 +143,12 @@ const en: PlatformCopy = {
     liveDemo: 'Live demo', requestDemo: 'Request a demo', langAria: 'Language', langName: { hu: 'Magyar', en: 'English' },
   },
   hero: {
-    eyebrow: 'White-label 3D configurator · pergolas and shading',
-    line1: '3D configurator', line2: '+ quote requests', line3: 'for pergola manufacturers.',
-    lead: 'Your customer designs their pergola in 3D on your website, sees the guide price instantly and requests a site survey. You receive the full design, their contact details and the price in one place – under your own brand and with your own prices.',
+    eyebrow: 'White-label 3D configurator · pergolas, verandas, conservatories',
+    line1: '3D configurator', line2: '+ quote requests', line3: 'for terrace-cover makers.',
+    lead: 'Your customer designs their pergola, veranda or conservatory in 3D on your website, sees the guide price instantly and requests a site survey. You receive the full design, their contact details and the price in one place – under your own brand and with your own prices.',
     ctaDemo: 'Request a demo', ctaLive: 'Try it live',
     proof: ['Nothing for the customer to install', 'Live within 5–10 business days', 'No lock-in period'],
-    imgAlt: 'The configurator: 3D pergola, dimensions and instant guide price including VAT',
+    imgAlt: 'The configurator: 3D terrace cover, dimensions and instant guide price including VAT',
     chipA: { label: 'Guide price incl. VAT', value: 'HUF 5,648,000', sub: 'installed, incl. 27% VAT' },
     chipB: { label: 'New lead · just now', name: 'Péter Kovács · Sárvár', detail: 'Aero 5.0 × 4.0 m · wall-mounted' },
     chipC: { title: 'QR-coded design', sub: 'one click to the customer’s design' },
@@ -160,7 +160,7 @@ const en: PlatformCopy = {
   showcase: {
     eyebrow: '02 – Showcase', srTitle: 'What it looks like in practice', cta: 'Open the live demo',
     beats: [
-      { title: 'The customer designs.', text: 'Real dimensions, the colours of their own house, day and night view – in 3D, in the browser, nothing to download. The guide price is visible throughout.', alt: 'Design interface of the 3D pergola configurator with guide price' },
+      { title: 'The customer designs.', text: 'Real dimensions, the colours of their own house, day and night view – in 3D, in the browser, nothing to download. The guide price is visible throughout.', alt: 'Design interface of the 3D configurator with guide price' },
       { title: 'You get a ready quote request.', text: 'Name, phone number, town, the exact configuration and the guide price. Call, e-mail, status and opening the design – all in one panel.', alt: 'Lead details in the manufacturer admin: guide price, status, contact details' },
       { title: 'You see what works.', text: 'How many people opened it, how many changed the design, how many asked for a survey – and how much open value is waiting to be closed.', alt: 'Manufacturer admin overview: leads, open value, visitor funnel' },
       { title: 'At hand in the field.', text: 'The lead list and details are optimised for phones: call with one tap, change the status and open the design.', alt: 'Lead details on a phone with call, e-mail and design buttons' },
@@ -170,11 +170,11 @@ const en: PlatformCopy = {
     eyebrow: '03 – Features', title: ['The customer doesn’t just see a price – they ', 'decide', '.'],
     sub: 'These tools are included in every plan. The goal is for the customer to request a survey with confidence, after discussing it with the family.',
     items: {
-      ar: { title: 'AR view', text: 'On their phone, the customer projects the pergola into their own garden at real size – on iPhone and Android, without an app.' },
-      photo: { title: 'Photo placement', text: 'They upload a photo of their house and the 3D pergola is fitted onto it: rotated, resized and matched to the lighting.' },
-      sun: { title: 'Shade analysis', text: 'Real sun path based on the town and orientation: it shows how much shade the pergola will cast on a July afternoon.' },
+      ar: { title: 'AR view', text: 'On their phone, the customer projects the pergola, veranda or conservatory into their own garden at real size – on iPhone and Android, without an app.' },
+      photo: { title: 'Photo placement', text: 'They upload a photo of their house and the 3D model is fitted onto it: rotated, resized and matched to the lighting.' },
+      sun: { title: 'Shade analysis', text: 'Real sun path based on the town and orientation: it shows how much shade the cover will cast on a July afternoon.' },
       budget: { title: 'Budget planner', text: 'The customer enters how much they want to spend and the system shows what fits – keeping the essence of their design.' },
-      advisor: { title: 'Advisor', text: 'After four simple questions they get a recommended pergola with the reasoning – opened in the 3D designer with one click.' },
+      advisor: { title: 'Advisor', text: 'After four simple questions they get a recommended build with the reasoning – opened in the 3D designer with one click.' },
       night: { title: 'Evening mood', text: 'Night view with LED lighting and heating: the customer sees what the terrace will look like in the evening, and what it costs.' },
       energy: { title: 'Energy and running costs', text: 'Annual electricity cost at the real residential tariff; with a solar roof, the expected output is shown too.' },
       pdf: { title: 'PDF and sharing', text: 'Downloadable PDF summary with images, dimensions, price and QR code – the decision is made together with the family.' },
@@ -193,7 +193,7 @@ const en: PlatformCopy = {
   },
   pricing: {
     eyebrow: '05 – Pricing', title: ['A few extra orders ', 'pay for', ' the year.'],
-    sub: 'A pergola project typically costs HUF 3–6 million. The plans differ in what the manufacturer needs; the customer experience is complete in every one.',
+    sub: 'A pergola, veranda or conservatory project typically costs HUF 3–6 million, conservatories often more. The plans differ in what the manufacturer needs; the customer experience is complete in every one.',
     billingAria: 'Billing period', monthly: 'Monthly', annual: 'Annual', annualBadge: '−2 months',
     everyLabel: 'In every plan:', everyAria: 'Included in every plan', badge: 'Most popular',
     custom: 'Custom quote', perMonth: '/ month', customNote: 'Depending on the number of brands and resellers',
@@ -226,7 +226,7 @@ const en: PlatformCopy = {
   },
   form: {
     name: 'Name *', company: 'Company *', email: 'E-mail *', phone: 'Phone', website: 'Website', websitePlaceholder: 'yourcompany.com', product: 'Product',
-    products: { pergola: 'Pergola', 'pergola+outdoor': 'Pergola + other outdoor product', carport: 'Carport / canopy', other: 'Other' },
+    products: { pergola: 'Pergola', veranda: 'Veranda / conservatory', 'pergola+outdoor': 'Pergola + other outdoor product', carport: 'Carport / canopy', other: 'Other' },
     planLegend: 'Which plan are you interested in?', planUnsure: 'Not sure yet', message: 'Message', messagePlaceholder: 'For example: what products do you make, and when would you like to start?',
     consent: 'I agree that the data I provided may be used to arrange the demo.', submit: 'Request a demo', sending: 'Sending…',
     note: 'We reply within one business day. We do not share your data.', failed: 'Sending failed.', offline: 'No connection to the server.',
@@ -248,7 +248,7 @@ const en: PlatformCopy = {
     ],
   },
   final: { title: ['Let’s talk about the ', 'next', ' season.'], text: 'If you start now, by spring your customers will be designing and seeing prices in the configurator – while others are still waiting for the price list.' },
-  footer: { text: 'White-label 3D configurator and quote-request system for pergola and shading manufacturers.', sample: '' },
+  footer: { text: 'White-label 3D configurator and quote-request system for pergola, veranda, conservatory and shading manufacturers.', sample: '' },
   cards: {
     price: { title: 'Instant guide price', text: 'The customer picks size, roof, side enclosures and extras, and the price updates instantly – with your pricing, net and gross, installation included.', width: 'Width', sizes: ['4.0 m', '5.0 m', '6.5 m'], chips: ['Aero louvred', 'ZIP screen', 'LED', 'Installed'], label: 'Guide price incl. VAT', prices: ['4,380,000', '5,648,000', '7,215,000'], currency: 'HUF', live: 'live calculation' },
     qr: { title: 'QR-coded design', text: 'Every design gets its own link and QR code: the customer shares it with the family, and you open it with one click.', hint: 'Scan it – this is the live demo' },

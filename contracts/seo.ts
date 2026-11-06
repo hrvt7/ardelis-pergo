@@ -16,11 +16,23 @@ export const PERGOLA_FAQS = [
     answer: 'A bejelentési vagy engedélyezési kötelezettség a pergola kialakításától, méretétől, helyétől és az önkormányzati szabályozástól függ. Kivitelezés előtt ezért helyi jogi, építészeti és statikai ellenőrzés szükséges lehet; az online konfigurátor ezt nem helyettesíti.',
   },
   {
+    question: 'Mi a különbség a pergola, a veranda és a télikert között?',
+    answer: 'A pergola jellemzően nyitott vagy részben zárható teraszfedés, mozgatható lamellákkal vagy fix tetővel. A veranda fix tetős, oldalain üvegezett vagy tömör fallal zárt tér, amely az év nagy részében használható. A télikert hőszigetelt üvegszerkezetű, fűthető és hűthető helyiség, amely egész évben lakótérként is szolgálhat. A konfigurátor mindhárom típust kezeli, az elérhető tető- és oldalzárási lehetőségek a kiválasztott típushoz igazodnak.',
+  },
+  {
+    question: 'Lehet-e a verandát vagy a télikertet fűteni és hűteni?',
+    answer: 'Igen, a télikert tervezésekor kiválasztható a klimatizálás (például split klíma) és a padlófűtés, az üvegezés hőszigetelése pedig két- vagy háromrétegű üveggel növelhető. A tényleges fűtési és hűtési teljesítményt, valamint a hőszigetelési követelményeket a végleges műszaki tervben kell meghatározni.',
+  },
+  {
+    question: 'Kell-e engedély verandához vagy télikerthez?',
+    answer: 'A zárt, tartósan használt épületrész – így a veranda és különösen a fűtött télikert – gyakran szigorúbb bejelentési vagy építési engedélyezési szabályok alá esik, mint egy nyitott pergola. Az alapterület, az épülethez csatlakozás, a telekhatár-távolság és a helyi építési szabályzat is számít, ezért kivitelezés előtt mindenképp érdemes az önkormányzatnál és építész tervezőnél egyeztetni. A konfigurátor tájékoztató jellegű, ezt nem helyettesíti.',
+  },
+  {
     question: 'Mit vizsgálnak a helyszíni felméréskor?',
     answer: 'A felmérés során ellenőrizhetők a pontos méretek, a rögzítési felületek, a terep- és burkolati adottságok, a vízelvezetés, az elektromos csatlakozások, valamint a kért oldalzárás és kiegészítők beépítési feltételei. Ennek alapján pontosítható a műszaki tartalom és az ár.',
   },
   {
-    question: 'Telefonon is használható a 3D pergolatervező?',
+    question: 'Telefonon is használható a 3D tervező?',
     answer: 'Igen. A konfigurátor mobilon külön kezelőfelületet és érintésre optimalizált 3D nézetet használ. A méret, a tetőrendszer, a szín, az oldalzárás és a kiegészítők mobilon is módosíthatók; a részletes ellenőrzéshez nagyobb képernyő is használható.',
   },
 ] as const
@@ -41,32 +53,32 @@ const SEO_PAGES: Record<string, SeoPage> = {
   '/': {
     key: 'platform',
     path: '/',
-    title: 'Lamelix – 3D pergola-konfigurátor és ajánlatkérő rendszer gyártóknak',
-    description: 'Saját márkás 3D pergola-konfigurátor gyártóknak és forgalmazóknak: azonnali irányár, AR-nézet, fotóba helyezés, ármátrix, QR-kódos terv és gyártói admin. Kérjen demót!',
+    title: 'Lamelix – 3D pergola-, veranda- és télikert-konfigurátor gyártóknak',
+    description: 'Saját márkás 3D pergola-, veranda- és télikert-konfigurátor gyártóknak és forgalmazóknak: azonnali irányár, AR-nézet, fotóba helyezés, ármátrix, QR-kódos terv és gyártói admin. Kérjen demót!',
     robots: INDEX_ROBOTS,
     indexable: true,
   },
   '/en': {
     key: 'platform',
     path: '/en',
-    title: 'Lamelix – 3D pergola configurator and quote-request system for manufacturers',
-    description: 'White-label 3D pergola configurator for manufacturers and dealers: instant guide price, AR view, photo placement, price matrix, QR-coded designs and a manufacturer admin. Request a demo!',
+    title: 'Lamelix – 3D pergola, veranda and conservatory configurator for manufacturers',
+    description: 'White-label 3D pergola, veranda and conservatory configurator for manufacturers and dealers: instant guide price, AR view, photo placement, price matrix, QR-coded designs and a manufacturer admin. Request a demo!',
     robots: INDEX_ROBOTS,
     indexable: true,
   },
   '/minta': {
     key: 'home',
     path: '/minta',
-    title: 'Bioklimatikus pergola 3D tervezése | Lamelix',
-    description: 'Tervezd meg bioklimatikus pergoládat valós idejű 3D-ben: méret, tetőrendszer, oldalzárás és világítás, azonnali irányárral és felmérési kérelemmel.',
+    title: 'Pergola, veranda és télikert 3D tervezése | Lamelix',
+    description: 'Tervezd meg pergolád, verandád vagy télikerted valós idejű 3D-ben: méret, tetőrendszer, üvegfal, oldalzárás és világítás, azonnali irányárral és felmérési kérelemmel.',
     robots: INDEX_ROBOTS,
     indexable: true,
   },
   '/konfigurator': {
     key: 'studio',
     path: '/konfigurator',
-    title: '3D pergolatervező és árkalkulátor | Lamelix',
-    description: 'Online 3D pergolatervező valós méretekkel, motoros lamellákkal, oldalzárással és kiegészítőkkel. Azonnali irányár, PDF és felmérési kérelem.',
+    title: '3D pergola-, veranda- és télikerttervező | Lamelix',
+    description: 'Online 3D tervező pergolához, verandához és télikerthez: valós méretek, motoros lamellák, üvegfal, ajtó, klíma és kiegészítők. Azonnali irányár, PDF és felmérési kérelem.',
     robots: INDEX_ROBOTS,
     indexable: true,
   },
@@ -117,7 +129,7 @@ export function getSeoPage(pathname: string): SeoPage {
     key: 'notFound',
     path: normalized,
     title: 'A keresett oldal nem található | Lamelix',
-    description: 'A keresett oldal nem érhető el. Térj vissza az Lamelix nyitóoldalára vagy indítsd el a 3D pergolatervezőt.',
+    description: 'A keresett oldal nem érhető el. Térj vissza az Lamelix nyitóoldalára vagy indítsd el a 3D tervezőt.',
     robots: 'noindex,follow',
     indexable: false,
   }
@@ -170,9 +182,9 @@ export function buildStructuredData(pathname: string, origin: string) {
       {
         '@type': 'Service',
         '@id': `${origin}/minta#pergola-service`,
-        name: 'Bioklimatikus pergola tervezése és helyszíni felmérése',
-        serviceType: 'Bioklimatikus pergola tervezése',
-        description: 'Paraméteres pergolatervezés valós idejű 3D előnézettel, tájékoztató árkalkulációval és helyszíni felmérési kérelemmel.',
+        name: 'Pergola, veranda és télikert tervezése és helyszíni felmérése',
+        serviceType: 'Pergola, veranda és télikert tervezése',
+        description: 'Paraméteres pergola-, veranda- és télikerttervezés valós idejű 3D előnézettel, tájékoztató árkalkulációval és helyszíni felmérési kérelemmel.',
         provider: { '@id': organizationId },
         areaServed: { '@type': 'Country', name: 'Magyarország' },
         url: `${origin}/minta`,
@@ -196,7 +208,7 @@ export function buildStructuredData(pathname: string, origin: string) {
       {
         '@type': 'WebApplication',
         '@id': `${origin}/konfigurator#application`,
-        name: 'PERGO 3D pergolatervező',
+        name: 'Lamelix 3D tervező – pergola, veranda, télikert',
         url: `${origin}/konfigurator`,
         applicationCategory: 'DesignApplication',
         operatingSystem: 'Web browser',
@@ -205,10 +217,10 @@ export function buildStructuredData(pathname: string, origin: string) {
         isAccessibleForFree: true,
         publisher: { '@id': organizationId },
         featureList: [
-          'Valós idejű, méretarányos 3D pergola-előnézet',
+          'Valós idejű, méretarányos 3D előnézet pergolához, verandához és télikerthez',
           'Falhoz csatlakozó és önálló kivitel',
           'Motoros lamellás, eltolható és fix tetőrendszer',
-          'Oldalzárás, világítás és kiegészítők konfigurálása',
+          'Oldalzárás, üvegfal, ajtó, világítás, klíma és kiegészítők konfigurálása',
           'Tájékoztató árkalkuláció és PDF-összefoglaló',
         ],
       },
@@ -216,7 +228,7 @@ export function buildStructuredData(pathname: string, origin: string) {
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Lamelix', item: `${origin}/minta` },
-          { '@type': 'ListItem', position: 2, name: '3D pergolatervező', item: `${origin}/konfigurator` },
+          { '@type': 'ListItem', position: 2, name: '3D tervező', item: `${origin}/konfigurator` },
         ],
       },
     ]

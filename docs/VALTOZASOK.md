@@ -1,5 +1,12 @@
 # Változások
 
+## 3.50 – Marketing szövegek: pergola, veranda, télikert
+
+- Nyitóoldal (`/minta`): hero felirat, bekezdés, CTA, bevezető (pergola/veranda/télikert különbség), címkék, alt/aria szövegek, GYIK-cím, záró CTA. Stílus és layout változatlan.
+- GYIK: 3 új kérdés (típusok különbsége, fűtés/hűtés, engedély verandához/télikerthez) – a FAQPage structured data-ba is bekerül.
+- SEO: title és description minden indexelhető oldalon (HU/EN), structured data, noscript szöveg.
+- B2B oldal (HU/EN): hero, ár-szöveg, lábléc, demókérő űrlap új „Veranda / télikert" termékopcióval (szerver is elfogadja).
+
 ## 3.27 – B2B oldal: funkciók, idővonal, megtérülés-kalkulátor, GYIK, lektorálás (2026. 11. 05.)
 
 - Új „Funkciók” blokk: AR-nézet, fotóba helyezés, árnyékelemzés, költségkeret-tervező, tanácsadó, esti hangulat, energia, PDF – élő CSS-illusztrációkkal.
