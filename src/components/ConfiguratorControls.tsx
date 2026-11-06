@@ -38,7 +38,6 @@ interface Props {
   onSceneChange: (patch: Partial<SceneSettings>) => void
   onPreset: (config: PergolaConfig) => void
   prices: PriceSettings
-  onPhotoUpload: (file: File) => void
   /** Mobil alsó lap állása. */
   sheet: SheetState
   onSheetChange: (sheet: SheetState) => void
@@ -254,7 +253,34 @@ function useSheetGesture(panel: React.RefObject<HTMLElement | null>, sheet: Shee
   }
 }
 
-export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, onPhotoUpload, sheet, onSheetChange, onAdvisor, energyCost, onEnergy }: Props) {
+/** Jelenet és vizualizáció: lebegő „Nézet” panel (nem lépés — a beállítások a 3D-nézeten azonnal látszanak). */
+export function SceneSettingsPanel({ scene, onSceneChange, onPhotoUpload }: { scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void; onPhotoUpload: (file: File) => void }) {
+  const setDayTime = (dayTime: number) => onSceneChange({ dayTime, time: dayTime >= 20 || dayTime < 7 ? 'night' : dayTime >= 17 ? 'sunset' : 'day' })
+  return (
+          <div className="scene-settings-body">
+            <SectionTitle title="Napszak" hint="Állítsd be az időpontot, és nézd meg, hogyan változik a jelenet megvilágítása." />
+            <div className="time-labels"><span>Reggel</span><strong>{String(Math.floor(scene.dayTime)).padStart(2, '0')}:00</strong><span>Éjjel</span></div>
+            <input aria-label="Napszak" className="range-input daylight-range" type="range" min={6} max={23} step={0.25} value={scene.dayTime} onChange={(event) => setDayTime(Number(event.target.value))} />
+            <div className="scene-options compact">{([[13, 'Nappal', Sun], [18, 'Aranyóra', Sunset], [22, 'Éjszaka', Moon]] as const).map(([time, label, Icon]) => <button type="button" key={label} className={scene.time === (time === 13 ? 'day' : time === 18 ? 'sunset' : 'night') ? 'selected' : ''} onClick={() => setDayTime(time)}><Icon size={17} /><span>{label}</span></button>)}</div>
+            <div className="scene-toggle-grid">
+              <Toggle label="180 cm-es figura" description="A méretek szemléltetéséhez" checked={scene.showPerson} onChange={(showPerson) => onSceneChange({ showPerson })} />
+              <Toggle label="Méretcímkék" description="Aktuális méretek centiméterben" checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
+              <Toggle label="Műszaki jelölések" description="Részletek a 3D modellen" checked={scene.showHotspots} onChange={(showHotspots) => onSceneChange({ showHotspots })} />
+              <Toggle label="Robbantott nézet" description="A szerkezet elemei szétválasztva" checked={scene.exploded} onChange={(exploded) => onSceneChange({ exploded })} />
+              <Toggle label="Automata forgatás" description="Koppintásra megáll" checked={scene.autoRotate} onChange={(autoRotate) => onSceneChange({ autoRotate })} />
+              <Toggle label="Követő kamera" description="A választáshoz fordul (oldal, szín, ventilátor)" checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
+            </div>
+            <label className="select-field"><span>3D minőség</span><select value={scene.quality} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="medium">Közepes</option><option value="low">Alacsony</option></select></label>
+            <div className="photo-mode">
+              <div><Image size={18} /><span><strong>Előnézet saját fotóval</strong><small>A kép csak ebben a böngészőben jelenik meg.</small></span></div>
+              <label className="upload-button"><Upload size={15} />Fotó feltöltése<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoUpload(file); event.target.value = '' }} /></label>
+              {scene.photoUrl && <><Toggle label="Fotós előnézet" description="Pergola a saját teraszodon" checked={scene.photoMode} onChange={(photoMode) => onSceneChange({ photoMode })} />{scene.photoMode && <div className="photo-transform"><SliderField label="Vízszintes pozíció" value={scene.photoX} min={-8} max={8} step={0.05} unit="m" onChange={(photoX) => onSceneChange({ photoX })} /><SliderField label="Függőleges pozíció" value={scene.photoY} min={-5} max={5} step={0.05} unit="m" onChange={(photoY) => onSceneChange({ photoY })} /><SliderField label="Méret a fotón" value={scene.photoScale} min={0.15} max={4} step={0.05} unit="×" onChange={(photoScale) => onSceneChange({ photoScale })} /><SliderField label="Elforgatás" value={Math.round(scene.photoRotation)} min={-180} max={180} step={1} unit="°" onChange={(photoRotation) => onSceneChange({ photoRotation })} /><SliderField label="Nézőszög" value={scene.photoTilt} min={0} max={60} step={1} unit="°" onChange={(photoTilt) => onSceneChange({ photoTilt })} /></div>}</>}
+            </div>
+          </div>
+  )
+}
+
+export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, sheet, onSheetChange, onAdvisor, energyCost, onEnergy }: Props) {
   const { tenant } = useTenant()
   const { limits } = tenant
   const panelRef = useRef<HTMLElement>(null)
@@ -287,7 +313,6 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
     const distance = event.changedTouches[0].clientX - touchStart.current
     if (Math.abs(distance) > 55) go(stepIndex + (distance < 0 ? 1 : -1))
   }
-  const setDayTime = (dayTime: number) => onSceneChange({ dayTime, time: dayTime >= 20 || dayTime < 7 ? 'night' : dayTime >= 17 ? 'sunset' : 'day' })
   const sideNames: Record<SideKey, string> = { front: 'Elülső oldal', back: 'Hátsó oldal', left: 'Bal oldal', right: 'Jobb oldal' }
 
   return (
@@ -391,30 +416,6 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           {step === 'summary' && summary}
         </div>
 
-        {step !== 'summary' && <details className="scene-settings">
-          <summary><span><SlidersHorizontal size={16} />Jelenet és vizualizáció</span><ChevronDown size={15} /></summary>
-          <div className="scene-settings-body">
-            <SectionTitle title="Napszak" hint="Állítsd be az időpontot, és nézd meg, hogyan változik a jelenet megvilágítása." />
-            <div className="time-labels"><span>Reggel</span><strong>{String(Math.floor(scene.dayTime)).padStart(2, '0')}:00</strong><span>Éjjel</span></div>
-            <input aria-label="Napszak" className="range-input daylight-range" type="range" min={6} max={23} step={0.25} value={scene.dayTime} onChange={(event) => setDayTime(Number(event.target.value))} />
-            <div className="scene-options compact">{([[13, 'Nappal', Sun], [18, 'Aranyóra', Sunset], [22, 'Éjszaka', Moon]] as const).map(([time, label, Icon]) => <button type="button" key={label} className={scene.time === (time === 13 ? 'day' : time === 18 ? 'sunset' : 'night') ? 'selected' : ''} onClick={() => setDayTime(time)}><Icon size={17} /><span>{label}</span></button>)}</div>
-            <div className="scene-toggle-grid">
-              <Toggle label="Enyhe szél" description="Növények és ZIP mozgása" checked={scene.wind} onChange={(wind) => onSceneChange({ wind })} />
-              <Toggle label="180 cm-es figura" description="A méretek szemléltetéséhez" checked={scene.showPerson} onChange={(showPerson) => onSceneChange({ showPerson })} />
-              <Toggle label="Méretcímkék" description="Aktuális méretek centiméterben" checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
-              <Toggle label="Műszaki jelölések" description="Részletek a 3D modellen" checked={scene.showHotspots} onChange={(showHotspots) => onSceneChange({ showHotspots })} />
-              <Toggle label="Robbantott nézet" description="A szerkezet elemei szétválasztva" checked={scene.exploded} onChange={(exploded) => onSceneChange({ exploded })} />
-              <Toggle label="Automata forgatás" description="Koppintásra megáll" checked={scene.autoRotate} onChange={(autoRotate) => onSceneChange({ autoRotate })} />
-              <Toggle label="Követő kamera" description="A választáshoz fordul (oldal, szín, ventilátor)" checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
-            </div>
-            <label className="select-field"><span>3D minőség</span><select value={scene.quality} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="medium">Közepes</option><option value="low">Alacsony</option></select></label>
-            <div className="photo-mode">
-              <div><Image size={18} /><span><strong>Előnézet saját fotóval</strong><small>A kép csak ebben a böngészőben jelenik meg.</small></span></div>
-              <label className="upload-button"><Upload size={15} />Fotó feltöltése<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoUpload(file); event.target.value = '' }} /></label>
-              {scene.photoUrl && <><Toggle label="Fotós előnézet" description="Pergola a saját teraszodon" checked={scene.photoMode} onChange={(photoMode) => onSceneChange({ photoMode })} />{scene.photoMode && <div className="photo-transform"><SliderField label="Vízszintes pozíció" value={scene.photoX} min={-8} max={8} step={0.05} unit="m" onChange={(photoX) => onSceneChange({ photoX })} /><SliderField label="Függőleges pozíció" value={scene.photoY} min={-5} max={5} step={0.05} unit="m" onChange={(photoY) => onSceneChange({ photoY })} /><SliderField label="Méret a fotón" value={scene.photoScale} min={0.15} max={4} step={0.05} unit="×" onChange={(photoScale) => onSceneChange({ photoScale })} /><SliderField label="Elforgatás" value={Math.round(scene.photoRotation)} min={-180} max={180} step={1} unit="°" onChange={(photoRotation) => onSceneChange({ photoRotation })} /><SliderField label="Nézőszög" value={scene.photoTilt} min={0} max={60} step={1} unit="°" onChange={(photoTilt) => onSceneChange({ photoTilt })} /></div>}</>}
-            </div>
-          </div>
-        </details>}
       </div>
       <div className="step-navigation"><button type="button" disabled={stepIndex === 0} onClick={() => go(stepIndex - 1)}><ArrowLeft size={16} />Vissza</button>{stepIndex === STEPS.length - 1
         ? <button type="button" className="next-step" onClick={() => scrollRef.current?.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Felmérést kérek<ArrowRight size={16} /></button>

@@ -640,3 +640,7 @@ működést, az eladhatóságot és a hibákat érintik.
 ## 3.37 – UX-audit javítások
 - A **tetőrendszer** (lamellás, fix stb.) mostantól az 1. lépésben is választható; korábban csak a 4. lépésben, az oldalas ábra közepére kattintva volt elérhető.
 - **Alacsony telefon-kijelzőn** (≤ 760 px magas, álló) a félig nyitott panel magasabb (66%), a konfigurációs fejléc és a lépéscím elmarad, a fülek tömörebbek: korábban a lépés tartalmából alig egy sor látszott.
+
+## 3.38 – „Nézet” panel, szél kapcsoló törölve
+- A „Jelenet és vizualizáció” beállítások kikerültek a lépések aljáról: a 3D-nézet eszköztárában új **Nézet** gomb nyitja őket lebegő panelként (nincs háttér-sötétítés, a napszak, méretcímkék, robbantott nézet stb. hatása közben látszik). Minden lépésben, az összegzésben is elérhető. Desktopon 1560 px alatt az eszköztár többi gombja ikon-only, hogy ne takarja a címet.
+- Az „Enyhe szél” kapcsoló törölve (alig látszott hatása); a mentett konfigurációkkal való kompatibilitás miatt a mező a modellben marad, alapból kikapcsolva.
