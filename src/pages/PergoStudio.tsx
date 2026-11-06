@@ -115,15 +115,6 @@ export default function PergoStudio() {
   const [landscapePhone, setLandscapePhone] = useState(() => window.matchMedia(LANDSCAPE_PHONE).matches)
   useEffect(() => { const query = window.matchMedia(LANDSCAPE_PHONE); const update = () => setLandscapePhone(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update) }, [])
   const sheetView: SheetState = landscapePhone ? 'half' : sheet
-  // Álló telefonon egyszer jelezzük, hogy fekvő nézetben nagyobb a 3D kép és kényelmesebb a tervezés.
-  useEffect(() => {
-    try {
-      if (!window.matchMedia('(max-width: 600px) and (orientation: portrait) and (pointer: coarse)').matches || window.sessionStorage.getItem('lamelix-rotate-hint')) return
-      window.sessionStorage.setItem('lamelix-rotate-hint', '1')
-      const timer = window.setTimeout(() => setToast('Tipp: fordítsd el a telefont fekvőre – nagyobb a 3D kép, kényelmesebb a tervezés.'), 6000)
-      return () => window.clearTimeout(timer)
-    } catch { /* tárolás nélkül nincs tipp */ }
-  }, [])
   const [saved, setSaved] = useState<SavedConfiguration[]>(() => loadSaved(tenant))
   const history = useRef<{ past: PergolaConfig[]; future: PergolaConfig[] }>({ past: [], future: [] })
   const photoUrl = useRef<string | null>(null)

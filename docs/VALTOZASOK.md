@@ -622,7 +622,7 @@ működést, az eladhatóságot és a hibákat érintik.
 
 ## 3.33 – Telefon fekvő (landscape) nézet
 - Fekvő telefonon (érintőképernyő, ≤ 520 px magas) a konfigurátor két oszlopos: balra a 3D jelenet (kameragombok oldalt), jobbra az állandóan nyitott vezérlősáv és alatta az ár/Összegzés. Korábban az alsó lap eltakarta a pergolát.
-- Álló telefonon egyszer megjelenik egy tipp a telefon elfordításáról. Az álló és az asztali elrendezés változatlan.
+- Az álló telefonos „fordítsd el a telefont” tippet a 3.47-ben kivettük. Az álló és az asztali elrendezés változatlan.
 
 ## 3.34 – Beépülő oldalelem-animáció
 - Új oldalelem (ZIP screen, tolóüveg, fix üveg, lamellafal, lécfal) kapcsolásakor az elem fentről lefelé „leereszkedik" (0,8 s, ease-out). Ugyanígy, ha az oldal típusát váltod.
@@ -696,3 +696,6 @@ működést, az eladhatóságot és a hibákat érintik.
 - **3D kiegészítők**: utólag felkerülő fűtés, hangfal és ventilátor felülről „beugrik”; a LED két villanással kapcsol fel, majd lágyan felfut. Első betöltéskor és csökkentett mozgásnál nem animál.
 - **Admin**: KPI-számok felfutása, animált üres állapot (pergola-körvonal), pulzáló jelző a 24 órán belüli új érdeklődőn.
 - Minden animáció tiszteletben tartja a `prefers-reduced-motion` beállítást.
+
+## 3.47 – Elforgatás-tipp kivéve
+- A konfigurátor megnyitásakor álló telefonon felugró „fordítsd el a telefont fekvőre” javaslat megszűnt. A fekvő elrendezés (3.33) továbbra is automatikusan érvényesül, ha a felhasználó maga elforgatja a telefont.
