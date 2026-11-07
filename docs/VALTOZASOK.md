@@ -1,5 +1,14 @@
 # Változások
 
+## 3.60 – Fotorealisztikusabb jelenet: valódi égbolt, PBR gyep, kontrasztos fény
+
+- **Égbolt:** éles (nem elmosott) „pure sky” HDR-ek: nappal felhős-kék ég látható nappal, aranyórában naplemente (`sunset_sky`), éjjel csillagos ég holddal (`night_sky`). Az ég úgy fordul, hogy a látható nap mindig a vetett árnyék irányában áll – minden módban, nem csak az árnyékelemzésben.
+- **Gyep:** magas/ultra szinten PBR fűtextúra normál- és érdességtérképpel, nagyléptékű foltos tónusvariációval (nincs látható ismétlődés); alacsony/közepes szinten marad az azonnal betöltődő beágyazott fű.
+- **Fény:** erősebb direkt napfény, visszafogottabb szórt fény – mélyebb, plasztikusabb árnyékok; ultrán 4K árnyéktérkép.
+- **Kamera:** a nézetváltás és a „Működés” közeli kamera valós időalapú – lassabb gépen is 1–2 s alatt ér célba (korábban képkocka-alapú volt, gyenge GPU-n 10–20 s-ig úszott).
+- **Működés:** a hajtás címkéi csak közelről jelennek meg (távolról egymásra csúsztak).
+- **Betöltés:** a fa és a talaj/terasz textúrái veszteséges WebP-re tömörítve (fa: 2,3 MB → 1,0 MB; fű 1,2 MB → 0,6 MB), a megjelenés változatlan.
+
 ## 3.59 – Valós lamellarendszer és „Működés” bemutató a konfigurátor 3D-jében
 
 - **Forgólamellás tető valós geometriával:** 215,8 × 39,8 mm vízcsatornás lamellaprofil, 200 mm osztás, 0–110° forgás, ≤4 m-es modulok osztógerendával, R115 hajtókar, lineáris motor (732→913 mm) – minden a megadott méretből számolva (`src/lib/louvreSystem.ts`, tesztekkel). A publikus SB 400 műszaki adatok szerint; partnergyártónként a saját profilra cserélhető.
