@@ -2063,6 +2063,11 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     const length = horizontal ? w : d
     const normal = new THREE.Vector3(side === 'left' ? -1 : side === 'right' ? 1 : 0, 0, side === 'front' ? 1 : side === 'back' ? -1 : 0)
     const tangent = new THREE.Vector3(-normal.z, 0, normal.x)
+    // Az oldalirányú eltolás a nyitott oldal felé mutasson: fali rögzítésnél a ház (és a mellette álló fa) felé
+    // tolt kamera a homlokzatba/lombba került volna.
+    if (hasBackWall(config.mount) && tangent.z < 0) tangent.negate()
+    if (isWallSide(config.mount, 'left') && tangent.x < 0) tangent.negate()
+    if (isWallSide(config.mount, 'right') && tangent.x > 0) tangent.negate()
     const center = new THREE.Vector3(normal.x * (w / 2), h * 0.48, normal.z * (d / 2))
     const distance = Math.max(6.4, length * 1.25 + 3.4) * (window.innerWidth < 820 ? 1.3 : 1)
     // A célpont a kiválasztott oldal és a pergola közepe között: az oldal kerül előtérbe, de a teljes szerkezet a képben marad.
@@ -2201,7 +2206,7 @@ function getLighting(scene: SceneSettings) {
   return {
     night,
     hdr: night ? HDR_FILES.night : golden ? HDR_FILES.golden : HDR_FILES.day,
-    fog: night ? '#17252e' : golden ? '#b09a88' : '#c3cdce',
+    fog: night ? '#1d2a30' : golden ? '#c7b5ad' : '#c3cdce',
     sun: night ? '#b5cff2' : golden ? '#ffc890' : '#fff4e2',
     // Erős, irányított napfény és visszafogottabb szórt fény: így a pergola, az oszlopok
     // és a lamellák valódi árnyékot vetnek (korábban a szórt fény szinte eltüntette).
@@ -2236,7 +2241,7 @@ function getStudyLighting(scene: SceneSettings) {
   return {
     night,
     hdr: night ? HDR_FILES.night : golden ? HDR_FILES.golden : HDR_FILES.day,
-    fog: night ? '#17252e' : golden ? '#a69a90' : '#c3cdce',
+    fog: night ? '#1d2a30' : golden ? '#c7b5ad' : '#c3cdce',
     sun: night ? '#b5cff2' : golden ? (elevation < 5 ? '#ffc995' : '#ffe0bd') : '#ffffff',
     intensity: night ? 0.52 : !lit ? 0.35 : golden ? 1.1 + strength * 2.4 : 1.2 + strength * 2.9,
     ambient: night ? 0.25 : 0.1 + strength * 0.06,

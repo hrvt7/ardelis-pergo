@@ -218,10 +218,10 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
       </group>
     </group>)}
     {mechanism && showLabels && near && <group name="ar-skip-overlays">
-      <Html position={[driveX[0] + driveSide * 0.03, plan.pivot[1] + 0.1, plan.pivot[0] - 0.3]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label mech-label">Lineáris motor · {DRIVE.force} N</span></Html>
-      <Html position={[driveX[0] + driveSide * 0.03, layout.axleY + 0.16, labelZ]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label mech-label">Hajtórúd 20×20 · minden lamellát egyszerre forgat</span></Html>
-      <Html position={[driveX[0], layout.axleY - 0.05, layout.z[Math.max(0, Math.round(n * 0.3))]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label mech-label">Hajtókar R115 mm</span></Html>
-      <Html position={[layout.modules[0].x - driveSide * modLen * 0.2, layout.axleY + 0.08, layout.z[Math.round(n * 0.4)]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label mech-label">Lamella 215,8 × 39,8 mm · vízcsatornás</span></Html>
+      <Html position={[driveX[0] + driveSide * 0.03, plan.pivot[1] + 0.1, plan.pivot[0] - 0.3]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label mech-label" style={{ display: 'inline-block', transform: 'translateY(34px)' }}>Lineáris motor · {DRIVE.force} N</span></Html>
+      <Html position={[driveX[0] + driveSide * 0.03, layout.axleY + 0.16, labelZ]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label mech-label" style={{ display: 'inline-block', transform: 'translateY(-30px)' }}>Hajtórúd 20×20 · minden lamellát egyszerre forgat</span></Html>
+      <Html position={[driveX[0], layout.axleY - 0.05, layout.z[Math.max(0, Math.round(n * 0.3))]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label mech-label" style={{ display: 'inline-block', transform: 'translateY(6px)' }}>Hajtókar R115 mm</span></Html>
+      <Html position={[layout.modules[0].x - driveSide * modLen * 0.2, layout.axleY + 0.08, layout.z[Math.round(n * 0.4)]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label mech-label" style={{ display: 'inline-block', transform: 'translateY(-64px)' }}>Lamella 215,8 × 39,8 mm · vízcsatornás</span></Html>
     </group>}
   </group>
 }
