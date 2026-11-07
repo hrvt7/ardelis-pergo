@@ -20,7 +20,7 @@ const hu = {
   hero: {
     eyebrow: 'Saját márkás 3D konfigurátor · pergola, veranda, télikert',
     line1: '3D konfigurátor', line2: '+ ajánlatkérés', line3: 'teraszfedés­gyártóknak.',
-    lead: 'A vevő az Ön weboldalán 3D-ben megtervezi a pergoláját, verandáját vagy télikertjét, azonnal látja az irányárat, és felmérést kér. Ön a teljes tervet, az elérhetőségét és az árat egyben kapja meg – a saját arculatával és a saját áraival.',
+    lead: 'A vásárló megtervezi, Önök megkapják a kész ajánlatkérést. Ügyfeleik a saját weboldalukon, interaktív 3D konfigurátorban állítják össze a pergolát, verandát vagy télikertet: kiválasztják a méretet, a színt és a kiegészítőket, közben azonnal látják az eredményt és az irányárat. Önökhöz pedig minden fontos adattal együtt, beárazva érkezik az érdeklődés – a saját arculatukkal és a saját áraikkal.',
     ctaDemo: 'Kérek demót', ctaLive: 'Kipróbálom élőben',
     proof: ['A vevőnek semmit sem kell telepítenie', 'Indulás 5–10 munkanapon belül', 'Nincs hűségidő'],
     imgAlt: 'A konfigurátor: 3D teraszfedés, méretek és azonnali bruttó irányár',
@@ -145,7 +145,7 @@ const en: PlatformCopy = {
   hero: {
     eyebrow: 'White-label 3D configurator · pergolas, verandas, conservatories',
     line1: '3D configurator', line2: '+ quote requests', line3: 'for terrace-cover makers.',
-    lead: 'Your customer designs their pergola, veranda or conservatory in 3D on your website, sees the guide price instantly and requests a site survey. You receive the full design, their contact details and the price in one place – under your own brand and with your own prices.',
+    lead: 'The customer designs it, you receive the finished quote request. On your own website, your customers build their pergola, veranda or conservatory in an interactive 3D configurator: they pick the size, colours and accessories and instantly see the result and a guide price. You receive the enquiry with every key detail, priced – under your own brand and with your own prices.',
     ctaDemo: 'Request a demo', ctaLive: 'Try it live',
     proof: ['Nothing for the customer to install', 'Live within 5–10 business days', 'No lock-in period'],
     imgAlt: 'The configurator: 3D terrace cover, dimensions and instant guide price including VAT',

@@ -1,5 +1,9 @@
 # Változások
 
+## 3.55 – Nyitóoldal (B2B) bevezető szövegének újraírása
+
+- A gyártóknak szóló nyitóoldal bevezetője (HU és EN) és a JavaScript nélküli tartalék szöveg: a vásárló megtervezi, a gyártó megkapja a kész, beárazott ajánlatkérést. Egységes megszólítás (Önök), veranda is szerepel, „irányár” a pontos kifejezés.
+
 ## 3.54 – A nyíló ajtó kifelé nyílik
 
 - A nyíló teraszajtó mostantól kifelé nyílik (3D-ben és a műszaki rajz alaprajzi nyitási ívén is), így nem fut bele a kanapéba vagy a berendezésbe. 3D-ben mérésekkel ellenőrizve: nyitott állapotban a szárny a pergola alapterületén kívülre kerül.
