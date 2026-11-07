@@ -28,6 +28,7 @@ import { clearPlacement, deletePhoto, loadPhoto, loadPlacement, savePhoto, saveP
 import type { ShadeResult } from '@/components/ShadeProbe'
 import { studySun } from '@/lib/sunSite'
 import { isMovableRoof } from '@/lib/roofs'
+import { isClosedBuilding } from '@/lib/buildings'
 import FullscreenControl from '@/components/FullscreenControl'
 import { DEFAULT_USAGE, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
 import type { FurnitureSet } from '@/types/pergola'
@@ -58,6 +59,8 @@ const CAMERA_VIEWS: { id: CameraView; label: string; icon: typeof View }[] = [
   { id: 'sofa', label: 'Kanapé', icon: Armchair },
 ]
 
+/** Folyamatosan húzható mezők: gyors egymásutánjuk egy visszavonási lépés. */
+const CONTINUOUS_KEYS = new Set(['width', 'depth', 'height', 'pitch'])
 const CHANGE_LABELS: Record<string, string> = {
   width: 'Szélesség', depth: 'Mélység', height: 'Magasság', mount: 'Rögzítés', roof: 'Tetőrendszer', frameColor: 'Szerkezetszín', customRal: 'Egyedi szín', roofColor: 'Tető / lamellák színe', roofRal: 'Tető / lamellák színe', sides: 'Oldalkialakítás', louverAngle: 'Lamellaszög', screenOpen: 'ZIP nyitottság', led: 'Periméter LED', heaters: 'Teraszfűtés', speakers: 'Hangrendszer', sensors: 'Szenzorcsomag', solar: 'Napelemes tető', split: 'Osztott oldal', ledRgb: 'Színváltós LED', fans: 'Mennyezeti ventilátor', smartHome: 'Okosotthon-vezérlés', roofShade: 'Tetőárnyékoló', shadeFabric: 'Árnyékoló színe'
 }
@@ -118,6 +121,11 @@ export default function PergoStudio() {
   const sheetView: SheetState = landscapePhone ? 'half' : sheet
   const [saved, setSaved] = useState<SavedConfiguration[]>(() => loadSaved(tenant))
   const history = useRef<{ past: PergolaConfig[]; future: PergolaConfig[] }>({ past: [], future: [] })
+  const lastEdit = useRef<{ key: string; time: number }>({ key: '', time: 0 })
+  const buildingStash = useRef<{ roof: PergolaConfig['roof']; sides: PergolaConfig['sides']; split: PergolaConfig['split']; pitch: PergolaConfig['pitch']; closedSides: PergolaConfig['sides'] } | null>(null)
+  const roofStash = useRef<Partial<Record<PergolaConfig['roof'], Partial<Pick<PergolaConfig, 'glazing' | 'roofShade' | 'shadeFabric' | 'solar' | 'roofColor' | 'roofRal'>>>>>({})
+  const configRef = useRef(config)
+  useEffect(() => { configRef.current = config }, [config])
   const photoUrl = useRef<string | null>(null)
   // White-label: a gyártói konfigurátor fülén a gyártó logója legyen (ha van), ne a platformé.
   useEffect(() => {
@@ -206,7 +214,33 @@ export default function PergoStudio() {
   }, [focusSide, overview])
 
   const applyConfig = useCallback((nextOrPatch: PergolaConfig | Partial<PergolaConfig>, replace = false) => {
-    const next = normalizeConfig(tenant, replace ? nextOrPatch as PergolaConfig : { ...config, ...nextOrPatch })
+    // Tetőváltáskor a tetőhöz kötött beállítások (üvegezés, árnyékoló, napelem, tetőszín) megmaradnak a régi tetőhöz,
+    // és visszaváltáskor visszajönnek: a normalizálás ugyanis a nem odaillőket eldobja.
+    let merged: PergolaConfig = replace ? nextOrPatch as PergolaConfig : { ...config, ...nextOrPatch }
+    if (replace) { roofStash.current = {}; buildingStash.current = null }
+    if (!replace && 'roof' in nextOrPatch && nextOrPatch.roof && nextOrPatch.roof !== config.roof) {
+      const { glazing, roofShade, shadeFabric, solar, roofColor, roofRal } = config
+      roofStash.current[config.roof] = { glazing, roofShade, shadeFabric, solar, roofColor, roofRal }
+      const restored = roofStash.current[nextOrPatch.roof] ?? {}
+      const explicit = nextOrPatch as Record<string, unknown>
+      merged = { ...config, ...Object.fromEntries(Object.entries(restored).filter(([key, value]) => value !== undefined && !(key in explicit))), ...nextOrPatch }
+    }
+    // Pergolából veranda/télikertbe váltáskor a tető, az oldalak és a dőlés kényszerből változnak; pergolára visszaváltva
+    // az eredeti állapot jön vissza (a közben kézzel módosított oldalak megmaradnak).
+    let enteringBuilding = false
+    if (!replace && 'building' in nextOrPatch) {
+      const wasClosed = isClosedBuilding(config.building)
+      const willBeClosed = isClosedBuilding(nextOrPatch.building)
+      if (!wasClosed && willBeClosed) enteringBuilding = true
+      if (wasClosed && !willBeClosed && buildingStash.current) {
+        const saved = buildingStash.current
+        const sides = Object.fromEntries((['front', 'back', 'left', 'right'] as const).map((side) => [side, config.sides[side] === saved.closedSides[side] ? saved.sides[side] : config.sides[side]])) as PergolaConfig['sides']
+        merged = { ...merged, roof: saved.roof, sides, split: saved.split, pitch: saved.pitch }
+        buildingStash.current = null
+      }
+    }
+    const next = normalizeConfig(tenant, merged)
+    if (enteringBuilding) buildingStash.current = { roof: config.roof, sides: config.sides, split: config.split, pitch: config.pitch, closedSides: next.sides }
     if (JSON.stringify(next) === JSON.stringify(config)) return
     const nextPrice = calculatePrice(next, prices, ROOF_LABELS)
     // Az összetartozó mezők (szín + kód) egy módosításnak számítanak.
@@ -220,9 +254,17 @@ export default function PergoStudio() {
     const now = performance.now()
     if (now - lastBuzz.current > 260 && typeof navigator.vibrate === 'function' && window.matchMedia('(pointer: coarse)').matches) { lastBuzz.current = now; try { navigator.vibrate(8) } catch { /* nem támogatott */ } }
     reactToChange(config, next)
-    history.current.past.push(config)
-    history.current.past = history.current.past.slice(-40)
+    // Csúszkahúzásnál (folyamatos mező, rövid időn belül) egyetlen visszavonási lépés keletkezik, nem tucatnyi.
+    const nowMs = Date.now()
+    const continuous = changedKeys.length === 1 && CONTINUOUS_KEYS.has(changedKeys[0])
+    const coalesce = continuous && lastEdit.current.key === changedKeys[0] && nowMs - lastEdit.current.time < 700 && history.current.past.length > 0
+    lastEdit.current = { key: continuous ? changedKeys[0] : '', time: nowMs }
+    if (!coalesce) {
+      history.current.past.push(config)
+      history.current.past = history.current.past.slice(-40)
+    }
     history.current.future = []
+    configRef.current = next
     setConfig(next)
   }, [config, price.totalGross, prices, tenant, ROOF_LABELS, reactToChange])
 
@@ -279,24 +321,24 @@ export default function PergoStudio() {
     if (side !== 'roof' && sceneRef.current.autoCamera) focusSide(side)
   }, [focusSide, setMobileControlsOpen])
 
+  // A visszavonás/újra nem mellékhatás a setState-en belül (az updater többször is lefuthat, és kihagyna lépéseket):
+  // az aktuális konfigurációt ref-ből olvassuk, a history módosítása és a setConfig külön lépés.
   const undo = useCallback(() => {
-    setConfig((current) => {
-      const previous = history.current.past.pop()
-      if (!previous) return current
-      history.current.future.push(current)
-      setDelta(null)
-      setChange(null)
-      return previous
-    })
+    const previous = history.current.past.pop()
+    if (!previous) return
+    history.current.future.push(configRef.current)
+    configRef.current = previous
+    setDelta(null)
+    setChange(null)
+    setConfig(previous)
   }, [])
   const redo = useCallback(() => {
-    setConfig((current) => {
-      const next = history.current.future.pop()
-      if (!next) return current
-      history.current.past.push(current)
-      setDelta(null)
-      return next
-    })
+    const next = history.current.future.pop()
+    if (!next) return
+    history.current.past.push(configRef.current)
+    configRef.current = next
+    setDelta(null)
+    setConfig(next)
   }, [])
 
   useEffect(() => {

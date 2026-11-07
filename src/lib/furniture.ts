@@ -20,10 +20,10 @@ export interface FurnitureSpec {
 }
 
 export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec> = {
-  lounge: { label: 'Pihenősarok', people: '4–5 fő', description: '3 személyes kanapé, dohányzóasztal', zone: [3.0, 2.6], parts: [{ kind: 'lounge', x: 0 }], seats: 5, repeatable: true },
+  lounge: { label: 'Pihenősarok', people: '4–5 fő', description: '3 személyes kanapé, dohányzóasztal', zone: [3.0, 2.6], parts: [{ kind: 'lounge', x: 0 }], seats: 5, repeatable: false },
   dining6: { label: 'Étkező 6 főre', people: '6 fő', description: '180 × 90 cm asztal, 6 szék', zone: [3.0, 2.4], parts: [{ kind: 'dining6', x: 0 }], seats: 6, repeatable: true },
   dining8: { label: 'Étkező 8 főre', people: '8 fő', description: '220 × 100 cm asztal, 8 szék', zone: [3.7, 2.5], parts: [{ kind: 'dining8', x: 0 }], seats: 8, repeatable: true },
-  combo: { label: 'Pihenő + étkező', people: '6 fő', description: 'Kanapé és 6 fős étkező egymás mellett', zone: [6.0, 2.6], parts: [{ kind: 'lounge', x: -1.5 }, { kind: 'dining6', x: 1.5 }], seats: 6, repeatable: true },
+  combo: { label: 'Pihenő + étkező', people: '6 fő', description: 'Kanapé és 6 fős étkező egymás mellett', zone: [6.0, 2.6], parts: [{ kind: 'lounge', x: -1.5 }, { kind: 'dining6', x: 1.5 }], seats: 6, repeatable: false },
   spa: { label: 'Jacuzzi', people: '5–6 fős', description: '2 × 2 m-es jacuzzi lépcsővel, körben 30–60 cm szabad hellyel', zone: [2.6, 2.6], parts: [{ kind: 'spa', x: 0 }], seats: 6, repeatable: false },
   loungeSpa: { label: 'Pihenő + jacuzzi', people: 'kanapé + jacuzzi', description: '3 személyes kanapé, dohányzóasztal és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'lounge', x: -1.3 }, { kind: 'spa', x: 1.5 }], seats: 5, repeatable: false },
   diningSpa: { label: 'Étkező + jacuzzi', people: '6 fő + jacuzzi', description: '180 × 90 cm asztal 6 székkel és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'dining6', x: -1.3 }, { kind: 'spa', x: 1.5 }], seats: 6, repeatable: false },
@@ -36,12 +36,13 @@ export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec
   summerKitchen: { label: 'Nyári konyha', people: 'főzőzóna', description: 'Konyhasor a hátsó fal mentén: hűtő, grill, mosogató, munkafelületek; nagyobb mélységnél szigetpult bárszékekkel', zone: [2.8, 2.2], parts: [{ kind: 'bar', x: 0 }], seats: 0, repeatable: false, pack: { audience: 'Családi ház, vendégház, panzió' } },
   kitchenDining: { label: 'Nyári konyha + étkező', people: '6–8 fő', description: 'Konyhasor és étkezőasztal egy tető alatt, tálalási távolsággal', zone: [3.4, 4.2], parts: [{ kind: 'dining6', x: 0 }], seats: 6, repeatable: false, pack: { audience: 'Családi ház, vendégház, panzió' } },
   banquet: { label: 'Bankett / rendezvény', people: 'hosszú asztalok', description: 'Hosszú asztalok 60 cm-es ülésosztással, sorok közt közlekedősávval', zone: [4.2, 2.4], parts: [{ kind: 'dining6', x: 0 }], seats: 12, repeatable: false, pack: { audience: 'Rendezvényhelyszín, borászat, szálloda' } },
+  mixed: { label: 'Vegyes terasz', people: 'pihenő, étkező, bisztró, bár', description: 'Váltakozó zónák: pihenősarok, étkező, bisztró-asztal, hátsó bárpult — nagy teraszon sem ismétlődik ugyanaz egymás mellett', zone: [3.4, 2.8], parts: [{ kind: 'lounge', x: 0 }], seats: 11, repeatable: false, pack: { audience: 'Szálloda, vendégház, étterem, családi terasz' } },
   barLounge: { label: 'Bár + lounge', people: 'bárpult és pihenő sarkok', description: 'Bárpult bárszékekkel a hátsó fal mentén, előtte pihenő sarkok', zone: [3.4, 4.6], parts: [{ kind: 'lounge', x: 0 }], seats: 9, repeatable: false, pack: { audience: 'Szálloda, borbár, étterem' } },
 }
 
 export const FURNITURE_ORDER: FurnitureSet[] = ['lounge', 'dining6', 'dining8', 'combo', 'bistro', 'bar', 'sunbed', 'spa', 'loungeSpa', 'diningSpa', 'none']
 /** Használati csomagok a kiválasztóban, a lakossági bútorok után. */
-export const PACK_ORDER: FurnitureSet[] = ['summerKitchen', 'kitchenDining', 'restaurant', 'banquet', 'barLounge']
+export const PACK_ORDER: FurnitureSet[] = ['mixed', 'summerKitchen', 'kitchenDining', 'restaurant', 'banquet', 'barLounge']
 
 /** Az oszlopok és a keret miatt a hasznos belső méret ennyivel kisebb. */
 const FRAME = 0.2

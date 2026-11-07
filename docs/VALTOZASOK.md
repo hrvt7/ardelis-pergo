@@ -1,5 +1,16 @@
 # Változások
 
+## 3.69 – Vegyes terasz, visszavonás és típusváltás javítása
+
+- **Vegyes terasz csomag** (1. lépés → Használati csomagok): nagy pergolán nem ismétlődik ugyanaz egymás mellett. A zónák váltakoznak (pihenő → étkező → bisztró-asztal → tükrözött pihenő), elég mélységnél hátsó bárpult bárszékekkel, 3 sorig. A „Bár + lounge" is váltakozó zónákat használ.
+- **Pihenősarok és Pihenő + étkező** nem sokszorozódik többé nagy pergolán (korábban 3 egyforma kanapé és asztal került egymás mellé); nagy terasznál a Vegyes terasz a javasolt.
+- **Kanapé-nézet:** vegyes elrendezésnél a kamera az első pihenő-zónához ül.
+- **Hiba: a Visszavonás kihagyott lépéseket** (a history módosítása a setState updaterében futott). Most tiszta; a Ctrl+Z/Y és a gombok ugyanazt a lépést adják.
+- **Hiba: egy csúszkahúzás kiürítette a 40 lépéses előzményt.** A gyors, azonos folyamatos mezőre (szélesség, mélység, magasság, dőlés) eső változtatások egy visszavonási lépés.
+- **Hiba: Pergola → Veranda/Télikert → vissza Pergola** nem hozta vissza a tetőt, az oldalfalakat és a dőlést. Most visszajön (a közben kézzel módosított oldalak megmaradnak).
+- **Hiba: tetőváltás oda-vissza elvesztette** az üvegezést, árnyékolót, napelemet és tetőszínt. Mostantól tetőnként megmaradnak.
+- Tesztek: `mixedPack` (átfedés, kilógás, szomszéd-egyformaság 10 méreten), `roofRoundtrip` (minden tetőpár, link).
+
 ## 3.68 – Használati csomagok: éttermi terasz, nyári konyha, bankett, bár + lounge
 
 - **Öt új csomag** (1. lépés → Használati csomagok): Nyári konyha, Nyári konyha + étkező, Éttermi terasz, Bankett / rendezvény, Bár + lounge. A bútorcsomagokkal szemben ezek a pergola méretéhez igazodnak: a konyhasor a hátsó fal mentén fut (hűtő, grill, mosogató, munkafelületek; elég mély pergolán szigetpult bárszékekkel), az étterem 4 fős asztalokat rácsban, a bankett hosszú asztalokat (60 cm-es ülésosztás) sorokban rak le, közlekedősávokkal.

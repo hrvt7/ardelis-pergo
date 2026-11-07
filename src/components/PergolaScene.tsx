@@ -33,7 +33,7 @@ import { doorLeafWidth, sideSegments } from '@/lib/sides'
 import { hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit, furnitureLayout } from '@/lib/furniture'
-import { kitchenModules } from '@/lib/usePacks'
+import { kitchenModules, packPlan } from '@/lib/usePacks'
 import HotTub from '@/components/HotTub'
 import { getSpecCode } from '@/lib/specification'
 import { effectiveGlazing, isGlazedRoof, isMovableRoof, roofRise } from '@/lib/roofs'
@@ -2096,6 +2096,11 @@ function Rain({ config, quality }: { config: PergolaConfig; quality: QualitySett
 function seatPosition(config: Pick<PergolaConfig, 'width' | 'depth'>, furniture: FurnitureSet): [number, number] {
   if (furniture === 'none') return [0, -config.depth * 0.17 - 0.195]
   const fit = furnitureFit(furniture, config)!
+  // Vegyes elrendezésnél (zónák egymás mellett) a kamera az első, normál állású pihenő-zónához ül, nem a pergola közepére.
+  if (furniture === 'mixed' || furniture === 'barLounge') {
+    const lounge = packPlan(furniture, config).items.find((item) => item.kind === 'lounge' && item.rot === 0)
+    if (lounge) return [lounge.x, lounge.z - 0.7]
+  }
   const first = FURNITURE_SETS[furniture].parts[0]
   const local: [number, number] = [first.x, first.kind === 'dining8' ? -0.72 : first.kind === 'dining6' ? -0.67 : first.kind === 'spa' ? -1.25 : first.kind === 'bar' ? 0.22 : first.kind === 'sunbed' ? 0.3 : -0.7]
   return fit.alongWidth ? local : [local[1], -local[0]]

@@ -7,8 +7,8 @@ import type { FurnitureSet, PergolaConfig } from '@/types/pergola'
 export type PackKind = 'table4' | 'longTable' | 'kitchen' | 'island' | 'barRun' | 'dining6' | 'dining8' | 'lounge'
 export interface PackItem { kind: PackKind; x: number; z: number; rot: number; /** Hossz méterben (konyhasor, bár, hosszú asztal, sziget). */ length?: number; seats?: number }
 
-export type PackId = Extract<FurnitureSet, 'restaurant' | 'summerKitchen' | 'kitchenDining' | 'banquet' | 'barLounge'>
-export const PACK_IDS: PackId[] = ['restaurant', 'summerKitchen', 'kitchenDining', 'banquet', 'barLounge']
+export type PackId = Extract<FurnitureSet, 'restaurant' | 'summerKitchen' | 'kitchenDining' | 'banquet' | 'barLounge' | 'mixed'>
+export const PACK_IDS: PackId[] = ['restaurant', 'summerKitchen', 'kitchenDining', 'banquet', 'barLounge', 'mixed']
 export const isPack = (set: FurnitureSet): set is PackId => (PACK_IDS as string[]).includes(set)
 
 export interface PackPlan {
@@ -161,12 +161,75 @@ function barLounge(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan {
   const stools = Math.floor(length / 0.55)
   const items: PackItem[] = [{ kind: 'barRun', x: 0, z: round2(barZ), rot: 0, length, seats: stools }]
   const loungeStart = barZ + 0.35 + 0.6 + 0.6 + 1.3 // pult + bárszék + közlekedés + a lounge-zóna fele
-  const cols = Math.max(1, Math.floor((w + 1e-9) / 3.0))
-  const pitch = Math.min(w / cols, 3.0 * 1.3)
   const loungeZ = Math.min(d / 2 - 1.3, loungeStart)
-  let seats = stools
-  for (let col = 0; col < cols; col++) { items.push({ kind: 'lounge', x: round2((col - (cols - 1) / 2) * pitch), z: round2(loungeZ), rot: 0, seats: 5 }); seats += 5 }
-  return { items, seats, bounds: boundsOf(items, extentOf), areaPerSeat: round2((w * d) / seats), benchmark: BENCH.hotel, notes: ['Bárpult a hátsó fal mentén, előtte pihenő sarkok: esti vendégtér szállodának, bornak, koktélbárnak.'] }
+  const zones = fillRow(w, loungeZ, 0)
+  const items2: PackItem[] = [...items, ...zones]
+  const seats = stools + zones.reduce((sum, item) => sum + (item.seats ?? 0), 0)
+  return { items: items2, seats, bounds: boundsOf(items2, extentOf), areaPerSeat: round2((w * d) / seats), benchmark: BENCH.hotel, notes: ['Bárpult a hátsó fal mentén, előtte váltakozó pihenő- és étkezőzónák: esti vendégtér szállodának, bornak, koktélbárnak.'] }
+}
+
+/** A zónák sorrendje egy soron belül: a szomszédos elemek soha nem egyformák (pihenő → étkező → bisztró-asztal → tükrözött pihenő …). */
+const ZONE_CYCLE: { kind: PackKind; width: number; seats: number; rot: number }[] = [
+  { kind: 'lounge', width: 3.0, seats: 5, rot: 0 },
+  { kind: 'dining6', width: 3.0, seats: 6, rot: 0 },
+  { kind: 'table4', width: 2.0, seats: 4, rot: 0 },
+  { kind: 'lounge', width: 3.0, seats: 5, rot: Math.PI },
+]
+const ZONE_GAP = 0.3
+
+/** Egy sor zóna a szélességen: a ciklus elemei egymás után, amíg férnek; az eltolás (offset) a következő sort más elemmel indítja. */
+function fillRow(innerWidth: number, z: number, offset: number): PackItem[] {
+  const picked: typeof ZONE_CYCLE = []
+  let used = 0
+  for (let i = 0; i < ZONE_CYCLE.length * 2; i++) {
+    const zone = ZONE_CYCLE[(i + offset) % ZONE_CYCLE.length]
+    const need = zone.width + (picked.length ? ZONE_GAP : 0)
+    if (used + need > innerWidth + 1e-9) break
+    picked.push(zone); used += need
+  }
+  if (!picked.length) picked.push(ZONE_CYCLE[(offset + 2) % ZONE_CYCLE.length])
+  // A maradék helyet egyenletesen osztjuk szét, de a hézag legfeljebb 1,2 m: ne lógjanak szét az elemek.
+  const free = Math.max(0, innerWidth - picked.reduce((sum, zone) => sum + zone.width, 0))
+  const gap = picked.length > 1 ? Math.min(1.2, free / (picked.length - 1)) : 0
+  const total = picked.reduce((sum, zone) => sum + zone.width, 0) + gap * (picked.length - 1)
+  let cursor = -total / 2
+  return picked.map((zone) => {
+    const x = cursor + zone.width / 2
+    cursor += zone.width + gap
+    return { kind: zone.kind, x: round2(x), z: round2(z), rot: zone.rot, seats: zone.seats }
+  })
+}
+
+/** Vegyes terasz: hátsó bárpult (ha elég mély), előtte egy vagy több sor váltakozó zóna. Nagy pergolán sem ismétlődik ugyanaz egymás mellett. */
+function mixed(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan {
+  const { w, d } = inner(config)
+  const ROW = 2.7
+  const items: PackItem[] = []
+  const notes: string[] = []
+  let seats = 0
+  let top = -d / 2
+  if (d >= 4.9 && w >= 3.4) {
+    const length = Math.min(4.8, Math.max(2.4, floorTo(w - 0.4, 0.3)))
+    const barZ = top + BACK_GAP + 0.35
+    const stools = Math.floor(length / 0.55)
+    items.push({ kind: 'barRun', x: 0, z: round2(barZ), rot: 0, length, seats: stools })
+    seats += stools
+    top = barZ + 0.35 + 0.6 + 0.6
+    notes.push('Bárpult a hátsó fal mentén, előtte a zónák.')
+  } else if (d >= 4.9) notes.push('Bárpult 3,4 m szélességtől kerül a hátsó falhoz.')
+  // A sorok a bárpult mögötti (vagy ennek hiányában a teljes) mélységen osztoznak; a maradék szabad hely a sorok közé kerül.
+  const avail = d / 2 - top
+  const rowCount = Math.max(1, Math.min(3, Math.floor(avail / ROW + 1e-9)))
+  const pitchZ = ROW + Math.min(0.8, Math.max(0, (avail - rowCount * ROW) / rowCount))
+  const blockDepth = pitchZ * (rowCount - 1) + ROW
+  const startZ = top + (avail - blockDepth) / 2 + ROW / 2
+  for (let row = 0; row < rowCount; row++) {
+    const rowItems = fillRow(w, startZ + row * pitchZ, row * 2)
+    items.push(...rowItems)
+    seats += rowItems.reduce((sum, item) => sum + (item.seats ?? 0), 0)
+  }
+  notes.push('A zónák váltakoznak (pihenő, étkező, bisztró-asztal), a közlekedősáv a sorok közt szabad marad.')
+  return { items, seats, bounds: boundsOf(items, extentOf), areaPerSeat: seats ? round2((w * d) / seats) : null, benchmark: BENCH.hotel, notes }
 }
 
 export function packPlan(set: PackId, config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan {
@@ -176,5 +239,6 @@ export function packPlan(set: PackId, config: Pick<PergolaConfig, 'width' | 'dep
     case 'kitchenDining': return kitchenDining(config)
     case 'banquet': return banquet(config)
     case 'barLounge': return barLounge(config)
+    case 'mixed': return mixed(config)
   }
 }
