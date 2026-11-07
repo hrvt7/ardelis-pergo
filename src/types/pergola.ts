@@ -32,6 +32,8 @@ export interface PergolaConfig {
   sides: Record<SideKey, SideType>
   /** Félbe osztott oldalak második felének típusa (az első fél a `sides`-ban). */
   split?: Partial<Record<SideKey, SideType>>
+  /** Ajtós oldal tükrözve: a zsanér/tolószárny a másik sarokban (a berendezés vagy a bejárat irányához igazítva). */
+  doorMirror?: Partial<Record<SideKey, boolean>>
   louverAngle: number
   /** Tetődőlés fokban (0 = vízszintes). A hátsó (fali) oldal emelkedik, az elülső magasság a `height`. */
   pitch?: number
@@ -76,6 +78,8 @@ export interface SceneSettings {
   wind: boolean
   showPerson: boolean
   showHotspots: boolean
+  /** 3D-beli feliratok (kattintási tippek, Működés-címkék). Alapból be; bemutatón kikapcsolható. */
+  labels?: boolean
   /** Robbantott nézet: a szerkezeti elemek szétválnak (csak látvány). */
   exploded: boolean
   /** Működés bemutató (lamellás tető): a hajtás láthatóvá válik, a lamellák a gyári 0–110° tartományban járnak. */

@@ -1,5 +1,12 @@
 # Változások
 
+## 3.61 – Ajtó nyitásirány, tetőválasztás a 4. lépésben, 3D-feliratok kapcsoló
+
+- **Ajtó nyitási iránya:** nyíló és tolóajtós oldalnál új gomb „Nyitás a másik oldalra” – a zsanér/tolószárny a másik sarokba kerül. 3D-ben, a műszaki rajzon (homlokzat és alaprajz, nyitási ív) és a megosztó kódban (`m` jelző) is.
+- **Javítás:** a nyíló ajtó belenyílt a dézsás növénybe – ajtós oldal mellett a dézsa kijjebb kerül.
+- **4. lépés (Oldalak):** a tető mezőnél a tetőtípus és az üveg/polikarbonát burkolat is átváltható, nem csak a lamellaszög (eddig vissza kellett lépni az 1. lépésre).
+- **Nézet panel:** „Feliratok a 3D-ben” kapcsoló – a kattintási tippek és a Működés-címkék bemutatóhoz elrejthetők.
+
 ## 3.60 – Fotorealisztikusabb jelenet: valódi égbolt, PBR gyep, kontrasztos fény
 
 - **Égbolt:** éles (nem elmosott) „pure sky” HDR-ek: nappal felhős-kék ég látható nappal, aranyórában naplemente (`sunset_sky`), éjjel csillagos ég holddal (`night_sky`). Az ég úgy fordul, hogy a látható nap mindig a vetett árnyék irányában áll – minden módban, nem csak az árnyékelemzésben.

@@ -34,6 +34,7 @@ export const pergolaConfigSchema = z.object({
   sensors: z.boolean(),
   solar: z.boolean().optional(),
   split: z.object({ front: sideEnum.optional(), back: sideEnum.optional(), left: sideEnum.optional(), right: sideEnum.optional() }).optional(),
+  doorMirror: z.object({ front: z.boolean().optional(), back: z.boolean().optional(), left: z.boolean().optional(), right: z.boolean().optional() }).optional(),
   ledRgb: z.boolean().optional(),
   fans: z.number().int().min(0).max(9).optional(),
   smartHome: z.boolean().optional(),
@@ -193,6 +194,8 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     heaters: Math.round(clamp(config.heaters, [0, tenant.limits.maxHeaters])),
     // Napelem csak fix tetőn és csak ott, ahol a gyártó kínálja; különben a mező el is marad.
     split: splitEntries.length ? Object.fromEntries(splitEntries) as PergolaConfig['split'] : undefined,
+    // Ajtótükrözés csak olyan oldalon marad meg, ahol tényleg ajtó van (egész vagy fél oldalon).
+    doorMirror: (() => { const entries = (['front', 'back', 'left', 'right'] as SideKey[]).filter((side) => config.doorMirror?.[side] && [sides[side], config.split?.[side]].some((type) => type === 'door' || type === 'doorSliding')); return entries.length ? Object.fromEntries(entries.map((side) => [side, true])) as PergolaConfig['doorMirror'] : undefined })(),
     ledRgb: led && tenant.extras.rgb && config.ledRgb ? true : undefined,
     fans: tenant.extras.fans && config.fans ? Math.round(clamp(config.fans, [0, 2])) || undefined : undefined,
     smartHome: tenant.extras.smartHome && config.smartHome ? true : undefined,

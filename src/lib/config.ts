@@ -19,6 +19,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   wind: false,
   showPerson: false,
   showHotspots: false,
+  labels: true,
   exploded: false,
   mechanism: false,
   glassOpen: false,

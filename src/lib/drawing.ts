@@ -363,16 +363,18 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
         const len = (b - a) / k
         const leaf = doorLeafWidth(type, len) * k
         const fixedW = (b - a) - leaf
+        const mirrored = !!config.doorMirror?.front
         if (fixedW > 0.3 * k) {
           const count = Math.max(1, Math.round(fixedW / k / 1.5))
           const pw = fixedW / count
-          for (let p = 0; p < count; p += 1) svg.rect(a + p * pw + 0.1, top + 0.2, pw - 0.2, bottom - top - 0.4, { stroke: MID, width: 0.18, fill: '#eef3f3' })
+          const fixedStart = mirrored ? a + leaf : a
+          for (let p = 0; p < count; p += 1) svg.rect(fixedStart + p * pw + 0.1, top + 0.2, pw - 0.2, bottom - top - 0.4, { stroke: MID, width: 0.18, fill: '#eef3f3' })
         }
-        const lx = b - leaf
+        const lx = mirrored ? a : b - leaf
         svg.rect(lx + 0.1, top + 0.2, leaf - 0.2, bottom - top - 0.4, { stroke: INK, width: 0.3, fill: '#ffffff' })
         svg.rect(lx + 0.1 + 0.05 * k, top + 0.2 + 0.05 * k, leaf - 0.2 - 0.1 * k, bottom - top - 0.4 - 0.1 * k, { stroke: MID, width: 0.13, fill: '#eef3f3' })
         const mid = (top + bottom) / 2
-        if (type === 'door') svg.line(lx + leaf - 0.1 - 0.07 * k, mid - 1.6, lx + leaf - 0.1 - 0.07 * k, mid + 1.6, 0.5, INK)
+        if (type === 'door') { const hx = mirrored ? lx + 0.1 + 0.07 * k : lx + leaf - 0.1 - 0.07 * k; svg.line(hx, mid - 1.6, hx, mid + 1.6, 0.5, INK) }
         else { svg.line(lx + 1.5, mid, lx + leaf - 1.5, mid, 0.2, MID); svg.line(lx + leaf - 3, mid - 0.9, lx + leaf - 1.5, mid, 0.2, MID); svg.line(lx + leaf - 3, mid + 0.9, lx + leaf - 1.5, mid, 0.2, MID) }
         svg.rect(a, bottom - 0.4, b - a, 0.4, { width: 0.13, fill: MID })
       } else if (type === 'louver') {
@@ -508,23 +510,25 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       for (let p = 1; p < count; p += 1) seg(start + (p * length) / count - 0.02, start + (p * length) / count + 0.02, 0, 0.9, INK)
     } else if (type === 'door' || type === 'doorSliding') {
       const leaf = doorLeafWidth(type, length)
-      seg(start, start + length - (type === 'door' ? leaf : 0), 0, 0.35, INK)
+      // Tükrözött ajtó: a szárny a szakasz másik végén (m: hossz menti tükrözés a szakasz közepére).
+      const m = (along: number) => (config.doorMirror?.[side] ? 2 * start + length - along : along)
+      seg(m(start), m(start + length - (type === 'door' ? leaf : 0)), 0, 0.35, INK)
       if (type === 'door') {
         // Ajtószárny 90°-ban kinyitva és a nyitási ív: a zsanér a fix tábla felőli oldalon van, az ajtó kifelé nyílik.
         const hinge = start + length - leaf
-        const [hx, hy] = P(hinge, 0)
-        const [ex, ey] = P(hinge, -leaf)
+        const [hx, hy] = P(m(hinge), 0)
+        const [ex, ey] = P(m(hinge), -leaf)
         svg.line(hx, hy, ex, ey, 0.45, INK, undefined, 'd-leaf')
-        let previous = P(hinge + leaf, 0)
+        let previous = P(m(hinge + leaf), 0)
         for (let step = 1; step <= 6; step += 1) {
           const t = (step / 6) * (Math.PI / 2)
-          const next = P(hinge + leaf * Math.cos(t), -leaf * Math.sin(t))
+          const next = P(m(hinge + leaf * Math.cos(t)), -leaf * Math.sin(t))
           svg.line(previous[0], previous[1], next[0], next[1], 0.1, SOFT, undefined, `d-arc a${step}`)
           previous = next
         }
       } else {
         seg(start, start + length, -0.03, 0.35, INK)
-        seg(start + length - leaf, start + length, 0.03, 0.35, INK)
+        seg(m(start + length - leaf), m(start + length), 0.03, 0.35, INK)
       }
     } else if (type === 'slatAlu' || type === 'slatWood') {
       seg(start, start + length, -0.025, 0.18, INK)

@@ -44,6 +44,7 @@ export function configToCompact(config: PergolaConfig) {
   if (config.roofShade) flags.push(`${ROOF_SHADE_INFO[config.roofShade].share}${findShadeFabric(config.shadeFabric).share}`)
   if (config.roofColor) flags.push(`t${COLOR[config.roofColor]}${config.roofColor === 'custom' && config.roofRal ? encodeCode(config.roofRal) : ''}`)
   if (config.split && SIDE_KEYS.some((side) => config.split?.[side])) flags.push(`s${SIDE_KEYS.map((side) => { const type = config.split?.[side]; return type ? SIDE[type] : '.' }).join('')}`)
+  if (config.doorMirror && SIDE_KEYS.some((side) => config.doorMirror?.[side])) flags.push(`m${SIDE_KEYS.map((side) => (config.doorMirror?.[side] ? '1' : '0')).join('')}`)
   // Zárt építmény: e = veranda (ev) / télikert (ec), w = oldalüvegezés, k = klíma, q = alap és padló.
   if (config.building) flags.push(config.building === 'conservatory' ? 'ec' : 'ev')
   if (config.wallGlazing) flags.push(`w${WALL_GLAZING_INFO[config.wallGlazing].share}`)
@@ -93,6 +94,11 @@ function parseFlags(text: string, sideMap: Record<string, SideType>) {
     else if (/^k[sub]$/.test(flag)) result.climate = Object.entries(CLIMATE_INFO).find(([, info]) => info.share === flag[1])?.[0] as PergolaConfig['climate']
     else if (flag === 'q') result.foundation = true
     else if (/^v\d$/.test(flag)) result.fans = Math.min(2, Number(flag.slice(1)))
+    else if (/^m[01]{4}$/.test(flag)) {
+      const mirror: NonNullable<PergolaConfig['doorMirror']> = {}
+      SIDE_KEYS.forEach((side, index) => { if (flag[index + 1] === '1') mirror[side] = true })
+      if (Object.keys(mirror).length) result.doorMirror = mirror
+    }
     else if (/^s.{4}$/.test(flag)) {
       const split: NonNullable<PergolaConfig['split']> = {}
       SIDE_KEYS.forEach((side, index) => { const type = sideMap[flag[index + 1]]; if (type) split[side] = type })

@@ -494,7 +494,7 @@ function getSpillTexture() {
  * Nyíló: a szárny a fix tábla felőli zsanér körül ~86°-ot fordul; toló: a szárny a fix tábla mögé csúszik a falszakaszon belül.
  * A nyitást a `scene.doorOpen` vezérli (kattintásra vált), a mozgás csillapított.
  */
-function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow, inward }: { length: number; height: number; color: string; sliding: boolean; opened: boolean; onToggle: () => void; look: { tint: string; opacity: number }; glow: number; inward: 1 | -1 }) {
+function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow, inward, mirror = false }: { length: number; height: number; color: string; sliding: boolean; opened: boolean; onToggle: () => void; look: { tint: string; opacity: number }; glow: number; inward: 1 | -1; mirror?: boolean }) {
   const usableHeight = height - 0.27
   // Toló: a szárny legfeljebb a fal fele, hogy a fix tábla előtt végig elférjen. Nyíló: kb. 0,95 m-es szárny.
   const leafWidth = doorLeafWidth(sliding ? 'doorSliding' : 'door', length)
@@ -536,7 +536,8 @@ function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow
   const leafCenterY = usableHeight / 2 + 0.1
   // Fényfolt a belső padlón: a belső oldal felé (inward) esik, a küszöbtől indulva.
   const spillZ = inward * 0.95
-  return <group onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>
+  // Tükrözés: a zsanér/tolószárny a másik sarokban (x-tengely menti −1 skála; a three.js a lapok körüljárását ilyenkor automatikusan átfordítja).
+  return <group scale={[mirror ? -1 : 1, 1, 1]} onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>
     {Array.from({ length: fixedCount }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 0.5), leafCenterY, 0]} renderOrder={2}><boxGeometry args={[paneWidth - 0.012, usableHeight - 0.04, 0.01]} /><LookGlass look={look} /></mesh>)}
     {Array.from({ length: Math.max(0, fixedCount - 1) }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 1), leafCenterY, 0]}><boxGeometry args={[0.008, usableHeight - 0.06, 0.016]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.4} /></mesh>)}
     {sliding
@@ -577,12 +578,12 @@ const MULLION = 0.06
 /** Az oldalfal helyi z tengelyének a tér belseje felé mutató előjele (az oldalak forgatása miatt oldalanként más). */
 const INWARD: Record<SideKey, 1 | -1> = { front: -1, back: 1, left: 1, right: -1 }
 
-function SideSegmentWall({ type, length, height, color, config, scene, onSceneChange, label, inward }: { inward: 1 | -1; type: SideType; length: number; height: number; color: string; config: PergolaConfig; scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void; label: boolean }) {
+function SideSegmentWall({ type, length, height, color, config, scene, onSceneChange, label, inward, mirror = false }: { inward: 1 | -1; mirror?: boolean; type: SideType; length: number; height: number; color: string; config: PergolaConfig; scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void; label: boolean }) {
   if (type === 'zip') return <ZipScreen length={length} height={height} open={config.screenOpen} color={color} wind={scene.wind} />
   if (type === 'glass' || type === 'glassFramed') return <GlassWall length={length} height={height} color={color} framed={type === 'glassFramed'} label={label} opened={scene.glassOpen} onToggle={() => onSceneChange({ glassOpen: !scene.glassOpen })} />
   const look = wallGlassLook(config.wallGlazing, config.building)
   if (type === 'glassFixed') return <FixedGlassWall length={length} height={height} color={color} look={look} />
-  if (type === 'door' || type === 'doorSliding') return <DoorWall length={length} height={height} color={color} look={look} inward={inward} sliding={type === 'doorSliding'} glow={scene.time === 'night' ? 0.5 : scene.time === 'sunset' ? 0.32 : 0.18} opened={scene.doorOpen} onToggle={() => onSceneChange({ doorOpen: !scene.doorOpen })} />
+  if (type === 'door' || type === 'doorSliding') return <DoorWall length={length} height={height} color={color} look={look} inward={inward} mirror={mirror} sliding={type === 'doorSliding'} glow={scene.time === 'night' ? 0.5 : scene.time === 'sunset' ? 0.32 : 0.18} opened={scene.doorOpen} onToggle={() => onSceneChange({ doorOpen: !scene.doorOpen })} />
   if (type === 'louver') return <LouverWall length={length} height={height} color={color} label={label} opened={scene.wallLouverOpen} onToggle={() => onSceneChange({ wallLouverOpen: !scene.wallLouverOpen })} />
   if (type === 'slatAlu' || type === 'slatWood') return <SlatWall length={length} height={height} color={color} wood={type === 'slatWood'} />
   return null
@@ -845,7 +846,7 @@ function SidePlacement({ side, config, scene, color, onSelect, onSceneChange, la
       const key = segment.type === 'glassFramed' ? 'glass' : segment.type
       const label = !labelled.has(key)
       if (label) labelled.add(key)
-      return <group key={`${index}-${segment.type}`} position={[x, 0, 0]}><BuildIn height={height} settled={settled} delay={config.building ? ({ front: 0, left: 1, right: 2, back: 3 }[side]) * 0.12 + (segment.type === 'door' || segment.type === 'doorSliding' ? 0.22 : 0) : 0}><SideSegmentWall type={segment.type} length={segmentLength} height={height} color={color} config={config} scene={scene} onSceneChange={onSceneChange} label={label} inward={INWARD[side]} /></BuildIn></group>
+      return <group key={`${index}-${segment.type}`} position={[x, 0, 0]}><BuildIn height={height} settled={settled} delay={config.building ? ({ front: 0, left: 1, right: 2, back: 3 }[side]) * 0.12 + (segment.type === 'door' || segment.type === 'doorSliding' ? 0.22 : 0) : 0}><SideSegmentWall type={segment.type} length={segmentLength} height={height} color={color} config={config} scene={scene} onSceneChange={onSceneChange} label={label && scene.labels !== false} inward={INWARD[side]} mirror={!!config.doorMirror?.[side]} /></BuildIn></group>
     })}
     {!isHorizontal && !allOpen && roofRise(config) > 0 && <GableInfill depth={depth} height={height} rise={roofRise(config)} glassy={segments.some((segment) => segment.type === 'glass' || segment.type === 'glassFramed' || segment.type === 'glassFixed')} color={color} />}
     {split && !midPost && <Beam args={[MULLION, height - 0.1, 0.09]} position={[0, (height - 0.1) / 2, 0]} color={color} radius={0.008} />}
@@ -1277,7 +1278,7 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     <ExplodePart ex={ex} dy={1.6} label={roof === 'fabric' ? 'Textiltető' : isGlazedRoof(roof) ? 'Üvegtető' : roof === 'fixed' ? 'Fix tető' : 'Tetőlamellák'} labelAt={[0, height + 0.5 + rise / 2, -depth / 4]} show={x}>
     {tilt(<>
     {roof === 'retractable' && <LouverBlades key={louverCount} geometry={geometry} width={width} depth={depth} height={height} count={louverCount} retractable angle={effectiveAngle} color={roofColor} />}
-    {realLouvres && <LouvreRoof width={width} depth={depth} height={height} beam={0.19} beamHeight={0.23} angle={effectiveAngle} driveSide={driveSide} mechanism={mechanism} roofMaterial={getCoat(roofColor, 0.38, materialDetail)} frameMaterial={getCoat(color, 0.4, materialDetail)} segments={louvreSegments} showLabels={!x} />}
+    {realLouvres && <LouvreRoof width={width} depth={depth} height={height} beam={0.19} beamHeight={0.23} angle={effectiveAngle} driveSide={driveSide} mechanism={mechanism} roofMaterial={getCoat(roofColor, 0.38, materialDetail)} frameMaterial={getCoat(color, 0.4, materialDetail)} segments={louvreSegments} showLabels={!x && scene.labels !== false} />}
     {roof === 'fixed' && <group><mesh position={[0, height + 0.14, 0]} castShadow receiveShadow><boxGeometry args={[width - 0.12, 0.09, depth - 0.12]} /><PowderCoat color={roofColor} /></mesh>{Array.from({ length: fixedSeamCount }, (_, index) => { const z = -depth / 2 + (index + 1) * depth / (fixedSeamCount + 1); return <Beam key={index} args={[width - 0.16, 0.018, 0.025]} position={[0, height + 0.192, z]} color={roofColor} radius={0.003} /> })}</group>}
     {isGlazedRoof(roof) && <GlazedRoof width={width} depth={depth} height={height} color={roofColor} kind={roof === 'glass' ? 'glass' : 'polycarbonate'} glazing={effectiveGlazing(config) ?? 'clear'} />}
     {isGlazedRoof(roof) && config.roofShade && <RoofShadeModel width={width} depth={depth} height={height} kind={config.roofShade} fabric={findShadeFabric(config.shadeFabric).hex} color={color} out={scene.shadeOut} night={night} onToggle={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })} />}
@@ -1780,6 +1781,11 @@ function Tree({ position, scale = 1, wind, bare = false }: { position: [number, 
   return <group ref={group}><RealisticAsset url={TREE_MODEL} position={position} height={4.8 * scale} rotation={position[0] * 0.43} shadows={false} bare={bare} /></group>
 }
 
+/** Van-e nyíló (szárnyas) ajtó az adott oldalon – egész vagy fél oldalon. */
+function hasSwingDoor(config: PergolaConfig, side: SideKey) {
+  return config.sides[side] === 'door' || config.split?.[side] === 'door'
+}
+
 function Garden({ config, scene, quality }: { config: PergolaConfig; scene: SceneSettings; quality: QualitySettings }) {
   const house = getHouseLayout(config)
   const sideX = house.width / 2 + 2.1
@@ -1789,9 +1795,9 @@ function Garden({ config, scene, quality }: { config: PergolaConfig; scene: Scen
     <Tree position={[sideX, -0.05, house.frontZ - 2.1]} scale={1.28} wind={scene.wind} />
     {quality.enableExtraPlants && <Tree position={[sideX + 1.4, -0.05, 4.6]} scale={0.86} wind={scene.wind} />}
     {[-0.32, 0, 0.32].map((fraction, index) => <RealisticAsset key={fraction} url={assetUrl('/assets/models/shrub_04/model.gltf')} position={[house.width * fraction, -0.04, rearZ]} height={0.95 + index * 0.08} rotation={index * 0.8} shadows={false} />)}
-    {/* Oldalfal esetén a dézsák a fal végéhez, a terasz elejére kerülnek. */}
-    <PlantPot position={isWallSide(config.mount, 'left') ? [-config.width / 2 + 0.38, 0.01, config.depth / 2 + 0.62] : [-config.width / 2 - 0.75, 0.01, config.depth / 2]} scale={1.25} />
-    <PlantPot position={isWallSide(config.mount, 'right') ? [config.width / 2 - 0.38, 0.01, config.depth / 2 + 0.62] : [config.width / 2 + 0.8, 0.01, hasBackWall(config.mount) ? -config.depth / 2 + 0.5 : -config.depth / 2]} scale={1.05} />
+    {/* Oldalfal esetén a dézsák a fal végéhez, a terasz elejére kerülnek. Nyíló ajtós oldal mellől a dézsa kijjebb kerül, hogy a kinyíló szárny ne ütközzön bele. */}
+    <PlantPot position={isWallSide(config.mount, 'left') ? [-config.width / 2 + 0.38, 0.01, config.depth / 2 + (hasSwingDoor(config, 'front') ? 1.75 : 0.62)] : [-config.width / 2 - (hasSwingDoor(config, 'left') ? 1.9 : 0.75), 0.01, config.depth / 2]} scale={1.25} />
+    <PlantPot position={isWallSide(config.mount, 'right') ? [config.width / 2 - 0.38, 0.01, config.depth / 2 + (hasSwingDoor(config, 'front') ? 1.75 : 0.62)] : [config.width / 2 + (hasSwingDoor(config, 'right') ? 1.9 : 0.8), 0.01, hasBackWall(config.mount) ? -config.depth / 2 + 0.5 : -config.depth / 2]} scale={1.05} />
   </group>
 }
 

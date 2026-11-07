@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, CloudRain, Cog, Columns3, Gauge, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowLeftRight, ArrowRight, Check, ChevronDown, ChevronRight, CloudRain, Cog, Columns3, Gauge, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
 import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, wallLabel } from '@/lib/mount'
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import { FanOption, RgbOption, RoofShadeOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
@@ -289,6 +289,7 @@ export function SceneSettingsPanel({ scene, onSceneChange, onPhotoUpload }: { sc
               <Toggle label="180 cm-es figura" description="A méretek szemléltetéséhez" checked={scene.showPerson} onChange={(showPerson) => onSceneChange({ showPerson })} />
               <Toggle label="Méretcímkék" description="Aktuális méretek centiméterben" checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
               <Toggle label="Műszaki jelölések" description="Részletek a 3D modellen" checked={scene.showHotspots} onChange={(showHotspots) => onSceneChange({ showHotspots })} />
+              <Toggle label="Feliratok a 3D-ben" description="Kattintási tippek és a Működés címkéi" checked={scene.labels !== false} onChange={(labels) => onSceneChange({ labels })} />
               <Toggle label="Robbantott nézet" description="A szerkezet elemei szétválasztva" checked={scene.exploded} onChange={(exploded) => onSceneChange({ exploded })} />
               <Toggle label="Automata forgatás" description="Koppintásra megáll" checked={scene.autoRotate} onChange={(autoRotate) => onSceneChange({ autoRotate })} />
               <Toggle label="Követő kamera" description="A választáshoz fordul (oldal, szín, ventilátor)" checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
@@ -326,6 +327,9 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
     : <>
       <SideSettings side={side} sideName={sideNames[side]} config={config} scene={scene} prices={prices} half={half} onHalfChange={setHalf} onChange={onChange} onSceneChange={onSceneChange} />
       {hasZip && <div className="inline-setting"><SliderField label="ZIP screen nyitottsága" value={config.screenOpen} min={0} max={100} step={1} unit="%" onChange={(screenOpen) => onChange({ screenOpen })} /></div>}
+      {[config.sides[side], config.split?.[side]].some((type) => type === 'door' || type === 'doorSliding') && <button type="button" className={`mech-cta${config.doorMirror?.[side] ? ' selected' : ''}`} aria-pressed={!!config.doorMirror?.[side]} onClick={() => onChange({ doorMirror: { ...config.doorMirror, [side]: !config.doorMirror?.[side] } })}>
+        <ArrowLeftRight size={18} /><span><strong>Nyitás a másik oldalra</strong><small>{config.sides[side] === 'doorSliding' || config.split?.[side] === 'doorSliding' ? 'A tolószárny a másik sarokból indul' : 'A zsanér a másik sarokban – a szárny a másik irányba nyílik'}</small></span>
+      </button>}
     </>
   const roofLabelsFor = (roof: RoofType) => `${tenant.roofs[roof]?.name ?? ''} · ${tenant.roofs[roof]?.short ?? ''}`
   const touchStart = useRef(0)
@@ -418,7 +422,9 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             {selectedSide === 'roof' ? <>
               <div className="selected-side-head"><strong>Tetőrendszer</strong><span>{roofLabelsFor(config.roof)}</span></div>
               <RoofControl config={config} scene={scene} onChange={onChange} onSceneChange={onSceneChange} />
-              <p className="split-note">A tetőtípus és az üveg/burkolat az 1. lépésben választható. <button type="button" className="text-link" onClick={() => onStepChange('size')}>Tető módosítása</button></p>
+              <SectionTitle title="Tetőtípus" hint="Itt is átválthatsz: az ár és a 3D azonnal követi." />
+              <RoofPicker config={config} prices={prices} onChange={onChange} />
+              <GlazingPicker config={config} prices={prices} onChange={onChange} />
               {ROOF_INFO[config.roof].motion === 'none' && <p className="split-note">Fix tető: nincs mozgatható része.</p>}
               {(supportsRoofShade(config.roof) && tenant.extras.roofShade) || (config.roof === 'fixed' && tenant.extras.solar) ? <p className="split-note">{config.roof === 'fixed' ? 'Napelemes tető' : 'Motoros árnyékoló'} az Extrák lépésben választható.</p> : null}
             </> : sideSettings(selectedSide)}
