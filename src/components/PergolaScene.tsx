@@ -36,6 +36,7 @@ import { getSpecCode } from '@/lib/specification'
 import { effectiveGlazing, isGlazedRoof, isMovableRoof, roofRise } from '@/lib/roofs'
 import { deckBounds } from '@/lib/deck'
 import { SolarPanels } from '@/components/SceneExtras'
+import LouvreRoof from '@/components/LouvreRoof'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
 const ShadeProbe = lazy(() => import('@/components/ShadeProbe'))
@@ -43,6 +44,12 @@ const ShadeProbe = lazy(() => import('@/components/ShadeProbe'))
 const EFFECTS_DISABLED = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('effects') === '0'
 
 const REDUCED = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+// ?cam=x,y,z,tx,ty,tz → rögzített kameraállás (marketing-állóképekhez, vizuális teszthez).
+const CAM_OVERRIDE = (() => {
+  if (typeof window === 'undefined') return null
+  const values = (new URLSearchParams(window.location.search).get('cam') ?? '').split(',').map(Number)
+  return values.length === 6 && values.every(Number.isFinite) ? values : null
+})()
 const seeded = (index: number, salt: number) => {
   const value = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453
   return value - Math.floor(value)
@@ -1217,6 +1224,11 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
   const geometry = useAerofoilGeometry(width)
+  const { materialDetail, louvreSegments } = useQuality()
+  // Forgólamellás tető: valós profil és látható hajtás (LouvreRoof). A hajtás azon az oldalon fut, amerre a Részlet-nézet néz.
+  const realLouvres = roof === 'louvered'
+  const driveSide: 1 | -1 = isWallSide(mount, 'right') && !isWallSide(mount, 'left') ? -1 : 1
+  const mechanism = realLouvres && !!scene.mechanism
   const postPositions = getPostPositions(config)
   const pitch = config.pitch ?? 0
   const rise = roofRise(config)
@@ -1247,8 +1259,8 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
   const night = scene.time === 'night'
   const x = scene.exploded
   return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={z < 0 ? height + rise : height} color={color} />)}{x && postPositions[0] && <Html position={[postPositions[0][0], height / 2, postPositions[0][1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">Oszlopok</span></Html>}<ExplodePart ex={ex} dy={0.55} label="Gerendák" labelAt={[width / 2 - 0.2, height + 0.3, depth / 2]} show={x}><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[width / 2, height, 0]} color={color} /></ExplodePart>
-    <ExplodePart ex={ex} dy={1.0} label="Vízelvezetés" labelAt={[-width / 2 + 0.4, height + 0.3, depth / 2]} show={x}>
-    {tilt(<>
+    <ExplodePart ex={ex} dy={1.0} label="Vízelvezetés" labelAt={[-width / 2 + 0.4, height + 0.3, depth / 2]} show={x && !realLouvres}>
+    {!realLouvres && tilt(<>
     <GutterChannel length={width - 0.18} position={[0, height + 0.04, depth / 2 - 0.105]} color={color} />
     <GutterChannel length={width - 0.18} position={[0, height + 0.04, -depth / 2 + 0.105]} color={color} />
     <GutterChannel length={depth - 0.2} position={[-width / 2 + 0.105, height + 0.04, 0]} rotation={Math.PI / 2} color={color} />
@@ -1260,11 +1272,12 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     {!drainPost && <group name="wall-downpipe" position={[width / 2 + 0.05, 0, depth / 2 - 0.06]}><mesh position={[0, height / 2 + 0.05, 0]} castShadow><cylinderGeometry args={[0.04, 0.04, height + 0.1, 18]} /><PowderCoat color={color} /></mesh><mesh position={[-0.02, 0.06, 0.04]} rotation={[0.9, 0, 0]}><cylinderGeometry args={[0.04, 0.04, 0.14, 18]} /><PowderCoat color={color} /></mesh></group>}
     <group position={[0, height + 0.02, depth / 2 + 0.105]}><mesh><boxGeometry args={[width - 0.05, 0.12, 0.045]} /><PowderCoat color={color} /></mesh><mesh position={[0, -0.065, 0.025]}><boxGeometry args={[width - 0.08, 0.014, 0.075]} /><meshStandardMaterial color="#1c2426" metalness={0.5} roughness={0.4} /></mesh></group>
     {drainPost && <mesh position={[drainPost[0], 0.14, drainPost[1] + 0.095]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.08, 0.025, 8, 20, Math.PI / 2]} /><PowderCoat color={color} /></mesh>}
-    <RoundedBox args={[0.28, 0.19, 0.34]} position={[width / 2 - 0.02, height + 0.12, depth / 2 - 0.25]} radius={0.035} smoothness={4} castShadow><PowderCoat color={color} /></RoundedBox>
+    {!realLouvres && <RoundedBox args={[0.28, 0.19, 0.34]} position={[width / 2 - 0.02, height + 0.12, depth / 2 - 0.25]} radius={0.035} smoothness={4} castShadow><PowderCoat color={color} /></RoundedBox>}
     <group position={[-width / 2 + 0.2, height + 0.32 + rise, -depth / 2 + 0.2]}><mesh><cylinderGeometry args={[0.045, 0.055, 0.12, 16]} /><meshStandardMaterial color="#31383a" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, 0.075, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.034, 16]} /><meshPhysicalMaterial color="#8aa0a4" roughness={0.1} clearcoat={1} /></mesh></group>
     <ExplodePart ex={ex} dy={1.6} label={roof === 'fabric' ? 'Textiltető' : isGlazedRoof(roof) ? 'Üvegtető' : roof === 'fixed' ? 'Fix tető' : 'Tetőlamellák'} labelAt={[0, height + 0.5 + rise / 2, -depth / 4]} show={x}>
     {tilt(<>
-    {(roof === 'louvered' || roof === 'retractable') && <LouverBlades key={louverCount} geometry={geometry} width={width} depth={depth} height={height} count={louverCount} retractable={roof === 'retractable'} angle={effectiveAngle} color={roofColor} />}
+    {roof === 'retractable' && <LouverBlades key={louverCount} geometry={geometry} width={width} depth={depth} height={height} count={louverCount} retractable angle={effectiveAngle} color={roofColor} />}
+    {realLouvres && <LouvreRoof width={width} depth={depth} height={height} beam={0.19} beamHeight={0.23} angle={effectiveAngle} driveSide={driveSide} mechanism={mechanism} roofMaterial={getCoat(roofColor, 0.38, materialDetail)} frameMaterial={getCoat(color, 0.4, materialDetail)} segments={louvreSegments} showLabels={!x} />}
     {roof === 'fixed' && <group><mesh position={[0, height + 0.14, 0]} castShadow receiveShadow><boxGeometry args={[width - 0.12, 0.09, depth - 0.12]} /><PowderCoat color={roofColor} /></mesh>{Array.from({ length: fixedSeamCount }, (_, index) => { const z = -depth / 2 + (index + 1) * depth / (fixedSeamCount + 1); return <Beam key={index} args={[width - 0.16, 0.018, 0.025]} position={[0, height + 0.192, z]} color={roofColor} radius={0.003} /> })}</group>}
     {isGlazedRoof(roof) && <GlazedRoof width={width} depth={depth} height={height} color={roofColor} kind={roof === 'glass' ? 'glass' : 'polycarbonate'} glazing={effectiveGlazing(config) ?? 'clear'} />}
     {isGlazedRoof(roof) && config.roofShade && <RoofShadeModel width={width} depth={depth} height={height} kind={config.roofShade} fabric={findShadeFabric(config.shadeFabric).hex} color={color} out={scene.shadeOut} night={night} onToggle={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })} />}
@@ -1883,7 +1896,7 @@ function seatPosition(config: Pick<PergolaConfig, 'width' | 'depth'>, furniture:
   return fit.alongWidth ? local : [local[1], -local[0]]
 }
 
-function CameraController({ view, focus, viewShift, revealed, config, autoRotate, furniture }: { view: CameraView; focus: CameraFocus | null; viewShift: number; revealed: boolean; config: PergolaConfig; autoRotate: boolean; furniture: FurnitureSet }) {
+function CameraController({ view, focus, viewShift, revealed, config, autoRotate, furniture, mechanism = false }: { view: CameraView; focus: CameraFocus | null; viewShift: number; revealed: boolean; config: PergolaConfig; autoRotate: boolean; furniture: FurnitureSet; mechanism?: boolean }) {
   const { camera, gl, invalidate } = useThree()
   const controls = useRef<OrbitControlsType>(null)
   const destination = useRef(new THREE.Vector3(12, 7, 14))
@@ -1923,7 +1936,12 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
       sofa: [eyeX, 1.18, eyeZ],
     }
     destination.current.set(...positions[view])
-    if (view === 'sofa') target.current.set(0, 1.22, config.depth / 2 + 6)
+    // Működés bemutató: közeli a hajtásoldali gerendára (motor, hajtórúd, karok), enyhén felülről, hogy a lamellák is látsszanak.
+    const drive = side
+    if (mechanism && view !== 'sofa') {
+      destination.current.set(drive * (config.width / 2 + 1.05), config.height + 1.15, config.depth / 2 + 1.25)
+      target.current.set(drive * (config.width / 2 - 0.35), config.height + 0.05, config.depth * 0.12)
+    } else if (view === 'sofa') target.current.set(0, 1.22, config.depth / 2 + 6)
     else if (view === 'detail') target.current.set(niche ? config.width / 2 - 0.3 : side * config.width / 2, config.height, config.depth / 2)
     else if (view === 'interior') target.current.set(0, config.height, config.depth * 0.16)
     else target.current.set(0, view === 'top' ? 0 : config.height * 0.42, 0)
@@ -1944,7 +1962,17 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
       beginMove()
     }
     invalidate()
-  }, [view, config.width, config.depth, config.height, config.mount, furniture, camera, invalidate, beginMove])
+    if (CAM_OVERRIDE && view !== 'sofa') {
+      // ?cam=x,y,z,tx,ty,tz — rögzített kameraállás (állóképekhez, automatikus ellenőrzéshez)
+      destination.current.set(CAM_OVERRIDE[0], CAM_OVERRIDE[1], CAM_OVERRIDE[2])
+      target.current.set(CAM_OVERRIDE[3], CAM_OVERRIDE[4], CAM_OVERRIDE[5])
+      camera.position.copy(destination.current)
+      controls.current?.target.copy(target.current)
+      controls.current?.update()
+      transitioning.current = false
+      firstFlight.current = false
+    }
+  }, [view, config.width, config.depth, config.height, config.mount, furniture, camera, invalidate, beginMove, mechanism])
   useEffect(() => { applyView() }, [applyView])
 
   useEffect(() => { if (revealed) invalidate() }, [revealed, invalidate])
@@ -2300,7 +2328,7 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} /></Suspense></SceneAssetBoundary>}
     {scene.photoMode
       ? <PhotoRig config={config} placement={placement} onCommit={(next) => onSceneChange(next)} />
-      : <CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} />}
+      : <CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} mechanism={config.roof === 'louvered' && !!scene.mechanism} />}
   </>
 }
 

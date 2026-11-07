@@ -1130,6 +1130,34 @@ body:has(.marketing-page) { overflow: visible; background: #e8e7e0; }
 .sun-compass { min-height: 34px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgba(216,255,114,.45); border-radius: 7px; background: var(--accent-subtle); color: var(--accent-primary); font-size: 12.5px; }
 .sun-hint { color: var(--text-secondary); font-size: 11.5px; line-height: 1.45; }
 .sun-note { margin: 0; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.1); color: var(--text-secondary); font-size: 11px; line-height: 1.5; }
+
+/* „Működés” bemutató: élő hajtásvázlat és mérőszámok (MechanismPanel) */
+.mech-panel { gap: 10px; }
+.mech-sketch { width: 100%; height: auto; display: block; border-radius: 8px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07); }
+.mech-sketch .mech-beam { fill: rgba(255,255,255,.05); stroke: rgba(255,255,255,.14); stroke-width: 2; }
+.mech-sketch .mech-blade { fill: #8c969b; stroke: #0d1311; stroke-width: 2.4; stroke-linejoin: round; }
+.mech-sketch .mech-axle { fill: #0d1311; stroke: #c9d1d4; stroke-width: 3; }
+.mech-sketch .mech-crank { stroke: var(--accent-primary); stroke-width: 13; stroke-linecap: round; }
+.mech-sketch .mech-pin { fill: #0d1311; stroke: var(--accent-primary); stroke-width: 3; }
+.mech-sketch .mech-bar { fill: var(--accent-primary); opacity: .9; }
+.mech-progress { height: 4px; border-radius: 4px; background: rgba(255,255,255,.08); overflow: hidden; }
+.mech-progress i { display: block; height: 100%; width: 0; background: var(--accent-primary); border-radius: 4px; }
+.mech-readout { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
+.mech-readout > div { padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); }
+.mech-readout dt { color: var(--text-secondary); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; }
+.mech-readout dd { margin: 2px 0 0; color: var(--text-primary); font-size: 19px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.mech-state { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--accent-primary); font-size: 12.5px; font-weight: 600; letter-spacing: .03em; }
+.mech-specs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.mech-specs li { display: flex; flex-direction: column; gap: 1px; }
+.mech-specs strong { color: var(--text-primary); font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mech-specs span { color: var(--text-secondary); font-size: 10.5px; line-height: 1.25; }
+.mech-label { color: #0d1311; background: rgba(216,255,114,.92); border-color: rgba(13,19,17,.25); }
+.mech-cta { width: 100%; display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px 12px; border: 1px solid rgba(216,255,114,.35); border-radius: 8px; background: var(--accent-subtle); color: var(--accent-primary); text-align: left; cursor: pointer; }
+.mech-cta span, .mech-cta strong, .mech-cta small { display: block; }
+.mech-cta strong { color: var(--text-primary); font-size: 13.5px; }
+.mech-cta small { margin-top: 2px; color: var(--text-secondary); font-size: 11.5px; }
+.mech-cta:hover, .mech-cta.selected { border-color: var(--accent-primary); }
+@media (prefers-reduced-motion: reduce) { .mech-progress i { transition: none; } }
 .compass-label { pointer-events: none; user-select: none; color: #0f1512; background: var(--accent-primary); border-radius: 50%; width: 18px; height: 18px; display: grid; place-items: center; font: 700 12.5px/1 'Plus Jakarta Sans', sans-serif; }
 .compass-label.is-minor { background: rgba(10,16,14,.8); color: #e8ece6; border: 1px solid rgba(255,255,255,.35); }
 .presentation-mode .sun-panel-slot { right: 20px; }

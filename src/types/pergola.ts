@@ -78,6 +78,8 @@ export interface SceneSettings {
   showHotspots: boolean
   /** Robbantott nézet: a szerkezeti elemek szétválnak (csak látvány). */
   exploded: boolean
+  /** Működés bemutató (lamellás tető): a hajtás láthatóvá válik, a lamellák a gyári 0–110° tartományban járnak. */
+  mechanism?: boolean
   glassOpen: boolean
   /** Az ajtók nyitva vannak-e a 3D-ben. */
   doorOpen: boolean

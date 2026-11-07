@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, CloudRain, Columns3, Gauge, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, CloudRain, Cog, Columns3, Gauge, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
 import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, wallLabel } from '@/lib/mount'
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import { FanOption, RgbOption, RoofShadeOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
@@ -172,10 +172,13 @@ function SideDiagram({ config, selected, roofName, onSelect }: { config: Pergola
 }
 
 /** A tető mozgatása: lamellaszög (forgatható) vagy nyitottság %-ban (eltolható, behúzható). */
-function RoofControl({ config, onChange }: { config: PergolaConfig; onChange: (patch: Partial<PergolaConfig>) => void }) {
+function RoofControl({ config, scene, onChange, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
   const info = ROOF_INFO[config.roof]
   if (info.motion === 'none') return null
-  if (info.motion === 'tilt') return <SliderField label="Lamellaszög" value={config.louverAngle} min={0} max={90} step={1} unit="°" onChange={(louverAngle) => onChange({ louverAngle })} />
+  if (info.motion === 'tilt') return <>
+    <SliderField label="Lamellaszög" value={config.louverAngle} min={0} max={90} step={1} unit="°" onChange={(louverAngle) => { onChange({ louverAngle }); if (scene.mechanism) onSceneChange({ mechanism: false }) }} />
+    {config.roof === 'louvered' && <button type="button" className={`mech-cta${scene.mechanism ? ' selected' : ''}`} aria-pressed={!!scene.mechanism} onClick={() => onSceneChange({ mechanism: !scene.mechanism, sunStudy: false, exploded: false })}><Cog size={16} /><span><strong>{scene.mechanism ? 'Bemutató leállítása' : 'Nézd meg működés közben'}</strong><small>Motor, hajtórúd és lamellák élőben, valós gyári adatokkal</small></span></button>}
+  </>
   return <SliderField label="Tetőnyitás" value={Math.round(config.louverAngle / 0.9)} min={0} max={100} step={1} unit="%" onChange={(open) => onChange({ louverAngle: Math.round(open * 9) / 10 })} />
 }
 
@@ -414,7 +417,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <SideDiagram config={config} selected={selectedSide} roofName={tenant.roofs[config.roof]?.name ?? ''} onSelect={onSideSelect} />
             {selectedSide === 'roof' ? <>
               <div className="selected-side-head"><strong>Tetőrendszer</strong><span>{roofLabelsFor(config.roof)}</span></div>
-              <RoofControl config={config} onChange={onChange} />
+              <RoofControl config={config} scene={scene} onChange={onChange} onSceneChange={onSceneChange} />
               <p className="split-note">A tetőtípus és az üveg/burkolat az 1. lépésben választható. <button type="button" className="text-link" onClick={() => onStepChange('size')}>Tető módosítása</button></p>
               {ROOF_INFO[config.roof].motion === 'none' && <p className="split-note">Fix tető: nincs mozgatható része.</p>}
               {(supportsRoofShade(config.roof) && tenant.extras.roofShade) || (config.roof === 'fixed' && tenant.extras.solar) ? <p className="split-note">{config.roof === 'fixed' ? 'Napelemes tető' : 'Motoros árnyékoló'} az Extrák lépésben választható.</p> : null}

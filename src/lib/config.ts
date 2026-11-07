@@ -20,6 +20,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   showPerson: false,
   showHotspots: false,
   exploded: false,
+  mechanism: false,
   glassOpen: false,
   doorOpen: false,
   climateRun: 'off',
