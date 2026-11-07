@@ -72,6 +72,25 @@ export function computeLeadStats(leads: LeadRow[], now = Date.now(), days = 30):
   }
 }
 
+/** Az értékesítési csatorna szakaszai és a lezárási esély (becslés, nem garancia): ebből jön a súlyozott várható bevétel. */
+export const STAGE_ODDS: Record<string, number> = { new: 0.1, contacted: 0.25, offered: 0.55 }
+
+export interface Pipeline { stages: { key: string; label: string; count: number; value: number; odds: number }[]; openValue: number; forecast: number; wonValue: number }
+
+/** Csatorna: szakaszonként darab és érték, a súlyozott várható bevétel és a megnyert érték. */
+export function computePipeline(leads: LeadRow[]): Pipeline {
+  const stages = LEAD_STATUSES.filter(([key]) => key in STAGE_ODDS).map(([key, label]) => {
+    const rows = leads.filter((lead) => lead.status === key)
+    return { key, label, count: rows.length, value: rows.reduce((sum, lead) => sum + lead.estimate_gross, 0), odds: STAGE_ODDS[key] }
+  })
+  return {
+    stages,
+    openValue: stages.reduce((sum, stage) => sum + stage.value, 0),
+    forecast: Math.round(stages.reduce((sum, stage) => sum + stage.value * stage.odds, 0)),
+    wonValue: leads.filter((lead) => lead.status === 'won').reduce((sum, lead) => sum + lead.estimate_gross, 0),
+  }
+}
+
 /** Az érdeklődők betöltése és státusz-módosítása (optimista frissítéssel). */
 export function useLeads(token: string, onExpired: () => void) {
   const [leads, setLeads] = useState<LeadRow[] | null>(null)

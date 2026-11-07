@@ -68,10 +68,10 @@ export const PLANS: Plan[] = [
     monthly: null,
     features: [
       'Minden, ami a Pro csomagban',
-      'Több márka és termékcsalád egy fiókban',
-      'Viszonteladói változatok saját arculattal',
+      'Több márka és termékcsalád: külön konfigurátor márkánként (egyedi megállapodás szerint)',
+      'Viszonteladói változatok saját arculattal, egyedi kiépítéssel',
       'Teljes white-label, Lamelix-jelzés nélkül',
-      'Egyedi 3D profil, termékszabályok és integráció (CRM, ERP)',
+      'Egyedi 3D profil, termékszabályok és integráció (CRM, ERP): egyedi fejlesztés, külön ajánlat alapján',
     ],
   },
 ]

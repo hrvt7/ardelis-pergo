@@ -10,6 +10,12 @@ create table if not exists public.demo_requests (
   website text,
   product text not null,
   plan text not null,
-  message text
+  message text,
+  consent_at timestamptz,
+  consent_version text
 );
 alter table public.demo_requests enable row level security;
+
+-- Meglévő táblához (ha már létrehoztad): a hozzájárulás időpontja és a tájékoztató verziója.
+alter table public.demo_requests add column if not exists consent_at timestamptz;
+alter table public.demo_requests add column if not exists consent_version text;

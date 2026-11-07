@@ -20,6 +20,7 @@ import { buildingSpecRows } from '../src/lib/buildings'
 import { resolveTenant } from './tenantAdmin'
 import { parseConfig, roofLabels, tenantPrice } from '../src/tenants/rules'
 import type { Tenant } from '../src/tenants/types'
+import { hasPrivacyUrl } from '../src/tenants/privacy'
 import type { PergolaConfig, PriceBreakdown, SideKey } from '../src/types/pergola'
 
 export type LeadEnv = Record<string, string | undefined>
@@ -254,6 +255,7 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   const input = parsed.data
   const tenant = await resolveTenant(env, input.tenantId)
   if (!tenant) return json(404, { ok: false, error: 'Ismeretlen konfigurátor.' })
+  if (!hasPrivacyUrl(tenant)) return json(503, { ok: false, error: 'Ennél a konfigurátornál az adatkezelési tájékoztató még nincs beállítva, ezért most nem fogadunk kérelmet. Kérjük, vedd fel a kapcsolatot közvetlenül a gyártóval.' })
   if (!tenant.regions.includes(input.customer.region)) return json(422, { ok: false, error: 'Kérlek, válassz régiót a listából.', field: 'customer.region' })
 
   const config = parseConfig(tenant, input.config)

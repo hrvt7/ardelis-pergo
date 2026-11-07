@@ -91,7 +91,7 @@ function DemoForm({ plan, onPlan }: { plan: PlanId | 'unsure'; onPlan: (plan: Pl
     </fieldset>
     <label className="pf-wide"><span>{f.message}</span><textarea name="message" rows={3} maxLength={2000} placeholder={f.messagePlaceholder} /></label>
     <input className="pf-hp" name="fax" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-    <label className="pf-consent"><input type="checkbox" name="consent" required /><span>{f.consent}</span></label>
+    <label className="pf-consent"><input type="checkbox" name="consent" required /><span>{f.consent} <a href="/adatkezeles" target="_blank" rel="noopener">{f.privacyLink}</a></span></label>
     {state.status === 'error' && <div className="pf-form-error" role="alert">
       <p>{state.message}{state.fallback ? f.fallback : ''}</p>
       {state.fallback && <div className="pf-fallback"><a href={`mailto:${state.fallback}?subject=${encodeURIComponent(f.mailSubject)}`}>{state.fallback}</a><button type="button" onClick={() => { void navigator.clipboard?.writeText(state.fallback!).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1500) }).catch(() => undefined) }}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? f.copied : f.copy}</button></div>}

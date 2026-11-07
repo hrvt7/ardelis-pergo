@@ -10,6 +10,7 @@ export const demoTenant: Tenant = {
   brand: {
     name: 'Lamelix',
     legalName: 'Lamelix (bemutató)',
+    privacyUrl: '/adatkezeles',
   },
   // A bemutató gyártó maga a Lamelix: a diszkrét platform-jelzés itt felesleges.
   platformCredit: false,

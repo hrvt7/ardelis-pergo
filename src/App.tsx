@@ -6,6 +6,7 @@ import TenantStudio from '@/pages/TenantStudio'
 const AdminPage = lazy(() => import('@/pages/AdminPage'))
 const QuotePage = lazy(() => import('@/pages/QuotePage'))
 const Home = lazy(() => import('@/pages/Home'))
+const Privacy = lazy(() => import('@/pages/Privacy'))
 
 /** Átirányítás, ami megtartja a lekérdezést és a #hash-t (megosztott konfigurációs linkek). */
 function Redirect({ to }: { to: string }) {
@@ -18,6 +19,8 @@ export default function App() {
     <Route path="/" element={<Platform />} />
     <Route path="/en" element={<Platform lang="en" />} />
     {/* A demó gyártó (Lamelix) lakossági mintaoldala */}
+    <Route path="/adatkezeles" element={<Suspense fallback={null}><Privacy /></Suspense>} />
+    <Route path="/privacy" element={<Redirect to="/adatkezeles" />} />
     <Route path="/minta" element={<Suspense fallback={null}><Home /></Suspense>} />
     <Route path="/ardelis" element={<Redirect to="/minta" />} />
     <Route path="/konfigurator" element={<TenantStudio mode="demo" />} />

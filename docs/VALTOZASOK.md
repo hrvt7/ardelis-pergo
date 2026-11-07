@@ -1,5 +1,14 @@
 # Változások
 
+## 3.56 – Admin prémium szint, adatvédelem, pontosított ígéretek
+
+- **Admin:** demó adatmód (28 valósághű, kitalált érdeklődő, trend és tölcsér; a demó gyártónál automatikusan, amíg nincs valódi adat), számfelfutás, fényfolt a kártyákon, lépcsőzetes belépő animációk, fülváltás-áttűnés.
+- **Érdeklődők:** kanban tábla húzással (Új → Kapcsolatba léptünk → Ajánlat kiment → Megnyert/Elveszett), tábla/kanban váltó, bővített részletpanel (felülnézeti vázlat, előzmények, kész e-mail-sablon).
+- **Áttekintés:** „Ma teendő” lista hívógombbal, értékesítési csatorna súlyozott várható bevétellel (a lezárási esélyek becslések), induló lista folyamatjelzővel, PDF-jelentés.
+- **Gyorskereső (Ctrl/Cmd + K)**, értesítések, élő új-érdeklődő jelzés (éles módban percenkénti frissítés), új **Beágyazás** fül (iframe-kód, link, QR, magasság, élő előnézet).
+- **Adatvédelem:** új `/adatkezeles` tájékoztató oldal; a demókérés tárolja a hozzájárulás időpontját és a tájékoztató verzióját (`supabase/demo_requests.sql`: futtasd újra az `alter table` sorokat); az éles gyártó leadjét a szerver elutasítja valós https adatkezelési cím nélkül; a demó gyártó a saját oldalunkra mutat.
+- **Pontosított ígéretek:** a GYIK már nem állítja, hogy a méretkorlát és a színkatalógus adminból állítható (nem az; induláskor mi állítjuk be). A Partnerhálózat csomag szövege jelzi, hogy egyedi kiépítésű és külön ajánlat alapján készül; a csomagszintű jogosultságkezelés, önkiszolgáló regisztráció és automatikus számlázás nincs megvalósítva.
+
 ## 3.55 – Nyitóoldal (B2B) bevezető szövegének újraírása
 
 - A gyártóknak szóló nyitóoldal bevezetője (HU és EN) és a JavaScript nélküli tartalék szöveg: a vásárló megtervezi, a gyártó megkapja a kész, beárazott ajánlatkérést. Egységes megszólítás (Önök), veranda is szerepel, „irányár” a pontos kifejezés.

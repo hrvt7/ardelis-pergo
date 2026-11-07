@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState, type PointerEvent } from 'react'
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, FileText, PhoneCall } from 'lucide-react'
 import { formatHuf } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
-import { computeLeadStats, initials, STATUS_COLORS, timeAgo, LEAD_STATUSES, type LeadRow } from '@/lib/adminLeads'
+import { computeLeadStats, computePipeline, initials, STATUS_COLORS, timeAgo, LEAD_STATUSES, type LeadRow } from '@/lib/adminLeads'
 import { computeFunnel, type EventRow } from '@/lib/adminStats'
 import type { RoofType } from '@/types/pergola'
+import { Checklist, type ChecklistItem } from '@/components/admin/adminKit'
 
 const compactHuf = (value: number) => (value >= 1_000_000 ? `${(value / 1_000_000).toLocaleString('hu-HU', { maximumFractionDigits: 1 })} M Ft` : formatHuf(value))
 const shortDate = (day: string) => new Date(`${day}T12:00:00`).toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' })
@@ -66,7 +67,7 @@ function CountValue({ value }: { value: string }) {
 }
 
 function Kpi({ label, value, hint, delta, spark, ring }: { label: string; value: string; hint?: string; delta?: number | null; spark?: number[]; ring?: number | null }) {
-  return <div className="kpi">
+  return <div className="kpi" onPointerMove={(event) => { const box = event.currentTarget.getBoundingClientRect(); event.currentTarget.style.setProperty('--mx', `${event.clientX - box.left}px`); event.currentTarget.style.setProperty('--my', `${event.clientY - box.top}px`) }}>
     <div className="kpi-head"><span>{label}</span>{delta != null && delta !== 0 && <em className={delta > 0 ? 'up' : 'down'}>{delta > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}{Math.abs(delta)}</em>}</div>
     <strong><CountValue value={value} /></strong>
     {hint && <small>{hint}</small>}
@@ -127,14 +128,50 @@ function HBars({ items, empty }: { items: { key: string; count: number }[]; empt
   return <ul className="hbars">{items.map((item) => <li key={item.key}><span>{item.key}</span><div><i style={{ width: `${(item.count / max) * 100}%` }} /></div><strong>{item.count}</strong></li>)}</ul>
 }
 
+const DAY = 86_400_000
+
+/** „Ma teendő”: a következő lépésre váró érdeklődők a kor szerint (új: első hívás, kapcsolatban: 3 nap, ajánlat: 5 nap után utánkövetés). */
+function TodayCard({ leads, now, onOpen }: { leads: LeadRow[]; now: number; onOpen: (ref: string) => void }) {
+  const age = (lead: LeadRow) => (now - new Date(lead.created_at).getTime()) / DAY
+  const tasks = leads.flatMap((lead) => {
+    if (lead.status === 'new') return [{ lead, why: age(lead) < 1 ? 'Új, első hívás' : `Új, ${Math.floor(age(lead))} napja vár`, weight: 3 + age(lead) }]
+    if (lead.status === 'contacted' && age(lead) > 3) return [{ lead, why: 'Utánkövetés: nincs ajánlat', weight: 2 }]
+    if (lead.status === 'offered' && age(lead) > 5) return [{ lead, why: 'Ajánlat nyomon követése', weight: 2.5 }]
+    return []
+  }).sort((a, b) => b.weight - a.weight).slice(0, 5)
+  return <section className="card today">
+    <header><h3>Ma teendő</h3>{tasks.length > 0 && <span className="check-count">{tasks.length}</span>}</header>
+    {tasks.length === 0 ? <p className="admin-hint">Nincs teendő. Minden érdeklődő kezelve van.</p> : <ul className="recent">{tasks.map(({ lead, why }) => <li key={lead.ref}>
+      <button type="button" className="today-row" onClick={() => onOpen(lead.ref)}><span className="avatar">{initials(lead.customer_name)}</span><div><strong>{lead.customer_name}</strong><small>{why}</small></div></button>
+      <a className="icon-btn call" href={`tel:${lead.phone.replace(/[^+0-9]/g, '')}`} aria-label={`${lead.customer_name} hívása`} title="Hívás"><PhoneCall size={15} /></a>
+    </li>)}</ul>}
+  </section>
+}
+
+function PipelineCard({ leads }: { leads: LeadRow[] }) {
+  const pipeline = computePipeline(leads)
+  const max = Math.max(1, ...pipeline.stages.map((stage) => stage.value))
+  return <section className="card pipeline">
+    <header><h3>Értékesítési csatorna</h3></header>
+    <div className="pipe-forecast"><span>Súlyozott várható bevétel</span><strong><CountValue value={compactHuf(pipeline.forecast)} /></strong><small>megnyert eddig: {compactHuf(pipeline.wonValue)}</small></div>
+    <ul className="pipe-stages">{pipeline.stages.map((stage) => <li key={stage.key}>
+      <div><span><i style={{ background: STATUS_COLORS[stage.key] }} />{stage.label}</span><b>{stage.count} db · {compactHuf(stage.value)}</b></div>
+      <div className="pipe-bar"><i style={{ width: `${(stage.value / max) * 100}%`, background: STATUS_COLORS[stage.key] }} /></div>
+      <small>{Math.round(stage.odds * 100)}% lezárási esély (becslés)</small>
+    </li>)}</ul>
+  </section>
+}
+
 const RANGES = [7, 30, 90] as const
 
-export default function AdminOverview({ leads, events, onOpenLeads }: { leads: LeadRow[]; events: EventRow[] | null; onOpenLeads: () => void }) {
+export default function AdminOverview({ leads, events, onOpenLeads, onOpenLead, checklist }: { leads: LeadRow[]; events: EventRow[] | null; onOpenLeads: () => void; onOpenLead: (ref: string) => void; checklist?: ChecklistItem[] }) {
   const [range, setRange] = useState<(typeof RANGES)[number]>(30)
   const [now] = useState(() => Date.now())
   const stats = computeLeadStats(leads, now, range)
   const delta = stats.last7 - stats.prev7
   const spark = stats.daily.slice(-14).map((item) => item.count)
+  const pipeline = computePipeline(leads)
+  const setupOpen = checklist?.some((item) => !item.done)
 
   return <div className="dash">
     <div className="kpis">
@@ -142,11 +179,15 @@ export default function AdminOverview({ leads, events, onOpenLeads }: { leads: L
       <Kpi label="Feldolgozatlan" value={String(stats.fresh)} hint={stats.fresh ? 'Hívásra vár' : 'Minden kezelve'} />
       <Kpi label="Átlagos irányár" value={compactHuf(stats.averageGross)} hint="bruttó, érdeklődőnként" />
       <Kpi label="Nyitott érték" value={compactHuf(stats.openValue)} hint="új + folyamatban + ajánlat" />
+      <Kpi label="Várható bevétel" value={compactHuf(pipeline.forecast)} hint="súlyozott, becsült" />
       <Kpi label="Nyerési arány" value={stats.winRate === null ? '—' : `${Math.round(stats.winRate * 100)}%`} hint="megnyert / lezárt" ring={stats.winRate} />
     </div>
     <div className="dash-grid">
+      {setupOpen && checklist && <div className="span-2"><Checklist items={checklist} /></div>}
+      <TodayCard leads={leads} now={now} onOpen={onOpenLead} />
+      <PipelineCard leads={leads} />
       <section className="card span-2">
-        <header><h3>Érkező érdeklődők</h3><div className="seg" role="group" aria-label="Időszak">{RANGES.map((value) => <button type="button" key={value} className={range === value ? 'is-on' : ''} onClick={() => setRange(value)}>{value} nap</button>)}</div></header>
+        <header><h3>Érkező érdeklődők</h3><button type="button" className="ghost-link report-btn" onClick={() => window.print()}><FileText size={13} />Jelentés (PDF)</button><div className="seg" role="group" aria-label="Időszak">{RANGES.map((value) => <button type="button" key={value} className={range === value ? 'is-on' : ''} onClick={() => setRange(value)}>{value} nap</button>)}</div></header>
         {leads.length === 0 ? <p className="admin-hint empty-hint">Még nem érkezett érdeklődő. Amint valaki felmérést kér, itt jelenik meg a grafikon.</p> : <AreaChart daily={stats.daily} />}
       </section>
       <section className="card span-2"><header><h3>Látogatói tölcsér</h3></header><FunnelCard events={events} recent={stats.last30} /></section>

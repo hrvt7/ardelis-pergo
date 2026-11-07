@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { ExternalLink, LayoutDashboard, LogOut, SlidersHorizontal, Users } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { Code2, ExternalLink, LayoutDashboard, LogOut, Search, SlidersHorizontal, Users } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import AdminLeads from '@/pages/AdminLeads'
 import LamelixLogo from '@/components/LamelixLogo'
 import AdminOverview from '@/pages/AdminOverview'
-import { useLeads } from '@/lib/adminLeads'
+import { LEAD_STATUSES, useLeads, type LeadRow } from '@/lib/adminLeads'
+import { demoEvents, demoLeads, demoIncoming } from '@/lib/adminDemo'
+import { CommandPalette, EmbedPanel, PALETTE_ICONS, Toasts, useToasts, type ChecklistItem, type PaletteCommand } from '@/components/admin/adminKit'
+import '@/admin-premium.css'
+import { hasPrivacyUrl } from '@/tenants/privacy'
 import { useQuotes } from '@/lib/quotes'
 import { useStats } from '@/lib/adminStats'
 import NotFound from '@/pages/NotFound'
@@ -88,7 +92,7 @@ function AdminForTenant({ base }: { base: Tenant }) {
 
   if (overrides === undefined) return <main className="admin-page"><p className="admin-card" role="status">Betöltés…</p></main>
 
-  return <AdminShell base={base} token={token} onExpired={logout} onLogout={logout}>
+  return <AdminShell base={base} token={token} overrides={overrides} onExpired={logout} onLogout={logout}>
     <AdminEditor base={base} initial={overrides} storage={storage} saving={saving} message={message}
       onSave={async (next) => {
       setSaving(true); setMessage(null)
@@ -104,24 +108,108 @@ function AdminForTenant({ base }: { base: Tenant }) {
   </AdminShell>
 }
 
-type AdminTab = 'overview' | 'leads' | 'settings'
-const TABS: [AdminTab, string, string][] = [['overview', 'Áttekintés', '#attekintes'], ['leads', 'Érdeklődők', '#erdeklodok'], ['settings', 'Beállítások', '#beallitasok']]
+const LEAD_STATUS_LABEL = Object.fromEntries(LEAD_STATUSES) as Record<string, string>
+
+type AdminTab = 'overview' | 'leads' | 'embed' | 'settings'
+const TABS: [AdminTab, string, string][] = [['overview', 'Áttekintés', '#attekintes'], ['leads', 'Érdeklődők', '#erdeklodok'], ['embed', 'Beágyazás', '#beagyazas'], ['settings', 'Beállítások', '#beallitasok']]
 
 const TAB_INFO: Record<AdminTab, { icon: ReactNode; subtitle: string }> = {
   overview: { icon: <LayoutDashboard size={18} />, subtitle: 'Érdeklődők, látogatottság és értékesítési csatorna egy helyen.' },
   leads: { icon: <Users size={18} />, subtitle: 'Kezeld a beérkező felmérési kérelmeket: státusz, megjegyzés, hívás.' },
+  embed: { icon: <Code2 size={18} />, subtitle: 'Másolható beágyazókód, link és QR-kód: a konfigurátor a saját weboldaladon.' },
   settings: { icon: <SlidersHorizontal size={18} />, subtitle: 'Árak, ármátrix, elérhető opciók és az értesítések címzettjei.' },
 }
 
 /** Közös keret: oldalsáv (mobilon alsó fülsáv) + sticky fejléc + Áttekintés / Érdeklődők / Beállítások. Az űrlap fül nem veszti el a szerkesztést váltáskor. */
-function AdminShell({ base, token, onExpired, onLogout, children }: { base: Tenant; token: string; onExpired: () => void; onLogout: () => void; children: ReactNode }) {
+function AdminShell({ base, token, overrides, onExpired, onLogout, children }: { base: Tenant; token: string; overrides: TenantOverrides | null; onExpired: () => void; onLogout: () => void; children: ReactNode }) {
   const [tab, setTab] = useState<AdminTab>(() => TABS.find(([, , hash]) => hash === window.location.hash)?.[0] ?? 'overview')
-  const { leads, error, reload, update } = useLeads(token, onExpired)
+  const real = useLeads(token, onExpired)
   const quoteApi = useQuotes(token, onExpired)
-  const events = useStats(token)
-  const choose = (next: AdminTab) => { setTab(next); window.history.replaceState(null, '', TABS.find(([key]) => key === next)![2]) }
+  const realEvents = useStats(token)
+  const { toasts, push, dismiss } = useToasts()
+  const [openRef, setOpenRef] = useState<string | null>(null)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  // Demó mód: a demó gyártónál (vagy kérésre bárkinél) kitalált, de valósághű adatokkal tölti fel a felületet, amíg nincs valódi érdeklődő.
+  const [demoPref, setDemoPref] = useState<boolean | null>(null)
+  const realEmpty = real.leads !== null && (real.leads.length === 0 || Boolean(real.error))
+  const demo = demoPref ?? (base.demo === true && realEmpty)
+  const [demoRows, setDemoRows] = useState<LeadRow[]>(() => demoLeads(Date.now()))
+  const [demoClock] = useState(() => Date.now())
+  const demoStats = useMemo(() => demoEvents(demoClock), [demoClock])
+  const leads = demo ? demoRows : real.leads
+  const error = demo ? '' : real.error
+  const events = demo ? demoStats : realEvents
+  const update = useCallback((ref: string, patch: { status?: string; ownerNote?: string }) => {
+    if (demo) setDemoRows((rows) => rows.map((row) => (row.ref === ref ? { ...row, ...(patch.status ? { status: patch.status } : {}), ...(patch.ownerNote !== undefined ? { owner_note: patch.ownerNote || null } : {}) } : row)))
+    else void real.update(ref, patch)
+    if (patch.status) push(`Státusz módosítva: ${LEAD_STATUS_LABEL[patch.status] ?? patch.status}`)
+    else if (patch.ownerNote !== undefined) push('Megjegyzés mentve')
+  }, [demo, real, push])
+
+  const choose = useCallback((next: AdminTab) => { setTab(next); window.history.replaceState(null, '', TABS.find(([key]) => key === next)![2]) }, [])
+  const openLead = useCallback((ref: string) => { choose('leads'); setOpenRef(ref) }, [choose])
+
+  // Élő értesítés: demóban időnként „beérkezik” egy kitalált érdeklődő, éles módban a szerver frissítése hozza az újat.
+  const known = useRef<Set<string> | null>(null)
+  useEffect(() => {
+    if (demo) {
+      let step = 0
+      const id = window.setInterval(() => {
+        const lead = demoIncoming(Date.now(), step++)
+        setDemoRows((rows) => [lead, ...rows.filter((row) => row.ref !== lead.ref)])
+        push(`Új érdeklődő: ${lead.customer_name}, ${lead.city}`, 'lead', { label: 'Megnyitás', run: () => openLead(lead.ref) })
+      }, 45_000)
+      return () => window.clearInterval(id)
+    }
+    const id = window.setInterval(() => { void real.reload() }, 60_000)
+    return () => window.clearInterval(id)
+  }, [demo, push, openLead, real])
+  useEffect(() => {
+    if (demo || !real.leads) return
+    const refs = new Set(real.leads.map((lead) => lead.ref))
+    if (known.current) {
+      const fresh = real.leads.filter((lead) => !known.current!.has(lead.ref))
+      if (fresh.length) push(`Új érdeklődő: ${fresh[0].customer_name}, ${fresh[0].city}`, 'lead', { label: 'Megnyitás', run: () => openLead(fresh[0].ref) })
+    }
+    known.current = refs
+  }, [demo, real.leads, push, openLead])
+
+  // Cmd/Ctrl+K: gyorskereső.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setPaletteOpen((open) => !open) } }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const effective = useMemo(() => (overrides ? applyOverrides(base, overrides) : base), [base, overrides])
+  const embedKey = `admin-embed-copied:${base.id}`
+  const [embedCopied, setEmbedCopied] = useState(() => { try { return localStorage.getItem(embedKey) === '1' } catch { return false } })
+  const markEmbed = () => { setEmbedCopied(true); try { localStorage.setItem(embedKey, '1') } catch { /* privát mód */ } push('Beágyazókód másolva') }
+  const checklist: ChecklistItem[] = [
+    { key: 'logo', label: 'Logó feltöltése', hint: 'Add meg a logó URL-jét a Beállításokban.', done: Boolean(effective.brand.logoUrl), go: () => choose('settings') },
+    { key: 'email', label: 'Kapcsolattartó e-mail', hint: 'Ez jelenik meg a vevőknek küldött anyagokon.', done: Boolean(effective.brand.email), go: () => choose('settings') },
+    { key: 'privacy', label: 'Adatkezelési tájékoztató', hint: 'Éles működéshez kötelező: nélküle a konfigurátor nem fogad kérelmet.', done: hasPrivacyUrl(effective), go: () => choose('settings') },
+    { key: 'recipients', label: 'Értesítési címzettek', hint: 'Ide érkeznek az új érdeklődők e-mailben.', done: effective.lead.recipients.length > 0, go: () => choose('settings') },
+    { key: 'lead', label: 'Első érdeklődő', hint: 'Küldj egy próbakérést a konfigurátorból.', done: (real.leads?.length ?? 0) > 0, go: () => window.open(`/k/${base.id}`, '_blank', 'noopener') },
+    { key: 'embed', label: 'Beágyazás a weboldalba', hint: 'Másold ki a kódot a Beágyazás fülön.', done: embedCopied, go: () => choose('embed') },
+  ]
+
+  const commands: PaletteCommand[] = [
+    { id: 'go-overview', label: 'Ugrás: Áttekintés', icon: PALETTE_ICONS.overview, run: () => choose('overview') },
+    { id: 'go-leads', label: 'Ugrás: Érdeklődők', icon: PALETTE_ICONS.leads, run: () => choose('leads') },
+    { id: 'go-embed', label: 'Ugrás: Beágyazás', icon: PALETTE_ICONS.embed, run: () => choose('embed') },
+    { id: 'go-settings', label: 'Ugrás: Beállítások', icon: PALETTE_ICONS.settings, run: () => choose('settings') },
+    { id: 'report', label: 'Jelentés nyomtatása / PDF', icon: PALETTE_ICONS.report, run: () => { choose('overview'); window.setTimeout(() => window.print(), 250) } },
+    { id: 'configurator', label: 'Konfigurátor megnyitása', icon: PALETTE_ICONS.open, run: () => window.open(`/k/${base.id}`, '_blank', 'noopener') },
+    { id: 'demo', label: demo ? 'Demó adatok kikapcsolása' : 'Demó adatok bekapcsolása', icon: PALETTE_ICONS.csv, run: () => setDemoPref(!demo) },
+  ]
+
   const fresh = leads?.filter((lead) => lead.status === 'new').length ?? 0
   const title = TABS.find(([key]) => key === tab)![1]
+  const quotes = demo
+    ? { all: [], create: async () => ({ ok: false as const, error: 'Demó módban az ajánlat nem küldhető ki.' }), withdraw: async () => false }
+    : { all: quoteApi.quotes ?? [], create: quoteApi.create, withdraw: quoteApi.withdraw }
   return <main className="admin-page">
     <div className="admin-layout">
       <aside className="admin-side">
@@ -132,13 +220,18 @@ function AdminShell({ base, token, onExpired, onLogout, children }: { base: Tena
         <div className="admin-side-foot"><Link to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor megnyitása</Link><button type="button" onClick={onLogout}><LogOut size={15} />Kilépés</button><a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><LamelixLogo height={16} title={null} /></a></div>
       </aside>
       <section className="admin-main">
-        <header className="admin-top"><div><h1>{title}</h1><p>{TAB_INFO[tab].subtitle}</p></div><Link className="btn" to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor</Link></header>
-        {tab !== 'settings' && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
-        {tab === 'overview' && leads && <>{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} /></>}
-        {tab === 'leads' && leads && <AdminLeads leads={leads} error={error} onReload={() => void reload()} onUpdate={(ref, patch) => void update(ref, patch)} quotes={{ all: quoteApi.quotes ?? [], create: quoteApi.create, withdraw: quoteApi.withdraw }} />}
+        {demo && <div className="demo-ribbon" role="status"><span><b>Demó adatok</b> · kitalált érdeklődők, a módosítások nem mentődnek.</span><button type="button" onClick={() => setDemoPref(false)}>Kikapcsolás</button></div>}
+        {!demo && base.demo === true && realEmpty && <div className="demo-ribbon is-soft"><span>Még nincs valódi érdeklődő.</span><button type="button" onClick={() => setDemoPref(true)}>Demó adatok megtekintése</button></div>}
+        <header className="admin-top"><div><h1>{title}</h1><p>{TAB_INFO[tab].subtitle}</p></div><div className="admin-top-actions"><button type="button" className="palette-btn" onClick={() => setPaletteOpen(true)} aria-label="Gyorskereső megnyitása"><Search size={14} /><span>Keresés</span><kbd>Ctrl K</kbd></button><Link className="btn" to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor</Link></div></header>
+        {(tab === 'overview' || tab === 'leads') && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
+        {tab === 'overview' && leads && <div key="overview" className="tab-fade">{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} onOpenLead={openLead} checklist={demo ? undefined : checklist} /></div>}
+        {tab === 'leads' && leads && <div key="leads" className="tab-fade"><AdminLeads leads={leads} error={error} onReload={() => void real.reload()} onUpdate={update} quotes={quotes} openRef={openRef} onOpenRef={setOpenRef} /></div>}
+        {tab === 'embed' && <div key="embed" className="tab-fade"><EmbedPanel tenantId={base.id} onCopied={markEmbed} /></div>}
         <div hidden={tab !== 'settings'}>{children}</div>
       </section>
     </div>
+    <Toasts toasts={toasts} onDismiss={dismiss} />
+    <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} leads={leads ?? []} onOpenLead={openLead} />
   </main>
 }
 

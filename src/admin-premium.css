@@ -1,0 +1,122 @@
+/* Admin – prémium réteg: animációk, kanban, értesítések, gyorskereső, induló lista, beágyazás. */
+.admin-page{--ap-glow:rgba(216,255,114,.14)}
+
+/* Belépő animációk */
+@keyframes ap-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes ap-fade{from{opacity:0}to{opacity:1}}
+.tab-fade{animation:ap-fade .28s ease backwards}
+.dash .kpi,.dash .card,.dash>div{animation:ap-rise .5s cubic-bezier(.2,.7,.2,1) backwards}
+.dash .kpis .kpi:nth-child(2){animation-delay:.05s}.dash .kpis .kpi:nth-child(3){animation-delay:.1s}.dash .kpis .kpi:nth-child(4){animation-delay:.15s}.dash .kpis .kpi:nth-child(5){animation-delay:.2s}.dash .kpis .kpi:nth-child(6){animation-delay:.25s}
+.dash-grid>*:nth-child(2){animation-delay:.08s}.dash-grid>*:nth-child(3){animation-delay:.14s}.dash-grid>*:nth-child(4){animation-delay:.2s}.dash-grid>*:nth-child(5){animation-delay:.26s}
+
+/* Fényfolt a KPI-kártyán (egér követése) */
+.kpi::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;background:radial-gradient(180px circle at var(--mx,50%) var(--my,50%),var(--ap-glow),transparent 70%)}
+.kpi:hover::after{opacity:1}
+.kpi:hover{border-color:var(--a-edge-hi)}
+
+/* Demó szalag */
+.demo-ribbon{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;padding:9px 14px;border-radius:12px;border:1px solid rgba(255,196,87,.35);background:linear-gradient(90deg,rgba(255,196,87,.14),rgba(255,196,87,.04));font-size:13px;color:var(--text-primary)}
+.demo-ribbon b{color:#ffc457}.demo-ribbon button{flex:none;min-height:28px;padding:0 12px;border-radius:8px;border:1px solid rgba(255,196,87,.4);background:none;color:#ffc457;font-weight:650;font-size:12.5px}
+.demo-ribbon.is-soft{border-color:var(--a-edge-hi);background:rgba(255,255,255,.03)}.demo-ribbon.is-soft button{border-color:var(--a-edge-hi);color:var(--text-primary)}
+
+/* Fejléc: gyorskereső gomb */
+.admin-top-actions{display:flex;align-items:center;gap:10px}
+.palette-btn{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 10px 0 12px;border-radius:10px;border:1px solid var(--a-edge-hi);background:rgba(255,255,255,.04);color:var(--a-muted);font-size:13px}
+.palette-btn:hover{color:var(--text-primary);border-color:rgba(255,255,255,.22)}
+kbd{font:600 10.5px/1 ui-monospace,monospace;padding:3px 6px;border-radius:5px;border:1px solid var(--a-edge-hi);background:rgba(255,255,255,.06);color:var(--a-muted)}
+
+/* Toast */
+.toasts{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:90;display:grid;gap:8px;width:min(360px,calc(100vw - 32px))}
+.toast{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid var(--a-edge-hi);background:rgba(24,28,22,.94);backdrop-filter:blur(14px);box-shadow:0 18px 44px -12px rgba(0,0,0,.7);font-size:13.5px;animation:ap-rise .3s cubic-bezier(.2,.7,.2,1) both}
+.toast-icon{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:rgba(216,255,114,.14);color:var(--accent-primary);flex:none}
+.toast.is-lead{border-color:rgba(216,255,114,.4);box-shadow:0 18px 44px -12px rgba(0,0,0,.7),0 0 0 3px rgba(216,255,114,.07)}
+.toast-text{flex:1;min-width:0}.toast button{flex:none;min-height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--a-edge-hi);background:rgba(255,255,255,.06);color:var(--text-primary);font-weight:650;font-size:12.5px}
+
+/* Gyorskereső */
+.palette-scrim{position:fixed;inset:0;z-index:95;display:flex;justify-content:center;align-items:flex-start;padding:12vh 16px 16px;background:rgba(6,8,5,.62);backdrop-filter:blur(6px);animation:ap-fade .15s ease both}
+.palette{width:min(580px,100%);border-radius:18px;border:1px solid var(--a-edge-hi);background:#141813;box-shadow:0 40px 90px -20px rgba(0,0,0,.85);overflow:hidden;animation:ap-rise .22s cubic-bezier(.2,.7,.2,1) both}
+.palette-input{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--a-edge);color:var(--a-muted)}
+.palette-input input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text-primary);font-size:16px}
+.palette-list{list-style:none;margin:0;padding:6px;max-height:min(52vh,420px);overflow:auto}
+.palette-group{padding:10px 10px 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--a-muted)}
+.palette-list button{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:6px 10px;border-radius:10px;border:0;background:none;color:var(--text-primary);text-align:left;font-size:14px}
+.palette-list button.is-on{background:rgba(216,255,114,.1)}
+.palette-ico{display:grid;place-items:center;width:28px;color:var(--a-muted)}.palette-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.palette-list small{color:var(--a-muted);font-size:12px}
+.palette-empty{padding:22px;text-align:center;color:var(--a-muted)}
+.avatar.sm{width:26px;height:26px;font-size:10px}
+
+/* Ma teendő + csatorna */
+.today-row{display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:0;border:0;background:none;color:inherit;text-align:left}
+.today-row div{display:grid;min-width:0}.today-row small{color:var(--a-muted)}
+.icon-btn.call{width:34px;height:34px;color:var(--accent-primary);border-color:rgba(216,255,114,.3);background:rgba(216,255,114,.07)}
+.check-count{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 7px;border-radius:99px;background:rgba(216,255,114,.14);color:var(--accent-primary);font-size:12px;font-weight:700}
+.pipe-forecast{display:grid;gap:2px;padding:12px 14px;margin-bottom:12px;border-radius:14px;border:1px solid rgba(216,255,114,.22);background:linear-gradient(135deg,rgba(216,255,114,.1),rgba(216,255,114,.02))}
+.pipe-forecast>span{font-size:12px;color:var(--a-muted)}.pipe-forecast strong{font-size:28px;letter-spacing:-.02em;color:var(--accent-primary)}.pipe-forecast small{color:var(--a-muted)}
+.pipe-stages{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.pipe-stages li>div:first-child{display:flex;justify-content:space-between;gap:8px;font-size:13px}.pipe-stages span{display:flex;align-items:center;gap:7px}.pipe-stages i{width:8px;height:8px;border-radius:50%}
+.pipe-stages small{color:var(--a-muted);font-size:11.5px}
+.pipe-bar{height:6px;margin:6px 0 4px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}.pipe-bar i{display:block;height:100%;border-radius:99px;transform-origin:left;animation:ap-grow .9s cubic-bezier(.2,.7,.2,1) both}
+@keyframes ap-grow{from{transform:scaleX(0)}to{transform:none}}
+.report-btn{margin-left:auto;display:inline-flex;align-items:center;gap:5px}
+
+/* Induló lista */
+.checklist .check-body{display:flex;gap:18px;align-items:flex-start}
+.check-ring{width:76px;height:76px;flex:none}.check-ring text{fill:var(--text-primary);font-size:10px;font-weight:700}
+.checklist ul{list-style:none;margin:0;padding:0;display:grid;gap:10px;flex:1;min-width:0}
+.checklist li{display:flex;align-items:center;gap:12px}.checklist li div{flex:1;min-width:0;display:grid}.checklist small{color:var(--a-muted)}
+.check-dot{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--a-edge-hi);flex:none;color:var(--ink-1000)}
+.checklist li.is-done .check-dot{background:var(--accent-primary);border-color:transparent}.checklist li.is-done b{color:var(--a-muted);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.25)}
+
+/* Kanban */
+.view-seg button{display:inline-flex;align-items:center;gap:6px}
+.board{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:12px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x proximity}
+.board-col{display:flex;flex-direction:column;min-height:320px;padding:10px;border-radius:16px;border:1px solid var(--a-edge);background:rgba(255,255,255,.02);scroll-snap-align:start;transition:background .15s,border-color .15s}
+.board-col.is-over{border-color:var(--pill);background:color-mix(in srgb,var(--pill) 7%,transparent)}
+.board-col>header{display:flex;align-items:center;gap:8px;padding:4px 4px 10px}.board-col>header i{width:9px;height:9px;border-radius:50%;background:var(--pill)}
+.board-col h3{margin:0;font-size:13.5px}.board-col>header b{font-size:12px;padding:1px 8px;border-radius:99px;background:rgba(255,255,255,.07)}.board-col>header{flex-wrap:wrap}.board-col>header small{flex-basis:100%;margin:-4px 0 0 17px;color:var(--a-muted);font-size:11.5px}.board-col>header small:empty{display:none}
+.board-list{display:grid;gap:8px;align-content:start;flex:1}
+.board-empty{margin:0;padding:22px 8px;text-align:center;font-size:12.5px;color:var(--a-muted);border:1px dashed var(--a-edge-hi);border-radius:12px}
+.board-card{position:relative;display:grid;gap:6px;padding:12px;border-radius:13px;border:1px solid var(--a-edge);background:var(--a-card);cursor:grab;transition:transform .15s,border-color .15s,box-shadow .15s}
+.board-card:hover,.board-card:focus-visible{border-color:var(--a-edge-hi);transform:translateY(-1px);box-shadow:0 14px 28px -16px rgba(0,0,0,.8);outline:0}
+.board-card.is-drag{opacity:.4;cursor:grabbing}
+.bc-top{display:flex;align-items:center;gap:8px;min-width:0}.bc-top b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}.bc-grip{color:var(--a-muted);opacity:.5}
+.bc-meta{font-size:12px;color:var(--a-muted)}.bc-foot{display:flex;justify-content:space-between;align-items:baseline}.bc-foot small{color:var(--a-muted)}
+.bc-moves{display:none;gap:6px}.board-card:hover .bc-moves,.board-card:focus-within .bc-moves{display:flex}
+.bc-moves button{width:14px;height:14px;border-radius:50%;border:0;padding:0;opacity:.8}.bc-moves button:hover{opacity:1;transform:scale(1.25)}
+@media (hover:none){.bc-moves{display:flex}.bc-moves button{width:22px;height:22px}}
+
+/* Részletpanel */
+.drawer-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch}
+.plan-sketch{width:100%;height:auto;border-radius:12px}.ps-ground{fill:rgba(255,255,255,.03);stroke:var(--a-edge)}.ps-roof{fill:rgba(216,255,114,.12);stroke:var(--accent-primary);stroke-width:1.4}
+.ps-louver{stroke:rgba(216,255,114,.55);stroke-width:1}.ps-post{fill:var(--text-primary)}.ps-dim{fill:var(--a-muted);font-size:8px}
+.drawer-hero .drawer-price{align-content:center}.drawer-price small{display:block;color:var(--a-muted);margin-top:2px}
+.timeline{list-style:none;margin:0 0 14px;padding:0 0 0 14px;border-left:1px solid var(--a-edge-hi);display:grid;gap:10px}
+.timeline li{position:relative;display:grid;font-size:13px}.timeline li i{position:absolute;left:-19px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--a-muted)}.timeline small{color:var(--a-muted)}
+
+/* Beágyazás */
+.embed{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px}.embed .span-all{grid-column:1/-1}
+.embed-height{display:flex;align-items:center;gap:12px;margin:12px 0}.embed-height input{flex:1}.embed-height b{min-width:64px;text-align:right}
+.embed-code{margin:0 0 12px;padding:14px;border-radius:12px;border:1px solid var(--a-edge);background:rgba(0,0,0,.35);overflow:auto;font:12.5px/1.55 ui-monospace,monospace;color:#cfe8a6}
+.embed-actions{display:flex;flex-wrap:wrap;gap:8px}
+.embed-qr{display:grid;gap:10px;justify-items:start;align-content:start}.embed-qr img,.qr-ph{border-radius:12px;background:#fff;padding:6px}.qr-ph{width:172px;height:172px}
+.embed-frame{border-radius:14px;overflow:hidden;border:1px solid var(--a-edge);background:#000}.embed-frame iframe{display:block;width:100%;border:0}
+
+/* Nyomtatás / PDF jelentés */
+@media print{
+  .admin-side,.admin-top-actions,.toasts,.palette-scrim,.demo-ribbon,.report-btn,.seg,.ghost-link{display:none!important}
+  .admin-page,.admin-main,body{background:#fff!important;color:#111!important}
+  .kpi,.card{break-inside:avoid;background:#fff!important;border-color:#ddd!important;box-shadow:none!important;color:#111!important;animation:none!important}
+  .dash .kpi,.dash .card{animation:none!important}
+}
+
+@media (max-width:900px){
+  .embed{grid-template-columns:minmax(0,1fr)}
+  .board{grid-template-columns:repeat(5,82vw)}
+  .drawer-hero{grid-template-columns:minmax(0,1fr)}
+  .palette-btn span,.palette-btn kbd{display:none}.palette-btn{padding:0 12px}
+  .checklist .check-body{flex-direction:column}
+  .toasts{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){.tab-fade,.dash .kpi,.dash .card,.dash>div,.toast,.palette,.pipe-bar i{animation:none!important}}
+
+@media (min-width:1100px){.dash .kpis{grid-template-columns:repeat(6,minmax(0,1fr))}.dash .kpi strong{font-size:clamp(22px,2vw,30px)}}

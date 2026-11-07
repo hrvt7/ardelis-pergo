@@ -2,6 +2,7 @@
 // Kézbesítés: e-mail (Resend) a platform tulajdonosának, és — ha be van állítva — mentés Supabase-be
 // (supabase/demo_requests.sql). Ha egyik sem érhető el, 503 + a kliens a közvetlen e-mail-címet mutatja.
 import { z } from 'zod'
+import { PRIVACY_VERSION } from '../src/lib/privacyVersion'
 
 export type DemoEnv = Record<string, string | undefined>
 
@@ -9,6 +10,8 @@ export type DemoEnv = Record<string, string | undefined>
 export const DEMO_REQUEST_EMAIL = 'hrvtadam.7@icloud.com'
 const MAX_BODY_BYTES = 12_000
 const MIN_FILL_MS = 2_000
+
+export { PRIVACY_VERSION } from '../src/lib/privacyVersion'
 
 export const DEMO_PRODUCTS = ['pergola', 'veranda', 'pergola+outdoor', 'carport', 'other'] as const
 export const DEMO_PLANS = ['start', 'pro', 'partner', 'unsure'] as const
@@ -102,7 +105,7 @@ export async function handleDemoRequest(request: Request, env: DemoEnv): Promise
     canStore ? fetch(`${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/demo_requests`, {
       method: 'POST',
       headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({ ref, name: input.name, company: input.company, email: input.email.toLowerCase(), phone: input.phone || null, website: input.website || null, product: input.product, plan: input.plan, message: input.lang === 'en' ? `[EN] ${input.message}`.trim() : input.message || null }),
+      body: JSON.stringify({ ref, name: input.name, company: input.company, email: input.email.toLowerCase(), phone: input.phone || null, website: input.website || null, product: input.product, plan: input.plan, message: input.lang === 'en' ? `[EN] ${input.message}`.trim() : input.message || null, consent_at: new Date(now).toISOString(), consent_version: PRIVACY_VERSION }),
     }).then((response) => { if (!response.ok) throw new Error(`Supabase ${response.status}`) }) : Promise.resolve(),
     canEmail ? fetch('https://api.resend.com/emails', {
       method: 'POST',
