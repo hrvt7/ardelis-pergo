@@ -1,7 +1,7 @@
 // Bútorcsomagok helyigénye a pergola alatt. A zóna a bútor + a használathoz
 // szükséges szabad hely (székek kihúzása 75 cm, közlekedés legalább 60 cm).
 import type { FurnitureSet, PergolaConfig } from '@/types/pergola'
-import { isPack, packPlan, type PackItem, type PackPlan } from '@/lib/usePacks'
+import { isPack, packPlan, type PackItem, type PackPlan } from './usePacks'
 
 export interface FurnitureSpec {
   label: string
