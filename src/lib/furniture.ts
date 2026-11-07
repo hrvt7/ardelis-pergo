@@ -1,6 +1,7 @@
 // Bútorcsomagok helyigénye a pergola alatt. A zóna a bútor + a használathoz
 // szükséges szabad hely (székek kihúzása 75 cm, közlekedés legalább 60 cm).
 import type { FurnitureSet, PergolaConfig } from '@/types/pergola'
+import { isPack, packPlan, type PackItem, type PackPlan } from '@/lib/usePacks'
 
 export interface FurnitureSpec {
   label: string
@@ -14,6 +15,8 @@ export interface FurnitureSpec {
   seats: number
   /** Nagy teraszon ismételhető-e (étterem, kávézó). A jacuzzi és a bár egyedi, nem ismétlődik. */
   repeatable: boolean
+  /** Használati csomag: a pergola méretéhez igazodó elrendezés (usePacks.ts), fix tájolással. */
+  pack?: { audience: string }
 }
 
 export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec> = {
@@ -28,9 +31,17 @@ export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec
   bistro: { label: 'Bisztró', people: '4 fő', description: 'Két 70 cm-es kerek asztal, 2–2 székkel', zone: [3.4, 2.4], parts: [{ kind: 'bistro', x: 0 }], seats: 4, repeatable: true },
   bar: { label: 'Kültéri bár', people: '4 fő', description: '220 × 60 cm bárpult, 4 bárszék', zone: [3.2, 2.3], parts: [{ kind: 'bar', x: 0 }], seats: 4, repeatable: false },
   sunbed: { label: 'Napozó', people: '2 fő', description: 'Két nyugágy kisasztallal', zone: [3.2, 2.4], parts: [{ kind: 'sunbed', x: 0 }], seats: 2, repeatable: true },
+  // Használati csomagok: a pergola méretéhez igazodnak (usePacks.ts). A zóna a legkisebb méret, ahol értelmes az elrendezés.
+  restaurant: { label: 'Éttermi terasz', people: 'asztalok rácsban', description: '4 fős asztalok, a méretből adódó darabszámban, közlekedősávokkal', zone: [4.0, 4.6], parts: [{ kind: 'dining6', x: 0 }], seats: 4, repeatable: false, pack: { audience: 'Étterem, kávézó, szálloda terasza' } },
+  summerKitchen: { label: 'Nyári konyha', people: 'főzőzóna', description: 'Konyhasor a hátsó fal mentén: hűtő, grill, mosogató, munkafelületek; nagyobb mélységnél szigetpult bárszékekkel', zone: [2.8, 2.2], parts: [{ kind: 'bar', x: 0 }], seats: 0, repeatable: false, pack: { audience: 'Családi ház, vendégház, panzió' } },
+  kitchenDining: { label: 'Nyári konyha + étkező', people: '6–8 fő', description: 'Konyhasor és étkezőasztal egy tető alatt, tálalási távolsággal', zone: [3.4, 4.2], parts: [{ kind: 'dining6', x: 0 }], seats: 6, repeatable: false, pack: { audience: 'Családi ház, vendégház, panzió' } },
+  banquet: { label: 'Bankett / rendezvény', people: 'hosszú asztalok', description: 'Hosszú asztalok 60 cm-es ülésosztással, sorok közt közlekedősávval', zone: [4.2, 2.4], parts: [{ kind: 'dining6', x: 0 }], seats: 12, repeatable: false, pack: { audience: 'Rendezvényhelyszín, borászat, szálloda' } },
+  barLounge: { label: 'Bár + lounge', people: 'bárpult és pihenő sarkok', description: 'Bárpult bárszékekkel a hátsó fal mentén, előtte pihenő sarkok', zone: [3.4, 4.6], parts: [{ kind: 'lounge', x: 0 }], seats: 9, repeatable: false, pack: { audience: 'Szálloda, borbár, étterem' } },
 }
 
 export const FURNITURE_ORDER: FurnitureSet[] = ['lounge', 'dining6', 'dining8', 'combo', 'bistro', 'bar', 'sunbed', 'spa', 'loungeSpa', 'diningSpa', 'none']
+/** Használati csomagok a kiválasztóban, a lakossági bútorok után. */
+export const PACK_ORDER: FurnitureSet[] = ['summerKitchen', 'kitchenDining', 'restaurant', 'banquet', 'barLounge']
 
 /** Az oszlopok és a keret miatt a hasznos belső méret ennyivel kisebb. */
 const FRAME = 0.2
@@ -56,13 +67,14 @@ export function furnitureFit(set: FurnitureSet, config: Pick<PergolaConfig, 'wid
   const innerD = config.depth - FRAME
   const check = (zw: number, zd: number): FitLevel => (zw <= innerW + 1e-9 && zd <= innerD + 1e-9 ? 'comfortable' : zw <= innerW + TIGHT && zd <= innerD + TIGHT ? 'tight' : 'no')
   const rank = { comfortable: 2, tight: 1, no: 0 }
+  const fixed = !!FURNITURE_SETS[set].pack
   const along = check(a, b)
-  const across = check(b, a)
-  const alongWidth = rank[along] >= rank[across]
+  const across = fixed ? 'no' as FitLevel : check(b, a)
+  const alongWidth = fixed || rank[along] >= rank[across]
   const level = alongWidth ? along : across
   if (level === 'comfortable') return { level, alongWidth, suggestion: null }
   // Javaslat: a két elrendezés közül az, amelyik kisebb alapterülettel kényelmes.
-  const options = [[a, b], [b, a]].map(([zw, zd]) => {
+  const options = (fixed ? [[a, b]] : [[a, b], [b, a]]).map(([zw, zd]) => {
     let width = Math.max(config.width, up(zw + FRAME))
     let depth = Math.max(config.depth, up(zd + FRAME))
     if (limits) {
@@ -80,11 +92,13 @@ export function furnitureFit(set: FurnitureSet, config: Pick<PergolaConfig, 'wid
 export function furnitureMinimum(set: FurnitureSet): { width: number; depth: number }[] {
   if (set === 'none') return []
   const [a, b] = FURNITURE_SETS[set].zone
-  return [[a, b], [b, a]].map(([zw, zd]) => ({ width: zw + FRAME - TIGHT, depth: zd + FRAME - TIGHT }))
+  return (FURNITURE_SETS[set].pack ? [[a, b]] : [[a, b], [b, a]]).map(([zw, zd]) => ({ width: zw + FRAME - TIGHT, depth: zd + FRAME - TIGHT }))
 }
 
 export interface FurnitureCell { x: number; z: number }
 export interface FurnitureLayout {
+  /** Használati csomagnál a terv (elemek, ülőhelyek, m²/fő, megjegyzések); egyébként nincs. */
+  pack?: PackPlan
   alongWidth: boolean
   /** A csomag példányai a zóna saját (elforgatás előtti) koordinátarendszerében, méterben. */
   cells: FurnitureCell[]
@@ -107,6 +121,10 @@ export function furnitureLayout(set: FurnitureSet, config: Pick<PergolaConfig, '
   const fit = furnitureFit(set, config)
   if (!fit || set === 'none') return null
   const spec = FURNITURE_SETS[set]
+  if (isPack(set)) {
+    const plan = packPlan(set, config)
+    return { pack: plan, alongWidth: true, cells: plan.items.map((item: PackItem) => ({ x: item.x, z: item.z })), count: plan.items.length, seats: plan.seats }
+  }
   const [zoneLong, zoneShort] = spec.zone
   const single: FurnitureLayout = { alongWidth: fit.alongWidth, cells: [{ x: 0, z: 0 }], count: 1, seats: spec.seats }
   if (!spec.repeatable || fit.level !== 'comfortable') return single

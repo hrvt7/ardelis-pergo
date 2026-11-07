@@ -1,5 +1,12 @@
 # Változások
 
+## 3.68 – Használati csomagok: éttermi terasz, nyári konyha, bankett, bár + lounge
+
+- **Öt új csomag** (1. lépés → Használati csomagok): Nyári konyha, Nyári konyha + étkező, Éttermi terasz, Bankett / rendezvény, Bár + lounge. A bútorcsomagokkal szemben ezek a pergola méretéhez igazodnak: a konyhasor a hátsó fal mentén fut (hűtő, grill, mosogató, munkafelületek; elég mély pergolán szigetpult bárszékekkel), az étterem 4 fős asztalokat rácsban, a bankett hosszú asztalokat (60 cm-es ülésosztás) sorokban rak le, közlekedősávokkal.
+- **Kapacitás:** a kiválasztó kiírja az ülőhelyek számát és a m²/fő értéket a vendéglátós irányértékkel együtt (átszámított nemzetközi tervezési ajánlás: étterem kb. 1,1–1,4, szálloda 1,4–1,7, bankett 0,9–1,0 m²/fő). A létszám tervezési irányszám; a megengedett vendéglétszámot a helyi előírások határozzák meg (ezt a felület is kiírja).
+- **Technikai:** a logika tiszta számítás (`src/lib/usePacks.ts`), tesztelt (`tests/usePacks.test.ts`); a székek egyszerűsített, 3 hálós változatból épülnek, hogy a nagy terasz is gyors maradjon. A csomagok fix tájolásúak (a konyha mindig a hátsó falnál). Új függőség nincs.
+- **Korlát:** a konyhasor moduljai (hűtő, grill, mosogató) a 3D-ben jelképes formák, nem gyártói termékek. Oldalfalas (üvegfalas) pergolánál a falak helyét az elrendezés még nem veszi figyelembe.
+
 ## 3.67 – Alapnézet (aranyóra, ház nélkül), nappali fény magas/ultra szinten, nagy pergolák berendezése
 
 - **Alapnézet:** a konfigurátor aranyórával és „csak a pergola” környezettel indul (nincs ház, kert, szomszédság: gyorsabb első betöltés, szebb árnyékok). A „Családi ház” és a nappal továbbra is választható a Nézet panelen.

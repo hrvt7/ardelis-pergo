@@ -1179,6 +1179,13 @@ body:has(.marketing-page) { overflow: visible; background: #e8e7e0; }
 .furniture-head strong, .furniture-head span { display: block; }
 .furniture-head strong { font-size: 14.5px; color: var(--text-primary); }
 .furniture-head span { margin-top: 3px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.furniture-group-title { margin-top: 12px; }
+.furniture-group-title strong, .furniture-group-title span { display: block; }
+.furniture-group-title strong { font-size: 13.5px; color: var(--text-primary); }
+.furniture-group-title span { margin-top: 2px; font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; }
+.furniture-pack { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+.furniture-pack b { color: var(--text-primary); }
+.furniture-pack small { margin-top: 3px; font-size: 11px; color: var(--text-secondary); line-height: 1.45; }
 .furniture-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 5px; }
 .furniture-options button { min-height: 46px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 6px 9px; border: 1px solid var(--surface-border); border-radius: 7px; background: transparent; color: var(--text-primary); text-align: left; }
 .furniture-options button strong { font-size: 12.5px; font-weight: 600; }

@@ -33,6 +33,7 @@ import { doorLeafWidth, sideSegments } from '@/lib/sides'
 import { hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit, furnitureLayout } from '@/lib/furniture'
+import { kitchenModules } from '@/lib/usePacks'
 import HotTub from '@/components/HotTub'
 import { getSpecCode } from '@/lib/specification'
 import { effectiveGlazing, isGlazedRoof, isMovableRoof, roofRise } from '@/lib/roofs'
@@ -1751,6 +1752,85 @@ function BarSet() {
 }
 
 /** Napozó: két döntött háttámlás nyugágy és egy kisasztal közöttük. */
+/** Egyszerűsített szék a használati csomagokhoz (sok darab kell): 3 háló székenként, hogy a nagy teraszok is gyorsak maradjanak. */
+function LiteChair({ position, rotation }: { position: [number, number, number]; rotation: number }) {
+  return <group position={position} rotation={[0, rotation, 0]}>
+    <mesh position={[0, 0.45, 0]} castShadow><boxGeometry args={[0.44, 0.05, 0.44]} /><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></mesh>
+    <mesh position={[0, 0.69, -0.2]} castShadow><boxGeometry args={[0.44, 0.4, 0.04]} /><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></mesh>
+    {[[-0.19, -0.19], [0.19, -0.19], [-0.19, 0.19], [0.19, 0.19]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x, 0.215, z]}><boxGeometry args={[0.025, 0.43, 0.025]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>)}
+  </group>
+}
+/** 4 fős étteremi asztal: 120 × 80 cm, két-két szék a hosszú oldalakon. */
+function Table4() {
+  return <group>
+    <mesh position={[0, 0.75, 0]} castShadow receiveShadow><boxGeometry args={[1.2, 0.04, 0.8]} /><meshStandardMaterial color="#9a7652" roughness={0.7} /></mesh>
+    {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x * 0.54, 0.365, z * 0.34]} castShadow><boxGeometry args={[0.05, 0.73, 0.05]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>)}
+    {[-0.3, 0.3].map((x) => <LiteChair key={`a${x}`} position={[x, 0, -0.62]} rotation={0} />)}
+    {[-0.3, 0.3].map((x) => <LiteChair key={`b${x}`} position={[x, 0, 0.62]} rotation={Math.PI} />)}
+  </group>
+}
+/** Hosszú rendezvényasztal: 90 cm széles, 60 cm-es ülésosztás mindkét oldalon. */
+function LongTable({ length }: { length: number }) {
+  const perSide = Math.max(1, Math.floor(length / 0.6 + 1e-9))
+  const xs = Array.from({ length: perSide }, (_, index) => (index - (perSide - 1) / 2) * 0.6)
+  return <group>
+    <mesh position={[0, 0.75, 0]} castShadow receiveShadow><boxGeometry args={[length, 0.04, 0.9]} /><meshStandardMaterial color="#9a7652" roughness={0.7} /></mesh>
+    {[-1, 1].map((side) => <mesh key={side} position={[side * (length / 2 - 0.25), 0.365, 0]} castShadow><boxGeometry args={[0.06, 0.73, 0.78]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>)}
+    {xs.map((x) => <LiteChair key={`a${x}`} position={[x, 0, -0.67]} rotation={0} />)}
+    {xs.map((x) => <LiteChair key={`b${x}`} position={[x, 0, 0.67]} rotation={Math.PI} />)}
+  </group>
+}
+/** Nyári konyhasor (65 cm mély, 90 cm magas): hűtő, előkészítő felületek, grill, mosogató; előlap +z felé. */
+function KitchenRun({ length }: { length: number }) {
+  const placed = kitchenModules(length).reduce<{ kind: ReturnType<typeof kitchenModules>[number]['kind']; width: number; x: number }[]>((list, module) => {
+    const start = list.length ? list[list.length - 1].x + list[list.length - 1].width / 2 : -length / 2
+    return [...list, { ...module, x: start + module.width / 2 }]
+  }, [])
+  return <group>
+    <mesh position={[0, 0.44, 0]} castShadow receiveShadow><boxGeometry args={[length, 0.88, 0.62]} /><meshStandardMaterial color="#2f3335" roughness={0.75} /></mesh>
+    <mesh position={[0, 0.9, 0.02]} castShadow receiveShadow><boxGeometry args={[length + 0.04, 0.045, 0.69]} /><meshStandardMaterial color="#cfcac0" roughness={0.45} /></mesh>
+    {placed.map((module, index) => {
+      return <group key={`${module.kind}${index}`} position={[module.x, 0, 0]}>
+        <mesh position={[0, 0.44, 0.315]}><boxGeometry args={[module.width - 0.04, 0.8, 0.012]} /><meshStandardMaterial color={module.kind === 'fridge' ? '#b9bfc2' : '#3a4043'} metalness={module.kind === 'fridge' ? 0.7 : 0.2} roughness={module.kind === 'fridge' ? 0.35 : 0.7} /></mesh>
+        <mesh position={[0, 0.7, 0.335]}><boxGeometry args={[Math.min(0.3, module.width * 0.6), 0.015, 0.02]} /><meshStandardMaterial color="#a8aeb1" metalness={0.8} roughness={0.3} /></mesh>
+        {module.kind === 'grill' && <group position={[0, 0.925, 0.02]}>
+          <mesh position={[0, 0.05, 0]} castShadow><boxGeometry args={[Math.min(module.width - 0.06, 0.78), 0.1, 0.55]} /><meshStandardMaterial color="#1c1f20" metalness={0.7} roughness={0.35} /></mesh>
+          <mesh position={[0, 0.14, -0.2]} rotation={[-0.5, 0, 0]} castShadow><boxGeometry args={[Math.min(module.width - 0.06, 0.78), 0.03, 0.34]} /><meshStandardMaterial color="#b9bfc2" metalness={0.8} roughness={0.3} /></mesh>
+        </group>}
+        {module.kind === 'sink' && <group position={[0, 0.925, 0.03]}>
+          <mesh position={[0, -0.002, 0]}><boxGeometry args={[module.width - 0.16, 0.012, 0.4]} /><meshStandardMaterial color="#7d8487" metalness={0.85} roughness={0.3} /></mesh>
+          <mesh position={[0, 0.16, -0.24]} castShadow><cylinderGeometry args={[0.014, 0.014, 0.32, 8]} /><meshStandardMaterial color="#c3c8ca" metalness={0.9} roughness={0.25} /></mesh>
+          <mesh position={[0, 0.31, -0.14]} rotation={[Math.PI / 2, 0, 0]} castShadow><cylinderGeometry args={[0.012, 0.012, 0.2, 8]} /><meshStandardMaterial color="#c3c8ca" metalness={0.9} roughness={0.25} /></mesh>
+        </group>}
+      </group>
+    })}
+  </group>
+}
+/** Szigetpult bárszékekkel a vendégoldalon (+z): 90 cm mély, 105 cm magas. */
+function KitchenIsland({ length, seats }: { length: number; seats: number }) {
+  const xs = Array.from({ length: seats }, (_, index) => (index - (seats - 1) / 2) * 0.6)
+  return <group>
+    <mesh position={[0, 0.5, -0.05]} castShadow receiveShadow><boxGeometry args={[length, 1.0, 0.7]} /><meshStandardMaterial color="#2f3335" roughness={0.75} /></mesh>
+    <mesh position={[0, 1.02, 0.02]} castShadow receiveShadow><boxGeometry args={[length + 0.06, 0.045, 0.95]} /><meshStandardMaterial color="#cfcac0" roughness={0.45} /></mesh>
+    {xs.map((x) => <group key={x} position={[x, 0, 0.74]}>
+      <mesh position={[0, 0.74, 0]} castShadow><cylinderGeometry args={[0.17, 0.17, 0.04, 16]} /><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></mesh>
+      <mesh position={[0, 0.37, 0]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.72, 8]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
+    </group>)}
+  </group>
+}
+/** Hosszú bárpult a hátsó fal mentén, bárszékekkel a vendégoldalon (+z). */
+function BarRun({ length, seats }: { length: number; seats: number }) {
+  const xs = Array.from({ length: seats }, (_, index) => (index - (seats - 1) / 2) * 0.55)
+  return <group>
+    <mesh position={[0, 0.525, 0]} castShadow receiveShadow><boxGeometry args={[length, 1.05, 0.6]} /><meshStandardMaterial color="#2f3335" roughness={0.75} /></mesh>
+    <mesh position={[0, 1.07, 0.05]} castShadow receiveShadow><boxGeometry args={[length + 0.1, 0.05, 0.75]} /><meshStandardMaterial color="#9a7652" roughness={0.6} /></mesh>
+    {xs.map((x) => <group key={x} position={[x, 0, 0.62]}>
+      <mesh position={[0, 0.74, 0]} castShadow><cylinderGeometry args={[0.17, 0.17, 0.04, 16]} /><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></mesh>
+      <mesh position={[0, 0.37, 0]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.72, 8]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
+    </group>)}
+  </group>
+}
+
 function SunbedSet() {
   return <group>
     {[-0.75, 0.75].map((x) => <group key={x} position={[x, 0, 0]}>
@@ -1771,19 +1851,23 @@ function Furniture({ config, scene, hideZone = false }: { config: PergolaConfig;
   const layout = furnitureLayout(set, config)!
   const [zoneLong, zoneShort] = FURNITURE_SETS[set].zone
   // Nagy pergolán a csomag rácsban ismétlődik (étterem, kávézó): minden példány a saját zónájában áll.
-  const content = layout.cells.map((cell) => <group key={`${cell.x}:${cell.z}`} position={[cell.x, 0, cell.z]}>
-    {FURNITURE_SETS[set].parts.map((part) => <group key={part.kind} position={[part.x, 0, 0]}>
-      {part.kind === 'lounge' ? <LoungeSet /> : part.kind === 'dining6' ? <DiningSet seats={6} /> : part.kind === 'dining8' ? <DiningSet seats={8} /> : part.kind === 'bistro' ? <BistroSet /> : part.kind === 'bar' ? <BarSet /> : part.kind === 'sunbed' ? <SunbedSet /> : <HotTub night={getLighting(scene).night} />}
-    </group>)}
-  </group>)
+  const content = layout.pack
+    ? layout.pack.items.map((item, index) => <group key={`${item.kind}:${index}`} position={[item.x, 0, item.z]} rotation={[0, item.rot, 0]}>
+      {item.kind === 'table4' ? <Table4 /> : item.kind === 'longTable' ? <LongTable length={item.length ?? 3} /> : item.kind === 'kitchen' ? <KitchenRun length={item.length ?? 3} /> : item.kind === 'island' ? <KitchenIsland length={item.length ?? 2.4} seats={item.seats ?? 4} /> : item.kind === 'barRun' ? <BarRun length={item.length ?? 3} seats={item.seats ?? 5} /> : item.kind === 'lounge' ? <LoungeSet /> : item.kind === 'dining8' ? <DiningSet seats={8} /> : <DiningSet seats={6} />}
+    </group>)
+    // Nagy pergolán a csomag rácsban ismétlődik (étterem, kávézó): minden példány a saját zónájában áll.
+    : layout.cells.map((cell) => <group key={`${cell.x}:${cell.z}`} position={[cell.x, 0, cell.z]}>
+      {FURNITURE_SETS[set].parts.map((part) => <group key={part.kind} position={[part.x, 0, 0]}>
+        {part.kind === 'lounge' ? <LoungeSet /> : part.kind === 'dining6' ? <DiningSet seats={6} /> : part.kind === 'dining8' ? <DiningSet seats={8} /> : part.kind === 'bistro' ? <BistroSet /> : part.kind === 'bar' ? <BarSet /> : part.kind === 'sunbed' ? <SunbedSet /> : <HotTub night={getLighting(scene).night} />}
+      </group>)}
+    </group>)
   const zoneColor = fit.level === 'comfortable' ? '#9be26a' : fit.level === 'tight' ? '#ffc24a' : '#ff5b4a'
-  const half = [zoneLong / 2, zoneShort / 2]
-  const outline: [number, number, number][] = [[-half[0], 0.035, -half[1]], [half[0], 0.035, -half[1]], [half[0], 0.035, half[1]], [-half[0], 0.035, half[1]], [-half[0], 0.035, -half[1]]]
+  const outlineFor = (zw: number, zd: number): [number, number, number][] => [[-zw / 2, 0.035, -zd / 2], [zw / 2, 0.035, -zd / 2], [zw / 2, 0.035, zd / 2], [-zw / 2, 0.035, zd / 2], [-zw / 2, 0.035, -zd / 2]]
   return <group name="terrace-furniture" rotation={[0, fit.alongWidth ? 0 : Math.PI / 2, 0]}>
     {content}
-    {scene.showFurnitureZone && !hideZone && layout.cells.map((cell) => <group key={`zone-${cell.x}:${cell.z}`} name="furniture-zone" position={[cell.x, 0, cell.z]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}><planeGeometry args={[zoneLong, zoneShort]} /><meshBasicMaterial color={zoneColor} transparent opacity={0.16} depthWrite={false} toneMapped={false} /></mesh>
-      <Line points={outline} color={zoneColor} lineWidth={2} dashed dashSize={0.18} gapSize={0.1} />
+    {scene.showFurnitureZone && !hideZone && (layout.pack ? [{ x: layout.pack.bounds.cx, z: layout.pack.bounds.cz, w: layout.pack.bounds.w, d: layout.pack.bounds.d }] : layout.cells.map((cell) => ({ x: cell.x, z: cell.z, w: zoneLong, d: zoneShort }))).map((cell) => <group key={`zone-${cell.x}:${cell.z}`} name="furniture-zone" position={[cell.x, 0, cell.z]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}><planeGeometry args={[cell.w, cell.d]} /><meshBasicMaterial color={zoneColor} transparent opacity={0.16} depthWrite={false} toneMapped={false} /></mesh>
+      <Line points={outlineFor(cell.w, cell.d)} color={zoneColor} lineWidth={2} dashed dashSize={0.18} gapSize={0.1} />
     </group>)}
   </group>
 }
