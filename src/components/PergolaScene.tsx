@@ -10,7 +10,7 @@ import type { CameraFocus, CameraView, PergolaConfig, RoofGlazing, SceneSettings
 import PhotoRig, { ShadowCatcher } from '@/components/PhotoRig'
 import { PHOTO_GROUP } from '@/lib/photoScene'
 import { QualityContext, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
-import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls } from '@/lib/mount'
+import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls, wallSides } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
 import { setActiveScene, setHiResRenderer } from '@/lib/sceneRegistry'
 import { useTenant } from '@/tenants/TenantContext'
@@ -1720,6 +1720,47 @@ function DiningSet({ seats }: { seats: 6 | 8 }) {
   </group>
 }
 
+/** Bisztró: két kerek kávézóasztal (70 cm), mindegyiknél két szék egymással szemben. */
+function BistroSet() {
+  return <group>
+    {[-0.95, 0.95].map((x) => <group key={x} position={[x, 0, 0]}>
+      <mesh position={[0, 0.73, 0]} castShadow receiveShadow><cylinderGeometry args={[0.35, 0.35, 0.035, 32]} /><meshStandardMaterial color="#d7d2c8" roughness={0.6} /></mesh>
+      <mesh position={[0, 0.36, 0]} castShadow><cylinderGeometry args={[0.03, 0.03, 0.7, 12]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
+      <mesh position={[0, 0.01, 0]} castShadow><cylinderGeometry args={[0.22, 0.24, 0.02, 24]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
+      <DiningChair position={[0, 0, -0.62]} rotation={0} />
+      <DiningChair position={[0, 0, 0.62]} rotation={Math.PI} />
+    </group>)}
+    <PlantPot position={[0, 0.02, -0.95]} scale={0.7} />
+  </group>
+}
+
+/** Kültéri bár: pult hátfallal, négy bárszék a vendégoldalon. */
+function BarSet() {
+  return <group>
+    <RoundedBox args={[2.2, 1.05, 0.6]} position={[0, 0.525, -0.35]} radius={0.02} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#2f3335" roughness={0.75} /></RoundedBox>
+    <RoundedBox args={[2.3, 0.05, 0.7]} position={[0, 1.07, -0.35]} radius={0.015} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#9a7652" roughness={0.6} /></RoundedBox>
+    {[-0.78, -0.26, 0.26, 0.78].map((x) => <group key={x} position={[x, 0, 0.22]}>
+      <mesh position={[0, 0.74, 0]} castShadow><cylinderGeometry args={[0.17, 0.17, 0.04, 20]} /><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></mesh>
+      <mesh position={[0, 0.37, 0]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.72, 10]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
+      <mesh position={[0, 0.01, 0]}><cylinderGeometry args={[0.17, 0.18, 0.02, 20]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
+    </group>)}
+    <PlantPot position={[1.35, 0.02, -0.6]} scale={0.8} />
+  </group>
+}
+
+/** Napozó: két döntött háttámlás nyugágy és egy kisasztal közöttük. */
+function SunbedSet() {
+  return <group>
+    {[-0.75, 0.75].map((x) => <group key={x} position={[x, 0, 0]}>
+      <RoundedBox args={[0.7, 0.08, 1.25]} position={[0, 0.34, 0.3]} radius={0.03} smoothness={3} castShadow receiveShadow><meshStandardMaterial color={FABRIC[1]} roughness={0.98} /></RoundedBox>
+      <RoundedBox args={[0.7, 0.08, 0.75]} position={[0, 0.58, -0.58]} rotation={[-0.75, 0, 0]} radius={0.03} smoothness={3} castShadow><meshStandardMaterial color={FABRIC[0]} roughness={0.98} /></RoundedBox>
+      {[[-0.3, -0.35], [0.3, -0.35], [-0.3, 0.8], [0.3, 0.8]].map(([lx, lz]) => <mesh key={`${lx}${lz}`} position={[lx, 0.15, lz]} castShadow><boxGeometry args={[0.03, 0.3, 0.03]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>)}
+    </group>)}
+    <mesh position={[0, 0.42, 0.1]} castShadow receiveShadow><cylinderGeometry args={[0.22, 0.22, 0.03, 24]} /><meshStandardMaterial color="#d7d2c8" roughness={0.6} /></mesh>
+    <mesh position={[0, 0.2, 0.1]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.4, 10]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
+  </group>
+}
+
 /** A választott bútorcsomag a pergola alatt, és kérésre a helyigénye (zöld: kényelmes, sárga: szűkös, piros: nem fér el). */
 function Furniture({ config, scene, hideZone = false }: { config: PergolaConfig; scene: SceneSettings; hideZone?: boolean }) {
   const set = scene.furniture
@@ -1727,7 +1768,7 @@ function Furniture({ config, scene, hideZone = false }: { config: PergolaConfig;
   const fit = furnitureFit(set, config)!
   const [zoneLong, zoneShort] = FURNITURE_SETS[set].zone
   const content = FURNITURE_SETS[set].parts.map((part) => <group key={part.kind} position={[part.x, 0, 0]}>
-    {part.kind === 'lounge' ? <LoungeSet /> : part.kind === 'dining6' ? <DiningSet seats={6} /> : part.kind === 'dining8' ? <DiningSet seats={8} /> : <HotTub night={getLighting(scene).night} />}
+    {part.kind === 'lounge' ? <LoungeSet /> : part.kind === 'dining6' ? <DiningSet seats={6} /> : part.kind === 'dining8' ? <DiningSet seats={8} /> : part.kind === 'bistro' ? <BistroSet /> : part.kind === 'bar' ? <BarSet /> : part.kind === 'sunbed' ? <SunbedSet /> : <HotTub night={getLighting(scene).night} />}
   </group>)
   const zoneColor = fit.level === 'comfortable' ? '#9be26a' : fit.level === 'tight' ? '#ffc24a' : '#ff5b4a'
   const half = [zoneLong / 2, zoneShort / 2]
@@ -1904,6 +1945,27 @@ function Ground({ scene }: { scene: SceneSettings }) {
   return <SceneAssetBoundary name="pbr grass" fallback={fallback}><Suspense fallback={fallback}><GrassGroundPBR scene={scene} /></Suspense></SceneAssetBoundary>
 }
 
+/**
+ * Stúdió-környezet: nincs ház, kert és szomszéd — csak egy semleges, világos padló és (fali rögzítésnél)
+ * egy egyszerű vakolt falszakasz, hogy a rögzítés látszódjon. Vendéglátós, ipari vagy katalógus-jellegű
+ * bemutatáshoz, és tiszta termékfotóhoz a PDF-be.
+ */
+function StudioEnvironment({ config, night }: { config: PergolaConfig; night: boolean }) {
+  const { width, depth } = config
+  const walls = wallSides(config.mount)
+  const wallHeight = config.height + 1.1
+  const wallColor = night ? '#6d6c66' : '#d9d6cf'
+  const floorColor = night ? '#555851' : '#dad7cf'
+  return <group name="studio-environment">
+    <mesh name="essential-studio-floor" rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.075, 0]} receiveShadow>
+      <planeGeometry args={[600, 600]} />
+      <meshStandardMaterial color={floorColor} roughness={0.92} />
+    </mesh>
+    {walls.includes('back') && <mesh position={[0, wallHeight / 2 - 0.07, -depth / 2 - 0.14]} castShadow receiveShadow><boxGeometry args={[width + 2.4, wallHeight, 0.28]} /><meshStandardMaterial color={wallColor} roughness={0.95} /></mesh>}
+    {(['left', 'right'] as const).filter((side) => walls.includes(side)).map((side) => { const sx = side === 'left' ? -1 : 1; return <mesh key={side} position={[sx * (width / 2 + 0.14), wallHeight / 2 - 0.07, -0.07]} castShadow receiveShadow><boxGeometry args={[0.28, wallHeight, depth + 0.28]} /><meshStandardMaterial color={wallColor} roughness={0.95} /></mesh> })}
+  </group>
+}
+
 function Stars() {
   const positions = useMemo(() => { const array = new Float32Array(360 * 3); for (let i = 0; i < 360; i++) { const angle = i * 2.399; const radius = 18 + (i % 17); array[i * 3] = Math.sin(angle) * radius; array[i * 3 + 1] = 8 + (i % 13) * 0.8; array[i * 3 + 2] = Math.cos(angle) * radius } return array }, [])
   return <points><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry><pointsMaterial color="#dce8ef" size={0.07} transparent opacity={0.8} sizeAttenuation depthWrite={false} /></points>
@@ -1945,7 +2007,7 @@ function seatPosition(config: Pick<PergolaConfig, 'width' | 'depth'>, furniture:
   if (furniture === 'none') return [0, -config.depth * 0.17 - 0.195]
   const fit = furnitureFit(furniture, config)!
   const first = FURNITURE_SETS[furniture].parts[0]
-  const local: [number, number] = [first.x, first.kind === 'dining8' ? -0.72 : first.kind === 'dining6' ? -0.67 : first.kind === 'spa' ? -1.25 : -0.7]
+  const local: [number, number] = [first.x, first.kind === 'dining8' ? -0.72 : first.kind === 'dining6' ? -0.67 : first.kind === 'spa' ? -1.25 : first.kind === 'bar' ? 0.22 : first.kind === 'sunbed' ? 0.3 : -0.7]
   return fit.alongWidth ? local : [local[1], -local[0]]
 }
 
@@ -2374,6 +2436,7 @@ function SceneRegistration() {
 
 function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const lighting = getLighting(scene)
+  const studio = scene.ground === 'studio'
   // Az árnyékkamera a pergolára és a közvetlen környezetére illeszkedik: ugyanazon a felbontáson élesebb árnyék.
   const shadowExtent = scene.sunStudy || scene.photoMode ? lighting.shadowExtent : Math.min(lighting.shadowExtent, Math.max(7, Math.max(config.width, config.depth) / 2 + 4.5))
   const houseLook = useMemo<HouseLook>(() => ({ wallFinish: scene.wallFinish, wallColor: scene.wallColor, windowColor: scene.windowColor }), [scene.wallFinish, scene.wallColor, scene.windowColor])
@@ -2384,13 +2447,16 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
   const pergola = <group name={PHOTO_GROUP} position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} rotation={[0, scene.photoMode ? THREE.MathUtils.degToRad(scene.photoRotation) : 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{scene.photoMode && <ShadowCatcher size={Math.max(config.width, config.depth) + 6} opacity={lighting.night ? 0.25 : 0.42} />}{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} hideZone={view === 'sofa'} /></OptionalSceneAsset>}</group>
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}|${scene.wallColor}|${scene.windowColor}`} />
-    {!scene.photoMode && <><fog attach="fog" args={[lighting.fog, 20, 43]} /><FogFollow /></>}
+    {!scene.photoMode && <><fog attach="fog" args={[studio ? (lighting.night ? '#1b1f22' : '#e8e5de') : lighting.fog, 20, 43]} /><FogFollow /></>}
     <ambientLight intensity={lighting.ambient} /><hemisphereLight args={[lighting.night ? '#9fb8d6' : '#cfdce6', lighting.night ? '#2f3338' : '#5a4d3f', lighting.hemisphere]} /><directionalLight key={shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={[quality.shadowMapSize, quality.shadowMapSize]} shadow-radius={quality.shadowRadius} shadow-blurSamples={quality.shadowRadius > 2 ? 16 : 8} shadow-camera-left={-shadowExtent} shadow-camera-right={shadowExtent} shadow-camera-top={shadowExtent} shadow-camera-bottom={-shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
-    {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={wantsSmallHdr(quality.tier) ? smallHdr(lighting.hdr) : lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0} backgroundIntensity={lighting.night ? 0.55 : 0.95} environmentIntensity={lighting.environment * quality.environmentIntensity} environmentRotation={[0, lighting.envRotation, 0]} backgroundRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
-    {!scene.photoMode && <Ground scene={scene} />}
-    {!scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} look={houseLook} night={lighting.night} />}
-    {!scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} look={houseLook} night={lighting.night} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
+    {/* Stúdióban az égbolt csak a fényt adja; a háttér egyszínű, hogy a pergola álljon a középpontban. */}
+    {studio && !scene.photoMode && <color attach="background" args={[lighting.night ? '#1b1f22' : '#e8e5de']} />}
+    {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={wantsSmallHdr(quality.tier) ? smallHdr(lighting.hdr) : lighting.hdr} background={!scene.photoMode && !studio} backgroundBlurriness={0} backgroundIntensity={lighting.night ? 0.55 : 0.95} environmentIntensity={lighting.environment * quality.environmentIntensity} environmentRotation={[0, lighting.envRotation, 0]} backgroundRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
+    {studio && !scene.photoMode && <StudioEnvironment config={config} night={lighting.night} />}
+    {!studio && !scene.photoMode && <Ground scene={scene} />}
+    {!studio && !scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} look={houseLook} night={lighting.night} />}
+    {!studio && !scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} look={houseLook} night={lighting.night} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
     {pergola}
     {!scene.photoMode && <ContactShadows key={`${config.width}-${config.depth}-${config.height}-${config.mount}`} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality.contactShadowResolution} frames={1} color="#10171d" />}
     {scene.rain && <Rain config={config} quality={quality} />}

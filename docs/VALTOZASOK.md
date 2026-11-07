@@ -1,5 +1,11 @@
 # Változások
 
+## 3.65 – Környezet kikapcsolása, vendéglátós bútorcsomagok
+
+- **„Csak a pergola” környezet** (Nézet panel → Környezet): a családi ház, a kert és a szomszédság helyett semleges, világos stúdió – csak a padló és (fali, sarok- vagy fülkés rögzítésnél) egy egyszerű vakolt falszakasz. Vendéglátós, ipari vagy katalógus-bemutatóhoz, és tisztább termékfotóhoz a PDF-be. Gyorsabb is: a 3,4 MB-os ház-modell ilyenkor nem töltődik be. Éjjel sötét háttérrel.
+- **Új bútorcsomagok** a „Mit szeretnél alatta?” választóban: **Bisztró** (két kerek asztal 2–2 székkel, 4 fő), **Kültéri bár** (220 cm-es pult 4 bárszékkel) és **Napozó** (két nyugágy kisasztallal). A helyigény-ellenőrzés, a méretjavaslat és a kanapé-nézet mindhárommal működik.
+- A `ground` jelenet-beállítás eddig nem volt használatban; most `terrace` (ház) és `studio` értéke van.
+
 ## 3.64 – Napsütéses fényarány: látható lamellacsíkok
 
 - **Fény:** a nappali és aranyórás jelenetben a direkt nap most kb. 4–14-szer erősebb (reggel/este kevésbé, délben jobban) az égbolt szórt fényénél (korábban ≈1,4×). Az árnyékok eddig is kiszámolódtak, de az erős HDR-égbolt fénye szinte kitöltötte őket, ezért a kép borúsnak hatott. Most a lamellák csíkos árnyéka jól látszik a teraszon és a házfalon, a pergola árnyéka a homlokzatra vetül.

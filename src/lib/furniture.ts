@@ -9,7 +9,7 @@ export interface FurnitureSpec {
   /** Helyigény bútorral és mozgástérrel együtt, méterben: [hossz, mélység]. */
   zone: [number, number]
   /** Az elemek a zónában, a hosszanti tengely mentén (m a középponttól): a 3D és a kanapé-nézet ebből dolgozik. */
-  parts: { kind: 'lounge' | 'dining6' | 'dining8' | 'spa'; x: number }[]
+  parts: { kind: 'lounge' | 'dining6' | 'dining8' | 'spa' | 'bistro' | 'bar' | 'sunbed'; x: number }[]
 }
 
 export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec> = {
@@ -20,9 +20,13 @@ export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec
   spa: { label: 'Jacuzzi', people: '5–6 fős', description: '2 × 2 m-es jacuzzi lépcsővel, körben 30–60 cm szabad hellyel', zone: [2.6, 2.6], parts: [{ kind: 'spa', x: 0 }] },
   loungeSpa: { label: 'Pihenő + jacuzzi', people: 'kanapé + jacuzzi', description: '3 személyes kanapé, dohányzóasztal és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'lounge', x: -1.3 }, { kind: 'spa', x: 1.5 }] },
   diningSpa: { label: 'Étkező + jacuzzi', people: '6 fő + jacuzzi', description: '180 × 90 cm asztal 6 székkel és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'dining6', x: -1.3 }, { kind: 'spa', x: 1.5 }] },
+  // Vendéglátós és napozós elrendezések: kávézó-terasz, bárpult, nyugágyak.
+  bistro: { label: 'Bisztró', people: '4 fő', description: 'Két 70 cm-es kerek asztal, 2–2 székkel', zone: [3.4, 2.4], parts: [{ kind: 'bistro', x: 0 }] },
+  bar: { label: 'Kültéri bár', people: '4 fő', description: '220 × 60 cm bárpult, 4 bárszék', zone: [3.2, 2.3], parts: [{ kind: 'bar', x: 0 }] },
+  sunbed: { label: 'Napozó', people: '2 fő', description: 'Két nyugágy kisasztallal', zone: [3.2, 2.4], parts: [{ kind: 'sunbed', x: 0 }] },
 }
 
-export const FURNITURE_ORDER: FurnitureSet[] = ['lounge', 'dining6', 'dining8', 'combo', 'spa', 'loungeSpa', 'diningSpa', 'none']
+export const FURNITURE_ORDER: FurnitureSet[] = ['lounge', 'dining6', 'dining8', 'combo', 'bistro', 'bar', 'sunbed', 'spa', 'loungeSpa', 'diningSpa', 'none']
 
 /** Az oszlopok és a keret miatt a hasznos belső méret ennyivel kisebb. */
 const FRAME = 0.2

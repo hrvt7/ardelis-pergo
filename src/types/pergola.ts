@@ -15,7 +15,8 @@ export type ClimateType = 'split' | 'underfloor' | 'both'
 export type SideKey = 'front' | 'back' | 'left' | 'right'
 export type FrameColor = 'anthracite' | 'black' | 'white' | 'bronze' | 'custom'
 export type TimeOfDay = 'day' | 'sunset' | 'night'
-export type GroundType = 'terrace' | 'garden'
+/** Környezet: családi ház teraszával (terrace/garden), vagy csak a pergola semleges stúdióban (studio). */
+export type GroundType = 'terrace' | 'garden' | 'studio'
 export type QualityLevel = 'auto' | 'ultra' | 'high' | 'medium' | 'low' | 'mobile'
 
 export interface PergolaConfig {
@@ -132,7 +133,7 @@ export interface SceneSettings {
   fanOn: boolean
 }
 
-export type FurnitureSet = 'none' | 'lounge' | 'dining6' | 'dining8' | 'combo' | 'spa' | 'loungeSpa' | 'diningSpa'
+export type FurnitureSet = 'none' | 'lounge' | 'dining6' | 'dining8' | 'combo' | 'spa' | 'loungeSpa' | 'diningSpa' | 'bistro' | 'bar' | 'sunbed'
 
 export interface SunSite {
   postalCode: string
