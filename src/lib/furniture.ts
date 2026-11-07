@@ -42,6 +42,14 @@ export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec
 
 export const FURNITURE_ORDER: FurnitureSet[] = ['lounge', 'dining6', 'dining8', 'combo', 'bistro', 'bar', 'sunbed', 'spa', 'loungeSpa', 'diningSpa', 'none']
 /** Használati csomagok a kiválasztóban, a lakossági bútorok után. */
+/** A választó csoportjai: egy listában, használat szerint rendezve (a „Üresen” külön, a lista végén). */
+export const FURNITURE_GROUPS: { id: string; label: string; sets: FurnitureSet[] }[] = [
+  { id: 'home', label: 'Otthon és pihenés', sets: ['lounge', 'dining6', 'dining8', 'combo', 'sunbed'] },
+  { id: 'kitchen', label: 'Konyha és étkezés', sets: ['summerKitchen', 'kitchenDining'] },
+  { id: 'wellness', label: 'Wellness', sets: ['spa', 'loungeSpa', 'diningSpa'] },
+  { id: 'hospitality', label: 'Vendéglátás és rendezvény', sets: ['mixed', 'restaurant', 'bistro', 'bar', 'barLounge', 'banquet'] },
+]
+
 export const PACK_ORDER: FurnitureSet[] = ['mixed', 'summerKitchen', 'kitchenDining', 'restaurant', 'banquet', 'barLounge']
 
 /** Az oszlopok és a keret miatt a hasznos belső méret ennyivel kisebb. */

@@ -1179,20 +1179,25 @@ body:has(.marketing-page) { overflow: visible; background: #e8e7e0; }
 .furniture-head strong, .furniture-head span { display: block; }
 .furniture-head strong { font-size: 14.5px; color: var(--text-primary); }
 .furniture-head span { margin-top: 3px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
-.furniture-group-title { margin-top: 12px; }
-.furniture-group-title strong, .furniture-group-title span { display: block; }
-.furniture-group-title strong { font-size: 13.5px; color: var(--text-primary); }
-.furniture-group-title span { margin-top: 2px; font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; }
 .furniture-pack { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
 .furniture-pack b { color: var(--text-primary); }
 .furniture-pack small { margin-top: 3px; font-size: 11px; color: var(--text-secondary); line-height: 1.45; }
-.furniture-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 5px; }
-.furniture-options button { min-height: 46px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 6px 9px; border: 1px solid var(--surface-border); border-radius: 7px; background: transparent; color: var(--text-primary); text-align: left; }
-.furniture-options button strong { font-size: 12.5px; font-weight: 600; }
-.furniture-options button small { font-size: 11.5px; color: var(--text-secondary); }
-.furniture-options button:hover { border-color: rgba(216,255,114,.45); }
-.furniture-options button.selected { border-color: rgba(216,255,114,.6); background: var(--accent-subtle); }
-.furniture-options button.selected small { color: var(--accent-primary); }
+.furniture-groups { display: flex; flex-direction: column; gap: 14px; }
+.furniture-group { display: flex; flex-direction: column; gap: 6px; }
+.furniture-group h4 { margin: 0; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary); }
+.furniture-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.furniture-card { position: relative; min-height: 56px; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--surface-border); border-radius: 9px; background: transparent; color: var(--text-primary); text-align: left; transition: border-color .15s, background .15s, transform .15s; }
+.furniture-card-icon { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,.05); color: var(--text-secondary); transition: background .15s, color .15s; }
+.furniture-card-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.furniture-card strong { font-size: 12.5px; font-weight: 600; line-height: 1.25; }
+.furniture-card small { font-size: 11px; color: var(--text-secondary); line-height: 1.3; }
+.furniture-group.is-empty .furniture-options { grid-template-columns: 1fr; }
+.furniture-group.is-empty .furniture-card { min-height: 46px; }
+.furniture-card:hover { border-color: rgba(216,255,114,.45); }
+.furniture-card.selected { border-color: rgba(216,255,114,.6); background: var(--accent-subtle); }
+.furniture-card.selected .furniture-card-icon { background: rgba(216,255,114,.16); color: var(--accent-primary); }
+.furniture-card.selected small { color: var(--accent-primary); }
+@media (prefers-reduced-motion: reduce) { .furniture-card, .furniture-card-icon { transition: none; } }
 .furniture-fit { --fit: #9be26a; display: flex; gap: 10px; align-items: flex-start; padding: 11px 12px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--fit), transparent 60%); background: color-mix(in srgb, var(--fit), transparent 90%); color: var(--fit); }
 .furniture-fit.is-tight { --fit: #ffc24a; } .furniture-fit.is-no { --fit: #ff7a6b; }
 .furniture-fit svg { flex: none; margin-top: 1px; }

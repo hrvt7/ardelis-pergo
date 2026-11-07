@@ -1,5 +1,11 @@
 # Változások
 
+## 3.70 – Egységes bútorválasztó
+
+- A „Használati csomagok” külön szekció megszűnt: minden elrendezés egy „Mit szeretnél alatta?” választóban van, használat szerint négy csoportba rendezve (Otthon és pihenés · Konyha és étkezés · Wellness · Vendéglátás és rendezvény), az „Üresen” a végén.
+- Új kártyák: ikon, név, létszám; a kiválasztott kártya kiemelve. Telefonon is két oszlopban, vízszintes túllógás nélkül; `prefers-reduced-motion` mellett átmenet nélkül.
+- Teszt: a csoportok pontosan egyszer tartalmazzák az összes csomagot.
+
 ## 3.69 – Vegyes terasz, visszavonás és típusváltás javítása
 
 - **Vegyes terasz csomag** (1. lépés → Használati csomagok): nagy pergolán nem ismétlődik ugyanaz egymás mellett. A zónák váltakoznak (pihenő → étkező → bisztró-asztal → tükrözött pihenő), elég mélységnél hátsó bárpult bárszékekkel, 3 sorig. A „Bár + lounge" is váltakozó zónákat használ.

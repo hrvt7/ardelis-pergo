@@ -1,7 +1,8 @@
 // „Mi fér el alatta?” — bútorcsomag választása a méret lépésben, a helyigény
 // ellenőrzésével és méretjavaslattal (a javasolt méret árkülönbségével együtt).
-import { AlertTriangle, CheckCircle2, Eye, EyeOff, Maximize, XCircle } from 'lucide-react'
-import { FURNITURE_ORDER, FURNITURE_SETS, PACK_ORDER, furnitureFit, furnitureLayout } from '@/lib/furniture'
+import { AlertTriangle, Armchair, Bath, CheckCircle2, ChefHat, Coffee, Eye, EyeOff, LayoutGrid, Maximize, Martini, PartyPopper, Sofa, SquareDashed, Sparkles, Sun, UtensilsCrossed, Waves, Wine, XCircle } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { FURNITURE_GROUPS, FURNITURE_SETS, furnitureFit, furnitureLayout } from '@/lib/furniture'
 import { formatHuf } from '@/lib/pricing'
 import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
@@ -10,10 +11,21 @@ import type { FurnitureSet, PergolaConfig, PriceSettings, SceneSettings } from '
 const m = (value: number) => value.toFixed(2).replace('.', ',')
 const m1 = (value: number) => value.toFixed(1).replace('.', ',')
 
+const ICONS: Record<FurnitureSet, ReactNode> = {
+  none: <SquareDashed size={18} />, lounge: <Sofa size={18} />, dining6: <UtensilsCrossed size={18} />, dining8: <UtensilsCrossed size={18} />, combo: <Armchair size={18} />,
+  spa: <Bath size={18} />, loungeSpa: <Waves size={18} />, diningSpa: <Waves size={18} />, bistro: <Coffee size={18} />, bar: <Wine size={18} />, sunbed: <Sun size={18} />,
+  restaurant: <LayoutGrid size={18} />, summerKitchen: <ChefHat size={18} />, kitchenDining: <ChefHat size={18} />, banquet: <PartyPopper size={18} />, barLounge: <Martini size={18} />, mixed: <Sparkles size={18} />,
+}
+
 function FurnitureOption({ id, scene, select }: { id: FurnitureSet; scene: SceneSettings; select: (furniture: FurnitureSet) => void }) {
-  return <button type="button" role="radio" aria-checked={scene.furniture === id} className={scene.furniture === id ? 'selected' : ''} onClick={() => select(id)}>
-    <strong>{id === 'none' ? 'Üresen' : FURNITURE_SETS[id].label}</strong>
-    <small>{id === 'none' ? 'bútor nélkül' : FURNITURE_SETS[id].people}</small>
+  const spec = id === 'none' ? null : FURNITURE_SETS[id]
+  const selected = scene.furniture === id
+  return <button type="button" role="radio" aria-checked={selected} className={`furniture-card${selected ? ' selected' : ''}`} onClick={() => select(id)}>
+    <span className="furniture-card-icon" aria-hidden="true">{ICONS[id]}</span>
+    <span className="furniture-card-text">
+      <strong>{spec ? spec.label : 'Üresen'}</strong>
+      <small>{spec ? spec.people : 'bútor nélkül'}</small>
+    </span>
   </button>
 }
 
@@ -28,13 +40,12 @@ export default function FurniturePicker({ config, scene, prices, onChange, onSce
 
   return <div className="furniture-picker">
     <div className="furniture-head"><strong>Mit szeretnél alatta?</strong><span>A 3D-ben is megjelenik, a szükséges szabad hellyel együtt.</span></div>
-    <div className="furniture-options" role="radiogroup" aria-label="Bútorcsomag">
-      {FURNITURE_ORDER.filter((id) => id !== 'none').map((id) => <FurnitureOption key={id} id={id} scene={scene} select={select} />)}
-    </div>
-    <div className="furniture-group-title"><strong>Használati csomagok</strong><span>A pergola méretéhez igazodnak: étterem, nyári konyha, rendezvény</span></div>
-    <div className="furniture-options" role="radiogroup" aria-label="Használati csomag">
-      {PACK_ORDER.map((id) => <FurnitureOption key={id} id={id} scene={scene} select={select} />)}
-      <FurnitureOption id="none" scene={scene} select={select} />
+    <div className="furniture-groups" role="radiogroup" aria-label="Bútorcsomag">
+      {FURNITURE_GROUPS.map((group) => <section key={group.id} className="furniture-group" aria-label={group.label}>
+        <h4>{group.label}</h4>
+        <div className="furniture-options">{group.sets.map((id) => <FurnitureOption key={id} id={id} scene={scene} select={select} />)}</div>
+      </section>)}
+      <section className="furniture-group is-empty" aria-label="Bútor nélkül"><div className="furniture-options"><FurnitureOption id="none" scene={scene} select={select} /></div></section>
     </div>
     {fit && spec && <div className={`furniture-fit is-${fit.level}`} role="status">
       {fit.level === 'comfortable' ? <CheckCircle2 size={17} /> : fit.level === 'tight' ? <AlertTriangle size={17} /> : <XCircle size={17} />}

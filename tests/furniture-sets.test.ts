@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FURNITURE_ORDER, FURNITURE_SETS, furnitureFit, furnitureMinimum } from '../src/lib/furniture'
+import { FURNITURE_GROUPS, FURNITURE_ORDER, FURNITURE_SETS, furnitureFit, furnitureMinimum } from '../src/lib/furniture'
 
 const limits = { width: [2.5, 7] as [number, number], depth: [2, 6] as [number, number] }
 
@@ -30,5 +30,11 @@ describe('vendéglátós és napozós bútorcsomagok', () => {
       expect(spec.parts.length).toBeGreaterThan(0)
       expect(furnitureMinimum(set)).toHaveLength(2)
     }
+  })
+
+  it('a választó csoportjai pontosan egyszer tartalmazzák az összes bútorcsomagot (a „Üresen” kivételével)', () => {
+    const grouped = FURNITURE_GROUPS.flatMap((group) => group.sets)
+    expect(new Set(grouped).size).toBe(grouped.length)
+    expect([...grouped].sort()).toEqual(Object.keys(FURNITURE_SETS).sort())
   })
 })
