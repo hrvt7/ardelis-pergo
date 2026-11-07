@@ -307,7 +307,7 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
 
       <Section title="Tetőrendszerek (nettó Ft/m² alapár)">
         <p className="admin-hint admin-wide">A terméknév és a rövid leírás a gyártó sajátja lehet (fehér címke): ez jelenik meg a konfigurátorban, a PDF-en és az ajánlatban.</p>
-        {ROOF_TYPES.map((roof) => <div className="admin-row" key={roof}>
+        {ROOF_TYPES.map((roof) => <div className="admin-row admin-wide" key={roof}>
           <label className="admin-check"><input type="checkbox" checked={roofs.includes(roof)} onChange={(event) => setRoofs(toggle(roofs, roof, event.target.checked))} /><small>{ROOF_INFO[roof].name}</small></label>
           <input type="text" aria-label={`${ROOF_INFO[roof].name} terméknév`} placeholder={ROOF_INFO[roof].name} maxLength={40} value={roofNames[roof].name} onChange={(event) => setRoofNames({ ...roofNames, [roof]: { ...roofNames[roof], name: event.target.value } })} />
           <input type="text" aria-label={`${ROOF_INFO[roof].name} rövid leírás`} placeholder={ROOF_INFO[roof].short} maxLength={60} value={roofNames[roof].short} onChange={(event) => setRoofNames({ ...roofNames, [roof]: { ...roofNames[roof], short: event.target.value } })} />
