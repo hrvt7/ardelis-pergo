@@ -10,20 +10,24 @@ export interface FurnitureSpec {
   zone: [number, number]
   /** Az elemek a zónában, a hosszanti tengely mentén (m a középponttól): a 3D és a kanapé-nézet ebből dolgozik. */
   parts: { kind: 'lounge' | 'dining6' | 'dining8' | 'spa' | 'bistro' | 'bar' | 'sunbed'; x: number }[]
+  /** Vendégek száma egy csomagban (a kapacitás-kijelzéshez). */
+  seats: number
+  /** Nagy teraszon ismételhető-e (étterem, kávézó). A jacuzzi és a bár egyedi, nem ismétlődik. */
+  repeatable: boolean
 }
 
 export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec> = {
-  lounge: { label: 'Pihenősarok', people: '4–5 fő', description: '3 személyes kanapé, dohányzóasztal', zone: [3.0, 2.6], parts: [{ kind: 'lounge', x: 0 }] },
-  dining6: { label: 'Étkező 6 főre', people: '6 fő', description: '180 × 90 cm asztal, 6 szék', zone: [3.0, 2.4], parts: [{ kind: 'dining6', x: 0 }] },
-  dining8: { label: 'Étkező 8 főre', people: '8 fő', description: '220 × 100 cm asztal, 8 szék', zone: [3.7, 2.5], parts: [{ kind: 'dining8', x: 0 }] },
-  combo: { label: 'Pihenő + étkező', people: '6 fő', description: 'Kanapé és 6 fős étkező egymás mellett', zone: [6.0, 2.6], parts: [{ kind: 'lounge', x: -1.5 }, { kind: 'dining6', x: 1.5 }] },
-  spa: { label: 'Jacuzzi', people: '5–6 fős', description: '2 × 2 m-es jacuzzi lépcsővel, körben 30–60 cm szabad hellyel', zone: [2.6, 2.6], parts: [{ kind: 'spa', x: 0 }] },
-  loungeSpa: { label: 'Pihenő + jacuzzi', people: 'kanapé + jacuzzi', description: '3 személyes kanapé, dohányzóasztal és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'lounge', x: -1.3 }, { kind: 'spa', x: 1.5 }] },
-  diningSpa: { label: 'Étkező + jacuzzi', people: '6 fő + jacuzzi', description: '180 × 90 cm asztal 6 székkel és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'dining6', x: -1.3 }, { kind: 'spa', x: 1.5 }] },
+  lounge: { label: 'Pihenősarok', people: '4–5 fő', description: '3 személyes kanapé, dohányzóasztal', zone: [3.0, 2.6], parts: [{ kind: 'lounge', x: 0 }], seats: 5, repeatable: true },
+  dining6: { label: 'Étkező 6 főre', people: '6 fő', description: '180 × 90 cm asztal, 6 szék', zone: [3.0, 2.4], parts: [{ kind: 'dining6', x: 0 }], seats: 6, repeatable: true },
+  dining8: { label: 'Étkező 8 főre', people: '8 fő', description: '220 × 100 cm asztal, 8 szék', zone: [3.7, 2.5], parts: [{ kind: 'dining8', x: 0 }], seats: 8, repeatable: true },
+  combo: { label: 'Pihenő + étkező', people: '6 fő', description: 'Kanapé és 6 fős étkező egymás mellett', zone: [6.0, 2.6], parts: [{ kind: 'lounge', x: -1.5 }, { kind: 'dining6', x: 1.5 }], seats: 6, repeatable: true },
+  spa: { label: 'Jacuzzi', people: '5–6 fős', description: '2 × 2 m-es jacuzzi lépcsővel, körben 30–60 cm szabad hellyel', zone: [2.6, 2.6], parts: [{ kind: 'spa', x: 0 }], seats: 6, repeatable: false },
+  loungeSpa: { label: 'Pihenő + jacuzzi', people: 'kanapé + jacuzzi', description: '3 személyes kanapé, dohányzóasztal és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'lounge', x: -1.3 }, { kind: 'spa', x: 1.5 }], seats: 5, repeatable: false },
+  diningSpa: { label: 'Étkező + jacuzzi', people: '6 fő + jacuzzi', description: '180 × 90 cm asztal 6 székkel és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'dining6', x: -1.3 }, { kind: 'spa', x: 1.5 }], seats: 6, repeatable: false },
   // Vendéglátós és napozós elrendezések: kávézó-terasz, bárpult, nyugágyak.
-  bistro: { label: 'Bisztró', people: '4 fő', description: 'Két 70 cm-es kerek asztal, 2–2 székkel', zone: [3.4, 2.4], parts: [{ kind: 'bistro', x: 0 }] },
-  bar: { label: 'Kültéri bár', people: '4 fő', description: '220 × 60 cm bárpult, 4 bárszék', zone: [3.2, 2.3], parts: [{ kind: 'bar', x: 0 }] },
-  sunbed: { label: 'Napozó', people: '2 fő', description: 'Két nyugágy kisasztallal', zone: [3.2, 2.4], parts: [{ kind: 'sunbed', x: 0 }] },
+  bistro: { label: 'Bisztró', people: '4 fő', description: 'Két 70 cm-es kerek asztal, 2–2 székkel', zone: [3.4, 2.4], parts: [{ kind: 'bistro', x: 0 }], seats: 4, repeatable: true },
+  bar: { label: 'Kültéri bár', people: '4 fő', description: '220 × 60 cm bárpult, 4 bárszék', zone: [3.2, 2.3], parts: [{ kind: 'bar', x: 0 }], seats: 4, repeatable: false },
+  sunbed: { label: 'Napozó', people: '2 fő', description: 'Két nyugágy kisasztallal', zone: [3.2, 2.4], parts: [{ kind: 'sunbed', x: 0 }], seats: 2, repeatable: true },
 }
 
 export const FURNITURE_ORDER: FurnitureSet[] = ['lounge', 'dining6', 'dining8', 'combo', 'bistro', 'bar', 'sunbed', 'spa', 'loungeSpa', 'diningSpa', 'none']
@@ -77,4 +81,46 @@ export function furnitureMinimum(set: FurnitureSet): { width: number; depth: num
   if (set === 'none') return []
   const [a, b] = FURNITURE_SETS[set].zone
   return [[a, b], [b, a]].map(([zw, zd]) => ({ width: zw + FRAME - TIGHT, depth: zd + FRAME - TIGHT }))
+}
+
+export interface FurnitureCell { x: number; z: number }
+export interface FurnitureLayout {
+  alongWidth: boolean
+  /** A csomag példányai a zóna saját (elforgatás előtti) koordinátarendszerében, méterben. */
+  cells: FurnitureCell[]
+  /** Hány példány fér el (1, ha a csomag nem ismételhető vagy csak egy fér). */
+  count: number
+  /** Vendégek száma összesen (becsült, a csomagok névleges létszámából). */
+  seats: number
+}
+
+/** Legfeljebb ennyi példányt rajzolunk: a 3D jelenet terhelése miatt. */
+const MAX_CELLS = 12
+/** Az egyenletesen szétosztott példányok közt legfeljebb ennyiszer akkora a távolság, mint a zóna (ne legyen „lógó” elrendezés). */
+const MAX_STRETCH = 1.35
+
+/**
+ * Nagy pergolán (étterem, kávézó, rendezvény) a bútorcsomag a rendelkezésre álló helyen ismétlődik:
+ * rácsban, a közlekedő sávokat a zónába beépített mozgástér adja. Kis pergolán egy példány marad, középen.
+ */
+export function furnitureLayout(set: FurnitureSet, config: Pick<PergolaConfig, 'width' | 'depth'>): FurnitureLayout | null {
+  const fit = furnitureFit(set, config)
+  if (!fit || set === 'none') return null
+  const spec = FURNITURE_SETS[set]
+  const [zoneLong, zoneShort] = spec.zone
+  const single: FurnitureLayout = { alongWidth: fit.alongWidth, cells: [{ x: 0, z: 0 }], count: 1, seats: spec.seats }
+  if (!spec.repeatable || fit.level !== 'comfortable') return single
+  const availLong = (fit.alongWidth ? config.width : config.depth) - FRAME
+  const availShort = (fit.alongWidth ? config.depth : config.width) - FRAME
+  let cols = Math.max(1, Math.floor((availLong + 1e-9) / zoneLong))
+  let rows = Math.max(1, Math.floor((availShort + 1e-9) / zoneShort))
+  while (cols * rows > MAX_CELLS) { if (cols >= rows) cols -= 1; else rows -= 1 }
+  if (cols * rows === 1) return single
+  const pitchLong = Math.min(availLong / cols, zoneLong * MAX_STRETCH)
+  const pitchShort = Math.min(availShort / rows, zoneShort * MAX_STRETCH)
+  const cells: FurnitureCell[] = []
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) cells.push({ x: (col - (cols - 1) / 2) * pitchLong, z: (row - (rows - 1) / 2) * pitchShort })
+  }
+  return { alongWidth: fit.alongWidth, cells, count: cells.length, seats: cells.length * spec.seats }
 }

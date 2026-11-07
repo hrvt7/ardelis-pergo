@@ -1,7 +1,7 @@
 // „Mi fér el alatta?” — bútorcsomag választása a méret lépésben, a helyigény
 // ellenőrzésével és méretjavaslattal (a javasolt méret árkülönbségével együtt).
 import { AlertTriangle, CheckCircle2, Eye, EyeOff, Maximize, XCircle } from 'lucide-react'
-import { FURNITURE_ORDER, FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
+import { FURNITURE_ORDER, FURNITURE_SETS, furnitureFit, furnitureLayout } from '@/lib/furniture'
 import { formatHuf } from '@/lib/pricing'
 import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
@@ -16,6 +16,7 @@ export default function FurniturePicker({ config, scene, prices, onChange, onSce
   const suggestion = fit?.suggestion
   const delta = suggestion ? tenantPrice(tenant, { ...config, ...suggestion }, prices).totalGross - tenantPrice(tenant, config, prices).totalGross : 0
   const spec = scene.furniture === 'none' ? null : FURNITURE_SETS[scene.furniture]
+  const layout = furnitureLayout(scene.furniture, config)
 
   return <div className="furniture-picker">
     <div className="furniture-head"><strong>Mit szeretnél alatta?</strong><span>A 3D-ben is megjelenik, a szükséges szabad hellyel együtt.</span></div>
@@ -30,6 +31,7 @@ export default function FurniturePicker({ config, scene, prices, onChange, onSce
       <div>
         <strong>{fit.level === 'comfortable' ? 'Kényelmesen elfér' : fit.level === 'tight' ? 'Elfér, de szűkös' : 'Nem fér el kényelmesen'}</strong>
         <span>{spec.description} · helyigény mozgástérrel {m(spec.zone[0])} × {m(spec.zone[1])} m{fit.level === 'tight' ? ' — a székek mögött kevesebb a hely' : ''}</span>
+        {layout && layout.count > 1 && <span className="furniture-capacity">Ezen a méreten {layout.count} csomag fér el egymás mellett, összesen kb. {layout.seats} fő (becsült létszám).</span>}
         {suggestion && <button type="button" className="furniture-suggest" onClick={() => onChange(suggestion)}>
           <Maximize size={14} />Méret igazítása: {m(suggestion.width)} × {m(suggestion.depth)} m <em>{delta >= 0 ? '+' : '−'}{formatHuf(Math.abs(delta))}</em>
         </button>}

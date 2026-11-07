@@ -52,7 +52,7 @@ export default function SceneEffects({ ultra, night, vignette, bloomScale }: { u
         halfRes
         depthAwareUpsampling
       />
-      <Bloom mipmapBlur luminanceThreshold={night ? 1 : 0.92} luminanceSmoothing={0.2} intensity={(night ? 0.85 : 0.2) * Math.max(bloomScale, 1)} radius={0.7} />
+      <Bloom mipmapBlur luminanceThreshold={night ? 1 : 1.25} luminanceSmoothing={0.2} intensity={(night ? 0.85 : 0.1) * Math.max(bloomScale, 1)} radius={0.7} />
       <ToneMapping mode={ToneMappingMode.NEUTRAL} />
       {/* Finom vignetta és enyhe telítettség a tónusleképezés után: a kép „fotósabb”, a figyelem a pergolára esik. */}
       {vignette ? <Vignette eskil={false} offset={0.32} darkness={night ? 0.5 : 0.42} /> : <></>}

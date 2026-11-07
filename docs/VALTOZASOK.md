@@ -1,5 +1,11 @@
 # Változások
 
+## 3.67 – Alapnézet (aranyóra, ház nélkül), nappali fény magas/ultra szinten, nagy pergolák berendezése
+
+- **Alapnézet:** a konfigurátor aranyórával és „csak a pergola” környezettel indul (nincs ház, kert, szomszédság: gyorsabb első betöltés, szebb árnyékok). A „Családi ház” és a nappal továbbra is választható a Nézet panelen.
+- **Nappali fény (magas és ultra szint):** a kiégett, „kimosódott” hatást az utófeldolgozás bloom-ja okozta, ez csak magas/ultra szinten fut; nappal a bloom küszöbe magasabb, az intenzitása a felére esett. A közepes szint és az éjszakai/aranyóra megjelenés változatlan. Valós ultra-gépen ellenőrizendő, szükség esetén tovább finomítható.
+- **Nagy pergolák berendezése:** a bútorcsomag (pihenősarok, étkezők, bisztró, napozó, kombinált) a rendelkezésre álló helyen rácsban ismétlődik, legfeljebb 12 példányig; a jacuzzi és a bár egyedi marad. A kiválasztó kiírja, hány csomag fér el és kb. hány főre (becsült létszám). Teszt: `tests/furnitureLayout.test.ts`.
+
 ## 3.66 – Modulos pergola: 1–4 összekapcsolt mező közös oszlopokkal
 
 - **Modulok** (1. lépés → Modulok, csak ha a gyártó kínálja: `limits.maxModules`, a demónál 4): több mező egymás mellett közös oszlopsorral és gerendával – hosszú teraszra, vendéglátó terekre. A szélesség-csúszka modulonként értendő (a gyártó mezőnkénti korlátján belül), a teljes szélesség a modulszorosa.

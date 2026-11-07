@@ -32,7 +32,7 @@ import { findShadeFabric } from '@/lib/roofShade'
 import { doorLeafWidth, sideSegments } from '@/lib/sides'
 import { hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
-import { FURNITURE_SETS, furnitureFit } from '@/lib/furniture'
+import { FURNITURE_SETS, furnitureFit, furnitureLayout } from '@/lib/furniture'
 import HotTub from '@/components/HotTub'
 import { getSpecCode } from '@/lib/specification'
 import { effectiveGlazing, isGlazedRoof, isMovableRoof, roofRise } from '@/lib/roofs'
@@ -1768,19 +1768,23 @@ function Furniture({ config, scene, hideZone = false }: { config: PergolaConfig;
   const set = scene.furniture
   if (set === 'none') return null
   const fit = furnitureFit(set, config)!
+  const layout = furnitureLayout(set, config)!
   const [zoneLong, zoneShort] = FURNITURE_SETS[set].zone
-  const content = FURNITURE_SETS[set].parts.map((part) => <group key={part.kind} position={[part.x, 0, 0]}>
-    {part.kind === 'lounge' ? <LoungeSet /> : part.kind === 'dining6' ? <DiningSet seats={6} /> : part.kind === 'dining8' ? <DiningSet seats={8} /> : part.kind === 'bistro' ? <BistroSet /> : part.kind === 'bar' ? <BarSet /> : part.kind === 'sunbed' ? <SunbedSet /> : <HotTub night={getLighting(scene).night} />}
+  // Nagy pergolán a csomag rácsban ismétlődik (étterem, kávézó): minden példány a saját zónájában áll.
+  const content = layout.cells.map((cell) => <group key={`${cell.x}:${cell.z}`} position={[cell.x, 0, cell.z]}>
+    {FURNITURE_SETS[set].parts.map((part) => <group key={part.kind} position={[part.x, 0, 0]}>
+      {part.kind === 'lounge' ? <LoungeSet /> : part.kind === 'dining6' ? <DiningSet seats={6} /> : part.kind === 'dining8' ? <DiningSet seats={8} /> : part.kind === 'bistro' ? <BistroSet /> : part.kind === 'bar' ? <BarSet /> : part.kind === 'sunbed' ? <SunbedSet /> : <HotTub night={getLighting(scene).night} />}
+    </group>)}
   </group>)
   const zoneColor = fit.level === 'comfortable' ? '#9be26a' : fit.level === 'tight' ? '#ffc24a' : '#ff5b4a'
   const half = [zoneLong / 2, zoneShort / 2]
   const outline: [number, number, number][] = [[-half[0], 0.035, -half[1]], [half[0], 0.035, -half[1]], [half[0], 0.035, half[1]], [-half[0], 0.035, half[1]], [-half[0], 0.035, -half[1]]]
   return <group name="terrace-furniture" rotation={[0, fit.alongWidth ? 0 : Math.PI / 2, 0]}>
     {content}
-    {scene.showFurnitureZone && !hideZone && <group name="furniture-zone">
+    {scene.showFurnitureZone && !hideZone && layout.cells.map((cell) => <group key={`zone-${cell.x}:${cell.z}`} name="furniture-zone" position={[cell.x, 0, cell.z]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}><planeGeometry args={[zoneLong, zoneShort]} /><meshBasicMaterial color={zoneColor} transparent opacity={0.16} depthWrite={false} toneMapped={false} /></mesh>
       <Line points={outline} color={zoneColor} lineWidth={2} dashed dashSize={0.18} gapSize={0.1} />
-    </group>}
+    </group>)}
   </group>
 }
 

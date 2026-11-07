@@ -7,9 +7,10 @@ import type { Tenant } from '@/tenants/types'
 import type { PergolaConfig, PriceSettings, SceneSettings } from '@/types/pergola'
 
 export const DEFAULT_SCENE: SceneSettings = {
-  time: 'day',
-  dayTime: 13,
-  ground: 'terrace',
+  // Alap: aranyóra (szép, hosszú árnyékok) és csak a pergola, ház nélkül: gyorsabb az első betöltés.
+  time: 'sunset',
+  dayTime: 18,
+  ground: 'studio',
   showDimensions: false,
   autoRotate: false,
   autoCamera: true,
