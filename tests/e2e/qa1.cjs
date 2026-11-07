@@ -16,7 +16,7 @@ const bad = (what) => { issues.push(what); log('  ✗', what) };
   const p0 = await priceNum(); log('start price', p0);
 
   // Lépések
-  for (const label of ['Méret', 'Rögzítés', 'Szín', 'Oldalak', 'Extrák', 'Összegzés']) { await step(label); const h = await p.locator('.step-heading h2').innerText().catch(() => ''); if (!h && label !== 'Összegzés') bad(`lépés ${label}: nincs fejléc`) }
+  for (const label of ['Típus', 'Méret', 'Tető', 'Szín', 'Extrák', 'Összegzés']) { await step(label); const h = await p.locator('.step-heading h2').innerText().catch(() => ''); if (!h && label !== 'Összegzés') bad(`lépés ${label}: nincs fejléc`) }
   await step('Méret');
 
   // Méret mezők: beírás, szélsőérték

@@ -1,5 +1,12 @@
 # Változások
 
+## 3.76 – Lépések átrendezése: kiegyensúlyozott hat lépés
+
+- **Új sorrend:** Típus → Méret → Tető → Szín → Extrák → Összegzés. Eddig az 1. lépés hét döntést sűrített (típus, csomag, tető, üveg, méret, modul, dőlés, bútor – 35 gomb), a 2. lépés egyet (rögzítés).
+- **Típus:** csak a „mit építesz” döntés, a kiinduló csomagok és a tanácsadó. **Méret:** méretek, modulok, tetődőlés és a rögzítés módja (a korábbi 2. lépés ide olvadt). **Tető:** a tetőrendszer, üvegtípus és lamellaszög/okos mód egy helyen (eddig az 1. és a 4. lépésben is választható volt), alatta az oldalak zárása. A Szín az oldalak után jön: az oldalzárás a geometriát változtatja, a szín csak a felületet.
+- **Bútor a Nézet panelbe:** a berendezés a jelenet része (nem kerül az árba, sem a PDF tételei közé), ezért a 3D feletti „Nézet” gomb alá került, a környezet mellé.
+- A lépés-azonosítók és a megosztó linkek változatlanok; a mentett piszkozatok működnek.
+
 ## 3.75 – Okos lamella: a lamellák a napot követik
 
 - **Okos mód** a lamellás tetőn (a Lamellaszög csúszka alatt): bekapcsolva a lamellák mindig a legnagyobb nyitásszögre állnak, amelynél a közvetlen napfény még teljesen kint marad — a napszak és a napirány csúszkával, illetve az árnyékelemzés valós napállásával együtt mozognak. A számítás a gyári lamellaméretből (215,8 mm széles, 200 mm osztás) indul: szemből sütő nap → zárva (teljes árnyék); a ház felől / magasról jövő nap → akár 90°-ig nyitva, árnyékkal; napsütés nélkül → nyitva.

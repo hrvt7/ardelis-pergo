@@ -22,11 +22,13 @@ import { BuildingIssues, BuildingPicker, ClimateSection, WallGlazingPicker } fro
 import { BUILDING_ROOFS, isClosedBuilding } from '@/lib/buildings'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
 
+// A lépések sorrendje a döntések természetes rendje: mit → mekkora és hogyan áll → tető és zárás → szín → komfort → felmérés.
+// Az azonosítók történeti okból maradtak ('size' = Típus, 'mount' = Méret és szerkezet, 'sides' = Tető és oldalak).
 const STEPS: { id: ConfigStep; label: string; short: string }[] = [
-  { id: 'size', label: 'Pergola', short: 'Csomag és méret' },
-  { id: 'mount', label: 'Rögzítés', short: 'Szerkezet' },
+  { id: 'size', label: 'Típus', short: 'Mit építesz' },
+  { id: 'mount', label: 'Méret', short: 'Méret és szerkezet' },
+  { id: 'sides', label: 'Tető', short: 'Tető és oldalak' },
   { id: 'color', label: 'Szín', short: 'Felület' },
-  { id: 'sides', label: 'Oldalak', short: 'Tető és zárás' },
   { id: 'extras', label: 'Extrák', short: 'Komfort' },
   { id: 'summary', label: 'Összegzés', short: 'Felmérés' },
 ]
@@ -283,7 +285,7 @@ function useSheetGesture(panel: React.RefObject<HTMLElement | null>, sheet: Shee
 }
 
 /** Jelenet és vizualizáció: lebegő „Nézet” panel (nem lépés — a beállítások a 3D-nézeten azonnal látszanak). */
-export function SceneSettingsPanel({ scene, onSceneChange, onPhotoUpload }: { scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void; onPhotoUpload: (file: File) => void }) {
+export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneChange, onPhotoUpload }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onPhotoUpload: (file: File) => void }) {
   const setDayTime = (dayTime: number) => onSceneChange({ dayTime, time: dayTime >= 20 || dayTime < 7 ? 'night' : dayTime >= 17 ? 'sunset' : 'day' })
   return (
           <div className="scene-settings-body">
@@ -296,6 +298,8 @@ export function SceneSettingsPanel({ scene, onSceneChange, onPhotoUpload }: { sc
             <div className="scene-options compact two" role="radiogroup" aria-label="Környezet">
               {([['terrace', 'Családi ház', House], ['studio', 'Csak a pergola', Box]] as const).map(([ground, label, Icon]) => { const active = (scene.ground === 'studio') === (ground === 'studio'); return <button type="button" role="radio" aria-checked={active} key={ground} className={active ? 'selected' : ''} onClick={() => onSceneChange({ ground })}><Icon size={17} /><span>{label}</span></button> })}
             </div>
+            {/* A berendezés a jelenet része (nem a terméké): itt van, a környezet mellett, nem a lépések között. */}
+            <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
             <div className="scene-toggle-grid">
               <Toggle label="180 cm-es figura" description="A méretek szemléltetéséhez" checked={scene.showPerson} onChange={(showPerson) => onSceneChange({ showPerson })} />
               <Toggle label="Méretcímkék" description="Aktuális méretek centiméterben" checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
@@ -346,7 +350,8 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   const touchStart = useRef(0)
   const stepIndex = STEPS.findIndex((item) => item.id === step)
   const [appliedPreset, setAppliedPreset] = useState<string | null>(null)
-  const stepLabel = (id: ConfigStep) => (id === 'size' ? (config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : 'Pergola') : STEPS.find((item) => item.id === id)!.label)
+  const stepLabel = (id: ConfigStep) => STEPS.find((item) => item.id === id)!.label
+  const buildingName = config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : 'Pergola'
   const [stepTrack, setStepTrack] = useState({ index: stepIndex, dir: 'fwd' as 'fwd' | 'back' })
   if (stepTrack.index !== stepIndex) setStepTrack({ index: stepIndex, dir: stepIndex > stepTrack.index ? 'fwd' : 'back' })
   const stepDir = stepTrack.dir
@@ -374,7 +379,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
       </div>
       <div className="controls-scroll" ref={scrollRef}>
         <div className={`panel-content dir-${stepDir}`} role="tabpanel" key={step}>
-          <div className="step-heading"><span>0{stepIndex + 1} · {STEPS[stepIndex].short}</span><h2>{stepLabel(step)}</h2></div>
+          <div className="step-heading"><span>0{stepIndex + 1} · {STEPS[stepIndex].short}</span><h2>{step === 'size' ? buildingName : stepLabel(step)}</h2></div>
 
           {step === 'size' && <>
             {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
@@ -382,9 +387,10 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <BuildingPicker config={config} prices={prices} onChange={onChange} />
             <SectionTitle title="Kiinduló csomagok" hint={isClosedBuilding(config.building) ? `A kiválasztott típushoz (${config.building === 'conservatory' ? 'télikert' : 'veranda'}) illő kiinduló terv. Utána minden szabadon módosítható.` : 'Egy koppintással indulhatsz, utána minden szabadon módosítható.'} />
             <div className="preset-list">{(tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')).length ? tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')) : tenant.presets).map((preset) => <button type="button" key={preset.id} className={appliedPreset === preset.id ? 'applied' : undefined} onClick={() => { onPreset(presetConfig(tenant, preset.config)); setAppliedPreset(preset.id); window.setTimeout(() => setAppliedPreset((current) => (current === preset.id ? null : current)), 1400) }}><strong>{preset.name}</strong><span>{preset.description}</span>{appliedPreset === preset.id ? <Check size={15} /> : <ArrowRight size={15} />}</button>)}</div>
-            <SectionTitle title="Tetőrendszer" hint={isClosedBuilding(config.building) ? (config.building === 'conservatory' ? 'Télikerthez üveg- vagy fix (szigetelt) tető való: a mozgó tető nem zárható megfelelően.' : 'Verandához üveg-, polikarbonát vagy fix tető való.') : 'A pergola típusa határozza meg az árnyékolást, az esővédelmet és az árat.'} />
-            <RoofPicker config={config} prices={prices} onChange={onChange} />
-            <GlazingPicker config={config} prices={prices} onChange={onChange} />
+            <p className="split-note">A méreteket, a tetőt, az oldalakat és a színt a következő lépésekben állítod be; a bútor és a környezet a 3D feletti <strong>Nézet</strong> gombnál van.</p>
+          </>}
+
+          {step === 'mount' && <>
             <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
             {(limits.maxModules ?? 1) > 1 && <>
               <SectionTitle title="Modulok" hint="Összekapcsolt mezők közös oszlopokkal – hosszú teraszra, vendéglátó terekre. Az ár és az összterület modulonként számolódik." />
@@ -400,10 +406,6 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             {(config.pitch ?? 0) > 0 && <p className="split-note">A tető hátsó (fali) éle {roofRise(config).toFixed(2).replace('.', ',')} m-rel magasabb az elülső oszlopmagasságnál, így a csapadék előre folyik le.</p>}
             {bayWidth(config) > 6 && <div className="smart-warning"><Columns3 size={18} /><p><strong>Középoszlop javasolt</strong>600 cm feletti mezőnél a műszaki ellenőrzés és egy középoszlop szükséges lehet.</p></div>}
             <div className="smart-helper"><Sparkles size={18} /><p><strong>{getSizeRecommendation(config).split(' · ')[0]}</strong>{getSizeRecommendation(config).split(' · ')[1]}</p></div>
-            <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
-          </>}
-
-          {step === 'mount' && <>
             <SectionTitle title="Hogyan kapcsolódik a házhoz?" hint="A falak, az oszlopok és az ár a modellen is azonnal frissülnek." />
             <div className="roof-options mount-options">{MOUNT_TYPES.filter((mount) => tenant.mounts.includes(mount)).map((mount) => <button type="button" key={mount} className={config.mount === mount ? 'selected' : ''} aria-pressed={config.mount === mount} onClick={() => onChange({ mount })}><MountIcon mount={mount} /><span><strong>{MOUNT_LABELS[mount]}</strong><small>{MOUNT_DESCRIPTIONS[mount]}</small></span><span className="selection-dot">{config.mount === mount && <Check size={12} />}</span></button>)}</div>
           </>}
@@ -435,17 +437,15 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           </>}
 
           {step === 'sides' && <>
-            <SectionTitle title="Melyik oldalt zárod?" hint="Koppints egy oldalra a felülnézeten vagy a 3D modellen. A középső mező a tetőt mutatja: itt a lamellák állását is beállíthatod." />
+            <SectionTitle title="Tetőrendszer" hint={isClosedBuilding(config.building) ? (config.building === 'conservatory' ? 'Télikerthez üveg- vagy fix (szigetelt) tető való: a mozgó tető nem zárható megfelelően.' : 'Verandához üveg-, polikarbonát vagy fix tető való.') : 'A tető típusa határozza meg az árnyékolást, az esővédelmet és az árat.'} />
+            <RoofPicker config={config} prices={prices} onChange={onChange} />
+            <GlazingPicker config={config} prices={prices} onChange={onChange} />
+            <RoofControl config={config} scene={scene} onChange={onChange} onSceneChange={onSceneChange} />
+            {ROOF_INFO[config.roof].motion === 'none' && <p className="split-note">Fix tető: nincs mozgatható része.</p>}
+            {(supportsRoofShade(config.roof) && tenant.extras.roofShade) || (config.roof === 'fixed' && tenant.extras.solar) ? <p className="split-note">{config.roof === 'fixed' ? 'Napelemes tető' : 'Motoros árnyékoló'} az Extrák lépésben választható.</p> : null}
+            <SectionTitle title="Melyik oldalt zárod?" hint="Koppints egy oldalra a felülnézeten vagy a 3D modellen. A középső mező a tető." />
             <SideDiagram config={config} selected={selectedSide} roofName={tenant.roofs[config.roof]?.name ?? ''} onSelect={onSideSelect} />
-            {selectedSide === 'roof' ? <>
-              <div className="selected-side-head"><strong>Tetőrendszer</strong><span>{roofLabelsFor(config.roof)}</span></div>
-              <RoofControl config={config} scene={scene} onChange={onChange} onSceneChange={onSceneChange} />
-              <SectionTitle title="Tetőtípus" hint="Itt is átválthatsz: az ár és a 3D azonnal követi." />
-              <RoofPicker config={config} prices={prices} onChange={onChange} />
-              <GlazingPicker config={config} prices={prices} onChange={onChange} />
-              {ROOF_INFO[config.roof].motion === 'none' && <p className="split-note">Fix tető: nincs mozgatható része.</p>}
-              {(supportsRoofShade(config.roof) && tenant.extras.roofShade) || (config.roof === 'fixed' && tenant.extras.solar) ? <p className="split-note">{config.roof === 'fixed' ? 'Napelemes tető' : 'Motoros árnyékoló'} az Extrák lépésben választható.</p> : null}
-            </> : sideSettings(selectedSide)}
+            {selectedSide === 'roof' ? <div className="selected-side-head"><strong>Tető kijelölve</strong><span>{roofLabelsFor(config.roof)} · a beállításai fent. Koppints egy oldalra a záráshoz.</span></div> : sideSettings(selectedSide)}
             {isClosedBuilding(config.building) && <WallGlazingPicker config={config} prices={prices} onChange={onChange} />}
             <BuildingIssues config={config} />
             <div className="interaction-hint"><Move size={17} /><p>A tolóüveg és az oldallamella a 3D-ben kattintásra, illetve a fenti gombbal is mozgatható. Egy oldal két részre is osztható, például fele tolóüveg, fele lécfal.</p></div>
