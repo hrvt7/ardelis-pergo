@@ -21,6 +21,7 @@ import { sunVectorInScene } from '@/lib/sun'
 import { studySun } from '@/lib/sunSite'
 import { daylightBalance } from '@/lib/lightBalance'
 import { bayBoundaries, bayCenter, bayWidth, hasCenterPost, moduleCount } from '@/lib/modules'
+import { fitDistance, maxOrbitDistance } from '@/lib/cameraFit'
 import type { ShadeResult } from '@/components/ShadeProbe'
 import type { FurnitureSet } from '@/types/pergola'
 import { kelvinToHex } from '@/lib/color'
@@ -2160,6 +2161,15 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     const perspectiveCamera = camera as THREE.PerspectiveCamera
     Object.assign(perspectiveCamera, { fov: view === 'sofa' ? (window.innerWidth < 820 ? 70 : 64) : (window.innerWidth < 820 ? 48 : 38) })
     perspectiveCamera.updateProjectionMatrix()
+    // Áttekintő nézetek: ha a szerkezet nem férne a képbe (széles, modulos pergola, keskeny vászon),
+    // a kamera ugyanabból az irányból hátrébb áll. Kis pergolánál a megszokott állás marad.
+    if (!mechanism && (view === 'perspective' || view === 'front' || view === 'top')) {
+      const element = gl.domElement
+      const needed = fitDistance({ width: config.width, depth: config.depth, height: config.height }, perspectiveCamera.fov, element.clientWidth / Math.max(1, element.clientHeight))
+      const direction = destination.current.clone().sub(target.current)
+      const distance = direction.length()
+      if (distance < needed) destination.current.copy(target.current).add(direction.multiplyScalar(needed / distance))
+    }
     if (view === 'sofa') {
       camera.position.copy(destination.current)
       camera.lookAt(target.current)
@@ -2183,7 +2193,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
       transitioning.current = false
       firstFlight.current = false
     }
-  }, [view, config.width, config.depth, config.height, config.mount, furniture, camera, invalidate, beginMove, mechanism])
+  }, [view, config.width, config.depth, config.height, config.mount, furniture, camera, gl, invalidate, beginMove, mechanism])
   useEffect(() => { applyView() }, [applyView])
 
   useEffect(() => { if (revealed) invalidate() }, [revealed, invalidate])
@@ -2348,7 +2358,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
       controls.current.update(); invalidate()
     } else if (autoRotate && idle.current > 2 && autoFrame.current >= 1 / 30) { autoFrame.current = 0; invalidate() }
   })
-  return <OrbitControls ref={controls} makeDefault enabled={view !== 'sofa'} enableDamping dampingFactor={0.07} minDistance={1.1} maxDistance={24} maxPolarAngle={view === 'interior' ? Math.PI * 0.86 : Math.PI / 1.98} autoRotate={autoRotate && view !== 'sofa'} autoRotateSpeed={0.4} onStart={() => { transitioning.current = false; firstFlight.current = false; showcase.current = 0; idle.current = 0 }} />
+  return <OrbitControls ref={controls} makeDefault enabled={view !== 'sofa'} enableDamping dampingFactor={0.07} minDistance={1.1} maxDistance={maxOrbitDistance(config)} maxPolarAngle={view === 'interior' ? Math.PI * 0.86 : Math.PI / 1.98} autoRotate={autoRotate && view !== 'sofa'} autoRotateSpeed={0.4} onStart={() => { transitioning.current = false; firstFlight.current = false; showcase.current = 0; idle.current = 0 }} />
 }
 
 /** Az égbolt-képeken (HDR) a nap iránya: equirect u koordináta → szög az xz síkban. */

@@ -1,5 +1,10 @@
 # Változások
 
+## 3.71 – Kamera-keretezés: a széles pergola is belefér a képbe
+
+- Az áttekintő nézetek (Kívülről, Elölről, Felülről) kameratávolsága a szerkezet befoglaló méretéből és a vászon tényleges oldalarányából számolódik (`src/lib/cameraFit.ts`): ha a pergola nem férne a képbe (modulos, széles kivitel vagy keskeny vászon), a kamera ugyanabból az irányból hátrébb áll. Kis pergolánál a megszokott beállás változatlan.
+- A forgatás távolságkorlátja (eddig fix 24 m) a méret szerint nő, így a nagy pergola kézzel is kiforgatható a teljes látványra.
+
 ## 3.70 – Egységes bútorválasztó
 
 - A „Használati csomagok” külön szekció megszűnt: minden elrendezés egy „Mit szeretnél alatta?” választóban van, használat szerint négy csoportba rendezve (Otthon és pihenés · Konyha és étkezés · Wellness · Vendéglátás és rendezvény), az „Üresen” a végén.
