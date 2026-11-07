@@ -1,5 +1,11 @@
 # Változások
 
+## 3.63 – Admin: saját terméknevek és gyártható méretek
+
+- **Tetőrendszerek:** minden tetőtípushoz a gyártó saját terméknevet és rövid leírást adhat meg (fehér címke) – a konfigurátor, a PDF és az ajánlat ezt mutatja; üres mező esetén az alapnév marad.
+- **Gyártható méretek:** szélesség/mélység/magasság min–max (m) és a fűtőpanelek maximuma az adminban állítható; a konfigurátor csúszkái és a megosztott linkek is ezen belül maradnak. Hibás tartomány (min ≥ max) mentés előtt elutasítva.
+- A nyitóoldali GYIK ennek megfelelően pontosítva (a színkatalógus továbbra is induláskor, általunk).
+
 ## 3.62 – Gyorsabb ultra szint, igazságosabb minőség-védőháló
 
 - **Védőháló:** a „túl lassú → alacsonyabb szint” döntés eddig örökre a böngészőben maradt (egy háttérbe tett fül vagy egy rövid akadás után is). Most 6 óra után lejár, a `?quality=` URL-paraméter felülírja, és csak 30 fps alatt, három egymást követő mérési ablakban (≈5 s) lép életbe (eddig 38 fps alatt, kettőben).

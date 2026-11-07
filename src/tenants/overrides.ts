@@ -45,6 +45,15 @@ export const tenantOverridesSchema = z.object({
     recipients: z.array(email.min(1)).max(10),
     subjectPrefix: optionalText(80),
   }).partial().optional(),
+  /** Gyártói terméknevek a tetőrendszerekhez (fehér címke: a platform nevei helyett a gyártó sajátjai). */
+  roofNames: z.partialRecord(z.enum(ROOF_TYPES as [RoofType, ...RoofType[]]), z.object({ name: text(40), short: text(60), description: text(400) }).partial()).optional(),
+  /** Gyártható mérettartomány (m) és a fűtőpanelek maximuma – a konfigurátor csak ezen belül enged tervezni. */
+  limits: z.object({
+    width: z.tuple([z.number().min(1).max(30), z.number().min(1).max(30)]),
+    depth: z.tuple([z.number().min(1).max(30), z.number().min(1).max(30)]),
+    height: z.tuple([z.number().min(1.8).max(6), z.number().min(1.8).max(6)]),
+    maxHeaters: z.number().int().min(0).max(20),
+  }).partial().refine((limits) => (['width', 'depth', 'height'] as const).every((key) => !limits[key] || limits[key]![0] < limits[key]![1]), 'A minimum kisebb kell legyen a maximumnál.').optional(),
 })
 
 export type TenantOverrides = z.infer<typeof tenantOverridesSchema>
@@ -94,9 +103,12 @@ export function applyOverrides(base: Tenant, overrides: unknown): Tenant {
   }
   if (o.priceMatrix) prices.priceMatrix = o.priceMatrix
 
-  const roofs = o.roofs
-    ? Object.fromEntries(o.roofs.map((roof) => [roof, base.roofs[roof] ?? defaultRoof(roof)])) as Tenant['roofs']
-    : base.roofs
+  const enabledRoofs = o.roofs ?? (Object.keys(base.roofs) as RoofType[])
+  const roofs = Object.fromEntries(enabledRoofs.map((roof) => {
+    const named = o.roofNames?.[roof] ?? {}
+    const cleaned = Object.fromEntries(Object.entries(named).filter(([, value]) => typeof value === 'string' && value.trim() !== ''))
+    return [roof, { ...(base.roofs[roof] ?? defaultRoof(roof)), ...cleaned }]
+  })) as Tenant['roofs']
 
   const tenant: Tenant = {
     ...base,
@@ -105,6 +117,7 @@ export function applyOverrides(base: Tenant, overrides: unknown): Tenant {
     roofs,
     sides: o.sides ?? base.sides,
     mounts: o.mounts ?? base.mounts,
+    limits: { ...base.limits, ...o.limits },
     extras: { ...base.extras, ...o.extras },
     lead: {
       recipients: o.lead?.recipients ?? base.lead.recipients,

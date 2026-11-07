@@ -248,6 +248,9 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
   const [subjectPrefix, setSubjectPrefix] = useState(effective.lead.subjectPrefix)
   const [matrix, setMatrix] = useState<MatrixDraft>(() => Object.fromEntries(ROOF_TYPES.map((roof) => [roof, pointsToRows(effective.prices.priceMatrix?.[roof])])))
   const [matrixErrors, setMatrixErrors] = useState<MatrixErrors>({})
+  const [roofNames, setRoofNames] = useState<Record<string, { name: string; short: string }>>(() => Object.fromEntries(ROOF_TYPES.map((roof) => [roof, { name: effective.roofs[roof]?.name ?? ROOF_INFO[roof].name, short: effective.roofs[roof]?.short ?? ROOF_INFO[roof].short }])))
+  const [limits, setLimits] = useState(() => ({ widthMin: effective.limits.width[0], widthMax: effective.limits.width[1], depthMin: effective.limits.depth[0], depthMax: effective.limits.depth[1], heightMin: effective.limits.height[0], heightMax: effective.limits.height[1], maxHeaters: effective.limits.maxHeaters }))
+  const setLimit = (key: keyof typeof limits, value: string) => setLimits((current) => ({ ...current, [key]: Number(value) }))
   const [matrixRoof, setMatrixRoof] = useState<RoofType | null>(null)
   const [formError, setFormError] = useState('')
 
@@ -282,6 +285,8 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
       mounts,
       extras,
       lead: { recipients: recipients.split(/[\n,;]+/).map((item) => item.trim()).filter(Boolean), subjectPrefix },
+      roofNames: Object.fromEntries(ROOF_TYPES.map((roof) => [roof, { name: roofNames[roof].name.trim(), short: roofNames[roof].short.trim() }])) as TenantOverrides['roofNames'],
+      limits: { width: [limits.widthMin, limits.widthMax], depth: [limits.depthMin, limits.depthMax], height: [limits.heightMin, limits.heightMax], maxHeaters: limits.maxHeaters },
     }
     const checked = parseOverrides(next)
     if (!checked.ok) { setFormError(checked.error); return }
@@ -301,8 +306,11 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
       </Section>
 
       <Section title="Tetőrendszerek (nettó Ft/m² alapár)">
+        <p className="admin-hint admin-wide">A terméknév és a rövid leírás a gyártó sajátja lehet (fehér címke): ez jelenik meg a konfigurátorban, a PDF-en és az ajánlatban.</p>
         {ROOF_TYPES.map((roof) => <div className="admin-row" key={roof}>
-          <label className="admin-check"><input type="checkbox" checked={roofs.includes(roof)} onChange={(event) => setRoofs(toggle(roofs, roof, event.target.checked))} />{ROOF_INFO[roof].name} <small>{ROOF_INFO[roof].short}</small></label>
+          <label className="admin-check"><input type="checkbox" checked={roofs.includes(roof)} onChange={(event) => setRoofs(toggle(roofs, roof, event.target.checked))} /><small>{ROOF_INFO[roof].name}</small></label>
+          <input type="text" aria-label={`${ROOF_INFO[roof].name} terméknév`} placeholder={ROOF_INFO[roof].name} maxLength={40} value={roofNames[roof].name} onChange={(event) => setRoofNames({ ...roofNames, [roof]: { ...roofNames[roof], name: event.target.value } })} />
+          <input type="text" aria-label={`${ROOF_INFO[roof].name} rövid leírás`} placeholder={ROOF_INFO[roof].short} maxLength={60} value={roofNames[roof].short} onChange={(event) => setRoofNames({ ...roofNames, [roof]: { ...roofNames[roof], short: event.target.value } })} />
           <input type="number" min="0" step="1000" aria-label={`${ROOF_INFO[roof].name} m² ár`} value={prices[ROOF_INFO[roof].priceKey]} onChange={(event) => setPrices({ ...prices, [ROOF_INFO[roof].priceKey]: Math.max(0, Number(event.target.value) || 0) })} />
         </div>)}
       </Section>
@@ -318,6 +326,17 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
         <PriceMatrixEditor roofs={ROOF_TYPES.filter((roof) => roofs.includes(roof))} value={matrix} errors={matrixErrors} active={matrixRoof} onActiveChange={setMatrixRoof}
           onChange={(roof, rows) => { setMatrix((current) => ({ ...current, [roof]: rows })); if (matrixErrors[roof]) setMatrixErrors((current) => ({ ...current, [roof]: undefined })) }} />
       </section>
+
+      <Section title="Gyártható méretek">
+        <label><span>Szélesség min. <small>m</small></span><input type="number" min="1" max="30" step="0.1" value={limits.widthMin} onChange={(event) => setLimit('widthMin', event.target.value)} /></label>
+        <label><span>Szélesség max. <small>m</small></span><input type="number" min="1" max="30" step="0.1" value={limits.widthMax} onChange={(event) => setLimit('widthMax', event.target.value)} /></label>
+        <label><span>Mélység (kinyúlás) min. <small>m</small></span><input type="number" min="1" max="30" step="0.1" value={limits.depthMin} onChange={(event) => setLimit('depthMin', event.target.value)} /></label>
+        <label><span>Mélység max. <small>m</small></span><input type="number" min="1" max="30" step="0.1" value={limits.depthMax} onChange={(event) => setLimit('depthMax', event.target.value)} /></label>
+        <label><span>Magasság min. <small>m</small></span><input type="number" min="1.8" max="6" step="0.05" value={limits.heightMin} onChange={(event) => setLimit('heightMin', event.target.value)} /></label>
+        <label><span>Magasság max. <small>m</small></span><input type="number" min="1.8" max="6" step="0.05" value={limits.heightMax} onChange={(event) => setLimit('heightMax', event.target.value)} /></label>
+        <label><span>Fűtőpanel max. <small>db</small></span><input type="number" min="0" max="20" step="1" value={limits.maxHeaters} onChange={(event) => setLimit('maxHeaters', event.target.value)} /></label>
+        <p className="admin-hint admin-wide">A konfigurátor csúszkái és a megosztott linkek is ezen a tartományon belül maradnak; a meglévő tervek a tartományra kerekednek.</p>
+      </Section>
 
       <Section title="Oldalfalak">
         {SIDE_TYPES.filter((type) => type !== 'none').map((type) => <label className="admin-check" key={type}><input type="checkbox" checked={sides.includes(type as never)} onChange={(event) => setSides(toggle(sides, type as never, event.target.checked))} />{SIDE_LABELS[type]}</label>)}
