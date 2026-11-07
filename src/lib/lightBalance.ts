@@ -24,5 +24,19 @@ export function daylightBalance(strength: number, golden: boolean): LightBalance
   return { sun: 2.6 + s * 4.2, ambient: 0.02, hemisphere: 0.12, environment: 0.34 + (1 - s) * 0.16 }
 }
 
+/**
+ * A nap helye a jelenetben a napszakból (6–23 h): reggel keleten alacsonyan, délben magasan,
+ * este nyugaton. A `sunDirection` (fok) az egész ívet elforgatja a pergola körül, így a vevő
+ * a saját teraszának tájolásához igazíthatja az árnyékokat anélkül, hogy a napszak változna.
+ */
+export function sunPosition(dayTime: number, sunDirection = 0): [number, number, number] {
+  const angle = ((dayTime - 6) / 14) * Math.PI
+  const x = Math.cos(angle) * 9
+  const y = Math.max(0.8, Math.sin(angle) * 10)
+  const z = 4
+  const turn = (sunDirection * Math.PI) / 180
+  return [x * Math.cos(turn) + z * Math.sin(turn), y, -x * Math.sin(turn) + z * Math.cos(turn)]
+}
+
 /** Napfény / szórt fény arány (a jelenet kontrasztjának mércéje). */
 export const sunToSkyRatio = (balance: LightBalance) => balance.sun / (balance.environment + balance.hemisphere + balance.ambient)

@@ -10,6 +10,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   // Alap: aranyóra (szép, hosszú árnyékok) és csak a pergola, ház nélkül: gyorsabb az első betöltés.
   time: 'sunset',
   dayTime: 18,
+  sunDirection: 0,
   ground: 'studio',
   showDimensions: false,
   autoRotate: false,

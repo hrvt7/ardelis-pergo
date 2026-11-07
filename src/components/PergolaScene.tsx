@@ -19,7 +19,7 @@ import { log } from '@/lib/logger'
 import { pbrPath } from '@/lib/textures'
 import { sunVectorInScene } from '@/lib/sun'
 import { studySun } from '@/lib/sunSite'
-import { daylightBalance } from '@/lib/lightBalance'
+import { daylightBalance, sunPosition } from '@/lib/lightBalance'
 import { bayBoundaries, bayCenter, bayWidth, hasCenterPost, moduleCount } from '@/lib/modules'
 import { fitDistance, maxOrbitDistance } from '@/lib/cameraFit'
 import type { ShadeResult } from '@/components/ShadeProbe'
@@ -2375,8 +2375,7 @@ function getLighting(scene: SceneSettings) {
   const night = t >= 20 || t < 7
   const golden = t >= 17 && t < 20
   const daylight = THREE.MathUtils.clamp(Math.sin(((t - 6) / 14) * Math.PI), 0, 1)
-  const sunAngle = ((t - 6) / 14) * Math.PI
-  const position: [number, number, number] = [Math.cos(sunAngle) * 9, Math.max(0.8, Math.sin(sunAngle) * 10), 4]
+  const position = sunPosition(t, scene.sunDirection ?? 0)
   const balance = daylightBalance(daylight, golden)
   return {
     night,

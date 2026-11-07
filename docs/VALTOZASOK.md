@@ -1,5 +1,10 @@
 # Változások
 
+## 3.72 – Napirány csúszka
+
+- **Nézet panel → Napirány (0–360°):** a nap járásának elforgatása a pergola körül, a napszak megtartásával. A vevő a saját teraszának tájolásához igazíthatja, merre essen az árnyék; az égbolt-kép napja és a vetett árnyék együtt fordul. 0° = az eddigi alap ív, tehát a megjelenés változatlan, amíg nem nyúlnak hozzá. Az árnyékelemzés (valós helyszín, dátum) alatt a csúszka nem látszik, ott a napállás számolt.
+- A nap helyének számítása egy helyre került (`sunPosition`, `src/lib/lightBalance.ts`), teszttel.
+
 ## 3.71 – Kamera-keretezés: a széles pergola is belefér a képbe
 
 - Az áttekintő nézetek (Kívülről, Elölről, Felülről) kameratávolsága a szerkezet befoglaló méretéből és a vászon tényleges oldalarányából számolódik (`src/lib/cameraFit.ts`): ha a pergola nem férne a képbe (modulos, széles kivitel vagy keskeny vászon), a kamera ugyanabból az irányból hátrébb áll. Kis pergolánál a megszokott beállás változatlan.

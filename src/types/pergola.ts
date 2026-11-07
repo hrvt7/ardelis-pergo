@@ -73,6 +73,8 @@ export interface PergolaConfig {
 export interface SceneSettings {
   time: TimeOfDay
   dayTime: number
+  /** A nap járásának elforgatása a jelenet körül (fok, 0 = alap ív: keletről nyugatra a pergola előtt). */
+  sunDirection?: number
   ground: GroundType
   showDimensions: boolean
   autoRotate: boolean
