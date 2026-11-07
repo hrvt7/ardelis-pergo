@@ -1,5 +1,12 @@
 # Változások
 
+## 3.74 – PDF gomb asztalon, napállás a horizont felett, forgatás-tipp, régi linkek tesztje
+
+- **PDF összefoglaló asztalon:** az árpanel alacsony (≤ 900 px) ablakban görgethető, és a PDF/Megosztás gombsor a panel alja alatt lógott ki — úgy tűnt, asztalon nincs PDF. A gombsor most a panel aljára tapad, mindig látszik.
+- **Napállás:** 19:30–20:00 és 7:00 körül a nap gyakorlatilag a horizonton állt, a fény vízszintesen súrolt, az árnyék és a kontraszt eltűnt. A nap mostantól legalább ~12° magasan marad: hosszú, de látható árnyék.
+- **Forgatás-tipp érintőképernyőn:** első megnyitáskor „Húzd a forgatáshoz” jelzés a jeleneten; az első érintésre (vagy 7 mp után) eltűnik, és nem jön vissza.
+- **Megosztó linkek:** rögzített, korábban kiküldött minták (flag nélküli, RAL + kapcsolók, modulos, régi `#k=`) tesztje — ha a kódolás változik, a régi QR-kódok törése azonnal kiderül.
+
 ## 3.73 – Töltőképernyő valódi százalékkal, mobil nyitókép, kapcsolati cím beállításból
 
 - **Töltőképernyő:** a százalék eddig a letöltés-számlálóból jött, ami hamar 99-re ugrott, és ott állt, amíg a ház és a környezet töltődött (akár 8–10 s „99%”). Most a tényleges szakaszokból áll össze (kód · eszközök · első képkocka · ház · díszítés), a felirat is követi: „Modell betöltése” → „Anyagok és környezet” → „Jelenet felépítése” → „Kész”.

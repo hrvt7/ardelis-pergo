@@ -7,7 +7,15 @@ describe('sunPosition', () => {
     expect(y).toBeGreaterThan(9)
     expect(Math.abs(x)).toBeLessThan(1)
     expect(sunPosition(6)[0]).toBeCloseTo(9)
-    expect(sunPosition(6)[1]).toBe(0.8)
+    expect(sunPosition(6)[1]).toBe(2.2)
+  })
+
+  it('a nap a horizont közelében sem süllyed a kontrasztot elvivő magasság alá', () => {
+    for (const hour of [6, 6.5, 7, 19.5, 19.75, 20]) {
+      const [x, y, z] = sunPosition(hour)
+      expect(y).toBeGreaterThanOrEqual(2.2)
+      expect(Math.atan2(y, Math.hypot(x, z)) * 180 / Math.PI).toBeGreaterThan(12)
+    }
   })
 
   it('a napirány a vízszintes ívet forgatja, a nap magassága változatlan', () => {

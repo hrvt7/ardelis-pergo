@@ -274,6 +274,8 @@ a { color: inherit; } svg { flex-shrink: 0; }
 .price-line strong, .price-line small { display: block; } .price-line strong { font-size: 11.5px; font-weight: 600; } .price-line small { color: var(--text-secondary); font-size: 10.5px; margin-top: 3px; line-height: 1.5; } .price-line > span { flex-shrink: 0; font-size: 11.5px; font-variant-numeric: tabular-nums; }
 .price-line.installation { border-top: 1px solid var(--surface-border); margin-top: 5px; padding-top: 11px; }
 .price-actions { display: grid; grid-template-columns: 1.45fr 1fr; gap: 6px; margin-top: 15px; }
+/* Asztalon az árpanel görgethető; a PDF/Megosztás sáv a panel aljára tapad, hogy alacsony képernyőn se csússzon ki a látómezőből. */
+.price-panel:not(.is-collapsed) .price-actions { position: sticky; bottom: -18px; z-index: 1; margin: 15px -18px 0; padding: 12px 18px 14px; background: var(--surface-panel); border-top: 1px solid var(--surface-border); }
 .primary-action, .secondary-action { min-height: 44px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-size: 12.5px; font-weight: 700; padding: 0 10px; }
 .primary-action { background: var(--accent-primary); color: var(--ink-1000); border: 1px solid var(--accent-primary); } .primary-action:hover:not(:disabled) { background: var(--accent-hover); }
 .secondary-action { background: transparent; color: var(--text-primary); border: 1px solid var(--surface-border); } .secondary-action:hover { background: var(--surface-raised); }
@@ -370,6 +372,8 @@ a { color: inherit; } svg { flex-shrink: 0; }
   .price-panel { display: none; }
   .camera-toolbar { left: 50%; bottom: 124px; transition: opacity 160ms ease-out; } .camera-toolbar button { min-height: 44px; width: 44px; }
   .pov-note { bottom: 182px; padding: 8px 10px; white-space: normal; width: max-content; } .pov-note span { font-size: 10.5px; }
+  .pov-note.rotate-hint { bottom: auto; top: 50%; width: auto; max-width: calc(100% - 48px); transform: translate(-50%, -50%); animation: pop-in 320ms ease-out; pointer-events: none; }
+  .scene-canvas-wrap[data-scene-ready="false"] ~ .pov-note.rotate-hint { display: none; }
   .studio-shell:has(.controls-panel.sheet-full) .camera-toolbar, .studio-shell:has(.controls-panel.is-dragging) .camera-toolbar { opacity: 0; pointer-events: none; }
   .studio-shell:has(.controls-panel.sheet-half) .camera-toolbar { bottom: calc(var(--sheet-half) + 20px); }
   .viewer-panel .change-pill { left: 50%; bottom: 180px; max-width: calc(100vw - 28px); }

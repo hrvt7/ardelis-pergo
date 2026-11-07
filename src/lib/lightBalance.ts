@@ -32,7 +32,9 @@ export function daylightBalance(strength: number, golden: boolean): LightBalance
 export function sunPosition(dayTime: number, sunDirection = 0): [number, number, number] {
   const angle = ((dayTime - 6) / 14) * Math.PI
   const x = Math.cos(angle) * 9
-  const y = Math.max(0.8, Math.sin(angle) * 10)
+  // A nap sosem süllyed a horizontig: ~12° alatt a fény vízszintesen súrolna, az árnyék elfolyna, a kép
+  // kontrasztja eltűnne (19:30–20:00 és 7:00 körül). Így a padlón hosszú, de látható árnyék marad.
+  const y = Math.max(2.2, Math.sin(angle) * 10)
   const z = 4
   const turn = (sunDirection * Math.PI) / 180
   return [x * Math.cos(turn) + z * Math.sin(turn), y, -x * Math.sin(turn) + z * Math.cos(turn)]
