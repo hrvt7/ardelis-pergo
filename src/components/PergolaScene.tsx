@@ -19,6 +19,7 @@ import { log } from '@/lib/logger'
 import { pbrPath } from '@/lib/textures'
 import { sunVectorInScene } from '@/lib/sun'
 import { studySun } from '@/lib/sunSite'
+import { daylightBalance } from '@/lib/lightBalance'
 import type { ShadeResult } from '@/components/ShadeProbe'
 import type { FurnitureSet } from '@/types/pergola'
 import { kelvinToHex } from '@/lib/color'
@@ -2209,20 +2210,20 @@ function getLighting(scene: SceneSettings) {
   const daylight = THREE.MathUtils.clamp(Math.sin(((t - 6) / 14) * Math.PI), 0, 1)
   const sunAngle = ((t - 6) / 14) * Math.PI
   const position: [number, number, number] = [Math.cos(sunAngle) * 9, Math.max(0.8, Math.sin(sunAngle) * 10), 4]
+  const balance = daylightBalance(daylight, golden)
   return {
     night,
     hdr: night ? HDR_FILES.night : golden ? HDR_FILES.golden : HDR_FILES.day,
     fog: night ? '#1d2a30' : golden ? '#c7b5ad' : '#c3cdce',
     sun: night ? '#b5cff2' : golden ? '#ffc890' : '#fff4e2',
-    // Erős, irányított napfény és visszafogottabb szórt fény: így a pergola, az oszlopok
-    // és a lamellák valódi árnyékot vetnek (korábban a szórt fény szinte eltüntette).
-    // Kontrasztos napfény: a direkt fény erősebb, a szórt (félgömb) fény visszafogottabb — az árnyékok
-    // mélyebbek, az alumínium élei és a lamellák plasztikusabbak (a HDR-égbolt adja a maradék szórt fényt).
-    intensity: night ? 0.52 : golden ? 2.7 : 1.3 + daylight * 3.2,
-    ambient: night ? 0.25 : 0.08 + daylight * 0.05,
-    hemisphere: night ? 0.3 : 0.22,
-    environment: night ? 0.68 : golden ? 0.72 : 0.72,
-    exposure: night ? 0.96 : golden ? 0.86 : 0.86,
+    // Napsütéses fényarány (lightBalance.ts): a direkt nap sokszorosa az égbolt szórt fényének,
+    // így a pergola, az oszlopok és a lamellák éles, jól látható árnyékot vetnek.
+    intensity: night ? 0.52 : balance.sun,
+    ambient: night ? 0.25 : balance.ambient,
+    hemisphere: night ? 0.3 : balance.hemisphere,
+    environment: night ? 0.68 : balance.environment,
+    // A gyengébb égboltfényt kicsit nagyobb expozíció ellensúlyozza: a napos felület világos, az árnyék mély marad.
+    exposure: night ? 0.96 : golden ? 0.9 : 0.96,
     position,
     envRotation: skyRotationFor(night ? 'night' : golden ? 'golden' : 'day', position),
     shadowExtent: 9,
@@ -2244,16 +2245,18 @@ function getStudyLighting(scene: SceneSettings) {
   const kind = night ? null : golden ? 'golden' : 'day'
   const envRotation = kind ? HDR_SUN_ANGLE[kind] - Math.atan2(z, x) : DEFAULT_ENV_ROTATION
   const lit = elevation > 0
+  const balance = daylightBalance(strength, golden)
   return {
     night,
     hdr: night ? HDR_FILES.night : golden ? HDR_FILES.golden : HDR_FILES.day,
     fog: night ? '#1d2a30' : golden ? '#c7b5ad' : '#c3cdce',
     sun: night ? '#b5cff2' : golden ? (elevation < 5 ? '#ffc995' : '#ffe0bd') : '#ffffff',
-    intensity: night ? 0.52 : !lit ? 0.35 : golden ? 1.1 + strength * 2.4 : 1.2 + strength * 2.9,
-    ambient: night ? 0.25 : 0.1 + strength * 0.06,
-    hemisphere: 0.3,
-    environment: night ? 0.68 : 0.72,
-    exposure: night ? 0.96 : 0.86,
+    // Nap a horizont alatt (szürkület): nincs direkt fény, a szórt égboltfény marad.
+    intensity: night ? 0.52 : !lit ? 0.35 : balance.sun,
+    ambient: night ? 0.25 : !lit ? 0.1 : balance.ambient,
+    hemisphere: night || !lit ? 0.3 : balance.hemisphere,
+    environment: night ? 0.68 : !lit ? 0.72 : balance.environment,
+    exposure: night ? 0.96 : !lit ? 0.86 : golden ? 0.9 : 0.96,
     // Napnyugta után a fény már nem a horizont alól jön: halvány, magasról érkező szórt fény.
     position: (lit ? [x * 14, y * 14, z * 14] : [4, 9, 6]) as [number, number, number],
     envRotation,

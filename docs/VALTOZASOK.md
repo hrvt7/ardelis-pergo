@@ -1,5 +1,11 @@
 # Változások
 
+## 3.64 – Napsütéses fényarány: látható lamellacsíkok
+
+- **Fény:** a nappali és aranyórás jelenetben a direkt nap most kb. 4–14-szer erősebb (reggel/este kevésbé, délben jobban) az égbolt szórt fényénél (korábban ≈1,4×). Az árnyékok eddig is kiszámolódtak, de az erős HDR-égbolt fénye szinte kitöltötte őket, ezért a kép borúsnak hatott. Most a lamellák csíkos árnyéka jól látszik a teraszon és a házfalon, a pergola árnyéka a homlokzatra vetül.
+- Az arány egy helyen állítható (`src/lib/lightBalance.ts`), az árnyékelemzés ugyanezt használja; napnyugta után és éjjel változatlan.
+- Az égboltfény csökkenését nagyobb nappali expozíció (0,86 → 0,96, aranyórában 0,90) ellensúlyozza.
+
 ## 3.63 – Admin: saját terméknevek és gyártható méretek
 
 - **Tetőrendszerek:** minden tetőtípushoz a gyártó saját terméknevet és rövid leírást adhat meg (fehér címke) – a konfigurátor, a PDF és az ajánlat ezt mutatja; üres mező esetén az alapnév marad.
