@@ -7,3 +7,7 @@
 .legal-page ul{padding-left:20px;display:grid;gap:6px}.legal-page a{color:#d8ff72}
 .legal-eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:rgba(232,236,226,.55)!important}
 .legal-page>footer{margin-top:40px}
+
+.sample-banner{position:relative;z-index:30;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;padding:9px max(16px,env(safe-area-inset-right,0px)) 9px max(16px,env(safe-area-inset-left,0px));background:#d8ff72;color:#0e110d;font-size:13px;line-height:1.4;text-align:center}
+.sample-banner b{letter-spacing:.04em;text-transform:uppercase;font-size:11.5px}.sample-banner a{color:#0e110d;font-weight:700;text-decoration:underline}
+.bom-note{margin:8px 0 0;font-size:12px;line-height:1.5;opacity:.65}

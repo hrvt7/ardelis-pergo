@@ -38,7 +38,7 @@ export const PERGOLA_FAQS = [
 ] as const
 
 export type SeoPage = {
-  key: 'platform' | 'home' | 'studio' | 'track' | 'partners' | 'admin' | 'login' | 'notFound'
+  key: 'platform' | 'home' | 'privacy' | 'studio' | 'track' | 'partners' | 'admin' | 'login' | 'notFound'
   path: string
   title: string
   description: string
@@ -69,16 +69,24 @@ const SEO_PAGES: Record<string, SeoPage> = {
   '/minta': {
     key: 'home',
     path: '/minta',
-    title: 'Pergola, veranda és télikert 3D tervezése | Lamelix',
-    description: 'Tervezd meg pergolád, verandád vagy télikerted valós idejű 3D-ben: méret, tetőrendszer, üvegfal, oldalzárás és világítás, azonnali irányárral és felmérési kérelemmel.',
+    title: 'Élő termékbemutató – minta pergola-konfigurátor | Lamelix',
+    description: 'Így néz ki a Lamelix konfigurátor a vásárló szemével: valós idejű 3D pergola-, veranda- és télikerttervezés, azonnali irányár, felmérési kérelem. Minta gyártói oldal, kivitelezést a Lamelix nem vállal.',
     robots: INDEX_ROBOTS,
     indexable: true,
   },
   '/konfigurator': {
     key: 'studio',
     path: '/konfigurator',
-    title: '3D pergola-, veranda- és télikerttervező | Lamelix',
-    description: 'Online 3D tervező pergolához, verandához és télikerthez: valós méretek, motoros lamellák, üvegfal, ajtó, klíma és kiegészítők. Azonnali irányár, PDF és felmérési kérelem.',
+    title: 'Élő demó: 3D pergola-, veranda- és télikerttervező | Lamelix',
+    description: 'Próbáld ki élőben a Lamelix 3D konfigurátort: valós méretek, motoros lamellák, üvegfal, ajtó, klíma és kiegészítők, azonnali irányár és PDF. Demó mintaárakkal gyártóknak.',
+    robots: INDEX_ROBOTS,
+    indexable: true,
+  },
+  '/adatkezeles': {
+    key: 'privacy',
+    path: '/adatkezeles',
+    title: 'Adatkezelési tájékoztató | Lamelix',
+    description: 'A Lamelix platform adatkezelési tájékoztatója: demókérés, felmérési kérelmek, névtelen használati mérés, az érintettek jogai.',
     robots: INDEX_ROBOTS,
     indexable: true,
   },
@@ -116,7 +124,7 @@ const SEO_PAGES: Record<string, SeoPage> = {
   },
 }
 
-export const SEO_SITEMAP_PATHS = ['/', '/en', '/minta', '/konfigurator'] as const
+export const SEO_SITEMAP_PATHS = ['/', '/en', '/minta', '/konfigurator', '/adatkezeles'] as const
 
 export function normalizeSeoPath(pathname: string) {
   if (!pathname || pathname === '/') return '/'
@@ -144,7 +152,7 @@ export function buildStructuredData(pathname: string, origin: string) {
     '@id': organizationId,
     name: 'Lamelix',
     url: `${origin}/`,
-    brand: { '@type': 'Brand', name: 'PERGO' },
+    brand: { '@type': 'Brand', name: 'Lamelix' },
     areaServed: { '@type': 'Country', name: 'Magyarország' },
   }
   const website = {
@@ -180,14 +188,14 @@ export function buildStructuredData(pathname: string, origin: string) {
       organization,
       website,
       {
-        '@type': 'Service',
-        '@id': `${origin}/minta#pergola-service`,
-        name: 'Pergola, veranda és télikert tervezése és helyszíni felmérése',
-        serviceType: 'Pergola, veranda és télikert tervezése',
-        description: 'Paraméteres pergola-, veranda- és télikerttervezés valós idejű 3D előnézettel, tájékoztató árkalkulációval és helyszíni felmérési kérelemmel.',
-        provider: { '@id': organizationId },
-        areaServed: { '@type': 'Country', name: 'Magyarország' },
+        '@type': 'WebPage',
+        '@id': `${origin}/minta#page`,
+        name: 'Lamelix élő termékbemutató – minta pergola-konfigurátor',
+        description: 'Minta gyártói oldal: így használja a vásárló a gyártó Lamelix-konfigurátorát. A Lamelix szoftvert fejleszt, kivitelezést nem vállal.',
         url: `${origin}/minta`,
+        inLanguage: 'hu-HU',
+        isPartOf: { '@id': websiteId },
+        about: { '@id': organizationId },
       },
       {
         '@type': 'FAQPage',
@@ -208,7 +216,7 @@ export function buildStructuredData(pathname: string, origin: string) {
       {
         '@type': 'WebApplication',
         '@id': `${origin}/konfigurator#application`,
-        name: 'Lamelix 3D tervező – pergola, veranda, télikert',
+        name: 'Lamelix élő demó – 3D pergola-, veranda- és télikerttervező',
         url: `${origin}/konfigurator`,
         applicationCategory: 'DesignApplication',
         operatingSystem: 'Web browser',
@@ -227,7 +235,7 @@ export function buildStructuredData(pathname: string, origin: string) {
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Lamelix', item: `${origin}/minta` },
+          { '@type': 'ListItem', position: 1, name: 'Lamelix', item: `${origin}/` },
           { '@type': 'ListItem', position: 2, name: '3D tervező', item: `${origin}/konfigurator` },
         ],
       },

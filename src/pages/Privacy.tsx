@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import LamelixLogo from '@/components/LamelixLogo'
 import { PRIVACY_VERSION } from '@/lib/privacyVersion'
+import { usePageSeo } from '@/lib/usePageSeo'
 import '@/legal.css'
 
 // FONTOS: a szöveg a tényleges adatkezelést írja le (lásd server/demoRequest.ts, server/lead.ts). Az adatkezelő
@@ -8,6 +9,7 @@ import '@/legal.css'
 const CONTACT = 'hrvtadam.7@icloud.com'
 
 export default function Privacy() {
+  usePageSeo('/adatkezeles')
   return <main className="legal-page">
     <header><Link to="/" aria-label="Lamelix kezdőlap"><LamelixLogo height={26} title={null} /></Link></header>
     <article>

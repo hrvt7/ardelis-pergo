@@ -1,5 +1,12 @@
 # Változások
 
+## 3.57 – SEO, pozicionálás, pontosabb megnevezések
+
+- **SEO:** a build mostantól mindig generál `robots.txt`-t és `sitemap.xml`-t (a `PUBLIC_SITE_URL` hiányában a Vercel éles címére esik vissza, korábban env nélkül a sitemap kimaradt). A fő oldalak (`/`, `/en`, `/minta`, `/konfigurator`, `/adatkezeles`) előre kitöltött címet, leírást, canonical/hreflang, Open Graph/Twitter és strukturált adatot kapnak a statikus HTML-ben, így a közösségi előnézet és a keresők JavaScript nélkül is a helyes oldalt látják.
+- **/minta és /konfigurator:** „Élő termékbemutató – minta konfigurátor” pozicionálás látható sávval; a strukturált adat már nem szolgáltatásként (pergola-tervezés és kivitelezés) írja le az oldalt, a Lamelix márkája egységes.
+- **Statisztika:** az admin „Eseményszámok és becsült konverzió” néven jelzi, hogy az arányok közelítők (az események nem kapcsolódnak egyedi látogatói úthoz).
+- **Anyaglista:** a 3D-specifikáció alatt jelzés: tájékoztató, szabályalapú becslés, nem gyártási dokumentáció. Gyártási lista, CNC- vagy ERP-export nem szerepel az ígéretek között.
+
 ## 3.56 – Admin prémium szint, adatvédelem, pontosított ígéretek
 
 - **Admin:** demó adatmód (28 valósághű, kitalált érdeklődő, trend és tölcsér; a demó gyártónál automatikusan, amíg nincs valódi adat), számfelfutás, fényfolt a kártyákon, lépcsőzetes belépő animációk, fülváltás-áttűnés.

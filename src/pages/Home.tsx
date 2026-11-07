@@ -7,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import SiteHeader, { SiteFooter } from '@/components/SiteChrome'
 import { PERGOLA_FAQS } from '@contracts/seo'
+import '@/legal.css'
 import { usePageSeo } from '@/lib/usePageSeo'
 import { WALL_COLORS, WINDOW_COLORS } from '@/lib/house'
 import '@/home-film.css'
@@ -325,6 +326,7 @@ export default function Home() {
 
   return <div className="marketing-page cinema-page" ref={root}>
     <SiteHeader action={<Link className="header-studio-link" to="/konfigurator">Megnyitom a stúdiót <ArrowUpRight size={15} /></Link>} />
+    <aside className="sample-banner" role="note"><b>Élő termékbemutató</b><span>Ez egy minta gyártói oldal: a Lamelix konfigurátor-szoftvert fejleszt gyártóknak, kivitelezést nem vállal.</span><Link to="/">Lamelix gyártóknak →</Link></aside>
     <div className="cinema-page-progress" aria-hidden="true"><i ref={pageProgress} /></div>
     <nav className={`chapter-rail${chapter ? ' is-visible' : ''}`} aria-label="Fejezetek">
       {CHAPTERS.map(([id, label], index) => <a key={id} href={`#${id}`} className={chapter === id ? 'is-active' : ''} aria-current={chapter === id ? 'true' : undefined}><span>{String(index + 1).padStart(2, '0')}</span><b>{label}</b></a>)}

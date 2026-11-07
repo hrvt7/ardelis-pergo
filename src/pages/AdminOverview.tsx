@@ -118,7 +118,7 @@ function FunnelCard({ events, recent }: { events: EventRow[] | null; recent: num
       <div className="funnel-bar" style={{ ['--w' as string]: `${Math.max(4, (step.count / max) * 100)}%`, ['--shade' as string]: String(1 - index * 0.16) }}><span>{step.label}</span><strong>{step.count}</strong></div>
       {step.rate !== null && <em>{Math.round(step.rate * 100)}%</em>}
     </div>)}
-    <p className="admin-hint">Névtelen, süti nélküli mérés, az elmúlt 30 nap. Összesített konverzió: <strong>{funnel.conversion === null ? '—' : `${(funnel.conversion * 100).toLocaleString('hu-HU', { maximumFractionDigits: 1 })}%`}</strong> (megnyitásból felmérési kérés).</p>
+    <p className="admin-hint">Névtelen, süti nélküli eseményszámlálás az elmúlt 30 napról: a lépések nem kapcsolódnak egyedi látogatói úthoz, ezért az arányok közelítő értékek. Becsült konverzió: <strong>{funnel.conversion === null ? '—' : `${(funnel.conversion * 100).toLocaleString('hu-HU', { maximumFractionDigits: 1 })}%`}</strong> (felmérési kérés / megnyitás).</p>
   </div>
 }
 
@@ -190,7 +190,7 @@ export default function AdminOverview({ leads, events, onOpenLeads, onOpenLead, 
         <header><h3>Érkező érdeklődők</h3><button type="button" className="ghost-link report-btn" onClick={() => window.print()}><FileText size={13} />Jelentés (PDF)</button><div className="seg" role="group" aria-label="Időszak">{RANGES.map((value) => <button type="button" key={value} className={range === value ? 'is-on' : ''} onClick={() => setRange(value)}>{value} nap</button>)}</div></header>
         {leads.length === 0 ? <p className="admin-hint empty-hint">Még nem érkezett érdeklődő. Amint valaki felmérést kér, itt jelenik meg a grafikon.</p> : <AreaChart daily={stats.daily} />}
       </section>
-      <section className="card span-2"><header><h3>Látogatói tölcsér</h3></header><FunnelCard events={events} recent={stats.last30} /></section>
+      <section className="card span-2"><header><h3>Eseményszámok és becsült konverzió</h3></header><FunnelCard events={events} recent={stats.last30} /></section>
       <section className="card">
         <header><h3>Státuszok</h3></header>
         <div className="stackbar" role="img" aria-label="Érdeklődők megoszlása státusz szerint">{stats.total === 0 ? <i style={{ width: '100%' }} /> : stats.byStatus.filter((item) => item.count > 0).map((item) => <i key={item.key} style={{ width: `${(item.count / stats.total) * 100}%`, background: STATUS_COLORS[item.key] }} title={`${item.label}: ${item.count}`} />)}</div>
