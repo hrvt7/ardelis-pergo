@@ -1851,7 +1851,7 @@ function getMacroNoise() {
 
 /** Fotorealisztikus gyep (magas/ultra szint): PBR fűtextúra normál- és érdességtérképpel, makró tónusvariációval. */
 function GrassGroundPBR({ scene }: { scene: SceneSettings }) {
-  const grass = usePBR('grass_ground', [22, 22], 0.3)
+  const grass = usePBR('grass_ground', [140, 140], 0.3)
   const macro = useMemo(() => getMacroNoise(), [])
   useEffect(() => () => macro.dispose(), [macro])
   const onBeforeCompile = useMemo(() => (shader: THREE.WebGLProgramParametersWithUniforms) => {
@@ -1859,12 +1859,13 @@ function GrassGroundPBR({ scene }: { scene: SceneSettings }) {
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <map_pars_fragment>', '#include <map_pars_fragment>\nuniform sampler2D macroMap;')
       .replace('#include <map_fragment>', `#include <map_fragment>
-        float macro = texture2D(macroMap, vMapUv * 0.0455).r;
+        float macro = texture2D(macroMap, vMapUv * 0.107).r;
         // Foltos tónus: sötétebb-zöldebb és szárazabb-sárgább területek, a textúra ismétlése így „eltűnik”.
         diffuseColor.rgb *= mix(vec3(0.78, 0.86, 0.72), vec3(1.12, 1.08, 0.94), macro);`)
   }, [macro])
   return <mesh name="essential-grass-ground" rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.075, 0]} receiveShadow>
-    <planeGeometry args={[96, 96]} />
+    {/* 600 m: szemmagasságból is a köd által elrejtett távolban ér véget, nem látszik a sík pereme a horizont előtt. */}
+    <planeGeometry args={[600, 600]} />
     <meshStandardMaterial map={grass.diff} normalMap={grass.normal} normalScale={[0.8, 0.8]} roughnessMap={grass.rough} roughness={1} color={scene.time === 'night' ? '#8a9488' : '#d9ddcf'} onBeforeCompile={onBeforeCompile} customProgramCacheKey={() => 'grass-macro'} />
   </mesh>
 }
@@ -1877,7 +1878,7 @@ function Ground({ scene }: { scene: SceneSettings }) {
     for (let index = 0; index < binary.length; index += 1) pixels[index] = binary.charCodeAt(index)
     const texture = new THREE.DataTexture(pixels, EMBEDDED_GRASS_SIZE, EMBEDDED_GRASS_SIZE, THREE.RGBAFormat)
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-    texture.repeat.set(29, 29)
+    texture.repeat.set(180, 180)
     texture.magFilter = THREE.LinearFilter
     texture.minFilter = THREE.LinearMipmapLinearFilter
     texture.generateMipmaps = true
@@ -1888,7 +1889,7 @@ function Ground({ scene }: { scene: SceneSettings }) {
   }, [])
   useEffect(() => () => grass.dispose(), [grass])
   const fallback = <mesh name="essential-grass-ground" rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.075, 0]} receiveShadow>
-    <planeGeometry args={[96, 96]} />
+    <planeGeometry args={[600, 600]} />
     <meshStandardMaterial map={grass} roughness={0.96} color={scene.time === 'night' ? '#7d887b' : '#c2c9b7'} />
   </mesh>
   // Alacsony/közepes szinten (és amíg a PBR-textúra töltődik) a beágyazott, azonnal kész fű látszik.
@@ -1984,8 +1985,9 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     // Működés bemutató: közeli a hajtásoldali gerendára (motor, hajtórúd, karok), enyhén felülről, hogy a lamellák is látsszanak.
     const drive = side
     if (mechanism && view !== 'sofa') {
-      destination.current.set(drive * (config.width / 2 + 1.05), config.height + 1.15, config.depth / 2 + 1.25)
-      target.current.set(drive * (config.width / 2 - 0.35), config.height + 0.05, config.depth * 0.12)
+      // A hajtásoldali gerenda a kép közepén, a motor (elöl) és a hajtórúd teljes hosszában látszik.
+      destination.current.set(drive * (config.width / 2 + 2.3), config.height + 1.05, config.depth / 2 + 1.7)
+      target.current.set(drive * (config.width / 2 - 0.05), config.height + 0.12, config.depth * 0.05)
     } else if (view === 'sofa') target.current.set(0, 1.22, config.depth / 2 + 6)
     else if (view === 'detail') target.current.set(niche ? config.width / 2 - 0.3 : side * config.width / 2, config.height, config.depth / 2)
     else if (view === 'interior') target.current.set(0, config.height, config.depth * 0.16)
