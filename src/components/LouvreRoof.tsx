@@ -2,7 +2,7 @@
 // A lamellák InstancedMesh-ként (penge + két véglap + hajtókar + tengelycsonk), a hajtórúd és a lineáris motor
 // a hajtásoldali gerenda tetején. A „Működés” módban a burkolat felemelkedik, a hajtás kiemelt színt kap,
 // és a lamellák a gyári 0–110° tartományban járnak (a panel ugyanabból az órából számol).
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Html, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
@@ -66,6 +66,7 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
   const modLen = layout.modules[0].length
   // a hajtás x-helye modulonként: a modul hajtásoldali gerendájának belső síkja
   const driveX = layout.modules.map((m) => m.x + driveSide * (m.inner / 2))
+  const labelAnchor = useMemo(() => new THREE.Vector3(driveX[0], plan.pivot[1], plan.pivot[0] - 0.3), [driveX, plan])
 
   const geo = useMemo(() => {
     const profile = louvreProfile(Math.max(6, Math.min(16, segments)))
@@ -139,6 +140,15 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
   }
 
   useLayoutEffect(() => { live.current.angle = -1 }, [layout, geo])
+  // A címkék csak közelről (a hajtásoldali kamera) jelennek meg; távolról egymásra csúsznának.
+  const [near, setNear] = useState(false)
+  const nearRef = useRef(false)
+  useFrame(({ camera }) => {
+    if (!mechanism || !showLabels) return
+    const d = camera.position.distanceTo(labelAnchor)
+    const next = nearRef.current ? d < 6.4 : d < 5.6
+    if (next !== nearRef.current) { nearRef.current = next; setNear(next) }
+  })
   useFrame((_, delta) => {
     const l = live.current
     // burkolat és kiemelés átúsztatása
@@ -207,7 +217,7 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
         <RoundedBox args={[0.082, 0.15, coverLen]} radius={0.016} smoothness={3} material={mats.cover} position={[driveX[j] + driveSide * 0.032, beamTop + 0.06, 0]} castShadow receiveShadow />
       </group>
     </group>)}
-    {mechanism && showLabels && <group name="ar-skip-overlays">
+    {mechanism && showLabels && near && <group name="ar-skip-overlays">
       <Html position={[driveX[0] + driveSide * 0.03, plan.pivot[1] + 0.1, plan.pivot[0] - 0.3]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label mech-label">Lineáris motor · {DRIVE.force} N</span></Html>
       <Html position={[driveX[0] + driveSide * 0.03, layout.axleY + 0.16, labelZ]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label mech-label">Hajtórúd 20×20 · minden lamellát egyszerre forgat</span></Html>
       <Html position={[driveX[0], layout.axleY - 0.05, layout.z[Math.max(0, Math.round(n * 0.3))]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label mech-label">Hajtókar R115 mm</span></Html>

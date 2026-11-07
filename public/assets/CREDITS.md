@@ -4,7 +4,8 @@ All assets below are from Poly Haven and licensed CC0.
 https://polyhaven.com/license
 
 - courtyard: https://polyhaven.com/a/courtyard (CC0)
-- evening_museum_courtyard: https://polyhaven.com/a/evening_museum_courtyard (CC0)
+- sunset_sky = belfast_sunset_puresky: https://polyhaven.com/a/belfast_sunset_puresky (CC0)
+- night_sky = kloppenheim_02_puresky: https://polyhaven.com/a/kloppenheim_02_puresky (CC0)
 - courtyard_night: https://polyhaven.com/a/courtyard_night (CC0)
 - kloofendal_48d_partly_cloudy_puresky: https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky (CC0)
 - concrete_floor_02: https://polyhaven.com/a/concrete_floor_02 (CC0)

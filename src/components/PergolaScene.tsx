@@ -63,8 +63,8 @@ function configureShadowBudget(renderer: THREE.WebGLRenderer) {
 }
 const HDR_FILES = {
   day: assetUrl('/assets/hdr/day_clear.hdr'),
-  golden: assetUrl('/assets/hdr/evening_museum_courtyard.hdr'),
-  night: assetUrl('/assets/hdr/courtyard_night.hdr'),
+  golden: assetUrl('/assets/hdr/sunset_sky.hdr'),
+  night: assetUrl('/assets/hdr/night_sky.hdr'),
 } as const
 /** Alacsony és közepes szinten (mobil) a 512×256-os égbolt elég a fényhez, és kb. negyedannyi letöltés. */
 const smallHdr = (file: string) => file.replace(/\.hdr$/, '-512.hdr')
@@ -1339,6 +1339,7 @@ function prefetchSceneAssets(scene: SceneSettings) {
     // Telefonon a másik két égbolt csak váltáskor töltődik (kb. 0,65 MB megtakarítás).
     if (!small) idle(() => { try { others.forEach((file) => useEnvironment.preload({ files: file })) } catch { /* nem kritikus */ } }, { timeout: 6000 })
     useTexture.preload((['diff', 'nor_gl', 'rough'] as const).map((map) => assetUrl(pbrPath('oak_wood_planks', map))))
+    if (!small) useTexture.preload((['diff', 'nor_gl', 'rough'] as const).map((map) => assetUrl(pbrPath('grass_ground', map))))
     DECOR_MODELS.forEach((url) => useGLTF.preload(url))
   } catch (error) {
     log.warn('Scene prefetch skipped', { error: error instanceof Error ? error.message : String(error) })
@@ -1828,7 +1829,48 @@ function Neighborhood({ config, scene }: { config: PergolaConfig; scene: SceneSe
   </group>
 }
 
+/** Nagyléptékű (kb. 1 ismétlés / 100 m) zajtérkép: a fű tónusa foltokban változik, így a csempézett textúra ismétlődése nem látszik. */
+function getMacroNoise() {
+  const size = 64
+  const data = new Uint8Array(size * size * 4)
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const i = (y * size + x) * 4
+    // Három oktáv sima zaj (periodikus, hogy az ismétlésnél ne legyen varrat).
+    const n = 0.5 + 0.28 * Math.sin((x / size) * Math.PI * 2 * 3 + 1.3) * Math.cos((y / size) * Math.PI * 2 * 2 + 0.4)
+      + 0.14 * Math.sin((x / size) * Math.PI * 2 * 7 + 2.1 + Math.sin((y / size) * Math.PI * 2 * 5))
+      + 0.08 * Math.cos((x / size) * Math.PI * 2 * 13 + (y / size) * Math.PI * 2 * 11)
+    const v = Math.round(THREE.MathUtils.clamp(n, 0, 1) * 255)
+    data[i] = v; data[i + 1] = v; data[i + 2] = v; data[i + 3] = 255
+  }
+  const texture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat)
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+  texture.magFilter = texture.minFilter = THREE.LinearFilter
+  texture.needsUpdate = true
+  return texture
+}
+
+/** Fotorealisztikus gyep (magas/ultra szint): PBR fűtextúra normál- és érdességtérképpel, makró tónusvariációval. */
+function GrassGroundPBR({ scene }: { scene: SceneSettings }) {
+  const grass = usePBR('grass_ground', [22, 22], 0.3)
+  const macro = useMemo(() => getMacroNoise(), [])
+  useEffect(() => () => macro.dispose(), [macro])
+  const onBeforeCompile = useMemo(() => (shader: THREE.WebGLProgramParametersWithUniforms) => {
+    shader.uniforms.macroMap = { value: macro }
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <map_pars_fragment>', '#include <map_pars_fragment>\nuniform sampler2D macroMap;')
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        float macro = texture2D(macroMap, vMapUv * 0.0455).r;
+        // Foltos tónus: sötétebb-zöldebb és szárazabb-sárgább területek, a textúra ismétlése így „eltűnik”.
+        diffuseColor.rgb *= mix(vec3(0.78, 0.86, 0.72), vec3(1.12, 1.08, 0.94), macro);`)
+  }, [macro])
+  return <mesh name="essential-grass-ground" rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.075, 0]} receiveShadow>
+    <planeGeometry args={[96, 96]} />
+    <meshStandardMaterial map={grass.diff} normalMap={grass.normal} normalScale={[0.8, 0.8]} roughnessMap={grass.rough} roughness={1} color={scene.time === 'night' ? '#8a9488' : '#d9ddcf'} onBeforeCompile={onBeforeCompile} customProgramCacheKey={() => 'grass-macro'} />
+  </mesh>
+}
+
 function Ground({ scene }: { scene: SceneSettings }) {
+  const { tier } = useQuality()
   const grass = useMemo(() => {
     const binary = window.atob(EMBEDDED_GRASS_RGBA)
     const pixels = new Uint8Array(binary.length)
@@ -1845,10 +1887,13 @@ function Ground({ scene }: { scene: SceneSettings }) {
     return texture
   }, [])
   useEffect(() => () => grass.dispose(), [grass])
-  return <mesh name="essential-grass-ground" rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.075, 0]} receiveShadow>
+  const fallback = <mesh name="essential-grass-ground" rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.075, 0]} receiveShadow>
     <planeGeometry args={[96, 96]} />
     <meshStandardMaterial map={grass} roughness={0.96} color={scene.time === 'night' ? '#7d887b' : '#c2c9b7'} />
   </mesh>
+  // Alacsony/közepes szinten (és amíg a PBR-textúra töltődik) a beágyazott, azonnal kész fű látszik.
+  if (tier === 'low' || tier === 'medium') return fallback
+  return <SceneAssetBoundary name="pbr grass" fallback={fallback}><Suspense fallback={fallback}><GrassGroundPBR scene={scene} /></Suspense></SceneAssetBoundary>
 }
 
 function Stars() {
@@ -1903,7 +1948,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
   const target = useRef(new THREE.Vector3())
   const transitioning = useRef(true)
   // Kameramozgás: időalapú, ívelt (a célpont körül forgó) átmenet, hogy ne csússzon át a szerkezeten.
-  const move = useRef({ p: 0, started: false, dur: 1.2, from: new THREE.Vector3(), fromTarget: new THREE.Vector3(), fromDir: new THREE.Vector3(), toDir: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), tmp: new THREE.Vector3(), tmpT: new THREE.Vector3() })
+  const move = useRef({ p: 0, started: false, t0: 0, dur: 1.2, from: new THREE.Vector3(), fromTarget: new THREE.Vector3(), fromDir: new THREE.Vector3(), toDir: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), tmp: new THREE.Vector3(), tmpT: new THREE.Vector3() })
   const beginMove = useCallback(() => { move.current.p = 0; move.current.started = false; transitioning.current = true }, [])
   // Első megjelenés: lassú, drónszerű berepülés magasról a nézetbe.
   const firstFlight = useRef(!REDUCED)
@@ -2102,9 +2147,12 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
           m.dur = firstFlight.current ? 3.4 : THREE.MathUtils.clamp(0.8 + m.from.distanceTo(destination.current) * 0.045, 0.9, 1.7)
           m.fromDir.copy(m.from).sub(m.fromTarget)
           m.started = true
+          m.t0 = performance.now()
         }
-        // Egy akadó képkocka ne ugorjon: a lépés felső korláttal lassít, nem ugrik.
-        m.p = Math.min(1, m.p + Math.min(delta, 0.04) / m.dur)
+        // Valós időalapú haladás: lassú gépen (kevés képkocka/s) is ugyanannyi idő alatt ér célba.
+        // Egy képkocka legfeljebb a táv negyedét lépheti, hogy egy hosszú akadás ne „teleportáljon”.
+        const elapsed = (performance.now() - m.t0) / 1000
+        m.p = Math.min(1, Math.min(elapsed / m.dur, m.p + Math.max(delta, 0.016) / m.dur + 0.25))
         const t = m.p
         const e = firstFlight.current ? 1 - Math.pow(1 - t, 3) : t * t * t * (t * (t * 6 - 15) + 10)
         controls.current.target.copy(m.fromTarget).lerp(target.current, e)
@@ -2133,7 +2181,11 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
 }
 
 /** Az égbolt-képeken (HDR) a nap iránya: equirect u koordináta → szög az xz síkban. */
-const HDR_SUN_ANGLE: Record<'day' | 'golden', number> = { day: (0.5947 - 0.5) * Math.PI * 2, golden: (0.25 - 0.5) * Math.PI * 2 }
+const HDR_SUN_ANGLE: Record<'day' | 'golden' | 'night', number> = { day: (0.5947 - 0.5) * Math.PI * 2, golden: (0.6045 - 0.5) * Math.PI * 2, night: (0.5986 - 0.5) * Math.PI * 2 }
+/** Az égbolt úgy fordul, hogy a rajta látható nap (éjjel a hold) pontosan a fényforrás irányából süssön — a vetett árnyék és a látható nap egybeesik. */
+function skyRotationFor(kind: 'day' | 'golden' | 'night', position: [number, number, number]) {
+  return HDR_SUN_ANGLE[kind] - Math.atan2(position[2], position[0])
+}
 const DEFAULT_ENV_ROTATION = Math.PI * 0.35
 
 function getLighting(scene: SceneSettings) {
@@ -2143,6 +2195,7 @@ function getLighting(scene: SceneSettings) {
   const golden = t >= 17 && t < 20
   const daylight = THREE.MathUtils.clamp(Math.sin(((t - 6) / 14) * Math.PI), 0, 1)
   const sunAngle = ((t - 6) / 14) * Math.PI
+  const position: [number, number, number] = [Math.cos(sunAngle) * 9, Math.max(0.8, Math.sin(sunAngle) * 10), 4]
   return {
     night,
     hdr: night ? HDR_FILES.night : golden ? HDR_FILES.golden : HDR_FILES.day,
@@ -2150,13 +2203,15 @@ function getLighting(scene: SceneSettings) {
     sun: night ? '#b5cff2' : golden ? '#ffc890' : '#fff4e2',
     // Erős, irányított napfény és visszafogottabb szórt fény: így a pergola, az oszlopok
     // és a lamellák valódi árnyékot vetnek (korábban a szórt fény szinte eltüntette).
-    intensity: night ? 0.52 : golden ? 2.5 : 1.2 + daylight * 2.9,
-    ambient: night ? 0.25 : 0.1 + daylight * 0.06,
-    hemisphere: night ? 0.3 : 0.3,
+    // Kontrasztos napfény: a direkt fény erősebb, a szórt (félgömb) fény visszafogottabb — az árnyékok
+    // mélyebbek, az alumínium élei és a lamellák plasztikusabbak (a HDR-égbolt adja a maradék szórt fényt).
+    intensity: night ? 0.52 : golden ? 2.7 : 1.3 + daylight * 3.2,
+    ambient: night ? 0.25 : 0.08 + daylight * 0.05,
+    hemisphere: night ? 0.3 : 0.22,
     environment: night ? 0.68 : golden ? 0.72 : 0.72,
     exposure: night ? 0.96 : golden ? 0.86 : 0.86,
-    position: [Math.cos(sunAngle) * 9, Math.max(0.8, Math.sin(sunAngle) * 10), 4] as [number, number, number],
-    envRotation: DEFAULT_ENV_ROTATION,
+    position,
+    envRotation: skyRotationFor(night ? 'night' : golden ? 'golden' : 'day', position),
     shadowExtent: 9,
   }
 }
@@ -2316,7 +2371,7 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     {!scene.photoMode && <><fog attach="fog" args={[lighting.fog, 20, 43]} /><FogFollow /></>}
     <ambientLight intensity={lighting.ambient} /><hemisphereLight args={[lighting.night ? '#9fb8d6' : '#cfdce6', lighting.night ? '#2f3338' : '#5a4d3f', lighting.hemisphere]} /><directionalLight key={shadowExtent} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={[quality.shadowMapSize, quality.shadowMapSize]} shadow-radius={quality.shadowRadius} shadow-blurSamples={quality.shadowRadius > 2 ? 16 : 8} shadow-camera-left={-shadowExtent} shadow-camera-right={shadowExtent} shadow-camera-top={shadowExtent} shadow-camera-bottom={-shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
-    {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={wantsSmallHdr(quality.tier) ? smallHdr(lighting.hdr) : lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0.1} backgroundIntensity={lighting.night ? 0.42 : 0.68} environmentIntensity={lighting.environment * quality.environmentIntensity} environmentRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
+    {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={wantsSmallHdr(quality.tier) ? smallHdr(lighting.hdr) : lighting.hdr} background={!scene.photoMode} backgroundBlurriness={0} backgroundIntensity={lighting.night ? 0.55 : 0.95} environmentIntensity={lighting.environment * quality.environmentIntensity} environmentRotation={[0, lighting.envRotation, 0]} backgroundRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
     {!scene.photoMode && <Ground scene={scene} />}
     {!scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} look={houseLook} night={lighting.night} />}
     {!scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} look={houseLook} night={lighting.night} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
