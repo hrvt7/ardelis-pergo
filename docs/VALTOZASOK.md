@@ -7,7 +7,8 @@
 - **Fény:** erősebb direkt napfény, visszafogottabb szórt fény – mélyebb, plasztikusabb árnyékok; ultrán 4K árnyéktérkép.
 - **Kamera:** a nézetváltás és a „Működés” közeli kamera valós időalapú – lassabb gépen is 1–2 s alatt ér célba (korábban képkocka-alapú volt, gyenge GPU-n 10–20 s-ig úszott).
 - **Működés:** a hajtás címkéi csak közelről jelennek meg (távolról egymásra csúsztak).
-- **Betöltés:** a fa és a talaj/terasz textúrái veszteséges WebP-re tömörítve (fa: 2,3 MB → 1,0 MB; fű 1,2 MB → 0,6 MB), a megjelenés változatlan.
+- **Javítás:** veranda/télikert választásakor (fali rögzítésnél) az oldalfókusz kamerája a ház homlokzatába és a fa lombjába került – most a nyitott oldal felé mozdul.
+- **Betöltés:** a poszter legfeljebb 8 s-ig vár a díszítőelemekre (korábban 25 s), a pergola előbb látszik; a fa és a talaj/terasz textúrái veszteséges WebP-re tömörítve (fa: 2,3 MB → 1,0 MB; fű 1,2 MB → 0,6 MB), a megjelenés változatlan.
 
 ## 3.59 – Valós lamellarendszer és „Működés” bemutató a konfigurátor 3D-jében
 

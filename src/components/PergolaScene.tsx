@@ -2575,9 +2575,11 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
     const timer = window.setTimeout(() => setLoaded(true), 600)
     return () => window.clearTimeout(timer)
   }, [ready, decorativeReady, houseReady, assetsLoading, loaded])
+  // Felső korlát a várakozásra: ha a ház vagy a növényzet lassan jön (gyenge hálózat, háttérbe tett lap),
+  // a pergola 8 s után akkor is megjelenik — a díszítőelemek utólag úsznak be, nem a posztert nézi a látogató.
   useEffect(() => {
     if (!ready || loaded) return
-    const timer = window.setTimeout(() => setLoaded(true), 25000)
+    const timer = window.setTimeout(() => setLoaded(true), 8000)
     return () => window.clearTimeout(timer)
   }, [ready, loaded])
   useEffect(() => {
