@@ -2158,6 +2158,16 @@ button.tr.is-open{background:rgba(216,255,114,.07);box-shadow:inset 0 0 0 1px rg
 
 /* „Nézet” lebegő panel (jelenet és vizualizáció) — a 3D-nézet fölött, háttér nélkül, hogy a változás közben látszódjon */
 .view-popover { position: absolute; z-index: 8; top: 76px; right: 394px; width: 340px; max-height: calc(100% - 170px); overflow-y: auto; border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,.45); overscroll-behavior: contain; }
+/* Eszközök menü: a szakértői eszközök névvel, egy helyen. */
+.tools-list { display: flex; flex-direction: column; gap: 4px; padding: 10px; }
+.tools-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--text-primary); text-align: left; cursor: pointer; transition: background var(--component-transition), border-color var(--component-transition); }
+.tools-item:hover { background: var(--surface-raised); }
+.tools-item.is-active { border-color: rgba(216,255,114,.35); background: var(--accent-subtle); }
+.tools-item > svg { flex-shrink: 0; color: var(--accent-primary); }
+.tools-item span { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.tools-item strong { font-size: 13.5px; font-weight: 600; }
+.tools-item small { color: var(--text-secondary); font-size: 11.5px; line-height: 1.4; }
+.tools-item em { flex-shrink: 0; font-style: normal; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-primary); }
 .view-popover-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 10px 18px; background: rgba(14,20,17,.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--surface-border); font-size: 14px; }
 .view-popover-head button { width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--text-primary); cursor: pointer; }
 .presentation-mode .view-popover { right: 20px; }

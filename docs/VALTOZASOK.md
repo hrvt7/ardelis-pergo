@@ -1,5 +1,11 @@
 # Változások
 
+## 3.77 – Eszközök menü a 3D felett
+
+- A 3D feletti sáv eddig hat ikonos gombot sorakoztatott (Eső, Fotó, Árnyék, Nézet, Működés, AR), mobilon felirat nélkül. Mostantól három marad: **Eső** (gyors kapcsoló), **AR** (a leginkább konverziós funkció) és az **Eszközök** menü.
+- Az Eszközök menüben névvel és egy soros magyarázattal: Nézet és vizualizáció · Árnyékelemzés · Fotóba helyezés · Működés-bemutató (lamellás tetőn) · Robbantott nézet · Költségkeret-tervező · Üzemeltetési költség · Tanácsadó. A bekapcsolt eszköz jelölve; a gomb kiemelve, amíg bármelyik aktív.
+- Ezzel a vevő alap útja (hat lépés, ár, PDF, megosztás, AR) és a szakértői eszközök szétválnak: kevesebb ikon, több név.
+
 ## 3.76 – Lépések átrendezése: kiegyensúlyozott hat lépés
 
 - **Új sorrend:** Típus → Méret → Tető → Szín → Extrák → Összegzés. Eddig az 1. lépés hét döntést sűrített (típus, csomag, tető, üveg, méret, modul, dőlés, bútor – 35 gomb), a 2. lépés egyet (rögzítés).
