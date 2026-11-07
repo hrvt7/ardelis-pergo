@@ -2767,12 +2767,16 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
     const timer = window.setTimeout(() => setPosterGone(true), 800)
     return () => window.clearTimeout(timer)
   }, [loaded])
-  const progressTarget = Math.min(99, Math.round(assetProgress))
+  // A százalék a tényleges szakaszokból áll össze (nem a letöltés-számláló 99%-án ragad, amíg a ház és a
+  // környezet jön): kód kész 12 · eszközök letöltése 50 · első képkocka 15 · ház 12 · díszítés 8 = 97, a 100 a feltárulás.
+  const composite = 12 + 0.5 * Math.min(100, Math.max(0, assetProgress)) + (ready ? 15 : 0) + (houseReady ? 12 : 0) + (decorativeReady ? 8 : 0)
+  const progressTarget = Math.min(97, Math.round(composite))
   if (progressTarget > shownProgress) setShownProgress(progressTarget)
+  const loaderMessage = shownProgress < 40 ? 'Modell betöltése' : shownProgress < 75 ? 'Anyagok és környezet' : 'Jelenet felépítése'
   const coreScene = coreOnly || !decorativeReady
   if (!webglSupported()) return <div className="scene-canvas-wrap" data-scene-ready="false"><ScenePoster message="Ez az eszköz nem támogatja a 3D nézetet. A konfigurálás, az ár és az ajánlatkérés így is teljes értékű." config={config} /></div>
   return <div className="scene-canvas-wrap" data-scene-ready={loaded}>
-    {!posterGone && !contextLost && <ScenePoster percent={loaded ? 100 : shownProgress} leaving={loaded} />}
+    {!posterGone && !contextLost && <ScenePoster percent={loaded ? 100 : shownProgress} message={loaded ? 'Kész' : loaderMessage} leaving={loaded} />}
     {contextLost && <ScenePoster message="A grafikai kapcsolat megszakadt. A konfigurációd megmaradt." onRetry={retry} config={config} />}
     <SceneErrorBoundary key={`boundary-${attempt}`} onRetry={retry} onFatal={onFatal} config={config}>
       <Canvas

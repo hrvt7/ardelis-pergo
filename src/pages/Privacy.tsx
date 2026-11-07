@@ -6,7 +6,7 @@ import '@/legal.css'
 
 // FONTOS: a szöveg a tényleges adatkezelést írja le (lásd server/demoRequest.ts, server/lead.ts). Az adatkezelő
 // cégadatai (név, székhely, adószám) a bejegyzett üzemeltető adataival egészítendők ki, és a végleges szöveget jogásszal ajánlott átnézetni.
-const CONTACT = 'hrvtadam.7@icloud.com'
+const CONTACT = import.meta.env.VITE_CONTACT_EMAIL || 'hrvtadam.7@icloud.com'
 
 export default function Privacy() {
   usePageSeo('/adatkezeles')

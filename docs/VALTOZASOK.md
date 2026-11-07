@@ -1,5 +1,11 @@
 # Változások
 
+## 3.73 – Töltőképernyő valódi százalékkal, mobil nyitókép, kapcsolati cím beállításból
+
+- **Töltőképernyő:** a százalék eddig a letöltés-számlálóból jött, ami hamar 99-re ugrott, és ott állt, amíg a ház és a környezet töltődött (akár 8–10 s „99%”). Most a tényleges szakaszokból áll össze (kód · eszközök · első képkocka · ház · díszítés), a felirat is követi: „Modell betöltése” → „Anyagok és környezet” → „Jelenet felépítése” → „Kész”.
+- **Nyitóoldal telefonon:** a konfigurátor képernyőképe az első képernyőre, a címsor fölé kerül (eddig csak a szöveg látszott görgetés nélkül).
+- **Kapcsolati e-mail:** a nyitóoldal, a GYIK és az adatkezelési oldal címe a `VITE_CONTACT_EMAIL` környezeti változóból jön (céges domain); nélküle a régi cím marad.
+
 ## 3.72 – Napirány csúszka
 
 - **Nézet panel → Napirány (0–360°):** a nap járásának elforgatása a pergola körül, a napszak megtartásával. A vevő a saját teraszának tájolásához igazíthatja, merre essen az árnyék; az égbolt-kép napja és a vetett árnyék együtt fordul. 0° = az eddigi alap ív, tehát a megjelenés változatlan, amíg nem nyúlnak hozzá. Az árnyékelemzés (valós helyszín, dátum) alatt a csúszka nem látszik, ott a napállás számolt.

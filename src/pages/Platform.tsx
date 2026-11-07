@@ -22,7 +22,8 @@ import '@/platform.css'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const CONTACT_EMAIL = 'hrvtadam.7@icloud.com'
+/** Kapcsolati cím a nyitóoldalon és a GYIK-ben; élesben a VITE_CONTACT_EMAIL környezeti változóból (céges domain). */
+const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'hrvtadam.7@icloud.com'
 const DEMO_PATH = '/konfigurator'
 const img = (name: string) => assetUrl(`/assets/platform/${name}.webp`)
 const imgSet = (name: string) => `${img(`${name}-900`)} 900w, ${img(name)} 1600w`
