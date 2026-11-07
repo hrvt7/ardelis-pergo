@@ -1,5 +1,10 @@
 # Változások
 
+## 3.75 – Okos lamella: a lamellák a napot követik
+
+- **Okos mód** a lamellás tetőn (a Lamellaszög csúszka alatt): bekapcsolva a lamellák mindig a legnagyobb nyitásszögre állnak, amelynél a közvetlen napfény még teljesen kint marad — a napszak és a napirány csúszkával, illetve az árnyékelemzés valós napállásával együtt mozognak. A számítás a gyári lamellaméretből (215,8 mm széles, 200 mm osztás) indul: szemből sütő nap → zárva (teljes árnyék); a ház felől / magasról jövő nap → akár 90°-ig nyitva, árnyékkal; napsütés nélkül → nyitva.
+- A csúszka az okos módban a számított szöget mutatja; ha a vevő belenyúl, az okos mód kikapcsol. A működés-bemutató és az okos mód kizárják egymást. Csak látvány: az ár, a specifikáció és a megosztó link nem változik.
+
 ## 3.74 – PDF gomb asztalon, napállás a horizont felett, forgatás-tipp, régi linkek tesztje
 
 - **PDF összefoglaló asztalon:** az árpanel alacsony (≤ 900 px) ablakban görgethető, és a PDF/Megosztás gombsor a panel alja alatt lógott ki — úgy tűnt, asztalon nincs PDF. A gombsor most a panel aljára tapad, mindig látszik.

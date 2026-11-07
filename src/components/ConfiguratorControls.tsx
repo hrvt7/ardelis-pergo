@@ -6,6 +6,8 @@ import { bayWidth, moduleCount, modulesLabel } from '@/lib/modules'
 import { FanOption, RgbOption, RoofShadeOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
 import { enabledRoofs, presetConfig, tenantPrice } from '@/tenants/rules'
 import { defaultGlazing, effectiveGlazing, GLAZING_INFO, glazingOptions, glazingPriceKey, PITCH_RANGE, ROOF_INFO, roofRise } from '@/lib/roofs'
+import { SMART_LOUVER_TEXT, smartLouver } from '@/lib/smartLouver'
+import { sceneSunVector } from '@/lib/sceneSun'
 import { useTenant } from '@/tenants/TenantContext'
 import { getSizeRecommendation } from '@/lib/specification'
 import { closedSegments } from '@/lib/sides'
@@ -176,9 +178,12 @@ function SideDiagram({ config, selected, roofName, onSelect }: { config: Pergola
 function RoofControl({ config, scene, onChange, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
   const info = ROOF_INFO[config.roof]
   if (info.motion === 'none') return null
+  const smart = !!scene.smartLouver && config.roof === 'louvered' && !scene.mechanism
+  const tracked = smart ? smartLouver(sceneSunVector(scene)) : null
   if (info.motion === 'tilt') return <>
-    <SliderField label="Lamellaszög" value={config.louverAngle} min={0} max={90} step={1} unit="°" onChange={(louverAngle) => { onChange({ louverAngle }); if (scene.mechanism) onSceneChange({ mechanism: false }) }} />
-    {config.roof === 'louvered' && <button type="button" className={`mech-cta${scene.mechanism ? ' selected' : ''}`} aria-pressed={!!scene.mechanism} onClick={() => onSceneChange({ mechanism: !scene.mechanism, sunStudy: false, exploded: false })}><Cog size={16} /><span><strong>{scene.mechanism ? 'Bemutató leállítása' : 'Nézd meg működés közben'}</strong><small>Motor, hajtórúd és lamellák élőben, valós gyári adatokkal</small></span></button>}
+    <SliderField label="Lamellaszög" value={tracked ? tracked.angle : config.louverAngle} min={0} max={90} step={1} unit="°" onChange={(louverAngle) => { onChange({ louverAngle }); if (scene.mechanism || scene.smartLouver) onSceneChange({ mechanism: false, smartLouver: false }) }} />
+    {config.roof === 'louvered' && <button type="button" className={`mech-cta smart-cta${smart ? ' selected' : ''}`} aria-pressed={smart} onClick={() => onSceneChange({ smartLouver: !smart, mechanism: false })}><Sun size={16} /><span><strong>{smart ? 'Okos mód: a lamellák a napot követik' : 'Okos mód: kövesse a napot'}</strong><small>{tracked ? SMART_LOUVER_TEXT[tracked.reason] : 'A legnagyobb nyitás, ami még teljes árnyékot ad — a napszak csúszkával együtt mozog'}</small></span></button>}
+    {config.roof === 'louvered' && <button type="button" className={`mech-cta${scene.mechanism ? ' selected' : ''}`} aria-pressed={!!scene.mechanism} onClick={() => onSceneChange({ mechanism: !scene.mechanism, sunStudy: false, exploded: false, smartLouver: false })}><Cog size={16} /><span><strong>{scene.mechanism ? 'Bemutató leállítása' : 'Nézd meg működés közben'}</strong><small>Motor, hajtórúd és lamellák élőben, valós gyári adatokkal</small></span></button>}
   </>
   return <SliderField label="Tetőnyitás" value={Math.round(config.louverAngle / 0.9)} min={0} max={100} step={1} unit="%" onChange={(open) => onChange({ louverAngle: Math.round(open * 9) / 10 })} />
 }

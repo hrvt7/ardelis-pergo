@@ -19,6 +19,8 @@ import { log } from '@/lib/logger'
 import { pbrPath } from '@/lib/textures'
 import { sunVectorInScene } from '@/lib/sun'
 import { studySun } from '@/lib/sunSite'
+import { smartLouver } from '@/lib/smartLouver'
+import { sceneSunVector } from '@/lib/sceneSun'
 import { daylightBalance, sunPosition } from '@/lib/lightBalance'
 import { bayBoundaries, bayCenter, bayWidth, hasCenterPost, moduleCount } from '@/lib/modules'
 import { fitDistance, maxOrbitDistance } from '@/lib/cameraFit'
@@ -1244,7 +1246,8 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
   const louverCount = Math.max(10, Math.floor(depth / 0.22))
   const rainProtection = scene.rain && config.sensors && isMovableRoof(roof)
   // Télen a lamellás tetők zárva (vízzáró állás), a textiltető behúzva (nem hóteherre készül).
-  const effectiveAngle = rainProtection ? 0 : config.louverAngle
+  const smart = scene.smartLouver && roof === 'louvered' && !scene.mechanism
+  const effectiveAngle = rainProtection ? 0 : smart ? smartLouver(sceneSunVector(scene)).angle : config.louverAngle
   const openness = effectiveAngle / 90
   const fixedSeamCount = Math.max(2, Math.floor(depth / 0.65))
   const introStart = useRef(0)

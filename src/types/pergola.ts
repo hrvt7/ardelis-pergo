@@ -90,6 +90,8 @@ export interface SceneSettings {
   exploded: boolean
   /** Működés bemutató (lamellás tető): a hajtás láthatóvá válik, a lamellák a gyári 0–110° tartományban járnak. */
   mechanism?: boolean
+  /** Okos lamella: a lamellák a napot követik (a legnagyobb nyitás, ami még teljes árnyékot ad). Csak látvány. */
+  smartLouver?: boolean
   glassOpen: boolean
   /** Az ajtók nyitva vannak-e a 3D-ben. */
   doorOpen: boolean
