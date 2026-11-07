@@ -1,5 +1,11 @@
 # Változások
 
+## 3.58 – Működésbemutató a nyitóoldalon
+
+- Új szekció („04 – Működés élőben”) a B2B nyitóoldalon: az SB 400 lamellás pergola interaktív működésbemutatója (lineáris motor, hajtórúd, lamellák) önálló, izolált modulként (`public/demo/sb400-live.html`, iframe). A szimulátor tartalma változatlan.
+- Terhelés-kímélő: csak akkor tölt, ha a látogató közel görgetett, távolodáskor felszabadul; alapból nem fogja el a görgetést (kattintásra kapcsol interaktívra), teljes képernyő gombbal és külön megnyitható oldallal.
+- A szekció jelzi, hogy egyedi működésbemutató modul a gyártó termékéből külön ajánlat alapján készül. A bemutató oldal nem indexelhető (`X-Robots-Tag`, robots.txt). Az utána következő szekciók számozása eggyel nőtt.
+
 ## 3.57 – SEO, pozicionálás, pontosabb megnevezések
 
 - **SEO:** a build mostantól mindig generál `robots.txt`-t és `sitemap.xml`-t (a `PUBLIC_SITE_URL` hiányában a Vercel éles címére esik vissza, korábban env nélkül a sitemap kimaradt). A fő oldalak (`/`, `/en`, `/minta`, `/konfigurator`, `/adatkezeles`) előre kitöltött címet, leírást, canonical/hreflang, Open Graph/Twitter és strukturált adatot kapnak a statikus HTML-ben, így a közösségi előnézet és a keresők JavaScript nélkül is a helyes oldalt látják.

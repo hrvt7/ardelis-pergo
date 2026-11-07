@@ -1,6 +1,7 @@
 // Lamelix – B2B nyitóoldal pergola- és árnyékolástechnikai gyártóknak. Cél: demókérés.
 // Látvány: 3D-ben dőlő termékképernyő, görgetésre kiegyenesedik; szövegfelfedés; rögzített bemutató
 // (konfigurátor → lead → statisztika → mobil); a gyártói képek a saját termékből készültek (demóadatokkal).
+import SimFrame from '@/components/SimFrame'
 import { useLayoutEffect, useRef, useState, type FormEvent, type PointerEvent, type ReactNode } from 'react'
 import { ArrowRight, ArrowUpRight, Box, Check, Copy, Mail, QrCode, Send, Smartphone, Table2 } from 'lucide-react'
 import { Link } from 'react-router'
@@ -312,6 +313,18 @@ function PlatformPage() {
           <p className="pf-sub">{c.features.sub}</p>
         </div>
         <CustomerFeatures />
+      </section>
+
+      <section className="pf-section pf-live" id="mukodes-elo" aria-labelledby="live-title" data-pf-reveal>
+        <div className="pf-head pf-head-row" data-pf-item>
+          <div><p className="pf-eyebrow">{c.live.eyebrow}</p><h2 id="live-title"><Em parts={c.live.title} /></h2></div>
+          <p className="pf-sub">{c.live.sub}</p>
+        </div>
+        <div className="pf-live-stage" data-pf-item>
+          <Browser url="lamelix.vercel.app/demo/sb400-live"><SimFrame src="/demo/sb400-live.html" labels={{ title: c.live.iframeTitle, activate: c.live.activate, release: c.live.release, fallback: c.live.fallback, fullscreen: c.live.fullscreen }} /></Browser>
+        </div>
+        <ul className="pf-live-chips" data-pf-item>{c.live.chips.map((chip) => <li key={chip}><Check size={15} />{chip}</li>)}</ul>
+        <div className="pf-live-note" data-pf-item><div><h3>{c.live.noteTitle}</h3><p>{c.live.note}</p></div><a className="pf-btn pf-btn-ghost" href="#demo">{c.live.cta} <ArrowUpRight size={17} /></a></div>
       </section>
 
       <section className="pf-section" id="mukodes" aria-labelledby="mukodes-title" data-pf-reveal>

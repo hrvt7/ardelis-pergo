@@ -14,7 +14,7 @@ const hu = {
   },
   nav: {
     brandAria: 'Lamelix – az oldal teteje', brandSmall: 'gyártóknak', mainAria: 'Fő navigáció', footerAria: 'Lábléc',
-    benefits: 'Előnyök', showcase: 'Bemutató', features: 'Funkciók', how: 'Működés', pricing: 'Árak', faq: 'GYIK',
+    benefits: 'Előnyök', showcase: 'Bemutató', features: 'Funkciók', live: 'Működés élőben', how: 'Működés', pricing: 'Árak', faq: 'GYIK',
     liveDemo: 'Élő demó', requestDemo: 'Kérek demót', langAria: 'Nyelv', langName: { hu: 'Magyar', en: 'English' },
   },
   hero: {
@@ -56,8 +56,15 @@ const hu = {
     },
     visual: { budgetLabel: 'Keret', budgetValue: '5 000 000 Ft', budgetTags: ['Méret −0,5 m', 'ZIP 1 oldalon'], advisorChips: ['Napvédelem', 'Esővédelem', 'Egész évben', 'Falhoz'], advisorResult: 'Javaslat: Aero lamellás', energy: '~18 600 Ft / év' },
   },
+  live: {
+    eyebrow: '04 – Működés élőben', title: ['A termék nemcsak jól néz ki – ', 'látszik', ', hogyan működik.'] as Em,
+    sub: 'Interaktív működésbemutató egy minta lamellás pergolán: a lineáris motor, a hajtórúd és a lamellák mozgása valós geometriából. A vevő érti, mit vesz, és kevesebb a „de hogyan működik?” kérdés.',
+    chips: ['Lamellaszög, nyitottság és árnyék élőben', 'Hajtásmechanika részletesen', 'Oldal-, felül- és hero nézet'],
+    iframeTitle: 'Interaktív működésbemutató: SB 400 lamellás pergola', activate: 'Kattints a kipróbáláshoz', release: 'Görgetés visszakapcsolása', fallback: 'Megnyitás külön oldalon', fullscreen: 'Teljes képernyő',
+    noteTitle: 'Ilyet az Ön termékéből is készítünk.', note: 'Ez egy minta (SB 400 lamellás pergola). Az Ön termékéhez egyedi működésbemutató modul készíthető a konfigurátor mellé, amit a weboldalára is kitehet. Külön ajánlat alapján, a termék műszaki adataiból.', cta: 'Kérjen ajánlatot a bemutatóra',
+  },
   how: {
-    eyebrow: '04 – Működés', title: ['Négy lépés, és ', 'él', ' a konfigurátor.'] as Em,
+    eyebrow: '05 – Működés', title: ['Négy lépés, és ', 'él', ' a konfigurátor.'] as Em,
     steps: [
       { when: '1. nap', title: 'Átküldi a termékadatokat', text: 'Méretkorlátok, tetőtípusok, színek, extrák és az árlista vagy ármátrix – a meglévő Excel-táblázat is megfelel.' },
       { when: '2–5. munkanap', title: 'Beállítjuk az arculatát', text: 'Logó, színek, cégadatok és értesítési címek. Ön csak átnézi és jóváhagyja.' },
@@ -67,7 +74,7 @@ const hu = {
     visual: { file: 'arlista_2027.xlsx', mail: 'Új felmérési kérelem', mailSub: ['Aero 5,0 × 4,0 m · 5,6 M Ft', 'Glide 6,0 × 4,5 m · 7,2 M Ft'] },
   },
   pricing: {
-    eyebrow: '05 – Árak', title: ['Néhány plusz megrendelés ', 'kifizeti', ' az évet.'] as Em,
+    eyebrow: '06 – Árak', title: ['Néhány plusz megrendelés ', 'kifizeti', ' az évet.'] as Em,
     sub: 'Egy pergola-, veranda- vagy télikertprojekt jellemzően 3–6 millió forint, a télikert gyakran afölött. A csomagok a gyártó igényeiben különböznek, a vevői élmény mindegyikben teljes.',
     billingAria: 'Fizetési ütem', monthly: 'Havi', annual: 'Éves', annualBadge: '−2 hónap',
     everyLabel: 'Minden csomagban:', everyAria: 'Minden csomagban benne van', badge: 'Legnépszerűbb',
@@ -90,7 +97,7 @@ const hu = {
     note: (fee: string, annual: boolean) => `Becslés nettó árakkal: a bevezetési díj (${fee}) és 12 hónap előfizetési díja, ${annual ? 'éves' : 'havi'} fizetéssel. A második évtől csak az előfizetési díj marad.`,
   },
   demo: {
-    eyebrow: '06 – Demó', title: ['Nézze meg a ', 'saját', ' termékével.'] as Em,
+    eyebrow: '07 – Demó', title: ['Nézze meg a ', 'saját', ' termékével.'] as Em,
     sub: '20 perces online bemutató: a konfigurátort már az Ön logójával és egy termékével mutatjuk meg, és átbeszéljük, mi kell az induláshoz.',
     points: ['Kipróbálhatja telefonon is', 'Hozza magával az árlistáját, és megmutatjuk az ármátrixban'], writeUs: 'Vagy írjon: ',
     liveNote: '',
@@ -105,7 +112,7 @@ const hu = {
     doneTitle: 'Köszönjük, megkaptuk!', doneText: 'Egy munkanapon belül jelentkezünk egy időpont-javaslattal. A demót már az Ön logójával és termékével mutatjuk meg.', ref: 'Azonosító: ',
   },
   faq: {
-    eyebrow: '07 – Kérdések', title: ['Rövid ', 'válaszok', '.'] as Em, sub: 'Nem találja, amit keres? Írjon nekünk, egy munkanapon belül válaszolunk.',
+    eyebrow: '08 – Kérdések', title: ['Rövid ', 'válaszok', '.'] as Em, sub: 'Nem találja, amit keres? Írjon nekünk, egy munkanapon belül válaszolunk.',
     contactTitle: 'Kérdése van?', openDemo: 'Nyissa meg az élő demót',
     items: [
       { q: 'Mennyi idő a bevezetés?', a: 'Jellemzően 5–10 munkanap attól számítva, hogy megkaptuk a termékadatokat és az árakat. A demót már az első egyeztetésen az Ön logójával mutatjuk meg.' },
@@ -139,7 +146,7 @@ const en: PlatformCopy = {
   },
   nav: {
     brandAria: 'Lamelix – top of the page', brandSmall: 'for manufacturers', mainAria: 'Main navigation', footerAria: 'Footer',
-    benefits: 'Benefits', showcase: 'Showcase', features: 'Features', how: 'How it works', pricing: 'Pricing', faq: 'FAQ',
+    benefits: 'Benefits', showcase: 'Showcase', features: 'Features', live: 'Live mechanics', how: 'How it works', pricing: 'Pricing', faq: 'FAQ',
     liveDemo: 'Live demo', requestDemo: 'Request a demo', langAria: 'Language', langName: { hu: 'Magyar', en: 'English' },
   },
   hero: {
@@ -181,8 +188,15 @@ const en: PlatformCopy = {
     },
     visual: { budgetLabel: 'Budget', budgetValue: 'HUF 5,000,000', budgetTags: ['Size −0.5 m', 'ZIP on 1 side'], advisorChips: ['Sun protection', 'Rain protection', 'All year', 'Wall-mounted'], advisorResult: 'Recommended: Aero louvred', energy: '~HUF 18,600 / year' },
   },
+  live: {
+    eyebrow: '04 – Live mechanics', title: ['A product that doesn’t just look good – it ', 'shows', ' how it works.'],
+    sub: 'An interactive mechanics demo on a sample louvered pergola: the linear motor, drive rod and louvres move from real geometry. Customers understand what they are buying, and “but how does it work?” questions drop.',
+    chips: ['Louvre angle, opening and shade, live', 'Drive mechanism in detail', 'Side, top and hero views'],
+    iframeTitle: 'Interactive mechanics demo: SB 400 louvered pergola', activate: 'Click to try it', release: 'Back to page scrolling', fallback: 'Open on its own page', fullscreen: 'Full screen',
+    noteTitle: 'We can build one for your product, too.', note: 'This is a sample (SB 400 louvered pergola). A custom mechanics module can be made for your product alongside the configurator, and placed on your own website. Quoted separately, built from the product’s technical data.', cta: 'Ask for a quote',
+  },
   how: {
-    eyebrow: '04 – How it works', title: ['Four steps, and the configurator is ', 'live', '.'],
+    eyebrow: '05 – How it works', title: ['Four steps, and the configurator is ', 'live', '.'],
     steps: [
       { when: 'Day 1', title: 'You send your product data', text: 'Size limits, roof types, colours, extras and your price list or price matrix – an existing Excel sheet works too.' },
       { when: 'Business days 2–5', title: 'We set up your branding', text: 'Logo, colours, company details and notification addresses. You just review and approve.' },
@@ -192,7 +206,7 @@ const en: PlatformCopy = {
     visual: { file: 'pricelist_2027.xlsx', mail: 'New site-survey request', mailSub: ['Aero 5.0 × 4.0 m · HUF 5.6M', 'Glide 6.0 × 4.5 m · HUF 7.2M'] },
   },
   pricing: {
-    eyebrow: '05 – Pricing', title: ['A few extra orders ', 'pay for', ' the year.'],
+    eyebrow: '06 – Pricing', title: ['A few extra orders ', 'pay for', ' the year.'],
     sub: 'A pergola, veranda or conservatory project typically costs HUF 3–6 million, conservatories often more. The plans differ in what the manufacturer needs; the customer experience is complete in every one.',
     billingAria: 'Billing period', monthly: 'Monthly', annual: 'Annual', annualBadge: '−2 months',
     everyLabel: 'In every plan:', everyAria: 'Included in every plan', badge: 'Most popular',
@@ -219,7 +233,7 @@ const en: PlatformCopy = {
     note: (fee: string, annual: boolean) => `Estimate at net prices: the setup fee (${fee}) plus 12 months of subscription, with ${annual ? 'annual' : 'monthly'} billing. From the second year only the subscription remains.`,
   },
   demo: {
-    eyebrow: '06 – Demo', title: ['See it with ', 'your own', ' product.'],
+    eyebrow: '07 – Demo', title: ['See it with ', 'your own', ' product.'],
     sub: 'A 20-minute online presentation: we show the configurator with your logo and one of your products, and go through what is needed to get started.',
     points: ['Try it on your phone too', 'Bring your price list and we’ll show it in the price matrix'], writeUs: 'Or write to us: ',
     liveNote: 'The interface of the live demo is currently in Hungarian.',
@@ -234,7 +248,7 @@ const en: PlatformCopy = {
     doneTitle: 'Thank you, we’ve got it!', doneText: 'We will get back to you within one business day with a proposed time. We’ll show the demo with your logo and your product.', ref: 'Reference: ',
   },
   faq: {
-    eyebrow: '07 – Questions', title: ['Short ', 'answers', '.'], sub: 'Can’t find what you’re looking for? Write to us – we reply within one business day.',
+    eyebrow: '08 – Questions', title: ['Short ', 'answers', '.'], sub: 'Can’t find what you’re looking for? Write to us – we reply within one business day.',
     contactTitle: 'Got a question?', openDemo: 'Open the live demo',
     items: [
       { q: 'How long does setup take?', a: 'Typically 5–10 business days from receiving your product data and prices. We show the demo with your logo already at the first meeting.' },

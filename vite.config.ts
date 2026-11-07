@@ -58,7 +58,7 @@ function staticSeo(siteUrl: string | undefined): Plugin {
     },
     generateBundle() {
       const origin = (siteUrl || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : DEFAULT_SITE)).replace(/\/$/, "")
-      const robots = `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /embed/\nDisallow: /k/\nDisallow: /ajanlat/\n\nSitemap: ${origin}/sitemap.xml\n`
+      const robots = `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /embed/\nDisallow: /k/\nDisallow: /ajanlat/\nDisallow: /demo/\n\nSitemap: ${origin}/sitemap.xml\n`
       this.emitFile({ type: "asset", fileName: "robots.txt", source: robots })
       const llms = `# Lamelix\n\n> Saját márkás (white-label) 3D pergola-konfigurátor és ajánlatkérő rendszer pergola- és árnyékolástechnikai gyártóknak: a vevő a gyártó weboldalán 3D-ben tervez, azonnali irányárat lát, a gyártó beárazott ajánlatkérést kap (admin, ármátrix, AR-nézet, fotóba helyezés, QR-kódos terv, PDF). Magyar nyelvű.\n\n## Oldalak\n\n${origin ? `- [Lamelix – gyártóknak](${origin}/): termék, működés, árak, demókérés\n- [Élő demó konfigurátor](${origin}/konfigurator)\n- [Élő termékbemutató (minta gyártói oldal)](${origin}/minta)\n` : "- Lamelix – gyártóknak (/)\n- Élő demó (/konfigurator)\n- Minta gyártói oldal (/minta)\n"}\n## Tudnivalók\n\n- Az árak nettó árak, a 27% áfa ezeken felül fizetendő; a konfigurátorban mutatott irányár tájékoztató jellegű.\n- Kapcsolat: hrvtadam.7@icloud.com\n`
       this.emitFile({ type: "asset", fileName: "llms.txt", source: llms })
