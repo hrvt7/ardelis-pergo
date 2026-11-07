@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 're
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Box, Check, ChevronDown, ChevronRight, CloudRain, Cog, Columns3, Gauge, House, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
 import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, wallLabel } from '@/lib/mount'
 import { formatHuf, formatNumber } from '@/lib/pricing'
+import { bayWidth, moduleCount, modulesLabel } from '@/lib/modules'
 import { FanOption, RgbOption, RoofShadeOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
 import { enabledRoofs, presetConfig, tenantPrice } from '@/tenants/rules'
 import { defaultGlazing, effectiveGlazing, GLAZING_INFO, glazingOptions, glazingPriceKey, PITCH_RANGE, ROOF_INFO, roofRise } from '@/lib/roofs'
@@ -379,12 +380,19 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <RoofPicker config={config} prices={prices} onChange={onChange} />
             <GlazingPicker config={config} prices={prices} onChange={onChange} />
             <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
-            <SliderField label="Szélesség" value={config.width} min={limits.width[0]} max={limits.width[1]} step={0.05} unit="m" metric onChange={(width) => onChange({ width })} />
+            {(limits.maxModules ?? 1) > 1 && <>
+              <SectionTitle title="Modulok" hint="Összekapcsolt mezők közös oszlopokkal – hosszú teraszra, vendéglátó terekre. Az ár és az összterület modulonként számolódik." />
+              <div className="scene-options compact four" role="radiogroup" aria-label="Modulok száma">
+                {Array.from({ length: Math.min(4, limits.maxModules ?? 1) }, (_, index) => index + 1).map((count) => { const active = moduleCount(config) === count; return <button type="button" role="radio" aria-checked={active} key={count} className={active ? 'selected' : ''} onClick={() => onChange({ modules: count > 1 ? count : undefined, width: Math.round(bayWidth(config) * count * 100) / 100 })}><strong>{count}×</strong></button> })}
+              </div>
+            </>}
+            <SliderField label={moduleCount(config) > 1 ? 'Szélesség modulonként' : 'Szélesség'} value={bayWidth(config)} min={limits.width[0]} max={limits.width[1]} step={0.05} unit="m" metric onChange={(bay) => onChange({ width: Math.round(bay * moduleCount(config) * 100) / 100 })} />
+            {moduleCount(config) > 1 && <p className="split-note">{modulesLabel(config, (value) => formatNumber(value, 2))} mező · összesen {formatNumber(config.width, 2)} m széles, {moduleCount(config) - 1} közös oszlopsorral.</p>}
             <SliderField label="Mélység" value={config.depth} min={limits.depth[0]} max={limits.depth[1]} step={0.05} unit="m" metric onChange={(depth) => onChange({ depth })} />
             <SliderField label="Oszlopmagasság" value={config.height} min={limits.height[0]} max={limits.height[1]} step={0.05} unit="m" metric onChange={(height) => onChange({ height })} />
             <SliderField label="Tetődőlés" value={config.pitch ?? 0} min={PITCH_RANGE[0]} max={PITCH_RANGE[1]} step={1} unit="°" onChange={(pitch) => onChange({ pitch: pitch || undefined })} />
             {(config.pitch ?? 0) > 0 && <p className="split-note">A tető hátsó (fali) éle {roofRise(config).toFixed(2).replace('.', ',')} m-rel magasabb az elülső oszlopmagasságnál, így a csapadék előre folyik le.</p>}
-            {config.width > 6 && <div className="smart-warning"><Columns3 size={18} /><p><strong>Középoszlop javasolt</strong>600 cm felett a műszaki ellenőrzés és egy középoszlop szükséges lehet.</p></div>}
+            {bayWidth(config) > 6 && <div className="smart-warning"><Columns3 size={18} /><p><strong>Középoszlop javasolt</strong>600 cm feletti mezőnél a műszaki ellenőrzés és egy középoszlop szükséges lehet.</p></div>}
             <div className="smart-helper"><Sparkles size={18} /><p><strong>{getSizeRecommendation(config).split(' · ')[0]}</strong>{getSizeRecommendation(config).split(' · ')[1]}</p></div>
             <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
           </>}

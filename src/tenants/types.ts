@@ -67,6 +67,8 @@ export interface Tenant {
     depth: [number, number]
     height: [number, number]
     maxHeaters: number
+    /** Összekapcsolt modulok legnagyobb száma (1 = nincs modulos kivitel; legfeljebb 4). */
+    maxModules?: number
   }
   mounts: MountType[]
   roofs: Partial<Record<RoofType, TenantRoof>>

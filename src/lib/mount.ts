@@ -2,6 +2,7 @@
 // Egyetlen igazságforrás a 3D-modellhez, az árhoz, az anyaglistához, a PDF-hez
 // és a szerveroldali e-mailhez. Tiszta TypeScript, böngészőben és szerveren is fut.
 import type { MountType, PergolaConfig, SideKey } from '../types/pergola'
+import { bayBoundaries, bayCenter, bayWidth, moduleCount } from './modules'
 
 export const MOUNT_TYPES: MountType[] = ['wall', 'corner-left', 'corner-right', 'niche', 'freestanding']
 
@@ -51,7 +52,7 @@ export const sideWalls = (mount: MountType) => wallSides(mount).filter((side): s
 export const hasBackWall = (mount: MountType) => mount !== 'freestanding'
 
 /** Az oszlopok középpontjai (x, z) méterben, a pergola közepéhez képest. */
-export function postPositions(config: Pick<PergolaConfig, 'width' | 'depth' | 'mount'>): [number, number][] {
+export function postPositions(config: Pick<PergolaConfig, 'width' | 'depth' | 'mount' | 'modules'>): [number, number][] {
   const { width, depth, mount } = config
   const left = -width / 2 + 0.09
   const right = width / 2 - 0.09
@@ -62,8 +63,10 @@ export function postPositions(config: Pick<PergolaConfig, 'width' | 'depth' | 'm
   if (!walls.includes('back')) positions.push([left, back], [right, back])
   if (!walls.includes('left')) positions.push([left, front])
   if (!walls.includes('right')) positions.push([right, front])
-  // Hosszú fesztávnál középoszlop az elülső gerenda alá (fülkében is, mert az oldalfalak csak a végeket tartják).
-  if (width > 6) positions.push([0, front])
+  // Modulhatárokon közös oszlopsor: elöl mindig, hátul csak ha nincs házfal.
+  for (const x of bayBoundaries(config)) { positions.push([x, front]); if (!walls.includes('back')) positions.push([x, back]) }
+  // Hosszú fesztávú mezőnél középoszlop az elülső gerenda alá (fülkében is, mert az oldalfalak csak a végeket tartják).
+  if (bayWidth(config) > 6) for (let index = 0; index < moduleCount(config); index++) positions.push([bayCenter(config, index), front])
   return positions
 }
 

@@ -2543,3 +2543,5 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 .glazing-chip .lt { display: block; margin-top: 2px; color: var(--text-secondary); font-size: 10.5px; letter-spacing: 0; font-variant-numeric: tabular-nums; }
 .text-link { background: none; border: 0; padding: 0; color: var(--accent, #d8ff72); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .scene-options.two { grid-template-columns: repeat(2, 1fr); }
+.scene-options.four { grid-template-columns: repeat(4, 1fr); }
+.scene-options.four button { min-height: 42px; font-size: 13px; }

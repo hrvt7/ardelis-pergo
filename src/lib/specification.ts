@@ -3,6 +3,7 @@ import { furnitureFit } from './furniture'
 import { PANEL, panelLayout } from './solar'
 import { ROOF_INFO, isGlazedRoof, GLAZING_INFO, effectiveGlazing, roofRise } from './roofs'
 import { isWallSide, MOUNT_CODES, MOUNT_LABELS, postPositions, sideWalls, wallLabel } from './mount'
+import { bayWidth, middlePostCount, moduleCount } from './modules'
 import { formatHuf, formatNumber, ROOF_LABELS, SIDE_NAMES } from './pricing'
 import { colorSummary } from './colors'
 import type { Tenant } from '../tenants/types'
@@ -30,7 +31,7 @@ export function getSpecCode(config: PergolaConfig) {
   const color = colorCode(config.frameColor, config.customRal) + (config.roofColor ? `/${colorCode(config.roofColor, config.roofRal)}` : '')
   // Oldalanként egy betű; félbe osztott oldalnál a két fél zárójelben, pl. „(G/Z)”.
   const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => (isWallSide(config.mount, side) ? 'W' : (() => { const codes = sideSegments(config, side).map((segment) => SIDE_INFO[segment.type].spec); return codes.length > 1 ? `(${codes.join('/')})` : codes[0] })())).join('')
-  const options = [config.solar ? 'PV' : '', config.smartHome ? 'SH' : '', config.fans ? `F${config.fans}` : '', config.led && config.ledRgb ? 'RGB' : '', config.roofShade ? ROOF_SHADE_INFO[config.roofShade].spec : '', config.building === 'conservatory' ? 'TK' : config.building === 'veranda' ? 'VR' : ''].filter(Boolean)
+  const options = [(config.modules ?? 1) > 1 ? `M${config.modules}` : '', config.solar ? 'PV' : '', config.smartHome ? 'SH' : '', config.fans ? `F${config.fans}` : '', config.led && config.ledRgb ? 'RGB' : '', config.roofShade ? ROOF_SHADE_INFO[config.roofShade].spec : '', config.building === 'conservatory' ? 'TK' : config.building === 'veranda' ? 'VR' : ''].filter(Boolean)
   return `PG-${roof}-${Math.round(config.width * 100)}${Math.round(config.depth * 100)}-${mount}-${color}-${sides}${options.map((option) => `-${option}`).join('')}`
 }
 
@@ -62,12 +63,15 @@ export function getBom(config: PergolaConfig): BomLine[] {
     ...(config.roofShade ? [{ label: 'Motoros tetőárnyékoló', value: `${ROOF_SHADE_INFO[config.roofShade].short} · ${formatNumber(roofShadeArea(config), 2)} m² · ${findShadeFabric(config.shadeFabric).name.toLowerCase()} ponyva, vezetősínnel, rádiós motorral` }] : []),
   ]
   const posts = postPositions(config).length
-  const middlePosts = config.width > 6 ? 1 : 0
+  const middlePosts = middlePostCount(config)
+  const modules = moduleCount(config)
+  const sharedPosts = (modules - 1) * (config.mount === 'freestanding' ? 2 : 1)
   const walls = sideWalls(config.mount)
   return [
-    { label: 'Hordozó oszlop', value: posts === 0 ? 'nincs · a falak tartják' : `${posts - middlePosts} db${middlePosts ? ` + ${middlePosts} db középoszlop` : ''} · ${formatNumber(config.height, 2)} m` },
+    ...(modules > 1 ? [{ label: 'Összekapcsolt modulok', value: `${modules} × ${formatNumber(bayWidth(config), 2)} m mező · közös oszlopokkal, összesen ${formatNumber(config.width, 2)} m` }] : []),
+    { label: 'Hordozó oszlop', value: posts === 0 ? 'nincs · a falak tartják' : `${posts - middlePosts - sharedPosts} db${sharedPosts ? ` + ${sharedPosts} db közös modul-oszlop` : ''}${middlePosts ? ` + ${middlePosts} db középoszlop` : ''} · ${formatNumber(config.height, 2)} m` },
     ...(walls.length ? [{ label: 'Oldalfali csatlakozó profil', value: walls.map((side) => `${side === 'left' ? 'bal' : 'jobb'} ${formatNumber(config.depth, 2)} m`).join(' + ') }] : []),
-    { label: 'Keretgerenda', value: `2 × ${formatNumber(config.width, 2)} m + 2 × ${formatNumber(config.depth, 2)} m` },
+    { label: 'Keretgerenda', value: `2 × ${formatNumber(config.width, 2)} m + 2 × ${formatNumber(config.depth, 2)} m${modules > 1 ? ` + ${modules - 1} × ${formatNumber(config.depth, 2)} m modulgerenda` : ''}` },
     roofBomLine(config),
     ...(config.solar ? [solarBomLine(config)] : []),
     { label: 'Tolóüveg panel', value: `${glassPanes} db` },

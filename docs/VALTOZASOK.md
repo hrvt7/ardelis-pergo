@@ -1,5 +1,13 @@
 # Változások
 
+## 3.66 – Modulos pergola: 1–4 összekapcsolt mező közös oszlopokkal
+
+- **Modulok** (1. lépés → Modulok, csak ha a gyártó kínálja: `limits.maxModules`, a demónál 4): több mező egymás mellett közös oszlopsorral és gerendával – hosszú teraszra, vendéglátó terekre. A szélesség-csúszka modulonként értendő (a gyártó mezőnkénti korlátján belül), a teljes szélesség a modulszorosa.
+- **3D:** a mezőhatárokon közös oszlop (elöl mindig, hátul ha nincs házfal) és keresztgerenda; lamellás tetőnél mezőnként külön lamellasor, a hajtás címkéi csak a hajtásoldali mezőn. A méretcímke „2 × 500 cm” alakú. A 6 m feletti középoszlop-szabály mezőnként érvényes.
+- **Ár:** ármátrixnál a mezőnkénti ár modulonként összeadódik (a gyártó árlistája egy mezőre szól); m²-árnál a teljes terület. Új tétel „Modulcsatlakozás · N mező”: a közös oszlopok az oszlop egységárán; a közös gerenda a szerkezeti árban.
+- **Kimenetek:** specifikáció-kód (`-M2`…), anyaglista (összekapcsolt modulok sor, közös modul-oszlopok, modulgerenda), megosztó kód (`n2`–`n4`), műszaki rajz (az oszlopok automatikusan). A szerver ugyanezekből számol újra.
+- **Korlát:** az oldalzárás (ZIP, üvegfal) továbbra is a teljes elülső/hátsó hosszon egy elemként szerepel; a modulonkénti oldalosztás később.
+
 ## 3.65 – Környezet kikapcsolása, vendéglátós bútorcsomagok
 
 - **„Csak a pergola” környezet** (Nézet panel → Környezet): a családi ház, a kert és a szomszédság helyett semleges, világos stúdió – csak a padló és (fali, sarok- vagy fülkés rögzítésnél) egy egyszerű vakolt falszakasz. Vendéglátós, ipari vagy katalógus-bemutatóhoz, és tisztább termékfotóhoz a PDF-be. Gyorsabb is: a 3,4 MB-os ház-modell ilyenkor nem töltődik be. Éjjel sötét háttérrel.

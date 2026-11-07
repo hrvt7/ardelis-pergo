@@ -84,6 +84,7 @@ export const demoTenant: Tenant = {
     depth: [2.5, 5],
     height: [2.2, 3.2],
     maxHeaters: 4,
+    maxModules: 4,
   },
   mounts: ['wall', 'corner-left', 'corner-right', 'niche', 'freestanding'],
   roofs: {

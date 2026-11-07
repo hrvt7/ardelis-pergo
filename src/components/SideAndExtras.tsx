@@ -6,6 +6,7 @@ import { DEFAULT_SHADE_FABRIC, ROOF_SHADE_INFO, ROOF_SHADES, roofShadeArea, SHAD
 import { HALF_NAMES, SIDE_INFO, sideSegments } from '@/lib/sides'
 import { RGB_SWATCHES, smartHomeTargets } from '@/lib/comfort'
 import { FAN_MIN_HEIGHT } from '@/lib/fans'
+import { hasCenterPost } from '@/lib/modules'
 import { CONSERVATORY_SIDE_TYPES } from '@/lib/buildings'
 import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
@@ -67,7 +68,7 @@ export function SideSettings({ side, sideName, config, scene, prices, half, onHa
   }
   const segments = sideSegments(config, side)
   const hasType = (...wanted: SideType[]) => segments.some((segment) => wanted.includes(segment.type))
-  const midPost = side === 'front' && config.width > 6
+  const midPost = side === 'front' && hasCenterPost(config)
 
   return <div className="side-settings">
     <div className="selected-side-head"><strong>{sideName}</strong><span>{split ? 'Két részre osztva' : SIDE_INFO[config.sides[side]].label}</span></div>

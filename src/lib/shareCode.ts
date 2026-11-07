@@ -50,6 +50,8 @@ export function configToCompact(config: PergolaConfig) {
   if (config.wallGlazing) flags.push(`w${WALL_GLAZING_INFO[config.wallGlazing].share}`)
   if (config.climate) flags.push(`k${CLIMATE_INFO[config.climate].share}`)
   if (config.foundation) flags.push('q')
+  // n = összekapcsolt modulok száma (2–4).
+  if ((config.modules ?? 1) > 1) flags.push(`n${config.modules}`)
   if (ral || flags.length) parts.push(ral)
   if (flags.length) parts.push(flags.join('-'))
   return parts.join('_')
@@ -79,6 +81,7 @@ function parseFlags(text: string, sideMap: Record<string, SideType>) {
     if (flag === 'p') result.solar = true
     else if (flag === 'r') result.ledRgb = true
     else if (flag === 'h') result.smartHome = true
+    else if (/^n[2-4]$/.test(flag)) result.modules = Number(flag.slice(1))
     else if (/^i\d{1,2}$/.test(flag)) result.pitch = Number(flag.slice(1))
     else if (/^u[csohf]$/.test(flag)) result.glazing = (Object.entries(GLAZING_INFO).find(([, info]) => info.share === flag[1])?.[0]) as PergolaConfig['glazing']
     else if (/^[ab][a-z]$/.test(flag)) {

@@ -20,9 +20,12 @@ export type GroundType = 'terrace' | 'garden' | 'studio'
 export type QualityLevel = 'auto' | 'ultra' | 'high' | 'medium' | 'low' | 'mobile'
 
 export interface PergolaConfig {
+  /** Teljes szélesség (m); modulos kivitelnél a mezők együtt. */
   width: number
   depth: number
   height: number
+  /** Összekapcsolt mezők száma közös oszlopokkal (2–4); nincs megadva = egy mező. */
+  modules?: number
   mount: MountType
   roof: RoofType
   frameColor: FrameColor

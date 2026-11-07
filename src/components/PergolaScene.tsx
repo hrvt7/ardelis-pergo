@@ -20,6 +20,7 @@ import { pbrPath } from '@/lib/textures'
 import { sunVectorInScene } from '@/lib/sun'
 import { studySun } from '@/lib/sunSite'
 import { daylightBalance } from '@/lib/lightBalance'
+import { bayBoundaries, bayCenter, bayWidth, hasCenterPost, moduleCount } from '@/lib/modules'
 import type { ShadeResult } from '@/components/ShadeProbe'
 import type { FurnitureSet } from '@/types/pergola'
 import { kelvinToHex } from '@/lib/color'
@@ -834,7 +835,7 @@ function SidePlacement({ side, config, scene, color, onSelect, onSceneChange, la
   const segments = sideSegments(config, side)
   const split = segments.length > 1
   // Elöl 6 m felett középoszlop áll: ott a fél-mezők az oszlophoz futnak, nincs külön osztóprofil.
-  const midPost = side === 'front' && width > 6
+  const midPost = side === 'front' && hasCenterPost(config)
   const gap = split ? (midPost ? 0.09 : MULLION / 2 + 0.005) : 0
   const allOpen = segments.every((segment) => segment.type === 'none')
   return <group position={position} rotation={[0, isHorizontal ? 0 : Math.PI / 2, 0]} onClick={(event) => { if (allOpen) { event.stopPropagation(); onSelect?.(side) } }}>
@@ -902,7 +903,7 @@ function DimensionGuides({ config }: { config: PergolaConfig }) {
   // A magasságvonal az elülső, falmentes sarokhoz kerül.
   const heightX = !leftWall ? -width / 2 - 0.35 : !rightWall ? width / 2 + 0.35 : -width / 2 + 0.35
   const heightZ = leftWall && rightWall ? depth / 2 + 0.3 : depth / 2
-  return <group><Line points={[[-width / 2, 0.06, depth / 2 + 0.55], [width / 2, 0.06, depth / 2 + 0.55]]} color={color} lineWidth={1.2} /><Line points={[[-width / 2, 0.06, depth / 2 + 0.42], [-width / 2, 0.06, depth / 2 + 0.68]]} color={color} /><Line points={[[width / 2, 0.06, depth / 2 + 0.42], [width / 2, 0.06, depth / 2 + 0.68]]} color={color} /><Html position={[0, 0.09, depth / 2 + 0.57]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(width)}</Html><Line points={[[depthX, 0.06, -depth / 2], [depthX, 0.06, depth / 2]]} color={color} lineWidth={1.2} /><Html position={[depthX + Math.sign(depthX) * 0.01, 0.09, 0]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(depth)}</Html><Line points={[[heightX, 0.05, heightZ], [heightX, height + 0.25, heightZ]]} color={color} lineWidth={1.2} /><Html position={[heightX, height / 2, heightZ]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(height)}</Html></group>
+  return <group><Line points={[[-width / 2, 0.06, depth / 2 + 0.55], [width / 2, 0.06, depth / 2 + 0.55]]} color={color} lineWidth={1.2} /><Line points={[[-width / 2, 0.06, depth / 2 + 0.42], [-width / 2, 0.06, depth / 2 + 0.68]]} color={color} /><Line points={[[width / 2, 0.06, depth / 2 + 0.42], [width / 2, 0.06, depth / 2 + 0.68]]} color={color} /><Html position={[0, 0.09, depth / 2 + 0.57]} center className="dimension-label" zIndexRange={[8, 0]}>{moduleCount(config) > 1 ? `${moduleCount(config)} × ${cm(bayWidth(config))}` : cm(width)}</Html><Line points={[[depthX, 0.06, -depth / 2], [depthX, 0.06, depth / 2]]} color={color} lineWidth={1.2} /><Html position={[depthX + Math.sign(depthX) * 0.01, 0.09, 0]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(depth)}</Html><Line points={[[heightX, 0.05, heightZ], [heightX, height + 0.25, heightZ]]} color={color} lineWidth={1.2} /><Html position={[heightX, height / 2, heightZ]} center className="dimension-label" zIndexRange={[8, 0]}>{cm(height)}</Html></group>
 }
 
 /**
@@ -1260,7 +1261,7 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
   })
   const night = scene.time === 'night'
   const x = scene.exploded
-  return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={z < 0 ? height + rise : height} color={color} />)}{x && postPositions[0] && <Html position={[postPositions[0][0], height / 2, postPositions[0][1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">Oszlopok</span></Html>}<ExplodePart ex={ex} dy={0.55} label="Gerendák" labelAt={[width / 2 - 0.2, height + 0.3, depth / 2]} show={x}><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[width / 2, height, 0]} color={color} /></ExplodePart>
+  return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={z < 0 ? height + rise : height} color={color} />)}{x && postPositions[0] && <Html position={[postPositions[0][0], height / 2, postPositions[0][1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">Oszlopok</span></Html>}<ExplodePart ex={ex} dy={0.55} label="Gerendák" labelAt={[width / 2 - 0.2, height + 0.3, depth / 2]} show={x}><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[width / 2, height, 0]} color={color} />{bayBoundaries(config).map((x) => <StructuralBeam key={x} args={[0.19, 0.23, depth]} position={[x, height, 0]} color={color} />)}</ExplodePart>
     <ExplodePart ex={ex} dy={1.0} label="Vízelvezetés" labelAt={[-width / 2 + 0.4, height + 0.3, depth / 2]} show={x && !realLouvres}>
     {!realLouvres && tilt(<>
     <GutterChannel length={width - 0.18} position={[0, height + 0.04, depth / 2 - 0.105]} color={color} />
@@ -1279,7 +1280,8 @@ function PergolaModel({ config, scene, onSideSelect, onSceneChange }: { config: 
     <ExplodePart ex={ex} dy={1.6} label={roof === 'fabric' ? 'Textiltető' : isGlazedRoof(roof) ? 'Üvegtető' : roof === 'fixed' ? 'Fix tető' : 'Tetőlamellák'} labelAt={[0, height + 0.5 + rise / 2, -depth / 4]} show={x}>
     {tilt(<>
     {roof === 'retractable' && <LouverBlades key={louverCount} geometry={geometry} width={width} depth={depth} height={height} count={louverCount} retractable angle={effectiveAngle} color={roofColor} />}
-    {realLouvres && <LouvreRoof width={width} depth={depth} height={height} beam={0.19} beamHeight={0.23} angle={effectiveAngle} driveSide={driveSide} mechanism={mechanism} roofMaterial={getCoat(roofColor, 0.38, materialDetail)} frameMaterial={getCoat(color, 0.4, materialDetail)} segments={louvreSegments} showLabels={!x && scene.labels !== false} />}
+    {/* Modulos kivitelnél mezőnként külön lamellasor a közös gerendák között; a hajtás címkéi csak a hajtásoldali mezőn. */}
+    {realLouvres && Array.from({ length: moduleCount(config) }, (_, index) => <group key={index} position={[bayCenter(config, index), 0, 0]}><LouvreRoof width={bayWidth(config)} depth={depth} height={height} beam={0.19} beamHeight={0.23} angle={effectiveAngle} driveSide={driveSide} mechanism={mechanism} roofMaterial={getCoat(roofColor, 0.38, materialDetail)} frameMaterial={getCoat(color, 0.4, materialDetail)} segments={louvreSegments} showLabels={!x && scene.labels !== false && index === (driveSide === 1 ? moduleCount(config) - 1 : 0)} /></group>)}
     {roof === 'fixed' && <group><mesh position={[0, height + 0.14, 0]} castShadow receiveShadow><boxGeometry args={[width - 0.12, 0.09, depth - 0.12]} /><PowderCoat color={roofColor} /></mesh>{Array.from({ length: fixedSeamCount }, (_, index) => { const z = -depth / 2 + (index + 1) * depth / (fixedSeamCount + 1); return <Beam key={index} args={[width - 0.16, 0.018, 0.025]} position={[0, height + 0.192, z]} color={roofColor} radius={0.003} /> })}</group>}
     {isGlazedRoof(roof) && <GlazedRoof width={width} depth={depth} height={height} color={roofColor} kind={roof === 'glass' ? 'glass' : 'polycarbonate'} glazing={effectiveGlazing(config) ?? 'clear'} />}
     {isGlazedRoof(roof) && config.roofShade && <RoofShadeModel width={width} depth={depth} height={height} kind={config.roofShade} fabric={findShadeFabric(config.shadeFabric).hex} color={color} out={scene.shadeOut} night={night} onToggle={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })} />}

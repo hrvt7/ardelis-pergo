@@ -9,6 +9,7 @@ import { HALF_NAMES, SIDE_INFO, SIDE_LABELS, sideLength, sideSegments, splitProf
 import { ROOF_INFO, ROOF_TYPES } from './roofs'
 import { getMatrixPrice } from './priceMatrix'
 import { omittedPosts, sideWalls } from './mount'
+import { bayWidth, moduleCount } from './modules'
 import { doorCount, effectiveWallGlazing, glassWallArea, hasSplitUnit, hasUnderfloor, WALL_GLAZING_INFO } from './buildings'
 import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, RoofType, SideKey } from '../types/pergola'
 
@@ -95,17 +96,32 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
 
   const roofRate = prices[ROOF_INFO[config.roof].priceKey]
 
-  // Gyártói ármátrix (ha van az adott tetőre), különben a m²-alapú ár.
-  const matrixPrice = getMatrixPrice(config.width, config.depth, prices.priceMatrix?.[config.roof])
-  const structure = matrixPrice ? matrixPrice.netPrice : area * roofRate
+  // Gyártói ármátrix (ha van az adott tetőre), különben a m²-alapú ár. Modulos kivitelnél
+  // a mátrix mezőnként érvényes (a gyártó árlistája egy mezőre szól), az ár a modulok összege.
+  const modules = moduleCount(config)
+  const bay = bayWidth(config)
+  const matrixPrice = getMatrixPrice(bay, config.depth, prices.priceMatrix?.[config.roof])
+  const structure = matrixPrice ? matrixPrice.netPrice * modules : area * roofRate
   lines.push({
     id: 'structure',
     label: roofLabels[config.roof],
     detail: matrixPrice
-      ? `${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} m · ${matrixPrice.exact ? 'gyártói ármátrix' : 'ármátrix, interpolált'}`
+      ? `${modules > 1 ? `${modules} × ` : ''}${formatNumber(bay, 2)} × ${formatNumber(config.depth, 2)} m · ${matrixPrice.exact ? 'gyártói ármátrix' : 'ármátrix, interpolált'}`
       : `${formatNumber(area)} m² × ${formatHuf(roofRate)} / m²`,
     amountNet: round(structure),
   })
+
+  // Összekapcsolt modulok: a mezőhatárokon közös oszlopsor (elöl mindig, hátul ha nincs házfal).
+  if (modules > 1 && prices.postNet > 0) {
+    const perBoundary = config.mount === 'freestanding' ? 2 : 1
+    const posts = (modules - 1) * perBoundary
+    lines.push({
+      id: 'modules',
+      label: `Modulcsatlakozás · ${modules} mező`,
+      detail: `${posts} db közös oszlop × ${formatHuf(prices.postNet)} · a közös gerenda a szerkezeti árban`,
+      amountNet: round(posts * prices.postNet),
+    })
+  }
 
   if (config.mount === 'freestanding') {
     lines.push({

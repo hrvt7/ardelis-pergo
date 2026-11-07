@@ -14,8 +14,9 @@ const sideEnum = z.enum(['none', 'zip', 'glass', 'glassFramed', 'glassFixed', 'd
 
 /** Szerkezeti séma: típusokat és durva tartományt ellenőriz, gyártótól függetlenül. */
 export const pergolaConfigSchema = z.object({
-  width: z.number().finite().min(1).max(20),
+  width: z.number().finite().min(1).max(28),
   depth: z.number().finite().min(1).max(20),
+  modules: z.number().int().min(1).max(4).optional(),
   height: z.number().finite().min(1).max(6),
   mount: z.enum(['freestanding', 'wall', 'corner-left', 'corner-right', 'niche']),
   roof: z.enum(['louvered', 'retractable', 'fabric', 'glass', 'polycarbonate', 'fixed']),
@@ -165,9 +166,12 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     return [[side, fitSide(type)] as const]
   })
   const led = tenant.extras.led && config.led
+  // Modulok: csak ha a gyártó kínálja; a teljes szélesség a mezőnkénti korlát modulszorosa.
+  const modules = Math.max(1, Math.min(tenant.limits.maxModules ?? 1, Math.round(config.modules ?? 1)))
   return {
     ...config,
-    width: roundCm(clamp(config.width, tenant.limits.width)),
+    modules: modules > 1 ? modules : undefined,
+    width: roundCm(clamp(config.width, [tenant.limits.width[0] * modules, tenant.limits.width[1] * modules])),
     depth: roundCm(clamp(config.depth, tenant.limits.depth)),
     height: roundCm(clamp(config.height, tenant.limits.height)),
     mount,

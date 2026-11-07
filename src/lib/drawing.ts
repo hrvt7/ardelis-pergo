@@ -5,6 +5,7 @@
 // Vetítés: európai (E) rendszer — homlokzat fent, alatta az alaprajz, mellette a metszet.
 import { glassPanels } from './glass'
 import { hasBackWall, postPositions, wallSides } from './mount'
+import { hasCenterPost } from './modules'
 import { isGlazedRoof, roofRise } from './roofs'
 import { PANEL, panelLayout } from './solar'
 import { doorLeafWidth, sideSegments, type SideSegment } from './sides'
@@ -177,7 +178,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     if (walls.includes(side)) return [] as { segment: SideSegment; a: number; b: number }[]
     const horizontal = side === 'front' || side === 'back'
     const L = horizontal ? w : d
-    const hasMidPost = side === 'front' && w > 6
+    const hasMidPost = side === 'front' && hasCenterPost(config)
     const midGap = hasMidPost ? POST / 2 : MULLION / 2
     return sideSegments(config, side).filter((segment) => segment.type !== 'none').map((segment) => {
       // Oldalt az első fél az elülső (+z) vég, ezért ott a helyi koordináta előjelet vált.
@@ -188,7 +189,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       return { segment, a, b }
     })
   }
-  const needsMullion = (side: SideKey) => !walls.includes(side) && Boolean(config.split?.[side]) && !(side === 'front' && w > 6)
+  const needsMullion = (side: SideKey) => !walls.includes(side) && Boolean(config.split?.[side]) && !(side === 'front' && hasCenterPost(config))
 
   // Modell-kiterjedések (m).
   const xMin = -w / 2 - (leftWing ? WALL_T : back ? 0.35 : 0)
