@@ -2502,8 +2502,9 @@ function FrameGovernor({ enabled, onSlow }: { enabled: boolean; onSlow: () => vo
     const average = w.sum / w.count
     w.sum = 0
     w.count = 0
-    w.slow = average > 0.026 ? w.slow + 1 : 0
-    if (w.slow >= 2) { w.slow = 0; onSlow() }
+    // 30 fps alatt három egymást követő mérési ablakban (≈4–5 s) lépünk lejjebb – egy rövid akadás nem elég hozzá.
+    w.slow = average > 0.034 ? w.slow + 1 : 0
+    if (w.slow >= 3) { w.slow = 0; onSlow() }
   })
   return null
 }

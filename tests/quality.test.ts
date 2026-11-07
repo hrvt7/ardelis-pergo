@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { QUALITY_PROFILES, isTier, lowerTier, qualitySettings, resolveQualityTier } from '../src/lib/quality'
+import { QUALITY_PROFILES, isTier, lowerTier, qualitySettings, resolveQualityTier, readTierCap, TIER_CAP_TTL_MS, writeTierCap } from '../src/lib/quality'
 
 describe('3D minőségkezelő', () => {
   it('a felhasználó választása felülírja az automatikus besorolást; a régi „mobile” a low szint', () => {
@@ -24,5 +24,21 @@ describe('3D minőségkezelő', () => {
     expect(lowerTier('low')).toBe('low')
     expect(isTier('high')).toBe(true)
     expect(isTier('mobile')).toBe(false)
+  })
+})
+
+describe('minőségi korlát (védőháló) lejárata', () => {
+  it('a lejegyzett korlát 6 óráig él, utána törlődik', () => {
+    const store = new Map<string, string>()
+    const localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v) }, removeItem: (k: string) => { store.delete(k) } }
+    const location = { search: '' }
+    Object.assign(globalThis, { window: { localStorage, location } })
+    writeTierCap('medium', 1000)
+    expect(readTierCap(1000 + TIER_CAP_TTL_MS - 1)).toBe('medium')
+    expect(readTierCap(1000 + TIER_CAP_TTL_MS + 1)).toBeNull()
+    expect(store.has('pergola-tier-cap')).toBe(false)
+    writeTierCap('low', 5000)
+    location.search = '?quality=ultra'
+    expect(readTierCap(5001)).toBeNull()
   })
 })

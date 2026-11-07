@@ -1,5 +1,10 @@
 # Változások
 
+## 3.62 – Gyorsabb ultra szint, igazságosabb minőség-védőháló
+
+- **Védőháló:** a „túl lassú → alacsonyabb szint” döntés eddig örökre a böngészőben maradt (egy háttérbe tett fül vagy egy rövid akadás után is). Most 6 óra után lejár, a `?quality=` URL-paraméter felülírja, és csak 30 fps alatt, három egymást követő mérési ablakban (≈5 s) lép életbe (eddig 38 fps alatt, kettőben).
+- **Ultra szint olcsóbban, azonos látvánnyal:** fél felbontású, mélységtudatosan felskálázott AO (eddig teljes felbontás), 16 AO-minta (24), 4× MSAA (8×), max. 1,65× renderfelbontás (1,8×). Retina kijelzőn ez a képpontok ~20%-át és az AO költségének ~70%-át takarítja meg.
+
 ## 3.61 – Ajtó nyitásirány, tetőválasztás a 4. lépésben, 3D-feliratok kapcsoló
 
 - **Ajtó nyitási iránya:** nyíló és tolóajtós oldalnál új gomb „Nyitás a másik oldalra” – a zsanér/tolószárny a másik sarokba kerül. 3D-ben, a műszaki rajzon (homlokzat és alaprajz, nyitási ív) és a megosztó kódban (`m` jelző) is.

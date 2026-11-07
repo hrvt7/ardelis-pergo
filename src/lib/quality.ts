@@ -37,7 +37,7 @@ export const QUALITY_PROFILES: Record<QualityTier, QualitySettings> = {
   low: { tier: 'low', shadowMapSize: 1024, dpr: [1, 1.1], enablePostprocessing: false, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 256, textureResolution: '1k', louvreSegments: 6, environmentIntensity: 0.9, maxAnisotropy: 2, enableGrassDetail: false, enableExtraPlants: false, rainDrops: 160, materialDetail: 'basic', shadowRadius: 1, vignette: false, bloomScale: 0 },
   medium: { tier: 'medium', shadowMapSize: 1024, dpr: [1, 1.35], enablePostprocessing: false, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 256, textureResolution: '1k', louvreSegments: 8, environmentIntensity: 1, maxAnisotropy: 4, enableGrassDetail: false, enableExtraPlants: true, rainDrops: 260, materialDetail: 'basic', shadowRadius: 1.5, vignette: false, bloomScale: 0 },
   high: { tier: 'high', shadowMapSize: 2048, dpr: [1.25, 1.5], enablePostprocessing: true, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 12, environmentIntensity: 1, maxAnisotropy: 8, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 320, materialDetail: 'enhanced', shadowRadius: 3, vignette: true, bloomScale: 1 },
-  ultra: { tier: 'ultra', shadowMapSize: 4096, dpr: [1.5, 1.8], enablePostprocessing: true, ultraEffects: true, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 16, environmentIntensity: 1.1, maxAnisotropy: 16, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 650, materialDetail: 'ultra', shadowRadius: 4.5, vignette: true, bloomScale: 1.25 },
+  ultra: { tier: 'ultra', shadowMapSize: 4096, dpr: [1.5, 1.65], enablePostprocessing: true, ultraEffects: true, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 16, environmentIntensity: 1.1, maxAnisotropy: 16, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 650, materialDetail: 'ultra', shadowRadius: 4.5, vignette: true, bloomScale: 1.25 },
 }
 
 const ORDER: QualityTier[] = ['low', 'medium', 'high', 'ultra']
@@ -103,10 +103,24 @@ export const useQuality = () => useContext(QualityContext)
 export const tierRank = (tier: QualityTier) => ORDER.indexOf(tier)
 
 const TIER_CAP_KEY = 'pergola-tier-cap'
-/** A futásidejű védőháló által megjegyzett, az eszközön még simán futó legmagasabb szint. */
-export function readTierCap(): QualityTier | null {
-  try { const value = window.localStorage.getItem(TIER_CAP_KEY); return isTier(value) ? value : null } catch { return null }
+/** A lejegyzett korlát ennyi ideig él: egy egyszeri akadás (háttérfül, más program, frissítés) ne rontsa a minőséget örökre. */
+export const TIER_CAP_TTL_MS = 6 * 60 * 60 * 1000
+/**
+ * A futásidejű védőháló által megjegyzett, az eszközön még simán futó legmagasabb szint.
+ * Lejárt vagy URL-ben kért (?quality=) szint esetén nincs korlát.
+ */
+export function readTierCap(now = Date.now()): QualityTier | null {
+  try {
+    if (isTier(new URLSearchParams(window.location.search).get('quality'))) return null
+    const raw = window.localStorage.getItem(TIER_CAP_KEY)
+    if (!raw) return null
+    const [value, stamp] = raw.split('@')
+    if (!isTier(value)) return null
+    const at = Number(stamp)
+    if (!Number.isFinite(at) || now - at > TIER_CAP_TTL_MS) { window.localStorage.removeItem(TIER_CAP_KEY); return null }
+    return value
+  } catch { return null }
 }
-export function writeTierCap(tier: QualityTier) {
-  try { window.localStorage.setItem(TIER_CAP_KEY, tier) } catch { /* privát mód: csak erre a munkamenetre érvényes */ }
+export function writeTierCap(tier: QualityTier, now = Date.now()) {
+  try { window.localStorage.setItem(TIER_CAP_KEY, `${tier}@${now}`) } catch { /* privát mód: csak erre a munkamenetre érvényes */ }
 }

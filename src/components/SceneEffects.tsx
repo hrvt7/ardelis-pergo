@@ -38,17 +38,18 @@ export default function SceneEffects({ ultra, night, vignette, bloomScale }: { u
   useEffect(() => () => clampPass.dispose(), [clampPass])
   // Natív MSAA a HDR pufferen: éles élek 100%-os Windows-skálázású (dpr 1) képernyőn is; az SMAA önmagában „pixeles” képet adott.
   return (
-    <EffectComposer multisampling={ultra ? 8 : 2} enableNormalPass={false}>
+    <EffectComposer multisampling={ultra ? 4 : 2} enableNormalPass={false}>
       <primitive object={clampPass} dispose={null} />
       <N8AO
         aoRadius={0.75}
         distanceFalloff={0.55}
         intensity={night ? 1.7 : 2.6}
-        aoSamples={ultra ? 24 : 10}
+        aoSamples={ultra ? 16 : 10}
         denoiseSamples={ultra ? 8 : 4}
         denoiseRadius={ultra ? 10 : 12}
         quality={ultra ? 'high' : 'medium'}
-        halfRes={!ultra}
+        // Fél felbontású AO mélységtudatos felskálázással ultrán is: a képminőség gyakorlatilag azonos, a költség a negyede.
+        halfRes
         depthAwareUpsampling
       />
       <Bloom mipmapBlur luminanceThreshold={night ? 1 : 0.92} luminanceSmoothing={0.2} intensity={(night ? 0.85 : 0.2) * Math.max(bloomScale, 1)} radius={0.7} />
