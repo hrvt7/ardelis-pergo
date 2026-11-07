@@ -1,5 +1,11 @@
 # Változások
 
+## 3.59 – Valós lamellarendszer és „Működés” bemutató a konfigurátor 3D-jében
+
+- **Forgólamellás tető valós geometriával:** 215,8 × 39,8 mm vízcsatornás lamellaprofil, 200 mm osztás, 0–110° forgás, ≤4 m-es modulok osztógerendával, R115 hajtókar, lineáris motor (732→913 mm) – minden a megadott méretből számolva (`src/lib/louvreSystem.ts`, tesztekkel). A publikus SB 400 műszaki adatok szerint; partnergyártónként a saját profilra cserélhető.
+- **„Működés” gomb** a jelenet-sávban (lamellás tetőnél): a hajtás mozgásban – motor, hajtórúd, karok zöld kiemeléssel és címkékkel, hajtásoldali közeli kamera; mellette panel élő értékekkel (lamellaszög, nyitott felület, lamellaköz, motorhossz), vázlattal, szünet/lejátszás gombbal. A panel és a 3D ugyanabból az órából számol.
+- A tető-beállításoknál „Nézd meg működés közben” gomb.
+
 ## 3.58 – Működésbemutató a nyitóoldalon
 
 - Új szekció („04 – Működés élőben”) a B2B nyitóoldalon: az SB 400 lamellás pergola interaktív működésbemutatója (lineáris motor, hajtórúd, lamellák) önálló, izolált modulként (`public/demo/sb400-live.html`, iframe). A szimulátor tartalma változatlan.
