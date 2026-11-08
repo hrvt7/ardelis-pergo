@@ -1,5 +1,12 @@
 # Változások
 
+## 4.03 – A pergola/carport stúdió is a közös keretre állt
+
+- **Egy kód, egy viselkedés:** a pergola és a carport stúdió (`PergoStudio`) is a közös `StudioHeader`, `SceneToolbar` és `usePresentation` / `usePriceCollapse` elemekre épül, mint a kerítés és a garázskapu. A saját, külön megírt fejléc, eszköztár, Eszközök-menü, bemutató- és árpanel-állapot megszűnt.
+- **Mindenhol azonos jelenet-eszköztár:** napszak-gomb (Nappal → Aranyóra → Éjszaka; a pergolánál 13, 18, 22 órára áll, a csúszka továbbra is a Nézet panelben), utána a termék gyorsgombjai (pergola/carport: Eső, AR; kerítés és garázskapu: kapunyitás), végül az Eszközök.
+- **Eszközök menü mindenhol:** elöl a Nézet és vizualizáció és a termék saját eszközei (pergolánál árnyékelemzés, fotóba helyezés, működés-bemutató, robbantott nézet, költségkeret, üzemeltetés, tanácsadó; kerítésnél mintaárak), utána a közös Bemutató mód, PDF összefoglaló, Megosztás — ez utóbbi hármat a pergola menüje eddig nem tartalmazta.
+- **Fejléc mindenhol:** a gyártó saját márkajele (eddig a kerítésnél és a garázskapunál a Lamelix-logó jelent meg a gyártóé helyett), „Építészeti konfigurátor” + termékváltó, teljes képernyő, visszavonás, Bemutató, Tudnivalók / Árazás, Alaphelyzet. A márkajelre kattintva a kamera az áttekintő nézetbe áll.
+
 ## 4.02 – Egységes stúdió minden terméknél: Eszközök, napszak, összecsukható árpanel, bemutató
 
 - **Közös stúdió-keret** (`components/studio/StudioChrome.tsx`, `studioState.ts`, `lib/studioLighting.ts`): a kerítés és a garázskapu konfigurátor ugyanazokat a termékfüggetlen funkciókat kapta, mint a pergola és a carport, ugyanott és ugyanúgy működve.

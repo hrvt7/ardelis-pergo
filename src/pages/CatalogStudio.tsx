@@ -6,7 +6,7 @@ import CatalogPricePanel from '@/components/CatalogPricePanel'
 import CatalogScene, { type CatalogSceneSettings, type CatalogView } from '@/components/CatalogScene'
 import LeadForm from '@/components/LeadForm'
 import OutdoorPriceDialog from '@/components/OutdoorPriceDialog'
-import { SceneToolbar, StudioHeader } from '@/components/studio/StudioChrome'
+import { SceneToolbar, StudioHeader, StudioViewSettings } from '@/components/studio/StudioChrome'
 import { DEFAULT_STUDIO_TIME } from '@/lib/studioLighting'
 import { usePriceCollapse, usePresentation } from '@/components/studio/studioState'
 import { useTenant } from '@/tenants/TenantContext'
@@ -91,11 +91,11 @@ export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
 
   const roofless = !roof
   return <div className={`app-shell catalog-studio ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>
-    <StudioHeader canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setPriceOpen(true)} infoLabel="Árazás" onReset={reset} />
+    <StudioHeader onHome={() => setView('perspective')} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setPriceOpen(true)} infoLabel="Árazás" onReset={reset} />
     <main className="studio-shell">
       <section className="viewer-panel" aria-label={`${meta.title} 3D előnézet`}><CatalogScene config={config} scene={scene} view={view} />
         <div className="viewer-heading"><span>ÉLŐ ÉPÍTÉSZETI JELENET</span><h1>{meta.title} <i>/</i> <span className="kinetic" key={`n${roof ? config.width * (family === 'carport' ? config.bays : 1) : config.length}`}>{roof ? config.width * (family === 'carport' ? config.bays : 1) : config.length}</span><small> m</small></h1><p>{meta.description}</p></div>
-        <SceneToolbar view={scene} productName={family === 'fence' ? 'a kerítés' : `a ${meta.title.toLowerCase()}`} onViewChange={(patch) => setScene((current) => ({ ...current, ...patch }))} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onExport={exportPdf} onShare={share}
+        <SceneToolbar time={scene.time} onTimeChange={(time) => setScene((current) => ({ ...current, time }))} viewPanel={<StudioViewSettings view={scene} productName={family === 'fence' ? 'a kerítés' : `a ${meta.title.toLowerCase()}`} onChange={(patch) => setScene((current) => ({ ...current, ...patch }))} />} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onExport={exportPdf} onShare={share}
           quick={roofless && config.gateType !== 'none' ? [{ id: 'gate', icon: scene.gateOpen ? EyeOff : Eye, label: scene.gateOpen ? 'Csukás' : 'Nyitás', title: 'A kapu nyitása és zárása', active: scene.gateOpen, run: () => setScene((current) => ({ ...current, gateOpen: !current.gateOpen })) }] : []}
           tools={[{ id: 'prices', icon: Settings2, name: 'Mintaárak szerkesztése', note: 'Folyóméter-, kapu- és tételárak a kalkulációhoz', run: () => setPriceOpen(true) }]} />
         <div className="camera-toolbar" aria-label="Kamera nézetek">{views.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} onClick={() => setView(id)}><Icon size={16} /><span>{label}</span></button>)}</div>

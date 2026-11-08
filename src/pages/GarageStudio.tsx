@@ -6,7 +6,7 @@ import GarageControls, { type GarageStep } from '@/components/GarageControls'
 import CatalogPricePanel from '@/components/CatalogPricePanel'
 import GarageScene, { type GarageSceneSettings, type GarageView } from '@/components/GarageScene'
 import LeadForm from '@/components/LeadForm'
-import { SceneToolbar, StudioHeader } from '@/components/studio/StudioChrome'
+import { SceneToolbar, StudioHeader, StudioViewSettings } from '@/components/studio/StudioChrome'
 import { usePriceCollapse, usePresentation } from '@/components/studio/studioState'
 import { DEFAULT_STUDIO_TIME } from '@/lib/studioLighting'
 import { useTenant } from '@/tenants/TenantContext'
@@ -80,11 +80,11 @@ export default function GarageStudio() {
   </div>
 
   return <div className={`app-shell catalog-studio ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>
-    <StudioHeader canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onReset={reset} />
+    <StudioHeader onHome={() => setView('perspective')} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onReset={reset} />
     <main className="studio-shell">
       <section className="viewer-panel" aria-label="Garázskapu 3D előnézet"><GarageScene config={config} scene={scene} view={view} />
         <div className="viewer-heading"><span>ÉLŐ ÉPÍTÉSZETI JELENET</span><h1><span className="kinetic" key={config.type}>{GARAGE_LABELS.type[config.type].split(' ')[0]}</span> <i>/</i> <span className="kinetic" key={`w${config.width}`}>{formatNumber(config.width, 2)}</span><small> m</small></h1><p>{GARAGE_LABELS.type[config.type]} · {formatNumber(config.width, 2)} × {formatNumber(config.height, 2)} m nyílás</p></div>
-        <SceneToolbar view={scene} productName="a garázskapu" onViewChange={(patch) => setScene((current) => ({ ...current, ...patch }))} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onExport={exportPdf} onShare={share}
+        <SceneToolbar time={scene.time} onTimeChange={(time) => setScene((current) => ({ ...current, time }))} viewPanel={<StudioViewSettings view={scene} productName="a garázskapu" onChange={(patch) => setScene((current) => ({ ...current, ...patch }))} />} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onExport={exportPdf} onShare={share}
           quick={[{ id: 'open', icon: scene.open ? DoorClosed : DoorOpen, label: scene.open ? 'Zárás' : 'Nyitás', title: 'A kapu nyitása és zárása', active: scene.open, run: () => setScene((current) => ({ ...current, open: !current.open })) }]} />
         <div className="camera-toolbar" aria-label="Kamera nézetek">{views.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} onClick={() => setView(id)}><Icon size={16} /><span>{label}</span></button>)}</div>
         <div className="viewer-footer"><span>1 egység = 1 méter</span><span>{formatNumber(price.area)} m² kapulap</span></div>

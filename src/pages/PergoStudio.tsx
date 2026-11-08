@@ -1,6 +1,5 @@
-import TenantMark from '@/components/TenantMark'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { SlidersHorizontal, Armchair, Cog, FileDown, Box, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Info, Layers, LayoutGrid, Maximize2, Presentation, Redo2, Rotate3d, RotateCcw, Scan, ShieldCheck, SunMedium, Undo2, View, Wallet, WandSparkles, X } from 'lucide-react'
+import { Armchair, Cog, FileDown, Box, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Layers, Maximize2, Rotate3d, Scan, ShieldCheck, SunMedium, Undo2, View, Wallet, WandSparkles, X } from 'lucide-react'
 import { Link } from 'react-router'
 import ConfiguratorControls, { SceneSettingsPanel } from '@/components/ConfiguratorControls'
 import { InfoDialog, PriceSettingsDialog, ResetDialog } from '@/components/Dialogs'
@@ -30,7 +29,8 @@ import type { ShadeResult } from '@/components/ShadeProbe'
 import { studySun } from '@/lib/sunSite'
 import { isMovableRoof } from '@/lib/roofs'
 import { isClosedBuilding } from '@/lib/buildings'
-import FullscreenControl from '@/components/FullscreenControl'
+import { SceneToolbar, StudioHeader, type ToolItem } from '@/components/studio/StudioChrome'
+import { usePresentation, usePriceCollapse } from '@/components/studio/studioState'
 import { DEFAULT_USAGE, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
 import type { FurnitureSet } from '@/types/pergola'
 
@@ -40,7 +40,6 @@ const timeForClock = (hour: number): SceneSettings['time'] => (hour >= 20 || hou
 const ArDialog = lazy(() => import('@/components/ArDialog'))
 const SunStudyPanel = lazy(() => import('@/components/SunStudyPanel'))
 import MechanismPanel from '@/components/MechanismPanel'
-import { ProductSwitch } from '@/components/ProductChooser'
 const BudgetDialog = lazy(() => import('@/components/BudgetDialog'))
 const MoodPanel = lazy(() => import('@/components/MoodPanel'))
 const AdvisorDialog = lazy(() => import('@/components/AdvisorDialog'))
@@ -120,7 +119,7 @@ export default function PergoStudio() {
     if (canvas) observer?.observe(canvas, { attributes: true, attributeFilter: ['data-scene-ready'] })
     return () => { canvas?.removeEventListener('pointerdown', done); observer?.disconnect(); window.clearTimeout(timer) }
   }, [rotateHint])
-  const [presentation, setPresentation] = useState(false)
+  const [presentation, setPresentation] = usePresentation()
   const [delta, setDelta] = useState<{ amount: number; label: string } | null>(null)
   // Kontextus-kamera, változás-jelző és rezgés.
   const [focus, setFocus] = useState<CameraFocus | null>(null)
@@ -203,12 +202,6 @@ export default function PergoStudio() {
     if (!scene.photoUrl) return
     savePlacement(tenant.id, { photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt, photoLens: scene.photoLens })
   }, [tenant.id, scene.photoUrl, scene.photoX, scene.photoY, scene.photoScale, scene.photoRotation, scene.photoTilt, scene.photoLens])
-  useEffect(() => {
-    if (!presentation) return
-    const exit = (event: KeyboardEvent) => { if (event.key === 'Escape') setPresentation(false) }
-    window.addEventListener('keydown', exit)
-    return () => window.removeEventListener('keydown', exit)
-  }, [presentation])
 
   const focusSide = useCallback((side: SideKey) => setFocus({ id: ++focusSeq.current, kind: 'side', side }), [])
   /** Vissza az áttekintő nézetbe — akkor is, ha a kamera épp egy oldalra fókuszált. */
@@ -323,13 +316,8 @@ export default function PergoStudio() {
   }, [focusSide, overview])
   const [shade, setShade] = useState<ShadeResult | null>(null)
   const [moodHidden, setMoodHidden] = useState(false)
-  const [viewOpen, setViewOpen] = useState(false)
-  // Eszközök menü: a szakértői eszközök egy helyen, névvel — a 3D feletti sáv csak a gyors kapcsolókat mutatja.
-  const [toolsOpen, setToolsOpen] = useState(false)
-  useEffect(() => { if (!viewOpen) return; const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setViewOpen(false) }; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close) }, [viewOpen])
   const applyAdvice = useCallback((next: PergolaConfig, furniture: FurnitureSet) => { replaceConfig(next); setScene((current) => ({ ...current, furniture })); setView('perspective'); setStep('size'); setModal(null); setToast('A javasolt pergola betöltve. Innen minden szabadon módosítható; visszavonás: ↶') }, [replaceConfig])
-  const [priceCollapsed, setPriceCollapsed] = useState(() => { try { return localStorage.getItem('pergo-price-collapsed') === '1' } catch { return false } })
-  const togglePrice = useCallback(() => setPriceCollapsed((current) => { try { localStorage.setItem('pergo-price-collapsed', current ? '0' : '1') } catch { /* privát mód */ } return !current }), [])
+  const [priceCollapsed, togglePrice] = usePriceCollapse()
   const mechanismOn = config.roof === 'louvered' && !!scene.mechanism && !scene.photoMode && !scene.sunStudy
   const toggleSunStudy = useCallback(() => setScene((current) => {
     if (current.sunStudy) return { ...current, sunStudy: false, time: timeForClock(current.dayTime) }
@@ -445,11 +433,7 @@ export default function PergoStudio() {
 
   return (
     <div className={`app-shell ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>
-      <header className="app-header">
-        <a className="brand" href="#top" aria-label={`${tenant.brand.name} kezdőnézet`} onClick={(event) => { event.preventDefault(); setView('perspective') }}><TenantMark tenant={tenant} /></a>
-        <div className="project-identity"><span>ÉPÍTÉSZETI KONFIGURÁTOR</span><ProductSwitch /></div>
-        <div className="header-actions"><FullscreenControl /><div className="history-actions"><button type="button" aria-label="Visszavonás" title="Visszavonás · Ctrl+Z" onClick={undo} disabled={!history.current.past.length}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" title="Ismétlés · Ctrl+Shift+Z" onClick={redo} disabled={!history.current.future.length}><Redo2 size={17} /></button></div><button type="button" className="header-text-button presentation-toggle" aria-label={presentation ? 'Szerkesztés' : 'Bemutató'} onClick={() => setPresentation(!presentation)}><Presentation size={16} /><span>{presentation ? 'Szerkesztés' : 'Bemutató'}</span></button><button type="button" className="header-text-button" aria-label="Tudnivalók" onClick={() => setModal('info')}><Info size={16} /><span>Tudnivalók</span></button><button type="button" className="header-text-button" aria-label="Alaphelyzet" onClick={() => setModal('reset')}><RotateCcw size={16} /><span>Alaphelyzet</span></button></div>
-      </header>
+      <StudioHeader onHome={() => setView('perspective')} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setModal('info')} onReset={() => setModal('reset')} />
 
       <main className="studio-shell" id="top">
         <section className={`viewer-panel ${scene.photoMode ? 'photo-preview' : ''}`} aria-label="3D előnézet">
@@ -457,10 +441,14 @@ export default function PergoStudio() {
           <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={handleSideSelect} onSceneChange={updateScene} onShade={setShade} />
           <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1><span className="kinetic" key={ROOF_LABELS[config.roof]}>{ROOF_LABELS[config.roof].split(' · ')[0]}</span> <i>/</i> <span className="kinetic" key={`w${config.width}`}>{config.width.toFixed(1).replace('.', ',')}</span><small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>
           <div className="viewer-live"><i />VALÓS IDEJŰ 3D</div>
-          <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások"><button type="button" className={scene.rain ? 'selected' : ''} aria-pressed={scene.rain} title="Eső be- és kikapcsolása" onClick={() => updateScene({ rain: !scene.rain })}><CloudRain size={17} /><span>Eső</span></button>{!arHidden && <button type="button" className="ar-launch" title={arPath === 'desktop' ? 'Nézd meg a kertedben valós méretben — telefonon (QR-kód)' : 'Nézd meg valós méretben a saját kertedben (AR)'} onClick={() => { if (!admin) { track(tenant.id, 'ar'); noteEngagement(tenant.id, 'ar') } if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') }}><Rotate3d size={17} /><span>AR</span></button>}<button type="button" className={`view-toggle tools-toggle ${toolsOpen || viewOpen || scene.sunStudy || scene.photoMode || mechanismOn || scene.exploded ? 'selected' : ''}`} aria-pressed={toolsOpen} aria-expanded={toolsOpen} title="Eszközök: nézet, árnyékelemzés, fotó, működés, robbantott nézet, keret, üzemeltetés, tanácsadó" onClick={() => { setToolsOpen((open) => !open); setViewOpen(false) }}><LayoutGrid size={17} /><span>Eszközök</span></button></div>
-          {toolsOpen && <div className="view-popover tools-menu glass-panel" role="dialog" aria-label="Eszközök"><div className="view-popover-head"><strong>Eszközök</strong><button type="button" aria-label="Bezárás" onClick={() => setToolsOpen(false)}><X size={16} /></button></div><div className="tools-list">
-            {([
-              { id: 'view', icon: SlidersHorizontal, name: 'Nézet és vizualizáció', note: product === 'carport' ? 'Napszak, napirány, környezet, feliratok, 3D-minőség' : 'Napszak, napirány, környezet, bútor, feliratok, 3D-minőség', active: false, run: () => { setViewOpen(true) } },
+          <SceneToolbar time={scene.time} onTimeChange={(time) => updateScene({ time, dayTime: time === 'day' ? 13 : time === 'sunset' ? 18 : 22 })}
+            viewPanel={<SceneSettingsPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onPhotoUpload={handlePhoto} />}
+            quick={[
+              { id: 'rain', icon: CloudRain, label: 'Eső', title: 'Eső be- és kikapcsolása', active: scene.rain, run: () => updateScene({ rain: !scene.rain }) },
+              ...(arHidden ? [] : [{ id: 'ar', icon: Rotate3d, label: 'AR', className: 'ar-launch', title: arPath === 'desktop' ? 'Nézd meg a kertedben valós méretben — telefonon (QR-kód)' : 'Nézd meg valós méretben a saját kertedben (AR)', run: () => { if (!admin) { track(tenant.id, 'ar'); noteEngagement(tenant.id, 'ar') } if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') } }]),
+            ]}
+            toolsBusy={scene.sunStudy || scene.photoMode || mechanismOn || scene.exploded}
+            tools={([
               { id: 'sun', icon: SunMedium, name: 'Árnyékelemzés', note: 'Valós napállás a saját helyszíneden, dátum és óra szerint', active: scene.sunStudy, run: toggleSunStudy },
               { id: 'photo', icon: scene.photoUrl ? Image : ImagePlus, name: 'Fotóba helyezés', note: product === 'carport' ? (scene.photoUrl ? 'A carport a saját udvarod fotóján' : 'Töltsd fel az udvarod fotóját, és helyezd rá a carportot') : (scene.photoUrl ? 'A pergola a saját teraszod fotóján' : 'Töltsd fel a teraszod fotóját, és helyezd rá a pergolát'), active: scene.photoMode, run: () => { if (!scene.photoUrl) openPhotoPicker(); else updateScene({ photoMode: !scene.photoMode, sunStudy: false }) } },
               ...(config.roof === 'louvered' ? [{ id: 'mechanism', icon: Cog, name: 'Működés-bemutató', note: 'A lamellahajtás mozgásban, valós gyári adatokkal', active: mechanismOn, run: () => updateScene({ mechanism: !scene.mechanism, sunStudy: false, photoMode: false, exploded: false }) }] : []),
@@ -468,9 +456,8 @@ export default function PergoStudio() {
               { id: 'budget', icon: Wallet, name: 'Költségkeret-tervező', note: 'Add meg a keretet, megmutatjuk, mi fér bele', active: false, run: () => setModal('budget') },
               { id: 'energy', icon: Gauge, name: energyCost ? `Üzemeltetés ≈ ${formatHuf(energyCost)} / év` : 'Üzemeltetési költség', note: 'Áramköltség a valós lakossági tarifával', active: false, run: () => setModal('energy') },
               { id: 'advisor', icon: WandSparkles, name: 'Tanácsadó', note: '4 kérdés, és javaslunk egy hozzád illő kivitelt', active: false, run: () => setModal('advisor') },
-            ] as const).filter(({ id }) => !(product === 'carport' && id === 'advisor')).map(({ id, icon: Icon, name, note, active, run }) => <button type="button" key={id} className={`tools-item${active ? ' is-active' : ''}`} aria-pressed={active} onClick={() => { setToolsOpen(false); run() }}><Icon size={18} /><span><strong>{name}</strong><small>{note}</small></span>{active && <em>Bekapcsolva</em>}</button>)}
-          </div></div>}
-          {viewOpen && <div className="view-popover glass-panel" role="dialog" aria-label="Nézet és vizualizáció"><div className="view-popover-head"><strong>Nézet és vizualizáció</strong><button type="button" aria-label="Bezárás" onClick={() => setViewOpen(false)}><X size={16} /></button></div><SceneSettingsPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onPhotoUpload={handlePhoto} /></div>}
+            ] as ToolItem[]).filter(({ id }) => !(product === 'carport' && id === 'advisor'))}
+            presentation={presentation} onPresentation={() => setPresentation(!presentation)} onExport={handleExport} onShare={handleShare} />
           {scene.rain && config.sensors && isMovableRoof(config.roof) && <div className="automation-status" role="status"><ShieldCheck size={16} /><span><strong>Esőautomata aktív</strong>{config.roof === 'retractable' ? 'A tolótető biztonságos, zárt pozícióban.' : 'A tetőlamellák biztonságos, zárt pozícióban.'}</span></div>}
           {scene.time === 'night' && !scene.sunStudy && !mechanismOn && !moodHidden && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot is-mood${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MoodPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onClose={() => setMoodHidden(true)} /></div></Suspense>}
           {mechanismOn && <Suspense fallback={null}><div className={`sun-panel-slot is-mechanism${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MechanismPanel config={config} onClose={() => updateScene({ mechanism: false })} /></div></Suspense>}
