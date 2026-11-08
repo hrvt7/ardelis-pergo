@@ -6,6 +6,8 @@ import type { Tenant } from '../tenants/types'
 import type { PergolaConfig, PriceBreakdown } from '../types/pergola'
 import { parseConfig, tenantPrice } from '../tenants/rules'
 import { shareHash } from '../lib/shareCode'
+import type { OutdoorConfig } from '../types/catalog'
+import { calculateOutdoorPrice, encodeOutdoorHash, OUTDOOR_PRICE_DEFAULTS, outdoorHeadline, outdoorSpecRows, parseOutdoorConfig } from './outdoor'
 import type { ProductFamily } from './index'
 
 export interface ProductEngine<C = unknown> {
@@ -18,6 +20,10 @@ export interface ProductEngine<C = unknown> {
   price(tenant: Tenant, config: C): PriceBreakdown
   /** A konfiguráció megosztó-kódja a hash-be (`kulcs=kód`). */
   shareHash(config: C): string
+  /** Egy soros fejléc a lead-e-mailbe és a vevői visszaigazolásba (pl. „Aero · 5,0 × 4,0 m”). A pergolánál a lead-végpont adja. */
+  headline?(tenant: Tenant, config: C): string
+  /** A konfiguráció olvasható sorai a lead-e-mailhez és az adatbázishoz. A pergolánál a lead-végpont `describeConfig`-ja adja. */
+  describe?(tenant: Tenant, config: C, price: PriceBreakdown): [string, string][]
 }
 
 export const pergolaEngine: ProductEngine<PergolaConfig> = {
@@ -28,8 +34,19 @@ export const pergolaEngine: ProductEngine<PergolaConfig> = {
   shareHash: (config) => shareHash(config),
 }
 
+/** Kerítés és kapu: a kültéri (lineáris) mag; ára ma a mintaárlistából, a gyártói árlista később a tenantból. */
+export const fenceEngine: ProductEngine<OutdoorConfig> = {
+  id: 'fence',
+  shareKey: 'k',
+  parse: (_tenant, raw) => parseOutdoorConfig(raw, 'fence'),
+  price: (_tenant, config) => calculateOutdoorPrice(config, OUTDOOR_PRICE_DEFAULTS),
+  shareHash: (config) => encodeOutdoorHash(config),
+  headline: (_tenant, config) => outdoorHeadline(config),
+  describe: (_tenant, config, price) => outdoorSpecRows(config, price),
+}
+
 // A carport a keretes-tető család tagja: ugyanaz a konfiguráció (building: 'carport'), ugyanaz a motor.
-const ENGINES: Partial<Record<ProductFamily, ProductEngine>> = { pergola: pergolaEngine as ProductEngine, carport: pergolaEngine as ProductEngine }
+const ENGINES: Partial<Record<ProductFamily, ProductEngine>> = { pergola: pergolaEngine as ProductEngine, carport: pergolaEngine as ProductEngine, fence: fenceEngine as ProductEngine }
 
 /** A család motorja, ha már van (a „hamarosan” családoknak nincs: ezekre lead sem fogadható). */
 export const getEngine = (id: ProductFamily): ProductEngine | undefined => ENGINES[id]

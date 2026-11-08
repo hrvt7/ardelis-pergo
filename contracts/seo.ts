@@ -38,7 +38,7 @@ export const PERGOLA_FAQS = [
 ] as const
 
 export type SeoPage = {
-  key: 'platform' | 'home' | 'privacy' | 'studio' | 'studio-carport' | 'track' | 'partners' | 'admin' | 'login' | 'notFound'
+  key: 'platform' | 'home' | 'privacy' | 'studio' | 'studio-carport' | 'studio-fence' | 'track' | 'partners' | 'admin' | 'login' | 'notFound'
   path: string
   title: string
   description: string
@@ -90,6 +90,14 @@ const SEO_PAGES: Record<string, SeoPage> = {
     robots: INDEX_ROBOTS,
     indexable: true,
   },
+  '/konfigurator/kerites': {
+    key: 'studio-fence',
+    path: '/konfigurator/kerites',
+    title: 'Kerítés és kapu tervező 3D-ben, folyóméter-árral | Lamelix',
+    description: 'Tervezd meg a kerítést 3D-ben: alumínium, acél, kovácsoltvas, fa vagy WPC, mintázat és szín, toló- vagy nyílókapu motorral, kiskapu. Azonnali irányár folyóméterre, PDF és felmérés.',
+    robots: INDEX_ROBOTS,
+    indexable: true,
+  },
   '/adatkezeles': {
     key: 'privacy',
     path: '/adatkezeles',
@@ -132,7 +140,7 @@ const SEO_PAGES: Record<string, SeoPage> = {
   },
 }
 
-export const SEO_SITEMAP_PATHS = ['/', '/en', '/minta', '/konfigurator', '/konfigurator/carport', '/adatkezeles'] as const
+export const SEO_SITEMAP_PATHS = ['/', '/en', '/minta', '/konfigurator', '/konfigurator/carport', '/konfigurator/kerites', '/adatkezeles'] as const
 
 export function normalizeSeoPath(pathname: string) {
   if (!pathname || pathname === '/') return '/'

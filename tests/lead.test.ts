@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { handleLeadRequest, resetLeadRateLimit } from '../server/lead'
 import { demoTenant } from '../src/tenants/demo'
+import { OUTDOOR_DEFAULTS } from '../src/products/outdoor'
 
 const body = (patch: Record<string, unknown> = {}) => ({
   tenantId: 'demo',
@@ -20,13 +21,17 @@ afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
 beforeEach(() => resetLeadRateLimit())
 
 describe('POST /api/lead', () => {
-  it('termékcsalád: megadás nélkül pergola; „hamarosan” családra még nem fogad kérelmet', async () => {
+  it('termékcsalád: megadás nélkül pergola; a kerítés a saját motorján érvényesül; „hamarosan” családra még nem fogad kérelmet', async () => {
     vi.spyOn(console, 'info').mockImplementation(() => {})
     const ok = await handleLeadRequest(post(body()), { NODE_ENV: 'development' })
     expect(ok.status).toBe(200)
-    const fence = await handleLeadRequest(post(body({ product: 'fence', customer: { ...body().customer, email: 'kerites@example.com' } })), { NODE_ENV: 'development' })
-    expect(fence.status).toBe(422)
-    expect(((await fence.json()) as { field?: string }).field).toBe('product')
+    // Pergola-konfiguráció a kerítés motorján: nem érvényes.
+    const mismatch = await handleLeadRequest(post(body({ product: 'fence', customer: { ...body().customer, email: 'kerites@example.com' } })), { NODE_ENV: 'development' })
+    expect(mismatch.status).toBe(422)
+    expect(((await mismatch.json()) as { field?: string }).field).toBe('config')
+    const soon = await handleLeadRequest(post(body({ product: 'garage-door', customer: { ...body().customer, email: 'garazs@example.com' } })), { NODE_ENV: 'development' })
+    expect(soon.status).toBe(422)
+    expect(((await soon.json()) as { field?: string }).field).toBe('product')
     const unknown = await handleLeadRequest(post(body({ product: 'nincs-ilyen' })), { NODE_ENV: 'development' })
     expect(unknown.status).toBe(422)
   })
@@ -60,6 +65,27 @@ describe('POST /api/lead', () => {
     expect(String(manager.body.html)).toContain('Teszt Elek')
     const customer = calls.find((call) => call.url.includes('resend') && (call.body.to as string[])[0] === 'teszt@example.com')
     expect(customer).toBeDefined()
+  })
+
+  it('kerítés-lead: a kerítés motorja áraz, az e-mail a kerítés leírását és a `k=` linket viszi, anyaglista nélkül', async () => {
+    const calls: { url: string; body: Record<string, unknown> }[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, body: JSON.parse(String(init.body)) })
+      return new Response('{}', { status: 200 })
+    }))
+    const response = await handleLeadRequest(post(body({ product: 'fence', config: OUTDOOR_DEFAULTS.fence })), { NODE_ENV: 'production', RESEND_API_KEY: 'k', LEAD_FALLBACK_EMAIL: 'gyarto@example.com', SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 's' })
+    expect(response.status).toBe(200)
+    const stored = calls.find((call) => call.url.includes('/rest/v1/leads'))!
+    expect(stored.body.product).toBe('fence')
+    expect(stored.body.estimate_gross).toBeGreaterThan(0)
+    expect(String(stored.body.config_url)).toMatch(/\/k\/demo\/kerites#k=/)
+    const html = String(calls.find((call) => call.url.includes('resend') && (call.body.to as string[])[0] === 'gyarto@example.com')!.body.html)
+    expect(html).toContain('Kerítés és kapu · 14 fm')
+    expect(html).toContain('Sínen futó tolókapu')
+    expect(html).toContain('Porfestett alumínium')
+    expect(html).not.toContain('Tájékoztató anyaglista')
+    const customer = String(calls.find((call) => call.url.includes('resend') && (call.body.to as string[])[0] === 'teszt@example.com')!.body.html)
+    expect(customer).toContain('Kerítés és kapu · 14 fm')
   })
 
   it('osztott oldal és komfort-opciók: ár a szerveren, leírás a gyártói e-mailben', async () => {

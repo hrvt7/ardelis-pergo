@@ -15,7 +15,7 @@ import { formatHuf, formatNumber, SIDE_NAMES } from '../src/lib/pricing'
 import { sideSummary } from '../src/lib/sides'
 import { colorSummary } from '../src/lib/colors'
 import { getBom, getSpecCode } from '../src/lib/specification'
-import { PRODUCT_IDS, productPath } from '../src/products'
+import { PRODUCT_IDS, productInfo, productPath } from '../src/products'
 import { getEngine } from '../src/products/engines'
 import { buildingSpecRows } from '../src/lib/buildings'
 import { resolveTenant } from './tenantAdmin'
@@ -69,10 +69,17 @@ export interface LeadRecord {
   ref: string
   tenant: Tenant
   input: LeadInput
-  config: PergolaConfig
+  /** A család motorja által érvényesített konfiguráció (pergola: PergolaConfig, kerítés: OutdoorConfig …). */
+  config: unknown
   price: PriceBreakdown
   configUrl: string
   createdAt: Date
+  /** Egy soros fejléc az e-mailekbe, pl. „Aero · 5,0 × 4,0 m” vagy „Kerítés és kapu · 14 fm · 1,6 m”. */
+  headline: string
+  /** A konfiguráció olvasható sorai. */
+  spec: [string, string][]
+  /** Tájékoztató anyaglista (ma csak a pergolának van). */
+  bom: [string, string][]
 }
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), {
@@ -139,7 +146,7 @@ export function describeConfig(tenant: Tenant, config: PergolaConfig, price: Pri
 }
 
 function managerEmailHtml(record: LeadRecord) {
-  const { tenant, input, config, price } = record
+  const { tenant, input, price } = record
   const rows = (pairs: [string, string][]) => pairs.map(([label, value]) => `<tr><td style="padding:6px 12px 6px 0;color:#62727a;vertical-align:top;white-space:nowrap">${escapeHtml(label)}</td><td style="padding:6px 0;font-weight:600">${escapeHtml(value)}</td></tr>`).join('')
   const score = scoreLead({ estimate_gross: price.totalGross, notes: input.customer.notes, address: input.customer.address, engagement: input.engagement })
   const customer: [string, string][] = [
@@ -153,20 +160,19 @@ function managerEmailHtml(record: LeadRecord) {
     ...(input.house ? [['A háza (3D alapján)', input.house] as [string, string]] : []),
   ]
   const lines: [string, string][] = [...price.lines.map((line) => [line.label, formatHuf(line.amountNet)] as [string, string]), ['Telepítés', formatHuf(price.installationNet)]]
-  const bom = getBom(config).map((line) => [line.label, line.value] as [string, string])
   return `<!doctype html><html lang="hu"><body style="margin:0;background:#f1f4f4;font-family:Arial,Helvetica,sans-serif;color:#233039">
 <div style="max-width:640px;margin:0 auto;padding:24px">
 <p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">ÚJ FELMÉRÉSI KÉRELEM · ${escapeHtml(record.ref)}</p>
 <h1 style="font-size:22px;margin:0 0 4px">${escapeHtml(input.customer.name)} – ${escapeHtml(formatHuf(price.totalGross))} bruttó irányár</h1>
-<p style="margin:0 0 20px;color:#62727a">${escapeHtml(input.customer.city)} · ${escapeHtml(roofLabels(tenant)[config.roof])} · ${escapeHtml(`${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} m`)}</p>
+<p style="margin:0 0 20px;color:#62727a">${escapeHtml(input.customer.city)} · ${escapeHtml(record.headline)}</p>
 <div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">Ügyfél</h2><table style="border-collapse:collapse;font-size:14px">${rows(customer)}</table>
 <p style="margin:12px 0 0"><a href="tel:${escapeHtml(input.customer.phone.replace(/[^+0-9]/g, ''))}" style="color:#007fae">Hívás</a> · <a href="mailto:${escapeHtml(input.customer.email)}" style="color:#007fae">Válasz e-mailben</a></p></div>
-<div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">Konfiguráció</h2><table style="border-collapse:collapse;font-size:14px">${rows(describeConfig(tenant, config, price))}</table>
+<div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">Konfiguráció</h2><table style="border-collapse:collapse;font-size:14px">${rows(record.spec)}</table>
 <p style="margin:12px 0 0"><a href="${escapeHtml(record.configUrl)}" style="color:#007fae">Megnyitás a 3D konfigurátorban →</a></p></div>
 <div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">Irányár (nettó tételek)</h2><table style="border-collapse:collapse;font-size:14px">${rows(lines)}</table>
 <p style="margin:12px 0 0;font-size:15px"><strong>Nettó: ${escapeHtml(formatHuf(price.totalNet))} · Bruttó: ${escapeHtml(formatHuf(price.totalGross))}</strong></p>
 <p style="margin:6px 0 0;font-size:12px;color:#62727a">A szerver a(z) ${escapeHtml(tenant.brand.name)} árlistájával számolta újra.</p></div>
-<div style="background:#fff;border-radius:8px;padding:16px 20px"><h2 style="font-size:15px;margin:0 0 8px">Tájékoztató anyaglista</h2><table style="border-collapse:collapse;font-size:13px">${rows(bom)}</table></div>
+${record.bom.length ? `<div style="background:#fff;border-radius:8px;padding:16px 20px"><h2 style="font-size:15px;margin:0 0 8px">Tájékoztató anyaglista</h2><table style="border-collapse:collapse;font-size:13px">${rows(record.bom)}</table></div>` : ''}
 <p style="font-size:11px;color:#8a979d;margin-top:16px">Forrás: ${escapeHtml(input.source)}${input.pageUrl ? ` · ${escapeHtml(input.pageUrl)}` : ''} · ${escapeHtml(record.createdAt.toISOString())}</p>
 ${tenant.platformCredit !== false ? platformFooter(record.configUrl) : ''}
 </div></body></html>`
@@ -180,7 +186,7 @@ function platformFooter(configUrl: string) {
 }
 
 function customerEmailHtml(record: LeadRecord) {
-  const { tenant, input, config, price } = record
+  const { tenant, input, price } = record
   const contact = [tenant.brand.phone, tenant.brand.email, tenant.brand.website].filter(Boolean).map((item) => escapeHtml(item!)).join(' · ')
   return `<!doctype html><html lang="hu"><body style="margin:0;background:#f1f4f4;font-family:Arial,Helvetica,sans-serif;color:#233039">
 <div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:8px;padding:20px 24px">
@@ -188,7 +194,7 @@ function customerEmailHtml(record: LeadRecord) {
 <h1 style="font-size:20px;margin:0 0 12px">Köszönjük, megkaptuk a felmérési kérelmedet!</h1>
 <p>Kedves ${escapeHtml(input.customer.name)}!</p>
 <p>A(z) ${escapeHtml(tenant.brand.name)} munkatársa hamarosan felveszi veled a kapcsolatot a helyszíni felmérés egyeztetéséhez.</p>
-<p style="margin:16px 0 4px"><strong>${escapeHtml(roofLabels(tenant)[config.roof])} · ${escapeHtml(`${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} m`)}</strong></p>
+<p style="margin:16px 0 4px"><strong>${escapeHtml(record.headline)}</strong></p>
 <p style="margin:0 0 16px">Bruttó irányár: <strong>${escapeHtml(formatHuf(price.totalGross))}</strong> (telepítéssel)</p>
 <p><a href="${escapeHtml(record.configUrl)}" style="color:#007fae">A konfigurációd megnyitása →</a></p>
 <p style="font-size:12px;color:#62727a">Az irányár tájékoztató jellegű, nem minősül árajánlatnak. A végleges ár helyszíni felmérés után készül.</p>
@@ -281,8 +287,7 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   // A család motorja érvényesít és áraz; a „hamarosan” családokra még nem fogadunk kérelmet.
   const engine = getEngine(input.product)
   if (!engine) return json(422, { ok: false, error: 'Ehhez a termékhez még nem fogadunk felmérési kérelmet.', field: 'product' })
-  // A leírás (describeConfig) és az e-mail ma pergola-specifikus; a második családdal a motorba kerül.
-  const config = engine.parse(tenant, input.config) as PergolaConfig | null
+  const config = engine.parse(tenant, input.config)
   if (!config) return json(422, { ok: false, error: 'A konfiguráció nem érvényes. Frissítsd az oldalt, és próbáld újra.', field: 'config' })
 
   const now = new Date()
@@ -300,7 +305,12 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
 
   const price = engine.price(tenant, config)
   const configUrl = `${siteOrigin(request, env)}${productPath('standalone', tenant.id, input.product)}#${engine.shareHash(config)}`
-  const record: LeadRecord = { ref, tenant, input, config, price, configUrl, createdAt: now }
+  // A leírás a pergola (és carport) esetén itt készül, a többi családnál a motor adja.
+  const pergola = engine.id === 'pergola' ? (config as PergolaConfig) : null
+  const headline = pergola ? `${roofLabels(tenant)[pergola.roof]} · ${formatNumber(pergola.width, 2)} × ${formatNumber(pergola.depth, 2)} m` : engine.headline?.(tenant, config) ?? productInfo(input.product).label
+  const spec = pergola ? describeConfig(tenant, pergola, price) : engine.describe?.(tenant, config, price) ?? []
+  const bom = pergola ? getBom(pergola).map((line) => [line.label, line.value] as [string, string]) : []
+  const record: LeadRecord = { ref, tenant, input, config, price, configUrl, createdAt: now, headline, spec, bom }
 
   const recipients = tenant.lead.recipients.length ? tenant.lead.recipients : (env.LEAD_FALLBACK_EMAIL ?? '').split(',').map((item) => item.trim()).filter(Boolean)
   const canEmail = Boolean(env.RESEND_API_KEY && recipients.length)

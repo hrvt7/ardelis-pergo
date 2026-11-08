@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_PRODUCT, INTEREST_EVENTS, interestEvent, productBySlug, productInfo, productPath, PRODUCTS, tenantProducts } from '../src/products'
 import { TRACK_EVENTS } from '../server/analytics'
-import { getEngine, pergolaEngine } from '../src/products/engines'
+import { fenceEngine, getEngine, pergolaEngine } from '../src/products/engines'
+import { calculateOutdoorPrice, decodeOutdoorHash, OUTDOOR_DEFAULTS, OUTDOOR_PRICE_DEFAULTS } from '../src/products/outdoor'
 import { shareHash } from '../src/lib/shareCode'
 import { parseConfig, tenantPrice } from '../src/tenants/rules'
 import { demoTenant } from '../src/tenants/demo'
@@ -26,10 +27,10 @@ describe('termékcsaládok', () => {
     expect(productPath('embed', 'acme', 'carport')).toBe('/embed/acme/carport')
   })
 
-  it('a gyártó kínálata: megadás nélkül csak pergola; a demó a teraszfedést és a carportot kínálja', () => {
+  it('a gyártó kínálata: megadás nélkül csak pergola; a demó a teraszfedést, a carportot és a kerítést kínálja', () => {
     expect(tenantProducts({})).toEqual(['pergola'])
     expect(tenantProducts({ products: ['pergola', 'fence'] })).toEqual(['pergola', 'fence'])
-    expect(tenantProducts(demoTenant)).toEqual(['pergola', 'carport'])
+    expect(tenantProducts(demoTenant)).toEqual(['pergola', 'carport', 'fence'])
   })
 
   it('motor: a pergola motorja ugyanazt adja, mint a meglévő érvényesítés, árazás és megosztókód; a többi családnak még nincs', () => {
@@ -42,7 +43,23 @@ describe('termékcsaládok', () => {
     expect(pergolaEngine.shareHash(config).startsWith(`${pergolaEngine.shareKey}=`)).toBe(true)
     // A carport a keretes-tető család tagja: a pergola motorján fut.
     expect(getEngine('carport')).toBe(pergolaEngine)
-    for (const id of ['fence', 'garage-door', 'garden-building'] as const) expect(getEngine(id)).toBeUndefined()
+    for (const id of ['garage-door', 'garden-building'] as const) expect(getEngine(id)).toBeUndefined()
+  })
+
+  it('kerítés-motor: csak kerítés-konfigurációt fogad, mintaárlistával áraz, `k=` megosztó kódot ad, leírást és fejlécet ír', () => {
+    const fence = OUTDOOR_DEFAULTS.fence
+    expect(getEngine('fence')).toBe(fenceEngine)
+    expect(fenceEngine.parse(demoTenant, fence)).toEqual(fence)
+    expect(fenceEngine.parse(demoTenant, OUTDOOR_DEFAULTS.gate)).toBeNull()
+    expect(fenceEngine.parse(demoTenant, { ...fence, length: 999 })).toBeNull()
+    expect(fenceEngine.price(demoTenant, fence).totalGross).toBe(calculateOutdoorPrice(fence, OUTDOOR_PRICE_DEFAULTS).totalGross)
+    expect(fenceEngine.price(demoTenant, fence).totalGross).toBeGreaterThan(0)
+    const hash = fenceEngine.shareHash(fence)
+    expect(hash.startsWith('k=')).toBe(true)
+    expect(decodeOutdoorHash(`#${hash}`)).toEqual(fence)
+    expect(fenceEngine.headline!(demoTenant, fence)).toContain('14 fm')
+    const spec = fenceEngine.describe!(demoTenant, fence, fenceEngine.price(demoTenant, fence))
+    expect(spec.map(([label]) => label)).toEqual(expect.arrayContaining(['Hossz és magasság', 'Kapu', 'Kiskapu', 'Konfigurációs kód']))
   })
 
   it('az érdeklődés-eseményeket a szerver mérése elfogadja', () => {

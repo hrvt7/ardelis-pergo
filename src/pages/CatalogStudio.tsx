@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Box, Check, ChevronRight, Download, Eye, EyeOff, Info, Link2, Maximize2, Moon, MoveUpRight, Ruler, Scan, Settings2, Sun, Undo2, Redo2, RotateCcw, UserRound, View, X } from 'lucide-react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import CatalogControls, { type CatalogStep } from '@/components/CatalogControls'
+import ProductChooser from '@/components/ProductChooser'
 import CatalogPricePanel from '@/components/CatalogPricePanel'
 import CatalogScene, { type CatalogSceneSettings, type CatalogView } from '@/components/CatalogScene'
 import LeadForm from '@/components/LeadForm'
 import OutdoorPriceDialog from '@/components/OutdoorPriceDialog'
 import { Brand } from '@/components/SiteChrome'
+import { useTenant } from '@/tenants/TenantContext'
 import { calculateOutdoorPrice, createOutdoorShareUrl, FAMILY_META, LABELS, loadOutdoorConfig, loadOutdoorPrices, OUTDOOR_DEFAULTS, outdoorSpecCode, persistOutdoorConfig, persistOutdoorPrices } from '@/lib/catalog'
 import { exportCatalogPdf } from '@/lib/exportCatalogPdf'
 import { formatHuf } from '@/lib/pricing'
@@ -20,7 +22,7 @@ const changeLabels: Record<string, string> = { width: 'Szélesség', depth: 'Mé
 const mountLabels: Record<OutdoorConfig['mount'], string> = { wall: 'Falhoz csatlakozó', freestanding: 'Önálló', cantilever: 'Fali konzolos', posts: 'Fali + oszlopos' }
 
 export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
-  const navigate = useNavigate()
+  const { tenant, homeHref } = useTenant()
   const [config, setConfig] = useState<OutdoorConfig>(() => loadOutdoorConfig(family))
   const [prices, setPrices] = useState(loadOutdoorPrices)
   const [scene, setScene] = useState<CatalogSceneSettings>({ night: false, gateOpen: false, showPerson: false, dimensions: true })
@@ -84,7 +86,7 @@ export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
   </div>
 
   return <div className="app-shell catalog-studio">
-    <header className="app-header"><Brand compact /><div className="project-identity"><span>ÉPÍTÉSZETI KONFIGURÁTOR</span><select aria-label="Termékcsalád váltása" value={family} onChange={(event) => navigate(`/studio/${event.target.value}`)}><option value="pergola">Pergo · pergola</option><option value="canopy">Cover · előtető</option><option value="carport">Drive · autóbeálló</option><option value="fence">Fence · kerítés</option><option value="gate">Gate · kapu</option></select></div><div className="header-actions"><div className="history-actions"><button type="button" aria-label="Visszavonás" onClick={undo} disabled={!history.current.past.length}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" onClick={redo} disabled={!history.current.future.length}><Redo2 size={17} /></button></div><button type="button" className="header-text-button" onClick={() => setPriceOpen(true)}><Info size={16} /><span>Árazás</span></button><button type="button" className="header-text-button" onClick={reset}><RotateCcw size={16} /><span>Alaphelyzet</span></button></div></header>
+    <header className="app-header"><Brand compact /><div className="project-identity"><span>{tenant.brand.name.toUpperCase()} · 3D KONFIGURÁTOR</span><strong>{meta.title}</strong></div><div className="header-actions"><div className="history-actions"><button type="button" aria-label="Visszavonás" onClick={undo} disabled={!history.current.past.length}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" onClick={redo} disabled={!history.current.future.length}><Redo2 size={17} /></button></div><button type="button" className="header-text-button" onClick={() => setPriceOpen(true)}><Info size={16} /><span>Árazás</span></button><button type="button" className="header-text-button" onClick={reset}><RotateCcw size={16} /><span>Alaphelyzet</span></button></div></header>
     <main className="studio-shell">
       <section className="viewer-panel" aria-label={`${meta.title} 3D előnézet`}><CatalogScene config={config} scene={scene} view={view} />
         <div className="viewer-heading"><span>{meta.series} / VALÓS IDEJŰ MODELL</span><h1>{meta.title} <i>/</i> {roof ? config.width * (family === 'carport' ? config.bays : 1) : config.length}<small> m</small></h1><p>{meta.description}</p></div>
@@ -93,12 +95,12 @@ export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
         <div className="camera-toolbar" aria-label="Kamera nézetek">{views.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} onClick={() => setView(id)}><Icon size={16} /><span>{label}</span></button>)}</div>
         <div className="viewer-footer"><span>1 egység = 1 méter</span><span>{roof ? `${price.area.toFixed(1)} m²` : `${config.length} fm`}</span></div>
       </section>
-      <CatalogControls config={config} step={step} price={price} summary={summary} mobileOpen={mobileOpen} onMobileToggle={() => setMobileOpen(!mobileOpen)} onStep={setStep} onChange={update} />
+      <CatalogControls config={config} step={step} price={price} summary={summary} chooser={<ProductChooser />} mobileOpen={mobileOpen} onMobileToggle={() => setMobileOpen(!mobileOpen)} onStep={setStep} onChange={update} />
       <CatalogPricePanel config={config} price={price} exporting={exporting} delta={delta} onEditPrices={() => setPriceOpen(true)} onExport={exportPdf} onShare={share} />
     </main>
     <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong>{formatHuf(price.totalGross)}</strong></div><button type="button" onClick={() => { setStep(step === 'summary' ? 'size' : 'summary'); setMobileOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>
     {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label="Értesítés bezárása" onClick={() => setToast('')}><X size={16} /></button></div>}
     {priceOpen && <OutdoorPriceDialog prices={prices} onChange={setPrices} onClose={() => setPriceOpen(false)} />}
-    <Link className="studio-home-link" to="/">Katalógus</Link>
+    {homeHref && (homeHref.startsWith('/') ? <Link className="studio-home-link" to={homeHref}>Kezdőlap</Link> : <a className="studio-home-link" href={homeHref} target="_top" rel="noreferrer">Kezdőlap</a>)}
   </div>
 }
