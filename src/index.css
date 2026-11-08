@@ -1276,7 +1276,7 @@ body:has(.marketing-page) { overflow: visible; background: #e8e7e0; }
 .price-expand small { color: var(--text-secondary); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; }
 .price-expand strong { font: 500 19px/1 'Plus Jakarta Sans', sans-serif; font-variant-numeric: tabular-nums; }
 @media (min-width: 821px) and (not ((orientation: landscape) and (max-height: 520px) and (pointer: coarse))) {
-  .price-collapsed .weather-toolbar, .price-collapsed .automation-status, .price-collapsed .sun-panel-slot { right: 20px; }
+  .price-collapsed .weather-toolbar, .price-collapsed .automation-status, .price-collapsed .sun-panel-slot, .price-collapsed .view-popover { right: 20px; }
   .price-collapsed .viewer-footer { right: 24px; bottom: 96px; }
 }
 

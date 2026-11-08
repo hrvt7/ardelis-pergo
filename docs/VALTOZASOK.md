@@ -1,5 +1,10 @@
 # Változások
 
+## 3.80 – Eszközök panel a jobb szélen, összecsukott árpanelnél is
+
+- **Mi volt a baj:** ha az árpanel össze volt csukva, az Eszközök gomb a jobb szélre ugrott, de a lenyíló panel ott maradt, ahol az árpanel volt, vagyis a képernyő közepén, és kitakarta a 3D modellt.
+- **Javítás:** összecsukott árpanelnél a panel is a jobb szélhez igazodik, közvetlenül a gomb alá (`src/index.css`). Nyitott árpanelnél és mobilon nem változott.
+
 ## 3.79 – Automatikus utánkövetés: a rendszer dolgozik a gyártó helyett
 
 - **Mi a baj, amit old:** a legtöbb érdeklődő a csendben vész el — a gyártó nem ér rá visszahívni, a vevő elfelejti. Eddig az admin „Ma teendő” listája jelezte, de csak annak, aki benézett.
