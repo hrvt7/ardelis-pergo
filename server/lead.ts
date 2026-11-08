@@ -21,6 +21,7 @@ import { resolveTenant } from './tenantAdmin'
 import { parseConfig, roofLabels, tenantPrice } from '../src/tenants/rules'
 import type { Tenant } from '../src/tenants/types'
 import { hasPrivacyUrl } from '../src/tenants/privacy'
+import { scoreLead, TIER_LABELS } from '../src/lib/leadScore'
 import type { PergolaConfig, PriceBreakdown, SideKey } from '../src/types/pergola'
 
 export type LeadEnv = Record<string, string | undefined>
@@ -52,6 +53,11 @@ const leadSchema = z.object({
   elapsedMs: z.number().int().nonnegative().max(1_000_000_000).optional(),
   source: z.enum(['demo', 'standalone', 'embed']).default('standalone'),
   pageUrl: z.string().max(2000).optional(),
+  /** Viselkedési jelek a lead-pontozáshoz (PDF, AR, megosztás, lépések, visszatérés) — a vevő hozzájárulásával. */
+  engagement: z.object({
+    pdf: z.boolean().optional(), ar: z.boolean().optional(), share: z.boolean().optional(), saved: z.boolean().optional(),
+    steps: z.number().int().min(0).max(6).optional(), visits: z.number().int().min(1).max(99).optional(), minutes: z.number().int().min(0).max(600).optional(),
+  }).strict().optional(),
 })
 
 export type LeadInput = z.infer<typeof leadSchema>
@@ -132,7 +138,9 @@ export function describeConfig(tenant: Tenant, config: PergolaConfig, price: Pri
 function managerEmailHtml(record: LeadRecord) {
   const { tenant, input, config, price } = record
   const rows = (pairs: [string, string][]) => pairs.map(([label, value]) => `<tr><td style="padding:6px 12px 6px 0;color:#62727a;vertical-align:top;white-space:nowrap">${escapeHtml(label)}</td><td style="padding:6px 0;font-weight:600">${escapeHtml(value)}</td></tr>`).join('')
+  const score = scoreLead({ estimate_gross: price.totalGross, notes: input.customer.notes, address: input.customer.address, engagement: input.engagement })
   const customer: [string, string][] = [
+    ['Érdeklődés', `${TIER_LABELS[score.tier]} (${score.score}/100)${score.reasons.length ? ` – ${score.reasons.join(' · ')}` : ''}`],
     ['Név', input.customer.name],
     ['Telefon', input.customer.phone],
     ['E-mail', input.customer.email],
@@ -200,7 +208,7 @@ export async function sendEmail(env: LeadEnv, message: { to: string[]; subject: 
   if (!response.ok) throw new Error(`Resend ${response.status}: ${(await response.text()).slice(0, 300)}`)
 }
 
-async function storeLead(env: LeadEnv, record: LeadRecord) {
+async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true) {
   const response = await fetch(`${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/leads`, {
     method: 'POST',
     headers: {
@@ -210,6 +218,7 @@ async function storeLead(env: LeadEnv, record: LeadRecord) {
       Prefer: 'return=minimal',
     },
     body: JSON.stringify({
+      ...(withEngagement && record.input.engagement ? { engagement: record.input.engagement } : {}),
       ref: record.ref,
       tenant_id: record.tenant.id,
       source: record.input.source,
@@ -229,7 +238,12 @@ async function storeLead(env: LeadEnv, record: LeadRecord) {
       consent_at: record.createdAt.toISOString(),
     }),
   })
-  if (!response.ok) throw new Error(`Supabase ${response.status}: ${(await response.text()).slice(0, 300)}`)
+  if (!response.ok) {
+    const detail = (await response.text()).slice(0, 300)
+    // Ha a gyártó adatbázisában még nincs `engagement` oszlop (supabase/leads.sql), a lead ne vesszen el: mentés a jelek nélkül.
+    if (withEngagement && record.input.engagement && response.status === 400 && /engagement/.test(detail)) return storeLead(env, record, false)
+    throw new Error(`Supabase ${response.status}: ${detail}`)
+  }
 }
 
 export async function handleLeadRequest(request: Request, env: LeadEnv): Promise<Response> {

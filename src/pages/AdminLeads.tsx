@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Check, Copy, Download, ExternalLink, GripVertical, KanbanSquare, List, Mail, Phone, Search, X } from 'lucide-react'
+import { Check, Copy, Download, ExternalLink, Flame, GripVertical, KanbanSquare, List, Mail, Phone, Search, X } from 'lucide-react'
 import { formatHuf } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
 import { initials, LEAD_STATUSES, leadsToCsv, STATUS_COLORS, timeAgo, type LeadRow } from '@/lib/adminLeads'
+import { byScore, scoreLead, TIER_COLORS, TIER_LABELS } from '@/lib/leadScore'
 import type { RoofType } from '@/types/pergola'
 import QuoteSection, { type QuoteApi } from '@/components/admin/QuoteSection'
 import { PlanSketch } from '@/components/admin/adminKit'
@@ -18,6 +19,13 @@ export function EmptyArt() {
     <path className="ea-frame" d="M20 58V20M100 58V20M14 20h92" />
     {[0, 1, 2, 3, 4].map((index) => <path key={index} className="ea-louver" style={{ ['--i' as string]: index }} d={`M${26 + index * 15} 16l9 8`} />)}
   </svg>
+}
+
+/** Forró / meleg / hideg jelzés a pontszámmal; viselkedési adat nélküli, nulla pontos leadnél nem jelenik meg. */
+function TierBadge({ lead }: { lead: LeadRow }) {
+  const score = scoreLead(lead)
+  if (score.blind && score.score === 0) return null
+  return <span className="tier" style={{ ['--pill' as string]: TIER_COLORS[score.tier] }} title={score.reasons.join(' · ') || 'Nincs viselkedési adat'}>{score.tier === 'hot' && <Flame size={11} />}{TIER_LABELS[score.tier]} · {score.score}</span>
 }
 
 function CopyButton({ value, label }: { value: string; label: string }) {
@@ -49,6 +57,7 @@ function Drawer({ lead, now, quotes, onClose, onUpdate }: { lead: LeadRow; now: 
   }, [onClose])
   const phone = lead.phone.replace(/[^+0-9]/g, '')
   const size = lead.config?.width && lead.config?.depth ? `${lead.config.width} × ${lead.config.depth} m` : null
+  const score = scoreLead(lead)
   return <>
     <div className="drawer-scrim" onClick={onClose} />
     <aside className="drawer" role="dialog" aria-modal="true" aria-label={`${lead.customer_name} részletei`} style={{ ['--pill' as string]: STATUS_COLORS[lead.status] }}>
@@ -75,6 +84,14 @@ function Drawer({ lead, now, quotes, onClose, onUpdate }: { lead: LeadRow; now: 
           <div><dt>Tető</dt><dd>{roofName(lead)}{size ? ` · ${size}` : ''}</dd></div>
           <div><dt>Érkezett</dt><dd>{dateFormat.format(new Date(lead.created_at))}</dd></div>
         </dl>
+
+        <div className="field-label">Mennyire komoly az érdeklődés?</div>
+        <div className="score-box" style={{ ['--pill' as string]: TIER_COLORS[score.tier] }}>
+          <div className="score-head"><strong>{score.tier === 'hot' && <Flame size={14} />}{TIER_LABELS[score.tier]}</strong><span>{score.score} / 100</span></div>
+          <div className="score-bar" role="progressbar" aria-valuenow={score.score} aria-valuemin={0} aria-valuemax={100} aria-label="Lead-pontszám"><i style={{ width: `${score.score}%` }} /></div>
+          {score.reasons.length > 0 && <ul>{score.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>}
+          <small>{score.blind ? 'Ehhez az érdeklődőhöz nincs viselkedési adat (a pontozás bevezetése előtt vagy külső forrásból érkezett).' : 'A pontszám a konfigurátorban mutatott viselkedésből (PDF, AR, megosztás, visszatérés, bejárt lépések) és az űrlap részletességéből adódik. Becslés, nem garancia.'}</small>
+        </div>
 
         {lead.notes && <><div className="field-label">A vevő megjegyzése</div><p className="customer-note">{lead.notes}</p></>}
 
@@ -112,11 +129,15 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, o
   const [view, setView] = useState<'table' | 'board'>(() => { try { return localStorage.getItem('admin-leads-view') === 'board' ? 'board' : 'table' } catch { return 'table' } })
   const [dragRef, setDragRef] = useState<string | null>(null)
   const [overCol, setOverCol] = useState<string | null>(null)
+  const [hotFirst, setHotFirst] = useState(() => { try { return localStorage.getItem('admin-leads-hot') === '1' } catch { return false } })
   const chooseView = (next: 'table' | 'board') => { setView(next); try { localStorage.setItem('admin-leads-view', next) } catch { /* privát mód */ } }
+  const toggleHot = () => setHotFirst((current) => { try { localStorage.setItem('admin-leads-hot', current ? '0' : '1') } catch { /* privát mód */ } return !current })
   const setOpenRef = onOpenRef
   const [now] = useState(() => Date.now())
   const needle = query.trim().toLowerCase()
-  const shown = leads.filter((lead) => (view === 'board' || filter === 'all' || lead.status === filter) && (!needle || [lead.customer_name, lead.city, lead.ref, lead.email, lead.phone].some((field) => field.toLowerCase().includes(needle))))
+  const filtered = leads.filter((lead) => (view === 'board' || filter === 'all' || lead.status === filter) && (!needle || [lead.customer_name, lead.city, lead.ref, lead.email, lead.phone].some((field) => field.toLowerCase().includes(needle))))
+  // Forró elöl: pontszám szerint; azonos pontnál marad az érkezési sorrend (a rendezés stabil).
+  const shown = hotFirst ? [...filtered].sort(byScore) : filtered
   const count = (status: string) => leads.filter((lead) => lead.status === status).length
   const open = leads.find((lead) => lead.ref === openRef) ?? null
   const exportCsv = () => {
@@ -130,6 +151,7 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, o
     <div className="toolbar">
       <label className="search"><Search size={15} /><input type="search" placeholder="Keresés: név, település, azonosító…" aria-label="Keresés" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
       <div className="seg view-seg" role="group" aria-label="Nézet"><button type="button" className={view === 'table' ? 'is-on' : ''} onClick={() => chooseView('table')}><List size={14} />Tábla</button><button type="button" className={view === 'board' ? 'is-on' : ''} onClick={() => chooseView('board')}><KanbanSquare size={14} />Kanban</button></div>
+      <button type="button" className={`btn${hotFirst ? ' is-on' : ''}`} aria-pressed={hotFirst} title="Rendezés lead-pontszám szerint: a legkomolyabb érdeklődők elöl" onClick={toggleHot}><Flame size={15} />Forró elöl</button>
       <button type="button" className="btn" onClick={exportCsv} disabled={shown.length === 0}><Download size={15} />CSV ({shown.length})</button>
       <button type="button" className="btn ghost" onClick={onReload}>Frissítés</button>
     </div>
@@ -151,7 +173,7 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, o
               onDragStart={(event) => { setDragRef(lead.ref); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', lead.ref) }} onDragEnd={() => { setDragRef(null); setOverCol(null) }}
               onClick={() => setOpenRef(lead.ref)} onKeyDown={(event) => { if (event.key === 'Enter') setOpenRef(lead.ref) }}>
               <div className="bc-top"><span className="avatar sm">{initials(lead.customer_name)}</span><b>{lead.customer_name}</b><GripVertical size={14} className="bc-grip" aria-hidden="true" /></div>
-              <div className="bc-meta">{lead.city} · {roofName(lead)}</div>
+              <div className="bc-meta">{lead.city} · {roofName(lead)} <TierBadge lead={lead} /></div>
               <div className="bc-foot"><strong>{formatHuf(lead.estimate_gross)}</strong><small>{timeAgo(lead.created_at, now)}</small></div>
               <div className="bc-moves">{LEAD_STATUSES.filter(([other]) => other !== key).slice(0, 4).map(([other, otherLabel]) => <button type="button" key={other} title={`Áthelyezés: ${otherLabel}`} aria-label={`Áthelyezés: ${otherLabel}`} style={{ background: STATUS_COLORS[other] }} onClick={(event) => { event.stopPropagation(); onUpdate(lead.ref, { status: other }) }} />)}</div>
             </article>)}
@@ -162,7 +184,7 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, o
       <div className="card table" role="table">
         <div className="tr th" role="row"><span>Ügyfél</span><span>Település</span><span>Tető</span><span className="num">Irányár</span><span>Státusz</span><span className="num">Érkezett</span></div>
         {shown.map((lead) => <button type="button" role="row" key={lead.ref} className={`tr${openRef === lead.ref ? ' is-open' : ''}`} onClick={() => setOpenRef(lead.ref)}>
-          <span className="who"><span className="avatar">{initials(lead.customer_name)}{lead.status === 'new' && now - new Date(lead.created_at).getTime() < 86_400_000 && <i className="new-dot" title="Új érdeklődő" />}</span><span><b>{lead.customer_name}</b><small className="only-wide">{lead.ref}</small><small className="only-narrow">{[lead.city, roofName(lead), timeAgo(lead.created_at, now)].filter((part) => part && part !== '—').join(' · ')}</small></span></span>
+          <span className="who"><span className="avatar">{initials(lead.customer_name)}{lead.status === 'new' && now - new Date(lead.created_at).getTime() < 86_400_000 && <i className="new-dot" title="Új érdeklődő" />}</span><span><b>{lead.customer_name}</b><small className="only-wide">{lead.ref} <TierBadge lead={lead} /></small><small className="only-narrow">{[lead.city, roofName(lead), timeAgo(lead.created_at, now)].filter((part) => part && part !== '—').join(' · ')} <TierBadge lead={lead} /></small></span></span>
           <span className="muted">{lead.city}</span>
           <span className="muted">{roofName(lead)}</span>
           <span className="num strong">{formatHuf(lead.estimate_gross)}</span>

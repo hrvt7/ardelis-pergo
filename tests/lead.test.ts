@@ -87,6 +87,31 @@ describe('POST /api/lead', () => {
     expect(tooLong.status).toBe(422)
   })
 
+  it('a viselkedési jeleket elmenti, a gyártói levélbe pontszám kerül; oszlop nélküli adatbázisnál a lead jelek nélkül is megmarad', async () => {
+    const calls: { url: string; body: Record<string, unknown> }[] = []
+    let storeAttempt = 0
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      const parsed = JSON.parse(String(init.body)) as Record<string, unknown>
+      calls.push({ url, body: parsed })
+      if (url.includes('/rest/v1/leads') && ++storeAttempt === 1) return new Response(JSON.stringify({ message: "Could not find the 'engagement' column of 'leads' in the schema cache" }), { status: 400 })
+      return new Response('{}', { status: 200 })
+    }))
+    const engagement = { pdf: true, ar: true, visits: 2, steps: 6, minutes: 7 }
+    const env = { NODE_ENV: 'production', RESEND_API_KEY: 'k', LEAD_FALLBACK_EMAIL: 'gyarto@example.com', SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 's' }
+    const response = await handleLeadRequest(post(body({ engagement, customer: { ...body().customer, notes: 'Tavasszal szeretnénk kezdeni, a terasz már megvan.' } })), env)
+    expect(response.status).toBe(200)
+    const stores = calls.filter((call) => call.url.includes('/rest/v1/leads'))
+    expect(stores).toHaveLength(2)
+    expect(stores[0].body.engagement).toEqual(engagement)
+    expect(stores[1].body.engagement).toBeUndefined()
+    const html = String(calls.find((call) => call.url.includes('resend') && (call.body.to as string[])[0] === 'gyarto@example.com')!.body.html)
+    expect(html).toContain('Forró (85/100)')
+    expect(html).toContain('Letöltötte a PDF-összefoglalót · 2. alkalommal járt a konfigurátorban')
+    // Ismeretlen mezőt vagy túl nagy értéket a szerver elutasít.
+    expect((await handleLeadRequest(post(body({ engagement: { pdf: true, hack: 1 }, customer: { ...body().customer, email: 'b@example.com' } })), { NODE_ENV: 'development' })).status).toBe(422)
+    expect((await handleLeadRequest(post(body({ engagement: { steps: 99 }, customer: { ...body().customer, email: 'c@example.com' } })), { NODE_ENV: 'development' })).status).toBe(422)
+  })
+
   it('a robotot (kitöltött rejtett mező) csendben elnyeli', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)

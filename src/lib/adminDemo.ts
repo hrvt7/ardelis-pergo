@@ -48,6 +48,8 @@ export function demoLeads(now: number): LeadRow[] {
       created_at: new Date(now - age).toISOString(),
       config: { roof, width, depth },
       owner_note: index === 7 ? 'Hétfőn visszahívni, az ajánlatot már elküldtük.' : null,
+      // Viselkedési jelek: a minta érdeklődők egy része forró (PDF + visszatérés), más része csak benézett.
+      engagement: index % 5 === 4 ? null : { pdf: index % 3 === 0, ar: index % 4 === 1, share: index % 6 === 2, saved: index % 7 === 3, steps: 3 + (index % 4), visits: index % 3 === 0 ? 2 : 1, minutes: 2 + (index % 9) },
     }
   })
 }

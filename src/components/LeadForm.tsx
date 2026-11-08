@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { track } from '@/lib/analytics'
+import { readEngagement } from '@/lib/engagement'
 import { ArrowRight, LockKeyhole, MapPin, ShieldCheck } from 'lucide-react'
 import { PRODUCT_LABELS, type ProductFamily } from '@contracts/catalog'
 import { useTenant } from '@/tenants/TenantContext'
@@ -81,6 +82,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
           elapsedMs: Date.now() - startedAt.current,
           source: embed ? 'embed' : tenant.demo ? 'demo' : 'standalone',
           pageUrl: embed && document.referrer ? document.referrer : window.location.origin + window.location.pathname,
+          engagement: readEngagement(tenant.id),
         }),
       })
       const data = await response.json().catch(() => null) as LeadResponse | null

@@ -1909,6 +1909,14 @@ button.tr.is-open{background:rgba(216,255,114,.07);box-shadow:inset 0 0 0 1px rg
 .facts div{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 14px;border-top:1px solid var(--a-edge);font-size:13.5px}.facts div:first-child{border-top:0}
 .facts dt{color:var(--a-muted);flex:none}.facts dd{margin:0;display:flex;align-items:center;gap:8px;text-align:right;min-width:0;overflow-wrap:anywhere}
 .customer-note{margin:0;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.04);font-size:13.5px;white-space:pre-wrap}
+/* lead-pontozás: forró / meleg / hideg */
+.tier{display:inline-flex;align-items:center;gap:3px;vertical-align:1px;margin-left:2px;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.02em;color:var(--pill);background:color-mix(in srgb,var(--pill) 14%,transparent);border:1px solid color-mix(in srgb,var(--pill) 32%,transparent);white-space:nowrap}
+.bc-meta .tier{margin-left:4px}
+.btn.is-on{border-color:color-mix(in srgb,var(--accent-primary) 55%,transparent);background:color-mix(in srgb,var(--accent-primary) 14%,transparent)}
+.score-box{display:grid;gap:9px;padding:13px 14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--pill) 30%,transparent);background:color-mix(in srgb,var(--pill) 7%,transparent)}
+.score-head{display:flex;justify-content:space-between;align-items:center;font-size:14px}.score-head strong{display:inline-flex;align-items:center;gap:5px;color:var(--pill)}.score-head span{color:var(--a-muted);font-variant-numeric:tabular-nums}
+.score-bar{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}.score-bar i{display:block;height:100%;border-radius:99px;background:var(--pill);transition:width .5s ease}
+.score-box ul{margin:0;padding-left:18px;display:grid;gap:3px;font-size:13px}.score-box small{font-size:11.5px;line-height:1.45;color:var(--a-muted)}
 .drawer textarea{width:100%;padding:11px 13px;border-radius:12px;border:1px solid var(--a-edge-hi);background:rgba(255,255,255,.04);color:inherit;font:inherit;font-size:14px;resize:vertical}
 .drawer textarea:focus{outline:none;border-color:rgba(216,255,114,.6);box-shadow:0 0 0 3px rgba(216,255,114,.1)}
 .config-box{display:flex;align-items:center;gap:16px;padding:14px;border:1px solid var(--a-edge);border-radius:14px}

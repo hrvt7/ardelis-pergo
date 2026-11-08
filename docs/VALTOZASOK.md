@@ -1,5 +1,14 @@
 # Változások
 
+## 3.78 – Lead-pontozás: forró, meleg, hideg érdeklődők
+
+- **Mi a baj, amit old:** a gyártó eddig csak nevet, települést és irányárat látott, és érkezési sorrendben hívott. A valódi szándék jelei (letöltötte-e a PDF-et, megnézte-e AR-ban, visszajött-e másnap) elvesztek.
+- **Viselkedési jelek a kérelemmel:** a konfigurátor a böngészőben (munkamenet-tár) jegyzi, hogy a vevő letöltött-e PDF-et, nyitott-e AR-nézetet, megosztott-e tervet (link, szöveg vagy kép), mentett-e változatot, hány lépést járt be, hányadik látogatása ez és hány percet tervezett. Semmi nem megy ki közben: a jelek csak a felmérési kérelemmel, a hozzájárulás pipájával kerülnek elküldésre (`engagement` mező, a szerver sémával ellenőrzi).
+- **Pontszám 0–100** (`src/lib/leadScore.ts`, tiszta függvény): PDF +20, visszatérő látogató +15, AR +15, megosztás +10, minden lépés bejárva +10 (többsége +5), mentés +5, 5+ perc +5; részletes megjegyzés +10 (rövid +5), pontos cím +5; 4 M Ft feletti terv +10 (2 M felett +5). **Forró** 55-től, **Meleg** 30-tól, alatta **Hideg**. Régi leadeknél (nincs jel) a pont csak az űrlapból jön, és az admin jelzi, hogy nincs viselkedési adat.
+- **Admin:** a táblában és a kanban-kártyán a név mellett jelzés („Forró · 85”), a részletpanelen „Mennyire komoly az érdeklődés?” sáv az indokokkal, a toolbaron **Forró elöl** rendezés (megjegyzett beállítás), a CSV-ben Pontszám és Érdeklődés oszlop. A gyártói e-mail első sora is a besorolás az indokokkal.
+- **Mérés:** három új névtelen esemény a napi számlálókban: `pdf`, `ar`, `share`.
+- **Adatbázis:** `supabase/leads.sql` új `engagement jsonb` oszlop (`alter table … add column if not exists`). Ha a gyártó még nem futtatta, a szerver a leadet a jelek nélkül menti, az admin lista pedig a jelek nélkül töltődik — érdeklődő nem vész el.
+
 ## 3.77 – Eszközök menü a 3D felett
 
 - A 3D feletti sáv eddig hat ikonos gombot sorakoztatott (Eső, Fotó, Árnyék, Nézet, Működés, AR), mobilon felirat nélkül. Mostantól három marad: **Eső** (gyors kapcsoló), **AR** (a leginkább konverziós funkció) és az **Eszközök** menü.

@@ -9,6 +9,7 @@ import PricePanel, { AnimatedPrice, PriceDeltaPop } from '@/components/PricePane
 import SummaryPanel from '@/components/SummaryPanel'
 import { track } from '@/lib/analytics'
 import { copyShareUrl, exportPergolaPdf } from '@/lib/exportPdf'
+import { noteEngagement, noteStep, startEngagement } from '@/lib/engagement'
 import { shareHash } from '@/lib/shareCode'
 import { captureScene } from '@/lib/showcase'
 import { houseSummary, loadHouseLook, saveHouseLook } from '@/lib/house'
@@ -163,7 +164,9 @@ export default function PergoStudio() {
   useEffect(() => persistConfig(tenant, config), [tenant, config])
   // Névtelen konverziómérés: megnyitás és az első érdemi módosítás (csak vásárlói nézetben).
   const firstConfig = useRef(config)
-  useEffect(() => { if (!admin) track(tenant.id, 'open') }, [tenant.id, admin])
+  useEffect(() => { if (!admin) { track(tenant.id, 'open'); startEngagement(tenant.id) } }, [tenant.id, admin])
+  // A lead-pontozáshoz: melyik lépéseket járta be (csak a böngészőben gyűlik, a kérelemmel megy ki).
+  useEffect(() => { noteStep(tenant.id, step) }, [tenant.id, step])
   useEffect(() => { if (!admin && config !== firstConfig.current) track(tenant.id, 'configure') }, [tenant.id, admin, config])
   // Ha az oldal megosztott linkkel nyílt, a címsor linkje kövesse a módosításokat — különben
   // frissítéskor a régi link felülírná a vásárló közben végzett változtatásait.
@@ -380,9 +383,11 @@ export default function PergoStudio() {
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#${shareHash(config)}`)
     try { await copyShareUrl(url); setToast('Megosztható hivatkozás a vágólapra másolva.') }
     catch { setToast('A hivatkozás frissült a címsorban; onnan másolhatod.') }
+    if (!admin) { track(tenant.id, 'share'); noteEngagement(tenant.id, 'share') }
   }
   const handleExport = async () => {
     setExporting(true)
+    if (!admin) { track(tenant.id, 'pdf'); noteEngagement(tenant.id, 'pdf') }
     try { await exportPergolaPdf(config, price, tenant, ROOF_LABELS, createShareUrl(config), energyUsage, projectName.trim() || undefined, houseSummary(scene)); setToast('A PDF-összefoglaló elkészült.') }
     catch (error) { console.error(error); setToast('A PDF nem készült el. Próbáld újra, vagy frissítsd az oldalt.') }
     finally { setExporting(false) }
@@ -430,6 +435,7 @@ export default function PergoStudio() {
       return slot === 'A' ? [item, ...without.filter((savedItem) => savedItem.id === 'B')].slice(0, 2) : [...without.filter((savedItem) => savedItem.id === 'A'), item].slice(0, 2)
     })
     setToast(`Konfiguráció ${slot} elmentve ebben a böngészőben.`)
+    if (!admin) noteEngagement(tenant.id, 'saved')
   }
   const summary = <SummaryPanel shareUrl={createShareUrl(config)} config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={() => setModal('energy')} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} />
 
@@ -447,7 +453,7 @@ export default function PergoStudio() {
           <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={handleSideSelect} onSceneChange={updateScene} onShade={setShade} />
           <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1>{ROOF_LABELS[config.roof].split(' · ')[0]} <i>/</i> {config.width.toFixed(1).replace('.', ',')}<small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>
           <div className="viewer-live"><i />VALÓS IDEJŰ 3D</div>
-          <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások"><button type="button" className={scene.rain ? 'selected' : ''} aria-pressed={scene.rain} title="Eső be- és kikapcsolása" onClick={() => updateScene({ rain: !scene.rain })}><CloudRain size={17} /><span>Eső</span></button>{!arHidden && <button type="button" className="ar-launch" title={arPath === 'desktop' ? 'Nézd meg a kertedben valós méretben — telefonon (QR-kód)' : 'Nézd meg valós méretben a saját kertedben (AR)'} onClick={() => { if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') }}><Rotate3d size={17} /><span>AR</span></button>}<button type="button" className={`view-toggle tools-toggle ${toolsOpen || viewOpen || scene.sunStudy || scene.photoMode || mechanismOn || scene.exploded ? 'selected' : ''}`} aria-pressed={toolsOpen} aria-expanded={toolsOpen} title="Eszközök: nézet, árnyékelemzés, fotó, működés, robbantott nézet, keret, üzemeltetés, tanácsadó" onClick={() => { setToolsOpen((open) => !open); setViewOpen(false) }}><LayoutGrid size={17} /><span>Eszközök</span></button></div>
+          <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások"><button type="button" className={scene.rain ? 'selected' : ''} aria-pressed={scene.rain} title="Eső be- és kikapcsolása" onClick={() => updateScene({ rain: !scene.rain })}><CloudRain size={17} /><span>Eső</span></button>{!arHidden && <button type="button" className="ar-launch" title={arPath === 'desktop' ? 'Nézd meg a kertedben valós méretben — telefonon (QR-kód)' : 'Nézd meg valós méretben a saját kertedben (AR)'} onClick={() => { if (!admin) { track(tenant.id, 'ar'); noteEngagement(tenant.id, 'ar') } if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') }}><Rotate3d size={17} /><span>AR</span></button>}<button type="button" className={`view-toggle tools-toggle ${toolsOpen || viewOpen || scene.sunStudy || scene.photoMode || mechanismOn || scene.exploded ? 'selected' : ''}`} aria-pressed={toolsOpen} aria-expanded={toolsOpen} title="Eszközök: nézet, árnyékelemzés, fotó, működés, robbantott nézet, keret, üzemeltetés, tanácsadó" onClick={() => { setToolsOpen((open) => !open); setViewOpen(false) }}><LayoutGrid size={17} /><span>Eszközök</span></button></div>
           {toolsOpen && <div className="view-popover tools-menu glass-panel" role="dialog" aria-label="Eszközök"><div className="view-popover-head"><strong>Eszközök</strong><button type="button" aria-label="Bezárás" onClick={() => setToolsOpen(false)}><X size={16} /></button></div><div className="tools-list">
             {([
               { id: 'view', icon: SlidersHorizontal, name: 'Nézet és vizualizáció', note: 'Napszak, napirány, környezet, bútor, feliratok, 3D-minőség', active: false, run: () => { setViewOpen(true) } },

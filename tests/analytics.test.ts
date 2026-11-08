@@ -14,6 +14,7 @@ describe('konverziómérés', () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 200 }))
     expect((await handleTrack(post({ tenantId: 'demo', name: 'open' }), env)).status).toBe(204)
     expect(fetchMock).toHaveBeenCalledTimes(1)
+    for (const name of ['pdf', 'ar', 'share']) expect((await handleTrack(post({ tenantId: 'demo', name }), env)).status).toBe(204)
     expect((await handleTrack(post({ tenantId: 'demo', name: 'hack' }), env)).status).toBe(422)
     expect((await handleTrack(post({ tenantId: 'nincs-ilyen', name: 'open' }), env)).status).toBe(422)
   })

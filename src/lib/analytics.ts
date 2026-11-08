@@ -1,6 +1,6 @@
 // Névtelen konverziómérés a konfigurátorban: süti és azonosító nélkül, munkamenetenként egy-egy jelzés eseményenként.
 // A "Do Not Track" beállítást tiszteletben tartja; hiba esetén csendben nem csinál semmit.
-export type TrackName = 'open' | 'configure' | 'lead_view' | 'lead_start'
+export type TrackName = 'open' | 'configure' | 'lead_view' | 'lead_start' | 'pdf' | 'ar' | 'share'
 
 const sent = new Set<string>()
 

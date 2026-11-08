@@ -31,3 +31,6 @@ alter table public.leads enable row level security;
 
 -- Gyártói belső megjegyzés az érdeklődőkhöz (admin lead nézet). Meglévő táblához is futtasd:
 alter table public.leads add column if not exists owner_note text;
+
+-- Viselkedési jelek a lead-pontozáshoz (PDF, AR, megosztás, lépések, visszatérés) — a vevő hozzájárulásával érkezik. Meglévő táblához is futtasd:
+alter table public.leads add column if not exists engagement jsonb;

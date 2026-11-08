@@ -7,6 +7,7 @@ import { captureScene, renderShareCard, shareOrDownload } from '@/lib/showcase'
 import { colorSummary } from '@/lib/colors'
 import LeadForm from '@/components/LeadForm'
 import { copyShareUrl } from '@/lib/exportPdf'
+import { noteEngagement } from '@/lib/engagement'
 import { MOUNT_LABELS } from '@/lib/mount'
 import { sideSegments } from '@/lib/sides'
 import { calculatePrice, formatHuf, formatNumber } from '@/lib/pricing'
@@ -71,11 +72,12 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
       })
       const result = await shareOrDownload(blob, `${(projectName.trim() || 'pergola').replace(/[^\p{L}\p{N}]+/gu, '-').toLowerCase()}.png`, title)
       if (result === 'downloaded') onNotify('A megosztható kép letöltve — küldd el a családnak.')
+      noteEngagement(tenant.id, 'share')
     } catch { onNotify('A megosztható kép most nem készült el.') }
     finally { setSharing(false) }
   }
   const copy = async () => {
-    try { await copyShareUrl(createTextSummary(config, price, ROOF_LABELS, tenant.brand.name, tenant)); onNotify('Az összefoglaló a vágólapra másolva.') }
+    try { await copyShareUrl(createTextSummary(config, price, ROOF_LABELS, tenant.brand.name, tenant)); onNotify('Az összefoglaló a vágólapra másolva.'); noteEngagement(tenant.id, 'share') }
     catch { onNotify('A másolás nem sikerült ebben a böngészőben.') }
   }
   const advice = getAdvice(config)

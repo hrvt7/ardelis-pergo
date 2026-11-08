@@ -1,10 +1,13 @@
 // Az admin dashboard adatai: az érdeklődők betöltése és a belőlük számolt mutatók (tiszta függvények).
 import { useCallback, useEffect, useState } from 'react'
+import { scoreLead, TIER_LABELS, type LeadEngagement } from './leadScore'
 
 export interface LeadRow {
   ref: string; customer_name: string; email: string; phone: string; postal_code: string | null; city: string; region: string
   address: string | null; notes: string | null; estimate_gross: number; config_url: string; status: string; source: string
   created_at: string; config?: { roof?: string; width?: number; depth?: number } | null; owner_note?: string | null
+  /** Viselkedési jelek a lead-pontozáshoz; régi leadeknél hiányzik. */
+  engagement?: LeadEngagement | null
 }
 
 export const LEAD_STATUSES: [string, string][] = [['new', 'Új'], ['contacted', 'Kapcsolatba léptünk'], ['offered', 'Ajánlat kiment'], ['won', 'Megnyert'], ['lost', 'Elveszett']]
@@ -125,8 +128,8 @@ const csvCell = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""').
 /** CSV az érdeklődőkről (Excel-barát: pontosvessző, UTF-8 BOM). */
 export function leadsToCsv(leads: LeadRow[]): string {
   const statusLabel = Object.fromEntries(LEAD_STATUSES)
-  const header = ['Azonosító', 'Dátum', 'Név', 'Telefon', 'E-mail', 'Irányítószám', 'Település', 'Megye', 'Cím', 'Bruttó irányár', 'Státusz', 'Vevő megjegyzése', 'Belső megjegyzés', 'Konfiguráció']
-  const rows = leads.map((lead) => [lead.ref, lead.created_at.slice(0, 10), lead.customer_name, lead.phone, lead.email, lead.postal_code, lead.city, lead.region, lead.address, lead.estimate_gross, statusLabel[lead.status] ?? lead.status, lead.notes, lead.owner_note, lead.config_url])
+  const header = ['Azonosító', 'Dátum', 'Név', 'Telefon', 'E-mail', 'Irányítószám', 'Település', 'Megye', 'Cím', 'Bruttó irányár', 'Státusz', 'Pontszám', 'Érdeklődés', 'Vevő megjegyzése', 'Belső megjegyzés', 'Konfiguráció']
+  const rows = leads.map((lead) => { const score = scoreLead(lead); return [lead.ref, lead.created_at.slice(0, 10), lead.customer_name, lead.phone, lead.email, lead.postal_code, lead.city, lead.region, lead.address, lead.estimate_gross, statusLabel[lead.status] ?? lead.status, score.score, TIER_LABELS[score.tier], lead.notes, lead.owner_note, lead.config_url] })
   return `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(';')).join('\r\n')}`
 }
 

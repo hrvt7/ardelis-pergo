@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { getTenant } from '../src/tenants'
 import { authorize, json, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
 
-export const TRACK_EVENTS = ['open', 'configure', 'lead_view', 'lead_start'] as const
+export const TRACK_EVENTS = ['open', 'configure', 'lead_view', 'lead_start', 'pdf', 'ar', 'share'] as const
 const trackSchema = z.object({ tenantId: z.string().trim().min(1).max(64), name: z.enum(TRACK_EVENTS) })
 
 const WINDOW_MS = 10 * 60_000
