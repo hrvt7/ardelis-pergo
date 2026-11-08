@@ -1,5 +1,17 @@
 # Változások
 
+## 3.97 – Prémium mikro-interakciók a referencia-oldalak mintájára
+
+Forrás: getlayers.ai, ui.live, itshover.com, prompt-motion.com, styles.refero.design, performative-ui. Közös minták: ikonok, amelyek „szándékkal mozdulnak”; fényvonal a fő gombon; élő állapotpont lüktetése; kinetikus számváltás; emelkedő üvegkártyák fényes kerettel; egységes, token-alapú stílus.
+
+- **Ikonok mozgása:** a jelenet-eszköztár, a kameranézetek, az Eszközök menü és a fejléc gombjainak ikonjai hoverre finoman megemelkednek/elfordulnak; a bekapcsolt jelenet-gomb ikonja „beáll” (settle) animációval.
+- **Fő lépésgomb** („Következő” / „Összegzés”): fényvonal fut át rajta hoverre, a nyíl előremozdul.
+- **„Élő” pont** a jelenet címkéjén és az árpanelen: lüktető gyűrű.
+- **Kinetikus cím:** a jelenet címében a tetőtípus és a méret szám váltáskor alulról, elmosódásból úszik be (pergola, carport, kerítés).
+- **Csomagkártyák:** hoverre megemelkednek árnyékkal; a betöltött csomag zöld keretet és pattanó pipát kap.
+- **Termékválasztó kártyák:** hoverre 4 px emelkedés, mély árnyék, átlós fényes keret (GlassCard-minta), a nyíl előremozdul.
+- Minden új mozgás tiszteli a `prefers-reduced-motion` beállítást.
+
 ## 3.96 – Csomagváltás nem vált éjszakára; a carport kalkulátorból kikerültek a pergola-elemek
 
 - **Hiba javítva – „Kétállásos carport” → éjszakai nézet:** a csomag LED-et kapcsol be, és a pergola „esti nézetre váltottunk” automatikája (amely a LED kapcsolóhoz készült) csomagbetöltéskor is lefutott. Teljes terv betöltésekor (csomag, tanácsadó, alaphelyzet) mostantól csak az áttekintő kamera áll be; az egyes módosításokhoz kötött reakciók (oldalra fókusz, esti nézet, belső nézet) nem futnak le. Ugyanez a pergola-csomagokra is igaz.
