@@ -22,5 +22,12 @@ Ha bármelyik piros, a munka nincs kész. Ne kapcsold ki a lint-/típus-/tesztsz
 8. Ha a feladat célja nem egyértelmű, ne találgass: írd le a kérdést és állj meg.
 9. Ne telepíts új függőséget indoklás nélkül; a csomagot írd le a commit üzenetben.
 
+## Skillek (lépésenkénti útmutatók)
+A `.claude/skills/` alatt; a Claude Code natívan, az OpenCode kompatibilitási forrásként olvassa. Ha egy feladat illik rájuk, töltsd be és kövesd:
+- `lamelix-workflow` – kapu, tesztek, `VALTOZASOK.md` bejegyzés, commit, push, Vercel deploy ellenőrzése (minden beadásnál).
+- `lamelix-edge-imports` – az `api/`/`server/` felől elérhető kódban érték-import csak relatív úton (a `@/` alias az Edge-ben nem működik); `tests/edge-imports.test.ts` bejárja az importgráfot.
+- `lamelix-add-roof-type` – új tetőtípus minden érintési pontja (a fordító csak egy részüket jelzi).
+- `lamelix-add-furniture-set` – új bútor- vagy használati csomag; tilos az egyforma készletek klónozása.
+
 ## Hol mi van
 Admin: `src/pages/Admin*.tsx`, `src/components/admin/`. Árazás/tenant: `src/tenants/`, `contracts/`. Lead: `server/lead.ts`, `server/demoRequest.ts`. SEO: `vite.config.ts`, `contracts/seo.ts`. Teendők: `docs/AGENT-BACKLOG.md`.

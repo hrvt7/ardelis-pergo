@@ -1,5 +1,11 @@
 # Változások
 
+## 3.87 – Ügynök-skillek a repóban, teljes Edge-importgráf ellenőrzés
+
+- **Négy skill** a `.claude/skills/` alatt (Claude Code és OpenCode is olvassa): `lamelix-workflow` (kapu, changelog, commit, deploy-ellenőrzés), `lamelix-edge-imports`, `lamelix-add-roof-type`, `lamelix-add-furniture-set`. Minden ügynök ugyanazt a lépéssort követi; az `AGENTS.md` hivatkozik rájuk.
+- A tető- és bútor-skill érintési listáját próbával ellenőriztük: új típust felvéve a `tsc` csak a helyek egy részét jelzi (tetőnél 3-at, bútornál 2-t), a többit a skill sorolja fel.
+- **Védőteszt kiterjesztve:** `tests/edge-imports.test.ts` mostantól az `api/` és `server/` fájlokból bejárja a teljes importgráfot (korábban 2 kézzel felsorolt fájl), és fájlonként listázza a `@/` érték-importokat. Negatív próbával igazolva: a 3.68-as hibás importot elkapja.
+
 ## 3.86 – Előtte-utána: ugyanaz a terasz, pergolával
 
 - **Képcsúszka** mindkét nyitóoldalon: két azonos kameraállású kép a 3D stúdióból (üres faburkolatú terasz a ház előtt, és ugyanaz antracit lamellás pergolával és bútorral), húzható választóvonallal. Egérrel, ujjal és billentyűvel (rejtett csúszka) is állítható; a képek `public/assets/home/terrace-before*.webp` és `terrace-after*.webp` (1920 és 960 px). Saját komponens (`ImageCompare`), nem a könyvtáré, mert annak BeforeAfter eleme szöveges lista.
