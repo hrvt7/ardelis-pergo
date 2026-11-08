@@ -1,5 +1,11 @@
 # Változások
 
+## 3.99 – Mobil nézet: a kerítés-stúdió lapja kinyílik, nincs átütő tartalom
+
+- **Hiba javítva – kerítés mobilon:** a „Kerítés és kapu beállításai” lap koppintásra nem nyílt ki (a fejlécnél maradt, a lépéssor levágva). Most 74%-os magasságig nyílik, közben a kameragombsor eltűnik, mint a pergola teljes lapjánál.
+- **Átütő elemek nyitott lap alatt:** az „Üdv újra” sáv (carport/pergola) és a 3D méretcímkéi (160 cm, 1850 cm) átlátszottak az üvegpanelen a lap tartalma mögött; nyitott lapnál elrejtve.
+- **Lépés-szemöldök mobilon:** a katalógus-stúdió rövid címkéket használ („01 · Méret”, „02 · Kivitel”, „03 · Komfort”), hogy a fejléc és a cím egy sorban maradjon.
+
 ## 3.98 – Mélyebb UI-pass: a kerítés-stúdió a pergola panelnyelvén
 
 - **Egy panelnyelv minden terméknél:** a kerítés (és a katalógus-motor többi családja) panelje ugyanazt a felépítést kapta, mint a pergoláé: „Konfiguráció 01 / 04” fejléc a mérettel („14,0 fm · 1,6 m”), számozott lépéspontok pipával, „01 · Méret és arányok” stílusú lépés-szemöldök. A belső sorozatkódok („LAMELIX / FENCE”, „3D / LIVE”) eltűntek a felületről.

@@ -2674,3 +2674,16 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
   .weather-toolbar button.selected svg, .viewer-live i::after, .live-indicator i::after, .viewer-heading h1 .kinetic, .preset-list button.applied svg, .step-navigation .next-step:hover::after { animation: none; }
   .preset-list button:hover, .product-hub-card:hover, .tools-item:hover > svg, .weather-toolbar button:hover svg, .camera-toolbar button:hover svg { transform: none; }
 }
+
+/* Mobil: a katalógus-stúdió (kerítés) lapja felnyitva valóban kinyílik; a nyitott lap alatt nem látszik át az „Üdv újra” sáv. */
+@media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .controls-panel.catalog-controls.is-mobile-open { height: min(74%, 620px); }
+  .studio-shell:has(.catalog-controls.is-mobile-open) .camera-toolbar { opacity: 0; pointer-events: none; }
+  .studio-shell:has(.controls-panel.sheet-half) .welcome-back, .studio-shell:has(.controls-panel.sheet-full) .welcome-back, .studio-shell:has(.catalog-controls.is-mobile-open) .welcome-back { display: none; }
+}
+@media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  /* Nyitott lap alatt a 3D méretcímkéi ne üssenek át az üvegpanelen. */
+  .studio-shell:has(.controls-panel.sheet-half) .dimension-label, .studio-shell:has(.controls-panel.sheet-full) .dimension-label, .studio-shell:has(.catalog-controls.is-mobile-open) .dimension-label { opacity: 0; transition: opacity 200ms; }
+  .catalog-controls .step-heading > span { white-space: nowrap; }
+}
+@media (max-width: 820px) { .studio-shell:has(.catalog-controls.is-mobile-open) .weather-toolbar { opacity: 0; pointer-events: none; transition: opacity 200ms; } }
