@@ -1,5 +1,14 @@
 # Változások
 
+## 3.93 – Kerítés és kapu: a második termékcsalád, saját lineáris motoron
+
+- **Élő család:** `/konfigurator/kerites` (és `/k/<gyártó>/kerites`, `/embed/<gyártó>/kerites`) a kerítés–kapu konfigurátort nyitja a gyártó héja alatt: saját 3D (kerítésszakaszok, oszlopok, nyíló-/toló-/úszókapu, kiskapu, kaputelefon, éjszaka, kapunyitás), négy lépés (méret, kivitel, extrák, kérés), tételes irányár, PDF, megosztó link. A korábbi, útvonal nélkül maradt katalógus-stúdió (`CatalogStudio`) éledt újra: a termékcsalád-váltó legördülő és a „Katalógus” link helyett a gyártó neve, a „Mit tervezel?” választó és a tenant kezdőlap-linkje.
+- **Kültéri mag** (`src/products/outdoor.ts`, szerver-biztos, relatív importokkal): alapértékek, mintaárlista, feliratok, árazás, spec-kód, leírás-sorok, fejléc, zod-séma, `k=` base64url megosztó kód. A böngészős `src/lib/catalog.ts` innen re-exportál, és csak a localStorage-piszkozat és a megosztó URL maradt benne.
+- **Kerítés-motor** (`fenceEngine`, kulcs `k=`): csak `family: 'fence'` konfigurációt fogad, a mintaárlistával áraz (a gyártói árlista később a tenantból), leírást és fejlécet ad a lead-e-mailhez. A motor-szerződés két opcionális taggal bővült: `headline`, `describe`.
+- **Lead-végpont motor-független:** a rekord `headline`, `spec`, `bom` mezőket kap; a pergola (és carport) leírását továbbra is a `describeConfig` + anyaglista adja, más családnál a motoré. A gyártói és vevői e-mail a fejlécből és a sorokból épül; anyaglista csak ott, ahol van. `product: 'fence'` lead a kerítés motorján érvényesül (pergola-konfigurációval 422 `config`), a konfigurációs link `/k/<gyártó>/kerites#k=…`.
+- **Demó kínálata:** teraszfedés + carport + kerítés; SEO-cím és sitemap-bejegyzés a kerítés oldalnak. Folyóméter kiírás: egész szám tizedes nélkül („14 fm”).
+- Tesztek: kerítés-motor (parse/price/shareHash/leírás), kerítés-lead e-mail és tárolás, termék-regiszter. Fájlok: `src/products/outdoor.ts`, `engines.ts`, `index.ts`, `studios.tsx`, `src/pages/FenceStudio.tsx`, `CatalogStudio.tsx`, `CatalogControls.tsx`, `src/lib/catalog.ts`, `server/lead.ts`, `src/tenants/demo.ts`, `contracts/seo.ts`.
+
 ## 3.92 – Carport: az első új termékcsalád a keretes-tető motoron
 
 - **Negyedik építménytípus** a pergola, veranda és télikert mellett: **Carport** (`building: 'carport'`). Fix tető kötelező (lemez, polikarbonát vagy üveg, a mozgó lamella és a textil nem választható), minden nyitott oldal nyitva marad (oldalzárás kézzel visszatehető), nincs üvegezés, klíma, alap. Pergolára visszaváltva az eredeti oldalak (pl. zip) helyreállnak. Megosztó kódban `ep` jelző; a régi linkek változatlanok.
