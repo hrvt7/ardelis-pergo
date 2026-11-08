@@ -118,7 +118,7 @@ Nagyságrend: a közös héj átalakítása ~1–2 hét, utána családonként a
 
 ## 8. Döntendő kérdések (ezekre kell válasz, mielőtt bármi épül)
 
-1. **Pozicionálás:** C) hibrid (vevői kirakat, gyártói bevétel) – egyetértesz, vagy maradjon tisztán B2B a treede mintájára?
+1. **Pozicionálás:** ✅ **Eldöntve 2026. nov. 8.: C) hibrid** – vevői kirakat több termékkel, gyártói bevétel (szerződött gyártó családonként és régiónként; a többi lead darabáron). A gyártói oldal `/gyartoknak` alá költözik, amikor a vevői nyitóoldal elkészül.
 2. **Első három termék:** carport → kerítés/kapu → garázskapu – vagy másik sorrend/termék (pl. szauna előbb a látvány miatt)?
 3. **Bevétel a nem szerződött leadekből:** darabár (15–25 e Ft) vagy régiós havidíj? Jutalékot nem javaslok.
 4. **Gyártói adatok:** van-e már kapcsolat kerítés- vagy kapuforgalmazóval, akitől árlista és műszaki lap jön? Enélkül a termék „típusként” készül, nyilvános szabványméretekből.
