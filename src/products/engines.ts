@@ -9,6 +9,7 @@ import { shareHash } from '../lib/shareCode'
 import type { OutdoorConfig } from '../types/catalog'
 import { calculateOutdoorPrice, encodeOutdoorHash, OUTDOOR_PRICE_DEFAULTS, outdoorHeadline, outdoorSpecRows, parseOutdoorConfig } from './outdoor'
 import type { ProductFamily } from './index'
+import { calculateGaragePrice, encodeGarageHash, GARAGE_PRICE_DEFAULTS, garageHeadline, garageSpecRows, parseGarageConfig, type GarageConfig } from './garage'
 
 export interface ProductEngine<C = unknown> {
   id: ProductFamily
@@ -45,8 +46,19 @@ export const fenceEngine: ProductEngine<OutdoorConfig> = {
   describe: (_tenant, config, price) => outdoorSpecRows(config, price),
 }
 
+/** Garázskapu: saját mag (products/garage.ts); ára ma a mintaárlistából, a gyártói árlista később a tenantból. */
+export const garageEngine: ProductEngine<GarageConfig> = {
+  id: 'garage-door',
+  shareKey: 'g',
+  parse: (_tenant, raw) => parseGarageConfig(raw),
+  price: (_tenant, config) => calculateGaragePrice(config, GARAGE_PRICE_DEFAULTS),
+  shareHash: (config) => encodeGarageHash(config),
+  headline: (_tenant, config) => garageHeadline(config),
+  describe: (_tenant, config, price) => garageSpecRows(config, price),
+}
+
 // A carport a keretes-tető család tagja: ugyanaz a konfiguráció (building: 'carport'), ugyanaz a motor.
-const ENGINES: Partial<Record<ProductFamily, ProductEngine>> = { pergola: pergolaEngine as ProductEngine, carport: pergolaEngine as ProductEngine, fence: fenceEngine as ProductEngine }
+const ENGINES: Partial<Record<ProductFamily, ProductEngine>> = { pergola: pergolaEngine as ProductEngine, carport: pergolaEngine as ProductEngine, fence: fenceEngine as ProductEngine, 'garage-door': garageEngine as ProductEngine }
 
 /** A család motorja, ha már van (a „hamarosan” családoknak nincs: ezekre lead sem fogadható). */
 export const getEngine = (id: ProductFamily): ProductEngine | undefined => ENGINES[id]

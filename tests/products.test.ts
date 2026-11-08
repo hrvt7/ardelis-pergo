@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { productDefaultConfig } from '../src/lib/config'
 import { DEFAULT_PRODUCT, HUB_SLUG, hubPath, INTEREST_EVENTS, interestEvent, productBySlug, productInfo, productPath, PRODUCTS, tenantProducts } from '../src/products'
 import { TRACK_EVENTS } from '../server/analytics'
-import { fenceEngine, getEngine, pergolaEngine } from '../src/products/engines'
+import { fenceEngine, garageEngine, getEngine, pergolaEngine } from '../src/products/engines'
+import { calculateGaragePrice, decodeGarageHash, GARAGE_DEFAULTS, GARAGE_PRICE_DEFAULTS } from '../src/products/garage'
 import { calculateOutdoorPrice, decodeOutdoorHash, OUTDOOR_DEFAULTS, OUTDOOR_PRICE_DEFAULTS } from '../src/products/outdoor'
 import { shareHash } from '../src/lib/shareCode'
 import { parseConfig, tenantPrice } from '../src/tenants/rules'
@@ -40,13 +41,13 @@ describe('termékcsaládok', () => {
     expect(productPath('embed', 'acme', 'carport')).toBe('/embed/acme/carport')
   })
 
-  it('a gyártó kínálata: megadás nélkül csak pergola; a demó a teraszfedést, a carportot és a kerítést kínálja', () => {
+  it('a gyártó kínálata: megadás nélkül csak pergola; a demó a teraszfedést, a carportot, a kerítést és a garázskaput kínálja', () => {
     expect(tenantProducts({})).toEqual(['pergola'])
     expect(tenantProducts({ products: ['pergola', 'fence'] })).toEqual(['pergola', 'fence'])
-    expect(tenantProducts(demoTenant)).toEqual(['pergola', 'carport', 'fence'])
+    expect(tenantProducts(demoTenant)).toEqual(['pergola', 'carport', 'fence', 'garage-door'])
   })
 
-  it('motor: a pergola motorja ugyanazt adja, mint a meglévő érvényesítés, árazás és megosztókód; a többi családnak még nincs', () => {
+  it('motor: a pergola motorja ugyanazt adja, mint a meglévő érvényesítés, árazás és megosztókód; a kerti háznak még nincs', () => {
     const config = demoTenant.defaultConfig
     expect(getEngine('pergola')).toBe(pergolaEngine)
     expect(pergolaEngine.parse(demoTenant, config)).toEqual(parseConfig(demoTenant, config))
@@ -56,7 +57,7 @@ describe('termékcsaládok', () => {
     expect(pergolaEngine.shareHash(config).startsWith(`${pergolaEngine.shareKey}=`)).toBe(true)
     // A carport a keretes-tető család tagja: a pergola motorján fut.
     expect(getEngine('carport')).toBe(pergolaEngine)
-    for (const id of ['garage-door', 'garden-building'] as const) expect(getEngine(id)).toBeUndefined()
+    expect(getEngine('garden-building')).toBeUndefined()
   })
 
   it('kerítés-motor: csak kerítés-konfigurációt fogad, mintaárlistával áraz, `k=` megosztó kódot ad, leírást és fejlécet ír', () => {
@@ -73,6 +74,28 @@ describe('termékcsaládok', () => {
     expect(fenceEngine.headline!(demoTenant, fence)).toContain('14 fm')
     const spec = fenceEngine.describe!(demoTenant, fence, fenceEngine.price(demoTenant, fence))
     expect(spec.map(([label]) => label)).toEqual(expect.arrayContaining(['Hossz és magasság', 'Kapu', 'Kiskapu', 'Konfigurációs kód']))
+  })
+
+  it('garázskapu-motor: érvényesít, mintaárlistával áraz, `g=` megosztó kódot ad, fejlécet és leírást ír; a típus szűri az opciókat', () => {
+    const garage = GARAGE_DEFAULTS
+    expect(getEngine('garage-door')).toBe(garageEngine)
+    expect(productInfo('garage-door').status).toBe('live')
+    expect(garageEngine.parse(demoTenant, garage)).toEqual(garage)
+    expect(garageEngine.parse(demoTenant, { ...garage, width: 9 })).toBeNull()
+    expect(garageEngine.parse(demoTenant, OUTDOOR_DEFAULTS.fence)).toBeNull()
+    expect(garageEngine.price(demoTenant, garage).totalGross).toBe(calculateGaragePrice(garage, GARAGE_PRICE_DEFAULTS).totalGross)
+    expect(garageEngine.price(demoTenant, garage).totalGross).toBeGreaterThan(0)
+    const hash = garageEngine.shareHash(garage)
+    expect(hash.startsWith('g=')).toBe(true)
+    expect(decodeGarageHash(`#${hash}`)).toEqual(garage)
+    expect(garageEngine.headline!(demoTenant, garage)).toContain('2,50 × 2,13 m')
+    const rows = garageEngine.describe!(demoTenant, garage, garageEngine.price(demoTenant, garage))
+    expect(rows.map(([label]) => label)).toEqual(expect.arrayContaining(['Típus', 'Nyílásméret', 'Panelminta', 'Szigetelés', 'Felszereltség', 'Konfigurációs kód']))
+    // Redőnykapunál nincs panel, szigetelés és ablak; a személybejáró sem értelmezhető.
+    const roller = { ...garage, type: 'roller' as const, wicket: true, windows: 'topRow' as const }
+    const rollerPrice = calculateGaragePrice(roller, GARAGE_PRICE_DEFAULTS)
+    expect(rollerPrice.lines.some((line) => line.id === 'windows' || line.id === 'wicket')).toBe(false)
+    expect(garageEngine.describe!(demoTenant, roller, rollerPrice).map(([label]) => label)).not.toContain('Panelminta')
   })
 
   it('az érdeklődés-eseményeket a szerver mérése elfogadja', () => {

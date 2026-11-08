@@ -30,6 +30,7 @@ import type { FurnitureSet } from '@/types/pergola'
 import { kelvinToHex } from '@/lib/color'
 import { glassPanels } from '@/lib/glass'
 import { WOOD_HEXES } from '@/lib/colors'
+import { getHouseAsset, HOUSE_RAW } from '@/lib/houseAsset'
 import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
 import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
@@ -1414,23 +1415,6 @@ function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'nig
   </group>
 }
 
-type ArchitecturalAsset = THREE.Group & { dispose: () => Promise<void> }
-type ArchitecturalModule = { createAsset: (namespace: typeof THREE, options: { states: 'lazy' }) => Promise<ArchitecturalAsset> }
-
-const houseAssetPath = assetUrl('/assets/models/cedar_zinc_house/asset.mjs')
-// Native browser import: the asset and its relative resources intentionally stay
-// in public/. Vite must not rewrite this runtime module request in dev mode.
-const importPublicModule = new Function('path', 'return import(path)') as (path: string) => Promise<ArchitecturalModule>
-let houseAssetPromise: Promise<ArchitecturalAsset> | null = null
-function getHouseAsset() {
-  if (!houseAssetPromise) {
-    houseAssetPromise = importPublicModule(houseAssetPath)
-      .then((module) => module.createAsset(THREE, { states: 'lazy' }))
-      .catch((error) => { houseAssetPromise = null; throw error })
-  }
-  return houseAssetPromise
-}
-
 /** Telefonon a fa 512 px-es textúrákkal töltődik (kb. 2,2 MB → 0,3 MB), a megjelenés alig változik. */
 const MOBILE_VIEW = typeof window !== 'undefined' && window.innerWidth < 760
 const TREE_MODEL = assetUrl(`/assets/models/tree_small_02/${MOBILE_VIEW ? 'optimized-512' : 'optimized'}.gltf`)
@@ -1465,8 +1449,6 @@ function prefetchSceneAssets(scene: SceneSettings) {
 
 type HouseLook = Pick<SceneSettings, 'wallFinish' | 'wallColor' | 'windowColor'>
 
-// A ház modell saját méretei (modellegységben, a talajszinttől).
-const HOUSE_RAW = { width: 18.22, depth: 6.79, eave: 2.947, facadeInset: 0.573 }
 
 /**
  * frontZ a ház homlokzatának síkja. Falhoz rögzítve a pergola 18 cm-es fali

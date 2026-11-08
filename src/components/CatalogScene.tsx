@@ -8,6 +8,7 @@ import type { OutdoorConfig } from '@/types/catalog'
 import { outdoorColor } from '@/lib/catalog'
 import FenceModel, { type FenceMaterials } from '@/components/catalog/FenceModel'
 import { fenceSystemLength } from '@/components/catalog/fenceLayout'
+import { HouseBackdrop } from '@/components/models/HouseAsset'
 
 export type CatalogView = 'perspective' | 'front' | 'top' | 'detail'
 /** environment: a ház és a növényzet a háttérben (kikapcsolva csak a kerítés látszik a terepen). */
@@ -146,6 +147,20 @@ function Ground({ config }: { config: OutdoorConfig }) {
       <meshStandardMaterial map={maps.concrete} color="#a8aaa3" roughness={0.88} />
     </mesh>
   </>
+}
+
+/** Semleges stúdió-padló (a pergola StudioEnvironment-jével azonos tónus). */
+/** Stúdió-háttér gömb: a környezet ki-be kapcsolásakor az Environment a háttérmezőt visszaállíthatja, ezért a semleges háttér
+ * egy hálóként is ott van (a pergola „Csak a pergola” háttérszínével). */
+function StudioBackdrop({ night }: { night: boolean }) {
+  return <mesh name="studio-backdrop" renderOrder={-1}><sphereGeometry args={[180, 32, 16]} /><meshBasicMaterial color={night ? '#1b1f22' : '#e8e5de'} side={THREE.BackSide} fog={false} depthWrite={false} /></mesh>
+}
+
+function StudioFloor({ night }: { night: boolean }) {
+  return <mesh name="studio-floor" rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.002, 0]} receiveShadow>
+    <planeGeometry args={[600, 600]} />
+    <meshStandardMaterial color={night ? '#555851' : '#dad7cf'} roughness={0.92} />
+  </mesh>
 }
 
 function ModernHouse({ position = [0, 0, -5], width = 10, night }: { position?: Vec3; width?: number; night: boolean }) {
@@ -502,15 +517,17 @@ function SceneContent({ config, scene, view, onReady }: { config: OutdoorConfig;
   const color = outdoorColor(config)
   const gl = useThree((state) => state.gl)
   const size = systemLength(config)
+  // Környezet nélkül ugyanaz a semleges stúdió-háttér, mint a pergola „Csak a pergola” nézetében.
+  const studio = (config.family === 'fence' || config.family === 'gate') && !scene.environment
   useEffect(() => {
     refreshShadow(gl)
     onReady()
-  }, [config, gl, onReady])
+  }, [config, gl, onReady, studio])
   useEffect(() => {
     setExposure(gl, scene.night)
   }, [gl, scene.night])
   return <>
-    <fog attach="fog" args={[scene.night ? '#172331' : '#b5c2bd', Math.max(40, size * 2.2), Math.max(85, size * 4.5)]} />
+    <fog attach="fog" args={[studio ? (scene.night ? '#1b1f22' : '#e8e5de') : scene.night ? '#172331' : '#b5c2bd', Math.max(40, size * 2.2), Math.max(85, size * 4.5)]} />
     <ambientLight intensity={scene.night ? 0.65 : 0.55} />
     <hemisphereLight args={['#d4e1e8', '#514b3f', scene.night ? 0.4 : 0.55]} />
     <directionalLight position={[7, 12, 8]} color={scene.night ? '#b7d5f2' : '#fff0d2'} intensity={scene.night ? 1.3 : 3.1} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-Math.max(16, size * 0.65)} shadow-camera-right={Math.max(16, size * 0.65)} shadow-camera-top={14} shadow-camera-bottom={-14} shadow-bias={-0.0002} shadow-normalBias={0.02} />
@@ -518,14 +535,15 @@ function SceneContent({ config, scene, view, onReady }: { config: OutdoorConfig;
       <directionalLight position={[-8, 5, 4]} color="#b7d5f2" intensity={1.8} />
       <pointLight position={[0, 5, 7]} color="#c5ddff" intensity={65} distance={30} decay={2} />
     </>}
-    <Suspense fallback={null}><Environment files={scene.night ? '/assets/hdr/courtyard_night.hdr' : '/assets/hdr/day_clear.hdr'} background backgroundBlurriness={0.18} backgroundIntensity={scene.night ? 0.4 : 0.65} environmentIntensity={scene.night ? 0.55 : 0.8} /></Suspense>
-    <Ground config={config} />
+    {studio && <color attach="background" args={[scene.night ? '#1b1f22' : '#e8e5de']} />}
+    <Suspense fallback={null}><Environment files={scene.night ? '/assets/hdr/courtyard_night.hdr' : '/assets/hdr/day_clear.hdr'} background={!studio} backgroundBlurriness={0.18} backgroundIntensity={scene.night ? 0.4 : 0.65} environmentIntensity={scene.night ? 0.55 : 0.8} /></Suspense>
+    {studio ? <><StudioBackdrop night={scene.night} /><StudioFloor night={scene.night} /></> : <Ground config={config} />}
     <MaterialProvider config={config}>
       {config.family === 'canopy' && <CoverModel config={config} color={color} night={scene.night} />}
       {config.family === 'carport' && <DriveModel config={config} color={color} night={scene.night} />}
       {(config.family === 'fence' || config.family === 'gate') && <>
         {scene.environment && <>
-          <ModernHouse position={[0, 0, -9]} width={12} night={scene.night} />
+          <Suspense fallback={null}><HouseBackdrop frontZ={-7.5} width={Math.max(17, fenceSystemLength(config) * 0.9)} /></Suspense>
           <Suspense fallback={null}><Greenery config={config} /></Suspense>
         </>}
         <Fence config={config} color={color} scene={scene} />

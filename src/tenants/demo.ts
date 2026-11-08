@@ -8,7 +8,7 @@ export const demoTenant: Tenant = {
   id: 'demo',
   demo: true,
   // Teraszfedés és carport él (közös keretes-tető motor); a többi család a választóban „hamarosan”, érdeklődés-méréssel.
-  products: ['pergola', 'carport', 'fence'],
+  products: ['pergola', 'carport', 'fence', 'garage-door'],
   brand: {
     name: 'Lamelix',
     legalName: 'Lamelix (bemutató)',

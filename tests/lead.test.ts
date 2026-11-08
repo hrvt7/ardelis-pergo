@@ -29,7 +29,7 @@ describe('POST /api/lead', () => {
     const mismatch = await handleLeadRequest(post(body({ product: 'fence', customer: { ...body().customer, email: 'kerites@example.com' } })), { NODE_ENV: 'development' })
     expect(mismatch.status).toBe(422)
     expect(((await mismatch.json()) as { field?: string }).field).toBe('config')
-    const soon = await handleLeadRequest(post(body({ product: 'garage-door', customer: { ...body().customer, email: 'garazs@example.com' } })), { NODE_ENV: 'development' })
+    const soon = await handleLeadRequest(post(body({ product: 'garden-building', customer: { ...body().customer, email: 'kertihaz@example.com' } })), { NODE_ENV: 'development' })
     expect(soon.status).toBe(422)
     expect(((await soon.json()) as { field?: string }).field).toBe('product')
     const unknown = await handleLeadRequest(post(body({ product: 'nincs-ilyen' })), { NODE_ENV: 'development' })

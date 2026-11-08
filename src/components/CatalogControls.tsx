@@ -11,16 +11,16 @@ const steps: { id: CatalogStep; label: string; icon: typeof Ruler }[] = [
   { id: 'extras', label: 'Extrák', icon: Sparkles }, { id: 'summary', label: 'Kérés', icon: ClipboardCheck },
 ]
 
-function Range({ label, value, min, max, step, unit, onChange }: { label: string; value: number; min: number; max: number; step: number; unit: string; onChange: (value: number) => void }) {
+export function Range({ label, value, min, max, step, unit, onChange }: { label: string; value: number; min: number; max: number; step: number; unit: string; onChange: (value: number) => void }) {
   return <div className="slider-field"><div className="field-heading"><label>{label}</label><div className="number-with-unit"><input type="number" aria-label={label} value={value} min={min} max={max} step={step} onChange={(e) => onChange(Math.max(min, Math.min(max, Number(e.target.value))))} /><span>{unit}</span></div></div><input className="range-input" type="range" aria-label={`${label} csúszka`} value={value} min={min} max={max} step={step} onChange={(e) => onChange(Number(e.target.value))} /><div className="range-limits"><span>{min} {unit}</span><span>{max} {unit}</span></div></div>
 }
-function Choices<T extends string>({ value, options, onChange, columns = 2 }: { value: T; options: { value: T; label: string; note?: string }[]; onChange: (value: T) => void; columns?: number }) {
+export function Choices<T extends string>({ value, options, onChange, columns = 2 }: { value: T; options: { value: T; label: string; note?: string }[]; onChange: (value: T) => void; columns?: number }) {
   return <div className="catalog-choices" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>{options.map((option) => <button type="button" key={option.value} className={value === option.value ? 'selected' : ''} onClick={() => onChange(option.value)}><span>{option.label}{option.note && <small>{option.note}</small>}</span>{value === option.value && <Check size={14} />}</button>)}</div>
 }
-function Toggle({ label, note, checked, onChange }: { label: string; note: string; checked: boolean; onChange: (value: boolean) => void }) {
+export function Toggle({ label, note, checked, onChange }: { label: string; note: string; checked: boolean; onChange: (value: boolean) => void }) {
   return <button type="button" className={`extra-card ${checked ? 'is-on' : ''}`} role="switch" aria-checked={checked} onClick={() => onChange(!checked)}><span><strong>{label}</strong><small>{note}</small></span><span className={`switch-track ${checked ? 'is-on' : ''}`}><span /></span></button>
 }
-function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+export function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return <section className="catalog-control-section"><div className="section-title"><h3>{title}</h3>{description && <p>{description}</p>}</div>{children}</section>
 }
 

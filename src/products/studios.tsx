@@ -10,6 +10,8 @@ const LOADERS: Partial<Record<ProductFamily, () => Promise<{ default: ComponentT
   carport: () => import('@/pages/PergoStudio'),
   // Kültéri (lineáris) család: kerítés és kapu a katalógus-stúdióban.
   fence: () => import('@/pages/FenceStudio'),
+  // Garázskapu: saját mag és 3D.
+  'garage-door': () => import('@/pages/GarageStudio'),
 }
 
 const STUDIOS: Partial<Record<ProductFamily, LazyExoticComponent<ComponentType>>> = Object.fromEntries(

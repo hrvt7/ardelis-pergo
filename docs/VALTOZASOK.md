@@ -1,5 +1,16 @@
 # Változások
 
+## 4.0 – Garázskapu konfigurátor; egységes ház és semleges háttér minden terméknél
+
+- **Új élő termék: garázskapu** (`/konfigurator/garazskapu`, `/k/<gyártó>/garazskapu`, `/embed/<gyártó>/garazskapu`). Saját mag (`src/products/garage.ts`: séma, alapértékek, mintaárlista, spec-kód, fejléc, leírás, `g=` megosztó kód), saját motor (`garageEngine` — a lead-végpont érvényesít és újraáraz), saját stúdió (`GarageStudio`), PDF (`exportSpecPdf`), SEO-bejegyzés és sitemap. A demó kínálata: teraszfedés, carport, kerítés, garázskapu.
+- **Négy kaputípus valós 3D-ben, animált nyitással:** szekcionált (a panelek a sín ívén a mennyezet alá futnak, torziós rugó, kötéldobok, mennyezeti motor), billenő (a lap kilendül és a mennyezet alá fordul, karokkal és húzórugókkal), redőny (a lécek a tengelydobozba tekerednek), oldalra nyíló szekcionált (a panelek a belső fal mentén fordulnak el). Panelminta (keskeny és széles borda, kazettás, sima, fahatású), ablak (felső sor, függőleges sáv, négyzetes), személybejáró kilinccsel és zárral, illeszkedő oldalajtó, fotocellák, okos kódkapcsoló, alacsony szemöldök vasalat.
+- **Csak ami a típushoz tartozik:** redőnykapunál nincs panelminta, szigetelés és ablak; billenőnél és redőnynél nincs személybejáró; az alacsony szemöldök csak szekcionáltnál. A vezérlő, az ár és a leírás is ezt követi; típusváltáskor a méret a típus korlátai közé áll.
+- **Jelenet:** a kapu egy lapostetős garázsszárny homlokzatában, mellette a pergola-konfigurátor háza; kocsibeálló, autó a garázsban; kameranézetek: Tér, Front, Részlet, Belülről.
+- **Egy ház minden terméknél:** a kerítés mögött eddig egy külön, egyszerű dobozház állt; most ugyanaz az építészeti ház, mint a pergolánál (a betöltő és az anyaghangolás közös modulba került: `src/lib/houseAsset.ts`, `components/models/HouseAsset.tsx`).
+- **Környezet kikapcsolva = a pergola semleges stúdió-háttere** a kerítésnél és a garázskapunál is: világos, semleges padló és háttér (éjjel sötét), nincs fű, beálló, ház és növényzet. Eddig a kerítésnél csak a ház tűnt el.
+- Az árpanel (`CatalogPricePanel`) fejléce termékfüggetlen lett; a vezérlő-primitívek (`Range`, `Choices`, `Toggle`, `Section`) közösek.
+- Tesztek: garázskapu-motor (érvényesítés, árazás, megosztó kód, leírás, típusfüggő opciók); a „hamarosan” lead-teszt a kerti házra állt át.
+
 ## 3.99 – Mobil nézet: a kerítés-stúdió lapja kinyílik, nincs átütő tartalom
 
 - **Hiba javítva – kerítés mobilon:** a „Kerítés és kapu beállításai” lap koppintásra nem nyílt ki (a fejlécnél maradt, a lépéssor levágva). Most 74%-os magasságig nyílik, közben a kameragombsor eltűnik, mint a pergola teljes lapjánál.

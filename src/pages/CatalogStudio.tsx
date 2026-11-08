@@ -96,7 +96,7 @@ export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
         <div className="viewer-footer"><span>1 egység = 1 méter</span><span>{roof ? `${price.area.toFixed(1)} m²` : `${config.length} fm`}</span></div>
       </section>
       <CatalogControls config={config} step={step} price={price} summary={summary} mobileOpen={mobileOpen} onMobileToggle={() => setMobileOpen(!mobileOpen)} onStep={setStep} onChange={update} />
-      <CatalogPricePanel config={config} price={price} exporting={exporting} delta={delta} onEditPrices={() => setPriceOpen(true)} onExport={exportPdf} onShare={share} />
+      <CatalogPricePanel heading={{ eyebrow: roof ? meta.title : `${LABELS.style[config.style]} · ${LABELS.gate[config.gateType]}`, title: roof ? `${formatNumber(config.width * (family === 'carport' ? config.bays : 1))} × ${formatNumber(config.depth)} m` : `${formatNumber(config.height)} m magas rendszer`, measure: `${roof ? `${formatNumber(price.area)} m²` : `${formatNumber(config.length)} fm`} · paraméteres modell` }} price={price} exporting={exporting} delta={delta} onEditPrices={() => setPriceOpen(true)} onExport={exportPdf} onShare={share} />
     </main>
     <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong>{formatHuf(price.totalGross)}</strong></div><button type="button" onClick={() => { setStep(step === 'summary' ? 'size' : 'summary'); setMobileOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>
     {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label="Értesítés bezárása" onClick={() => setToast('')}><X size={16} /></button></div>}
