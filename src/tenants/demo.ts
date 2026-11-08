@@ -7,6 +7,8 @@ import type { Tenant } from './types'
 export const demoTenant: Tenant = {
   id: 'demo',
   demo: true,
+  // Csak a teraszfedés él; a többi család a választóban „hamarosan” jelzéssel, érdeklődés-méréssel jelenik meg.
+  products: ['pergola'],
   brand: {
     name: 'Lamelix',
     legalName: 'Lamelix (bemutató)',

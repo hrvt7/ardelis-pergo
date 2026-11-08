@@ -5,6 +5,8 @@ import { DEFAULT_TENANT_ID, getTenant } from '@/tenants'
 import { TenantProvider } from '@/tenants/TenantContext'
 import { applyOverrides } from '@/tenants/overrides'
 import type { Tenant } from '@/tenants/types'
+import { DEFAULT_PRODUCT, productBySlug, tenantProducts } from '@/products'
+import ProductSoon from '@/pages/ProductSoon'
 
 const loadStudio = () => import('@/pages/PergoStudio')
 const PergoStudio = lazy(loadStudio)
@@ -52,13 +54,18 @@ export default function TenantStudio({ mode }: { mode: 'demo' | 'standalone' | '
   const [search] = useSearchParams()
   const base = getTenant(mode === 'demo' ? DEFAULT_TENANT_ID : params.tenantId)
   const tenant = useEffectiveTenant(base)
-  if (!base) return <NotFound />
+  // Termékcsalád az útvonalból; nincs megadva = pergola. Ismeretlen szelet, vagy olyan család, amit a gyártó nem kínál → 404.
+  const product = params.product ? productBySlug(params.product) : { id: DEFAULT_PRODUCT, status: 'live' as const }
+  if (!base || !product) return <NotFound />
   if (!tenant) return <PageLoading />
+  if (product.id !== DEFAULT_PRODUCT && !tenant.demo && !tenantProducts(tenant).includes(product.id)) return <NotFound />
   const embed = mode === 'embed'
   const homeHref = embed ? null : tenant.demo ? '/minta' : tenant.brand.website ?? null
   return (
-    <TenantProvider key={tenant.id} tenant={tenant} admin={search.get('admin') === '1'} embed={embed} homeHref={homeHref}>
-      <Suspense fallback={<PageLoading />}><PergoStudio /></Suspense>
+    <TenantProvider key={`${tenant.id}:${product.id}`} tenant={tenant} product={product.id} mode={mode} admin={search.get('admin') === '1'} embed={embed} homeHref={homeHref}>
+      {product.status === 'live'
+        ? <Suspense fallback={<PageLoading />}><PergoStudio /></Suspense>
+        : <ProductSoon product={product.id} />}
     </TenantProvider>
   )
 }

@@ -18,6 +18,7 @@ import { findWindowColor, finishPreview, houseSummary, wallColorHex, wallColorNa
 import { describeColor } from '@/lib/colors'
 import { supportsRoofShade } from '@/lib/roofShade'
 import ColorPicker from '@/components/ColorPicker'
+import ProductChooser from '@/components/ProductChooser'
 import { BuildingIssues, BuildingPicker, ClimateSection, WallGlazingPicker } from '@/components/BuildingControls'
 import { BUILDING_ROOFS, isClosedBuilding } from '@/lib/buildings'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
@@ -382,6 +383,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           <div className="step-heading"><span>0{stepIndex + 1} · {STEPS[stepIndex].short}</span><h2>{step === 'size' ? buildingName : stepLabel(step)}</h2></div>
 
           {step === 'size' && <>
+            <ProductChooser />
             {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
             <SectionTitle title="Mit építesz?" hint="Nyitott pergola, zárt üvegezett veranda vagy egész éves télikert. A választás átállítja a tetőt és az oldalakat, utána minden módosítható." />
             <BuildingPicker config={config} prices={prices} onChange={onChange} />

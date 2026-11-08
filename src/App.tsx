@@ -23,15 +23,24 @@ export default function App() {
     <Route path="/privacy" element={<Redirect to="/adatkezeles" />} />
     <Route path="/minta" element={<Suspense fallback={null}><Home /></Suspense>} />
     <Route path="/ardelis" element={<Redirect to="/minta" />} />
+    {/* Konfigurátor: a pergola a rövid útvonalon, a többi termékcsalád a /konfigurator/<család> alatt (src/products). */}
     <Route path="/konfigurator" element={<TenantStudio mode="demo" />} />
+    <Route path="/konfigurator/:product" element={<TenantStudio mode="demo" />} />
     <Route path="/studio/pergola" element={<Redirect to="/konfigurator" />} />
     <Route path="/k/demo" element={<Redirect to="/konfigurator" />} />
     <Route path="/ajanlat/:token" element={<Suspense fallback={null}><QuotePage /></Suspense>} />
     <Route path="/k/:tenantId/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
     <Route path="/k/:tenantId" element={<TenantStudio mode="standalone" />} />
+    <Route path="/k/:tenantId/:product" element={<TenantStudio mode="standalone" />} />
     <Route path="/embed/:tenantId" element={<TenantStudio mode="embed" />} />
-    {/* Régi, már nem létező útvonalak (piactér és katalógus) → kezdőlap */}
-    {['/studio/canopy', '/studio/carport', '/studio/fence', '/studio/gate', '/partnerek', '/admin', '/keresett', '/login'].map((path) => <Route key={path} path={path} element={<Navigate to="/" replace />} />)}
+    <Route path="/embed/:tenantId/:product" element={<TenantStudio mode="embed" />} />
+    {/* Régi termék-útvonalak → az új termékcsalád-oldalak */}
+    <Route path="/studio/canopy" element={<Redirect to="/konfigurator/carport" />} />
+    <Route path="/studio/carport" element={<Redirect to="/konfigurator/carport" />} />
+    <Route path="/studio/fence" element={<Redirect to="/konfigurator/kerites" />} />
+    <Route path="/studio/gate" element={<Redirect to="/konfigurator/kerites" />} />
+    {/* Régi, már nem létező útvonalak (piactér) → kezdőlap */}
+    {['/partnerek', '/admin', '/keresett', '/login'].map((path) => <Route key={path} path={path} element={<Navigate to="/" replace />} />)}
     <Route path="*" element={<NotFound />} />
   </Routes>
 }

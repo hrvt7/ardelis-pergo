@@ -3,8 +3,10 @@
 import { z } from 'zod'
 import { getTenant } from '../src/tenants'
 import { authorize, json, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
+import { INTEREST_EVENTS } from '../src/products'
 
-export const TRACK_EVENTS = ['open', 'configure', 'lead_view', 'lead_start', 'pdf', 'ar', 'share'] as const
+// A tölcsér eseményei + érdeklődés a még nem elérhető termékcsaládokra (interest_<család>, src/products).
+export const TRACK_EVENTS = ['open', 'configure', 'lead_view', 'lead_start', 'pdf', 'ar', 'share', ...INTEREST_EVENTS] as [string, ...string[]]
 const trackSchema = z.object({ tenantId: z.string().trim().min(1).max(64), name: z.enum(TRACK_EVENTS) })
 
 const WINDOW_MS = 10 * 60_000

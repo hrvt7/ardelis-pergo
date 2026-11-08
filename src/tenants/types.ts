@@ -2,6 +2,7 @@
 // Ez a fájl böngészőben és szerveren (lead végpont) is fut, ezért csak
 // relatív importot és tiszta TypeScriptet használhat — React és DOM nélkül.
 import type { FrameColor, MountType, PergolaConfig, PriceSettings, RoofType, SideType } from '../types/pergola'
+import type { ProductFamily } from '../products'
 
 export interface TenantRoof {
   /** Rövid terméknév, pl. „Aero” — a 3D-felirat és az árpanel ezt mutatja. */
@@ -38,6 +39,8 @@ export interface Tenant {
   id: string
   /** Bemutató (demó) gyártó-e — ilyenkor az árak „mintaárak”. */
   demo: boolean
+  /** Kínált termékcsaládok (src/products). Nincs megadva = csak teraszfedés (pergola, veranda, télikert). */
+  products?: ProductFamily[]
   brand: {
     /** Fejlécben és PDF-en megjelenő név, pl. „ARDELIS”. */
     name: string
