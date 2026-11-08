@@ -2,7 +2,11 @@
 // Látvány: 3D-ben dőlő termékképernyő, görgetésre kiegyenesedik; szövegfelfedés; rögzített bemutató
 // (konfigurátor → lead → statisztika → mobil); a gyártói képek a saját termékből készültek (demóadatokkal).
 import SimFrame from '@/components/SimFrame'
-import { useLayoutEffect, useRef, useState, type FormEvent, type PointerEvent, type ReactNode } from 'react'
+import { lazy, Suspense, useLayoutEffect, useRef, useState, type FormEvent, type PointerEvent, type ReactNode } from 'react'
+import { COLOR_CATALOG } from '@/lib/colors'
+import { ROOF_TYPES } from '@/lib/roofs'
+import { SIDE_TYPES } from '@/lib/sides'
+import { MOUNT_TYPES } from '@/lib/mount'
 import { ArrowRight, ArrowUpRight, Box, Check, Copy, Mail, QrCode, Send, Smartphone, Table2 } from 'lucide-react'
 import { Link } from 'react-router'
 import gsap from 'gsap'
@@ -21,6 +25,14 @@ import LangSwitch from '@/i18n/LangSwitch'
 import '@/platform.css'
 
 gsap.registerPlugin(ScrollTrigger)
+
+// Látványelemek (performative-ui) lustán: a könyvtár csak a nyitóoldallal töltődik, a konfigurátorral nem.
+const FeatureSlips = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.FeatureSlips })))
+const CountingStats = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.CountingStats })))
+const StickyCta = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.StickyCta })))
+const BigFooter = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.BigFooter })))
+/** A katalógusból számolt, valódi számok a felfutó számsorhoz. */
+const STATS = { colors: COLOR_CATALOG.length, roofs: ROOF_TYPES.length, sides: SIDE_TYPES.filter((type) => type !== 'none').length, mounts: MOUNT_TYPES.length }
 
 /** Kapcsolati cím a nyitóoldalon és a GYIK-ben; élesben a VITE_CONTACT_EMAIL környezeti változóból (céges domain). */
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'hrvtadam.7@icloud.com'
@@ -248,7 +260,16 @@ function PlatformPage() {
   const n = c.nav
   const h = c.hero
   const pr = c.pricing
-  return <div className="pf-page" ref={root}>
+  const statItems = lang === 'en'
+    ? [{ value: STATS.colors, label: 'frame colours (RAL and wood look)' }, { value: STATS.roofs, label: 'roof systems, from louvres to glass' }, { value: STATS.sides, label: 'side enclosure types per side' }, { value: STATS.mounts, label: 'mounting layouts, wall to free-standing' }]
+    : [{ value: STATS.colors, label: 'szín a szerkezethez (RAL és fa hatás)' }, { value: STATS.roofs, label: 'tetőrendszer a lamellától az üvegig' }, { value: STATS.sides, label: 'oldalzárás-típus, oldalanként választható' }, { value: STATS.mounts, label: 'rögzítési mód a faltól a szabadon állóig' }]
+  const footerColumns = [
+    { heading: lang === 'en' ? 'Product' : 'Termék', links: [{ label: n.liveDemo, href: DEMO_PATH }, { label: n.requestDemo, href: '#demo' }, ...(c.footer.sample ? [{ label: c.footer.sample, href: '/minta' }] : [])] },
+    { heading: lang === 'en' ? 'Contact' : 'Kapcsolat', links: [{ label: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` }] },
+    { heading: lang === 'en' ? 'Legal' : 'Jogi', links: [{ label: c.form.privacyLink, href: '/adatkezeles' }] },
+  ]
+  const marqueeRows = [c.marquee.slice(0, 7), c.marquee.slice(6)]
+  return <div className="pf-page pui-lamelix" ref={root}>
     <header className={`pf-header${scrolled ? ' is-scrolled' : ''}`}>
       <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={30} title={null} /><small>{n.brandSmall}</small></a>
       <nav aria-label={n.mainAria}><a href="#elonyok">{n.benefits}</a><a href="#bemutato">{n.showcase}</a><a href="#funkciok">{n.features}</a><a href="#mukodes">{n.how}</a><a href="#arak">{n.pricing}</a><a href="#gyik">{n.faq}</a></nav>
@@ -277,7 +298,11 @@ function PlatformPage() {
         </div>
       </section>
 
-      <div className="pf-marquee" aria-hidden="true"><div className="pf-marquee-track">{[0, 1].map((copy) => <span key={copy}>{c.marquee.map((item) => <b key={item}>{item}<i>✦</i></b>)}</span>)}</div></div>
+      <Suspense fallback={<div className="pf-marquee" aria-hidden="true"><div className="pf-marquee-track">{[0, 1].map((copy) => <span key={copy}>{c.marquee.map((item) => <b key={item}>{item}<i>✦</i></b>)}</span>)}</div></div>}>
+        <FeatureSlips rows={marqueeRows} highlight={[c.marquee[0], c.marquee[7], c.marquee[12]]} />
+        <CountingStats items={statItems} />
+        <StickyCta after=".pf-hero" until=".pf-final" text={lang === 'en' ? 'See the live configurator' : 'Nézze meg élőben a konfigurátort'} cta={n.liveDemo} to={DEMO_PATH} />
+      </Suspense>
 
       <section className="pf-statement" aria-label={c.statement.aria}>
         <p>{statement.split(' ').map((word, index) => <span className="pf-word" key={index}>{word} </span>)}</p>
@@ -385,11 +410,13 @@ function PlatformPage() {
       </section>
     </main>
 
-    <footer className="pf-footer">
+    <Suspense fallback={<footer className="pf-footer">
       <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={28} title={null} /></a>
       <p>{c.footer.text}</p>
       <nav aria-label={n.footerAria}><Link to={DEMO_PATH}>{n.liveDemo}</Link>{c.footer.sample && <Link to="/minta">{c.footer.sample}</Link>}<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></nav>
       <small>© {new Date().getFullYear()} Lamelix</small>
-    </footer>
+    </footer>}>
+      <BigFooter company="LAMELIX" columns={footerColumns} brand={<LamelixLogo className="pf-logo" height={26} title={null} />} copyright={<>© {new Date().getFullYear()} Lamelix · {c.footer.text}</>} />
+    </Suspense>
   </div>
 }

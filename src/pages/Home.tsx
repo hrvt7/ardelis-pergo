@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useLayoutEffect, useRef, useState } from 'react'
 import { assetUrl } from '@/lib/assetUrl'
 import { ArrowDown, ArrowRight, ArrowUpRight, Armchair, Check, FileText, Home as HomeIcon, MoveRight, Ruler, Share2, SunMedium, Wallet } from 'lucide-react'
 import { Link } from 'react-router'
@@ -13,6 +13,17 @@ import { WALL_COLORS, WINDOW_COLORS } from '@/lib/house'
 import '@/home-film.css'
 
 gsap.registerPlugin(ScrollTrigger)
+
+// Látványelemek (performative-ui) lustán, a mintaoldal témájával (pui-film).
+const FeatureSlips = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.FeatureSlips })))
+const RollingWord = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.RollingWord })))
+const StickyCta = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.StickyCta })))
+const BigFooter = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.BigFooter })))
+const FOOTER_COLUMNS = [
+  { heading: 'Tervezés', links: [{ label: '3D stúdió', href: '/konfigurator' }, { label: 'Színek és ház', href: '#szinek' }, { label: 'Tervezési útmutató', href: '#utmutato' }, { label: 'Gyakori kérdések', href: '#gyik' }] },
+  { heading: 'Gyártóknak', links: [{ label: 'Lamelix platform', href: '/' }, { label: 'Demó kérése', href: '/#demo' }] },
+  { heading: 'Jogi', links: [{ label: 'Adatkezelési tájékoztató', href: '/adatkezeles' }] },
+]
 
 /** Saját 3D stúdiónkból renderelt képek (public/assets/home). */
 const shot = (name: string) => assetUrl(`/assets/home/${name}.webp`)
@@ -324,7 +335,7 @@ export default function Home() {
     }
   }, [])
 
-  return <div className="marketing-page cinema-page" ref={root}>
+  return <div className="marketing-page cinema-page pui-film" ref={root}>
     <SiteHeader action={<Link className="header-studio-link" to="/konfigurator">Megnyitom a stúdiót <ArrowUpRight size={15} /></Link>} />
     <aside className="sample-banner" role="note"><b>Élő termékbemutató</b><span>Ez egy minta gyártói oldal: a Lamelix konfigurátor-szoftvert fejleszt gyártóknak, kivitelezést nem vállal.</span><Link to="/">Lamelix gyártóknak →</Link></aside>
     <div className="cinema-page-progress" aria-hidden="true"><i ref={pageProgress} /></div>
@@ -335,7 +346,7 @@ export default function Home() {
       <section className="cinema-hero" aria-labelledby="home-title">
         <div className="hero-ghost" aria-hidden="true">PERGO</div>
         <div className="cinema-hero-copy">
-          <div className="cinema-overline hero-intro-item"><span>LAMELIX</span><i />PERGOLA · VERANDA · TÉLIKERT</div>
+          <div className="cinema-overline hero-intro-item"><span>LAMELIX</span><i /><Suspense fallback={<>PERGOLA · VERANDA · TÉLIKERT</>}><RollingWord words={['PERGOLA', 'VERANDA', 'TÉLIKERT']} /></Suspense></div>
           <h1 id="home-title" aria-label="A teraszod. Újragondolva."><SplitLine>A teraszod.</SplitLine><SplitLine italic>Újragondolva.</SplitLine></h1>
           <p className="hero-intro-item">Tervezd meg a pergolát, a verandát vagy a télikertet a saját teraszod méreteire, a saját házad színei elé. Tetőrendszer, oldalzárás, üvegfal, árnyékolás és fény — valós idejű 3D-ben, azonnali irányárral.</p>
           <div className="cinema-hero-actions hero-intro-item"><OvalLink to="/konfigurator">Saját teraszfedés tervezése</OvalLink><a className="cinema-text-link" href="#elmeny">Fedezd fel <ArrowDown size={15} /></a></div>
@@ -350,7 +361,10 @@ export default function Home() {
         <div className="hero-scroll-cue" aria-hidden="true"><span>GÖRGESS</span><i /></div>
       </section>
 
-      <div className="cinema-marquee" aria-hidden="true"><div className="cinema-marquee-track">{[...MARQUEE, ...MARQUEE].map((item, index) => <span key={index}>{item}<i>✦</i></span>)}</div></div>
+      <Suspense fallback={<div className="cinema-marquee" aria-hidden="true"><div className="cinema-marquee-track">{[...MARQUEE, ...MARQUEE].map((item, index) => <span key={index}>{item}<i>✦</i></span>)}</div></div>}>
+        <FeatureSlips rows={[MARQUEE.slice(0, 5), MARQUEE.slice(5)]} highlight={[MARQUEE[0], MARQUEE[5]]} />
+        <StickyCta after=".cinema-hero" until=".cinema-final" text="Öt perc, és látod a teraszod" cta="Tervezés" to="/konfigurator" theme="pui-film" />
+      </Suspense>
 
       <section className="cinema-intro" id="elmeny" data-cinema-reveal>
         <div className="intro-index" data-reveal-item>LAMELIX / 01<br />VALÓS MÉRETEK.<br />ÁTLÁTHATÓ TERVEZÉS.</div>
@@ -467,6 +481,6 @@ export default function Home() {
         <Link className="cinema-final-button" to="/konfigurator" aria-label="Tervezés indítása"><span>KEZDD EL</span><ArrowUpRight /></Link>
       </section>
     </main>
-    <SiteFooter />
+    <Suspense fallback={<SiteFooter />}><BigFooter company="LAMELIX" columns={FOOTER_COLUMNS} copyright={<>© {new Date().getFullYear()} Lamelix · Paraméteres pergolatervezés, valós idejű vizualizáció és műszaki összefoglaló.</>} /></Suspense>
   </div>
 }

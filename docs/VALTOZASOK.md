@@ -1,5 +1,14 @@
 # Változások
 
+## 3.85 – Nyitóoldalak: performative-ui látványelemek Lamelix témával
+
+- **Könyvtár:** `performative-ui` 0.7 (MIT, React 18/19), csak a nyitóoldalakkal töltődik (lazy `Showpieces` chunk, ~15 KB gzip JS + 9 KB CSS); a konfigurátor csomagját nem érinti. A lila „AI” gradient helyett saját téma (`src/pui-theme.css`): `.pui-lamelix` a főoldalon (zöldes-fekete, #d8ff72 akcent), `.pui-film` a mintaoldalon (tinta, bronz, Cormorant).
+- **Főoldal (`/`):** a futó marquee helyett két sor jellemző-badge, amelyek görgetésre ellentétes irányba csúsznak (SlippyWords), kiemelt elemekkel; alatta felfutó számsor valódi, a katalógusból számolt értékekkel (91 szín, 6 tetőrendszer, 9 oldalzárás, 5 rögzítési mód), ami akkor indul, amikor a képernyőre ér; ragadós CTA-sáv a hero után („Nézze meg élőben a konfigurátort”), ami a záró szekciónál eltűnik; fal méretű LAMELIX felirat a láblécben link-oszlopokkal (Termék, Kapcsolat, Jogi). Magyarul és angolul.
+- **Mintaoldal (`/minta`):** a címsor felett forgó szó (PERGOLA → VERANDA → TÉLIKERT), a bronz marquee helyett csúszó badge-sorok a mintaoldal betűivel, ragadós „Tervezés” sáv, és a hero PERGO-szellemképét tükröző óriás LAMELIX lábléc.
+- **Technika:** a ragadós sáv a `body`-ba portálódik (az animált szülők transzformja alatt a `fixed` nem működne); a belső lábléc-linkek kliensoldali navigációval nyílnak; a felfutó számok és a sáv görgetésfigyeléssel működnek (IntersectionObserver nélkül). Csökkentett mozgásnál a csúszás és a számlálás kikapcsol.
+- **Szándékosan kihagyva:** Aurora, FloatingSparkles, GradientText, Prompt, ChatBubble, PricingCard, Popover — ezek a startup-klisék, amiket a könyvtár maga is kigúnyol, egy prémium építőipari márkához hiteltelenek. GlassCard sem került be: a Stúdió bento világos háttéren van, az üvegkártya sötét háttérre való.
+- Fájlok: `src/components/Showpieces.tsx`, `src/pui-theme.css`, `src/pages/Platform.tsx`, `src/pages/Home.tsx`, `package.json`.
+
 ## 3.84 – Nappal-éjszaka átúsztatás, filmszerű kameravágás
 
 - **Napszakváltás:** a nap ereje, színe és iránya, az égboltfény, a köd, az expozíció már nem ugrik, hanem a célérték felé úszik. Az égbolt-kép (HDR) és a csak be/ki jellegű dolgok (csillagok, éjszakai derítőfények, LED éjszakai fénye, bloom) az 1,5 s-os átmenet közepén váltanak, amikor az égbolt a legtompább, így a csere nem látszik. A napszak-csúszka húzása közben is folyamatos.

@@ -1,0 +1,84 @@
+/*
+  performative-ui a Lamelix színeire. A könyvtár alapból lila–rózsaszín „AI” gradientet rak mindenre;
+  itt a saját sötét háttér, az akcentszín és a betűtípusaink veszik át. Két téma:
+  .pui-lamelix  — a főoldal (platform.css: zöldes-fekete háttér, #d8ff72 akcent)
+  .pui-film     — a mintaoldal (home-film.css: tinta háttér, bronz akcent, Cormorant címek)
+*/
+.pui-lamelix, .pui-film {
+  --pui-font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --pui-font-mono: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --pui-ease: cubic-bezier(.22, 1, .36, 1);
+  --pui-radius-xl: 18px;
+  --pui-glow: none;
+  --pui-glow-strong: none;
+}
+.pui-lamelix {
+  --pui-bg: var(--pf-bg, #0b1210);
+  --pui-bg-elev: rgba(255,255,255,.03);
+  --pui-border: var(--pf-edge, rgba(255,255,255,.1));
+  --pui-border-bright: rgba(216,255,114,.32);
+  --pui-fg: var(--pf-text, #f2f5ef);
+  --pui-fg-dim: var(--pf-muted, #b9c2b4);
+  --pui-fg-mute: rgba(185,194,180,.62);
+  --pui-grad-from: #d8ff72;
+  --pui-grad-mid: #b9ec4f;
+  --pui-grad-to: #8fd36a;
+  --pui-grad: linear-gradient(120deg, var(--pui-grad-from), var(--pui-grad-mid), var(--pui-grad-to));
+  --pui-glass-soft: rgba(255,255,255,.035);
+  --pui-overlay: rgba(255,255,255,.04);
+  --pui-overlay-strong: rgba(255,255,255,.08);
+}
+.pui-film {
+  --pui-bg: #1a1a1a;
+  --pui-bg-elev: #222;
+  --pui-border: rgba(245,243,238,.12);
+  --pui-border-bright: rgba(245,243,238,.22);
+  --pui-fg: #f5f3ee;
+  --pui-fg-dim: rgba(245,243,238,.72);
+  --pui-fg-mute: rgba(245,243,238,.48);
+  --pui-grad-from: oklch(84% .095 82);
+  --pui-grad-mid: oklch(78% .11 70);
+  --pui-grad-to: oklch(88% .07 90);
+  --pui-grad: linear-gradient(120deg, var(--pui-grad-from), var(--pui-grad-mid), var(--pui-grad-to));
+  --pui-glass-soft: rgba(245,243,238,.05);
+  --pui-overlay: rgba(245,243,238,.04);
+  --pui-overlay-strong: rgba(245,243,238,.08);
+}
+
+/* ── SlippyWords: jellemző-sorok, amelyek görgetésre ellentétes irányba csúsznak ── */
+.lx-slippy { padding: clamp(26px, 4vw, 44px) 0; border-block: 1px solid var(--pui-border); }
+.lx-slippy .pui-slippy__word { font-size: clamp(13px, 1.25vw, 17px); font-weight: 600; letter-spacing: .01em; padding: 9px 18px; }
+.lx-slippy .pui-slippy__word--gradient { color: #0b1210; font-weight: 700; }
+.pui-film .lx-slippy { border-block: 1px solid rgba(26,26,26,.2); background: var(--accent-film); }
+.pui-film .lx-slippy .pui-slippy__word { font-family: var(--display); font-weight: 400; font-size: clamp(20px, 2.1vw, 30px); letter-spacing: -.01em; color: var(--primitive-ink); border-color: rgba(26,26,26,.22); background: rgba(255,255,255,.14); }
+.pui-film .lx-slippy .pui-slippy__word--gradient { color: var(--primitive-paper); background: var(--primitive-ink); border-color: transparent; }
+
+/* ── WordRoll a címsor feliratában: a forgó szó a feliratsor magasságát tartja ── */
+.lx-roll { color: var(--accent-film, #d8ff72); }
+.lx-roll .pui-roll { vertical-align: bottom; }
+
+/* ── StatCounter-sor: valódi, katalógusból számolt számok ── */
+.lx-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; max-width: 1120px; margin: 0 auto; padding: clamp(28px, 4vw, 48px) var(--pf-gutter, 24px) 0; }
+.lx-stats div { padding: 18px 0 0; border-top: 1px solid var(--pui-border); }
+.lx-stats strong { display: block; font-size: clamp(30px, 3.6vw, 48px); font-weight: 700; letter-spacing: -.035em; line-height: 1; color: var(--pui-fg); font-variant-numeric: tabular-nums; }
+.lx-stats strong small { font-size: .5em; font-weight: 600; letter-spacing: 0; margin-left: 2px; color: var(--pui-grad-from); }
+.lx-stats span { display: block; margin-top: 8px; font-size: 13px; line-height: 1.45; color: var(--pui-fg-dim); }
+@media (max-width: 760px) { .lx-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } }
+
+/* ── Ragadós CTA-sáv: a hero elhagyása után úszik fel, a záró szekciónál eltűnik ── */
+.lx-sticky { position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 40; transform: translate(-50%, 140%); opacity: 0; transition: transform .5s var(--pui-ease), opacity .4s ease; pointer-events: none; }
+.lx-sticky.is-visible { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+.lx-sticky .pui-sticky-banner { gap: 14px; padding: 9px 10px 9px 18px; border: 1px solid var(--pui-border-bright); border-radius: 999px; background: color-mix(in oklab, var(--pui-bg) 82%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 18px 50px rgba(0,0,0,.4); color: var(--pui-fg); font-size: 13.5px; font-weight: 500; white-space: nowrap; }
+.lx-sticky .pui-sticky-banner > svg:first-child, .lx-sticky .pui-sticky-banner__sparkle { color: var(--pui-grad-from); }
+.lx-sticky a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: var(--pui-grad-from); color: #0b1210; font-weight: 700; font-size: 13px; text-decoration: none; }
+.lx-sticky.pui-film a { color: #1a1a1a; }
+.lx-sticky.pui-film .pui-sticky-banner { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+@media (max-width: 640px) { .lx-sticky { left: 12px; right: 12px; transform: translate(0, 140%); } .lx-sticky.is-visible { transform: translate(0, 0); } .lx-sticky .pui-sticky-banner { width: 100%; justify-content: space-between; white-space: normal; padding-left: 14px; } .lx-sticky .lx-sticky-text { display: none; } }
+
+/* ── BigBack lábléc: link-oszlopok fölött a fal méretű LAMELIX felirat ── */
+.lx-bigback.pui-bigback { background: var(--pui-bg); border-top: 1px solid var(--pui-border); }
+.lx-bigback .pui-bigback__heading { font-family: var(--pui-font-sans); letter-spacing: .14em; }
+.lx-bigback .pui-bigback__svg text { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weight: 800; letter-spacing: -.04em; fill: var(--pui-fg); opacity: .14; }
+.pui-film .lx-bigback .pui-bigback__svg text { font-family: var(--display); font-weight: 500; letter-spacing: -.02em; }
+.lx-bigback .pui-bigback__svg:hover text { opacity: .22; }
+.lx-bigback-brand { display: block; margin-bottom: 14px; }
