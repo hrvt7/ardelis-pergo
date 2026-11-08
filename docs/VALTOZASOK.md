@@ -1,5 +1,13 @@
 # Változások
 
+## 3.86 – Előtte-utána: ugyanaz a terasz, pergolával
+
+- **Képcsúszka** mindkét nyitóoldalon: két azonos kameraállású kép a 3D stúdióból (üres faburkolatú terasz a ház előtt, és ugyanaz antracit lamellás pergolával és bútorral), húzható választóvonallal. Egérrel, ujjal és billentyűvel (rejtett csúszka) is állítható; a képek `public/assets/home/terrace-before*.webp` és `terrace-after*.webp` (1920 és 960 px). Saját komponens (`ImageCompare`), nem a könyvtáré, mert annak BeforeAfter eleme szöveges lista.
+- **Főoldal:** a kijelentés után új szekció („Ugyanaz a terasz. Pergolával.”), a kép alatt a könyvtár két oszlopos előtte-utána listája a gyártói folyamatról (árlista e-mailben → irányár tervezés közben; „kb. 5×4 méter” → teljes konfiguráció PDF-fel…), a nyíl fölött „Lamelix-szel”. Magyarul és angolul.
+- **Mintaoldal:** az élmény-szekció után ugyanez a képcsúszka a fotóba helyezés felvezetéseként.
+- **Képkészítés:** a stúdió `?cam=` rögzített kameraállásával, ultra minőségben, az „előtte” képhez a pergola- és bútorcsoport elrejtésével — így a két kép pixelre ugyanaz a jelenet.
+- Fájlok: `src/components/Showpieces.tsx` (`ImageCompare`, `BeforeAfterList`), `src/pui-theme.css`, `src/pages/Platform.tsx`, `src/pages/Home.tsx`, `public/assets/home/terrace-*.webp`.
+
 ## 3.85 – Nyitóoldalak: performative-ui látványelemek Lamelix témával
 
 - **Könyvtár:** `performative-ui` 0.7 (MIT, React 18/19), csak a nyitóoldalakkal töltődik (lazy `Showpieces` chunk, ~15 KB gzip JS + 9 KB CSS); a konfigurátor csomagját nem érinti. A lila „AI” gradient helyett saját téma (`src/pui-theme.css`): `.pui-lamelix` a főoldalon (zöldes-fekete, #d8ff72 akcent), `.pui-film` a mintaoldalon (tinta, bronz, Cormorant).

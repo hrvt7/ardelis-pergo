@@ -19,6 +19,7 @@ const FeatureSlips = lazy(() => import('@/components/Showpieces').then((m) => ({
 const RollingWord = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.RollingWord })))
 const StickyCta = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.StickyCta })))
 const BigFooter = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.BigFooter })))
+const ImageCompare = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.ImageCompare })))
 const FOOTER_COLUMNS = [
   { heading: 'Tervezés', links: [{ label: '3D stúdió', href: '/konfigurator' }, { label: 'Színek és ház', href: '#szinek' }, { label: 'Tervezési útmutató', href: '#utmutato' }, { label: 'Gyakori kérdések', href: '#gyik' }] },
   { heading: 'Gyártóknak', links: [{ label: 'Lamelix platform', href: '/' }, { label: 'Demó kérése', href: '/#demo' }] },
@@ -376,6 +377,15 @@ export default function Home() {
           <div><strong><b data-count={WINDOW_COLORS.length}>{WINDOW_COLORS.length}</b></strong><span>nyílászáró-szín</span></div>
           <div><strong><b data-count="1">1</b></strong><span>terv: 3D, PDF és felmérés</span></div>
         </div>
+      </section>
+
+      <section className="lx-compare-section cinema-compare" aria-labelledby="compare-title">
+        <div className="cinema-section-index">ELŐTTE, UTÁNA</div>
+        <h2 id="compare-title">Ugyanaz a terasz.<br /><em>Pergolával.</em></h2>
+        <p>Húzd a vonalat: bal oldalt az üres terasz, jobb oldalt ugyanaz a kép a 3D stúdióban megtervezett pergolával. A fotóba helyezéssel a saját teraszodról is ilyen kép készül.</p>
+        <Suspense fallback={<Shot name="terrace-after" alt="Antracit pergola egy faburkolatú ház teraszán, aranyórában" sizes="(max-width: 900px) 100vw, 1100px" />}>
+          <ImageCompare before={{ src: shot('terrace-before'), srcSet: shotSet('terrace-before') }} after={{ src: shot('terrace-after'), srcSet: shotSet('terrace-after') }} beforeAlt="Üres faburkolatú terasz egy családi ház előtt" afterAlt="Ugyanaz a terasz antracit bioklimatikus pergolával és kerti bútorral" />
+        </Suspense>
       </section>
 
       <section className="cinema-film" id="film" ref={film} aria-label="A PERGO forma, méret, fény és este jelenete">

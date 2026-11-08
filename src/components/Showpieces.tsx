@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 're
 import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router'
 import { ArrowRight } from 'lucide-react'
-import { BigBack, SlippyWords, StatCounter, StickyBanner, WordRoll } from 'performative-ui'
+import { BeforeAfter, BigBack, SlippyWords, StatCounter, StickyBanner, WordRoll } from 'performative-ui'
 import 'performative-ui/styles.css'
 import '@/pui-theme.css'
 
@@ -66,6 +66,40 @@ export function StickyCta({ after, until, text, cta, to, theme = 'pui-lamelix' }
   return createPortal(<div className={`lx-sticky ${theme}${visible ? ' is-visible' : ''}`} aria-hidden={!visible}>
     <StickyBanner trailing={<Link to={to} tabIndex={visible ? 0 : -1}>{cta} <ArrowRight size={14} /></Link>}><span className="lx-sticky-text">{text}</span></StickyBanner>
   </div>, document.body)
+}
+
+/**
+ * Előtte-utána képcsúszka: két azonos kameraállású kép, a választóvonal húzható (egér, ujj) és billentyűvel is
+ * állítható (a rejtett csúszka). A felirat a két oldal fölött, a vonalon fogantyú.
+ */
+export function ImageCompare({ before, after, beforeAlt, afterAlt, beforeLabel = 'Előtte', afterLabel = 'Utána', sizes = '(max-width: 900px) 100vw, 1100px' }: { before: { src: string; srcSet?: string }; after: { src: string; srcSet?: string }; beforeAlt: string; afterAlt: string; beforeLabel?: string; afterLabel?: string; sizes?: string }) {
+  const [split, setSplit] = useState(58)
+  const frame = useRef<HTMLDivElement>(null)
+  const dragging = useRef(false)
+  const move = (clientX: number) => {
+    const rect = frame.current?.getBoundingClientRect()
+    if (!rect) return
+    setSplit(Math.round(Math.min(96, Math.max(4, ((clientX - rect.left) / rect.width) * 100)) * 10) / 10)
+  }
+  return <div className="lx-compare" ref={frame} style={{ ['--lx-split' as string]: `${split}%` }}
+    onPointerDown={(event) => { dragging.current = true; (event.currentTarget as HTMLDivElement).setPointerCapture(event.pointerId); move(event.clientX) }}
+    onPointerMove={(event) => { if (dragging.current) move(event.clientX) }}
+    onPointerUp={(event) => { dragging.current = false; (event.currentTarget as HTMLDivElement).releasePointerCapture(event.pointerId) }}
+    onPointerCancel={() => { dragging.current = false }}>
+    <img className="lx-compare-after" src={after.src} srcSet={after.srcSet} sizes={sizes} alt={afterAlt} loading="lazy" decoding="async" draggable={false} />
+    <div className="lx-compare-before" aria-hidden="true"><img src={before.src} srcSet={before.srcSet} sizes={sizes} alt="" loading="lazy" decoding="async" draggable={false} /></div>
+    <span className="lx-compare-label is-before">{beforeLabel}</span>
+    <span className="lx-compare-label is-after">{afterLabel}</span>
+    <div className="lx-compare-handle" aria-hidden="true"><i /><b><ArrowRight size={14} style={{ transform: 'rotate(180deg)' }} /><ArrowRight size={14} /></b></div>
+    <input className="lx-compare-range" type="range" min={4} max={96} step={0.5} value={split} onChange={(event) => setSplit(Number(event.target.value))} aria-label={`${beforeLabel} / ${afterLabel}`} aria-valuetext={`${Math.round(split)}% ${beforeLabel.toLowerCase()}`} />
+    <span className="sr-only">{beforeAlt}</span>
+  </div>
+}
+
+/** Két oszlopos előtte-utána lista (a könyvtár BeforeAfter eleme), a nyíl fölött a márkanévvel. */
+export function BeforeAfterList({ before, after, brand, beforeLabel, afterLabel }: { before: string[]; after: string[]; brand: string; beforeLabel: string; afterLabel: string }) {
+  // A könyvtár a márkanév elé fixen „with ”-et ír; a CSS a szöveget elrejti, csak a saját feliratunk látszik („Lamelix-szel”).
+  return <BeforeAfter className="lx-ba" before={before} after={after} brand={<b className="lx-ba-brand">{brand}</b>} beforeLabel={beforeLabel} afterLabel={afterLabel} />
 }
 
 export interface FooterColumn { heading: string; links: { label: string; href: string }[] }

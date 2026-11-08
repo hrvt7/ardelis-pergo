@@ -31,6 +31,9 @@ const FeatureSlips = lazy(() => import('@/components/Showpieces').then((m) => ({
 const CountingStats = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.CountingStats })))
 const StickyCta = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.StickyCta })))
 const BigFooter = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.BigFooter })))
+const ImageCompare = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.ImageCompare })))
+const BeforeAfterList = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.BeforeAfterList })))
+const terrace = (name: string) => ({ src: assetUrl(`/assets/home/${name}.webp`), srcSet: `${assetUrl(`/assets/home/${name}-960.webp`)} 960w, ${assetUrl(`/assets/home/${name}.webp`)} 1920w` })
 /** A katalógusból számolt, valódi számok a felfutó számsorhoz. */
 const STATS = { colors: COLOR_CATALOG.length, roofs: ROOF_TYPES.length, sides: SIDE_TYPES.filter((type) => type !== 'none').length, mounts: MOUNT_TYPES.length }
 
@@ -269,6 +272,9 @@ function PlatformPage() {
     { heading: lang === 'en' ? 'Legal' : 'Jogi', links: [{ label: c.form.privacyLink, href: '/adatkezeles' }] },
   ]
   const marqueeRows = [c.marquee.slice(0, 7), c.marquee.slice(6)]
+  const compare = lang === 'en'
+    ? { eyebrow: 'Before and after', title: <>The same terrace. <em>With a pergola.</em></>, text: 'Drag the line: the empty terrace on the left, the same shot with the pergola designed in the 3D studio on the right. Your customers get this view of their own terrace from a photo.', beforeAlt: 'Empty wooden terrace in front of a family house', afterAlt: 'The same terrace with an anthracite bioclimatic pergola and garden furniture', beforeLabel: 'Before', afterLabel: 'After', brand: 'with Lamelix', listBefore: ['Price list by e-mail, days later', 'Customer imagines the terrace from a catalogue', 'Requests arrive as “about 5 by 4 metres”', 'Every quote is drawn up by hand'], listAfter: ['Guide price while they design, at eleven at night', 'Their own terrace in 3D, from their own photo', 'Requests arrive with the full configuration and PDF', 'The quote is generated, you only confirm'] }
+    : { eyebrow: 'Előtte, utána', title: <>Ugyanaz a terasz. <em>Pergolával.</em></>, text: 'Húzza a vonalat: bal oldalt az üres terasz, jobb oldalt ugyanaz a kép a 3D stúdióban megtervezett pergolával. A vevői a saját teraszukról kapnak ilyen képet, egy fotóból.', beforeAlt: 'Üres faburkolatú terasz egy családi ház előtt', afterAlt: 'Ugyanaz a terasz antracit bioklimatikus pergolával és kerti bútorral', beforeLabel: 'Előtte', afterLabel: 'Utána', brand: 'Lamelix-szel', listBefore: ['Árlista e-mailben, napokkal később', 'A vevő katalógusból képzeli el a teraszt', 'A kérés úgy jön, hogy „kb. 5×4 méter”', 'Minden ajánlat kézzel készül'], listAfter: ['Irányár tervezés közben, este tizenegykor is', 'A saját terasza 3D-ben, a saját fotójáról', 'A kérés a teljes konfigurációval és PDF-fel érkezik', 'Az ajánlat generálódik, Ön csak jóváhagyja'] }
   return <div className="pf-page pui-lamelix" ref={root}>
     <header className={`pf-header${scrolled ? ' is-scrolled' : ''}`}>
       <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={30} title={null} /><small>{n.brandSmall}</small></a>
@@ -306,6 +312,16 @@ function PlatformPage() {
 
       <section className="pf-statement" aria-label={c.statement.aria}>
         <p>{statement.split(' ').map((word, index) => <span className="pf-word" key={index}>{word} </span>)}</p>
+      </section>
+
+      <section className="lx-compare-section" id="elotte-utana" aria-labelledby="compare-title">
+        <p className="pf-eyebrow">{compare.eyebrow}</p>
+        <h2 id="compare-title">{compare.title}</h2>
+        <p>{compare.text}</p>
+        <Suspense fallback={null}>
+          <ImageCompare before={terrace('terrace-before')} after={terrace('terrace-after')} beforeAlt={compare.beforeAlt} afterAlt={compare.afterAlt} beforeLabel={compare.beforeLabel} afterLabel={compare.afterLabel} />
+          <BeforeAfterList before={compare.listBefore} after={compare.listAfter} brand={compare.brand} beforeLabel={compare.beforeLabel} afterLabel={compare.afterLabel} />
+        </Suspense>
       </section>
 
       <section className="pf-section" id="elonyok" aria-labelledby="elonyok-title" data-pf-reveal>
