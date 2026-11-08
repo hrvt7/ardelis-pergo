@@ -23,6 +23,8 @@ export const PRODUCTS: readonly ProductInfo[] = [
 ]
 
 export const DEFAULT_PRODUCT: ProductFamily = 'pergola'
+/** A családok azonosítói sémákhoz (zod enum). */
+export const PRODUCT_IDS = PRODUCTS.map((product) => product.id) as [ProductFamily, ...ProductFamily[]]
 
 export const productInfo = (id: ProductFamily): ProductInfo => PRODUCTS.find((product) => product.id === id)!
 export const productBySlug = (slug: string | undefined | null): ProductInfo | undefined => (slug ? PRODUCTS.find((product) => product.slug === slug.toLowerCase()) : undefined)

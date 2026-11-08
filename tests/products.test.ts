@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_PRODUCT, INTEREST_EVENTS, interestEvent, productBySlug, productInfo, productPath, PRODUCTS, tenantProducts } from '../src/products'
 import { TRACK_EVENTS } from '../server/analytics'
+import { getEngine, pergolaEngine } from '../src/products/engines'
+import { shareHash } from '../src/lib/shareCode'
+import { parseConfig, tenantPrice } from '../src/tenants/rules'
 import { demoTenant } from '../src/tenants/demo'
 
 describe('termékcsaládok', () => {
@@ -27,6 +30,17 @@ describe('termékcsaládok', () => {
     expect(tenantProducts({})).toEqual(['pergola'])
     expect(tenantProducts({ products: ['pergola', 'fence'] })).toEqual(['pergola', 'fence'])
     expect(tenantProducts(demoTenant)).toEqual(['pergola'])
+  })
+
+  it('motor: a pergola motorja ugyanazt adja, mint a meglévő érvényesítés, árazás és megosztókód; a többi családnak még nincs', () => {
+    const config = demoTenant.defaultConfig
+    expect(getEngine('pergola')).toBe(pergolaEngine)
+    expect(pergolaEngine.parse(demoTenant, config)).toEqual(parseConfig(demoTenant, config))
+    expect(pergolaEngine.parse(demoTenant, { width: 'x' })).toBeNull()
+    expect(pergolaEngine.price(demoTenant, config).totalGross).toBe(tenantPrice(demoTenant, config).totalGross)
+    expect(pergolaEngine.shareHash(config)).toBe(shareHash(config))
+    expect(pergolaEngine.shareHash(config).startsWith(`${pergolaEngine.shareKey}=`)).toBe(true)
+    for (const id of ['carport', 'fence', 'garage-door', 'garden-building'] as const) expect(getEngine(id)).toBeUndefined()
   })
 
   it('az érdeklődés-eseményeket a szerver mérése elfogadja', () => {

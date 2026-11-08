@@ -30,7 +30,7 @@ const FIELD_NAMES: Record<string, string> = {
 }
 
 export default function LeadForm({ productFamily, config, house }: Props) {
-  const { tenant, embed } = useTenant()
+  const { tenant, embed, product } = useTenant()
   const startedAt = useRef(Date.now())
   const formRef = useRef<HTMLFormElement>(null)
   useEffect(() => {
@@ -65,6 +65,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId: tenant.id,
+          product,
           config,
           customer: {
             name: field('customerName'),

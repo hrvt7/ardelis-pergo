@@ -20,6 +20,17 @@ afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
 beforeEach(() => resetLeadRateLimit())
 
 describe('POST /api/lead', () => {
+  it('termékcsalád: megadás nélkül pergola; „hamarosan” családra még nem fogad kérelmet', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+    const ok = await handleLeadRequest(post(body()), { NODE_ENV: 'development' })
+    expect(ok.status).toBe(200)
+    const fence = await handleLeadRequest(post(body({ product: 'fence', customer: { ...body().customer, email: 'kerites@example.com' } })), { NODE_ENV: 'development' })
+    expect(fence.status).toBe(422)
+    expect(((await fence.json()) as { field?: string }).field).toBe('product')
+    const unknown = await handleLeadRequest(post(body({ product: 'nincs-ilyen' })), { NODE_ENV: 'development' })
+    expect(unknown.status).toBe(422)
+  })
+
   it('élesben kézbesítés nélkül 503-at ad, nem tesz úgy, mintha sikerült volna', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const response = await handleLeadRequest(post(body()), { NODE_ENV: 'production' })

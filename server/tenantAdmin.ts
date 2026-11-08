@@ -195,7 +195,7 @@ export async function handleAdminLeads(request: Request, env: AdminEnv): Promise
   try {
     if (request.method === 'GET') {
       const list = (columns: string) => fetch(`${base}?tenant_id=eq.${tenantId}&select=${columns}&order=created_at.desc&limit=200`, { headers: storeHeaders(env), signal: AbortSignal.timeout(5000) })
-      let response = await list(`${LEAD_COLUMNS},engagement,followup_sent_at,reminder_sent_at`)
+      let response = await list(`${LEAD_COLUMNS},engagement,followup_sent_at,reminder_sent_at,product`)
       // Ha a gyártó adatbázisában még nincsenek az újabb oszlopok (supabase/leads.sql), a lista nélkülük is jöjjön le.
       if (response.status === 400) response = await list(LEAD_COLUMNS)
       if (!response.ok) throw new Error(`Supabase ${response.status}`)

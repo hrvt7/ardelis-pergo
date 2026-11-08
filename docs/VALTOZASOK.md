@@ -1,5 +1,12 @@
 # Változások
 
+## 3.91 – Többtermékes héj, 2. lépés: termékcsalád-motorok és Stúdió-regiszter
+
+- **Motor-szerződés** (`src/products/engines.ts`): egy család motorja érvényesít (`parse`), áraz (`price`) és megosztó-kódot ad (`shareHash`, saját kulccsal: pergola `c=`). A pergola motorja a meglévő `parseConfig`, `tenantPrice`, `shareHash` fölötti vékony réteg — a pergola viselkedése nem változott. A „hamarosan” családoknak nincs motorjuk.
+- **Lead-végpont** a motoron keresztül dolgozik: a kérés `product` mezőt kap (régi kliensek nem küldik → pergola); ismeretlen vagy motor nélküli családra 422. A konfigurációs link a család útvonalára mutat. A leads tábla új `product` oszlopot kap (`supabase/leads.sql`); ha még nincs lefuttatva, a lead az oszlop nélkül is elmentődik. Az admin lead-lista lekéri a `product` mezőt.
+- **Stúdió-regiszter** (`src/products/studios.tsx`): családonként a konfigurátor komponense lustán; a `TenantStudio` innen választ, és a család Stúdiójának kódját tölti elő. Új családnál egy sor ide, egy motor az `engines.ts`-be.
+- Tesztek: motor-egyezés a meglévő függvényekkel, lead `product` elfogadás/elutasítás. A leírás és az e-mail (`describeConfig`) ma még pergola-specifikus; a második családdal a motorba kerül.
+
 ## 3.90 – Többtermékes héj, 1. lépés: termékcsaládok, útvonalak, „Mit tervezel?” választó
 
 - **Termékcsalád-regiszter** (`src/products/index.ts`): teraszfedés (él), carport és előtető, kerítés és kapu, garázskapu, kerti ház és szauna (hamarosan). Függőség nélküli modul, a szerver és a tesztek is látják. A gyártó (tenant) `products` mezővel adja meg, mit kínál; megadás nélkül csak teraszfedés, így a meglévő gyártók változatlanul működnek.

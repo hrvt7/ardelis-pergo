@@ -11,6 +11,8 @@ export interface LeadRow {
   /** Automatikus utánkövetés: mikor ment ki a vevői emlékeztető, illetve a gyártói jelzés. */
   followup_sent_at?: string | null
   reminder_sent_at?: string | null
+  /** Termékcsalád (src/products); régi leadeknél hiányzik = pergola. */
+  product?: string | null
 }
 
 export const LEAD_STATUSES: [string, string][] = [['new', 'Új'], ['contacted', 'Kapcsolatba léptünk'], ['offered', 'Ajánlat kiment'], ['won', 'Megnyert'], ['lost', 'Elveszett']]

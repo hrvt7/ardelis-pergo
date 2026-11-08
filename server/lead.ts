@@ -14,11 +14,12 @@ import { isWallSide, MOUNT_LABELS, wallLabel } from '../src/lib/mount'
 import { formatHuf, formatNumber, SIDE_NAMES } from '../src/lib/pricing'
 import { sideSummary } from '../src/lib/sides'
 import { colorSummary } from '../src/lib/colors'
-import { shareHash } from '../src/lib/shareCode'
 import { getBom, getSpecCode } from '../src/lib/specification'
+import { PRODUCT_IDS, productPath } from '../src/products'
+import { getEngine } from '../src/products/engines'
 import { buildingSpecRows } from '../src/lib/buildings'
 import { resolveTenant } from './tenantAdmin'
-import { parseConfig, roofLabels, tenantPrice } from '../src/tenants/rules'
+import { roofLabels } from '../src/tenants/rules'
 import type { Tenant } from '../src/tenants/types'
 import { hasPrivacyUrl } from '../src/tenants/privacy'
 import { scoreLead, TIER_LABELS } from '../src/lib/leadScore'
@@ -31,6 +32,8 @@ const MIN_FILL_MS = 2_500
 
 const leadSchema = z.object({
   tenantId: z.string().trim().min(1).max(64),
+  /** Termékcsalád (src/products); régi kliensek nem küldik → pergola. */
+  product: z.enum(PRODUCT_IDS).default('pergola'),
   config: z.unknown(),
   customer: z.object({
     name: z.string().trim().min(2).max(120),
@@ -208,7 +211,7 @@ export async function sendEmail(env: LeadEnv, message: { to: string[]; subject: 
   if (!response.ok) throw new Error(`Resend ${response.status}: ${(await response.text()).slice(0, 300)}`)
 }
 
-async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true) {
+async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true, withProduct = true) {
   const response = await fetch(`${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/leads`, {
     method: 'POST',
     headers: {
@@ -219,6 +222,7 @@ async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true
     },
     body: JSON.stringify({
       ...(withEngagement && record.input.engagement ? { engagement: record.input.engagement } : {}),
+      ...(withProduct ? { product: record.input.product } : {}),
       ref: record.ref,
       tenant_id: record.tenant.id,
       source: record.input.source,
@@ -241,7 +245,9 @@ async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true
   if (!response.ok) {
     const detail = (await response.text()).slice(0, 300)
     // Ha a gyártó adatbázisában még nincs `engagement` oszlop (supabase/leads.sql), a lead ne vesszen el: mentés a jelek nélkül.
-    if (withEngagement && record.input.engagement && response.status === 400 && /engagement/.test(detail)) return storeLead(env, record, false)
+    if (withEngagement && record.input.engagement && response.status === 400 && /engagement/.test(detail)) return storeLead(env, record, false, withProduct)
+    // Ugyanígy a `product` oszlop nélkül (régebbi tábla): a lead a családjelölés nélkül is elmentődik.
+    if (withProduct && response.status === 400 && /product/.test(detail)) return storeLead(env, record, withEngagement, false)
     throw new Error(`Supabase ${response.status}: ${detail}`)
   }
 }
@@ -272,7 +278,11 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   if (!hasPrivacyUrl(tenant)) return json(503, { ok: false, error: 'Ennél a konfigurátornál az adatkezelési tájékoztató még nincs beállítva, ezért most nem fogadunk kérelmet. Kérjük, vedd fel a kapcsolatot közvetlenül a gyártóval.' })
   if (!tenant.regions.includes(input.customer.region)) return json(422, { ok: false, error: 'Kérlek, válassz régiót a listából.', field: 'customer.region' })
 
-  const config = parseConfig(tenant, input.config)
+  // A család motorja érvényesít és áraz; a „hamarosan” családokra még nem fogadunk kérelmet.
+  const engine = getEngine(input.product)
+  if (!engine) return json(422, { ok: false, error: 'Ehhez a termékhez még nem fogadunk felmérési kérelmet.', field: 'product' })
+  // A leírás (describeConfig) és az e-mail ma pergola-specifikus; a második családdal a motorba kerül.
+  const config = engine.parse(tenant, input.config) as PergolaConfig | null
   if (!config) return json(422, { ok: false, error: 'A konfiguráció nem érvényes. Frissítsd az oldalt, és próbáld újra.', field: 'config' })
 
   const now = new Date()
@@ -288,8 +298,8 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   const limited = rateLimited(clientKey(request), input.customer.email.toLowerCase(), now.getTime())
   if (limited) return json(429, { ok: false, error: 'Túl sok kérelem érkezett rövid idő alatt. Kérlek, próbáld újra néhány perc múlva.' })
 
-  const price = tenantPrice(tenant, config)
-  const configUrl = `${siteOrigin(request, env)}/k/${tenant.id}#${shareHash(config)}`
+  const price = engine.price(tenant, config)
+  const configUrl = `${siteOrigin(request, env)}${productPath('standalone', tenant.id, input.product)}#${engine.shareHash(config)}`
   const record: LeadRecord = { ref, tenant, input, config, price, configUrl, createdAt: now }
 
   const recipients = tenant.lead.recipients.length ? tenant.lead.recipients : (env.LEAD_FALLBACK_EMAIL ?? '').split(',').map((item) => item.trim()).filter(Boolean)

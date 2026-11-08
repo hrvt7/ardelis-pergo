@@ -38,3 +38,6 @@ alter table public.leads add column if not exists engagement jsonb;
 -- Automatikus utánkövetés (napi cron, /api/followup): mikor ment ki a vevői emlékeztető és a gyártói jelzés. Meglévő táblához is futtasd:
 alter table public.leads add column if not exists followup_sent_at timestamptz;
 alter table public.leads add column if not exists reminder_sent_at timestamptz;
+
+-- 3.91: termékcsalád (src/products); régi sorok = pergola.
+alter table public.leads add column if not exists product text not null default 'pergola';

@@ -1,15 +1,13 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router'
 import NotFound from '@/pages/NotFound'
 import { DEFAULT_TENANT_ID, getTenant } from '@/tenants'
 import { TenantProvider } from '@/tenants/TenantContext'
 import { applyOverrides } from '@/tenants/overrides'
 import type { Tenant } from '@/tenants/types'
-import { DEFAULT_PRODUCT, productBySlug, tenantProducts } from '@/products'
+import { DEFAULT_PRODUCT, productBySlug, tenantProducts, type ProductFamily } from '@/products'
+import { hasStudio, preloadStudio, ProductStudio } from '@/products/studios'
 import ProductSoon from '@/pages/ProductSoon'
-
-const loadStudio = () => import('@/pages/PergoStudio')
-const PergoStudio = lazy(loadStudio)
 
 function PageLoading() {
   return <div className="page-loading" role="status"><span>3D</span><p>Konfigurátor betöltése…</p></div>
@@ -20,13 +18,13 @@ function PageLoading() {
  * betöltésével párhuzamosan fut, legfeljebb ~1,5 s-ot vár; hiba vagy időtúllépés esetén a kódban
  * lévő alapbeállítás érvényes. Így az ár nem „ugrik” a megnyitás után.
  */
-function useEffectiveTenant(base: Tenant | undefined): Tenant | undefined | null {
+function useEffectiveTenant(base: Tenant | undefined, product: ProductFamily): Tenant | undefined | null {
   const [state, setState] = useState<{ id: string; tenant: Tenant } | null>(null)
   const id = base?.id
   useEffect(() => {
     if (!base || !id) return
     if (import.meta.env.VITE_PREVIEW_MODE === '1') return
-    void loadStudio()
+    void preloadStudio(product)
     const controller = new AbortController()
     const timer = window.setTimeout(() => controller.abort(), 1500)
     fetch(`/api/tenant?id=${encodeURIComponent(id)}`, { signal: controller.signal })
@@ -35,7 +33,7 @@ function useEffectiveTenant(base: Tenant | undefined): Tenant | undefined | null
       .catch(() => setState({ id, tenant: base }))
       .finally(() => window.clearTimeout(timer))
     return () => { controller.abort(); window.clearTimeout(timer) }
-  }, [base, id])
+  }, [base, id, product])
   if (!base) return undefined
   // Előnézeti buildben nincs szerver: az alapbeállítás érvényes.
   if (import.meta.env.VITE_PREVIEW_MODE === '1') return base
@@ -53,19 +51,19 @@ export default function TenantStudio({ mode }: { mode: 'demo' | 'standalone' | '
   const params = useParams()
   const [search] = useSearchParams()
   const base = getTenant(mode === 'demo' ? DEFAULT_TENANT_ID : params.tenantId)
-  const tenant = useEffectiveTenant(base)
   // Termékcsalád az útvonalból; nincs megadva = pergola. Ismeretlen szelet, vagy olyan család, amit a gyártó nem kínál → 404.
   const product = params.product ? productBySlug(params.product) : { id: DEFAULT_PRODUCT, status: 'live' as const }
+  const tenant = useEffectiveTenant(base, product?.id ?? DEFAULT_PRODUCT)
   if (!base || !product) return <NotFound />
   if (!tenant) return <PageLoading />
   if (product.id !== DEFAULT_PRODUCT && !tenant.demo && !tenantProducts(tenant).includes(product.id)) return <NotFound />
   const embed = mode === 'embed'
   const homeHref = embed ? null : tenant.demo ? '/minta' : tenant.brand.website ?? null
+  // A család Stúdiója (src/products/studios); amíg nincs, a „hamarosan” oldal.
+  const live = product.status === 'live' && hasStudio(product.id)
   return (
     <TenantProvider key={`${tenant.id}:${product.id}`} tenant={tenant} product={product.id} mode={mode} admin={search.get('admin') === '1'} embed={embed} homeHref={homeHref}>
-      {product.status === 'live'
-        ? <Suspense fallback={<PageLoading />}><PergoStudio /></Suspense>
-        : <ProductSoon product={product.id} />}
+      {live ? <Suspense fallback={<PageLoading />}><ProductStudio id={product.id} /></Suspense> : <ProductSoon product={product.id} />}
     </TenantProvider>
   )
 }
