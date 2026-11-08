@@ -39,7 +39,8 @@ alapból a konfigurátor nyílik.
    - `RESEND_API_KEY`, `LEAD_FROM_EMAIL` (Resendben hitelesített domain),
    - `LEAD_FALLBACK_EMAIL` — ide mennek a demó érdeklődői,
    - `PUBLIC_SITE_URL` — a saját domain,
-   - opcionálisan `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (előtte `supabase/leads.sql`).
+   - opcionálisan `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (előtte `supabase/leads.sql`),
+   - `CRON_SECRET` — az automatikus utánkövetéshez (napi cron, `/api/followup`; Supabase is kell hozzá).
 3. Élesben, kézbesítés beállítása nélkül az űrlap **hibát ad** (503), nem tesz
    úgy, mintha elküldte volna. Így nem vesznek el csendben érdeklődők.
 

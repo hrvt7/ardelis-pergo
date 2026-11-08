@@ -8,6 +8,9 @@ export interface LeadRow {
   created_at: string; config?: { roof?: string; width?: number; depth?: number } | null; owner_note?: string | null
   /** Viselkedési jelek a lead-pontozáshoz; régi leadeknél hiányzik. */
   engagement?: LeadEngagement | null
+  /** Automatikus utánkövetés: mikor ment ki a vevői emlékeztető, illetve a gyártói jelzés. */
+  followup_sent_at?: string | null
+  reminder_sent_at?: string | null
 }
 
 export const LEAD_STATUSES: [string, string][] = [['new', 'Új'], ['contacted', 'Kapcsolatba léptünk'], ['offered', 'Ajánlat kiment'], ['won', 'Megnyert'], ['lost', 'Elveszett']]

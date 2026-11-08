@@ -246,6 +246,7 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
   const [extras, setExtras] = useState<Record<string, boolean>>(() => Object.fromEntries(EXTRA_FIELDS.map(([key]) => [key, Boolean(effective.extras[key])])))
   const [recipients, setRecipients] = useState(effective.lead.recipients.join('\n'))
   const [subjectPrefix, setSubjectPrefix] = useState(effective.lead.subjectPrefix)
+  const [followUp, setFollowUp] = useState(effective.lead.followUp !== false)
   const [matrix, setMatrix] = useState<MatrixDraft>(() => Object.fromEntries(ROOF_TYPES.map((roof) => [roof, pointsToRows(effective.prices.priceMatrix?.[roof])])))
   const [matrixErrors, setMatrixErrors] = useState<MatrixErrors>({})
   const [roofNames, setRoofNames] = useState<Record<string, { name: string; short: string }>>(() => Object.fromEntries(ROOF_TYPES.map((roof) => [roof, { name: effective.roofs[roof]?.name ?? ROOF_INFO[roof].name, short: effective.roofs[roof]?.short ?? ROOF_INFO[roof].short }])))
@@ -284,7 +285,7 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
       sides,
       mounts,
       extras,
-      lead: { recipients: recipients.split(/[\n,;]+/).map((item) => item.trim()).filter(Boolean), subjectPrefix },
+      lead: { recipients: recipients.split(/[\n,;]+/).map((item) => item.trim()).filter(Boolean), subjectPrefix, followUp },
       roofNames: Object.fromEntries(ROOF_TYPES.map((roof) => [roof, { name: roofNames[roof].name.trim(), short: roofNames[roof].short.trim() }])) as TenantOverrides['roofNames'],
       limits: { width: [limits.widthMin, limits.widthMax], depth: [limits.depthMin, limits.depthMax], height: [limits.heightMin, limits.heightMax], maxHeaters: limits.maxHeaters },
     }
@@ -303,6 +304,8 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
       <Section title="Érdeklődők fogadása">
         <label className="admin-wide"><span>Lead e-mail címek (soronként egy)</span><textarea rows={3} value={recipients} onChange={(event) => setRecipients(event.target.value)} placeholder="ajanlat@ceg.hu" /></label>
         <label><span>E-mail tárgy előtag</span><input value={subjectPrefix} onChange={(event) => setSubjectPrefix(event.target.value)} maxLength={80} /></label>
+        <label className="admin-check admin-wide"><input type="checkbox" checked={followUp} onChange={(event) => setFollowUp(event.target.checked)} />Automatikus utánkövetés</label>
+        <p className="admin-hint admin-wide">Bekapcsolva: 3 nappal a kérelem után a vevő egyetlen emlékeztető e-mailt kap a 3D-terve linkjével és „Időpontot kérek” gombbal, ha a lead még „Új” vagy „Kapcsolatba léptünk”. 7 nap után, ha a lead még mindig „Új”, nektek megy összesítő a válasz nélkül maradt érdeklődőkről. Naponta egyszer fut.</p>
       </Section>
 
       <Section title="Tetőrendszerek (nettó Ft/m² alapár)">

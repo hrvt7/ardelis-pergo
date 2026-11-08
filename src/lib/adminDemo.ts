@@ -50,6 +50,9 @@ export function demoLeads(now: number): LeadRow[] {
       owner_note: index === 7 ? 'Hétfőn visszahívni, az ajánlatot már elküldtük.' : null,
       // Viselkedési jelek: a minta érdeklődők egy része forró (PDF + visszatérés), más része csak benézett.
       engagement: index % 5 === 4 ? null : { pdf: index % 3 === 0, ar: index % 4 === 1, share: index % 6 === 2, saved: index % 7 === 3, steps: 3 + (index % 4), visits: index % 3 === 0 ? 2 : 1, minutes: 2 + (index % 9) },
+      // Automatikus utánkövetés: a 3 napnál régebbi, nyitott érdeklődők már kaptak emlékeztetőt; az egy hétnél régebbi „Új” leadekről jelzés is ment.
+      followup_sent_at: age > 3 * DAY && ['new', 'contacted'].includes(status) ? new Date(now - age + 3 * DAY).toISOString() : null,
+      reminder_sent_at: age > 7 * DAY && status === 'new' ? new Date(now - age + 7 * DAY).toISOString() : null,
     }
   })
 }

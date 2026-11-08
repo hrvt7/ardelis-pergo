@@ -44,6 +44,7 @@ export const tenantOverridesSchema = z.object({
   lead: z.object({
     recipients: z.array(email.min(1)).max(10),
     subjectPrefix: optionalText(80),
+    followUp: z.boolean(),
   }).partial().optional(),
   /** Gyártói terméknevek a tetőrendszerekhez (fehér címke: a platform nevei helyett a gyártó sajátjai). */
   roofNames: z.partialRecord(z.enum(ROOF_TYPES as [RoofType, ...RoofType[]]), z.object({ name: text(40), short: text(60), description: text(400) }).partial()).optional(),
@@ -122,6 +123,7 @@ export function applyOverrides(base: Tenant, overrides: unknown): Tenant {
     lead: {
       recipients: o.lead?.recipients ?? base.lead.recipients,
       subjectPrefix: o.lead?.subjectPrefix || base.lead.subjectPrefix,
+      followUp: o.lead?.followUp ?? base.lead.followUp ?? true,
     },
   }
   // Az alapértelmezett konfiguráció is feleljen meg a (szűkített) kínálatnak.

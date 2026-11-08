@@ -1,5 +1,15 @@
 # Változások
 
+## 3.79 – Automatikus utánkövetés: a rendszer dolgozik a gyártó helyett
+
+- **Mi a baj, amit old:** a legtöbb érdeklődő a csendben vész el — a gyártó nem ér rá visszahívni, a vevő elfelejti. Eddig az admin „Ma teendő” listája jelezte, de csak annak, aki benézett.
+- **Vevői emlékeztető (3 nap):** ha a lead 3 nap után még „Új” vagy „Kapcsolatba léptünk”, a vevő **egyetlen** e-mailt kap: a saját 3D-tervének linkje, az irányár, és egy **„Időpontot kérek”** gomb (előre kitöltött e-mail a gyártónak a lead azonosítójával), telefonszám mellé. A levél kimondja, hogy több emlékeztető nem jön.
+- **Gyártói jelzés (7 nap):** ha a lead egy hét után még mindig „Új”, a gyártói címzettek összesítőt kapnak a válasz nélkül maradt érdeklődőkről: név, település, irányár, lead-pontszám, hány napja vár, kattintható telefonszám, link az adminba. Érdeklődőnként egyszer.
+- **Hogyan fut:** napi Vercel cron (`vercel.json` → `GET /api/followup`, 07:00 UTC), a `CRON_SECRET` környezeti változóval védve (a Vercel automatikusan küldi; nélküle a végpont nem fut). `?dry=1` próbafutás: felmér, nem ír és nem küld. Dupla küldés ellen a lead előbb „lefoglalódik” (dátumoszlop csak üresre írható), és csak utána megy a levél. Bevezetéskor a 14 (vevő), illetve 28 (gyártó) napnál régebbi leadeket nem keresi meg.
+- **Kikapcsolható:** admin → Beállítások → Érdeklődők fogadása → „Automatikus utánkövetés” (alapból bekapcsolva, tenantonként).
+- **Admin:** a lead részletpanelének előzményeiben látszik, mikor ment ki a vevői emlékeztető és a gyártói jelzés.
+- **Adatbázis:** `supabase/leads.sql` két új oszlop: `followup_sent_at`, `reminder_sent_at` (`alter table … add column if not exists`). Amíg nincs lefuttatva, a cron hibát jelez a naplóban, a többi funkció változatlanul működik.
+
 ## 3.78 – Lead-pontozás: forró, meleg, hideg érdeklődők
 
 - **Mi a baj, amit old:** a gyártó eddig csak nevet, települést és irányárat látott, és érkezési sorrendben hívott. A valódi szándék jelei (letöltötte-e a PDF-et, megnézte-e AR-ban, visszajött-e másnap) elvesztek.

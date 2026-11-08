@@ -101,6 +101,8 @@ function Drawer({ lead, now, quotes, onClose, onUpdate }: { lead: LeadRow; now: 
         <div className="field-label">Előzmények</div>
         <ol className="timeline">
           <li><i />Felmérési kérés beérkezett<small>{dateFormat.format(new Date(lead.created_at))}</small></li>
+          {lead.followup_sent_at && <li><i />Emlékeztető e-mail a vevőnek (3D-link, időpontkérés)<small>{dateFormat.format(new Date(lead.followup_sent_at))}</small></li>}
+          {lead.reminder_sent_at && <li><i />Jelzés nektek: egy hete válasz nélkül<small>{dateFormat.format(new Date(lead.reminder_sent_at))}</small></li>}
           {lead.status !== 'new' && <li><i style={{ background: STATUS_COLORS[lead.status] }} />Jelenlegi státusz: {STATUS_LABEL[lead.status] ?? lead.status}</li>}
           {lead.owner_note && <li><i />Belső megjegyzés rögzítve</li>}
         </ol>

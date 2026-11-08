@@ -112,5 +112,7 @@ export interface Tenant {
     recipients: string[]
     /** Az e-mail tárgy előtagja. */
     subjectPrefix: string
+    /** Automatikus utánkövetés (3 nap: vevői emlékeztető, 7 nap: gyártói jelzés). Alapértelmezés: bekapcsolva. */
+    followUp?: boolean
   }
 }
