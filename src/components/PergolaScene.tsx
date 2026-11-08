@@ -250,7 +250,25 @@ function getWoodTexture() {
 /** Közös, gyorsítótárazott anyagok: színenként és érdességenként egy példány (kevesebb anyag, egy helyen hangolható). */
 const coatCache = new Map<string, THREE.MeshStandardMaterial>()
 type MaterialDetail = 'basic' | 'enhanced' | 'ultra'
-function getCoat(color: string, roughness: number, detail: MaterialDetail) {
+/**
+ * Színváltás átúsztatása: a `tween:<id>` színkulcs mögött a célszín anyagának másolatai állnak (érdességenként egy),
+ * amelyek színe képkockánként az előző színből a célszín felé úszik; a végén a modell a gyorsítótárazott célanyagra vált.
+ */
+interface ColorTween { from: THREE.Color; to: THREE.Color; toHex: string; t: number; materials: Map<string, THREE.MeshStandardMaterial> }
+const colorTweens = new Map<string, ColorTween>()
+let tweenSerial = 0
+const isTween = (color: string) => color.startsWith('tween:')
+/** nyers anyagoknak (nem a közös bevonat): átúsztatás alatt rögtön a célszín */
+const solidHex = (color: string) => (isTween(color) ? (colorTweens.get(color)?.toHex ?? '#808080') : color)
+function getCoat(color: string, roughness: number, detail: MaterialDetail): THREE.MeshStandardMaterial {
+  if (isTween(color)) {
+    const tween = colorTweens.get(color)
+    if (!tween) return getCoat('#808080', roughness, detail)
+    const tweenKey = `${roughness}|${detail}`
+    let material = tween.materials.get(tweenKey)
+    if (!material) { material = getCoat(tween.toHex, roughness, detail).clone(); material.color.copy(tween.from).lerp(tween.to, tween.t); tween.materials.set(tweenKey, material) }
+    return material
+  }
   const key = `${color}|${roughness}|${detail}`
   let material = coatCache.get(key)
   if (!material) {
@@ -304,6 +322,87 @@ function LookGlass({ look }: { look: { tint: string; opacity: number } }) {
   return <GlassMaterial tint={initial.tint} opacity={initial.opacity} envMapIntensity={2.1} doubleSided matRef={material} />
 }
 
+/**
+ * A megjelenített szín: új célszínnél 0,6 s alatt átúszik (a visszaadott kulcs ez idő alatt `tween:<id>`), a végén a célszín hexe.
+ * Fa színnél (más textúra) és csökkentett mozgásnál azonnal vált. Első betöltéskor nem animál.
+ */
+function useColorFade(target: string, settled: { current: boolean }) {
+  const [shown, setShown] = useState(target)
+  const fade = useRef({ target, id: '' })
+  const invalidate = useThree((state) => state.invalidate)
+  const gl = useThree((state) => state.gl)
+  useEffect(() => { invalidate() }, [target, invalidate])
+  useFrame((_, delta) => {
+    const f = fade.current
+    if (f.target !== target) {
+      const previous = colorTweens.get(f.id)
+      const from = previous ? previous.from.clone().lerp(previous.to, previous.t) : new THREE.Color(f.target)
+      if (previous) { previous.materials.forEach((material) => material.dispose()); colorTweens.delete(f.id) }
+      f.target = target
+      if (REDUCED || !settled.current || WOOD_HEXES.has(target) || WOOD_HEXES.has(f.target) || WOOD_HEXES.has(`#${from.getHexString()}`)) { f.id = ''; setShown(target); return }
+      f.id = `tween:${++tweenSerial}`
+      colorTweens.set(f.id, { from, to: new THREE.Color(target), toHex: target, t: 0, materials: new Map() })
+      setShown(f.id)
+      return
+    }
+    const tween = colorTweens.get(f.id)
+    if (!tween) return
+    tween.t = Math.min(1, tween.t + Math.min(delta, 0.05) / 0.6)
+    const e = 1 - Math.pow(1 - tween.t, 3)
+    tween.materials.forEach((material) => { material.color.copy(tween.from).lerp(tween.to, e) })
+    refreshShadows(gl)
+    invalidate()
+    if (tween.t >= 1) { tween.materials.forEach((material) => material.dispose()); colorTweens.delete(f.id); f.id = ''; setShown(target) }
+  })
+  return shown
+}
+
+/**
+ * Tetőtípus-váltás: a régi tető a tetőszint közepe felé összehúzódik és eltűnik, az új kissé felülről, enyhe
+ * túllendüléssel ereszkedik a helyére. Első betöltéskor és csökkentett mozgásnál nem animál.
+ */
+function RoofSwap({ roofKey, settled, height, children }: { roofKey: string; settled: { current: boolean }; height: number; children: ReactNode }) {
+  const [leaving, setLeaving] = useState<{ key: string; node: ReactNode } | null>(null)
+  const history = useRef({ key: roofKey, node: children, prevKey: '', prevNode: null as ReactNode, pending: false, enter: 1, leave: 1 })
+  const enter = useRef<THREE.Group>(null)
+  const leave = useRef<THREE.Group>(null)
+  const invalidate = useThree((state) => state.invalidate)
+  const gl = useThree((state) => state.gl)
+  useEffect(() => {
+    const h = history.current
+    if (h.key !== roofKey) { h.prevKey = h.key; h.prevNode = h.node; h.key = roofKey; h.pending = true }
+    h.node = children
+    invalidate()
+  })
+  useFrame((_, delta) => {
+    const h = history.current
+    if (h.pending) {
+      h.pending = false
+      if (settled.current && !REDUCED) { h.enter = 0; h.leave = 0; setLeaving({ key: `${h.prevKey}-${Date.now()}`, node: h.prevNode }) }
+    }
+    if (h.enter >= 1 && h.leave >= 1) return
+    const step = Math.min(delta, 0.05)
+    if (h.enter < 1 && enter.current) {
+      h.enter = Math.min(1, h.enter + step / 0.55)
+      const x = h.enter - 1
+      const back = 1 + 2.2 * x * x * x + 1.2 * x * x
+      enter.current.scale.setScalar(0.72 + 0.28 * back)
+      enter.current.position.y = 0.5 * (1 - back)
+    }
+    if (h.leave < 1) {
+      h.leave = Math.min(1, h.leave + step / 0.4)
+      if (leave.current) { const s = Math.max(0.01, 1 - h.leave * h.leave); leave.current.scale.set(s, s, s); leave.current.position.y = 0.25 * h.leave }
+      if (h.leave >= 1) setLeaving(null)
+    }
+    refreshShadows(gl)
+    invalidate()
+  })
+  return <>
+    <group position={[0, height, 0]}><group ref={enter}><group position={[0, -height, 0]}>{children}</group></group></group>
+    {leaving && <group key={leaving.key} position={[0, height, 0]}><group ref={leave}><group position={[0, -height, 0]}>{leaving.node}</group></group></group>}
+  </>
+}
+
 function PowderCoat({ color, roughness = 0.4 }: { color: string; roughness?: number }) {
   const { materialDetail } = useQuality()
   return <primitive object={getCoat(color, roughness, materialDetail)} attach="material" dispose={null} />
@@ -319,7 +418,7 @@ function StructuralBeam({ args, position, color }: { args: [number, number, numb
   return <group position={position}>
     <Beam args={args} position={[0, 0, 0]} color={color} radius={0.008} />
     <mesh position={[0, -args[1] / 2 - 0.001, 0]} receiveShadow><boxGeometry args={channel} /><meshStandardMaterial color="#151b1c" metalness={0.35} roughness={0.58} /></mesh>
-    <mesh position={[0, -args[1] / 2 + 0.019, 0]}><boxGeometry args={alongX ? [args[0] - 0.16, 0.012, args[2] * 0.17] : [args[0] * 0.17, 0.012, args[2] - 0.16]} /><meshStandardMaterial color={color} metalness={0.15} roughness={0.48} /></mesh>
+    <mesh position={[0, -args[1] / 2 + 0.019, 0]}><boxGeometry args={alongX ? [args[0] - 0.16, 0.012, args[2] * 0.17] : [args[0] * 0.17, 0.012, args[2] - 0.16]} /><meshStandardMaterial color={solidHex(color)} metalness={0.15} roughness={0.48} /></mesh>
   </group>
 }
 
@@ -545,7 +644,7 @@ function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow
   // Tükrözés: a zsanér/tolószárny a másik sarokban (x-tengely menti −1 skála; a three.js a lapok körüljárását ilyenkor automatikusan átfordítja).
   return <group scale={[mirror ? -1 : 1, 1, 1]} onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>
     {Array.from({ length: fixedCount }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 0.5), leafCenterY, 0]} renderOrder={2}><boxGeometry args={[paneWidth - 0.012, usableHeight - 0.04, 0.01]} /><LookGlass look={look} /></mesh>)}
-    {Array.from({ length: Math.max(0, fixedCount - 1) }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 1), leafCenterY, 0]}><boxGeometry args={[0.008, usableHeight - 0.06, 0.016]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.4} /></mesh>)}
+    {Array.from({ length: Math.max(0, fixedCount - 1) }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 1), leafCenterY, 0]}><boxGeometry args={[0.008, usableHeight - 0.06, 0.016]} /><meshStandardMaterial color={solidHex(color)} metalness={0.5} roughness={0.4} /></mesh>)}
     {sliding
       ? <group ref={leaf} name="door-leaf" position={[length / 2 - leafWidth / 2, leafCenterY, inward * 0.045]}>{leafBody}</group>
       : <group position={[hingeX, leafCenterY, 0]}><group ref={leaf} name="door-leaf"><group position={[(leafWidth - 0.02) / 2, 0, 0]}>{leafBody}</group></group></group>}
@@ -964,7 +1063,7 @@ function LouverBlades({ geometry, width, depth, height, count, retractable, angl
   return <group>
     <instancedMesh ref={blades} args={[undefined, undefined, count]} frustumCulled={false} castShadow receiveShadow><primitive object={geometry} attach="geometry" /><PowderCoat color={color} roughness={0.38} /></instancedMesh>
     <instancedMesh ref={strips} args={[undefined, undefined, count]} frustumCulled={false}><boxGeometry args={[width - 0.22, 0.012, 0.014]} /><meshStandardMaterial color="#111718" roughness={0.92} /></instancedMesh>
-    <instancedMesh ref={caps} args={[undefined, undefined, count * 2]} frustumCulled={false}><cylinderGeometry args={[0.034, 0.034, 0.014, radial]} /><meshStandardMaterial color={color} metalness={0.35} roughness={0.4} /></instancedMesh>
+    <instancedMesh ref={caps} args={[undefined, undefined, count * 2]} frustumCulled={false}><cylinderGeometry args={[0.034, 0.034, 0.014, radial]} /><meshStandardMaterial color={solidHex(color)} metalness={0.35} roughness={0.4} /></instancedMesh>
   </group>
 }
 
@@ -1222,11 +1321,14 @@ function Tilt({ pitch, height, depth, children }: { pitch: number; height: numbe
 function PergolaModel({ config, scene, rainShow = 0, onSideSelect, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; rainShow?: 0 | 1 | 2; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
   const { width, depth, height, roof, mount } = config
   const { tenant } = useTenant()
-  const color = getFrameColorHex(config, tenant.colors)
+  // Az első betöltéskor nem animálunk: csak a későbbi kapcsolásoknál épül fel látványosan az oldalelem, úszik át a szín, cserélődik a tető.
+  const settled = useRef(false)
+  const frameHex = getFrameColorHex(config, tenant.colors)
   // Kéttónusú kivitelnél a tető/lamellák saját színe; fehér tetőnél kicsit tompítva (ne égjen ki).
-  const roofBase = config.roofColor ? getFrameColorHex({ frameColor: config.roofColor, customRal: config.roofRal }, tenant.colors) : color
+  const roofBase = config.roofColor ? getFrameColorHex({ frameColor: config.roofColor, customRal: config.roofRal }, tenant.colors) : frameHex
   const roofIsWhite = (config.roofColor ?? config.frameColor) === 'white'
-  const roofColor = roofIsWhite ? '#d4d6d1' : roofBase
+  const color = useColorFade(frameHex, settled)
+  const roofColor = useColorFade(roofIsWhite ? '#d4d6d1' : roofBase, settled)
   const model = useRef<THREE.Group>(null)
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
@@ -1253,8 +1355,6 @@ function PergolaModel({ config, scene, rainShow = 0, onSideSelect, onSceneChange
   const fixedSeamCount = Math.max(2, Math.floor(depth / 0.65))
   const introStart = useRef(0)
   const ex = useRef(scene.exploded && REDUCED ? 1 : 0)
-  // Az első betöltéskor nem animálunk: csak a későbbi kapcsolásoknál épül fel látványosan az oldalelem.
-  const settled = useRef(false)
   useEffect(() => { const id = window.setTimeout(() => { settled.current = true }, 2500); return () => window.clearTimeout(id) }, [])
   useFrame(({ clock }, delta) => {
     if (!introStart.current) introStart.current = clock.elapsedTime
@@ -1284,7 +1384,7 @@ function PergolaModel({ config, scene, rainShow = 0, onSideSelect, onSceneChange
     {!realLouvres && <RoundedBox args={[0.28, 0.19, 0.34]} position={[width / 2 - 0.02, height + 0.12, depth / 2 - 0.25]} radius={0.035} smoothness={4} castShadow><PowderCoat color={color} /></RoundedBox>}
     <group position={[-width / 2 + 0.2, height + 0.32 + rise, -depth / 2 + 0.2]}><mesh><cylinderGeometry args={[0.045, 0.055, 0.12, 16]} /><meshStandardMaterial color="#31383a" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, 0.075, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.034, 16]} /><meshPhysicalMaterial color="#8aa0a4" roughness={0.1} clearcoat={1} /></mesh></group>
     <ExplodePart ex={ex} dy={1.6} label={roof === 'fabric' ? 'Textiltető' : isGlazedRoof(roof) ? 'Üvegtető' : roof === 'fixed' ? 'Fix tető' : 'Tetőlamellák'} labelAt={[0, height + 0.5 + rise / 2, -depth / 4]} show={x}>
-    {tilt(<>
+    <RoofSwap roofKey={roof} settled={settled} height={height}>{tilt(<>
     {roof === 'retractable' && <LouverBlades key={louverCount} geometry={geometry} width={width} depth={depth} height={height} count={louverCount} retractable angle={effectiveAngle} color={roofColor} />}
     {/* Modulos kivitelnél mezőnként külön lamellasor a közös gerendák között; a hajtás címkéi csak a hajtásoldali mezőn. */}
     {realLouvres && Array.from({ length: moduleCount(config) }, (_, index) => <group key={index} position={[bayCenter(config, index), 0, 0]}><LouvreRoof width={bayWidth(config)} depth={depth} height={height} beam={0.19} beamHeight={0.23} angle={effectiveAngle} driveSide={driveSide} mechanism={mechanism} reveal={rainShow > 0} slow={rainShow === 2} rain={scene.rain} roofMaterial={getCoat(roofColor, 0.38, materialDetail)} frameMaterial={getCoat(color, 0.4, materialDetail)} segments={louvreSegments} showLabels={!x && scene.labels !== false && index === (driveSide === 1 ? moduleCount(config) - 1 : 0)} /></group>)}
@@ -1293,7 +1393,7 @@ function PergolaModel({ config, scene, rainShow = 0, onSideSelect, onSceneChange
     {isGlazedRoof(roof) && config.roofShade && <RoofShadeModel width={width} depth={depth} height={height} kind={config.roofShade} fabric={findShadeFabric(config.shadeFabric).hex} color={color} out={scene.shadeOut} night={night} onToggle={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })} />}
     {roof === 'fabric' && <FabricRoof width={width} depth={depth} height={height} color={roofColor} openness={openness} />}
     {roof === 'fixed' && config.solar && <SolarPanels config={config} />}
-    </>)}
+    </>)}</RoofSwap>
     </ExplodePart>
     {(() => { const labelled = new Set<string>(); return (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <ExplodePart key={side} ex={ex} dx={side === 'left' ? -1.1 : side === 'right' ? 1.1 : 0} dz={side === 'front' ? 1.1 : side === 'back' ? -1.1 : 0}><SidePlacement side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} labelled={labelled} settled={settled} /></ExplodePart>) })()}
     {config.led && tilt(<LedRamp settled={settled}>{(factor) => <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={(scene.ledLevel / 100) * factor} rgb={config.ledRgb ? scene.ledColor : null} />}</LedRamp>)}

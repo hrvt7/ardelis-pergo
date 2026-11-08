@@ -1,5 +1,11 @@
 # Változások
 
+## 3.82 – Színváltás átúsztatva, tetőtípus-váltás animálva
+
+- **Szín:** új szín választásakor a szerkezet (és kéttónusú kivitelnél a tető) 0,6 s alatt átúszik az új színbe, nem ugrik. Fa hatású színnél (más felület/textúra) és csökkentett mozgásnál azonnali a váltás. A közös, gyorsítótárazott anyagok nem változnak: az átmenet idejére a célszín anyagának másolata dolgozik, a végén a modell a közös anyagra vált.
+- **Tető:** tetőtípus-váltásnál a régi tető a tetőszint közepe felé összehúzódik és eltűnik, az új kissé felülről, enyhe túllendüléssel ereszkedik a helyére (0,55 s). Az árnyék közben frissül. Első betöltéskor nincs animáció.
+- Fájl: `src/components/PergolaScene.tsx` (`useColorFade`, `RoofSwap`, `getCoat` átmeneti kulcs).
+
 ## 3.81 – Eső: filmszerű zárás, látható eső, borult fény
 
 - **Esőbemutató:** ha a vevő nyitott forgólamellás tetőnél (esőérzékelővel) bekapcsolja az esőt, a lamellák nem kapcsolnak át egy pillanat alatt. A kamera a hajtásoldalra közelít, a hajtás burkolata felemelkedik és a motor–hajtórúd kiemelést kap (mint a Működés-bemutatóban), a lamellák egy valós hajtás tempójában (max. 30°/s, a végén lassulva) zárnak, majd a kamera visszatér a nézetbe és a burkolat visszaereszkedik. Kb. 7 másodperc; a zárás csak a kamera megérkezése után indul. Eső után a lamellák ugyanilyen lassan nyílnak vissza.
