@@ -9,10 +9,11 @@ import { outdoorColor } from '@/lib/catalog'
 import FenceModel, { type FenceMaterials } from '@/components/catalog/FenceModel'
 import { fenceSystemLength } from '@/components/catalog/fenceLayout'
 import { HouseBackdrop } from '@/components/models/HouseAsset'
+import { studioLighting, type StudioTime } from '@/lib/studioLighting'
 
 export type CatalogView = 'perspective' | 'front' | 'top' | 'detail'
 /** environment: a ház és a növényzet a háttérben (kikapcsolva csak a kerítés látszik a terepen). */
-export interface CatalogSceneSettings { night: boolean; gateOpen: boolean; showPerson: boolean; dimensions: boolean; environment: boolean }
+export interface CatalogSceneSettings { time: StudioTime; gateOpen: boolean; showPerson: boolean; dimensions: boolean; environment: boolean; autoRotate: boolean }
 type Vec3 = [number, number, number]
 type TextureMaps = { diff: THREE.Texture; normal: THREE.Texture; rough: THREE.Texture }
 type MaterialContextValue = { config: OutdoorConfig | null; wood: TextureMaps | null }
@@ -32,8 +33,8 @@ function clonedTexture(source: THREE.Texture, repeat: [number, number], srgb = f
 function refreshShadow(renderer: THREE.WebGLRenderer) {
   renderer.shadowMap.needsUpdate = true
 }
-function setExposure(renderer: THREE.WebGLRenderer, night: boolean) {
-  renderer.toneMappingExposure = night ? 1 : 0.88
+function setExposure(renderer: THREE.WebGLRenderer, exposure: number) {
+  renderer.toneMappingExposure = exposure
 }
 
 function MaterialProvider({ config, children }: { config: OutdoorConfig; children: ReactNode }) {
@@ -153,7 +154,7 @@ function Ground({ config }: { config: OutdoorConfig }) {
 /** Stúdió-háttér gömb: a környezet ki-be kapcsolásakor az Environment a háttérmezőt visszaállíthatja, ezért a semleges háttér
  * egy hálóként is ott van (a pergola „Csak a pergola” háttérszínével). */
 function StudioBackdrop({ night }: { night: boolean }) {
-  return <mesh name="studio-backdrop" renderOrder={-1}><sphereGeometry args={[180, 32, 16]} /><meshBasicMaterial color={night ? '#1b1f22' : '#e8e5de'} side={THREE.BackSide} fog={false} depthWrite={false} /></mesh>
+  return <mesh name="studio-backdrop" renderOrder={-1}><sphereGeometry args={[180, 32, 16]} /><meshBasicMaterial color={night ? '#1b1f22' : '#e8e5de'} side={THREE.BackSide} fog={false} depthWrite={false} toneMapped={false} /></mesh>
 }
 
 function StudioFloor({ night }: { night: boolean }) {
@@ -400,7 +401,7 @@ function useFenceMaterials(config: OutdoorConfig, color: string, night: boolean)
 }
 
 function Fence({ config, color, scene }: { config: OutdoorConfig; color: string; scene: CatalogSceneSettings }) {
-  const materials = useFenceMaterials(config, color, scene.night)
+  const materials = useFenceMaterials(config, color, scene.time === 'night')
   return <FenceModel config={config} materials={materials} open={scene.gateOpen} />
 }
 
@@ -472,7 +473,7 @@ function freeBand(canvas: HTMLCanvasElement) {
   return right - left < box.width * 0.35 ? { left: 0, right: box.width } : { left, right }
 }
 
-function CameraRig({ config, view }: { config: OutdoorConfig; view: CatalogView }) {
+function CameraRig({ config, view, autoRotate }: { config: OutdoorConfig; view: CatalogView; autoRotate: boolean }) {
   const camera = useThree((state) => state.camera)
   const canvas = useThree((state) => state.gl.domElement)
   const viewport = useThree((state) => state.size)
@@ -510,7 +511,7 @@ function CameraRig({ config, view }: { config: OutdoorConfig; view: CatalogView 
       controls.current.update()
     }
   }, [camera, canvas, config, view, viewport.width, viewport.height, size])
-  return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={0.08} minDistance={2.5} maxDistance={Math.max(60, size * 4)} maxPolarAngle={Math.PI / 2.02} />
+  return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={0.08} autoRotate={autoRotate} autoRotateSpeed={0.6} minDistance={2.5} maxDistance={Math.max(60, size * 4)} maxPolarAngle={Math.PI / 2.02} />
 }
 
 function SceneContent({ config, scene, view, onReady }: { config: OutdoorConfig; scene: CatalogSceneSettings; view: CatalogView; onReady: () => void }) {
@@ -523,24 +524,26 @@ function SceneContent({ config, scene, view, onReady }: { config: OutdoorConfig;
     refreshShadow(gl)
     onReady()
   }, [config, gl, onReady, studio])
+  const light = studioLighting(scene.time)
+  const night = light.night
   useEffect(() => {
-    setExposure(gl, scene.night)
-  }, [gl, scene.night])
+    setExposure(gl, light.exposure)
+  }, [gl, light.exposure])
   return <>
-    <fog attach="fog" args={[studio ? (scene.night ? '#1b1f22' : '#e8e5de') : scene.night ? '#172331' : '#b5c2bd', Math.max(40, size * 2.2), Math.max(85, size * 4.5)]} />
-    <ambientLight intensity={scene.night ? 0.65 : 0.55} />
-    <hemisphereLight args={['#d4e1e8', '#514b3f', scene.night ? 0.4 : 0.55]} />
-    <directionalLight position={[7, 12, 8]} color={scene.night ? '#b7d5f2' : '#fff0d2'} intensity={scene.night ? 1.3 : 3.1} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-Math.max(16, size * 0.65)} shadow-camera-right={Math.max(16, size * 0.65)} shadow-camera-top={14} shadow-camera-bottom={-14} shadow-bias={-0.0002} shadow-normalBias={0.02} />
-    {scene.night && <>
+    <fog attach="fog" args={[studio ? light.studio : light.fog, Math.max(40, size * 2.2), Math.max(85, size * 4.5)]} />
+    <ambientLight intensity={light.ambient} />
+    <hemisphereLight args={['#d4e1e8', '#514b3f', light.hemisphere]} />
+    <directionalLight position={light.sunPosition} color={light.sun} intensity={light.sunIntensity} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-Math.max(16, size * 0.65)} shadow-camera-right={Math.max(16, size * 0.65)} shadow-camera-top={14} shadow-camera-bottom={-14} shadow-bias={-0.0002} shadow-normalBias={0.02} />
+    {night && <>
       <directionalLight position={[-8, 5, 4]} color="#b7d5f2" intensity={1.8} />
       <pointLight position={[0, 5, 7]} color="#c5ddff" intensity={65} distance={30} decay={2} />
     </>}
-    {studio && <color attach="background" args={[scene.night ? '#1b1f22' : '#e8e5de']} />}
-    <Suspense fallback={null}><Environment files={scene.night ? '/assets/hdr/courtyard_night.hdr' : '/assets/hdr/day_clear.hdr'} background={!studio} backgroundBlurriness={0.18} backgroundIntensity={scene.night ? 0.4 : 0.65} environmentIntensity={scene.night ? 0.55 : 0.8} /></Suspense>
-    {studio ? <><StudioBackdrop night={scene.night} /><StudioFloor night={scene.night} /></> : <Ground config={config} />}
+    {studio && <color attach="background" args={[light.studio]} />}
+    <Suspense fallback={null}><Environment files={light.hdr} background={!studio} backgroundBlurriness={0.18} backgroundIntensity={light.background} environmentIntensity={light.environment} /></Suspense>
+    {studio ? <><StudioBackdrop night={night} /><StudioFloor night={night} /></> : <Ground config={config} />}
     <MaterialProvider config={config}>
-      {config.family === 'canopy' && <CoverModel config={config} color={color} night={scene.night} />}
-      {config.family === 'carport' && <DriveModel config={config} color={color} night={scene.night} />}
+      {config.family === 'canopy' && <CoverModel config={config} color={color} night={night} />}
+      {config.family === 'carport' && <DriveModel config={config} color={color} night={night} />}
       {(config.family === 'fence' || config.family === 'gate') && <>
         {scene.environment && <>
           <Suspense fallback={null}><HouseBackdrop frontZ={-7.5} width={Math.max(17, fenceSystemLength(config) * 0.9)} /></Suspense>
@@ -551,7 +554,7 @@ function SceneContent({ config, scene, view, onReady }: { config: OutdoorConfig;
     </MaterialProvider>
     <Suspense fallback={null}><ScalePerson key={scene.showPerson ? 'person-on' : 'person-off'} show={scene.showPerson} config={config} /></Suspense>
     {scene.dimensions && <Dimensions config={config} />}
-    <CameraRig config={config} view={view} />
+    <CameraRig config={config} view={view} autoRotate={scene.autoRotate} />
   </>
 }
 
@@ -574,9 +577,9 @@ export default memo(function CatalogScene({ config, scene, view }: { config: Out
   const onReady = useMemo(() => () => setReady(true), [])
   return <div className="scene-canvas-wrap" data-scene-ready={ready}>
     {!ready && <ScenePoster />}
-    <Boundary><Canvas frameloop="demand" shadows dpr={[1, 1.25]} camera={{ position: [10, 7, 12], fov: 40, near: 0.1, far: 260 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }} onCreated={({ gl }) => {
+    <Boundary><Canvas frameloop={scene.autoRotate ? 'always' : 'demand'} shadows dpr={[1, 1.25]} camera={{ position: [10, 7, 12], fov: 40, near: 0.1, far: 260 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }} onCreated={({ gl }) => {
       gl.toneMapping = THREE.ACESFilmicToneMapping
-      gl.toneMappingExposure = scene.night ? 1 : 0.88
+      gl.toneMappingExposure = studioLighting(scene.time).exposure
       gl.shadowMap.autoUpdate = false
       gl.shadowMap.needsUpdate = true
       gl.domElement.dataset.catalogCanvas = 'true'

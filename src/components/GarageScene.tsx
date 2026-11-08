@@ -8,11 +8,12 @@ import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import { GARAGE_SIDE_DOOR, garageColor, garageSideDoorX as sideDoorX, type GarageConfig } from '@/products/garage'
 import { HouseBackdrop } from '@/components/models/HouseAsset'
+import { studioLighting, type StudioTime } from '@/lib/studioLighting'
 import GarageModel, { DOOR_Z, SideDoor, type GarageMaterials } from '@/components/garage/GarageModel'
 import Car from '@/components/models/Car'
 
 export type GarageView = 'perspective' | 'front' | 'detail' | 'interior'
-export interface GarageSceneSettings { night: boolean; open: boolean; showPerson: boolean; dimensions: boolean; environment: boolean }
+export interface GarageSceneSettings { time: StudioTime; open: boolean; showPerson: boolean; dimensions: boolean; environment: boolean; autoRotate: boolean }
 type Vec3 = [number, number, number]
 
 const WALL_T = 0.36
@@ -31,7 +32,7 @@ function clonedTexture(source: THREE.Texture, repeat: [number, number], srgb = f
   return texture
 }
 function refreshShadow(renderer: THREE.WebGLRenderer) { renderer.shadowMap.needsUpdate = true }
-function setExposure(renderer: THREE.WebGLRenderer, night: boolean) { renderer.toneMappingExposure = night ? 1 : 0.88 }
+function setExposure(renderer: THREE.WebGLRenderer, exposure: number) { renderer.toneMappingExposure = exposure }
 
 /** A homlokzat teljes szélessége — a kamera ehhez keretez. */
 const facadeWidth = (config: GarageConfig) => config.width + (config.sideDoor ? SIDE_DOOR_GAP + SIDE_DOOR_W : 0) + 2.4
@@ -67,7 +68,7 @@ function useGarageMaterials(config: GarageConfig, night: boolean): GarageMateria
 /** Stúdió-háttér gömb: a környezet ki-be kapcsolásakor az Environment a háttérmezőt visszaállíthatja, ezért a semleges háttér
  * egy hálóként is ott van (a pergola „Csak a pergola” háttérszínével). */
 function StudioBackdrop({ night }: { night: boolean }) {
-  return <mesh name="studio-backdrop" renderOrder={-1}><sphereGeometry args={[180, 32, 16]} /><meshBasicMaterial color={night ? '#1b1f22' : '#e8e5de'} side={THREE.BackSide} fog={false} depthWrite={false} /></mesh>
+  return <mesh name="studio-backdrop" renderOrder={-1}><sphereGeometry args={[180, 32, 16]} /><meshBasicMaterial color={night ? '#1b1f22' : '#e8e5de'} side={THREE.BackSide} fog={false} depthWrite={false} toneMapped={false} /></mesh>
 }
 
 function StudioFloor({ night }: { night: boolean }) {
@@ -216,7 +217,7 @@ function freeBand(canvas: HTMLCanvasElement) {
   return right - left < box.width * 0.35 ? { left: 0, right: box.width } : { left, right }
 }
 
-function CameraRig({ config, view, environment }: { config: GarageConfig; view: GarageView; environment: boolean }) {
+function CameraRig({ config, view, environment, autoRotate }: { config: GarageConfig; view: GarageView; environment: boolean; autoRotate: boolean }) {
   const camera = useThree((state) => state.camera)
   const canvas = useThree((state) => state.gl.domElement)
   const viewport = useThree((state) => state.size)
@@ -249,25 +250,27 @@ function CameraRig({ config, view, environment }: { config: GarageConfig; view: 
     camera.updateProjectionMatrix()
     if (controls.current) { controls.current.target.set(...target); controls.current.update() }
   }, [camera, canvas, config, view, environment, viewport.width, viewport.height])
-  return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={0.08} minDistance={1.2} maxDistance={40} maxPolarAngle={Math.PI / 2.02} />
+  return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={0.08} autoRotate={autoRotate} autoRotateSpeed={0.6} minDistance={1.2} maxDistance={40} maxPolarAngle={Math.PI / 2.02} />
 }
 
 function SceneContent({ config, scene, view, onReady }: { config: GarageConfig; scene: GarageSceneSettings; view: GarageView; onReady: () => void }) {
   const gl = useThree((state) => state.gl)
-  const materials = useGarageMaterials(config, scene.night)
-  useEffect(() => { refreshShadow(gl); onReady() }, [config, gl, onReady, scene.environment])
-  useEffect(() => { setExposure(gl, scene.night) }, [gl, scene.night])
+  const light = studioLighting(scene.time)
+  const night = light.night
+  const materials = useGarageMaterials(config, night)
+  useEffect(() => { refreshShadow(gl); onReady() }, [config, gl, onReady, scene.environment, scene.time])
+  useEffect(() => { setExposure(gl, light.exposure) }, [gl, light.exposure])
   return <>
-    {!scene.environment && <color attach="background" args={[scene.night ? '#1b1f22' : '#e8e5de']} />}
-    <fog attach="fog" args={[scene.environment ? (scene.night ? '#172331' : '#b5c2bd') : (scene.night ? '#1b1f22' : '#e8e5de'), 45, 120]} />
-    <ambientLight intensity={scene.night ? 0.6 : 0.5} />
-    <hemisphereLight args={['#d4e1e8', '#514b3f', scene.night ? 0.4 : 0.55]} />
-    <directionalLight position={[6, 9, 10]} color={scene.night ? '#b7d5f2' : '#fff0d2'} intensity={scene.night ? 1.1 : 3} castShadow shadow-mapSize={[1536, 1536]} shadow-camera-left={-12} shadow-camera-right={12} shadow-camera-top={10} shadow-camera-bottom={-10} shadow-bias={-0.0002} shadow-normalBias={0.02} />
-    {scene.night && <pointLight position={[0, 4, 6]} color="#c5ddff" intensity={40} distance={25} decay={2} />}
-    <Suspense fallback={null}><Environment files={scene.night ? '/assets/hdr/courtyard_night.hdr' : '/assets/hdr/day_clear.hdr'} background={scene.environment} backgroundBlurriness={0.18} backgroundIntensity={scene.night ? 0.4 : 0.65} environmentIntensity={scene.night ? 0.55 : 0.8} /></Suspense>
-    {scene.environment ? <Ground config={config} /> : <><StudioBackdrop night={scene.night} /><StudioFloor night={scene.night} /></>}
+    {!scene.environment && <color attach="background" args={[light.studio]} />}
+    <fog attach="fog" args={[scene.environment ? light.fog : light.studio, 45, 120]} />
+    <ambientLight intensity={light.ambient} />
+    <hemisphereLight args={['#d4e1e8', '#514b3f', light.hemisphere]} />
+    <directionalLight position={light.sunPosition} color={light.sun} intensity={light.sunIntensity} castShadow shadow-mapSize={[1536, 1536]} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={12} shadow-camera-bottom={-12} shadow-bias={-0.0002} shadow-normalBias={0.02} />
+    {night && <pointLight position={[0, 4, 6]} color="#c5ddff" intensity={40} distance={25} decay={2} />}
+    <Suspense fallback={null}><Environment files={light.hdr} background={scene.environment} backgroundBlurriness={0.18} backgroundIntensity={light.background} environmentIntensity={light.environment} /></Suspense>
+    {scene.environment ? <Ground config={config} /> : <><StudioBackdrop night={night} /><StudioFloor night={night} /></>}
     {scene.environment ? <>
-      <Facade config={config} night={scene.night} materials={materials} />
+      <Facade config={config} night={night} materials={materials} />
       <Suspense fallback={null}><HouseBackdrop rightEdge={wingLeft(config) + 0.02} frontZ={-0.9} width={17} /></Suspense>
       <Car color="#1f3248" position={[Math.min(0.35, Math.max(0, config.width / 2 - 1.05)), 0, -3.75]} />
     </> : <Reveal config={config} />}
@@ -275,7 +278,7 @@ function SceneContent({ config, scene, view, onReady }: { config: GarageConfig; 
     {config.sideDoor && <SideDoor config={config} m={materials} x={sideDoorX(config)} />}
     <Suspense fallback={null}><ScalePerson key={scene.showPerson ? 'on' : 'off'} show={scene.showPerson} config={config} /></Suspense>
     {scene.dimensions && <Dimensions config={config} />}
-    <CameraRig config={config} view={view} environment={scene.environment} />
+    <CameraRig config={config} view={view} environment={scene.environment} autoRotate={scene.autoRotate} />
   </>
 }
 
@@ -298,9 +301,9 @@ export default memo(function GarageScene({ config, scene, view }: { config: Gara
   const onReady = useMemo(() => () => setReady(true), [])
   return <div className="scene-canvas-wrap" data-scene-ready={ready}>
     {!ready && <ScenePoster />}
-    <Boundary><Canvas frameloop="demand" shadows dpr={[1, 1.25]} camera={{ position: [6, 3, 8], fov: 40, near: 0.1, far: 220 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }} onCreated={({ gl }) => {
+    <Boundary><Canvas frameloop={scene.autoRotate ? 'always' : 'demand'} shadows dpr={[1, 1.25]} camera={{ position: [6, 3, 8], fov: 40, near: 0.1, far: 220 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }} onCreated={({ gl }) => {
       gl.toneMapping = THREE.ACESFilmicToneMapping
-      gl.toneMappingExposure = scene.night ? 1 : 0.88
+      gl.toneMappingExposure = studioLighting(scene.time).exposure
       gl.shadowMap.autoUpdate = false
       gl.shadowMap.needsUpdate = true
       gl.domElement.dataset.catalogCanvas = 'true'

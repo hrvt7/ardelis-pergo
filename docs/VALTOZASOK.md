@@ -1,5 +1,19 @@
 # Változások
 
+## 4.02 – Egységes stúdió minden terméknél: Eszközök, napszak, összecsukható árpanel, bemutató
+
+- **Közös stúdió-keret** (`components/studio/StudioChrome.tsx`, `studioState.ts`, `lib/studioLighting.ts`): a kerítés és a garázskapu konfigurátor ugyanazokat a termékfüggetlen funkciókat kapta, mint a pergola és a carport, ugyanott és ugyanúgy működve.
+  - **Fejléc:** teljes képernyő, visszavonás/ismétlés, Bemutató, (kerítésnél Árazás), Alaphelyzet.
+  - **Eszközök menü:** Nézet és vizualizáció, Bemutató mód, PDF összefoglaló, Megosztás (kerítésnél Mintaárak szerkesztése is).
+  - **Nézet és vizualizáció panel:** napszak (Nappal / Aranyóra / Éjszaka), környezet (Családi ház / Csak a termék), 180 cm-es figura, méretcímkék, automata forgatás.
+  - **Napszak-gomb** a jelenet-eszköztárban (nappal → aranyóra → éjszaka), mellette a termék saját gyorsgombja (kapu nyitása).
+  - **Összecsukható árpanel** a pergoláéval azonos módon és megjegyzett állapottal; összecsukva a bruttó irányár a sarokban, animált számváltással.
+  - **Bemutató mód:** csak a 3D jelenet és az „Ügyfél-bemutató” címke; Esc-re vissza.
+- **Kiindulás mindenhol azonos:** aranyóra és környezet nélküli, semleges háttér — a kerítés és a garázskapu is így tölt be, mint a pergola és a carport.
+- **Napszak-világítás** a kerítés- és garázsjelenetben a pergola égboltjaival és fényszíneivel (aranyórában alacsony, meleg, oldalról sütő nap).
+- A semleges háttér egyenletes (a háttérgömb nem kap tónusleképezést, így nem sötétebb a padlónál).
+- A katalógus-stúdió külön eszköztár- és címelrendezése megszűnt: ugyanaz, mint a pergoláé.
+
 ## 4.01 – Garázskapu: a garázsszárny a házhoz épül; tiszta belső nézet
 
 - **A garázsszárny a ház oromfalához épül:** eddig egy külön álló, vakolt doboz állt a ház előtt, résekkel. Most a szárny bal fala a ház jobb széléhez illeszkedik (a ház a saját szélességéből igazodik, `HouseBackdrop rightEdge`), a szárny mélysége a házéhoz igazodik.

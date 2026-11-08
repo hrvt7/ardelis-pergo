@@ -2623,15 +2623,7 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 .scene-options.four { grid-template-columns: repeat(4, 1fr); }
 .scene-options.four button { min-height: 42px; font-size: 13px; }
 
-/* Kerítés/carport stúdió asztalon: az eszköztár függőlegesen a jobb panel mellett, a cím nem fut alá. */
-@media (min-width: 821px) {
-  .catalog-studio .weather-toolbar { flex-direction: column; }
-  .catalog-studio .viewer-heading { max-width: calc(100% - 436px - 394px - 70px); }
-  .catalog-studio .viewer-live { display: none; }
-}
-@media (min-width: 821px) and (max-width: 1439px) {
-  .catalog-studio .viewer-heading p { display: none; }
-}
+/* A kerítés- és garázskapu-stúdió a pergola stúdió eszköztár- és címelrendezését használja (közös StudioChrome). */
 /* A fejléc termékváltója ne örökölje a projektcímke betűközét, és ne törjön sorokra. */
 .project-identity > span { white-space: nowrap; }
 .project-identity .product-switch { white-space: nowrap; }

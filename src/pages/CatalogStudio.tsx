@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Box, Check, ChevronRight, Download, Eye, EyeOff, Info, Link2, Maximize2, Moon, MoveUpRight, Ruler, Scan, Settings2, Sun, Trees, Undo2, Redo2, RotateCcw, UserRound, View, X } from 'lucide-react'
+import { Box, Check, ChevronRight, Download, Eye, EyeOff, Info, Link2, Maximize2, MoveUpRight, Ruler, Scan, Settings2, View, X } from 'lucide-react'
 import { Link } from 'react-router'
 import CatalogControls, { type CatalogStep } from '@/components/CatalogControls'
-import { ProductSwitch } from '@/components/ProductChooser'
 import CatalogPricePanel from '@/components/CatalogPricePanel'
 import CatalogScene, { type CatalogSceneSettings, type CatalogView } from '@/components/CatalogScene'
 import LeadForm from '@/components/LeadForm'
 import OutdoorPriceDialog from '@/components/OutdoorPriceDialog'
-import { Brand } from '@/components/SiteChrome'
+import { SceneToolbar, StudioHeader } from '@/components/studio/StudioChrome'
+import { DEFAULT_STUDIO_TIME } from '@/lib/studioLighting'
+import { usePriceCollapse, usePresentation } from '@/components/studio/studioState'
 import { useTenant } from '@/tenants/TenantContext'
 import { calculateOutdoorPrice, createOutdoorShareUrl, FAMILY_META, LABELS, loadOutdoorConfig, loadOutdoorPrices, OUTDOOR_DEFAULTS, outdoorSpecCode, persistOutdoorConfig, persistOutdoorPrices } from '@/lib/catalog'
 import { exportCatalogPdf } from '@/lib/exportCatalogPdf'
@@ -22,10 +23,13 @@ const changeLabels: Record<string, string> = { width: 'Szélesség', depth: 'Mé
 const mountLabels: Record<OutdoorConfig['mount'], string> = { wall: 'Falhoz csatlakozó', freestanding: 'Önálló', cantilever: 'Fali konzolos', posts: 'Fali + oszlopos' }
 
 export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
-  const { tenant, homeHref } = useTenant()
+  const { homeHref } = useTenant()
   const [config, setConfig] = useState<OutdoorConfig>(() => loadOutdoorConfig(family))
   const [prices, setPrices] = useState(loadOutdoorPrices)
-  const [scene, setScene] = useState<CatalogSceneSettings>({ night: false, gateOpen: false, showPerson: false, dimensions: true, environment: true })
+  // A pergola/carport stúdióval azonos kiindulás: aranyóra, semleges háttér (környezet nélkül).
+  const [scene, setScene] = useState<CatalogSceneSettings>({ time: DEFAULT_STUDIO_TIME, gateOpen: false, showPerson: false, dimensions: true, environment: false, autoRotate: false })
+  const [presentation, setPresentation] = usePresentation()
+  const [priceCollapsed, togglePrice] = usePriceCollapse()
   const [view, setView] = useState<CatalogView>('perspective')
   const [step, setStep] = useState<CatalogStep>('size')
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -85,18 +89,21 @@ export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
     <div className="summary-footnote"><Info size={14} /><span>A piszkozat és a tarifák a böngésződben maradnak. Csak az űrlap elküldésekor jön létre valós, adatbázisban rögzített projekt.</span></div>
   </div>
 
-  return <div className="app-shell catalog-studio">
-    <header className="app-header"><Brand compact /><div className="project-identity"><span>{tenant.brand.name.toUpperCase()} · 3D KONFIGURÁTOR</span><ProductSwitch /></div><div className="header-actions"><div className="history-actions"><button type="button" aria-label="Visszavonás" onClick={undo} disabled={!history.current.past.length}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" onClick={redo} disabled={!history.current.future.length}><Redo2 size={17} /></button></div><button type="button" className="header-text-button" onClick={() => setPriceOpen(true)}><Info size={16} /><span>Árazás</span></button><button type="button" className="header-text-button" onClick={reset}><RotateCcw size={16} /><span>Alaphelyzet</span></button></div></header>
+  const roofless = !roof
+  return <div className={`app-shell catalog-studio ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>
+    <StudioHeader canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setPriceOpen(true)} infoLabel="Árazás" onReset={reset} />
     <main className="studio-shell">
       <section className="viewer-panel" aria-label={`${meta.title} 3D előnézet`}><CatalogScene config={config} scene={scene} view={view} />
         <div className="viewer-heading"><span>ÉLŐ ÉPÍTÉSZETI JELENET</span><h1>{meta.title} <i>/</i> <span className="kinetic" key={`n${roof ? config.width * (family === 'carport' ? config.bays : 1) : config.length}`}>{roof ? config.width * (family === 'carport' ? config.bays : 1) : config.length}</span><small> m</small></h1><p>{meta.description}</p></div>
-        <div className="viewer-live"><i />PARAMÉTERES 3D</div>
-        <div className="weather-toolbar"><button type="button" className={scene.night ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, night: !current.night }))}>{scene.night ? <Sun size={17} /> : <Moon size={17} />}<span>{scene.night ? 'Nappal' : 'Éjszaka'}</span></button>{!roof && config.gateType !== 'none' && <button type="button" className={scene.gateOpen ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, gateOpen: !current.gateOpen }))}>{scene.gateOpen ? <EyeOff size={17} /> : <Eye size={17} />}<span>{scene.gateOpen ? 'Csukás' : 'Nyitás'}</span></button>}<button type="button" className={scene.environment ? 'selected' : ''} aria-pressed={scene.environment} title="A ház és a környezet be- és kikapcsolása" onClick={() => setScene((current) => ({ ...current, environment: !current.environment }))}><Trees size={17} /><span>Környezet</span></button><button type="button" className={scene.showPerson ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, showPerson: !current.showPerson }))}><UserRound size={17} /><span>Méretarány</span></button><button type="button" className={scene.dimensions ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, dimensions: !current.dimensions }))}><Ruler size={17} /><span>Méret</span></button></div>
+        <SceneToolbar view={scene} productName={family === 'fence' ? 'a kerítés' : `a ${meta.title.toLowerCase()}`} onViewChange={(patch) => setScene((current) => ({ ...current, ...patch }))} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onExport={exportPdf} onShare={share}
+          quick={roofless && config.gateType !== 'none' ? [{ id: 'gate', icon: scene.gateOpen ? EyeOff : Eye, label: scene.gateOpen ? 'Csukás' : 'Nyitás', title: 'A kapu nyitása és zárása', active: scene.gateOpen, run: () => setScene((current) => ({ ...current, gateOpen: !current.gateOpen })) }] : []}
+          tools={[{ id: 'prices', icon: Settings2, name: 'Mintaárak szerkesztése', note: 'Folyóméter-, kapu- és tételárak a kalkulációhoz', run: () => setPriceOpen(true) }]} />
         <div className="camera-toolbar" aria-label="Kamera nézetek">{views.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} onClick={() => setView(id)}><Icon size={16} /><span>{label}</span></button>)}</div>
         <div className="viewer-footer"><span>1 egység = 1 méter</span><span>{roof ? `${price.area.toFixed(1)} m²` : `${config.length} fm`}</span></div>
+        {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{meta.title} · {roof ? `${formatNumber(config.width * (family === 'carport' ? config.bays : 1))} × ${formatNumber(config.depth)} m` : `${formatNumber(config.length)} fm · ${formatNumber(config.height)} m`}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
       </section>
       <CatalogControls config={config} step={step} price={price} summary={summary} mobileOpen={mobileOpen} onMobileToggle={() => setMobileOpen(!mobileOpen)} onStep={setStep} onChange={update} />
-      <CatalogPricePanel heading={{ eyebrow: roof ? meta.title : `${LABELS.style[config.style]} · ${LABELS.gate[config.gateType]}`, title: roof ? `${formatNumber(config.width * (family === 'carport' ? config.bays : 1))} × ${formatNumber(config.depth)} m` : `${formatNumber(config.height)} m magas rendszer`, measure: `${roof ? `${formatNumber(price.area)} m²` : `${formatNumber(config.length)} fm`} · paraméteres modell` }} price={price} exporting={exporting} delta={delta} onEditPrices={() => setPriceOpen(true)} onExport={exportPdf} onShare={share} />
+      <CatalogPricePanel collapsed={priceCollapsed} onToggleCollapse={togglePrice} heading={{ eyebrow: roof ? meta.title : `${LABELS.style[config.style]} · ${LABELS.gate[config.gateType]}`, title: roof ? `${formatNumber(config.width * (family === 'carport' ? config.bays : 1))} × ${formatNumber(config.depth)} m` : `${formatNumber(config.height)} m magas rendszer`, measure: `${roof ? `${formatNumber(price.area)} m²` : `${formatNumber(config.length)} fm`} · paraméteres modell` }} price={price} exporting={exporting} delta={delta} onEditPrices={() => setPriceOpen(true)} onExport={exportPdf} onShare={share} />
     </main>
     <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong>{formatHuf(price.totalGross)}</strong></div><button type="button" onClick={() => { setStep(step === 'summary' ? 'size' : 'summary'); setMobileOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>
     {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label="Értesítés bezárása" onClick={() => setToast('')}><X size={16} /></button></div>}
