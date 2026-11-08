@@ -1,5 +1,12 @@
 # Változások
 
+## 3.96 – Csomagváltás nem vált éjszakára; a carport kalkulátorból kikerültek a pergola-elemek
+
+- **Hiba javítva – „Kétállásos carport” → éjszakai nézet:** a csomag LED-et kapcsol be, és a pergola „esti nézetre váltottunk” automatikája (amely a LED kapcsolóhoz készült) csomagbetöltéskor is lefutott. Teljes terv betöltésekor (csomag, tanácsadó, alaphelyzet) mostantól csak az áttekintő kamera áll be; az egyes módosításokhoz kötött reakciók (oldalra fókusz, esti nézet, belső nézet) nem futnak le. Ugyanez a pergola-csomagokra is igaz.
+- **Carport kalkulátor – csak ami oda való:** nincs „Kanapé” kameranézet; a Nézet panelen nincs bútorválasztó, a környezet opció „Csak a carport”, a szövegek carportról szólnak (fotóba helyezés, napirány, követő kamera); az esti hangulatpanel nem kínál teraszfűtést és színes LED-et; a költségkeret-tervező szövege is carportot mond.
+- **Műszaki jelölések a 3D-ben** csak a tervben meglévő részletekre: lamellamotor és esőszenzor csak mozgó tetőnél, LED csak ha van — fix tetős carporton és pergolán eddig lamellamotort mutatott.
+- **Üzenetsávok** („Üdv újra”, ármódosítás-pill) a két panel közötti szabad sávban maradnak, nem futnak a panelek alá.
+
 ## 3.95 – Kerítés-nézet keretezése, élesebb autó, rendezett fejléc
 
 - **Kamera a szabad sávra keretez** (`CatalogScene.tsx`): a kerítés/carport 3D eddig a két oldalpanel mögé lógott. A kamera most megméri a panelek közötti szabad sávot, annak közepére tolja a képet (view offset), és akkora távolságra áll, hogy a teljes rendszer (kapuval, kiskapuval) beleférjen. Tér-, front- és felülnézetben is; mobilon a teljes vászon a keret.

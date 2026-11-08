@@ -21,12 +21,15 @@ export default function MoodPanel({ config, scene, prices, onChange, onSceneChan
   const ledPrice = tenantPrice(tenant, { ...config, led: true }, prices).totalGross - current
   const heaterPrice = tenantPrice(tenant, { ...config, heaters: Math.max(1, config.heaters) }, prices).totalGross - current
   const rgbPrice = tenantPrice(tenant, { ...config, led: true, ledRgb: true }, prices).totalGross - tenantPrice(tenant, { ...config, led: true }, prices).totalGross
+  // Carportnál csak a világítás értelmezhető: fűtés és színes LED nem tartozik a termékhez.
+  const carport = config.building === 'carport'
   const canLed = tenant.extras.led
-  const canHeat = tenant.limits.maxHeaters > 0
+  const canHeat = tenant.limits.maxHeaters > 0 && !carport
+  const canRgb = tenant.extras.rgb && !carport
 
   return <section className="mood-panel" aria-label="Esti hangulat">
     <header>
-      <div><Moon size={16} /><span><strong>Esti hangulat</strong><small>Így néz ki a teraszod este</small></span></div>
+      <div><Moon size={16} /><span><strong>Esti hangulat</strong><small>{carport ? 'Így néz ki a beállód este' : 'Így néz ki a teraszod este'}</small></span></div>
       <button type="button" className="sun-close" aria-label="Esti hangulat bezárása" onClick={onClose}><X size={16} /></button>
     </header>
 
@@ -46,7 +49,7 @@ export default function MoodPanel({ config, scene, prices, onChange, onSceneChan
         <div className="rgb-swatches mood-rgb" role="radiogroup" aria-label="LED színe">
           {RGB_SWATCHES.map((swatch) => <button type="button" role="radio" aria-checked={scene.ledColor === swatch.hex} key={swatch.hex} className={scene.ledColor === swatch.hex ? 'selected' : ''} style={{ '--swatch': swatch.hex } as React.CSSProperties} title={swatch.name} aria-label={swatch.name} onClick={() => onSceneChange({ ledColor: swatch.hex })} />)}
         </div>
-      </> : tenant.extras.rgb && <button type="button" className="mood-add" onClick={() => onChange({ ledRgb: true })}><Plus size={14} /><span><strong>Színes fények is kellenek?</strong><small>Színváltós RGB+W LED · +{formatHuf(rgbPrice)}</small></span></button>}
+      </> : canRgb && <button type="button" className="mood-add" onClick={() => onChange({ ledRgb: true })}><Plus size={14} /><span><strong>Színes fények is kellenek?</strong><small>Színváltós RGB+W LED · +{formatHuf(rgbPrice)}</small></span></button>}
     </> : <button type="button" className="mood-add" onClick={() => onChange({ led: true })}><Plus size={14} /><span><strong>Próbáld ki LED-világítással</strong><small>Rejtett periméter LED · +{formatHuf(ledPrice)}</small></span></button>)}
 
     {canHeat && (config.heaters > 0

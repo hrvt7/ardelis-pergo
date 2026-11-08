@@ -287,19 +287,21 @@ function useSheetGesture(panel: React.RefObject<HTMLElement | null>, sheet: Shee
 /** Jelenet és vizualizáció: lebegő „Nézet” panel (nem lépés — a beállítások a 3D-nézeten azonnal látszanak). */
 export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneChange, onPhotoUpload }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onPhotoUpload: (file: File) => void }) {
   const setDayTime = (dayTime: number) => onSceneChange({ dayTime, time: dayTime >= 20 || dayTime < 7 ? 'night' : dayTime >= 17 ? 'sunset' : 'day' })
+  const carport = config.building === 'carport'
+  const thing = carport ? 'a carport' : 'a pergola'
   return (
           <div className="scene-settings-body">
             <SectionTitle title="Napszak" hint="Állítsd be az időpontot, és nézd meg, hogyan változik a jelenet megvilágítása." />
             <div className="time-labels"><span>Reggel</span><strong>{String(Math.floor(scene.dayTime)).padStart(2, '0')}:00</strong><span>Éjjel</span></div>
             <input aria-label="Napszak" className="range-input daylight-range" type="range" min={6} max={23} step={0.25} value={scene.dayTime} onChange={(event) => setDayTime(Number(event.target.value))} />
             <div className="scene-options compact">{([[13, 'Nappal', Sun], [18, 'Aranyóra', Sunset], [22, 'Éjszaka', Moon]] as const).map(([time, label, Icon]) => <button type="button" key={label} className={scene.time === (time === 13 ? 'day' : time === 18 ? 'sunset' : 'night') ? 'selected' : ''} onClick={() => setDayTime(time)}><Icon size={17} /><span>{label}</span></button>)}</div>
-            {!scene.sunStudy && <div className="inline-setting"><SliderField label="Napirány" value={scene.sunDirection ?? 0} min={0} max={360} step={5} unit="°" onChange={(sunDirection) => onSceneChange({ sunDirection: sunDirection % 360 })} /><p className="split-note">A nap járásának elforgatása a terasz körül: az árnyék oda esik, ahova a te teraszodon. Pontos helyszín és dátum szerint az Árnyékelemzésben.</p></div>}
-            <SectionTitle title="Környezet" hint="Családi ház teraszán, vagy csak a pergola semleges háttér előtt – vendéglátós, ipari vagy katalógus-bemutatóhoz." />
+            {!scene.sunStudy && <div className="inline-setting"><SliderField label="Napirány" value={scene.sunDirection ?? 0} min={0} max={360} step={5} unit="°" onChange={(sunDirection) => onSceneChange({ sunDirection: sunDirection % 360 })} /><p className="split-note">{carport ? 'A nap járásának elforgatása a telek körül: az árnyék oda esik, ahova nálad.' : 'A nap járásának elforgatása a terasz körül: az árnyék oda esik, ahova a te teraszodon.'} Pontos helyszín és dátum szerint az Árnyékelemzésben.</p></div>}
+            <SectionTitle title="Környezet" hint={carport ? 'Családi ház előtt, vagy csak a carport semleges háttér előtt – katalógus-bemutatóhoz.' : 'Családi ház teraszán, vagy csak a pergola semleges háttér előtt – vendéglátós, ipari vagy katalógus-bemutatóhoz.'} />
             <div className="scene-options compact two" role="radiogroup" aria-label="Környezet">
-              {([['terrace', 'Családi ház', House], ['studio', 'Csak a pergola', Box]] as const).map(([ground, label, Icon]) => { const active = (scene.ground === 'studio') === (ground === 'studio'); return <button type="button" role="radio" aria-checked={active} key={ground} className={active ? 'selected' : ''} onClick={() => onSceneChange({ ground })}><Icon size={17} /><span>{label}</span></button> })}
+              {([['terrace', 'Családi ház', House], ['studio', `Csak ${thing}`, Box]] as const).map(([ground, label, Icon]) => { const active = (scene.ground === 'studio') === (ground === 'studio'); return <button type="button" role="radio" aria-checked={active} key={ground} className={active ? 'selected' : ''} onClick={() => onSceneChange({ ground })}><Icon size={17} /><span>{label}</span></button> })}
             </div>
             {/* A berendezés a jelenet része (nem a terméké): itt van, a környezet mellett, nem a lépések között. */}
-            <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
+            {!carport && <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />}
             <div className="scene-toggle-grid">
               <Toggle label="180 cm-es figura" description="A méretek szemléltetéséhez" checked={scene.showPerson} onChange={(showPerson) => onSceneChange({ showPerson })} />
               <Toggle label="Méretcímkék" description="Aktuális méretek centiméterben" checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
@@ -307,7 +309,7 @@ export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneCha
               <Toggle label="Feliratok a 3D-ben" description="Kattintási tippek és a Működés címkéi" checked={scene.labels !== false} onChange={(labels) => onSceneChange({ labels })} />
               <Toggle label="Robbantott nézet" description="A szerkezet elemei szétválasztva" checked={scene.exploded} onChange={(exploded) => onSceneChange({ exploded })} />
               <Toggle label="Automata forgatás" description="Koppintásra megáll" checked={scene.autoRotate} onChange={(autoRotate) => onSceneChange({ autoRotate })} />
-              <Toggle label="Követő kamera" description="A választáshoz fordul (oldal, szín, ventilátor)" checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
+              <Toggle label="Követő kamera" description={carport ? 'A választáshoz fordul (szín, tető)' : 'A választáshoz fordul (oldal, szín, ventilátor)'} checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
             </div>
             <label className="select-field"><span>3D minőség</span><select value={scene.quality} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="medium">Közepes</option><option value="low">Alacsony</option></select></label>
             <div className="photo-mode">

@@ -1119,7 +1119,10 @@ function Hotspots({ config, posts }: { config: PergolaConfig; posts: [number, nu
     { id: 'sensor', position: [-width / 2 + 0.2, height + 0.35, -depth / 2 + 0.2] },
     ...(post && post !== drain ? [{ id: 'post' as const, position: [post[0], 0.15, post[1]] as [number, number, number] }] : []),
   ]
-  return <group>{points.map((point) => <group key={point.id} position={point.position}><Html center zIndexRange={[12, 0]}><button type="button" className={`hotspot ${active === point.id ? 'active' : ''}`} aria-label={HOTSPOTS[point.id].title} onClick={(event) => { event.stopPropagation(); setActive(active === point.id ? null : point.id) }}><span>+</span></button>{active === point.id && <div className="hotspot-card"><button type="button" aria-label="Előnykártya bezárása" onClick={() => setActive(null)}>×</button><strong>{HOTSPOTS[point.id].title}</strong><p>{HOTSPOTS[point.id].text}</p></div>}</Html></group>)}</group>
+  // Csak a tervben meglévő részletek kapnak jelölést: lamellamotor és szenzor mozgó tetőnél, LED ha van.
+  const movable = config.roof === 'louvered'
+  const shown = points.filter((point) => (point.id === 'motor' || point.id === 'sensor' ? movable : point.id === 'led' ? config.led : true))
+  return <group>{shown.map((point) => <group key={point.id} position={point.position}><Html center zIndexRange={[12, 0]}><button type="button" className={`hotspot ${active === point.id ? 'active' : ''}`} aria-label={HOTSPOTS[point.id].title} onClick={(event) => { event.stopPropagation(); setActive(active === point.id ? null : point.id) }}><span>+</span></button>{active === point.id && <div className="hotspot-card"><button type="button" aria-label="Előnykártya bezárása" onClick={() => setActive(null)}>×</button><strong>{HOTSPOTS[point.id].title}</strong><p>{HOTSPOTS[point.id].text}</p></div>}</Html></group>)}</group>
 }
 
 function Person({ config }: { config: PergolaConfig }) {

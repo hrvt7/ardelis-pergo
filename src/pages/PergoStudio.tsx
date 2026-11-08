@@ -272,7 +272,10 @@ export default function PergoStudio() {
     // Finom visszajelzés érintőképernyőn (csúszka húzásakor ritkítva).
     const now = performance.now()
     if (now - lastBuzz.current > 260 && typeof navigator.vibrate === 'function' && window.matchMedia('(pointer: coarse)').matches) { lastBuzz.current = now; try { navigator.vibrate(8) } catch { /* nem támogatott */ } }
-    reactToChange(config, next)
+    // Teljes terv betöltésekor (csomag, tanácsadó, alaphelyzet) csak áttekintő nézet: az egyes módosításokhoz kötött
+    // reakciók (oldalra fókusz, esti nézet a LED-hez) itt félrevezetők lennének.
+    if (replace) { const current = sceneRef.current; if (current.autoCamera && !current.photoMode && !current.sunStudy) overview() }
+    else reactToChange(config, next)
     // Csúszkahúzásnál (folyamatos mező, rövid időn belül) egyetlen visszavonási lépés keletkezik, nem tucatnyi.
     const nowMs = Date.now()
     const continuous = changedKeys.length === 1 && CONTINUOUS_KEYS.has(changedKeys[0])
@@ -285,7 +288,7 @@ export default function PergoStudio() {
     history.current.future = []
     configRef.current = next
     setConfig(next)
-  }, [config, price.totalGross, prices, tenant, ROOF_LABELS, reactToChange])
+  }, [config, price.totalGross, prices, tenant, ROOF_LABELS, reactToChange, overview])
 
   const updateConfig = useCallback((patch: Partial<PergolaConfig>) => applyConfig(patch), [applyConfig])
   const replaceConfig = useCallback((next: PergolaConfig) => applyConfig(next, true), [applyConfig])
@@ -457,9 +460,9 @@ export default function PergoStudio() {
           <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások"><button type="button" className={scene.rain ? 'selected' : ''} aria-pressed={scene.rain} title="Eső be- és kikapcsolása" onClick={() => updateScene({ rain: !scene.rain })}><CloudRain size={17} /><span>Eső</span></button>{!arHidden && <button type="button" className="ar-launch" title={arPath === 'desktop' ? 'Nézd meg a kertedben valós méretben — telefonon (QR-kód)' : 'Nézd meg valós méretben a saját kertedben (AR)'} onClick={() => { if (!admin) { track(tenant.id, 'ar'); noteEngagement(tenant.id, 'ar') } if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') }}><Rotate3d size={17} /><span>AR</span></button>}<button type="button" className={`view-toggle tools-toggle ${toolsOpen || viewOpen || scene.sunStudy || scene.photoMode || mechanismOn || scene.exploded ? 'selected' : ''}`} aria-pressed={toolsOpen} aria-expanded={toolsOpen} title="Eszközök: nézet, árnyékelemzés, fotó, működés, robbantott nézet, keret, üzemeltetés, tanácsadó" onClick={() => { setToolsOpen((open) => !open); setViewOpen(false) }}><LayoutGrid size={17} /><span>Eszközök</span></button></div>
           {toolsOpen && <div className="view-popover tools-menu glass-panel" role="dialog" aria-label="Eszközök"><div className="view-popover-head"><strong>Eszközök</strong><button type="button" aria-label="Bezárás" onClick={() => setToolsOpen(false)}><X size={16} /></button></div><div className="tools-list">
             {([
-              { id: 'view', icon: SlidersHorizontal, name: 'Nézet és vizualizáció', note: 'Napszak, napirány, környezet, bútor, feliratok, 3D-minőség', active: false, run: () => { setViewOpen(true) } },
+              { id: 'view', icon: SlidersHorizontal, name: 'Nézet és vizualizáció', note: product === 'carport' ? 'Napszak, napirány, környezet, feliratok, 3D-minőség' : 'Napszak, napirány, környezet, bútor, feliratok, 3D-minőség', active: false, run: () => { setViewOpen(true) } },
               { id: 'sun', icon: SunMedium, name: 'Árnyékelemzés', note: 'Valós napállás a saját helyszíneden, dátum és óra szerint', active: scene.sunStudy, run: toggleSunStudy },
-              { id: 'photo', icon: scene.photoUrl ? Image : ImagePlus, name: 'Fotóba helyezés', note: scene.photoUrl ? 'A pergola a saját teraszod fotóján' : 'Töltsd fel a teraszod fotóját, és helyezd rá a pergolát', active: scene.photoMode, run: () => { if (!scene.photoUrl) openPhotoPicker(); else updateScene({ photoMode: !scene.photoMode, sunStudy: false }) } },
+              { id: 'photo', icon: scene.photoUrl ? Image : ImagePlus, name: 'Fotóba helyezés', note: product === 'carport' ? (scene.photoUrl ? 'A carport a saját udvarod fotóján' : 'Töltsd fel az udvarod fotóját, és helyezd rá a carportot') : (scene.photoUrl ? 'A pergola a saját teraszod fotóján' : 'Töltsd fel a teraszod fotóját, és helyezd rá a pergolát'), active: scene.photoMode, run: () => { if (!scene.photoUrl) openPhotoPicker(); else updateScene({ photoMode: !scene.photoMode, sunStudy: false }) } },
               ...(config.roof === 'louvered' ? [{ id: 'mechanism', icon: Cog, name: 'Működés-bemutató', note: 'A lamellahajtás mozgásban, valós gyári adatokkal', active: mechanismOn, run: () => updateScene({ mechanism: !scene.mechanism, sunStudy: false, photoMode: false, exploded: false }) }] : []),
               { id: 'exploded', icon: Layers, name: 'Robbantott nézet', note: 'A szerkezet elemei szétválasztva', active: scene.exploded, run: () => updateScene({ exploded: !scene.exploded, mechanism: false }) },
               { id: 'budget', icon: Wallet, name: 'Költségkeret-tervező', note: 'Add meg a keretet, megmutatjuk, mi fér bele', active: false, run: () => setModal('budget') },
@@ -476,7 +479,7 @@ export default function PergoStudio() {
           {rotateHint && view !== 'sofa' && !scene.photoMode && !welcomeBack && <div className="pov-note rotate-hint" role="status"><Rotate3d size={16} /><span><strong>Húzd a forgatáshoz</strong>Két ujjal nagyíthatsz</span></div>}
           {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
           {scene.photoMode ? <PhotoBar placement={{ photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt, photoLens: scene.photoLens }} coarse={isNarrow || window.matchMedia('(pointer: coarse)').matches} onChange={(next) => updateScene(next)} onReset={() => updateScene({ ...DEFAULT_PLACEMENT })} onReplace={openPhotoPicker} onDelete={deleteUserPhoto} onDone={() => updateScene({ photoMode: false })} />
-            : <div className="camera-toolbar" aria-label="Kamera nézetek">{CAMERA_VIEWS.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} aria-pressed={view === id} onClick={() => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} title={`${label} nézet`}><Icon size={16} /><span>{label}</span></button>)}</div>}
+            : <div className="camera-toolbar" aria-label="Kamera nézetek">{CAMERA_VIEWS.filter(({ id }) => !(product === 'carport' && id === 'sofa')).map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} aria-pressed={view === id} onClick={() => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} title={`${label} nézet`}><Icon size={16} /><span>{label}</span></button>)}</div>}
           {welcomeBack && <div className="welcome-back" role="status">
             <span><strong>Üdv újra!</strong>Ott folytatod, ahol abbahagytad: {config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {formatHuf(price.totalGross)}</span>
             <button type="button" className="welcome-primary" onClick={() => setWelcomeBack(false)}>Folytatom</button>

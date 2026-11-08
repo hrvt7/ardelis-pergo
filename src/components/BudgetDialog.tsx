@@ -41,7 +41,7 @@ export default function BudgetDialog({ config, prices, furniture, currentGross, 
       {amount <= 0 && <p className="budget-note">Adj meg egy összeget.</p>}
       {busy && <p className="budget-note"><LoaderCircle size={15} className="spin" />Számolás a gyártó árlistájával…</p>}
       {value?.status === 'fits' && <div className="budget-fits"><Check size={18} /><div><strong>Belefér a terved.</strong><span>Marad {formatHuf(value.remaining)} — ebből kényelmesen futja pl. LED-re vagy oldalzárásra.</span></div></div>}
-      {value?.status === 'impossible' && <div className="budget-fits is-warning"><Wallet size={18} /><div><strong>Ebbe a keretbe nem fér bele ez a fajta pergola.</strong><span>A legolcsóbb elérhető változat (legkisebb méret{furniture !== 'none' ? ' a választott bútorhoz' : ''}, egyszerűbb tető, kiegészítők nélkül) ára {formatHuf(value.minimumGross)}.</span></div></div>}
+      {value?.status === 'impossible' && <div className="budget-fits is-warning"><Wallet size={18} /><div><strong>Ebbe a keretbe nem fér bele ez a fajta {config.building === 'carport' ? 'carport' : 'pergola'}.</strong><span>A legolcsóbb elérhető változat (legkisebb méret{furniture !== 'none' ? ' a választott bútorhoz' : ''}, egyszerűbb tető, kiegészítők nélkül) ára {formatHuf(value.minimumGross)}.</span></div></div>}
       {value?.status === 'plans' && <div className="budget-plans">
         {value.plans.map((plan) => <article key={plan.id} className={`budget-plan${plan.id === 'balanced' ? ' is-best' : ''}`}>
           <header><span>{plan.title}</span>{plan.id === 'balanced' && <em>Ajánlott</em>}</header>
