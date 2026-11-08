@@ -29,7 +29,8 @@ export function studioLighting(time: StudioTime) {
     ambient: night ? 0.6 : golden ? 0.45 : 0.55,
     hemisphere: night ? 0.4 : golden ? 0.5 : 0.55,
     environment: night ? 0.55 : golden ? 0.75 : 0.8,
-    background: night ? 0.4 : golden ? 0.75 : 0.65,
+    /** Égbolt-háttér a pergola-jelenet értékeivel (élesen, nem elmosva), hogy a horizont köde és az ég összeérjen. */
+    background: night ? 0.55 : 0.95,
     exposure: night ? 1 : golden ? 0.9 : 0.88,
   }
 }

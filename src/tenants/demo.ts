@@ -130,7 +130,7 @@ export const demoTenant: Tenant = {
       id: 'basic', name: 'Alap', description: '3,5 × 3 m · nyitott, letisztult',
       config: { width: 3.5, depth: 3, mount: 'freestanding', sides: { front: 'none', back: 'none', left: 'none', right: 'none' }, led: false, sensors: false },
     },
-    { id: 'comfort', name: 'Komfort', description: '5 × 4 m · ZIP + LED + szenzor', config: {} },
+    { id: 'comfort', name: 'Komfort', description: '5 × 4 m · ZIP + LED + szenzor', config: {}, featured: true },
     {
       id: 'premium', name: 'Prémium', description: '6 × 4,5 m · üveg + fűtés + hang',
       config: { width: 6, depth: 4.5, mount: 'freestanding', frameColor: 'black', sides: { front: 'glass', back: 'louver', left: 'glass', right: 'zip' }, heaters: 2, speakers: true },
@@ -148,7 +148,7 @@ export const demoTenant: Tenant = {
       config: { width: 3, depth: 5.2, height: 2.3, mount: 'freestanding', roof: 'fixed', building: 'carport', sides: { front: 'none', back: 'none', left: 'none', right: 'none' }, led: false, sensors: false, heaters: 0, speakers: false },
     },
     {
-      id: 'carport-double', name: 'Kétállásos carport', description: '5,6 × 5,4 m · polikarbonát tető, LED',
+      id: 'carport-double', name: 'Kétállásos carport', description: '5,6 × 5,4 m · polikarbonát tető, LED', featured: true,
       config: { width: 5.6, depth: 5.4, height: 2.3, mount: 'freestanding', roof: 'polycarbonate', building: 'carport', pitch: 3, sides: { front: 'none', back: 'none', left: 'none', right: 'none' }, led: true, sensors: false, heaters: 0, speakers: false },
     },
     {

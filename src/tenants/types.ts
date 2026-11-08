@@ -32,6 +32,8 @@ export interface TenantPreset {
   name: string
   description: string
   config: Partial<PergolaConfig>
+  /** Kiemelt („Legnépszerűbb”) csomag a listában. */
+  featured?: boolean
 }
 
 export interface Tenant {

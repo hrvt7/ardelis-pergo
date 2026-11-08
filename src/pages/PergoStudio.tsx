@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Armchair, Cog, FileDown, Box, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Layers, Maximize2, Rotate3d, Scan, ShieldCheck, SunMedium, Undo2, View, Wallet, WandSparkles, X } from 'lucide-react'
+import { Armchair, Cog, FileDown, Box, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Layers, Maximize2, Rotate3d, Scan, ShieldCheck, SunMedium, View, Wallet, WandSparkles, X } from 'lucide-react'
 import { Link } from 'react-router'
 import ConfiguratorControls, { SceneSettingsPanel } from '@/components/ConfiguratorControls'
 import { InfoDialog, PriceSettingsDialog, ResetDialog } from '@/components/Dialogs'
@@ -29,7 +29,7 @@ import type { ShadeResult } from '@/components/ShadeProbe'
 import { studySun } from '@/lib/sunSite'
 import { isMovableRoof } from '@/lib/roofs'
 import { isClosedBuilding } from '@/lib/buildings'
-import { SceneToolbar, StudioHeader, type ToolItem } from '@/components/studio/StudioChrome'
+import { ChangePill, SceneToolbar, StudioHeader, WelcomeBack, type ToolItem } from '@/components/studio/StudioChrome'
 import { usePresentation, usePriceCollapse } from '@/components/studio/studioState'
 import { DEFAULT_USAGE, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
 import type { FurnitureSet } from '@/types/pergola'
@@ -444,8 +444,8 @@ export default function PergoStudio() {
           <SceneToolbar time={scene.time} onTimeChange={(time) => updateScene({ time, dayTime: time === 'day' ? 13 : time === 'sunset' ? 18 : 22 })}
             viewPanel={<SceneSettingsPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onPhotoUpload={handlePhoto} />}
             quick={[
-              { id: 'rain', icon: CloudRain, label: 'Eső', title: 'Eső be- és kikapcsolása', active: scene.rain, run: () => updateScene({ rain: !scene.rain }) },
-              ...(arHidden ? [] : [{ id: 'ar', icon: Rotate3d, label: 'AR', className: 'ar-launch', title: arPath === 'desktop' ? 'Nézd meg a kertedben valós méretben — telefonon (QR-kód)' : 'Nézd meg valós méretben a saját kertedben (AR)', run: () => { if (!admin) { track(tenant.id, 'ar'); noteEngagement(tenant.id, 'ar') } if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') } }]),
+              { id: 'rain', icon: CloudRain, label: 'Eső', className: 'icon-rain', title: 'Eső be- és kikapcsolása', active: scene.rain, run: () => updateScene({ rain: !scene.rain }) },
+              ...(arHidden ? [] : [{ id: 'ar', icon: Rotate3d, label: 'AR', className: 'ar-launch icon-ar', title: arPath === 'desktop' ? 'Nézd meg a kertedben valós méretben — telefonon (QR-kód)' : 'Nézd meg valós méretben a saját kertedben (AR)', run: () => { if (!admin) { track(tenant.id, 'ar'); noteEngagement(tenant.id, 'ar') } if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') } }]),
             ]}
             toolsBusy={scene.sunStudy || scene.photoMode || mechanismOn || scene.exploded}
             tools={([
@@ -467,15 +467,8 @@ export default function PergoStudio() {
           {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
           {scene.photoMode ? <PhotoBar placement={{ photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt, photoLens: scene.photoLens }} coarse={isNarrow || window.matchMedia('(pointer: coarse)').matches} onChange={(next) => updateScene(next)} onReset={() => updateScene({ ...DEFAULT_PLACEMENT })} onReplace={openPhotoPicker} onDelete={deleteUserPhoto} onDone={() => updateScene({ photoMode: false })} />
             : <div className="camera-toolbar" aria-label="Kamera nézetek">{CAMERA_VIEWS.filter(({ id }) => !(product === 'carport' && id === 'sofa')).map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} aria-pressed={view === id} onClick={() => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} title={`${label} nézet`}><Icon size={16} /><span>{label}</span></button>)}</div>}
-          {welcomeBack && <div className="welcome-back" role="status">
-            <span><strong>Üdv újra!</strong>Ott folytatod, ahol abbahagytad: {config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {formatHuf(price.totalGross)}</span>
-            <button type="button" className="welcome-primary" onClick={() => setWelcomeBack(false)}>Folytatom</button>
-            <button type="button" onClick={() => { replaceConfig(productDefaultConfig(tenant, product)); setProjectName(''); setWelcomeBack(false); goStep('size') }}>Új terv</button>
-          </div>}
-          {change && change.amount !== 0 && !presentation && <div key={change.id} className={`change-pill ${change.amount < 0 ? 'is-down' : 'is-up'}`} role="status" aria-live="polite">
-            <strong>{change.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(change.amount))}</strong><span>{change.label}</span>
-            <button type="button" onClick={() => { undo(); setChange(null) }}><Undo2 size={14} />Visszavonás</button>
-          </div>}
+          {welcomeBack && <WelcomeBack summary={`${config.width.toFixed(1).replace('.', ',')} × ${config.depth.toFixed(1).replace('.', ',')} m · ${formatHuf(price.totalGross)}`} onContinue={() => setWelcomeBack(false)} onFresh={() => { replaceConfig(productDefaultConfig(tenant, product)); setProjectName(''); setWelcomeBack(false); goStep('size') }} />}
+          {!presentation && <ChangePill change={change} onUndo={() => { undo(); setChange(null) }} />}
           <div className="viewer-footer"><span>{scene.photoMode ? 'HELYI FOTÓS ELŐNÉZET' : '1 egység = 1 méter'}</span><span>{price.area.toFixed(1).replace('.', ',')} m²</span>{tenant.platformCredit !== false && <a className="platform-credit" href="/" target="_blank" rel="noopener" title="3D konfigurátor: Lamelix"><LamelixLogo variant="symbol" tone="onDark" height={11} title={null} />Lamelix</a>}</div>
         </section>
 

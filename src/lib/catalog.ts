@@ -36,3 +36,8 @@ export function createOutdoorShareUrl(config: OutdoorConfig) {
   url.hash = encodeOutdoorHash(config)
   return url.toString()
 }
+
+/** Van-e a böngészőben a családnak mentett, az alaptól eltérő piszkozata (link nélkül nyitva). */
+export function hasOutdoorDraft(family: OutdoorFamily, config: OutdoorConfig) {
+  try { return !window.location.hash && localStorage.getItem(`ardelis-config-${family}-v1`) !== null && JSON.stringify(config) !== JSON.stringify(OUTDOOR_DEFAULTS[family]) } catch { return false }
+}

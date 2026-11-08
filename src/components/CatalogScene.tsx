@@ -539,7 +539,7 @@ function SceneContent({ config, scene, view, onReady }: { config: OutdoorConfig;
       <pointLight position={[0, 5, 7]} color="#c5ddff" intensity={65} distance={30} decay={2} />
     </>}
     {studio && <color attach="background" args={[light.studio]} />}
-    <Suspense fallback={null}><Environment files={light.hdr} background={!studio} backgroundBlurriness={0.18} backgroundIntensity={light.background} environmentIntensity={light.environment} /></Suspense>
+    <Suspense fallback={null}><Environment files={light.hdr} background={!studio} backgroundBlurriness={0} backgroundIntensity={light.background} environmentIntensity={light.environment} /></Suspense>
     {studio ? <><StudioBackdrop night={night} /><StudioFloor night={night} /></> : <Ground config={config} />}
     <MaterialProvider config={config}>
       {config.family === 'canopy' && <CoverModel config={config} color={color} night={night} />}
@@ -577,7 +577,7 @@ export default memo(function CatalogScene({ config, scene, view }: { config: Out
   const onReady = useMemo(() => () => setReady(true), [])
   return <div className="scene-canvas-wrap" data-scene-ready={ready}>
     {!ready && <ScenePoster />}
-    <Boundary><Canvas frameloop={scene.autoRotate ? 'always' : 'demand'} shadows dpr={[1, 1.25]} camera={{ position: [10, 7, 12], fov: 40, near: 0.1, far: 260 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }} onCreated={({ gl }) => {
+    <Boundary><Canvas frameloop={scene.autoRotate ? 'always' : 'demand'} shadows dpr={[1, 1.25]} camera={{ position: [10, 7, 12], fov: 40, near: 0.1, far: 260 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} onCreated={({ gl }) => {
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.toneMappingExposure = studioLighting(scene.time).exposure
       gl.shadowMap.autoUpdate = false

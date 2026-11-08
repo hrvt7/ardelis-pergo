@@ -1,5 +1,30 @@
 # Változások
 
+## 4.04 – Prémium csomag: közös visszajelzések, mozgás, termékválasztó, tervrendszer
+
+**A — Közös funkciók minden konfigurátorban**
+- **Ármódosító buborék visszavonással** (`ChangePill`): a kerítés és a garázskapu is megkapta; a pergola ugyanazt a komponenst használja.
+- **„Üdv újra” sáv** (`WelcomeBack`): mentett piszkozatnál a kerítés és a garázskapu is felajánlja a folytatást vagy az új tervet (eddig szó nélkül betöltötték).
+- **Összegzés-bélyegkép:** a kerítésnél és a garázskapunál is a jelenet valódi pillanatképe (eddig doboz-ikon); a vásznak `preserveDrawingBuffer`-rel futnak.
+- **Lépésváltás iránya:** előrelépéskor jobbról, visszalépéskor balról csúszik be a panel — mint a pergolánál.
+- **Jelenet-alcím műszaki adattal:** kerítésnél „Porfestett alumínium · vízszintes lamella · 1,6 m magas” (eddig marketingmondat).
+
+**B — Mozgás és visszajelzés**
+- **Jelentéses ikonmozgás:** a nap forog, az aranyóra felkel, a hold billen, az eső csöppen, a kapu ajtaja kinyílik, az AR körbefordul, az Eszközök rács megpattan.
+- **Fő gombok** (PDF összefoglaló, felmérési kérelem küldése): átfutó fény és finom ragyogás hoverre.
+- **Kiemelt csomag:** a gyártó megjelölhet egy kiinduló csomagot (`featured`); átmenetes keret és „Legnépszerűbb” címke. Demó: Komfort, Kétállásos carport.
+- **Animált ár** a mobil alsó ársávban mindenhol (eddig csak a pergolánál).
+
+**C — Termékválasztó oldal**
+- Minden kártyán a termék saját 3D-jelenetéből készült kép (aranyóra, családi ház); betöltés közben csillogó helykitöltő, betöltéskor finom beúszás, hoverre lassú nagyítás.
+- Számozott „Tervezd meg → Lásd az árat → Kérj felmérést” sáv.
+
+**D — Egységes tervrendszer**
+- **Saroksugár-skála:** `--radius-xs/sm/md/lg/xl/pill` (4 / 7 / 9 / 13 / 18 / 999 px); a stíluslap 244 egyedi értéke (4–20 px között 14 féle) erre a hat lépcsőre állt.
+- **Kis betűméretek skálája:** `--text-2xs … --text-lg` (10,5–15,5 px); 570 egyedi érték (10–15,5 px közötti fél pixeles eltérések) erre a hat lépcsőre állt.
+- **Árnyékskála:** `--shadow-sm/md/lg`; az üvegpanelek ezt használják.
+- **Égbolt:** a kerítés- és garázsjelenet égboltja élesen, a pergoláéval azonos fényerővel (a horizont köde és az ég összeér).
+
 ## 4.03 – A pergola/carport stúdió is a közös keretre állt
 
 - **Egy kód, egy viselkedés:** a pergola és a carport stúdió (`PergoStudio`) is a közös `StudioHeader`, `SceneToolbar` és `usePresentation` / `usePriceCollapse` elemekre épül, mint a kerítés és a garázskapu. A saját, külön megírt fejléc, eszköztár, Eszközök-menü, bemutató- és árpanel-állapot megszűnt.

@@ -4,6 +4,8 @@
 // A termék csak a saját eszközeit és a saját nézet-beállításait adja hozzá; a közös rész mindenhol azonos.
 import { useEffect, useState, type ReactNode } from 'react'
 import { Box, Download, House, Info, LayoutGrid, Link2, Moon, Presentation, Redo2, RotateCcw, SlidersHorizontal, Sun, Sunset, Undo2, X, type LucideIcon } from 'lucide-react'
+import { formatHuf } from '@/lib/pricing'
+import type { PriceChange } from '@/components/studio/studioState'
 import FullscreenControl from '@/components/FullscreenControl'
 import { ProductSwitch } from '@/components/ProductChooser'
 import TenantMark from '@/components/TenantMark'
@@ -79,13 +81,31 @@ export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools 
   ]
   return <>
     <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások">
-      <button type="button" title={`Napszak: ${timeLabel} — váltás`} aria-label={`Napszak: ${timeLabel}`} onClick={() => onTimeChange(nextTime[time])} className={time !== 'day' ? 'selected' : ''}><TimeIcon size={17} /><span>{timeLabel}</span></button>
+      <button type="button" title={`Napszak: ${timeLabel} — váltás`} aria-label={`Napszak: ${timeLabel}`} onClick={() => onTimeChange(nextTime[time])} className={`icon-time icon-${time}${time !== 'day' ? ' selected' : ''}`}><TimeIcon size={17} /><span>{timeLabel}</span></button>
       {quick.map(({ id, icon: Icon, label, title, active, className, run }) => <button type="button" key={id} className={[className, active ? 'selected' : ''].filter(Boolean).join(' ')} aria-pressed={active === undefined ? undefined : active} title={title} onClick={run}><Icon size={17} /><span>{label}</span></button>)}
-      <button type="button" className={`view-toggle tools-toggle ${toolsOpen || viewOpen || toolsBusy ? 'selected' : ''}`} aria-pressed={toolsOpen} aria-expanded={toolsOpen} title="Eszközök: nézet, napszak, környezet, bemutató, PDF, megosztás" onClick={() => { setToolsOpen((open) => !open); setViewOpen(false) }}><LayoutGrid size={17} /><span>Eszközök</span></button>
+      <button type="button" className={`view-toggle tools-toggle icon-grid ${toolsOpen || viewOpen || toolsBusy ? 'selected' : ''}`} aria-pressed={toolsOpen} aria-expanded={toolsOpen} title="Eszközök: nézet, napszak, környezet, bemutató, PDF, megosztás" onClick={() => { setToolsOpen((open) => !open); setViewOpen(false) }}><LayoutGrid size={17} /><span>Eszközök</span></button>
     </div>
     {toolsOpen && <div className="view-popover tools-menu glass-panel" role="dialog" aria-label="Eszközök"><div className="view-popover-head"><strong>Eszközök</strong><button type="button" aria-label="Bezárás" onClick={() => setToolsOpen(false)}><X size={16} /></button></div>
       <div className="tools-list">{items.map(({ id, icon: Icon, name, note, active, run }) => <button type="button" key={id} className={`tools-item${active ? ' is-active' : ''}`} aria-pressed={Boolean(active)} onClick={() => { setToolsOpen(false); run() }}><Icon size={18} /><span><strong>{name}</strong><small>{note}</small></span>{active && <em>Bekapcsolva</em>}</button>)}</div>
     </div>}
     {viewOpen && <div className="view-popover glass-panel" role="dialog" aria-label="Nézet és vizualizáció"><div className="view-popover-head"><strong>Nézet és vizualizáció</strong><button type="button" aria-label="Bezárás" onClick={() => setViewOpen(false)}><X size={16} /></button></div>{viewPanel}</div>}
   </>
+}
+
+/** Ármódosító buborék visszavonással (minden konfigurátorban ugyanaz). */
+export function ChangePill({ change, onUndo }: { change: PriceChange | null; onUndo: () => void }) {
+  if (!change || change.amount === 0) return null
+  return <div key={change.id} className={`change-pill ${change.amount < 0 ? 'is-down' : 'is-up'}`} role="status" aria-live="polite">
+    <strong>{change.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(change.amount))}</strong><span>{change.label}</span>
+    <button type="button" onClick={onUndo}><Undo2 size={14} />Visszavonás</button>
+  </div>
+}
+
+/** „Üdv újra” sáv: a mentett piszkozat folytatása vagy új terv (minden konfigurátorban ugyanaz). */
+export function WelcomeBack({ summary, onContinue, onFresh }: { summary: string; onContinue: () => void; onFresh: () => void }) {
+  return <div className="welcome-back" role="status">
+    <span><strong>Üdv újra!</strong>Ott folytatod, ahol abbahagytad: {summary}</span>
+    <button type="button" className="welcome-primary" onClick={onContinue}>Folytatom</button>
+    <button type="button" onClick={onFresh}>Új terv</button>
+  </div>
 }

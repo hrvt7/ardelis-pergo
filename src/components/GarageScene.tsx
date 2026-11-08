@@ -267,7 +267,7 @@ function SceneContent({ config, scene, view, onReady }: { config: GarageConfig; 
     <hemisphereLight args={['#d4e1e8', '#514b3f', light.hemisphere]} />
     <directionalLight position={light.sunPosition} color={light.sun} intensity={light.sunIntensity} castShadow shadow-mapSize={[1536, 1536]} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={12} shadow-camera-bottom={-12} shadow-bias={-0.0002} shadow-normalBias={0.02} />
     {night && <pointLight position={[0, 4, 6]} color="#c5ddff" intensity={40} distance={25} decay={2} />}
-    <Suspense fallback={null}><Environment files={light.hdr} background={scene.environment} backgroundBlurriness={0.18} backgroundIntensity={light.background} environmentIntensity={light.environment} /></Suspense>
+    <Suspense fallback={null}><Environment files={light.hdr} background={scene.environment} backgroundBlurriness={0} backgroundIntensity={light.background} environmentIntensity={light.environment} /></Suspense>
     {scene.environment ? <Ground config={config} /> : <><StudioBackdrop night={night} /><StudioFloor night={night} /></>}
     {scene.environment ? <>
       <Facade config={config} night={night} materials={materials} />
@@ -301,7 +301,7 @@ export default memo(function GarageScene({ config, scene, view }: { config: Gara
   const onReady = useMemo(() => () => setReady(true), [])
   return <div className="scene-canvas-wrap" data-scene-ready={ready}>
     {!ready && <ScenePoster />}
-    <Boundary><Canvas frameloop={scene.autoRotate ? 'always' : 'demand'} shadows dpr={[1, 1.25]} camera={{ position: [6, 3, 8], fov: 40, near: 0.1, far: 220 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }} onCreated={({ gl }) => {
+    <Boundary><Canvas frameloop={scene.autoRotate ? 'always' : 'demand'} shadows dpr={[1, 1.25]} camera={{ position: [6, 3, 8], fov: 40, near: 0.1, far: 220 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} onCreated={({ gl }) => {
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.toneMappingExposure = studioLighting(scene.time).exposure
       gl.shadowMap.autoUpdate = false

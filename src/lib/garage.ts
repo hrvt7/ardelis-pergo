@@ -28,3 +28,8 @@ export function createGarageShareUrl(config: GarageConfig) {
   url.hash = encodeGarageHash(config)
   return url.toString()
 }
+
+/** Van-e a böngészőben mentett, az alaptól eltérő garázskapu-piszkozat (link nélkül nyitva). */
+export function hasGarageDraft(config: GarageConfig) {
+  try { return !window.location.hash && localStorage.getItem('ardelis-config-garage-v1') !== null && JSON.stringify(config) !== JSON.stringify(GARAGE_DEFAULTS) } catch { return false }
+}

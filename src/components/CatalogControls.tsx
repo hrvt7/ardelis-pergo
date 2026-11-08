@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Ruler, Shapes, Sparkles, ClipboardCheck } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { COLOR_HEX, FAMILY_META, LABELS } from '@/lib/catalog'
 import { formatNumber } from '@/lib/pricing'
 import type { OutdoorColor, OutdoorConfig } from '@/types/catalog'
@@ -38,6 +38,9 @@ export default function CatalogControls({ config, step, summary, mobileOpen, onM
   const meta = FAMILY_META[config.family]
   const roofFamily = config.family === 'canopy' || config.family === 'carport'
   const index = steps.findIndex((item) => item.id === step)
+  // Lépésváltás iránya (mint a pergolánál): előre jobbról, vissza balról csúszik be a tartalom.
+  const [stepTrack, setStepTrack] = useState({ index, dir: 'fwd' as 'fwd' | 'back' })
+  if (stepTrack.index !== index) setStepTrack({ index, dir: index > stepTrack.index ? 'fwd' : 'back' })
   const finishOptions: { value: OutdoorConfig['finish']; label: string; materials: OutdoorConfig['frameMaterial'][] }[] = [
     { value: 'powder', label: 'Porfestés', materials: ['aluminium', 'steel', 'wrought'] },
     { value: 'galvanizedPowder', label: 'Horganyzás + porfestés', materials: ['steel', 'wrought'] },
@@ -89,7 +92,7 @@ export default function CatalogControls({ config, step, summary, mobileOpen, onM
     <button type="button" className="sheet-toggle" onClick={onMobileToggle} aria-expanded={mobileOpen}><span className="sheet-handle" /><span>{meta.title} beállításai</span><ChevronDown size={16} /></button>
     <div className="config-head"><div><span>Konfiguráció</span><strong>{String(index + 1).padStart(2, '0')} / 0{steps.length}</strong></div><span className="mini-summary">{roofFamily ? `${formatNumber(config.width * (config.family === 'carport' ? config.bays : 1))} × ${formatNumber(config.depth)} m` : `${formatNumber(config.length)} fm · ${formatNumber(config.height)} m`}</span></div>
     <nav className="control-tabs catalog-step-tabs" aria-label="Konfigurációs lépések">{steps.map(({ id, label }, i) => <button type="button" key={id} className={step === id ? 'active' : i < index ? 'complete' : ''} onClick={() => onStep(id)}><span className="step-dot">{i < index ? <Check size={11} /> : i + 1}</span><span>{label}</span></button>)}</nav>
-    <div className="controls-scroll"><div className="panel-content" key={`${config.family}-${step}`}>
+    <div className="controls-scroll"><div className={`panel-content dir-${stepTrack.dir}`} key={`${config.family}-${step}`}>
       {step !== 'summary' && <div className="step-heading"><span>0{index + 1} · {step === 'size' ? 'Méret' : step === 'design' ? 'Kivitel' : 'Komfort'}</span><h2>{step === 'size' ? 'Arányok és méretek' : step === 'design' ? 'Anyag és karakter' : 'Működés és comfort'}</h2></div>}
       {step === 'size' && (roofFamily ? <>
         {config.family === 'carport' && <Section title="Beállók száma"><Choices value={String(config.bays)} options={[{ value: '1', label: 'Egyállásos' }, { value: '2', label: 'Kétállásos' }]} onChange={(v) => onChange({ bays: Number(v) as 1 | 2 })} /></Section>}

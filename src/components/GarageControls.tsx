@@ -1,7 +1,7 @@
 // Garázskapu vezérlőpanel: a pergola/kerítés panelnyelvén (Konfiguráció 01/04, számozott lépések), csak a kapuhoz
 // tartozó beállításokkal. A típus dönti el, mely opciók értelmezhetők (garageFeatures).
 import { ArrowLeft, ArrowRight, Check, ChevronDown } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Choices, Range, Section, Toggle } from '@/components/CatalogControls'
 import { formatNumber } from '@/lib/pricing'
 import { GARAGE_COLOR_HEX, GARAGE_LABELS, GARAGE_META, garageFeatures, type GarageColor, type GarageConfig, type GarageType } from '@/products/garage'
@@ -29,6 +29,9 @@ interface Props {
 
 export default function GarageControls({ config, step, summary, mobileOpen, onMobileToggle, onStep, onChange }: Props) {
   const index = steps.findIndex((item) => item.id === step)
+  // Lépésváltás iránya (mint a pergolánál): előre jobbról, vissza balról csúszik be a tartalom.
+  const [stepTrack, setStepTrack] = useState({ index, dir: 'fwd' as 'fwd' | 'back' })
+  if (stepTrack.index !== index) setStepTrack({ index, dir: index > stepTrack.index ? 'fwd' : 'back' })
   const features = garageFeatures(config.type)
   const limits = LIMITS[config.type]
   const changeType = (type: GarageType) => {
@@ -40,7 +43,7 @@ export default function GarageControls({ config, step, summary, mobileOpen, onMo
     <button type="button" className="sheet-toggle" onClick={onMobileToggle} aria-expanded={mobileOpen}><span className="sheet-handle" /><span>{GARAGE_META.title} beállításai</span><ChevronDown size={16} /></button>
     <div className="config-head"><div><span>Konfiguráció</span><strong>{String(index + 1).padStart(2, '0')} / 0{steps.length}</strong></div><span className="mini-summary">{formatNumber(config.width, 2)} × {formatNumber(config.height, 2)} m</span></div>
     <nav className="control-tabs catalog-step-tabs" aria-label="Konfigurációs lépések">{steps.map(({ id, label }, i) => <button type="button" key={id} className={step === id ? 'active' : i < index ? 'complete' : ''} onClick={() => onStep(id)}><span className="step-dot">{i < index ? <Check size={11} /> : i + 1}</span><span>{label}</span></button>)}</nav>
-    <div className="controls-scroll"><div className="panel-content" key={step}>
+    <div className="controls-scroll"><div className={`panel-content dir-${stepTrack.dir}`} key={step}>
       {step !== 'summary' && <div className="step-heading"><span>0{index + 1} · {step === 'size' ? 'Típus' : step === 'design' ? 'Kivitel' : 'Komfort'}</span><h2>{step === 'size' ? 'Kaputípus és nyílás' : step === 'design' ? 'Panel, ablak, szín' : 'Motor és felszereltség'}</h2></div>}
       {step === 'size' && <>
         <Section title="Kaputípus" description="A típus dönti el a működést és a nyílás fölötti helyigényt.">
