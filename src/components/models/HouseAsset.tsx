@@ -10,8 +10,9 @@ function refreshShadow(renderer: THREE.WebGLRenderer) { renderer.shadowMap.needs
 /**
  * A ház a háttérben: a homlokzat síkja `frontZ`-n, a ház közepe `x`-en, `width` méter széles (az arányok megmaradnak).
  * `hidePorch`: a homlokzat előtti terasz-lemez elrejtése (pl. ha a ház elé más építmény kerül).
+ * `rightEdge`: ha meg van adva, a ház jobb széle (az eresszel együtt) ide kerül — pl. egy hozzáépített garázsszárny fala.
  */
-export function HouseBackdrop({ x = 0, frontZ, width = 17, hidePorch = false }: { x?: number; frontZ: number; width?: number; hidePorch?: boolean }) {
+export function HouseBackdrop({ x = 0, frontZ, width = 17, hidePorch = false, rightEdge }: { x?: number; frontZ: number; width?: number; hidePorch?: boolean; rightEdge?: number }) {
   const source = use(getHouseAsset())
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
@@ -24,12 +25,13 @@ export function HouseBackdrop({ x = 0, frontZ, width = 17, hidePorch = false }: 
     const siding = object.getObjectByName('Horizontal_front_and_rear_siding')
     const facade = siding ? new THREE.Box3().setFromObject(siding).max.z : box.max.z - HOUSE_RAW.facadeInset
     const porch = ['Terrace_projection', 'Terrace_nosing'].map((name) => object.getObjectByName(name)).filter((item): item is THREE.Object3D => Boolean(item))
-    return { object, center, minY: box.min.y, facade, porch }
+    return { object, center, maxX: box.max.x, minY: box.min.y, facade, porch }
   }, [source])
   useEffect(() => { prepared.porch.forEach((item) => { item.visible = !hidePorch }) }, [prepared, hidePorch])
-  useEffect(() => { refreshShadow(gl); invalidate() }, [prepared, gl, invalidate, x, frontZ, width])
+  useEffect(() => { refreshShadow(gl); invalidate() }, [prepared, gl, invalidate, x, frontZ, width, rightEdge])
   const scale = width / HOUSE_RAW.width
-  return <group name="architectural-house" position={[x - prepared.center.x * scale, -prepared.minY * scale, frontZ - prepared.facade * scale]} scale={scale}>
+  const offsetX = rightEdge === undefined ? x - prepared.center.x * scale : rightEdge - prepared.maxX * scale
+  return <group name="architectural-house" position={[offsetX, -prepared.minY * scale, frontZ - prepared.facade * scale]} scale={scale}>
     <primitive object={prepared.object} />
   </group>
 }

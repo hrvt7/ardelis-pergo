@@ -1,5 +1,12 @@
 # Változások
 
+## 4.01 – Garázskapu: a garázsszárny a házhoz épül; tiszta belső nézet
+
+- **A garázsszárny a ház oromfalához épül:** eddig egy külön álló, vakolt doboz állt a ház előtt, résekkel. Most a szárny bal fala a ház jobb széléhez illeszkedik (a ház a saját szélességéből igazodik, `HouseBackdrop rightEdge`), a szárny mélysége a házéhoz igazodik.
+- **Kortárs toldalék-anyagok:** antracit vakolat a ház cédrus- és téglafelületei mellé, a ház tetőjével azonos horganyzott attikafedés és homlokdeszka, előre kinyúló eresz a kapu fölé, ereszcsatorna és a sarokba futó lefolyó, sötét lábazati sáv, keskeny, lefelé világító lámpa (éjjel fénykúppal), házszámtábla.
+- **Belül:** festett falak és mennyezet, polcos tároló a hátsó sarokban, mennyezeti lámpa (éjjel világít).
+- **„Belülről” nézet javítva:** az autó a garázs jobb felére állt, a kamera a bal oldali szabad sávból, szemmagasság fölött néz a kapura — a nyitott kapu és a nyílás szabadon látszik (eddig az autó takarta a kép felét).
+
 ## 4.0 – Garázskapu konfigurátor; egységes ház és semleges háttér minden terméknél
 
 - **Új élő termék: garázskapu** (`/konfigurator/garazskapu`, `/k/<gyártó>/garazskapu`, `/embed/<gyártó>/garazskapu`). Saját mag (`src/products/garage.ts`: séma, alapértékek, mintaárlista, spec-kód, fejléc, leírás, `g=` megosztó kód), saját motor (`garageEngine` — a lead-végpont érvényesít és újraáraz), saját stúdió (`GarageStudio`), PDF (`exportSpecPdf`), SEO-bejegyzés és sitemap. A demó kínálata: teraszfedés, carport, kerítés, garázskapu.

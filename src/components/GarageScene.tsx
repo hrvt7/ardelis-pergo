@@ -34,7 +34,7 @@ function refreshShadow(renderer: THREE.WebGLRenderer) { renderer.shadowMap.needs
 function setExposure(renderer: THREE.WebGLRenderer, night: boolean) { renderer.toneMappingExposure = night ? 1 : 0.88 }
 
 /** A homlokzat teljes szélessége — a kamera ehhez keretez. */
-const facadeWidth = (config: GarageConfig) => config.width + (config.sideDoor ? SIDE_DOOR_GAP + SIDE_DOOR_W : 0) + 3.4
+const facadeWidth = (config: GarageConfig) => config.width + (config.sideDoor ? SIDE_DOOR_GAP + SIDE_DOOR_W : 0) + 2.4
 
 function useGarageMaterials(config: GarageConfig, night: boolean): GarageMaterials {
   const color = garageColor(config)
@@ -75,7 +75,7 @@ function StudioFloor({ night }: { night: boolean }) {
 }
 
 /** A garázsszárny bal széle (a ház jobb széle ide illeszkedik). */
-const wingLeft = (config: GarageConfig) => -facadeWidth(config) / 2 + 0.2
+const wingLeft = (config: GarageConfig) => -config.width / 2 - 1.2
 
 function Ground({ config }: { config: GarageConfig }) {
   const source = useTexture({ grass: '/assets/textures/grass_ground/diff.webp', concrete: '/assets/textures/concrete_floor_02/diff.webp' })
@@ -90,48 +90,66 @@ function Ground({ config }: { config: GarageConfig }) {
   </>
 }
 
-/** Ház homlokzata a kapu körül: fal, lábazat, lapostető, ablak jobbra, lámpa a kapu fölött, belső garázstér. */
+/**
+ * Garázsszárny: a ház jobb oromfalához épített, lapostetős toldalék. Antracit vakolat (a ház cédrus- és téglafelületei
+ * mellett semleges, kortárs anyag), a ház tetőjével azonos horganyzott attikafedés és eresz, lábazat, fali lámpa,
+ * házszám; belül festett falak, polcok, mennyezeti lámpa. Bal fala a ház oromfalához simul (a háznak nem ér bele).
+ */
 function Facade({ config, night, materials }: { config: GarageConfig; night: boolean; materials: GarageMaterials }) {
   const source = useTexture('/assets/textures/plastered_wall_04/diff.webp')
   const wall = useMemo(() => clonedTexture(source, [3.5, 2.2], true), [source])
   useEffect(() => () => wall.dispose(), [wall])
   const { width, height } = config
   const W = facadeWidth(config)
-  const H = height + 1.15
-  const left = -W / 2 + 0.2
-  const right = W / 2 + 0.2
-  const plaster = <meshStandardMaterial map={wall} color="#d9d5cb" roughness={0.92} />
-  const seg = (x0: number, x1: number, y0: number, y1: number) => <mesh position={[(x0 + x1) / 2, (y0 + y1) / 2, -WALL_T / 2]} castShadow receiveShadow><boxGeometry args={[x1 - x0, y1 - y0, WALL_T]} />{plaster}</mesh>
-  return <group>
-    {/* Falmezők a nyílások körül */}
+  const H = height + 1.05
+  const left = wingLeft(config)
+  const right = left + W
+  const zinc = <meshStandardMaterial color="#697276" metalness={0.78} roughness={0.42} />
+  const render = <meshStandardMaterial map={wall} color="#4b5052" roughness={0.9} />
+  const seg = (x0: number, x1: number, y0: number, y1: number) => <mesh position={[(x0 + x1) / 2, (y0 + y1) / 2, -WALL_T / 2]} castShadow receiveShadow><boxGeometry args={[x1 - x0, y1 - y0, WALL_T]} />{render}</mesh>
+  const doorLeft = sideDoorX(config) - SIDE_DOOR_W / 2 - 0.08
+  const doorRight = sideDoorX(config) + SIDE_DOOR_W / 2 + 0.08
+  return <group name="garage-wing">
+    {/* Homlokzati falmezők a nyílások körül */}
     {seg(left, -width / 2 - 0.08, 0, H)}
-    {config.sideDoor
-      ? <>{seg(width / 2 + 0.08, sideDoorX(config) - SIDE_DOOR_W / 2 - 0.08, 0, H)}{seg(sideDoorX(config) + SIDE_DOOR_W / 2 + 0.08, right, 0, H)}{seg(sideDoorX(config) - SIDE_DOOR_W / 2 - 0.08, sideDoorX(config) + SIDE_DOOR_W / 2 + 0.08, 2.1 + 0.08, H)}</>
-      : seg(width / 2 + 0.08, right, 0, H)}
+    {config.sideDoor ? <>{seg(width / 2 + 0.08, doorLeft, 0, H)}{seg(doorRight, right, 0, H)}{seg(doorLeft, doorRight, 2.18, H)}</> : seg(width / 2 + 0.08, right, 0, H)}
     {seg(-width / 2 - 0.08, width / 2 + 0.08, height + 0.08, H)}
-    {/* Lábazat */}
-    <mesh position={[0.2, 0.2, 0.02]} receiveShadow><boxGeometry args={[W, 0.4, 0.04]} /><meshStandardMaterial color="#5b5f60" roughness={0.9} /></mesh>
-    {/* Attika és lapostető */}
-    <mesh position={[0.2, H + 0.1, -DEPTH / 2 + 0.3]} castShadow><boxGeometry args={[W + 0.3, 0.2, DEPTH + 1]} /><meshStandardMaterial color="#3e4748" roughness={0.6} /></mesh>
-    {/* Fali lámpa a kapu fölött */}
-    <group position={[0, height + 0.62, 0.08]}>
-      <mesh castShadow><boxGeometry args={[0.28, 0.07, 0.16]} /><meshStandardMaterial color="#2b2f31" metalness={0.5} roughness={0.5} /></mesh>
-      <mesh position={[0, -0.04, 0]} material={materials.glow}><boxGeometry args={[0.24, 0.01, 0.12]} /></mesh>
-      {night && <spotLight position={[0, -0.08, 0.1]} target-position={[0, 0, 1]} angle={1.1} penumbra={0.6} intensity={40} distance={9} decay={2} color="#ffd9a0" castShadow={false} />}
+    {/* Jobb oldalfal és hátfal kívülről (vakolt), bal oldalon a ház oromfala zár */}
+    <mesh position={[right - 0.1, H / 2, -DEPTH / 2 - WALL_T / 2]} castShadow receiveShadow><boxGeometry args={[0.2, H, DEPTH - WALL_T]} />{render}</mesh>
+    <mesh position={[(left + right) / 2, H / 2, -DEPTH]} castShadow receiveShadow><boxGeometry args={[W, H, 0.2]} />{render}</mesh>
+    {/* Lábazat: sötét lábazati sáv a homlokzaton és a jobb oldalon */}
+    <mesh position={[(left + right) / 2, 0.15, 0.012]} receiveShadow><boxGeometry args={[W, 0.3, 0.025]} /><meshStandardMaterial color="#2c3032" roughness={0.85} /></mesh>
+    <mesh position={[right + 0.012, 0.15, -DEPTH / 2]} receiveShadow><boxGeometry args={[0.025, 0.3, DEPTH]} /><meshStandardMaterial color="#2c3032" roughness={0.85} /></mesh>
+    {/* Lapostető: födém, horganyzott attikafedés körben, előre kinyúló eresz a kapu fölé */}
+    <mesh position={[(left + right) / 2, H + 0.12, -DEPTH / 2 + 0.25]} castShadow receiveShadow><boxGeometry args={[W + 0.1, 0.24, DEPTH + 0.5]} /><meshStandardMaterial color="#3a3f41" roughness={0.7} /></mesh>
+    <mesh position={[(left + right) / 2, H + 0.27, 0.52]} castShadow>{<boxGeometry args={[W + 0.16, 0.08, 0.06]} />}{zinc}</mesh>
+    <mesh position={[right + 0.03, H + 0.27, -DEPTH / 2 + 0.25]} castShadow><boxGeometry args={[0.06, 0.08, DEPTH + 0.5]} />{zinc}</mesh>
+    <mesh position={[(left + right) / 2, H + 0.13, 0.5]} castShadow><boxGeometry args={[W + 0.16, 0.26, 0.03]} />{zinc}</mesh>
+    {/* Ereszcsatorna és lefolyó a jobb sarkon */}
+    <mesh position={[(left + right) / 2, H - 0.02, 0.56]} rotation={[0, 0, Math.PI / 2]} castShadow><cylinderGeometry args={[0.06, 0.06, W + 0.1, 14, 1, true, 0, Math.PI]} /><meshStandardMaterial color="#697276" metalness={0.78} roughness={0.42} side={THREE.DoubleSide} /></mesh>
+    <mesh position={[right + 0.07, H / 2, -0.12]} castShadow><cylinderGeometry args={[0.045, 0.045, H + 0.2, 12]} />{zinc}</mesh>
+    <mesh position={[right + 0.07, H + 0.08, 0.22]} rotation={[Math.PI / 2, 0, 0]} castShadow><cylinderGeometry args={[0.045, 0.045, 0.7, 12]} />{zinc}</mesh>
+    {/* Fali lámpa a kapu fölött (lefelé világító, keskeny) */}
+    <group position={[0, height + 0.5, 0.06]}>
+      <mesh castShadow><boxGeometry args={[0.42, 0.06, 0.12]} /><meshStandardMaterial color="#202426" metalness={0.5} roughness={0.5} /></mesh>
+      <mesh position={[0, -0.032, 0.01]} material={materials.glow}><boxGeometry args={[0.38, 0.006, 0.08]} /></mesh>
+      {night && <spotLight position={[0, -0.08, 0.1]} target-position={[0, 0, 1.4]} angle={1.05} penumbra={0.7} intensity={38} distance={9} decay={2} color="#ffd9a0" castShadow={false} />}
     </group>
-    {/* Házszám */}
-    <mesh position={[-width / 2 - 0.55, height + 0.35, 0.02]}><boxGeometry args={[0.22, 0.3, 0.02]} /><meshStandardMaterial color="#202628" roughness={0.6} /></mesh>
-    {/* Ereszcsatorna lefolyó balra */}
-    <mesh position={[left + 0.25, H / 2, 0.08]} castShadow><cylinderGeometry args={[0.045, 0.045, H, 12]} /><meshStandardMaterial color="#3e4748" metalness={0.6} roughness={0.45} /></mesh>
-    {/* Belső garázstér: padló, oldalfalak, hátfal, mennyezet */}
-    <group>
-      <mesh position={[0, 0.005, -DEPTH / 2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[W, DEPTH]} /><meshStandardMaterial color="#6d6f6a" roughness={0.95} /></mesh>
-      <mesh position={[0.2, H / 2, -DEPTH - 0.1]} receiveShadow><boxGeometry args={[W + 0.3, H, 0.2]} /><meshStandardMaterial color="#c9c6bd" roughness={0.95} /></mesh>
-      {[left, right].map((x) => <mesh key={x} position={[x, H / 2, -DEPTH / 2]} receiveShadow><boxGeometry args={[0.2, H, DEPTH]} /><meshStandardMaterial color="#cfccc3" roughness={0.95} /></mesh>)}
-      <mesh position={[0.2, H, -DEPTH / 2]} receiveShadow><boxGeometry args={[W + 0.3, 0.1, DEPTH]} /><meshStandardMaterial color="#d6d3ca" roughness={0.95} /></mesh>
-      {/* Polc a hátfalon */}
-      {[0.9, 1.5].map((y) => <mesh key={y} position={[-W / 4, y, -DEPTH + 0.2]} castShadow><boxGeometry args={[2.2, 0.04, 0.4]} /><meshStandardMaterial color="#8c8f8a" metalness={0.4} roughness={0.5} /></mesh>)}
-      {night && <pointLight position={[0, H - 0.3, -DEPTH / 2]} intensity={25} distance={10} decay={2} color="#ffe8c8" />}
+    {/* Házszám a kapu mellett */}
+    <group position={[-width / 2 - 0.45, height * 0.72, 0.012]}>
+      <mesh><boxGeometry args={[0.2, 0.28, 0.012]} /><meshStandardMaterial color="#d8d5cc" roughness={0.5} /></mesh>
+      <mesh position={[0, 0, 0.008]}><boxGeometry args={[0.04, 0.18, 0.006]} /><meshStandardMaterial color="#202426" /></mesh>
+    </group>
+    {/* Belső garázstér: festett falak, padló, mennyezet, polcok, lámpa */}
+    <group name="garage-interior">
+      <mesh position={[(left + right) / 2, 0.005, -DEPTH / 2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[W, DEPTH]} /><meshStandardMaterial color="#7a7c77" roughness={0.9} /></mesh>
+      <mesh position={[(left + right) / 2, H / 2, -DEPTH + 0.11]} receiveShadow><boxGeometry args={[W - 0.2, H, 0.02]} /><meshStandardMaterial color="#e2dfd6" roughness={0.95} /></mesh>
+      {[left + 0.11, right - 0.21].map((x) => <mesh key={x} position={[x, H / 2, -DEPTH / 2 - 0.05]} receiveShadow><boxGeometry args={[0.02, H, DEPTH - 0.4]} /><meshStandardMaterial color="#e6e3da" roughness={0.95} /></mesh>)}
+      <mesh position={[(left + right) / 2, H - 0.01, -DEPTH / 2]} receiveShadow><boxGeometry args={[W, 0.02, DEPTH]} /><meshStandardMaterial color="#ecebe6" roughness={0.95} /></mesh>
+      {[0.9, 1.45, 2.0].map((y) => <mesh key={y} position={[right - 0.45, y, -DEPTH + 0.9]} castShadow><boxGeometry args={[0.4, 0.035, 1.4]} /><meshStandardMaterial color="#8c8f8a" metalness={0.4} roughness={0.5} /></mesh>)}
+      {[-1, 1].map((s) => <mesh key={s} position={[right - 0.45, 1.05, -DEPTH + 0.9 + s * 0.68]}><boxGeometry args={[0.4, 2.1, 0.03]} /><meshStandardMaterial color="#6f726e" metalness={0.5} roughness={0.5} /></mesh>)}
+      <mesh position={[(left + right) / 2, H - 0.04, -DEPTH / 2]} material={materials.glow}><boxGeometry args={[1.2, 0.03, 0.12]} /></mesh>
+      {night && <pointLight position={[(left + right) / 2, H - 0.3, -DEPTH / 2]} intensity={25} distance={10} decay={2} color="#ffe8c8" />}
     </group>
   </group>
 }
@@ -220,8 +238,10 @@ function CameraRig({ config, view, environment }: { config: GarageConfig; view: 
       perspective: { position: along([0.85, 0.42, 1], fit * 0.98), target: [0, targetY, 0] },
       front: { position: [0, targetY + 0.3, fit], target: [0, targetY, 0] },
       detail: { position: [config.width / 2 + 1.1, 1.25, 2.1], target: [config.width / 2 - 0.5, 0.95, DOOR_Z] },
-      // Belülről: a hátsó sarokból, az autó teteje fölött a kapura.
-      interior: { position: [-(config.width / 2 - 0.2), Math.min(config.height + 0.75, 2.85), environment ? -6.3 : -3.6], target: [0.2, config.height * 0.45, DOOR_Z] },
+      // Belülről: az autó melletti szabad sávból, szemmagasságban a kapura (környezet nélkül a káva mögül).
+      interior: environment
+        ? { position: [Math.max(wingLeft(config) + 0.5, -config.width / 2 - 0.6), 1.95, -5.3], target: [0.25, config.height * 0.42, DOOR_Z] }
+        : { position: [0.6, 1.6, -3.4], target: [0, config.height * 0.5, DOOR_Z] },
     }
     const { position, target } = positions[view]
     camera.position.set(position[0], position[1] + (view === 'perspective' || view === 'front' ? targetY : 0), position[2])
@@ -248,8 +268,8 @@ function SceneContent({ config, scene, view, onReady }: { config: GarageConfig; 
     {scene.environment ? <Ground config={config} /> : <><StudioBackdrop night={scene.night} /><StudioFloor night={scene.night} /></>}
     {scene.environment ? <>
       <Facade config={config} night={scene.night} materials={materials} />
-      <Suspense fallback={null}><HouseBackdrop x={wingLeft(config) - 8.5} frontZ={-0.6} width={17} /></Suspense>
-      <Car color="#1f3248" position={[0, 0, -3.6]} />
+      <Suspense fallback={null}><HouseBackdrop rightEdge={wingLeft(config) + 0.02} frontZ={-0.9} width={17} /></Suspense>
+      <Car color="#1f3248" position={[Math.min(0.35, Math.max(0, config.width / 2 - 1.05)), 0, -3.75]} />
     </> : <Reveal config={config} />}
     <GarageModel config={config} materials={materials} open={scene.open} />
     {config.sideDoor && <SideDoor config={config} m={materials} x={sideDoorX(config)} />}
