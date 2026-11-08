@@ -1,5 +1,13 @@
 # Változások
 
+## 3.95 – Kerítés-nézet keretezése, élesebb autó, rendezett fejléc
+
+- **Kamera a szabad sávra keretez** (`CatalogScene.tsx`): a kerítés/carport 3D eddig a két oldalpanel mögé lógott. A kamera most megméri a panelek közötti szabad sávot, annak közepére tolja a képet (view offset), és akkora távolságra áll, hogy a teljes rendszer (kapuval, kiskapuval) beleférjen. Tér-, front- és felülnézetben is; mobilon a teljes vászon a keret.
+- **Terep:** nagyobb, zöldebb gyep, a köd és a távoli vágósík a nagyobb kameratávolsághoz igazítva (nem látszik a talaj széle, nem ködösödik be a kerítés).
+- **Kerítés/carport stúdió fejléce asztalon:** a jelenet-eszköztár függőlegesen a jobb panel mellé került, a cím nem fut alá; 1440 px alatt a leírás-sor elrejtve; a panel mögül kilógó „Paraméteres 3D” címke eltűnt.
+- **Termékváltó a fejlécben** egy sorban marad („Carport és előtető · Másik termék”) — eddig a projektcímke betűközét örökölte és három sorba tört.
+- **Autó:** függőleges lökhárítók éles élekkel, alacsonyabb, lejtős motorháztető, határozott csomagtartó-él és függőleges far a korábbi „kapszula” vég helyett; kisebb vállív, hűtőrács és alsó légbeömlő, oldalsó karaktervonal, krómozott ablakperem, lejjebb ültetett LED fényszórók.
+
 ## 3.94 – Különálló kalkulátorok termékenként; új kerítés- és autómodell
 
 - **Szétválasztott termékek:** a kalkulátorokon belül nincs többé „Mit tervezel?” lista — minden család saját, különálló tervező. A termékválasztó külön oldalra került (`/konfigurator/termekek`, `/k/<gyártó>/termekek`, `/embed/<gyártó>/termekek`), a kalkulátor fejlécében egy „<termék> · Másik termék” link vezet oda (csak ha a gyártó egynél több családot kínál).

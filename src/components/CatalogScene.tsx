@@ -127,18 +127,19 @@ function Post({ x, z, height, color }: { x: number; z: number; height: number; c
 
 function Ground({ config }: { config: OutdoorConfig }) {
   const source = useTexture({ grass: '/assets/textures/grass_ground/diff.webp', concrete: '/assets/textures/concrete_floor_02/diff.webp' })
-  const maps = useMemo(() => ({
-    grass: clonedTexture(source.grass, [18, 18], true),
-    concrete: clonedTexture(source.concrete, [9, 9], true),
-  }), [source])
-  useEffect(() => () => Object.values(maps).forEach((texture) => texture.dispose()), [maps])
   const boundary = config.family === 'fence' || config.family === 'gate'
-  const groundSize = Math.max(70, config.length + 28)
+  const groundSize = Math.max(200, config.length * 10)
+  const grassRepeat = Math.round(groundSize / 3.8)
+  const maps = useMemo(() => ({
+    grass: clonedTexture(source.grass, [grassRepeat, grassRepeat], true),
+    concrete: clonedTexture(source.concrete, [9, 9], true),
+  }), [source, grassRepeat])
+  useEffect(() => () => Object.values(maps).forEach((texture) => texture.dispose()), [maps])
   const concreteWidth = boundary ? Math.max(32, config.length + config.gateWidth + 10) : 16
   return <>
     <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <planeGeometry args={[groundSize, groundSize]} />
-      <meshStandardMaterial map={maps.grass} color="#859071" roughness={0.96} />
+      <meshStandardMaterial map={maps.grass} color="#8fa66a" roughness={0.96} />
     </mesh>
     <mesh position={[0, 0.016, boundary ? 2.5 : 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <planeGeometry args={[concreteWidth, config.family === 'carport' ? 15 : 10]} />
@@ -440,32 +441,61 @@ function Dimensions({ config }: { config: OutdoorConfig }) {
   </group>
 }
 
+/** A vászon szabad, panelek által nem takart vízszintes sávja (képpontban, a vászon bal szélétől). */
+function freeBand(canvas: HTMLCanvasElement) {
+  const box = canvas.getBoundingClientRect()
+  let left = 0
+  let right = box.width
+  for (const panel of document.querySelectorAll<HTMLElement>('.controls-panel, .price-panel')) {
+    const rect = panel.getBoundingClientRect()
+    if (!rect.width || rect.bottom < box.top + box.height * 0.3 || rect.top > box.top + box.height * 0.7) continue
+    const center = rect.left + rect.width / 2 - box.left
+    if (center < box.width / 2) left = Math.max(left, rect.right - box.left)
+    else right = Math.min(right, rect.left - box.left)
+  }
+  // Mobilon a panelek lapként takarnak, ott a teljes vászon a keret.
+  return right - left < box.width * 0.35 ? { left: 0, right: box.width } : { left, right }
+}
+
 function CameraRig({ config, view }: { config: OutdoorConfig; view: CatalogView }) {
   const camera = useThree((state) => state.camera)
+  const canvas = useThree((state) => state.gl.domElement)
   const viewport = useThree((state) => state.size)
   const controls = useRef<OrbitControlsType>(null)
   const size = systemLength(config)
   useEffect(() => {
     const depth = config.family === 'canopy' || config.family === 'carport' ? config.depth : 2
+    const perspectiveCamera = camera as THREE.PerspectiveCamera
+    const { left, right } = freeBand(canvas)
+    const free = Math.max(1, right - left) / Math.max(1, viewport.width)
+    // A szabad sáv közepére toljuk a képet, és akkorára állítjuk a távolságot, hogy a teljes rendszer beleférjen.
+    const shift = Math.round(viewport.width / 2 - (left + right) / 2)
+    if (shift) perspectiveCamera.setViewOffset(viewport.width, viewport.height, shift, 0, viewport.width, viewport.height)
+    else perspectiveCamera.clearViewOffset()
+    const aspect = viewport.width / Math.max(1, viewport.height)
+    const halfWidth = Math.tan(THREE.MathUtils.degToRad(perspectiveCamera.fov / 2)) * aspect * free
+    const fit = Math.max(size, depth * 1.4, 4) / 0.86 / (2 * halfWidth)
+    const along = (direction: Vec3, distance: number): Vec3 => {
+      const length = Math.hypot(...direction)
+      return direction.map((value) => value / length * distance) as Vec3
+    }
+    const target = config.height * 0.45
     const positions: Record<CatalogView, Vec3> = {
-      perspective: [size * 0.7 + 4, config.height * 2 + 3, Math.max(10, depth * 1.25 + size * 0.38)],
-      front: [0, config.height * 0.85 + 1, 10 + size * 0.65],
-      top: [0.01, 14 + size * 0.45, 0.01],
+      perspective: along([0.62, 0.3, 1], fit * 0.92),
+      front: [0, config.height * 0.6 + 0.6, fit],
+      top: [0.01, Math.max(14, fit * 1.1), 0.01],
       detail: [size * 0.22 + 2, config.height + 1.2, Math.max(4.5, depth + 2.5)],
     }
-    const aspect = viewport.width / Math.max(1, viewport.height)
-    const narrowFit = view === 'perspective' && aspect < 0.85 ? Math.min(2.1, 0.85 / aspect) : 1
     const [x, y, z] = positions[view]
-    camera.position.set(x * narrowFit, y + (narrowFit - 1) * 2, z * narrowFit)
-    camera.lookAt(0, config.height * 0.45, 0)
+    camera.position.set(x, y + (view === 'top' ? 0 : target), z)
+    camera.lookAt(0, target, 0)
     camera.updateProjectionMatrix()
     if (controls.current) {
-      controls.current.target.set(0, config.height * 0.45, 0)
-      controls.current.maxDistance = Math.max(32, size * 2.2)
+      controls.current.target.set(0, target, 0)
       controls.current.update()
     }
-  }, [camera, config, view, viewport.width, viewport.height, size])
-  return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={0.08} minDistance={2.5} maxDistance={Math.max(32, size * 2.2)} maxPolarAngle={Math.PI / 2.02} />
+  }, [camera, canvas, config, view, viewport.width, viewport.height, size])
+  return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={0.08} minDistance={2.5} maxDistance={Math.max(60, size * 4)} maxPolarAngle={Math.PI / 2.02} />
 }
 
 function SceneContent({ config, scene, view, onReady }: { config: OutdoorConfig; scene: CatalogSceneSettings; view: CatalogView; onReady: () => void }) {
@@ -480,7 +510,7 @@ function SceneContent({ config, scene, view, onReady }: { config: OutdoorConfig;
     setExposure(gl, scene.night)
   }, [gl, scene.night])
   return <>
-    <fog attach="fog" args={[scene.night ? '#172331' : '#b5c2bd', Math.max(24, size * 0.8), Math.max(55, size * 2.2)]} />
+    <fog attach="fog" args={[scene.night ? '#172331' : '#b5c2bd', Math.max(40, size * 2.2), Math.max(85, size * 4.5)]} />
     <ambientLight intensity={scene.night ? 0.65 : 0.55} />
     <hemisphereLight args={['#d4e1e8', '#514b3f', scene.night ? 0.4 : 0.55]} />
     <directionalLight position={[7, 12, 8]} color={scene.night ? '#b7d5f2' : '#fff0d2'} intensity={scene.night ? 1.3 : 3.1} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-Math.max(16, size * 0.65)} shadow-camera-right={Math.max(16, size * 0.65)} shadow-camera-top={14} shadow-camera-bottom={-14} shadow-bias={-0.0002} shadow-normalBias={0.02} />
@@ -526,7 +556,7 @@ export default memo(function CatalogScene({ config, scene, view }: { config: Out
   const onReady = useMemo(() => () => setReady(true), [])
   return <div className="scene-canvas-wrap" data-scene-ready={ready}>
     {!ready && <ScenePoster />}
-    <Boundary><Canvas frameloop="demand" shadows dpr={[1, 1.25]} camera={{ position: [10, 7, 12], fov: 40, near: 0.1, far: 120 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }} onCreated={({ gl }) => {
+    <Boundary><Canvas frameloop="demand" shadows dpr={[1, 1.25]} camera={{ position: [10, 7, 12], fov: 40, near: 0.1, far: 260 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }} onCreated={({ gl }) => {
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.toneMappingExposure = scene.night ? 1 : 0.88
       gl.shadowMap.autoUpdate = false

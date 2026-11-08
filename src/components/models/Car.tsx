@@ -11,7 +11,7 @@ const WHEEL_R = 0.34
 const AXLE_FRONT = 1.4
 const AXLE_REAR = -1.36
 /** Lekerekített váll: a karosszéria oldala felül befelé ível (nem doboz). */
-const BEVEL = 0.13
+const BEVEL = 0.085
 const CABIN_WIDTH = WIDTH - 0.2
 
 type Geometries = { body: THREE.BufferGeometry; cabin: THREE.BufferGeometry; roof: THREE.BufferGeometry; tire: THREE.BufferGeometry; rim: THREE.BufferGeometry; spoke: THREE.BufferGeometry; disc: THREE.BufferGeometry; liner: THREE.BufferGeometry; box: THREE.BufferGeometry }
@@ -32,21 +32,23 @@ function geometries(): Geometries {
   const rear = -LENGTH / 2
   // Alsó karosszéria: x = hossz (orr: +), y = magasság. A kerékjáratok az alsó élbe vágott ívek.
   const body = new THREE.Shape()
-  body.moveTo(rear + 0.12, 0.24)
+  body.moveTo(rear + 0.09, 0.24)
   body.lineTo(AXLE_REAR - 0.44, 0.24)
   body.absarc(AXLE_REAR, 0.34, 0.44, Math.PI, 0, true)
   body.lineTo(AXLE_FRONT - 0.44, 0.24)
   body.absarc(AXLE_FRONT, 0.34, 0.44, Math.PI, 0, true)
-  body.lineTo(front - 0.16, 0.24)
-  // orr: lökhárító, majd ívesen fel a motorháztetőre
-  body.quadraticCurveTo(front, 0.26, front, 0.48)
-  body.quadraticCurveTo(front - 0.02, 0.72, front - 0.32, 0.8)
-  body.quadraticCurveTo(front - 0.9, 0.88, 0.82, 0.93)
-  // ék alakú övvonal hátrafelé emelkedve, csomagtartó, hátsó lökhárító
-  body.lineTo(-1.62, 1.01)
-  body.quadraticCurveTo(rear + 0.12, 0.99, rear + 0.04, 0.88)
-  body.quadraticCurveTo(rear - 0.02, 0.6, rear + 0.02, 0.42)
-  body.quadraticCurveTo(rear + 0.02, 0.26, rear + 0.12, 0.24)
+  body.lineTo(front - 0.1, 0.24)
+  // orr: függőleges lökhárító éles alsó éllel, majd alacsony, lejtős motorháztető
+  body.lineTo(front - 0.02, 0.3)
+  body.lineTo(front, 0.56)
+  body.quadraticCurveTo(front - 0.01, 0.68, front - 0.16, 0.73)
+  body.quadraticCurveTo(front - 0.8, 0.84, 0.82, 0.93)
+  // ék alakú övvonal hátrafelé emelkedve, határozott csomagtartó-él, függőleges far
+  body.lineTo(-1.66, 1.0)
+  body.lineTo(rear + 0.05, 0.99)
+  body.quadraticCurveTo(rear - 0.01, 0.97, rear, 0.9)
+  body.lineTo(rear + 0.01, 0.36)
+  body.lineTo(rear + 0.09, 0.24)
   // Utastér (üveg): szélvédő tövétől a tetőn át a hátsó ablakig.
   const cabin = new THREE.Shape()
   cabin.moveTo(0.92, 0.88)
@@ -127,7 +129,9 @@ export default function Car({ color, position, rotation = 0 }: { color: string; 
     {/* Oszlopok: B-oszlop és a hátsó C-oszlop sávja karosszériaszínben */}
     {[-1, 1].flatMap((s) => [
       box(`b${s}`, mats.trim, [s * (CABIN_WIDTH / 2 + 0.004), 1.15, -0.32], [0.012, 0.46, 0.09]),
-      box(`sill${s}`, mats.trim, [s * (half - 0.02), 0.3, 0.02], [0.03, 0.06, 2.0]),
+      box(`sill${s}`, mats.trim, [s * (half - 0.02), 0.3, 0.02], [0.03, 0.08, 2.0]),
+      box(`crease${s}`, mats.dark, [s * (half + 0.001), 0.85, 0.0], [0.004, 0.012, 3.3]),
+      box(`chrome${s}`, mats.rim, [s * (CABIN_WIDTH / 2 + 0.002), 0.93, -0.4], [0.008, 0.018, 2.5]),
       box(`seam1${s}`, mats.trim, [s * (half + 0.001), 0.66, 0.74], [0.004, 0.62, 0.006]),
       box(`seam2${s}`, mats.trim, [s * (half + 0.001), 0.66, -0.36], [0.004, 0.62, 0.006]),
       box(`handle1${s}`, mats.dark, [s * (half + 0.006), 0.88, 0.28], [0.012, 0.025, 0.16]),
@@ -137,10 +141,11 @@ export default function Car({ color, position, rotation = 0 }: { color: string; 
     ])}
     {/* Elöl: LED fényszórók, nappali menetfény, hűtőrács, rendszám */}
     {[-1, 1].flatMap((s) => [
-      box(`head${s}`, mats.head, [s * 0.62, 0.74, LENGTH / 2 - 0.13], [0.42, 0.06, 0.12], [0.2, 0, 0]),
-      box(`fog${s}`, mats.trim, [s * 0.66, 0.38, LENGTH / 2 - 0.03], [0.22, 0.06, 0.03]),
+      box(`head${s}`, mats.head, [s * 0.6, 0.64, LENGTH / 2 - 0.03], [0.44, 0.055, 0.06], [0.35, 0, 0]),
+      box(`fog${s}`, mats.trim, [s * 0.66, 0.36, LENGTH / 2 - 0.01], [0.22, 0.06, 0.03]),
     ])}
-    {box('grille', mats.trim, [0, 0.52, LENGTH / 2 - 0.02], [0.92, 0.2, 0.04])}
+    {box('grille', mats.trim, [0, 0.47, LENGTH / 2 - 0.005], [0.86, 0.12, 0.03])}
+    {box('intake', mats.trim, [0, 0.3, LENGTH / 2 - 0.06], [1.5, 0.08, 0.06])}
     {box('plateF', mats.plate, [0, 0.4, LENGTH / 2 + 0.005], [0.5, 0.11, 0.01])}
     {/* Hátul: teljes szélességű lámpasor, rendszám, diffúzor */}
     {box('tail', mats.tail, [0, 0.86, -LENGTH / 2 + 0.05], [1.6, 0.06, 0.04])}
