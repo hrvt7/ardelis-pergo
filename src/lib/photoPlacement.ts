@@ -19,10 +19,12 @@ export interface PhotoPlacement {
   photoRotation: number
   /** A nézőpont magassága (fok): mennyire felülről néz a kamera — a fotó perspektívájához igazítható. */
   photoTilt: number
+  /** A perspektíva erőssége: a kamera távolságának szorzója (0,5 = közelről, széles látószög, erős rövidülés; 2 = távolról, tele, lapos). A pergola látszó mérete nem változik. */
+  photoLens: number
 }
 
-export const DEFAULT_PLACEMENT: PhotoPlacement = { photoX: 0, photoY: 0, photoScale: 1, photoRotation: -25, photoTilt: 14 }
-export const PLACEMENT_LIMITS = { x: 8, yMin: -5, yMax: 5, scaleMin: 0.15, scaleMax: 4, tiltMin: 0, tiltMax: 60 } as const
+export const DEFAULT_PLACEMENT: PhotoPlacement = { photoX: 0, photoY: 0, photoScale: 1, photoRotation: -25, photoTilt: 14, photoLens: 1 }
+export const PLACEMENT_LIMITS = { x: 8, yMin: -5, yMax: 5, scaleMin: 0.15, scaleMax: 4, tiltMin: 0, tiltMax: 60, lensMin: 0.5, lensMax: 2.2 } as const
 
 export function validatePhotoFile(file: Pick<File, 'type' | 'size' | 'name'>): string | null {
   const type = file.type.toLowerCase()
@@ -45,10 +47,11 @@ export function clampPlacement(placement: PhotoPlacement): PhotoPlacement {
     photoScale: clamp(placement.photoScale, PLACEMENT_LIMITS.scaleMin, PLACEMENT_LIMITS.scaleMax),
     photoRotation: wrapDegrees(placement.photoRotation),
     photoTilt: clamp(placement.photoTilt, PLACEMENT_LIMITS.tiltMin, PLACEMENT_LIMITS.tiltMax),
+    photoLens: clamp(Number.isFinite(placement.photoLens) ? placement.photoLens : 1, PLACEMENT_LIMITS.lensMin, PLACEMENT_LIMITS.lensMax),
   }
 }
 
-export const pickPlacement = (scene: Pick<SceneSettings, keyof PhotoPlacement>): PhotoPlacement => ({ photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt })
+export const pickPlacement = (scene: Pick<SceneSettings, keyof PhotoPlacement>): PhotoPlacement => ({ photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt, photoLens: scene.photoLens })
 
 /** Húzás: képernyő-pixel → méter a kamera síkjában (a kamera szemből néz, így x→x, y→y). */
 export function dragPlacement(start: PhotoPlacement, dxPx: number, dyPx: number, metersPerPixel: number): PhotoPlacement {
@@ -61,16 +64,24 @@ export function pinchPlacement(start: PhotoPlacement, scaleFactor: number, twist
   return clampPlacement({ ...moved, photoScale: start.photoScale * (Number.isFinite(scaleFactor) && scaleFactor > 0 ? scaleFactor : 1), photoRotation: start.photoRotation - twistDeg })
 }
 
-/** A fotó módbeli kamera: szemből, a megadott magasságszögből, a pergola méretéhez igazított távolságból. */
-export function photoCameraPose(config: Pick<PergolaConfig, 'width' | 'depth' | 'height'>, tiltDeg: number, fovDeg: number) {
+/**
+ * A fotó módbeli kamera: szemből, a megadott magasságszögből, a pergola méretéhez igazított távolságból.
+ * A `lens` a távolság szorzója; a látószög úgy szűkül/tágul, hogy a pergola látszó mérete ugyanaz maradjon —
+ * így csak a perspektíva erőssége (a rövidülés) változik, ami a fotó objektívjéhez igazítható.
+ */
+export function photoCameraPose(config: Pick<PergolaConfig, 'width' | 'depth' | 'height'>, tiltDeg: number, fovDeg: number, lens = 1) {
   const span = Math.max(config.width, config.depth * 0.8, config.height * 1.4)
-  const distance = (span * 1.05) / Math.tan(((fovDeg * Math.PI) / 180) / 2) + config.depth / 2
+  const factor = clamp(Number.isFinite(lens) ? lens : 1, PLACEMENT_LIMITS.lensMin, PLACEMENT_LIMITS.lensMax)
+  const baseDistance = (span * 1.05) / Math.tan(((fovDeg * Math.PI) / 180) / 2) + config.depth / 2
+  const distance = baseDistance * factor
+  const fov = (2 * Math.atan(Math.tan(((fovDeg * Math.PI) / 180) / 2) / factor) * 180) / Math.PI
   const tilt = (clamp(tiltDeg, PLACEMENT_LIMITS.tiltMin, PLACEMENT_LIMITS.tiltMax) * Math.PI) / 180
   const targetY = config.height * 0.45
   return {
     position: [0, targetY + Math.sin(tilt) * distance, Math.cos(tilt) * distance] as [number, number, number],
     target: [0, targetY, 0] as [number, number, number],
     distance,
+    fov,
   }
 }
 

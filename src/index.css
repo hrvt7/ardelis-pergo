@@ -1605,6 +1605,9 @@ button.diagram-core.selected span { color: var(--accent-primary); }
 .showroom-share:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 14px 34px rgba(216,255,114,.26); }
 .showroom-share strong, .showroom-share small { display: block; }
 .showroom-share strong { font-size: 15px; } .showroom-share small { margin-top: 2px; font-size: 12px; opacity: .75; }
+/* A PDF az elsődleges gomb; alatta a képmegosztás visszafogottabb, hogy ne két egyforma kiemelt gomb legyen egymás alatt. */
+.showroom-share.is-pdf + .showroom-share { margin-top: 8px; background: var(--surface-raised); color: var(--text-primary); border: 1px solid var(--surface-border); box-shadow: none; }
+.showroom-share.is-pdf + .showroom-share:hover:not(:disabled) { border-color: var(--accent-primary); box-shadow: none; }
 .price-mix { display: grid; gap: 9px; }
 .price-mix-bar { display: flex; gap: 3px; height: 10px; }
 .price-mix-bar i { min-width: 4px; border-radius: 3px; transition: flex-grow 420ms cubic-bezier(.2,.8,.2,1); }

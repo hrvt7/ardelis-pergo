@@ -116,6 +116,23 @@ describe('télikert árazás', () => {
     expect(total(conservatory({ climate: 'both' }))).toBeGreaterThan(total(conservatory({ climate: 'split' })))
   })
 
+  it('veranda: a zip-árnyékolós oldal is üvegfal lesz; pergolára visszaváltva a zip visszakerül', () => {
+    const withZip: PergolaConfig = { ...base, sides: { front: 'none', back: 'none', left: 'zip', right: 'none' } }
+    const veranda = normalizeConfig(demoTenant, { ...withZip, ...buildingPatch(withZip, 'veranda', roofs, demoTenant.sides) })
+    expect(veranda.sides.left).not.toBe('zip')
+    expect(['glass', 'glassFixed', 'door', 'doorSliding']).toContain(veranda.sides.left)
+    expect(veranda.openSides).toEqual(withZip.sides)
+    // télikertre tovább, majd vissza pergolára: az eredeti oldalak állnak helyre, nem marad üveg
+    const conservatoryNext = normalizeConfig(demoTenant, { ...veranda, ...buildingPatch(veranda, 'conservatory', roofs, demoTenant.sides) })
+    expect(conservatoryNext.openSides).toEqual(withZip.sides)
+    const pergola = normalizeConfig(demoTenant, { ...conservatoryNext, ...buildingPatch(conservatoryNext, 'pergola', roofs, demoTenant.sides) })
+    expect(pergola.building).toBeUndefined()
+    expect(pergola.sides).toEqual(withZip.sides)
+    expect(pergola.openSides).toBeUndefined()
+    // megosztó kódban is megmarad a pergola állapota (openSides nélkül)
+    expect(parseConfig(demoTenant, compactToJson(configToCompact(pergola)))?.sides).toEqual(withZip.sides)
+  })
+
   it('a veranda üvegezése alapból edzett (nincs felár), a pergola ára nem változik', () => {
     const veranda = normalizeConfig(demoTenant, { ...base, ...buildingPatch(base, 'veranda', roofs, demoTenant.sides) })
     expect(lineIds(veranda)).not.toContain('wall-glazing')

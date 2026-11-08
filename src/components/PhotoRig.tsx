@@ -2,7 +2,7 @@
 // húzása / csippentése / csavarása, valamint egy „árnyékfogó” sík, hogy a pergola árnyéka a fotó
 // talaján is látsszon. Gesztus közben a transzformációt közvetlenül a 3D objektumon állítjuk
 // (nincs React-újrarenderelés képkockánként), elengedéskor egyszer mentjük az állapotba.
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { clampPlacement, dragPlacement, metersPerPixel, photoCameraPose, pinchPlacement, type PhotoPlacement } from '@/lib/photoPlacement'
@@ -24,8 +24,9 @@ export default function PhotoRig({ config, placement, onCommit }: { config: Pick
   const latest = useRef(placement)
   const commit = useRef(onCommit)
   useEffect(() => { latest.current = placement; commit.current = onCommit })
-  const fovDeg = (camera as THREE.PerspectiveCamera).fov ?? 40
-  const pose = useMemo(() => photoCameraPose({ width: config.width, depth: config.depth, height: config.height }, placement.photoTilt, fovDeg), [config.width, config.depth, config.height, placement.photoTilt, fovDeg])
+  // Az alap látószög rögzített: a perspektíva-szorzó (photoLens) ebből számolja a távolságot és a tényleges fov-ot.
+  const [fovDeg] = useState(() => (camera as THREE.PerspectiveCamera).fov ?? 40)
+  const pose = useMemo(() => photoCameraPose({ width: config.width, depth: config.depth, height: config.height }, placement.photoTilt, fovDeg, placement.photoLens), [config.width, config.depth, config.height, placement.photoTilt, placement.photoLens, fovDeg])
 
   // Kamera: fotó módban nem orbitál, a nézőszög csúszkával állítható.
   useLayoutEffect(() => {
@@ -34,6 +35,7 @@ export default function PhotoRig({ config, placement, onCommit }: { config: Pick
     const perspective = camera as THREE.PerspectiveCamera
     if (size.width < 820) perspective.setViewOffset(size.width, size.height, 0, Math.round(size.height * 0.2), size.width, size.height)
     else if (perspective.view?.enabled) perspective.clearViewOffset()
+    Object.assign(perspective, { fov: pose.fov })
     perspective.updateProjectionMatrix()
     camera.position.set(...pose.position)
     camera.lookAt(...pose.target)
@@ -56,8 +58,8 @@ export default function PhotoRig({ config, placement, onCommit }: { config: Pick
     let start: { placement: PhotoPlacement; pointers: Map<number, Pointer>; rotate: boolean } | null = null
     let wheelTimer = 0
     let wheelValue: PhotoPlacement | null = null
-    const fov = (camera as THREE.PerspectiveCamera).fov ?? 40
-    const perPixel = () => metersPerPixel(camera.position.distanceTo(new THREE.Vector3(latest.current.photoX, latest.current.photoY, 0)), fov, element.clientHeight || size.height)
+    // A látószög a perspektíva-csúszkával változik: húzáskor mindig az aktuálisat használjuk, hogy a pergola a kurzorral együtt mozogjon.
+    const perPixel = () => metersPerPixel(camera.position.distanceTo(new THREE.Vector3(latest.current.photoX, latest.current.photoY, 0)), (camera as THREE.PerspectiveCamera).fov ?? 40, element.clientHeight || size.height)
     const show = (next: PhotoPlacement) => {
       const group = scene.getObjectByName(PHOTO_GROUP)
       if (!group) return
@@ -74,7 +76,7 @@ export default function PhotoRig({ config, placement, onCommit }: { config: Pick
         const from = start.pointers.get(id)
         const now = pointers.get(id)
         if (!from || !now) return null
-        if (start.rotate) return clampPlacement({ ...start.placement, photoRotation: start.placement.photoRotation + (now.x - from.x) * 0.4 })
+        if (start.rotate) return clampPlacement({ ...start.placement, photoRotation: start.placement.photoRotation + (now.x - from.x) * 0.25 })
         return dragPlacement(start.placement, now.x - from.x, now.y - from.y, perPixel())
       }
       if (ids.length >= 2) {

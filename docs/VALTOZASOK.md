@@ -1,5 +1,13 @@
 # Változások
 
+## 3.83 – Típusváltás-hibák, PDF gomb az összegzésben, pontosabb fotóba helyezés
+
+- **Veranda / télikert váltás:** eddig csak az üres oldalak kaptak üvegfalat, a zip-árnyékolós (lamellás, lécfalas) oldal megmaradt, így a veranda „félig zárt” lett. Most zárt építménynél minden nyitott oldal üvegfal (vagy ajtó) lesz.
+- **Vissza pergolára:** eddig az üvegfalak megmaradtak. Most a zárt építmény előtti oldalak (pl. bal oldali zip) helyreállnak. Ehhez a konfiguráció megjegyzi az eredeti oldalakat (`openSides`, csak zárt építménynél; a megosztó linkbe is bekerül, `o….` jelző). A tetőtípus szándékosan marad, amit a vevő a zárt építményhez választott.
+- **PDF az összegzésben:** az Összegzés lépés tetején nagy „PDF összefoglaló letöltése” gomb (az árpanel gombja összecsukott panelnél nem látszott). A képmegosztás gombja alatta, visszafogottabb stílussal.
+- **Fotóba helyezés:** új **Perspektíva** csúszka — a kamera távolságát és látószögét együtt állítja úgy, hogy a pergola látszó mérete nem változik, csak a rövidülés erőssége; így közelről, széles látószöggel készült fotóhoz is illeszthető, ami eddig forgatással nem ment. Az **Elforgatás** külön csúszkán is állítható (fokra pontosan), a gombok 15° helyett 5°-ot lépnek, a Shift/jobb gomb + húzás finomabb (0,25°/px). Régi mentett elhelyezés a csúszka alapértékével (1) töltődik be.
+- Fájlok: `src/lib/buildings.ts`, `src/tenants/rules.ts`, `src/lib/shareCode.ts`, `src/types/pergola.ts`, `src/components/SummaryPanel.tsx`, `src/lib/photoPlacement.ts`, `src/components/PhotoRig.tsx`, `src/components/PhotoBar.tsx`; tesztek: `tests/buildings.test.ts`, `tests/photoPlacement.test.ts`.
+
 ## 3.82 – Színváltás átúsztatva, tetőtípus-váltás animálva
 
 - **Szín:** új szín választásakor a szerkezet (és kéttónusú kivitelnél a tető) 0,6 s alatt átúszik az új színbe, nem ugrik. Fa hatású színnél (más felület/textúra) és csökkentett mozgásnál azonnali a váltás. A közös, gyorsítótárazott anyagok nem változnak: az átmenet idejére a célszín anyagának másolata dolgozik, a végén a modell a közös anyagra vált.

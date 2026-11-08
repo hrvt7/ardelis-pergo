@@ -50,6 +50,8 @@ export function configToCompact(config: PergolaConfig) {
   if (config.wallGlazing) flags.push(`w${WALL_GLAZING_INFO[config.wallGlazing].share}`)
   if (config.climate) flags.push(`k${CLIMATE_INFO[config.climate].share}`)
   if (config.foundation) flags.push('q')
+  // o…. = a zárt építmény előtti oldalak (pergolára visszaváltáskor állnak helyre).
+  if (config.building && config.openSides) flags.push(`o${SIDE_KEYS.map((side) => SIDE[config.openSides![side]]).join('')}`)
   // n = összekapcsolt modulok száma (2–4).
   if ((config.modules ?? 1) > 1) flags.push(`n${config.modules}`)
   if (ral || flags.length) parts.push(ral)
@@ -106,6 +108,10 @@ function parseFlags(text: string, sideMap: Record<string, SideType>) {
       const split: NonNullable<PergolaConfig['split']> = {}
       SIDE_KEYS.forEach((side, index) => { const type = sideMap[flag[index + 1]]; if (type) split[side] = type })
       if (Object.keys(split).length) result.split = split
+    }
+    else if (/^o.{4}$/.test(flag)) {
+      const types = SIDE_KEYS.map((_, index) => sideMap[flag[index + 1]])
+      if (types.every(Boolean)) result.openSides = { front: types[0], back: types[1], left: types[2], right: types[3] }
     }
   }
   return result

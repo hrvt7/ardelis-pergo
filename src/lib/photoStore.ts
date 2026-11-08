@@ -51,7 +51,8 @@ export function loadPlacement(key: string): PhotoPlacement | null {
     const value = JSON.parse(raw) as Partial<PhotoPlacement>
     const numbers = ['photoX', 'photoY', 'photoScale', 'photoRotation', 'photoTilt'] as const
     if (!numbers.every((name) => typeof value[name] === 'number' && Number.isFinite(value[name]))) return null
-    return clampPlacement(value as PhotoPlacement)
+    // A perspektíva-szorzó később került be: régi mentésnél az alapérték (1).
+    return clampPlacement({ ...value, photoLens: typeof value.photoLens === 'number' ? value.photoLens : 1 } as PhotoPlacement)
   } catch { return null }
 }
 export function clearPlacement(key: string) {

@@ -18,14 +18,30 @@ describe('fotóba helyezés', () => {
   })
 
   it('az alapértékek egyeznek a jelenet alapértékeivel', () => {
-    expect({ photoX: DEFAULT_SCENE.photoX, photoY: DEFAULT_SCENE.photoY, photoScale: DEFAULT_SCENE.photoScale, photoRotation: DEFAULT_SCENE.photoRotation, photoTilt: DEFAULT_SCENE.photoTilt }).toEqual(DEFAULT_PLACEMENT)
+    expect({ photoX: DEFAULT_SCENE.photoX, photoY: DEFAULT_SCENE.photoY, photoScale: DEFAULT_SCENE.photoScale, photoRotation: DEFAULT_SCENE.photoRotation, photoTilt: DEFAULT_SCENE.photoTilt, photoLens: DEFAULT_SCENE.photoLens }).toEqual(DEFAULT_PLACEMENT)
   })
 
   it('a határok közé szorít és a szöget −180…180 közé hozza', () => {
     expect(wrapDegrees(190)).toBe(-170)
     expect(wrapDegrees(-190)).toBe(170)
-    const clamped = clampPlacement({ photoX: 99, photoY: -99, photoScale: 50, photoRotation: 370, photoTilt: 90 })
-    expect(clamped).toEqual({ photoX: 8, photoY: -5, photoScale: 4, photoRotation: 10, photoTilt: 60 })
+    const clamped = clampPlacement({ photoX: 99, photoY: -99, photoScale: 50, photoRotation: 370, photoTilt: 90, photoLens: 9 })
+    expect(clamped).toEqual({ photoX: 8, photoY: -5, photoScale: 4, photoRotation: 10, photoTilt: 60, photoLens: 2.2 })
+    expect(clampPlacement({ ...DEFAULT_PLACEMENT, photoLens: Number.NaN }).photoLens).toBe(1)
+  })
+
+  it('perspektíva: a szorzó a távolságot és a látószöget együtt állítja, a pergola látszó mérete nem változik', () => {
+    const normal = photoCameraPose({ width: 5, depth: 4, height: 2.6 }, 14, 40)
+    const wide = photoCameraPose({ width: 5, depth: 4, height: 2.6 }, 14, 40, 0.5)
+    const tele = photoCameraPose({ width: 5, depth: 4, height: 2.6 }, 14, 40, 2)
+    expect(normal.fov).toBeCloseTo(40)
+    expect(wide.distance).toBeCloseTo(normal.distance / 2)
+    expect(wide.fov).toBeGreaterThan(normal.fov)
+    expect(tele.distance).toBeCloseTo(normal.distance * 2)
+    expect(tele.fov).toBeLessThan(normal.fov)
+    // látszó méret: a látómező szélessége a pergola távolságában ugyanakkora
+    const span = (pose: { distance: number; fov: number }) => 2 * pose.distance * Math.tan((pose.fov * Math.PI) / 360)
+    expect(span(wide)).toBeCloseTo(span(normal))
+    expect(span(tele)).toBeCloseTo(span(normal))
   })
 
   it('húzás: jobbra-le húzás → +x, −y', () => {

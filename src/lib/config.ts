@@ -38,6 +38,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   photoScale: 1,
   photoRotation: -25,
   photoTilt: 14,
+  photoLens: 1,
   sunStudy: false,
   sunDate: '',
   sunHour: 15,

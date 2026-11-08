@@ -2706,8 +2706,8 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     if (phase) invalidate()
   })
   // Fotó módban a pergola csoportját a PhotoRig mozgatja (húzás, csippentés, forgatás); itt csak a kiinduló értékek.
-  const { photoX, photoY, photoScale, photoRotation, photoTilt } = scene
-  const placement = useMemo(() => ({ photoX, photoY, photoScale, photoRotation, photoTilt }), [photoX, photoY, photoScale, photoRotation, photoTilt])
+  const { photoX, photoY, photoScale, photoRotation, photoTilt, photoLens } = scene
+  const placement = useMemo(() => ({ photoX, photoY, photoScale, photoRotation, photoTilt, photoLens }), [photoX, photoY, photoScale, photoRotation, photoTilt, photoLens])
   const pergola = <group name={PHOTO_GROUP} position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} rotation={[0, scene.photoMode ? THREE.MathUtils.degToRad(scene.photoRotation) : 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} rainShow={rainShow} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{scene.photoMode && <ShadowCatcher size={Math.max(config.width, config.depth) + 6} opacity={lighting.night ? 0.25 : 0.42} />}{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} hideZone={view === 'sofa'} /></OptionalSceneAsset>}</group>
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}|${scene.wallColor}|${scene.windowColor}`} />

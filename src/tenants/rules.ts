@@ -25,6 +25,7 @@ export const pergolaConfigSchema = z.object({
   roofColor: z.enum(['anthracite', 'black', 'white', 'bronze', 'custom']).optional(),
   roofRal: z.string().max(24).optional(),
   sides: z.object({ front: sideEnum, back: sideEnum, left: sideEnum, right: sideEnum }),
+  openSides: z.object({ front: sideEnum, back: sideEnum, left: sideEnum, right: sideEnum }).optional(),
   louverAngle: z.number().finite().min(0).max(90),
   pitch: z.number().finite().min(0).max(30).optional(),
   glazing: z.enum(['clear', 'satin', 'opal', 'heat', 'tinted']).optional(),
@@ -177,6 +178,8 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     mount,
     roof,
     building,
+    // A zárt építmény előtti oldalak csak zárt építménynél őrződnek (a gyártó kínálatához igazítva).
+    openSides: building && config.openSides ? Object.fromEntries((['front', 'back', 'left', 'right'] as SideKey[]).map((side) => [side, config.openSides![side] === 'none' || tenant.sides.includes(config.openSides![side]) ? config.openSides![side] : 'none'])) as PergolaConfig['openSides'] : undefined,
     frameColor,
     customRal: frame.custom,
     roofColor: twoTone ? twoTone.color : undefined,

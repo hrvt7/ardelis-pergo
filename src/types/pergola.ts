@@ -45,6 +45,8 @@ export interface PergolaConfig {
   glazing?: RoofGlazing
   /** Zárt építmény: veranda vagy télikert (nincs megadva = nyitott pergola). */
   building?: Exclude<BuildingType, 'pergola'>
+  /** A zárt építmény előtti oldalak (csak zárt építménynél): pergolára visszaváltva ezek állnak helyre. */
+  openSides?: Record<SideKey, SideType>
   /** Oldalfal-üvegezés (csak zárt építménynél; nincs megadva = alapkivitel: veranda edzett, télikert kétrétegű). */
   wallGlazing?: WallGlazing
   /** Fűtés/hűtés (csak télikertnél). */
@@ -114,6 +116,8 @@ export interface SceneSettings {
   photoRotation: number
   /** Fotó módban: a nézőpont magassága (fok). */
   photoTilt: number
+  /** Fotó módban: a perspektíva erőssége (kamera-távolság szorzó: 0,5 = közelről, széles látószög; 2 = távolról, tele). */
+  photoLens: number
   /** Árnyékelemzés: valós napállás a megadott helyen, napon és időpontban. */
   sunStudy: boolean
   /** A vizsgált nap (ÉÉÉÉ-HH-NN); üresen a mai nap. */

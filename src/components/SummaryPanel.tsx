@@ -1,7 +1,7 @@
 import '@/legal.css'
 import { useEffect, useState } from 'react'
 import { getAdvice } from '@/lib/advice'
-import { MessageCircle, ArrowRight, Camera, Check, ChevronRight, Clipboard, Clock3, Code2, Gauge, GitCompareArrows, LoaderCircle, PackageCheck, PencilLine, Save, Share2, Wallet } from 'lucide-react'
+import { MessageCircle, ArrowRight, Camera, Check, ChevronRight, Clipboard, Clock3, Code2, FileDown, Gauge, GitCompareArrows, LoaderCircle, PackageCheck, PencilLine, Save, Share2, Wallet } from 'lucide-react'
 import PriceMix from '@/components/PriceMix'
 import { captureScene, renderShareCard, shareOrDownload } from '@/lib/showcase'
 import { colorSummary } from '@/lib/colors'
@@ -34,9 +34,12 @@ interface Props {
   /** A vásárló házának leírása (a 3D beállításból) — a kérelemhez és a PDF-hez. */
   house?: string
   shareUrl?: string
+  /** PDF-összefoglaló letöltése (ugyanaz, mint az árpanelen; itt is elérhető, mert az árpanel összecsukható). */
+  onExport?: () => void
+  exporting?: boolean
 }
 
-export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, projectName, onProjectName, house, shareUrl }: Props) {
+export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, onExport, exporting = false, projectName, onProjectName, house, shareUrl }: Props) {
   const { tenant, labels: ROOF_LABELS } = useTenant()
   const [thumbnail, setThumbnail] = useState('')
   const bom = getBom(config)
@@ -97,6 +100,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
           <p>{formatNumber(price.area)} m² · {MOUNT_LABELS[config.mount]} · {colorSummary(tenant, config)}</p>
           <strong>{formatHuf(price.totalGross)}</strong><small>bruttó irányár, telepítéssel</small>
         </div>
+        {onExport && <button type="button" className="showroom-share is-pdf" onClick={onExport} disabled={exporting}>{exporting ? <LoaderCircle size={17} className="spin" /> : <FileDown size={17} />}<span><strong>{exporting ? 'PDF készül…' : 'PDF összefoglaló letöltése'}</strong><small>Méretek, anyaglista, irányár és a 3D-link egy dokumentumban</small></span></button>}
         <button type="button" className="showroom-share" onClick={share} disabled={sharing}>{sharing ? <LoaderCircle size={17} className="spin" /> : <Share2 size={17} />}<span><strong>Kép küldése a családnak</strong><small>Márkázott kép a tervvel és az árral · WhatsApp, Messenger, e-mail</small></span></button>
         <PriceMix price={price} />
       </section>

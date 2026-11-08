@@ -167,7 +167,8 @@ const SIDE_ORDER: SideKey[] = ['front', 'left', 'right', 'back']
  * télikertnél enyhe tetődőlés, alap és klíma. A kliens ezt alkalmazza; a végső szabályokat a normalizáció adja.
  */
 export function buildingPatch(config: PergolaConfig, building: BuildingType, roofs: RoofType[], sides: SideType[]): Partial<PergolaConfig> {
-  if (building === 'pergola') return { building: undefined, wallGlazing: undefined, climate: undefined, foundation: undefined }
+  // Vissza pergolára: a zárt építmény előtti oldalak (pl. zip-árnyékoló) visszakerülnek, nem marad üvegfal.
+  if (building === 'pergola') return { building: undefined, wallGlazing: undefined, climate: undefined, foundation: undefined, ...(config.openSides ? { sides: { ...config.openSides } } : {}), openSides: undefined }
   const allowed = BUILDING_ROOFS[building].filter((roof) => roofs.includes(roof))
   const roof = allowed.includes(config.roof) ? config.roof : (allowed[0] ?? config.roof)
   const has = (type: SideType) => sides.includes(type)
@@ -175,10 +176,8 @@ export function buildingPatch(config: PergolaConfig, building: BuildingType, roo
   const door: SideType = has('doorSliding') ? 'doorSliding' : has('door') ? 'door' : 'none'
   const open = SIDE_ORDER.filter((side) => !isWallSide(config.mount, side))
   const next = { ...config.sides }
-  open.forEach((side) => {
-    const current = next[side]
-    if (current === 'none' || (building === 'conservatory' && !CONSERVATORY_SIDE_TYPES.includes(current))) next[side] = closing
-  })
+  // Zárt építményben minden nyitott oldal üvegfal (vagy ajtó) lesz: a zip, a lamella és a lécfal is cserélődik, nem csak az üres oldal.
+  open.forEach((side) => { if (!GLASS_WALL_TYPES.includes(next[side])) next[side] = closing })
   const hasDoor = open.some((side) => isDoorType(next[side]) || isDoorType(config.split?.[side] ?? 'none'))
   if (!hasDoor && door !== 'none') {
     const entrance = open.find((side) => next[side] === 'glassFixed' || next[side] === 'glass' || next[side] === 'none')
@@ -188,6 +187,8 @@ export function buildingPatch(config: PergolaConfig, building: BuildingType, roo
     building,
     roof,
     sides: next,
+    // Az eredeti (nyitott) oldalak megőrzése, hogy pergolára visszaváltva helyreálljanak.
+    openSides: config.openSides ?? (isClosedBuilding(config.building) ? undefined : { ...config.sides }),
     wallGlazing: undefined,
     pitch: building === 'conservatory' && !config.pitch && roof === 'glass' ? 3 : config.pitch,
     climate: building === 'conservatory' ? (config.climate ?? 'split') : undefined,
