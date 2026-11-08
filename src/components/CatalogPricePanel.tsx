@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, Download, Info, Link2, LoaderCircle, Settings2, TrendingDown, TrendingUp } from 'lucide-react'
-import { FAMILY_META } from '@/lib/catalog'
+import { FAMILY_META, LABELS } from '@/lib/catalog'
 import { formatHuf, formatNumber } from '@/lib/pricing'
 import type { OutdoorConfig } from '@/types/catalog'
 import type { PriceBreakdown } from '@/types/pergola'
@@ -22,7 +22,7 @@ export default function CatalogPricePanel({ config, price, exporting, delta, onE
   const measure = roof ? `${formatNumber(price.area)} m²` : `${formatNumber(config.length)} fm`
   return <aside className="price-panel glass-panel compact" aria-label="Árkalkuláció">
     <div className="price-topline"><span>Azonnali kalkuláció</span><span className="live-indicator"><i />ÉLŐ</span></div>
-    <div className="price-product"><span>{FAMILY_META[config.family].series}</span><strong>{roof ? `${formatNumber(config.width * (config.family === 'carport' ? config.bays : 1))} × ${formatNumber(config.depth)} m` : `${formatNumber(config.height)} m magas rendszer`}</strong><small>{measure} · paraméteres modell</small></div>
+    <div className="price-product"><span>{roof ? FAMILY_META[config.family].title : `${LABELS.style[config.style]} · ${LABELS.gate[config.gateType]}`}</span><strong>{roof ? `${formatNumber(config.width * (config.family === 'carport' ? config.bays : 1))} × ${formatNumber(config.depth)} m` : `${formatNumber(config.height)} m magas rendszer`}</strong><small>{measure} · paraméteres modell</small></div>
     <div className="price-mode" aria-label="Ár megjelenítése">{(['net', 'vat', 'gross'] as const).map((id) => <button type="button" key={id} className={mode === id ? 'selected' : ''} onClick={() => setMode(id)}>{id === 'net' ? 'Nettó' : id === 'vat' ? 'ÁFA' : 'Bruttó'}</button>)}</div>
     <div className="total-price"><span>{mode === 'gross' ? 'Bruttó irányár' : mode === 'net' ? 'Nettó irányár' : 'ÁFA összege'}</span><strong>{formatHuf(amount)}</strong><small>Telepítési mintatétellel · nem ajánlattétel</small></div>
     {delta && delta.amount !== 0 && <div className={`price-delta ${delta.amount < 0 ? 'negative' : ''}`} role="status">{delta.amount > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}<span>Árváltozás</span><strong>{delta.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(delta.amount))}</strong><small>{delta.label}</small></div>}

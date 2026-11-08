@@ -1,5 +1,11 @@
 # Változások
 
+## 3.98 – Mélyebb UI-pass: a kerítés-stúdió a pergola panelnyelvén
+
+- **Egy panelnyelv minden terméknél:** a kerítés (és a katalógus-motor többi családja) panelje ugyanazt a felépítést kapta, mint a pergoláé: „Konfiguráció 01 / 04” fejléc a mérettel („14,0 fm · 1,6 m”), számozott lépéspontok pipával, „01 · Méret és arányok” stílusú lépés-szemöldök. A belső sorozatkódok („LAMELIX / FENCE”, „3D / LIVE”) eltűntek a felületről.
+- **Árpanel szemöldöke** kerítésnél a kivitelt mondja („Vízszintes lamella · Sínen futó tolókapu”), nem a motor nevét; a jelenet címkéje „Élő építészeti jelenet”, mint a pergolánál.
+- **Összegzés:** a bélyegkép a termék nevét mutatja; a kapunyílás tizedesvesszővel („3,5 m”); az utolsó lépés gombja „Felmérést kérek”, és a kérőlaphoz görget (eddig „Tervezés” felirattal az első lépésre ugrott).
+
 ## 3.97 – Prémium mikro-interakciók a referencia-oldalak mintájára
 
 Forrás: getlayers.ai, ui.live, itshover.com, prompt-motion.com, styles.refero.design, performative-ui. Közös minták: ikonok, amelyek „szándékkal mozdulnak”; fényvonal a fő gombon; élő állapotpont lüktetése; kinetikus számváltás; emelkedő üvegkártyák fényes kerettel; egységes, token-alapú stílus.

@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Ruler, Shapes, Sparkles, ClipboardCheck } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { COLOR_HEX, FAMILY_META, LABELS } from '@/lib/catalog'
-import { formatHuf } from '@/lib/pricing'
+import { formatNumber } from '@/lib/pricing'
 import type { OutdoorColor, OutdoorConfig } from '@/types/catalog'
 import type { PriceBreakdown } from '@/types/pergola'
 
@@ -34,7 +34,7 @@ interface Props {
   onStep: (step: CatalogStep) => void
   onChange: (patch: Partial<OutdoorConfig>) => void
 }
-export default function CatalogControls({ config, step, price, summary, mobileOpen, onMobileToggle, onStep, onChange }: Props) {
+export default function CatalogControls({ config, step, summary, mobileOpen, onMobileToggle, onStep, onChange }: Props) {
   const meta = FAMILY_META[config.family]
   const roofFamily = config.family === 'canopy' || config.family === 'carport'
   const index = steps.findIndex((item) => item.id === step)
@@ -87,10 +87,10 @@ export default function CatalogControls({ config, step, price, summary, mobileOp
     : availableFinishes.some((option) => option.value !== 'woodlook' && option.value !== 'lazur'))
   return <aside className={`controls-panel glass-panel catalog-controls ${mobileOpen ? 'is-mobile-open mobile-open' : ''}`}>
     <button type="button" className="sheet-toggle" onClick={onMobileToggle} aria-expanded={mobileOpen}><span className="sheet-handle" /><span>{meta.title} beállításai</span><ChevronDown size={16} /></button>
-    <div className="config-head"><div><span>{meta.series}</span><strong>3D / LIVE</strong></div><div className="mini-summary">{formatHuf(price.totalGross)}<br />bruttó irányár</div></div>
-    <nav className="control-tabs catalog-step-tabs" aria-label="Konfigurációs lépések">{steps.map(({ id, label, icon: Icon }, i) => <button type="button" key={id} className={step === id ? 'active' : i < index ? 'complete' : ''} onClick={() => onStep(id)}><span className="step-dot">{i < index ? <Check size={11} /> : <Icon size={11} />}</span><span>{label}</span></button>)}</nav>
+    <div className="config-head"><div><span>Konfiguráció</span><strong>{String(index + 1).padStart(2, '0')} / 0{steps.length}</strong></div><span className="mini-summary">{roofFamily ? `${formatNumber(config.width * (config.family === 'carport' ? config.bays : 1))} × ${formatNumber(config.depth)} m` : `${formatNumber(config.length)} fm · ${formatNumber(config.height)} m`}</span></div>
+    <nav className="control-tabs catalog-step-tabs" aria-label="Konfigurációs lépések">{steps.map(({ id, label }, i) => <button type="button" key={id} className={step === id ? 'active' : i < index ? 'complete' : ''} onClick={() => onStep(id)}><span className="step-dot">{i < index ? <Check size={11} /> : i + 1}</span><span>{label}</span></button>)}</nav>
     <div className="controls-scroll"><div className="panel-content" key={`${config.family}-${step}`}>
-      {step !== 'summary' && <div className="step-heading"><span>{meta.series}</span><h2>{step === 'size' ? 'Arányok és méretek' : step === 'design' ? 'Anyag és karakter' : 'Működés és comfort'}</h2></div>}
+      {step !== 'summary' && <div className="step-heading"><span>0{index + 1} · {step === 'size' ? 'Méret és arányok' : step === 'design' ? 'Anyag és karakter' : 'Komfort'}</span><h2>{step === 'size' ? 'Arányok és méretek' : step === 'design' ? 'Anyag és karakter' : 'Működés és comfort'}</h2></div>}
       {step === 'size' && (roofFamily ? <>
         {config.family === 'carport' && <Section title="Beállók száma"><Choices value={String(config.bays)} options={[{ value: '1', label: 'Egyállásos' }, { value: '2', label: 'Kétállásos' }]} onChange={(v) => onChange({ bays: Number(v) as 1 | 2 })} /></Section>}
         <Section title="Külső méretek" description="A modell valós méterarányban frissül."><Range label="Szélesség egy modulon" value={config.width} min={config.family === 'carport' ? 2.8 : 1.2} max={config.family === 'carport' ? 4.5 : 8} step={0.1} unit="m" onChange={(width) => onChange({ width })} /><Range label="Mélység" value={config.depth} min={config.family === 'carport' ? 4.5 : 0.8} max={config.family === 'carport' ? 8 : 5} step={0.1} unit="m" onChange={(depth) => onChange({ depth })} /><Range label="Belső magasság" value={config.height} min={2.1} max={3.4} step={0.05} unit="m" onChange={(height) => onChange({ height })} /></Section>
@@ -124,6 +124,6 @@ export default function CatalogControls({ config, step, price, summary, mobileOp
       </div>}
       {step === 'summary' && summary}
     </div></div>
-    <div className="step-navigation"><button type="button" disabled={index === 0} onClick={() => onStep(steps[index - 1].id)}><ArrowLeft size={14} />Vissza</button><span>{index + 1} / {steps.length}</span><button type="button" className="next-step" onClick={() => onStep(steps[(index + 1) % steps.length].id)}>{index === steps.length - 1 ? 'Tervezés' : 'Tovább'}<ArrowRight size={14} /></button></div>
+    <div className="step-navigation"><button type="button" disabled={index === 0} onClick={() => onStep(steps[index - 1].id)}><ArrowLeft size={14} />Vissza</button><span>{index + 1} / {steps.length}</span><button type="button" className="next-step" onClick={() => { if (index === steps.length - 1) document.querySelector('.catalog-controls .lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); else onStep(steps[index + 1].id) }}>{index === steps.length - 1 ? 'Felmérést kérek' : 'Tovább'}<ArrowRight size={14} /></button></div>
   </aside>
 }
