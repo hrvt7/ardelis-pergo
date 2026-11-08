@@ -1,5 +1,11 @@
 # Változások
 
+## 3.89 – Lamellák eltűnése javítva (első betöltés telefonon, színváltás)
+
+- **Hiba:** a valós lamellás tetőn (Aero) a lamellák eltűntek, csak a keret látszott. Telefonon első betöltéskor jelentkezett (az automatikus minőségállítás az első másodpercekben anyagot cserél), asztalon keretszín-váltás után. Tetőváltás után helyrejött. Ok: a lamellák `InstancedMesh`-ei az anyagot és a geometriát konstruktor-argumentumként kapták, így anyagcserénél a mesh csendben újraépült üres (egységmátrixos) példányokkal, a lamellák pedig a nullpontba estek.
+- **Javítás:** az anyag és a geometria tulajdonságként kerül a mesh-re (csere esetén nem épül újra), és védőháló figyeli, ha mégis új mesh jön létre, ilyenkor a lamellák azonnal újra a helyükre kerülnek. Böngészőben mérve: színváltás után 36/36 lamella a helyén (előtte 0/36).
+- **Átvizsgálás:** új böngészős végigjáró (`tests/e2e/invariants.cjs`): minden lépés minden gombja, legördülője, csúszkája és számmezője asztali és telefonos nézetben, és mindegyik után ellenőrzés: nincs látható üres példány-mesh, nincs NaN a 3D-ben, az ár szám, a fejléc a kiválasztott tetőt mutatja, nincs JS-hiba. Eredmény: 41 + 69 művelet, hiba nélkül. A `?debug=1` mostantól a jelenetet is elérhetővé teszi a tesztek számára (`window.__lamelixScene`).
+
 ## 3.88 – Nyitóoldal: összecsúszott szekciók javítva, modernebb szövegbetű
 
 - **Hiba:** a 3.85–3.86-ban lustán betöltött szekciók (badge-sorok, számsor, előtte-utána, lábléc) a betöltés után megnövelték az oldal magasságát, de a GSAP ScrollTrigger már korábban kiszámolta a rögzített (pin) bemutató helyét. Ettől a „Bemutató” szekció szövegei és kártyái egymásra csúsztak, és a következő szekció belelógott. Javítás: minden lustán betöltődő látványelem betöltés után újraszámoltatja a görgetés-pozíciókat (`useScrollRefresh` a `Showpieces`-ben).

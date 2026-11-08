@@ -155,8 +155,14 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
     const next = nearRef.current ? d < 6.4 : d < 5.6
     if (next !== nearRef.current) { nearRef.current = next; setNear(next) }
   })
+  // Védőháló: ha az R3F bármi okból új InstancedMesh-t hoz létre (az üres, egységmátrixos), a lamellákat újra a helyükre írjuk.
+  // Enélkül anyag- vagy minőségváltás után (pl. színcsere, telefonon az első másodpercek automatikus minőségállítása)
+  // minden lamella a nullpontba esett, és a tető lamellák nélkül látszott.
+  const meshes = useRef<(THREE.InstancedMesh | null)[]>([])
   useFrame(({ clock }, delta) => {
     const l = live.current
+    const current = [blades.current, caps.current, cranks.current, shafts.current]
+    if (current.some((mesh, index) => mesh !== meshes.current[index])) { meshes.current = current; l.angle = -1 }
     if (l.rain !== rain) { l.rain = rain; if (!rain) l.slowUntil = clock.elapsedTime + 3.5 }
     const slowNow = slow || clock.elapsedTime < l.slowUntil
     // burkolat és kiemelés átúsztatása
@@ -197,10 +203,10 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
   const labelZ = layout.z[Math.min(n - 1, Math.round(n * 0.55))]
 
   return <group name="louvre-roof">
-    <instancedMesh key={`b${total}`} ref={blades} args={[geo.blade, roofMaterial, total]} frustumCulled={false} castShadow receiveShadow />
-    <instancedMesh key={`c${total}`} ref={caps} args={[geo.cap, mats.caps, total * 2]} frustumCulled={false} />
-    <instancedMesh key={`k${total}`} ref={cranks} args={[geo.crank, mats.drive, total]} frustumCulled={false} castShadow />
-    <instancedMesh key={`s${total}`} ref={shafts} args={[geo.shaft, mats.rod, total]} frustumCulled={false} />
+    <instancedMesh key={`b${total}`} ref={blades} args={[undefined, undefined, total]} geometry={geo.blade} material={roofMaterial} frustumCulled={false} castShadow receiveShadow />
+    <instancedMesh key={`c${total}`} ref={caps} args={[undefined, undefined, total * 2]} geometry={geo.cap} material={mats.caps} frustumCulled={false} />
+    <instancedMesh key={`k${total}`} ref={cranks} args={[undefined, undefined, total]} geometry={geo.crank} material={mats.drive} frustumCulled={false} castShadow />
+    <instancedMesh key={`s${total}`} ref={shafts} args={[undefined, undefined, total]} geometry={geo.shaft} material={mats.rod} frustumCulled={false} />
     {/* 4 m feletti szélességnél a modulok közös (dupla) gerendán találkoznak */}
     {layout.modules.slice(1).map((mod, j) => <mesh key={`d${j}`} material={frameMaterial} position={[mod.x - (mod.inner + beam) / 2, height, 0]} castShadow receiveShadow><boxGeometry args={[beam, beamHeight, depth - beam]} /></mesh>)}
     {layout.modules.map((mod, j) => <group key={j}>

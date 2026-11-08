@@ -2715,6 +2715,8 @@ function PerfProbe({ quality }: { quality: QualitySettings }) {
     const { render, memory } = gl.info
     const data = { tier: quality.tier, fps: stats.fps, calls: render.calls, triangles: render.triangles, textures: memory.textures, geometries: memory.geometries }
     ;(window as unknown as { __perf?: typeof data }).__perf = data
+    // Csak ?debug=1 mellett: a jelenet elérhető a böngészős tesztekből (pl. ellenőrizhető, hogy a lamellák a helyükön vannak).
+    ;(window as unknown as { __lamelixScene?: THREE.Scene }).__lamelixScene = scene
     if (box.current) box.current.textContent = `${data.tier} · ${data.fps} fps\ncalls ${data.calls} · tri ${(data.triangles / 1000).toFixed(0)}k\ntex ${data.textures} · geo ${data.geometries}`
   })
   return null
