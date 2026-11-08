@@ -1,5 +1,13 @@
 # Változások
 
+## 3.90 – Többtermékes héj, 1. lépés: termékcsaládok, útvonalak, „Mit tervezel?” választó
+
+- **Termékcsalád-regiszter** (`src/products/index.ts`): teraszfedés (él), carport és előtető, kerítés és kapu, garázskapu, kerti ház és szauna (hamarosan). Függőség nélküli modul, a szerver és a tesztek is látják. A gyártó (tenant) `products` mezővel adja meg, mit kínál; megadás nélkül csak teraszfedés, így a meglévő gyártók változatlanul működnek.
+- **Útvonalak:** `/konfigurator/<család>`, `/k/<gyártó>/<család>`, `/embed/<gyártó>/<család>`; a pergola marad a rövid címen. Ismeretlen szelet, vagy a gyártó által nem kínált család → 404. A régi `/studio/fence`, `/studio/gate` → `/konfigurator/kerites`, `/studio/canopy`, `/studio/carport` → `/konfigurator/carport`.
+- **„Mit tervezel?” választó** a Típus lépés tetején: az élő családok linkek, a még nem elérhetők a bemutató gyártónál „hamarosan · érdekel” gombbal. Egy kattintás névtelen `interest_<család>` eseményt küld (a `/api/track` fogadja), így mérhető, melyik családot érdemes következőnek megépíteni. Nem felugró ablak: linkelhető és kereshető.
+- **„Hamarosan” oldal** (`/konfigurator/kerites` stb.): a család rövid leírása, érdeklődés-gomb, link a teraszfedés tervezéséhez.
+- A tenant-kontextus megkapta a `product` és `mode` mezőt az útvonalképzéshez. Tesztek: `tests/products.test.ts`. Terv: `docs/TOBBTERMEK-TERV.md`.
+
 ## 3.89 – Lamellák eltűnése javítva (első betöltés telefonon, színváltás)
 
 - **Hiba:** a valós lamellás tetőn (Aero) a lamellák eltűntek, csak a keret látszott. Telefonon első betöltéskor jelentkezett (az automatikus minőségállítás az első másodpercekben anyagot cserél), asztalon keretszín-váltás után. Tetőváltás után helyrejött. Ok: a lamellák `InstancedMesh`-ei az anyagot és a geometriát konstruktor-argumentumként kapták, így anyagcserénél a mesh csendben újraépült üres (egységmátrixos) példányokkal, a lamellák pedig a nullpontba estek.
