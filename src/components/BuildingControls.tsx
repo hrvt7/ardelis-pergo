@@ -44,7 +44,8 @@ function BuildingIcon({ type }: { type: BuildingType }) {
 export function BuildingPicker({ config, prices, onChange }: { config: PergolaConfig; prices: PriceSettings; onChange: Change }) {
   const { tenant } = useTenant()
   const roofs = enabledRoofs(tenant)
-  const available = availableBuildings(roofs, tenant.sides)
+  // A carport külön termék, saját kalkulátorral (/konfigurator/carport): itt nem választható.
+  const available: BuildingType[] = availableBuildings(roofs, tenant.sides).filter((type) => type !== 'carport')
   if (available.length < 2) return null
   const current: BuildingType = config.building ?? 'pergola'
   const base = tenantPrice(tenant, config, prices).totalGross

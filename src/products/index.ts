@@ -39,8 +39,15 @@ export type InterestEvent = `interest_${ProductFamily}`
 export const interestEvent = (id: ProductFamily): InterestEvent => `interest_${id}`
 export const INTEREST_EVENTS: readonly InterestEvent[] = PRODUCTS.map((product) => interestEvent(product.id))
 
+const basePath = (mode: 'demo' | 'standalone' | 'embed', tenantId: string) => (mode === 'demo' ? '/konfigurator' : `/${mode === 'embed' ? 'embed' : 'k'}/${tenantId}`)
+
 /** A konfigurátor útvonala egy családhoz, a megjelenítési mód szerint. A pergola a rövid, megszokott útvonalon marad. */
 export function productPath(mode: 'demo' | 'standalone' | 'embed', tenantId: string, id: ProductFamily): string {
-  const base = mode === 'demo' ? '/konfigurator' : `/${mode === 'embed' ? 'embed' : 'k'}/${tenantId}`
+  const base = basePath(mode, tenantId)
   return id === DEFAULT_PRODUCT ? base : `${base}/${productInfo(id).slug}`
 }
+
+/** A termékválasztó oldal szelete: /konfigurator/termekek, /k/<gyártó>/termekek. Egyetlen család sem kaphatja ezt a szeletet. */
+export const HUB_SLUG = 'termekek'
+/** A termékválasztó oldal: innen indul minden család a saját, különálló kalkulátorába. */
+export const hubPath = (mode: 'demo' | 'standalone' | 'embed', tenantId: string) => `${basePath(mode, tenantId)}/${HUB_SLUG}`

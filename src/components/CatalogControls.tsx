@@ -29,14 +29,12 @@ interface Props {
   step: CatalogStep
   price: PriceBreakdown
   summary: ReactNode
-  /** A „Mit tervezel?” termékválasztó az első lépés tetején (a tenant héja adja). */
-  chooser?: ReactNode
   mobileOpen: boolean
   onMobileToggle: () => void
   onStep: (step: CatalogStep) => void
   onChange: (patch: Partial<OutdoorConfig>) => void
 }
-export default function CatalogControls({ config, step, price, summary, chooser, mobileOpen, onMobileToggle, onStep, onChange }: Props) {
+export default function CatalogControls({ config, step, price, summary, mobileOpen, onMobileToggle, onStep, onChange }: Props) {
   const meta = FAMILY_META[config.family]
   const roofFamily = config.family === 'canopy' || config.family === 'carport'
   const index = steps.findIndex((item) => item.id === step)
@@ -92,7 +90,6 @@ export default function CatalogControls({ config, step, price, summary, chooser,
     <div className="config-head"><div><span>{meta.series}</span><strong>3D / LIVE</strong></div><div className="mini-summary">{formatHuf(price.totalGross)}<br />bruttó irányár</div></div>
     <nav className="control-tabs catalog-step-tabs" aria-label="Konfigurációs lépések">{steps.map(({ id, label, icon: Icon }, i) => <button type="button" key={id} className={step === id ? 'active' : i < index ? 'complete' : ''} onClick={() => onStep(id)}><span className="step-dot">{i < index ? <Check size={11} /> : <Icon size={11} />}</span><span>{label}</span></button>)}</nav>
     <div className="controls-scroll"><div className="panel-content" key={`${config.family}-${step}`}>
-      {step === 'size' && chooser}
       {step !== 'summary' && <div className="step-heading"><span>{meta.series}</span><h2>{step === 'size' ? 'Arányok és méretek' : step === 'design' ? 'Anyag és karakter' : 'Működés és comfort'}</h2></div>}
       {step === 'size' && (roofFamily ? <>
         {config.family === 'carport' && <Section title="Beállók száma"><Choices value={String(config.bays)} options={[{ value: '1', label: 'Egyállásos' }, { value: '2', label: 'Kétállásos' }]} onChange={(v) => onChange({ bays: Number(v) as 1 | 2 })} /></Section>}

@@ -13,7 +13,7 @@ import { noteEngagement, noteStep, startEngagement } from '@/lib/engagement'
 import { shareHash } from '@/lib/shareCode'
 import { captureScene } from '@/lib/showcase'
 import { houseSummary, loadHouseLook, saveHouseLook } from '@/lib/house'
-import { createShareUrl, DEFAULT_SCENE, hasStoredDraft, loadInitialConfig, loadPrices, persistConfig, persistPrices } from '@/lib/config'
+import { createShareUrl, DEFAULT_SCENE, hasStoredDraft, loadInitialConfig, loadPrices, persistConfig, persistPrices, productDefaultConfig } from '@/lib/config'
 import { calculatePrice, formatHuf } from '@/lib/pricing'
 import { normalizeConfig, parseConfig } from '@/tenants/rules'
 import type { Tenant } from '@/tenants/types'
@@ -40,6 +40,7 @@ const timeForClock = (hour: number): SceneSettings['time'] => (hour >= 20 || hou
 const ArDialog = lazy(() => import('@/components/ArDialog'))
 const SunStudyPanel = lazy(() => import('@/components/SunStudyPanel'))
 import MechanismPanel from '@/components/MechanismPanel'
+import { ProductSwitch } from '@/components/ProductChooser'
 const BudgetDialog = lazy(() => import('@/components/BudgetDialog'))
 const MoodPanel = lazy(() => import('@/components/MoodPanel'))
 const AdvisorDialog = lazy(() => import('@/components/AdvisorDialog'))
@@ -84,7 +85,7 @@ export default function PergoStudio() {
   usePageSeo(product === 'carport' ? '/konfigurator/carport' : '/konfigurator', { noindex: embed || !tenant.demo, title: tenant.demo ? undefined : `${tenant.brand.name} · ${product === 'carport' ? 'carport' : 'pergola'} konfigurátor` })
   const [config, setConfig] = useState<PergolaConfig>(() => loadInitialConfig(tenant, product))
   // Visszatérő látogató: ha piszkozatból (nem linkből) indultunk, és az nem az alapterv, felajánljuk a folytatást.
-  const [welcomeBack, setWelcomeBack] = useState(() => !window.location.hash && JSON.stringify(config) !== JSON.stringify(normalizeConfig(tenant, tenant.defaultConfig)) && hasStoredDraft(tenant))
+  const [welcomeBack, setWelcomeBack] = useState(() => !window.location.hash && JSON.stringify(config) !== JSON.stringify(normalizeConfig(tenant, productDefaultConfig(tenant, product))) && hasStoredDraft(tenant, product))
   const projectKey = `pergo-project-name:${tenant.id}`
   const [projectName, setProjectName] = useState(() => { try { return localStorage.getItem(projectKey) ?? '' } catch { return '' } })
   useEffect(() => { try { localStorage.setItem(projectKey, projectName) } catch { /* privát mód */ } }, [projectKey, projectName])
@@ -161,7 +162,7 @@ export default function PergoStudio() {
   const energy = useMemo(() => estimateEnergy(config, energyUsage, tenant.energy?.heaterWatts), [config, energyUsage, tenant])
   const energyCost = energy.hasElectrics ? roundCost(energy.cost) : null
 
-  useEffect(() => persistConfig(tenant, config), [tenant, config])
+  useEffect(() => persistConfig(tenant, config, product), [tenant, config, product])
   // Névtelen konverziómérés: megnyitás és az első érdemi módosítás (csak vásárlói nézetben).
   const firstConfig = useRef(config)
   useEffect(() => { if (!admin) { track(tenant.id, 'open'); startEngagement(tenant.id) } }, [tenant.id, admin])
@@ -443,7 +444,7 @@ export default function PergoStudio() {
     <div className={`app-shell ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>
       <header className="app-header">
         <a className="brand" href="#top" aria-label={`${tenant.brand.name} kezdőnézet`} onClick={(event) => { event.preventDefault(); setView('perspective') }}><TenantMark tenant={tenant} /></a>
-        <div className="project-identity"><span>ÉPÍTÉSZETI KONFIGURÁTOR</span><strong>Valós méretek. Azonnali előnézet.</strong></div>
+        <div className="project-identity"><span>ÉPÍTÉSZETI KONFIGURÁTOR</span><ProductSwitch /></div>
         <div className="header-actions"><FullscreenControl /><div className="history-actions"><button type="button" aria-label="Visszavonás" title="Visszavonás · Ctrl+Z" onClick={undo} disabled={!history.current.past.length}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" title="Ismétlés · Ctrl+Shift+Z" onClick={redo} disabled={!history.current.future.length}><Redo2 size={17} /></button></div><button type="button" className="header-text-button presentation-toggle" aria-label={presentation ? 'Szerkesztés' : 'Bemutató'} onClick={() => setPresentation(!presentation)}><Presentation size={16} /><span>{presentation ? 'Szerkesztés' : 'Bemutató'}</span></button><button type="button" className="header-text-button" aria-label="Tudnivalók" onClick={() => setModal('info')}><Info size={16} /><span>Tudnivalók</span></button><button type="button" className="header-text-button" aria-label="Alaphelyzet" onClick={() => setModal('reset')}><RotateCcw size={16} /><span>Alaphelyzet</span></button></div>
       </header>
 
@@ -464,7 +465,7 @@ export default function PergoStudio() {
               { id: 'budget', icon: Wallet, name: 'Költségkeret-tervező', note: 'Add meg a keretet, megmutatjuk, mi fér bele', active: false, run: () => setModal('budget') },
               { id: 'energy', icon: Gauge, name: energyCost ? `Üzemeltetés ≈ ${formatHuf(energyCost)} / év` : 'Üzemeltetési költség', note: 'Áramköltség a valós lakossági tarifával', active: false, run: () => setModal('energy') },
               { id: 'advisor', icon: WandSparkles, name: 'Tanácsadó', note: '4 kérdés, és javaslunk egy hozzád illő kivitelt', active: false, run: () => setModal('advisor') },
-            ] as const).map(({ id, icon: Icon, name, note, active, run }) => <button type="button" key={id} className={`tools-item${active ? ' is-active' : ''}`} aria-pressed={active} onClick={() => { setToolsOpen(false); run() }}><Icon size={18} /><span><strong>{name}</strong><small>{note}</small></span>{active && <em>Bekapcsolva</em>}</button>)}
+            ] as const).filter(({ id }) => !(product === 'carport' && id === 'advisor')).map(({ id, icon: Icon, name, note, active, run }) => <button type="button" key={id} className={`tools-item${active ? ' is-active' : ''}`} aria-pressed={active} onClick={() => { setToolsOpen(false); run() }}><Icon size={18} /><span><strong>{name}</strong><small>{note}</small></span>{active && <em>Bekapcsolva</em>}</button>)}
           </div></div>}
           {viewOpen && <div className="view-popover glass-panel" role="dialog" aria-label="Nézet és vizualizáció"><div className="view-popover-head"><strong>Nézet és vizualizáció</strong><button type="button" aria-label="Bezárás" onClick={() => setViewOpen(false)}><X size={16} /></button></div><SceneSettingsPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onPhotoUpload={handlePhoto} /></div>}
           {scene.rain && config.sensors && isMovableRoof(config.roof) && <div className="automation-status" role="status"><ShieldCheck size={16} /><span><strong>Esőautomata aktív</strong>{config.roof === 'retractable' ? 'A tolótető biztonságos, zárt pozícióban.' : 'A tetőlamellák biztonságos, zárt pozícióban.'}</span></div>}
@@ -479,7 +480,7 @@ export default function PergoStudio() {
           {welcomeBack && <div className="welcome-back" role="status">
             <span><strong>Üdv újra!</strong>Ott folytatod, ahol abbahagytad: {config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {formatHuf(price.totalGross)}</span>
             <button type="button" className="welcome-primary" onClick={() => setWelcomeBack(false)}>Folytatom</button>
-            <button type="button" onClick={() => { replaceConfig(tenant.defaultConfig); setProjectName(''); setWelcomeBack(false); goStep('size') }}>Új terv</button>
+            <button type="button" onClick={() => { replaceConfig(productDefaultConfig(tenant, product)); setProjectName(''); setWelcomeBack(false); goStep('size') }}>Új terv</button>
           </div>}
           {change && change.amount !== 0 && !presentation && <div key={change.id} className={`change-pill ${change.amount < 0 ? 'is-down' : 'is-up'}`} role="status" aria-live="polite">
             <strong>{change.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(change.amount))}</strong><span>{change.label}</span>
@@ -501,7 +502,7 @@ export default function PergoStudio() {
       {modal === 'energy' && <Suspense fallback={null}><EnergyDialog config={config} prices={prices} usage={energyUsage} onUsageChange={setEnergyUsage} onConfigChange={updateConfig} onClose={() => setModal(null)} /></Suspense>}
       <input ref={photoInput} className="visually-hidden-input" type="file" accept={PHOTO_ACCEPT} tabIndex={-1} aria-hidden="true" onChange={(event) => { const file = event.target.files?.[0]; if (file) handlePhoto(file); event.target.value = '' }} />
       {modal === 'ar' && <Suspense fallback={null}><ArDialog shareUrl={buildArUrl(config)} onClose={() => setModal(null)} onPhoto={() => { if (scene.photoUrl) updateScene({ photoMode: true, sunStudy: false }); else openPhotoPicker() }} /></Suspense>}
-      {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(tenant.defaultConfig); setScene((current) => ({ ...DEFAULT_SCENE, wallFinish: current.wallFinish, wallColor: current.wallColor, windowColor: current.windowColor })); setView('perspective'); setStep('size'); setToast('Az alapkonfiguráció visszaállt.') }} onClose={() => setModal(null)} />}
+      {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(productDefaultConfig(tenant, product)); setScene((current) => ({ ...DEFAULT_SCENE, wallFinish: current.wallFinish, wallColor: current.wallColor, windowColor: current.windowColor })); setView('perspective'); setStep('size'); setToast('Az alapkonfiguráció visszaállt.') }} onClose={() => setModal(null)} />}
       {homeHref && (homeHref.startsWith('/') ? <Link className="studio-home-link" to={homeHref}>Kezdőlap</Link> : <a className="studio-home-link" href={homeHref} target="_top" rel="noreferrer">Kezdőlap</a>)}
     </div>
   )

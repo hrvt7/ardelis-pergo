@@ -77,7 +77,8 @@ export function getFrameColorHex(config: Pick<PergolaConfig, 'frameColor' | 'cus
 
 // Böngészőben tárolt piszkozat és (csak admin módban) szerkesztett árak,
 // gyártónként külön kulccsal, hogy két gyártó demója ne keveredjen.
-const configKey = (tenant: Tenant) => `pergo-atelier-config-v2:${tenant.id}`
+// Termékenként külön piszkozat (a carport ne írja felül a teraszfedést); a pergola kulcsa változatlan.
+const configKey = (tenant: Tenant, product: ProductFamily = 'pergola') => `pergo-atelier-config-v2:${tenant.id}${product === 'pergola' ? '' : `:${product}`}`
 const priceKey = (tenant: Tenant) => `pergo-atelier-prices-v2:${tenant.id}`
 
 export function readStored(key: string): unknown {
@@ -90,21 +91,27 @@ export function readStored(key: string): unknown {
 }
 
 /** Van-e a böngészőben elmentett piszkozat ehhez a gyártóhoz. */
-export function hasStoredDraft(tenant: Tenant) {
-  return readStored(configKey(tenant)) !== null
+export function hasStoredDraft(tenant: Tenant, product: ProductFamily = 'pergola') {
+  return readStored(configKey(tenant, product)) !== null
+}
+
+/** A termék alapterve: pergolánál a gyártó alapkonfigurációja, carportnál az első carport-csomag (vagy az alapterv carportra állítva). */
+export function productDefaultConfig(tenant: Tenant, product: ProductFamily = 'pergola'): PergolaConfig {
+  if (product !== 'carport') return tenant.defaultConfig
+  const preset = tenant.presets.find((item) => item.config.building === 'carport')
+  const base = preset
+    ? { ...tenant.defaultConfig, ...preset.config, sides: { ...tenant.defaultConfig.sides, ...preset.config.sides } }
+    : { ...tenant.defaultConfig, ...buildingPatch(tenant.defaultConfig, 'carport', enabledRoofs(tenant), tenant.sides) }
+  return normalizeConfig(tenant, base as PergolaConfig)
 }
 
 export function loadInitialConfig(tenant: Tenant, product: ProductFamily = 'pergola'): PergolaConfig {
   // A hibás hivatkozás nem akadályozhatja meg az indulást: ilyenkor a piszkozat vagy az alapállapot jön.
   const shared = window.location.hash ? parseConfig(tenant, decodeShareHash(window.location.hash)) : null
   if (shared) return shared
-  const stored = parseConfig(tenant, readStored(configKey(tenant))) ?? tenant.defaultConfig
-  // Carport útvonalon (/konfigurator/carport) a kezdőállapot carport: a piszkozat vagy az alapterv átállítva.
-  if (product === 'carport' && stored.building !== 'carport') {
-    const preset = tenant.presets.find((item) => item.config.building === 'carport')
-    const base = preset ? { ...tenant.defaultConfig, ...preset.config, sides: { ...tenant.defaultConfig.sides, ...preset.config.sides } } : { ...stored, ...buildingPatch(stored, 'carport', enabledRoofs(tenant), tenant.sides) }
-    return normalizeConfig(tenant, base as PergolaConfig)
-  }
+  const stored = parseConfig(tenant, readStored(configKey(tenant, product))) ?? productDefaultConfig(tenant, product)
+  // Carport útvonalon a kezdőállapot mindig carport.
+  if (product === 'carport' && stored.building !== 'carport') return productDefaultConfig(tenant, product)
   // Teraszfedés útvonalon a carport-piszkozat visszavált pergolára (az eredeti oldalakkal): az útvonal családja az irányadó.
   if (product === 'pergola' && stored.building === 'carport') return normalizeConfig(tenant, { ...stored, ...buildingPatch(stored, 'pergola', enabledRoofs(tenant), tenant.sides) } as PergolaConfig)
   return stored
@@ -118,8 +125,8 @@ export function loadPrices(tenant: Tenant, admin: boolean): PriceSettings {
   return parsed.success ? { ...parsed.data, priceMatrix: tenant.prices.priceMatrix } : tenant.prices
 }
 
-export function persistConfig(tenant: Tenant, config: PergolaConfig) {
-  try { localStorage.setItem(configKey(tenant), JSON.stringify(config)) } catch { /* privát mód */ }
+export function persistConfig(tenant: Tenant, config: PergolaConfig, product: ProductFamily = 'pergola') {
+  try { localStorage.setItem(configKey(tenant, product), JSON.stringify(config)) } catch { /* privát mód */ }
 }
 
 export function persistPrices(tenant: Tenant, prices: PriceSettings) {

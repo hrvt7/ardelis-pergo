@@ -5,9 +5,10 @@ import { DEFAULT_TENANT_ID, getTenant } from '@/tenants'
 import { TenantProvider } from '@/tenants/TenantContext'
 import { applyOverrides } from '@/tenants/overrides'
 import type { Tenant } from '@/tenants/types'
-import { DEFAULT_PRODUCT, productBySlug, tenantProducts, type ProductFamily } from '@/products'
+import { DEFAULT_PRODUCT, HUB_SLUG, productBySlug, tenantProducts, type ProductFamily } from '@/products'
 import { hasStudio, preloadStudio, ProductStudio } from '@/products/studios'
 import ProductSoon from '@/pages/ProductSoon'
+import ProductHub from '@/components/ProductChooser'
 
 function PageLoading() {
   return <div className="page-loading" role="status"><span>3D</span><p>Konfigurátor betöltése…</p></div>
@@ -51,8 +52,10 @@ export default function TenantStudio({ mode }: { mode: 'demo' | 'standalone' | '
   const params = useParams()
   const [search] = useSearchParams()
   const base = getTenant(mode === 'demo' ? DEFAULT_TENANT_ID : params.tenantId)
+  // A termékválasztó oldal (…/termekek): a családok különálló kalkulátorainak kiindulópontja.
+  const hub = params.product === HUB_SLUG
   // Termékcsalád az útvonalból; nincs megadva = pergola. Ismeretlen szelet, vagy olyan család, amit a gyártó nem kínál → 404.
-  const product = params.product ? productBySlug(params.product) : { id: DEFAULT_PRODUCT, status: 'live' as const }
+  const product = params.product && !hub ? productBySlug(params.product) : { id: DEFAULT_PRODUCT, status: 'live' as const }
   const tenant = useEffectiveTenant(base, product?.id ?? DEFAULT_PRODUCT)
   if (!base || !product) return <NotFound />
   if (!tenant) return <PageLoading />
@@ -63,7 +66,7 @@ export default function TenantStudio({ mode }: { mode: 'demo' | 'standalone' | '
   const live = product.status === 'live' && hasStudio(product.id)
   return (
     <TenantProvider key={`${tenant.id}:${product.id}`} tenant={tenant} product={product.id} mode={mode} admin={search.get('admin') === '1'} embed={embed} homeHref={homeHref}>
-      {live ? <Suspense fallback={<PageLoading />}><ProductStudio id={product.id} /></Suspense> : <ProductSoon product={product.id} />}
+      {hub ? <ProductHub /> : live ? <Suspense fallback={<PageLoading />}><ProductStudio id={product.id} /></Suspense> : <ProductSoon product={product.id} />}
     </TenantProvider>
   )
 }

@@ -18,7 +18,6 @@ import { findWindowColor, finishPreview, houseSummary, wallColorHex, wallColorNa
 import { describeColor } from '@/lib/colors'
 import { supportsRoofShade } from '@/lib/roofShade'
 import ColorPicker from '@/components/ColorPicker'
-import ProductChooser from '@/components/ProductChooser'
 import { BuildingIssues, BuildingPicker, ClimateSection, WallGlazingPicker } from '@/components/BuildingControls'
 import { BUILDING_ROOFS, isClosedBuilding } from '@/lib/buildings'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
@@ -321,8 +320,10 @@ export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneCha
 }
 
 export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, sheet, onSheetChange, onAdvisor, energyCost, onEnergy }: Props) {
-  const { tenant } = useTenant()
+  const { tenant, product } = useTenant()
   const { limits } = tenant
+  // A carport külön termék (saját kalkulátor ugyanezen a motoron): nincs típusválasztó, és a pergola-komfort opciók sem jelennek meg.
+  const carport = product === 'carport'
   const panelRef = useRef<HTMLElement>(null)
   const mobileOpen = sheet !== 'peek'
   const sheetGesture = useSheetGesture(panelRef, sheet, onSheetChange)
@@ -383,10 +384,11 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           <div className="step-heading"><span>0{stepIndex + 1} · {STEPS[stepIndex].short}</span><h2>{step === 'size' ? buildingName : stepLabel(step)}</h2></div>
 
           {step === 'size' && <>
-            <ProductChooser />
-            {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
-            <SectionTitle title="Mit építesz?" hint="Nyitott pergola, zárt üvegezett veranda, egész éves télikert vagy fix tetős carport. A választás átállítja a tetőt és az oldalakat, utána minden módosítható." />
-            <BuildingPicker config={config} prices={prices} onChange={onChange} />
+            {!carport && <>
+              {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
+              <SectionTitle title="Mit építesz?" hint="Nyitott pergola, zárt üvegezett veranda vagy egész éves télikert. A választás átállítja a tetőt és az oldalakat, utána minden módosítható." />
+              <BuildingPicker config={config} prices={prices} onChange={onChange} />
+            </>}
             <SectionTitle title="Kiinduló csomagok" hint={config.building ? `A kiválasztott típushoz (${config.building === 'conservatory' ? 'télikert' : config.building === 'carport' ? 'carport' : 'veranda'}) illő kiinduló terv. Utána minden szabadon módosítható.` : 'Egy koppintással indulhatsz, utána minden szabadon módosítható.'} />
             <div className="preset-list">{(tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')).length ? tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')) : tenant.presets).map((preset) => <button type="button" key={preset.id} className={appliedPreset === preset.id ? 'applied' : undefined} onClick={() => { onPreset(presetConfig(tenant, preset.config)); setAppliedPreset(preset.id); window.setTimeout(() => setAppliedPreset((current) => (current === preset.id ? null : current)), 1400) }}><strong>{preset.name}</strong><span>{preset.description}</span>{appliedPreset === preset.id ? <Check size={15} /> : <ArrowRight size={15} />}</button>)}</div>
             <p className="split-note">A méreteket, a tetőt, az oldalakat és a színt a következő lépésekben állítod be; a bútor és a környezet a 3D feletti <strong>Nézet</strong> gombnál van.</p>
@@ -417,7 +419,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <div className="color-tabs" role="tablist" aria-label="Színek">
               <button type="button" role="tab" aria-selected={colorTab === 'pergola'} className={colorTab === 'pergola' ? 'active' : ''} onClick={() => setColorTab('pergola')}>
                 <span className="color-tab-swatch" style={{ background: frameHex }} aria-hidden="true" />
-                <span><strong>Pergola</strong><small>{frameName}</small></span>
+                <span><strong>{carport ? 'Carport' : 'Pergola'}</strong><small>{frameName}</small></span>
               </button>
               <button type="button" role="tab" aria-selected={colorTab === 'house'} className={colorTab === 'house' ? 'active' : ''} onClick={() => setColorTab('house')}>
                 <span className="color-tab-swatch" style={finishPreview(scene.wallFinish, wallColorHex(scene.wallFinish, scene.wallColor))} aria-hidden="true" />
@@ -459,6 +461,15 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               <ClimateSection config={config} prices={prices} onChange={onChange} scene={scene} onSceneChange={onSceneChange} />
               <BuildingIssues config={config} />
             </>}
+            {carport && <>
+              {/* Carportnál csak az ide illő extrák: világítás és napelemes tető. */}
+              <SectionTitle title="Világítás és energia" hint="Minden opció azonnal megjelenik a modellen és a tételes árban." />
+              <div className="extra-grid">
+                {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett világítás a beállóban" icon={LampCeiling} price={`${formatHuf(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ledRgb: undefined })} />}
+                <SolarToggle config={config} prices={prices} onChange={onChange} />
+              </div>
+            </>}
+            {!carport && <>
             <SectionTitle title="Világítás és hangulat" hint="Minden opció azonnal megjelenik a modellen és a tételes árban." />
             <div className="extra-grid">
               {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett, beépített világítás" icon={LampCeiling} price={`${formatHuf(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ...(led ? {} : { ledRgb: undefined }) })} />}
@@ -475,7 +486,8 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               <SmartHomeOption config={config} prices={prices} onChange={onChange} />
               <SolarToggle config={config} prices={prices} onChange={onChange} />
             </div>
-            {onEnergy && <button type="button" className="energy-trigger" onClick={onEnergy}><Gauge size={16} /><span><strong>{energyCost ? `Üzemeltetés ≈ ${formatHuf(energyCost)} / év` : 'Üzemeltetési költség'}</strong><small>{energyCost ? 'Áramköltség a valós lakossági tarifával · részletek' : 'Nincs áramfogyasztó a tervben'}</small></span><ChevronRight size={15} /></button>}
+            </>}
+            {onEnergy &&<button type="button" className="energy-trigger" onClick={onEnergy}><Gauge size={16} /><span><strong>{energyCost ? `Üzemeltetés ≈ ${formatHuf(energyCost)} / év` : 'Üzemeltetési költség'}</strong><small>{energyCost ? 'Áramköltség a valós lakossági tarifával · részletek' : 'Nincs áramfogyasztó a tervben'}</small></span><ChevronRight size={15} /></button>}
           </>}
 
           {step === 'summary' && summary}

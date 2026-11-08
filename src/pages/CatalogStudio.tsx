@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Box, Check, ChevronRight, Download, Eye, EyeOff, Info, Link2, Maximize2, Moon, MoveUpRight, Ruler, Scan, Settings2, Sun, Undo2, Redo2, RotateCcw, UserRound, View, X } from 'lucide-react'
+import { Box, Check, ChevronRight, Download, Eye, EyeOff, Info, Link2, Maximize2, Moon, MoveUpRight, Ruler, Scan, Settings2, Sun, Trees, Undo2, Redo2, RotateCcw, UserRound, View, X } from 'lucide-react'
 import { Link } from 'react-router'
 import CatalogControls, { type CatalogStep } from '@/components/CatalogControls'
-import ProductChooser from '@/components/ProductChooser'
+import { ProductSwitch } from '@/components/ProductChooser'
 import CatalogPricePanel from '@/components/CatalogPricePanel'
 import CatalogScene, { type CatalogSceneSettings, type CatalogView } from '@/components/CatalogScene'
 import LeadForm from '@/components/LeadForm'
@@ -25,7 +25,7 @@ export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
   const { tenant, homeHref } = useTenant()
   const [config, setConfig] = useState<OutdoorConfig>(() => loadOutdoorConfig(family))
   const [prices, setPrices] = useState(loadOutdoorPrices)
-  const [scene, setScene] = useState<CatalogSceneSettings>({ night: false, gateOpen: false, showPerson: false, dimensions: true })
+  const [scene, setScene] = useState<CatalogSceneSettings>({ night: false, gateOpen: false, showPerson: false, dimensions: true, environment: true })
   const [view, setView] = useState<CatalogView>('perspective')
   const [step, setStep] = useState<CatalogStep>('size')
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -86,16 +86,16 @@ export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
   </div>
 
   return <div className="app-shell catalog-studio">
-    <header className="app-header"><Brand compact /><div className="project-identity"><span>{tenant.brand.name.toUpperCase()} · 3D KONFIGURÁTOR</span><strong>{meta.title}</strong></div><div className="header-actions"><div className="history-actions"><button type="button" aria-label="Visszavonás" onClick={undo} disabled={!history.current.past.length}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" onClick={redo} disabled={!history.current.future.length}><Redo2 size={17} /></button></div><button type="button" className="header-text-button" onClick={() => setPriceOpen(true)}><Info size={16} /><span>Árazás</span></button><button type="button" className="header-text-button" onClick={reset}><RotateCcw size={16} /><span>Alaphelyzet</span></button></div></header>
+    <header className="app-header"><Brand compact /><div className="project-identity"><span>{tenant.brand.name.toUpperCase()} · 3D KONFIGURÁTOR</span><ProductSwitch /></div><div className="header-actions"><div className="history-actions"><button type="button" aria-label="Visszavonás" onClick={undo} disabled={!history.current.past.length}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" onClick={redo} disabled={!history.current.future.length}><Redo2 size={17} /></button></div><button type="button" className="header-text-button" onClick={() => setPriceOpen(true)}><Info size={16} /><span>Árazás</span></button><button type="button" className="header-text-button" onClick={reset}><RotateCcw size={16} /><span>Alaphelyzet</span></button></div></header>
     <main className="studio-shell">
       <section className="viewer-panel" aria-label={`${meta.title} 3D előnézet`}><CatalogScene config={config} scene={scene} view={view} />
         <div className="viewer-heading"><span>{meta.series} / VALÓS IDEJŰ MODELL</span><h1>{meta.title} <i>/</i> {roof ? config.width * (family === 'carport' ? config.bays : 1) : config.length}<small> m</small></h1><p>{meta.description}</p></div>
         <div className="viewer-live"><i />PARAMÉTERES 3D</div>
-        <div className="weather-toolbar"><button type="button" className={scene.night ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, night: !current.night }))}>{scene.night ? <Sun size={17} /> : <Moon size={17} />}<span>{scene.night ? 'Nappal' : 'Éjszaka'}</span></button>{!roof && config.gateType !== 'none' && <button type="button" className={scene.gateOpen ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, gateOpen: !current.gateOpen }))}>{scene.gateOpen ? <EyeOff size={17} /> : <Eye size={17} />}<span>{scene.gateOpen ? 'Csukás' : 'Nyitás'}</span></button>}<button type="button" className={scene.showPerson ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, showPerson: !current.showPerson }))}><UserRound size={17} /><span>Méretarány</span></button><button type="button" className={scene.dimensions ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, dimensions: !current.dimensions }))}><Ruler size={17} /><span>Méret</span></button></div>
+        <div className="weather-toolbar"><button type="button" className={scene.night ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, night: !current.night }))}>{scene.night ? <Sun size={17} /> : <Moon size={17} />}<span>{scene.night ? 'Nappal' : 'Éjszaka'}</span></button>{!roof && config.gateType !== 'none' && <button type="button" className={scene.gateOpen ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, gateOpen: !current.gateOpen }))}>{scene.gateOpen ? <EyeOff size={17} /> : <Eye size={17} />}<span>{scene.gateOpen ? 'Csukás' : 'Nyitás'}</span></button>}<button type="button" className={scene.environment ? 'selected' : ''} aria-pressed={scene.environment} title="A ház és a környezet be- és kikapcsolása" onClick={() => setScene((current) => ({ ...current, environment: !current.environment }))}><Trees size={17} /><span>Környezet</span></button><button type="button" className={scene.showPerson ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, showPerson: !current.showPerson }))}><UserRound size={17} /><span>Méretarány</span></button><button type="button" className={scene.dimensions ? 'selected' : ''} onClick={() => setScene((current) => ({ ...current, dimensions: !current.dimensions }))}><Ruler size={17} /><span>Méret</span></button></div>
         <div className="camera-toolbar" aria-label="Kamera nézetek">{views.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} onClick={() => setView(id)}><Icon size={16} /><span>{label}</span></button>)}</div>
         <div className="viewer-footer"><span>1 egység = 1 méter</span><span>{roof ? `${price.area.toFixed(1)} m²` : `${config.length} fm`}</span></div>
       </section>
-      <CatalogControls config={config} step={step} price={price} summary={summary} chooser={<ProductChooser />} mobileOpen={mobileOpen} onMobileToggle={() => setMobileOpen(!mobileOpen)} onStep={setStep} onChange={update} />
+      <CatalogControls config={config} step={step} price={price} summary={summary} mobileOpen={mobileOpen} onMobileToggle={() => setMobileOpen(!mobileOpen)} onStep={setStep} onChange={update} />
       <CatalogPricePanel config={config} price={price} exporting={exporting} delta={delta} onEditPrices={() => setPriceOpen(true)} onExport={exportPdf} onShare={share} />
     </main>
     <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong>{formatHuf(price.totalGross)}</strong></div><button type="button" onClick={() => { setStep(step === 'summary' ? 'size' : 'summary'); setMobileOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>

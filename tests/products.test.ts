@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PRODUCT, INTEREST_EVENTS, interestEvent, productBySlug, productInfo, productPath, PRODUCTS, tenantProducts } from '../src/products'
+import { productDefaultConfig } from '../src/lib/config'
+import { DEFAULT_PRODUCT, HUB_SLUG, hubPath, INTEREST_EVENTS, interestEvent, productBySlug, productInfo, productPath, PRODUCTS, tenantProducts } from '../src/products'
 import { TRACK_EVENTS } from '../server/analytics'
 import { fenceEngine, getEngine, pergolaEngine } from '../src/products/engines'
 import { calculateOutdoorPrice, decodeOutdoorHash, OUTDOOR_DEFAULTS, OUTDOOR_PRICE_DEFAULTS } from '../src/products/outdoor'
@@ -17,6 +18,18 @@ describe('termékcsaládok', () => {
     expect(productBySlug('KERITES')?.id).toBe('fence')
     expect(productBySlug('nincs-ilyen')).toBeUndefined()
     expect(productBySlug(undefined)).toBeUndefined()
+  })
+
+  it('termékválasztó oldal: saját szelet, amely egyik családé sem; útvonal módonként', () => {
+    expect(PRODUCTS.some((product) => product.slug === HUB_SLUG)).toBe(false)
+    expect(hubPath('demo', 'demo')).toBe('/konfigurator/termekek')
+    expect(hubPath('standalone', 'acme')).toBe('/k/acme/termekek')
+    expect(hubPath('embed', 'acme')).toBe('/embed/acme/termekek')
+  })
+
+  it('külön kalkulátorok: a carport alapterve carport, a pergoláé a gyártó alapkonfigurációja', () => {
+    expect(productDefaultConfig(demoTenant, 'carport').building).toBe('carport')
+    expect(productDefaultConfig(demoTenant, 'pergola')).toBe(demoTenant.defaultConfig)
   })
 
   it('útvonalak: a pergola a rövid címen marad, a többi család a szelet alatt, módonként', () => {

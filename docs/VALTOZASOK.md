@@ -1,5 +1,15 @@
 # Változások
 
+## 3.94 – Különálló kalkulátorok termékenként; új kerítés- és autómodell
+
+- **Szétválasztott termékek:** a kalkulátorokon belül nincs többé „Mit tervezel?” lista — minden család saját, különálló tervező. A termékválasztó külön oldalra került (`/konfigurator/termekek`, `/k/<gyártó>/termekek`, `/embed/<gyártó>/termekek`), a kalkulátor fejlécében egy „<termék> · Másik termék” link vezet oda (csak ha a gyártó egynél több családot kínál).
+- **Teraszfedés kalkulátor:** a „Mit építesz?” csak pergola / veranda / télikert; a carport innen kikerült.
+- **Carport kalkulátor** (ugyanazon a motoron): nincs típusválasztó és tanácsadó, csak a carport-csomagok; az Extrák lépésben csak LED és napelem (fűtés, hangrendszer, ventilátor, árnyékoló, szenzor, okosotthon nincs); a Szín fül „Carport”. Az „Új terv” és az „Alaphelyzet” a carport alaptervére áll vissza (eddig a pergoláéra ugrott). Termékenként külön piszkozat a böngészőben — a carport nem írja felül a teraszfedést (a pergola kulcsa változatlan).
+- **Kerítés 3D újraépítve** (`src/components/catalog/FenceModel.tsx`): oszlop legfeljebb 2 m-enként (80 × 80 fedlappal, alapozott talppal vagy talplemezzel), beton lábazati szegély, profilos lamellák U-sínben fedő- és záróprofillal; függőleges léc tartósínen, átlós léc kerethez vágva, klasszikus rúd lándzsahegyekkel, kovácsolt betét íves rúdtetővel és gyűrűkkel, tömör betét. Kapu: 120 × 120 kapuoszlopok, keretes szárny azonos betéttel; tolókapu sínnel és görgőkkel a bal szakasz mögé futva, úszókapu farokrésszel, alsó C-profillal és görgős kocsikkal; kétszárnyú nyílókapu zsanérokkal és ejtőreteszel; motor betonalapon, fogasléc, fotocellák, villogó; kiskapu kilinccsel és zárral, együtt nyílik a kapuval; kaputelefon a kiskapu oszlopán; LED az oszlopfejeken. WPC-nél fa betét fém vázban. Minden ismétlődő elem példányosított.
+- **„Környezet” kapcsoló** a kerítés 3D-ben: kikapcsolva csak a kerítés látszik a terepen; bekapcsolva ház, bokrok és fa a telken.
+- **Új autómodell** a carport alá (`src/components/models/Car.tsx`): oldalsziluettből kihúzott, lekerekített vállú karosszéria kerékjárati ívekkel, ék alakú övvonal, üvegezett utastér tetőpanellel és oszlopokkal, ajtóvonalak és kilincsek, tükrök, könnyűfém felni küllőkkel és féktárcsával, LED fényszóró, teljes szélességű hátsó lámpasor, rendszámok. Ezüst és mélykék fényezés.
+- Tesztek: termékválasztó útvonala (a szelet egyik családé sem), carport-alapterv.
+
 ## 3.93 – Kerítés és kapu: a második termékcsalád, saját lineáris motoron
 
 - **Élő család:** `/konfigurator/kerites` (és `/k/<gyártó>/kerites`, `/embed/<gyártó>/kerites`) a kerítés–kapu konfigurátort nyitja a gyártó héja alatt: saját 3D (kerítésszakaszok, oszlopok, nyíló-/toló-/úszókapu, kiskapu, kaputelefon, éjszaka, kapunyitás), négy lépés (méret, kivitel, extrák, kérés), tételes irányár, PDF, megosztó link. A korábbi, útvonal nélkül maradt katalógus-stúdió (`CatalogStudio`) éledt újra: a termékcsalád-váltó legördülő és a „Katalógus” link helyett a gyártó neve, a „Mit tervezel?” választó és a tenant kezdőlap-linkje.

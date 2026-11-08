@@ -1,19 +1,21 @@
 import LamelixLogo from '@/components/LamelixLogo'
 import { Component, Suspense, createContext, memo, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { Environment, Html, Line, OrbitControls, RoundedBox, useGLTF, useProgress, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import type { OutdoorConfig } from '@/types/catalog'
 import { outdoorColor } from '@/lib/catalog'
+import FenceModel, { type FenceMaterials } from '@/components/catalog/FenceModel'
+import { fenceSystemLength } from '@/components/catalog/fenceLayout'
 
 export type CatalogView = 'perspective' | 'front' | 'top' | 'detail'
-export interface CatalogSceneSettings { night: boolean; gateOpen: boolean; showPerson: boolean; dimensions: boolean }
+/** environment: a ház és a növényzet a háttérben (kikapcsolva csak a kerítés látszik a terepen). */
+export interface CatalogSceneSettings { night: boolean; gateOpen: boolean; showPerson: boolean; dimensions: boolean; environment: boolean }
 type Vec3 = [number, number, number]
 type TextureMaps = { diff: THREE.Texture; normal: THREE.Texture; rough: THREE.Texture }
 type MaterialContextValue = { config: OutdoorConfig | null; wood: TextureMaps | null }
 
-const REDUCED = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const MaterialContext = createContext<MaterialContextValue>({ config: null, wood: null })
 
 function clonedTexture(source: THREE.Texture, repeat: [number, number], srgb = false) {
@@ -108,24 +110,6 @@ function RepeatedBoxes({ args, transforms, color }: { args: Vec3; transforms: In
   useInstances(ref, transforms)
   return <instancedMesh ref={ref} args={[undefined, undefined, transforms.length]} castShadow receiveShadow>
     <boxGeometry args={args} />
-    <StructureMaterial color={color} />
-  </instancedMesh>
-}
-
-function RepeatedCones({ transforms, color }: { transforms: InstanceTransform[]; color: string }) {
-  const ref = useRef<THREE.InstancedMesh>(null)
-  useInstances(ref, transforms)
-  return <instancedMesh ref={ref} args={[undefined, undefined, transforms.length]} castShadow>
-    <coneGeometry args={[0.065, 0.14, 4]} />
-    <StructureMaterial color={color} />
-  </instancedMesh>
-}
-
-function RepeatedOrnaments({ transforms, color }: { transforms: InstanceTransform[]; color: string }) {
-  const ref = useRef<THREE.InstancedMesh>(null)
-  useInstances(ref, transforms)
-  return <instancedMesh ref={ref} args={[undefined, undefined, transforms.length]} castShadow>
-    <torusGeometry args={[0.19, 0.018, 8, 24]} />
     <StructureMaterial color={color} />
   </instancedMesh>
 }
@@ -307,114 +291,6 @@ function DriveModel({ config, color, night }: { config: OutdoorConfig; color: st
   </group>
 }
 
-function Infill({ length, height, style, color }: { length: number; height: number; style: OutdoorConfig['style']; color: string }) {
-  if (style === 'privacy') return <Beam args={[length, height - 0.15, 0.055]} position={[0, height / 2, 0]} color={color} />
-  if (style === 'horizontal') {
-    const count = Math.max(3, Math.floor(height / 0.17))
-    const transforms = Array.from({ length: count }, (_, index) => ({ position: [0, 0.16 + index * (height - 0.24) / Math.max(2, count - 1), 0] as Vec3 }))
-    return <RepeatedBoxes args={[length - 0.08, 0.105, 0.045]} transforms={transforms} color={color} />
-  }
-  if (style === 'diagonal') {
-    const count = Math.ceil(length / 0.18)
-    const transforms = Array.from({ length: count }, (_, index) => ({
-      position: [-length / 2 + 0.1 + index * 0.18, height / 2, 0] as Vec3,
-      rotation: [0, 0, -0.36] as Vec3,
-    }))
-    return <RepeatedBoxes args={[0.07, height * 1.14, 0.045]} transforms={transforms} color={color} />
-  }
-  const count = Math.max(2, Math.ceil(length / (style === 'ornamental' ? 0.19 : 0.14)))
-  const transforms = Array.from({ length: count }, (_, index) => ({ position: [-length / 2 + (index + 0.5) * length / count, height / 2, 0] as Vec3 }))
-  return <>
-    <RepeatedBoxes args={[style === 'ornamental' ? 0.035 : 0.045, height - 0.12, 0.035]} transforms={transforms} color={color} />
-    {(style === 'picket' || style === 'ornamental') && <RepeatedCones transforms={transforms.map(({ position }) => ({ position: [position[0], height - 0.035, position[2]] as Vec3 }))} color={color} />}
-    {style === 'ornamental' && <RepeatedOrnaments
-      color={color}
-      transforms={[-0.25, 0.25].flatMap((y) => Array.from({ length: Math.max(1, Math.floor(length / 0.7)) }, (_, index) => ({
-        position: [-length / 2 + 0.4 + index * 0.7, height / 2 + y * height, 0] as Vec3,
-      })))}
-    />}
-  </>
-}
-
-function FenceSegment({ length, height, style, color, position = [0, 0, 0] }: { length: number; height: number; style: OutdoorConfig['style']; color: string; position?: Vec3 }) {
-  if (length <= 0.05) return null
-  return <group position={position}>
-    <Infill length={length} height={height} style={style} color={color} />
-    <Beam args={[length + 0.08, 0.065, 0.075]} position={[0, 0.09, 0]} color={color} />
-    <Beam args={[length + 0.08, 0.065, 0.075]} position={[0, height - 0.08, 0]} color={color} />
-    {[-length / 2, length / 2].map((x) => <Post key={x} x={x} z={0} height={height + 0.12} color={color} />)}
-  </group>
-}
-
-function DriveGate({ config, color, open }: { config: OutdoorConfig; color: string; open: boolean }) {
-  const sliding = useRef<THREE.Group>(null)
-  const left = useRef<THREE.Group>(null)
-  const right = useRef<THREE.Group>(null)
-  const lastShadow = useRef(0)
-  const invalidate = useThree((state) => state.invalidate)
-  const gl = useThree((state) => state.gl)
-  useFrame(({ clock }, delta) => {
-    let moving = false
-    if (sliding.current) {
-      const target = open ? config.gateWidth * 0.9 : 0
-      const next = REDUCED ? target : THREE.MathUtils.damp(sliding.current.position.x, target, 6, delta)
-      if (Math.abs(next - sliding.current.position.x) > 0.0005) moving = true
-      sliding.current.position.x = next
-    }
-    if (left.current && right.current) {
-      const target = open ? 1.25 : 0
-      const next = REDUCED ? target : THREE.MathUtils.damp(left.current.rotation.y, target, 6, delta)
-      if (Math.abs(next - left.current.rotation.y) > 0.0005) moving = true
-      left.current.rotation.y = next
-      right.current.rotation.y = -next
-    }
-    if (moving) {
-      if (clock.elapsedTime - lastShadow.current > 0.12) { refreshShadow(gl); lastShadow.current = clock.elapsedTime }
-      invalidate()
-    }
-  })
-  const leaf = (width: number) => <group>
-    <Infill length={width} height={config.height} style={config.style} color={color} />
-    <Beam args={[width + 0.05, 0.07, 0.08]} position={[0, 0.08, 0]} color={color} />
-    <Beam args={[width + 0.05, 0.07, 0.08]} position={[0, config.height - 0.06, 0]} color={color} />
-  </group>
-  if (config.gateType === 'swing') return <group>
-    <group ref={left} position={[-config.gateWidth / 2, 0, 0]}><group position={[config.gateWidth / 4, 0, 0]}>{leaf(config.gateWidth / 2)}</group></group>
-    <group ref={right} position={[config.gateWidth / 2, 0, 0]}><group position={[-config.gateWidth / 4, 0, 0]}>{leaf(config.gateWidth / 2)}</group></group>
-  </group>
-  return <group ref={sliding}>
-    {leaf(config.gateWidth)}
-    {config.gateType === 'cantilever' && <Beam args={[config.gateWidth * 0.35, 0.12, 0.12]} position={[-config.gateWidth * 0.64, 0.16, 0]} color={color} />}
-  </group>
-}
-
-function FenceModel({ config, color, open }: { config: OutdoorConfig; color: string; open: boolean }) {
-  const gateWidth = config.gateType === 'none' ? 0 : config.gateWidth
-  const each = Math.max(0.6, (config.length - (config.pedestrianGate ? 1 : 0)) / 2)
-  const leftCenter = -gateWidth / 2 - each / 2
-  const rightCenter = gateWidth / 2 + each / 2 + (config.pedestrianGate ? 1 : 0)
-  return <group>
-    <FenceSegment length={each} height={config.height} style={config.style} color={color} position={[leftCenter, 0, 0]} />
-    <FenceSegment length={each} height={config.height} style={config.style} color={color} position={[rightCenter, 0, 0]} />
-    {config.gateType !== 'none' && <>
-      <DriveGate config={config} color={color} open={open} />
-      {[-gateWidth / 2, gateWidth / 2].map((x) => <Post key={x} x={x} z={0} height={config.height + 0.2} color={color} />)}
-      {config.gateAutomation && <group position={[gateWidth / 2 + 0.35, 0, -0.35]}>
-        <Beam args={[0.32, 0.48, 0.55]} position={[0, 0.25, 0]} color="#343c3d" />
-        {config.safetyKit && <mesh position={[-0.1, Math.min(0.9, config.height * 0.65), 0.2]}><boxGeometry args={[0.06, 0.12, 0.06]} /><meshStandardMaterial color="#26302f" emissive="#5fc99b" emissiveIntensity={0.7} /></mesh>}
-      </group>}
-    </>}
-    {config.pedestrianGate && <group position={[gateWidth / 2 + 0.5, 0, 0]}>
-      <Infill length={0.95} height={config.height} style={config.style} color={color} />
-      <Beam args={[0.04, 0.25, 0.07]} position={[0.34, Math.min(1.02, config.height * 0.62), 0.06]} color="#a3a8a5" />
-    </group>}
-    {config.intercom && <group position={[gateWidth / 2 + 0.18, 0, 0.55]}>
-      <Beam args={[0.1, 1.25, 0.1]} position={[0, 0.625, 0]} color={color} />
-      <mesh position={[0, 1.25, 0.03]}><boxGeometry args={[0.18, 0.27, 0.08]} /><meshStandardMaterial color="#242c2d" metalness={0.4} /></mesh>
-    </group>}
-  </group>
-}
-
 function ScalePerson({ show, config }: { show: boolean; config: OutdoorConfig }) {
   const { scene } = useGLTF('/assets/models/scale_person/person.glb')
   const invalidate = useThree((state) => state.invalidate)
@@ -454,7 +330,10 @@ function ScalePerson({ show, config }: { show: boolean; config: OutdoorConfig })
   } else if (config.family === 'carport') {
     position = [-config.width * config.bays / 2 + 0.55, 0.02, config.depth / 2 + 0.55]
   } else {
-    position = [Math.min(config.length / 2, config.gateWidth / 2 + 1.1), 0.02, 1.1]
+    // Az utcai oldalon, a kiskapu (vagy a kapu) mellett.
+    const total = fenceSystemLength(config)
+    const split = config.gateType !== 'none' || config.pedestrianGate
+    position = [split ? total / 2 - config.length / 2 + 0.7 : 0.6, 0.02, 1.0]
   }
   return <group position={position}>
     <primitive object={object} />
@@ -462,10 +341,85 @@ function ScalePerson({ show, config }: { show: boolean; config: OutdoorConfig })
   </group>
 }
 
+/** Kerítés anyagai: a betét a WPC-nél fa, a vázszín porfestett fém; a vasalat horganyzott acél. */
+function useFenceMaterials(config: OutdoorConfig, color: string, night: boolean): FenceMaterials {
+  const { wood } = useContext(MaterialContext)
+  const materials = useMemo<FenceMaterials>(() => {
+    const woodAll = config.frameMaterial === 'wood' || config.finish === 'woodlook' || config.finish === 'lazur' || config.color === 'wood'
+    const woodInfill = woodAll || config.frameMaterial === 'wpc'
+    const steel = config.frameMaterial === 'steel' || config.frameMaterial === 'wrought'
+    const metal = (hex: string) => new THREE.MeshPhysicalMaterial({
+      color: hex,
+      metalness: steel ? 0.45 : 0.25,
+      roughness: config.finish === 'galvanizedPowder' ? 0.5 : 0.42,
+      clearcoat: 0.25,
+      clearcoatRoughness: 0.45,
+      envMapIntensity: 0.9,
+    })
+    const woodMaterial = () => new THREE.MeshStandardMaterial({
+      map: wood?.diff ?? null,
+      normalMap: wood?.normal ?? null,
+      normalScale: new THREE.Vector2(0.35, 0.35),
+      roughnessMap: wood?.rough ?? null,
+      color: config.color === 'wood' || config.frameMaterial === 'wpc' ? '#c9a888' : color,
+      roughness: config.finish === 'lazur' ? 0.6 : 0.78,
+      metalness: 0,
+      envMapIntensity: 0.55,
+    })
+    // WPC-nél a váz antracit fém, ha a választott szín fahatású; különben a választott szín.
+    const frameHex = woodAll && config.frameMaterial !== 'wood' ? '#3a3f42' : color
+    return {
+      frame: config.frameMaterial === 'wood' ? woodMaterial() : metal(frameHex),
+      infill: woodInfill ? woodMaterial() : metal(color),
+      hardware: new THREE.MeshStandardMaterial({ color: '#8b9194', metalness: 0.85, roughness: 0.32 }),
+      dark: new THREE.MeshStandardMaterial({ color: '#202628', metalness: 0.3, roughness: 0.55 }),
+      concrete: new THREE.MeshStandardMaterial({ color: '#a9a9a1', roughness: 0.94 }),
+      glow: new THREE.MeshStandardMaterial({ color: '#fff3d6', emissive: '#ffd9a0', emissiveIntensity: night ? 3.2 : 0.5, toneMapped: false }),
+      amber: new THREE.MeshStandardMaterial({ color: '#e08a1e', emissive: '#e07a10', emissiveIntensity: night ? 1.6 : 0.35, transparent: true, opacity: 0.92 }),
+      screen: new THREE.MeshStandardMaterial({ color: '#28414f', emissive: '#4f86a6', emissiveIntensity: night ? 1.4 : 0.4, roughness: 0.2 }),
+    }
+  }, [config.frameMaterial, config.finish, config.color, color, night, wood])
+  useEffect(() => () => Object.values(materials).forEach((material) => material.dispose()), [materials])
+  return materials
+}
+
+function Fence({ config, color, scene }: { config: OutdoorConfig; color: string; scene: CatalogSceneSettings }) {
+  const materials = useFenceMaterials(config, color, scene.night)
+  return <FenceModel config={config} materials={materials} open={scene.gateOpen} />
+}
+
+/** Növényzet a telken belül, a kerítés mögött (csak bekapcsolt környezettel). */
+function Greenery({ config }: { config: OutdoorConfig }) {
+  const shrub = useGLTF('/assets/models/shrub_04/model.gltf').scene
+  const tree = useGLTF('/assets/models/tree_small_02/optimized-512.gltf').scene
+  const invalidate = useThree((state) => state.invalidate)
+  const items = useMemo(() => {
+    const total = fenceSystemLength(config)
+    const fit = (source: THREE.Object3D, height: number) => {
+      const clone = source.clone(true)
+      const box = new THREE.Box3().setFromObject(clone)
+      const scale = height / Math.max(0.01, box.getSize(new THREE.Vector3()).y)
+      clone.scale.setScalar(scale)
+      clone.position.y = -box.min.y * scale
+      clone.traverse((child) => { if (child instanceof THREE.Mesh) { child.castShadow = true; child.receiveShadow = true } })
+      return clone
+    }
+    const left = -total / 2
+    return [
+      { object: fit(shrub, 1.1), position: [left + 1.2, 0, -1.3] as Vec3, rotation: 0.4 },
+      { object: fit(shrub, 0.9), position: [left + 2.6, 0, -1.6] as Vec3, rotation: 1.9 },
+      { object: fit(shrub, 1.2), position: [total / 2 - 1.4, 0, -1.4] as Vec3, rotation: 2.6 },
+      { object: fit(tree, 4.2), position: [total / 2 - 3.2, 0, -3.4] as Vec3, rotation: 0.8 },
+    ]
+  }, [shrub, tree, config])
+  useEffect(() => { invalidate() }, [items, invalidate])
+  return <>{items.map((item, index) => <primitive key={index} object={item.object} position={item.position} rotation={[0, item.rotation, 0]} />)}</>
+}
+
 function systemLength(config: OutdoorConfig) {
   if (config.family === 'canopy') return config.width
   if (config.family === 'carport') return config.width * config.bays
-  return config.length + (config.gateType === 'none' ? 0 : config.gateWidth) + (config.pedestrianGate ? 1 : 0)
+  return fenceSystemLength(config)
 }
 
 function Dimensions({ config }: { config: OutdoorConfig }) {
@@ -540,8 +494,11 @@ function SceneContent({ config, scene, view, onReady }: { config: OutdoorConfig;
       {config.family === 'canopy' && <CoverModel config={config} color={color} night={scene.night} />}
       {config.family === 'carport' && <DriveModel config={config} color={color} night={scene.night} />}
       {(config.family === 'fence' || config.family === 'gate') && <>
-        <ModernHouse position={[0, 0, -8]} width={12} night={scene.night} />
-        <FenceModel config={config} color={color} open={scene.gateOpen} />
+        {scene.environment && <>
+          <ModernHouse position={[0, 0, -9]} width={12} night={scene.night} />
+          <Suspense fallback={null}><Greenery config={config} /></Suspense>
+        </>}
+        <Fence config={config} color={color} scene={scene} />
       </>}
     </MaterialProvider>
     <Suspense fallback={null}><ScalePerson key={scene.showPerson ? 'person-on' : 'person-off'} show={scene.showPerson} config={config} /></Suspense>
