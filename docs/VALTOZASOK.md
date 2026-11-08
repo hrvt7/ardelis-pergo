@@ -1,5 +1,14 @@
 # Változások
 
+## 3.81 – Eső: filmszerű zárás, látható eső, borult fény
+
+- **Esőbemutató:** ha a vevő nyitott forgólamellás tetőnél (esőérzékelővel) bekapcsolja az esőt, a lamellák nem kapcsolnak át egy pillanat alatt. A kamera a hajtásoldalra közelít, a hajtás burkolata felemelkedik és a motor–hajtórúd kiemelést kap (mint a Működés-bemutatóban), a lamellák egy valós hajtás tempójában (max. 30°/s, a végén lassulva) zárnak, majd a kamera visszatér a nézetbe és a burkolat visszaereszkedik. Kb. 7 másodperc; a zárás csak a kamera megérkezése után indul. Eső után a lamellák ugyanilyen lassan nyílnak vissza.
+- **Nem fut a bemutató**, ha a lamellák már (majdnem) zárva vannak, kanapé-, fotó-, árnyékelemző- vagy Működés-módban, tolótetőnél, vagy ha a rendszer csökkentett mozgást kér; ilyenkor a tető a régi módon zár.
+- **Eső rendereléshiba javítva:** az eső akadozott, mert a 30 fps-es szűrő a kihagyott képkockákon nem kért újrarajzolást (igény szerinti renderelésnél megállt). Most minden képkockán a valós eltelt időből lép.
+- **Látható eső:** a cseppek pontok helyett rövid, enyhén szélsodorta csíkok, kétszeres darabszámmal, világos aljjal és halványuló tetejével; több és erősebb csobbanás a talajon.
+- **Borult fény:** esőben a nap fénye, az égbolt és az expozíció átúsztatva tompul (nem ugrik), eső után ugyanígy derül vissza.
+- Fájlok: `src/components/PergolaScene.tsx` (Rain, WeatherMood, esőbemutató fázisok), `src/components/LouvreRoof.tsx` (`reveal`, `slow`, `rain` paraméterek).
+
 ## 3.80 – Eszközök panel a jobb szélen, összecsukott árpanelnél is
 
 - **Mi volt a baj:** ha az árpanel össze volt csukva, az Eszközök gomb a jobb szélre ugrott, de a lenyíló panel ott maradt, ahol az árpanel volt, vagyis a képernyő közepén, és kitakarta a 3D modellt.

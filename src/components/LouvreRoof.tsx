@@ -48,13 +48,19 @@ export interface LouvreRoofProps {
   /** melyik oldali gerendán fut a hajtás (+1 jobb, −1 bal) */
   driveSide: 1 | -1
   mechanism: boolean
+  /** a hajtás burkolata felemelkedik és a hajtás kiemelést kap, de a lamellák a konfigurált szögben maradnak (esőbemutató) */
+  reveal?: boolean
+  /** lassú, filmszerű lamellamozgás (esőzárás) a gyors kapcsolás helyett */
+  slow?: boolean
+  /** esik-e: az eső elmúltával a lamellák 3,5 s-ig ugyanilyen lassan nyílnak vissza */
+  rain?: boolean
   roofMaterial: THREE.Material
   frameMaterial: THREE.Material
   segments: number
   showLabels: boolean
 }
 
-export default function LouvreRoof({ width, depth, height, beam, beamHeight, angle, driveSide, mechanism, roofMaterial, frameMaterial, segments, showLabels }: LouvreRoofProps) {
+export default function LouvreRoof({ width, depth, height, beam, beamHeight, angle, driveSide, mechanism, reveal = false, slow = false, rain = false, roofMaterial, frameMaterial, segments, showLabels }: LouvreRoofProps) {
   const gl = useThree((s) => s.gl)
   const invalidate = useThree((s) => s.invalidate)
   const beamTop = height + beamHeight / 2
@@ -96,7 +102,7 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
   const motors = useRef<(THREE.Group | null)[]>([])
   const rods = useRef<(THREE.Mesh | null)[]>([])
   const covers = useRef<(THREE.Group | null)[]>([])
-  const live = useRef({ angle: -1, shown: mechanism ? 1 : 0, wave: 0 })
+  const live = useRef({ angle: -1, shown: mechanism || reveal ? 1 : 0, wave: 0, rain, slowUntil: 0 })
   const tools = useMemo(() => ({ m: new THREE.Matrix4(), part: new THREE.Matrix4(), q: new THREE.Quaternion(), p: new THREE.Vector3(), s: new THREE.Vector3(1, 1, 1), x: new THREE.Vector3(1, 0, 0), target: new THREE.Vector3() }), [])
   const offsets = useMemo(() => ({
     capL: new THREE.Matrix4().makeTranslation(-(modLen / 2 + 0.004), 0, 0),
@@ -149,12 +155,14 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
     const next = nearRef.current ? d < 6.4 : d < 5.6
     if (next !== nearRef.current) { nearRef.current = next; setNear(next) }
   })
-  useFrame((_, delta) => {
+  useFrame(({ clock }, delta) => {
     const l = live.current
+    if (l.rain !== rain) { l.rain = rain; if (!rain) l.slowUntil = clock.elapsedTime + 3.5 }
+    const slowNow = slow || clock.elapsedTime < l.slowUntil
     // burkolat és kiemelés átúsztatása
-    const shownTarget = mechanism ? 1 : 0
+    const shownTarget = mechanism || reveal ? 1 : 0
     if (Math.abs(l.shown - shownTarget) > 0.002) {
-      l.shown = REDUCED ? shownTarget : THREE.MathUtils.damp(l.shown, shownTarget, 4, delta)
+      l.shown = REDUCED ? shownTarget : THREE.MathUtils.damp(l.shown, shownTarget, reveal ? 2.5 : 4, delta)
       if (Math.abs(l.shown - shownTarget) < 0.002) l.shown = shownTarget
       mats.drive.color.copy(STEEL).lerp(ACCENT, l.shown)
       mats.cover.opacity = 1 - l.shown
@@ -163,7 +171,9 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
       invalidate()
     }
     const target = mechanism ? demoAngle(demoSeconds()).angle : THREE.MathUtils.clamp(angle, 0, 90)
-    const next = mechanism || REDUCED || l.angle < 0 ? target : THREE.MathUtils.damp(l.angle, target, 6, delta)
+    // Lassú módban legfeljebb 30°/s, a vége felé csillapodva — egy valós hajtás tempója, nem kapcsolás.
+    const damped = THREE.MathUtils.damp(l.angle, target, slowNow ? 1.6 : 6, delta)
+    const next = mechanism || REDUCED || l.angle < 0 ? target : slowNow ? l.angle + THREE.MathUtils.clamp(damped - l.angle, -30 * delta, 30 * delta) : damped
     if (Math.abs(next - l.angle) > 0.01) {
       l.angle = Math.abs(next - target) < 0.01 ? target : next
       write(l.angle)
