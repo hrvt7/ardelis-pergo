@@ -1,10 +1,12 @@
 // Utófeldolgozás asztali gépen: ambient occlusion (árnyék a sarkokban, a
 // lamellák között, a bútor alatt), bloom (a LED és a fűtés tényleg világít) és
 // színhű (Khronos Neutral) tónusleképezés. Mobilon és fotós előnézetben nem töltődik be.
-import { useEffect, useMemo } from 'react'
-import { Bloom, EffectComposer, HueSaturation, N8AO, ToneMapping, Vignette } from '@react-three/postprocessing'
-import { ShaderPass, ToneMappingMode } from 'postprocessing'
+import { useEffect, useMemo, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { Bloom, DepthOfField, EffectComposer, HueSaturation, N8AO, ToneMapping, Vignette } from '@react-three/postprocessing'
+import { DepthOfFieldEffect, ShaderPass, ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
+import { cameraMotion } from '@/lib/cameraMotion'
 
 
 /**
@@ -36,6 +38,18 @@ function createClampPass() {
 export default function SceneEffects({ ultra, night, vignette, bloomScale }: { ultra: boolean; night: boolean; vignette: boolean; bloomScale: number }) {
   const clampPass = useMemo(() => createClampPass(), [])
   useEffect(() => () => clampPass.dispose(), [clampPass])
+  // Filmszerű vágás: kameraváltás közben a célpont marad éles, a környezet enyhén elmosódik („fókuszálás”); nyugalomban a hatás nulla, nem kerül képre.
+  const dof = useRef<DepthOfFieldEffect>(null)
+  useFrame(() => {
+    const effect = dof.current
+    if (!effect) return
+    const strength = Math.sin(Math.PI * cameraMotion.p)
+    const bokeh = strength * 2.6
+    if (effect.bokehScale === bokeh && bokeh === 0) return
+    effect.bokehScale = bokeh
+    effect.cocMaterial.worldFocusDistance = cameraMotion.focus
+    effect.cocMaterial.worldFocusRange = 1.5 + cameraMotion.focus * 0.25
+  })
   // Natív MSAA a HDR pufferen: éles élek 100%-os Windows-skálázású (dpr 1) képernyőn is; az SMAA önmagában „pixeles” képet adott.
   return (
     <EffectComposer multisampling={ultra ? 4 : 2} enableNormalPass={false}>
@@ -52,6 +66,7 @@ export default function SceneEffects({ ultra, night, vignette, bloomScale }: { u
         halfRes
         depthAwareUpsampling
       />
+      <DepthOfField ref={dof} worldFocusDistance={10} worldFocusRange={4} bokehScale={0} resolutionScale={0.5} />
       <Bloom mipmapBlur luminanceThreshold={night ? 1 : 1.25} luminanceSmoothing={0.2} intensity={(night ? 0.85 : 0.1) * Math.max(bloomScale, 1)} radius={0.7} />
       <ToneMapping mode={ToneMappingMode.NEUTRAL} />
       {/* Finom vignetta és enyhe telítettség a tónusleképezés után: a kép „fotósabb”, a figyelem a pergolára esik. */}

@@ -1,5 +1,12 @@
 # Változások
 
+## 3.84 – Nappal-éjszaka átúsztatás, filmszerű kameravágás
+
+- **Napszakváltás:** a nap ereje, színe és iránya, az égboltfény, a köd, az expozíció már nem ugrik, hanem a célérték felé úszik. Az égbolt-kép (HDR) és a csak be/ki jellegű dolgok (csillagok, éjszakai derítőfények, LED éjszakai fénye, bloom) az 1,5 s-os átmenet közepén váltanak, amikor az égbolt a legtompább, így a csere nem látszik. A napszak-csúszka húzása közben is folyamatos.
+- **LED felkapcsolódás:** amikor beáll az este, a perimeter LED ugyanazzal a villanó-felfutó animációval kapcsol fel, mint utólagos bekapcsoláskor.
+- **Kameravágás:** nézetváltáskor a repülés közepén a látószög 3°-kal szűkül, majd visszaáll („fókuszálás”), és a mélységélesség a célponton marad, a környezet enyhén elmosódik, a végére kitisztul. A mélységélesség csak magas/ultra 3D-minőségnél fut (utófeldolgozás), fél felbontáson; nyugalomban nulla a hatása. Az első berepülésnél nincs.
+- Fájlok: `src/components/PergolaScene.tsx` (`LightingMood` a korábbi `WeatherMood` helyett, `LedRamp`, `CameraController`), `src/components/SceneEffects.tsx` (DepthOfField), `src/lib/cameraMotion.ts`.
+
 ## 3.83 – Típusváltás-hibák, PDF gomb az összegzésben, pontosabb fotóba helyezés
 
 - **Veranda / télikert váltás:** eddig csak az üres oldalak kaptak üvegfalat, a zip-árnyékolós (lamellás, lécfalas) oldal megmaradt, így a veranda „félig zárt” lett. Most zárt építménynél minden nyitott oldal üvegfal (vagy ajtó) lesz.

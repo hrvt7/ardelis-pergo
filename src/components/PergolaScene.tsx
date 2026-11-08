@@ -9,6 +9,7 @@ import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import type { CameraFocus, CameraView, PergolaConfig, RoofGlazing, SceneSettings, SideKey, SideType } from '@/types/pergola'
 import PhotoRig, { ShadowCatcher } from '@/components/PhotoRig'
 import { PHOTO_GROUP } from '@/lib/photoScene'
+import { cameraMotion } from '@/lib/cameraMotion'
 import { QualityContext, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls, wallSides } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
@@ -893,13 +894,16 @@ function DropIn({ settled, dy = 0.45, delay = 0, children }: { settled: { curren
   return <group ref={ref} scale={animate ? 0.01 : 1} position={[0, animate ? dy : 0, 0]}>{children}</group>
 }
 
-/** LED-fény felkapcsolása: két gyors villanás, majd lágy felfutás (csak utólagos bekapcsoláskor). */
-function LedRamp({ settled, children }: { settled: { current: boolean }; children: (factor: number) => ReactNode }) {
+/** LED-fény felkapcsolása: két gyors villanás, majd lágy felfutás (utólagos bekapcsoláskor és az éjszaka beálltakor). */
+function LedRamp({ settled, night = true, children }: { settled: { current: boolean }; night?: boolean; children: (factor: number) => ReactNode }) {
   const [animate] = useState(() => settled.current && !REDUCED)
   const [factor, setFactor] = useState(animate ? 0 : 1)
   const t = useRef(animate ? 0 : 1)
+  const wasNight = useRef(night)
   const invalidate = useThree((state) => state.invalidate)
   useFrame((_, delta) => {
+    // Nappalból éjszakába fordulva a LED újra „felkapcsolódik” (villanás, felfutás).
+    if (night !== wasNight.current) { wasNight.current = night; if (night && settled.current && !REDUCED) { t.current = 0; setFactor(0) } }
     if (t.current >= 1) return
     t.current = Math.min(1, t.current + Math.min(delta, 0.05) / 1.3)
     const u = t.current
@@ -1318,7 +1322,7 @@ function Tilt({ pitch, height, depth, children }: { pitch: number; height: numbe
   return <group position={[0, height, depth / 2]} rotation={[pitch * Math.PI / 180, 0, 0]}><group position={[0, -height, -depth / 2]}>{children}</group></group>
 }
 
-function PergolaModel({ config, scene, rainShow = 0, onSideSelect, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; rainShow?: 0 | 1 | 2; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
+function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'night', onSideSelect, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; rainShow?: 0 | 1 | 2; /** éjszakai fények (a napszak-átmenet közepén vált, nem a kapcsoláskor) */ night?: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
   const { width, depth, height, roof, mount } = config
   const { tenant } = useTenant()
   // Az első betöltéskor nem animálunk: csak a későbbi kapcsolásoknál épül fel látványosan az oldalelem, úszik át a szín, cserélődik a tető.
@@ -1365,7 +1369,6 @@ function PergolaModel({ config, scene, rainShow = 0, onSideSelect, onSceneChange
       if (Math.abs(model.current.scale.y - 1) > 0.001) { refreshShadows(gl); invalidate() }
     }
   })
-  const night = scene.time === 'night'
   const x = scene.exploded
   return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={z < 0 ? height + rise : height} color={color} />)}{x && postPositions[0] && <Html position={[postPositions[0][0], height / 2, postPositions[0][1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">Oszlopok</span></Html>}<ExplodePart ex={ex} dy={0.55} label="Gerendák" labelAt={[width / 2 - 0.2, height + 0.3, depth / 2]} show={x}><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, 0.23, 0.19]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[0.19, 0.23, depth]} position={[width / 2, height, 0]} color={color} />{bayBoundaries(config).map((x) => <StructuralBeam key={x} args={[0.19, 0.23, depth]} position={[x, height, 0]} color={color} />)}</ExplodePart>
     <ExplodePart ex={ex} dy={1.0} label="Vízelvezetés" labelAt={[-width / 2 + 0.4, height + 0.3, depth / 2]} show={x && !realLouvres}>
@@ -1396,7 +1399,7 @@ function PergolaModel({ config, scene, rainShow = 0, onSideSelect, onSceneChange
     </>)}</RoofSwap>
     </ExplodePart>
     {(() => { const labelled = new Set<string>(); return (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <ExplodePart key={side} ex={ex} dx={side === 'left' ? -1.1 : side === 'right' ? 1.1 : 0} dz={side === 'front' ? 1.1 : side === 'back' ? -1.1 : 0}><SidePlacement side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} labelled={labelled} settled={settled} /></ExplodePart>) })()}
-    {config.led && tilt(<LedRamp settled={settled}>{(factor) => <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={(scene.ledLevel / 100) * factor} rgb={config.ledRgb ? scene.ledColor : null} />}</LedRamp>)}
+    {config.led && tilt(<LedRamp settled={settled} night={night}>{(factor) => <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={(scene.ledLevel / 100) * factor} rgb={config.ledRgb ? scene.ledColor : null} />}</LedRamp>)}
     {config.foundation && <SlabRise settled={settled} width={width} depth={depth} />}
     {hasSplitUnit(config.climate) && <DropIn settled={settled} delay={1.1}><SplitUnits config={config} run={scene.climateRun} /></DropIn>}
     {hasUnderfloor(config.climate) && <FloorGlow width={width} depth={depth} run={scene.climateRun} />}
@@ -2220,23 +2223,66 @@ function Rain({ config, quality }: { config: PergolaConfig; quality: QualitySett
   </group>
 }
 
-/** Esőhangulat: borult, tompább fény és égbolt, kisebb expozíció — átúsztatva, nem ugrásszerűen. */
-const SUN_LIGHT = 'sun-light'
-function WeatherMood({ rain, lighting, quality }: { rain: boolean; lighting: ReturnType<typeof getLighting>; quality: QualitySettings }) {
-  const wet = useRef(rain && REDUCED ? 1 : 0)
-  const sun = useRef<THREE.DirectionalLight | null>(null)
-  useFrame(({ gl, scene, invalidate }, delta) => {
-    const target = rain ? 1 : 0
-    const moving = Math.abs(wet.current - target) > 0.002
-    if (moving) { wet.current = REDUCED ? target : THREE.MathUtils.damp(wet.current, target, 1.8, delta); if (Math.abs(wet.current - target) < 0.002) wet.current = target }
-    const w = wet.current
-    gl.toneMappingExposure = lighting.exposure * (1 - 0.16 * w)
-    if (!sun.current || !sun.current.parent) sun.current = (scene.getObjectByName(SUN_LIGHT) as THREE.DirectionalLight | undefined) ?? null
-    if (sun.current) sun.current.intensity = lighting.intensity * (1 - 0.55 * w)
-    scene.environmentIntensity = lighting.environment * quality.environmentIntensity * (1 - 0.3 * w)
-    if (moving) invalidate()
+type Lighting = ReturnType<typeof getLighting>
+const fogColorFor = (lighting: Lighting, studio: boolean) => (studio ? (lighting.night ? '#1b1f22' : '#e8e5de') : lighting.fog)
+/**
+ * Fényhangulat egy helyen. A nap (erő, szín, irány), az égboltfény, a köd, az expozíció és az eső tompítása a
+ * célérték felé úszik (nem ugrik). Napszakváltásnál az égbolt 1,5 s alatt tompul és derül; a közepén, amikor a
+ * legtompább, cserélődik az égbolt-kép és minden, ami csak be/ki jellegű (csillagok, éjszakai fények, LED) —
+ * ezt az `onSwap` jelzi a jelenetnek. A fényeket itt hozzuk létre, az értékeiket képkockánként írjuk.
+ */
+function LightingMood({ target, targetKey, shownNight, onSwap, rain, quality, studio, shadowExtent, fogEnabled }: { target: Lighting; targetKey: string; shownNight: boolean; onSwap: (key: string) => void; rain: boolean; quality: QualitySettings; studio: boolean; shadowExtent: number; fogEnabled: boolean }) {
+  const ambient = useRef<THREE.AmbientLight>(null)
+  const hemisphere = useRef<THREE.HemisphereLight>(null)
+  const sun = useRef<THREE.DirectionalLight>(null)
+  const fog = useRef<THREE.Fog>(null)
+  const live = useRef({
+    wet: rain && REDUCED ? 1 : 0, key: targetKey, skyT: 1, swapped: true,
+    intensity: target.intensity, ambient: target.ambient, hemisphere: target.hemisphere, environment: target.environment, exposure: target.exposure,
+    sunColor: new THREE.Color(target.sun), fogColor: new THREE.Color(fogColorFor(target, studio)), skyColor: new THREE.Color(target.night ? '#9fb8d6' : '#cfdce6'), groundColor: new THREE.Color(target.night ? '#2f3338' : '#5a4d3f'),
+    position: new THREE.Vector3(...target.position), tmpColor: new THREE.Color(), tmpVector: new THREE.Vector3(),
   })
-  return null
+  useFrame(({ gl, scene, invalidate }, delta) => {
+    const l = live.current
+    const dt = Math.min(delta, 0.05)
+    // Napszakváltás: az égbolt tompítása, a közepén csere.
+    if (l.key !== targetKey) { l.key = targetKey; l.skyT = REDUCED ? 1 : 0; l.swapped = REDUCED; if (REDUCED) onSwap(targetKey) }
+    if (l.skyT < 1) { l.skyT = Math.min(1, l.skyT + dt / 1.5); if (!l.swapped && l.skyT >= 0.5) { l.swapped = true; onSwap(targetKey) } }
+    const dim = 1 - 0.85 * Math.sin(Math.PI * l.skyT)
+    let moving = l.skyT < 1
+    const k = REDUCED ? 1 : 1 - Math.exp(-3.2 * dt)
+    const step = (current: number, to: number) => { if (Math.abs(to - current) < 0.0015) return to; moving = true; return current + (to - current) * k }
+    const stepColor = (current: THREE.Color, to: string) => { l.tmpColor.set(to); if (Math.abs(current.r - l.tmpColor.r) + Math.abs(current.g - l.tmpColor.g) + Math.abs(current.b - l.tmpColor.b) < 0.004) { current.copy(l.tmpColor); return } moving = true; current.lerp(l.tmpColor, k) }
+    l.intensity = step(l.intensity, target.intensity)
+    l.ambient = step(l.ambient, target.ambient)
+    l.hemisphere = step(l.hemisphere, target.hemisphere)
+    l.environment = step(l.environment, target.environment)
+    l.exposure = step(l.exposure, target.exposure)
+    stepColor(l.sunColor, target.sun)
+    stepColor(l.fogColor, fogColorFor(target, studio))
+    stepColor(l.skyColor, target.night ? '#9fb8d6' : '#cfdce6')
+    stepColor(l.groundColor, target.night ? '#2f3338' : '#5a4d3f')
+    l.tmpVector.set(...target.position)
+    let sunMoved = false
+    if (l.position.distanceToSquared(l.tmpVector) > 1e-4) { l.position.lerp(l.tmpVector, k); moving = true; sunMoved = true } else l.position.copy(l.tmpVector)
+    const wetTarget = rain ? 1 : 0
+    if (Math.abs(l.wet - wetTarget) > 0.002) { l.wet = REDUCED ? wetTarget : THREE.MathUtils.damp(l.wet, wetTarget, 1.8, delta); if (Math.abs(l.wet - wetTarget) < 0.002) l.wet = wetTarget; moving = true }
+    const w = l.wet
+    gl.toneMappingExposure = l.exposure * (1 - 0.16 * w) * (0.8 + 0.2 * dim)
+    if (sun.current) { sun.current.intensity = l.intensity * (1 - 0.55 * w); sun.current.color.copy(l.sunColor); sun.current.position.copy(l.position) }
+    if (ambient.current) ambient.current.intensity = l.ambient
+    if (hemisphere.current) { hemisphere.current.intensity = l.hemisphere; hemisphere.current.color.copy(l.skyColor); hemisphere.current.groundColor.copy(l.groundColor) }
+    if (fog.current) fog.current.color.copy(l.fogColor)
+    scene.environmentIntensity = l.environment * quality.environmentIntensity * (1 - 0.3 * w) * dim
+    scene.backgroundIntensity = (shownNight ? 0.55 : 0.95) * dim
+    if (moving) { if (sunMoved || l.skyT < 1) refreshShadows(gl); invalidate() }
+  })
+  return <>
+    {fogEnabled && <fog ref={fog} attach="fog" args={['#c3cdce', 20, 43]} />}
+    <ambientLight ref={ambient} />
+    <hemisphereLight ref={hemisphere} />
+    <directionalLight key={shadowExtent} ref={sun} castShadow shadow-mapSize={[quality.shadowMapSize, quality.shadowMapSize]} shadow-radius={quality.shadowRadius} shadow-blurSamples={quality.shadowRadius > 2 ? 16 : 8} shadow-camera-left={-shadowExtent} shadow-camera-right={shadowExtent} shadow-camera-top={shadowExtent} shadow-camera-bottom={-shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
+  </>
 }
 
 function seatPosition(config: Pick<PergolaConfig, 'width' | 'depth'>, furniture: FurnitureSet): [number, number] {
@@ -2267,6 +2313,8 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
   const autoFrame = useRef(0)
   const yaw = useRef(0)
   const pitch = useRef(0)
+  // Filmszerű vágás: a repülés közepén a látószög enyhén szűkül (a kamera „fókuszál”), a végén visszaáll.
+  const baseFov = useRef(38)
 
   // A nézet alapbeállítása (kameraállás + célpont). Fókusz után is ide térünk vissza, ha a lépés áttekintést kér.
   const applyView = useCallback(() => {
@@ -2304,7 +2352,8 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     else target.current.set(0, view === 'top' ? 0 : config.height * 0.42, 0)
 
     const perspectiveCamera = camera as THREE.PerspectiveCamera
-    Object.assign(perspectiveCamera, { fov: view === 'sofa' ? (window.innerWidth < 820 ? 70 : 64) : (window.innerWidth < 820 ? 48 : 38) })
+    baseFov.current = view === 'sofa' ? (window.innerWidth < 820 ? 70 : 64) : (window.innerWidth < 820 ? 48 : 38)
+    Object.assign(perspectiveCamera, { fov: baseFov.current })
     perspectiveCamera.updateProjectionMatrix()
     // Áttekintő nézetek: ha a szerkezet nem férne a képbe (széles, modulos pergola, keskeny vászon),
     // a kamera ugyanabból az irányból hátrébb áll. Kis pergolánál a megszokott állás marad.
@@ -2489,7 +2538,15 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
         const slerped = m.q2.identity().slerp(m.q, e)
         m.tmp.applyQuaternion(slerped).multiplyScalar(r0 + (r1 - r0) * e)
         camera.position.copy(controls.current.target).add(m.tmp)
-        if (m.p >= 1) { camera.position.copy(destination.current); controls.current.target.copy(target.current); transitioning.current = false; firstFlight.current = false }
+        // Vágás közben: látószög-lélegzés és a mélységélesség a célponton (SceneEffects olvassa a cameraMotion-t).
+        if (!firstFlight.current) {
+          const breath = Math.sin(Math.PI * m.p)
+          Object.assign(camera, { fov: baseFov.current - 3 * breath })
+          ;(camera as THREE.PerspectiveCamera).updateProjectionMatrix()
+          cameraMotion.p = m.p
+          cameraMotion.focus = camera.position.distanceTo(controls.current.target)
+        }
+        if (m.p >= 1) { camera.position.copy(destination.current); controls.current.target.copy(target.current); transitioning.current = false; firstFlight.current = false; cameraMotion.p = 0; Object.assign(camera, { fov: baseFov.current }); (camera as THREE.PerspectiveCamera).updateProjectionMatrix() }
       }
       camera.position.set(camera.position.x, Math.max(0.28, camera.position.y), camera.position.z)
       controls.current.update(); invalidate()
@@ -2684,7 +2741,12 @@ function SceneRegistration() {
 }
 
 function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
-  const lighting = getLighting(scene)
+  const target = getLighting(scene)
+  // Az égbolt-kép és a be/ki jellegű dolgok (csillagok, éjszakai fények, LED) a napszak-átmenet közepén váltanak (LightingMood).
+  const targetKey = `${target.hdr}|${target.night}`
+  const [shownKey, setShownKey] = useState(targetKey)
+  const shownNight = shownKey.endsWith('|true')
+  const lighting = { ...target, night: shownNight, hdr: shownKey.slice(0, shownKey.lastIndexOf('|')) }
   const studio = scene.ground === 'studio'
   // Az árnyékkamera a pergolára és a közvetlen környezetére illeszkedik: ugyanazon a felbontáson élesebb árnyék.
   const shadowExtent = scene.sunStudy || scene.photoMode ? lighting.shadowExtent : Math.min(lighting.shadowExtent, Math.max(7, Math.max(config.width, config.depth) / 2 + 4.5))
@@ -2708,11 +2770,11 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
   // Fotó módban a pergola csoportját a PhotoRig mozgatja (húzás, csippentés, forgatás); itt csak a kiinduló értékek.
   const { photoX, photoY, photoScale, photoRotation, photoTilt, photoLens } = scene
   const placement = useMemo(() => ({ photoX, photoY, photoScale, photoRotation, photoTilt, photoLens }), [photoX, photoY, photoScale, photoRotation, photoTilt, photoLens])
-  const pergola = <group name={PHOTO_GROUP} position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} rotation={[0, scene.photoMode ? THREE.MathUtils.degToRad(scene.photoRotation) : 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} rainShow={rainShow} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{scene.photoMode && <ShadowCatcher size={Math.max(config.width, config.depth) + 6} opacity={lighting.night ? 0.25 : 0.42} />}{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} hideZone={view === 'sofa'} /></OptionalSceneAsset>}</group>
+  const pergola = <group name={PHOTO_GROUP} position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} rotation={[0, scene.photoMode ? THREE.MathUtils.degToRad(scene.photoRotation) : 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} rainShow={rainShow} night={shownNight} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{scene.photoMode && <ShadowCatcher size={Math.max(config.width, config.depth) + 6} opacity={lighting.night ? 0.25 : 0.42} />}{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} hideZone={view === 'sofa'} /></OptionalSceneAsset>}</group>
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}|${scene.wallColor}|${scene.windowColor}`} />
-    {!scene.photoMode && <><fog attach="fog" args={[studio ? (lighting.night ? '#1b1f22' : '#e8e5de') : lighting.fog, 20, 43]} /><FogFollow /></>}
-    <ambientLight intensity={lighting.ambient} /><hemisphereLight args={[lighting.night ? '#9fb8d6' : '#cfdce6', lighting.night ? '#2f3338' : '#5a4d3f', lighting.hemisphere]} /><directionalLight key={shadowExtent} name={SUN_LIGHT} position={lighting.position} color={lighting.sun} intensity={lighting.intensity} castShadow shadow-mapSize={[quality.shadowMapSize, quality.shadowMapSize]} shadow-radius={quality.shadowRadius} shadow-blurSamples={quality.shadowRadius > 2 ? 16 : 8} shadow-camera-left={-shadowExtent} shadow-camera-right={shadowExtent} shadow-camera-top={shadowExtent} shadow-camera-bottom={-shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
+    {!scene.photoMode && <FogFollow />}
+    <LightingMood target={target} targetKey={targetKey} shownNight={shownNight} onSwap={setShownKey} rain={scene.rain} quality={quality} studio={studio} shadowExtent={shadowExtent} fogEnabled={!scene.photoMode} />
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
     {/* Stúdióban az égbolt csak a fényt adja; a háttér egyszínű, hogy a pergola álljon a középpontban. */}
     {studio && !scene.photoMode && <color attach="background" args={[lighting.night ? '#1b1f22' : '#e8e5de']} />}
@@ -2724,7 +2786,6 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     {pergola}
     {!scene.photoMode && <ContactShadows key={`${config.width}-${config.depth}-${config.height}-${config.mount}`} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality.contactShadowResolution} frames={1} color="#10171d" />}
     {scene.rain && <Rain config={config} quality={quality} />}
-    <WeatherMood rain={scene.rain} lighting={lighting} quality={quality} />
     {scene.sunStudy && !scene.photoMode && <CompassRose config={config} facing={scene.facing} />}
     {scene.sunStudy && !scene.photoMode && !coreOnly && onShade && <SceneAssetBoundary name="shade analysis"><Suspense fallback={null}><ShadeProbe config={config} scene={scene} onResult={onShade} /></Suspense></SceneAssetBoundary>}
     {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} /></Suspense></SceneAssetBoundary>}
