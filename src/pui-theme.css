@@ -5,8 +5,8 @@
   .pui-film     — a mintaoldal (home-film.css: tinta háttér, bronz akcent, Cormorant címek)
 */
 .pui-lamelix, .pui-film {
-  --pui-font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --pui-font-mono: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --pui-font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --pui-font-mono: 'Geist', system-ui, sans-serif;
   --pui-ease: cubic-bezier(.22, 1, .36, 1);
   --pui-radius-xl: 18px;
   --pui-glow: none;
@@ -60,7 +60,7 @@
 /* ── StatCounter-sor: valódi, katalógusból számolt számok ── */
 .lx-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; max-width: 1120px; margin: 0 auto; padding: clamp(28px, 4vw, 48px) var(--pf-gutter, 24px) 0; }
 .lx-stats div { padding: 18px 0 0; border-top: 1px solid var(--pui-border); }
-.lx-stats strong { display: block; font-size: clamp(30px, 3.6vw, 48px); font-weight: 700; letter-spacing: -.035em; line-height: 1; color: var(--pui-fg); font-variant-numeric: tabular-nums; }
+.lx-stats strong { display: block; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: clamp(30px, 3.6vw, 48px); font-weight: 700; letter-spacing: -.035em; line-height: 1; color: var(--pui-fg); font-variant-numeric: tabular-nums; }
 .lx-stats strong small { font-size: .5em; font-weight: 600; letter-spacing: 0; margin-left: 2px; color: var(--pui-grad-from); }
 .lx-stats span { display: block; margin-top: 8px; font-size: 13px; line-height: 1.45; color: var(--pui-fg-dim); }
 @media (max-width: 760px) { .lx-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } }
@@ -72,14 +72,14 @@
 .lx-sticky .pui-sticky-banner > svg:first-child, .lx-sticky .pui-sticky-banner__sparkle { color: var(--pui-grad-from); }
 .lx-sticky a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: var(--pui-grad-from); color: #0b1210; font-weight: 700; font-size: 13px; text-decoration: none; }
 .lx-sticky.pui-film a { color: #1a1a1a; }
-.lx-sticky.pui-film .pui-sticky-banner { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+.lx-sticky.pui-film .pui-sticky-banner { font-family: 'Geist', system-ui, sans-serif; }
 @media (max-width: 640px) { .lx-sticky { left: 12px; right: 12px; transform: translate(0, 140%); } .lx-sticky.is-visible { transform: translate(0, 0); } .lx-sticky .pui-sticky-banner { width: 100%; justify-content: space-between; white-space: normal; padding-left: 14px; } .lx-sticky .lx-sticky-text { display: none; } }
 
 /* ── Előtte-utána képcsúszka ── */
 .lx-compare { position: relative; isolation: isolate; aspect-ratio: 1705 / 1000; width: 100%; overflow: hidden; border-radius: 18px; background: #111; cursor: ew-resize; user-select: none; -webkit-user-select: none; touch-action: pan-y; box-shadow: 0 30px 80px rgba(0,0,0,.45); }
 .lx-compare img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .lx-compare-before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--lx-split)) 0 0); }
-.lx-compare-label { position: absolute; top: 16px; z-index: 2; padding: 6px 12px; border-radius: 999px; background: rgba(10,14,12,.62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #f4f6f1; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; pointer-events: none; }
+.lx-compare-label { position: absolute; top: 16px; z-index: 2; padding: 6px 12px; border-radius: 999px; background: rgba(10,14,12,.62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #f4f6f1; font-family: 'Geist', system-ui, sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; pointer-events: none; }
 .lx-compare-label.is-before { left: 16px; }
 .lx-compare-label.is-after { right: 16px; background: var(--pui-grad-from); color: #0b1210; }
 .lx-compare-handle { position: absolute; top: 0; bottom: 0; left: var(--lx-split); z-index: 2; width: 0; pointer-events: none; }

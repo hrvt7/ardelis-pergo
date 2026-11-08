@@ -4,14 +4,27 @@ import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 're
 import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router'
 import { ArrowRight } from 'lucide-react'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { BeforeAfter, BigBack, SlippyWords, StatCounter, StickyBanner, WordRoll } from 'performative-ui'
 import 'performative-ui/styles.css'
 import '@/pui-theme.css'
 
 const REDUCED = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+/**
+ * A lustán betöltött szekciók megváltoztatják az oldal magasságát, miután a GSAP ScrollTrigger már kiszámolta a
+ * rögzített (pin) részek helyét — ettől csúsztak egymásra a szekciók. Betöltés után újraszámoltatjuk.
+ */
+function useScrollRefresh() {
+  useEffect(() => {
+    let frame = window.requestAnimationFrame(() => { frame = window.requestAnimationFrame(() => { ScrollTrigger.refresh() }) })
+    return () => window.cancelAnimationFrame(frame)
+  }, [])
+}
+
 /** Jellemző-sorok, amelyek görgetésre ellentétes irányba csúsznak. A sorok hossza elég, hogy a szél sose üres. */
 export function FeatureSlips({ rows, highlight = [] }: { rows: string[][]; highlight?: string[] }) {
+  useScrollRefresh()
   return <div className="lx-slippy" aria-hidden="true">
     <SlippyWords rows={rows.map((row) => [...row, ...row].map((label, index) => ({ label, key: `${label}-${index}`, gradient: highlight.includes(label) })))} intensity={220} gap={10} fade />
   </div>
@@ -28,6 +41,7 @@ export interface StatItem { value: number; suffix?: string; label: string }
 export function CountingStats({ items }: { items: StatItem[] }) {
   const ref = useRef<HTMLDivElement>(null)
   const [live, setLive] = useState(REDUCED)
+  useScrollRefresh()
   useEffect(() => {
     if (live) return
     // Ha a sor már elérte a képernyő alsó részét (vagy a látogató túlgörgött rajta), indul a számlálás.
@@ -75,6 +89,7 @@ export function StickyCta({ after, until, text, cta, to, theme = 'pui-lamelix' }
 export function ImageCompare({ before, after, beforeAlt, afterAlt, beforeLabel = 'Előtte', afterLabel = 'Utána', sizes = '(max-width: 900px) 100vw, 1100px' }: { before: { src: string; srcSet?: string }; after: { src: string; srcSet?: string }; beforeAlt: string; afterAlt: string; beforeLabel?: string; afterLabel?: string; sizes?: string }) {
   const [split, setSplit] = useState(58)
   const frame = useRef<HTMLDivElement>(null)
+  useScrollRefresh()
   const dragging = useRef(false)
   const move = (clientX: number) => {
     const rect = frame.current?.getBoundingClientRect()
@@ -98,6 +113,7 @@ export function ImageCompare({ before, after, beforeAlt, afterAlt, beforeLabel =
 
 /** Két oszlopos előtte-utána lista (a könyvtár BeforeAfter eleme), a nyíl fölött a márkanévvel. */
 export function BeforeAfterList({ before, after, brand, beforeLabel, afterLabel }: { before: string[]; after: string[]; brand: string; beforeLabel: string; afterLabel: string }) {
+  useScrollRefresh()
   // A könyvtár a márkanév elé fixen „with ”-et ír; a CSS a szöveget elrejti, csak a saját feliratunk látszik („Lamelix-szel”).
   return <BeforeAfter className="lx-ba" before={before} after={after} brand={<b className="lx-ba-brand">{brand}</b>} beforeLabel={beforeLabel} afterLabel={afterLabel} />
 }
@@ -107,6 +123,7 @@ export interface FooterColumn { heading: string; links: { label: string; href: s
 /** Lábléc fal méretű felirattal: a link-oszlopok fölött az óriás, halvány LAMELIX. A belső linkek kliensoldali navigációval nyílnak. */
 export function BigFooter({ company, columns, copyright, brand }: { company: string; columns: FooterColumn[]; copyright: ReactNode; brand?: ReactNode }) {
   const navigate = useNavigate()
+  useScrollRefresh()
   const onClick = (event: MouseEvent<HTMLDivElement>) => {
     const anchor = (event.target as HTMLElement).closest('a')
     const href = anchor?.getAttribute('href') ?? ''

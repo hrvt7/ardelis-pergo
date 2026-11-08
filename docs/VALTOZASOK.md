@@ -1,5 +1,11 @@
 # Változások
 
+## 3.88 – Nyitóoldal: összecsúszott szekciók javítva, modernebb szövegbetű
+
+- **Hiba:** a 3.85–3.86-ban lustán betöltött szekciók (badge-sorok, számsor, előtte-utána, lábléc) a betöltés után megnövelték az oldal magasságát, de a GSAP ScrollTrigger már korábban kiszámolta a rögzített (pin) bemutató helyét. Ettől a „Bemutató” szekció szövegei és kártyái egymásra csúsztak, és a következő szekció belelógott. Javítás: minden lustán betöltődő látványelem betöltés után újraszámoltatja a görgetés-pozíciókat (`useScrollRefresh` a `Showpieces`-ben).
+- **Betűtípus:** a szövegek (bekezdések, gombok, feliratok, címkék, űrlap) mindkét nyitóoldalon **Geist**-re váltottak, ami modernebb és jól olvasható; a nagy címek, a kijelentés, a számok és a lábléc-felirat maradtak Plus Jakarta Sans-ban, a dőlt kiemelések Cormorant Garamondban. A Geist a Google Fonts importból jön (`src/index.css`), a konfigurátort nem érinti.
+- Fájlok: `src/components/Showpieces.tsx`, `src/platform.css`, `src/home-film.css`, `src/pui-theme.css`, `src/index.css`.
+
 ## 3.87 – Ügynök-skillek a repóban, teljes Edge-importgráf ellenőrzés
 
 - **Négy skill** a `.claude/skills/` alatt (Claude Code és OpenCode is olvassa): `lamelix-workflow` (kapu, changelog, commit, deploy-ellenőrzés), `lamelix-edge-imports`, `lamelix-add-roof-type`, `lamelix-add-furniture-set`. Minden ügynök ugyanazt a lépéssort követi; az `AGENTS.md` hivatkozik rájuk.
