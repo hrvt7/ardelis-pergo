@@ -130,7 +130,7 @@ export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, 
   return [
     `${brandName} / ${config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : 'Pergola'} – ${roofLabels[config.roof]}`,
     `Méret: ${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} × ${formatNumber(config.height, 2)} m (${formatNumber(price.area)} m²)`,
-    ...(config.building ? [`Építmény: ${config.building === 'conservatory' ? 'télikert' : 'veranda'}${config.climate ? ` · ${CLIMATE_INFO[config.climate].label.toLowerCase()}` : ''}`] : []),
+    ...(config.building ? [`Építmény: ${config.building === 'conservatory' ? 'télikert' : config.building === 'carport' ? 'carport' : 'veranda'}${config.climate ? ` · ${CLIMATE_INFO[config.climate].label.toLowerCase()}` : ''}`] : []),
     `Kialakítás: ${MOUNT_LABELS[config.mount].toLowerCase()} · ${sides}`,
     `Szín: ${colorSummary(colors, config)}`,
     `Kiegészítők: ${extras.length ? extras.join(', ') : 'nincs kiegészítő'}`,

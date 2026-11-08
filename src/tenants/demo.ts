@@ -7,8 +7,8 @@ import type { Tenant } from './types'
 export const demoTenant: Tenant = {
   id: 'demo',
   demo: true,
-  // Csak a teraszfedés él; a többi család a választóban „hamarosan” jelzéssel, érdeklődés-méréssel jelenik meg.
-  products: ['pergola'],
+  // Teraszfedés és carport él (közös keretes-tető motor); a többi család a választóban „hamarosan”, érdeklődés-méréssel.
+  products: ['pergola', 'carport'],
   brand: {
     name: 'Lamelix',
     legalName: 'Lamelix (bemutató)',
@@ -142,6 +142,18 @@ export const demoTenant: Tenant = {
     {
       id: 'conservatory', name: 'Télikert', description: '5 × 4 m · hőszigetelt üveg, ajtó, klíma',
       config: { width: 5, depth: 4, mount: 'wall', roof: 'glass', building: 'conservatory', pitch: 3, climate: 'split', foundation: true, sides: { front: 'door', back: 'none', left: 'glassFixed', right: 'glassFixed' }, led: true, sensors: false },
+    },
+    {
+      id: 'carport-single', name: 'Egyállásos carport', description: '3 × 5,2 m · fix lemeztető, szabadon álló',
+      config: { width: 3, depth: 5.2, height: 2.3, mount: 'freestanding', roof: 'fixed', building: 'carport', sides: { front: 'none', back: 'none', left: 'none', right: 'none' }, led: false, sensors: false, heaters: 0, speakers: false },
+    },
+    {
+      id: 'carport-double', name: 'Kétállásos carport', description: '5,6 × 5,4 m · polikarbonát tető, LED',
+      config: { width: 5.6, depth: 5.4, height: 2.3, mount: 'freestanding', roof: 'polycarbonate', building: 'carport', pitch: 3, sides: { front: 'none', back: 'none', left: 'none', right: 'none' }, led: true, sensors: false, heaters: 0, speakers: false },
+    },
+    {
+      id: 'carport-wall', name: 'Fali carport', description: '3,2 × 5,2 m · a ház oldalához rögzítve, üvegtető',
+      config: { width: 3.2, depth: 5.2, height: 2.4, mount: 'wall', roof: 'glass', building: 'carport', pitch: 4, sides: { front: 'none', back: 'none', left: 'none', right: 'none' }, led: false, sensors: false, heaters: 0, speakers: false },
     },
   ],
   lead: {

@@ -26,10 +26,10 @@ describe('termékcsaládok', () => {
     expect(productPath('embed', 'acme', 'carport')).toBe('/embed/acme/carport')
   })
 
-  it('a gyártó kínálata: megadás nélkül csak pergola; a demó a pergolát kínálja', () => {
+  it('a gyártó kínálata: megadás nélkül csak pergola; a demó a teraszfedést és a carportot kínálja', () => {
     expect(tenantProducts({})).toEqual(['pergola'])
     expect(tenantProducts({ products: ['pergola', 'fence'] })).toEqual(['pergola', 'fence'])
-    expect(tenantProducts(demoTenant)).toEqual(['pergola'])
+    expect(tenantProducts(demoTenant)).toEqual(['pergola', 'carport'])
   })
 
   it('motor: a pergola motorja ugyanazt adja, mint a meglévő érvényesítés, árazás és megosztókód; a többi családnak még nincs', () => {
@@ -40,7 +40,9 @@ describe('termékcsaládok', () => {
     expect(pergolaEngine.price(demoTenant, config).totalGross).toBe(tenantPrice(demoTenant, config).totalGross)
     expect(pergolaEngine.shareHash(config)).toBe(shareHash(config))
     expect(pergolaEngine.shareHash(config).startsWith(`${pergolaEngine.shareKey}=`)).toBe(true)
-    for (const id of ['carport', 'fence', 'garage-door', 'garden-building'] as const) expect(getEngine(id)).toBeUndefined()
+    // A carport a keretes-tető család tagja: a pergola motorján fut.
+    expect(getEngine('carport')).toBe(pergolaEngine)
+    for (const id of ['fence', 'garage-door', 'garden-building'] as const) expect(getEngine(id)).toBeUndefined()
   })
 
   it('az érdeklődés-eseményeket a szerver mérése elfogadja', () => {

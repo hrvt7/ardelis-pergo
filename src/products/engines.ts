@@ -28,7 +28,8 @@ export const pergolaEngine: ProductEngine<PergolaConfig> = {
   shareHash: (config) => shareHash(config),
 }
 
-const ENGINES: Partial<Record<ProductFamily, ProductEngine>> = { pergola: pergolaEngine as ProductEngine }
+// A carport a keretes-tető család tagja: ugyanaz a konfiguráció (building: 'carport'), ugyanaz a motor.
+const ENGINES: Partial<Record<ProductFamily, ProductEngine>> = { pergola: pergolaEngine as ProductEngine, carport: pergolaEngine as ProductEngine }
 
 /** A család motorja, ha már van (a „hamarosan” családoknak nincs: ezekre lead sem fogadható). */
 export const getEngine = (id: ProductFamily): ProductEngine | undefined => ENGINES[id]

@@ -1,5 +1,14 @@
 # Változások
 
+## 3.92 – Carport: az első új termékcsalád a keretes-tető motoron
+
+- **Negyedik építménytípus** a pergola, veranda és télikert mellett: **Carport** (`building: 'carport'`). Fix tető kötelező (lemez, polikarbonát vagy üveg, a mozgó lamella és a textil nem választható), minden nyitott oldal nyitva marad (oldalzárás kézzel visszatehető), nincs üvegezés, klíma, alap. Pergolára visszaváltva az eredeti oldalak (pl. zip) helyreállnak. Megosztó kódban `ep` jelző; a régi linkek változatlanok.
+- **Szabályok a kutatásból** (`docs/TERMEKADATOK.md`): egy állás 2,8 m-től, kettő 5,3 m-től; figyelmeztetés szűk szélességre, 5 m alatti mélységre, 2,1 m alatti belmagasságra; üveg/polikarbonát tetőnél dőlés javaslat. Tájékoztató a bejelentés/engedély és a hóteher-osztály kérdéséről.
+- **3D:** a carport alatt autó áll (kétállásosnál kettő), paraméteres karosszéria kerekekkel, üvegekkel, lámpákkal; a fadeszka helyett térkő/beton beálló fugahálóval. Minden más (ház, kert, fény, fotóba helyezés, AR, PDF) változatlanul működik.
+- **Belépés:** `/konfigurator/carport` (saját SEO-címmel és sitemap-bejegyzéssel) carport kezdőállapottal indul — a demó három csomagja: egyállásos 3 × 5,2, kétállásos 5,6 × 5,4 polikarbonát tetővel, fali 3,2 × 5,2 üvegtetővel. A „Mit tervezel?” választóban a carport élő link, a lead `product: carport`-tal érkezik, a motor a pergoláé.
+- **Gyártóknak:** a carport automatikusan elérhető ott, ahol a gyártó fix, polikarbonát vagy üvegtetőt kínál (`availableBuildings`); a `products` listába `'carport'` kell a választóhoz. A demó kínálata: teraszfedés + carport.
+- Tesztek: carport-patch, link-visszaolvasás, szabályok, elérhetőség, motor. Fájlok: `src/lib/buildings.ts`, `src/tenants/rules.ts`, `src/lib/shareCode.ts`, `src/components/PergolaScene.tsx` (Car, CarportCars, Paving), `BuildingControls.tsx`, `ConfiguratorControls.tsx`, `src/lib/config.ts`, `src/tenants/demo.ts`, `contracts/seo.ts`, `src/products/*`.
+
 ## 3.91 – Többtermékes héj, 2. lépés: termékcsalád-motorok és Stúdió-regiszter
 
 - **Motor-szerződés** (`src/products/engines.ts`): egy család motorja érvényesít (`parse`), áraz (`price`) és megosztó-kódot ad (`shareHash`, saját kulccsal: pergola `c=`). A pergola motorja a meglévő `parseConfig`, `tenantPrice`, `shareHash` fölötti vékony réteg — a pergola viselkedése nem változott. A „hamarosan” családoknak nincs motorjuk.

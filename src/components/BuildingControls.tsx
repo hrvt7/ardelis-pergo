@@ -18,6 +18,14 @@ function BuildingIcon({ type }: { type: BuildingType }) {
     <path d="M6 12h40" className="bi-roof" pathLength={1} />{[12, 18, 24, 30, 36, 42].map((x) => <path key={x} d={`M${x} 9v6`} className="bi-slat" />)}
     <path d="M8 13v19M44 13v19" className="bi-post" pathLength={1} /><path d="M3 32h46" className="bi-ground" />
   </svg>
+  if (type === 'carport') return <svg {...common}>
+    <path d="M4 10h44" className="bi-roof" pathLength={1} /><path d="M6 10v3M46 10v3" className="bi-slat" />
+    <path d="M9 13v18M43 13v18" className="bi-post" pathLength={1} />
+    {/* autó: karosszéria, tető, kerekek */}
+    <path d="M15 27v-4l3-3h8l5 3h5v4z" className="bi-car" /><path d="M19 23l2-2h6l3 2" className="bi-car" />
+    <circle cx="19" cy="28" r="2" className="bi-wheel" /><circle cx="33" cy="28" r="2" className="bi-wheel" />
+    <path d="M2 32h48" className="bi-ground bi-slab" />
+  </svg>
   if (type === 'veranda') return <svg {...common}>
     <path d="M5 13L26 5l21 8z" className="bi-roof" pathLength={1} />
     <rect x="8" y="14" width="12" height="17" className="bi-pane" /><rect x="20" y="14" width="12" height="17" className="bi-pane" /><rect x="32" y="14" width="12" height="17" className="bi-pane" />

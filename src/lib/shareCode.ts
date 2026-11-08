@@ -46,7 +46,8 @@ export function configToCompact(config: PergolaConfig) {
   if (config.split && SIDE_KEYS.some((side) => config.split?.[side])) flags.push(`s${SIDE_KEYS.map((side) => { const type = config.split?.[side]; return type ? SIDE[type] : '.' }).join('')}`)
   if (config.doorMirror && SIDE_KEYS.some((side) => config.doorMirror?.[side])) flags.push(`m${SIDE_KEYS.map((side) => (config.doorMirror?.[side] ? '1' : '0')).join('')}`)
   // Zárt építmény: e = veranda (ev) / télikert (ec), w = oldalüvegezés, k = klíma, q = alap és padló.
-  if (config.building) flags.push(config.building === 'conservatory' ? 'ec' : 'ev')
+  // Zárt építmény: e = veranda (ev) / télikert (ec); carport (ep) — nyitott, fix tetős autóbeálló.
+  if (config.building) flags.push(config.building === 'conservatory' ? 'ec' : config.building === 'carport' ? 'ep' : 'ev')
   if (config.wallGlazing) flags.push(`w${WALL_GLAZING_INFO[config.wallGlazing].share}`)
   if (config.climate) flags.push(`k${CLIMATE_INFO[config.climate].share}`)
   if (config.foundation) flags.push('q')
@@ -94,7 +95,7 @@ function parseFlags(text: string, sideMap: Record<string, SideType>) {
       result.roofColor = COLOR_BY_CHAR[flag[1]]
       if (flag.length > 2) result.roofRal = safeDecode(flag.slice(2))
     }
-    else if (flag === 'ev' || flag === 'ec') result.building = flag === 'ec' ? 'conservatory' : 'veranda'
+    else if (flag === 'ev' || flag === 'ec' || flag === 'ep') result.building = flag === 'ec' ? 'conservatory' : flag === 'ep' ? 'carport' : 'veranda'
     else if (/^w[sdt]$/.test(flag)) result.wallGlazing = Object.entries(WALL_GLAZING_INFO).find(([, info]) => info.share === flag[1])?.[0] as PergolaConfig['wallGlazing']
     else if (/^k[sub]$/.test(flag)) result.climate = Object.entries(CLIMATE_INFO).find(([, info]) => info.share === flag[1])?.[0] as PergolaConfig['climate']
     else if (flag === 'q') result.foundation = true

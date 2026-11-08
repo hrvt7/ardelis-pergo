@@ -7,7 +7,7 @@ import { calculatePrice } from '../lib/pricing'
 import { defaultGlazing, glazingOptions, PITCH_RANGE, ROOF_TYPES } from '../lib/roofs'
 import { normalizeColorCode, pickCatalogColor, supportsTwoTone } from '../lib/colors'
 import type { PergolaConfig, PriceBreakdown, PriceSettings, RoofType, SideKey } from '../types/pergola'
-import { availableBuildings, BUILDING_ROOFS, CONSERVATORY_SIDE_TYPES, defaultWallGlazing, isClosedBuilding, wallGlazingOptions } from '../lib/buildings'
+import { availableBuildings, BUILDING_ROOFS, CONSERVATORY_SIDE_TYPES, defaultWallGlazing, wallGlazingOptions } from '../lib/buildings'
 import type { Tenant } from './types'
 
 const sideEnum = z.enum(['none', 'zip', 'glass', 'glassFramed', 'glassFixed', 'door', 'doorSliding', 'louver', 'slatAlu', 'slatWood'])
@@ -42,7 +42,7 @@ export const pergolaConfigSchema = z.object({
   smartHome: z.boolean().optional(),
   roofShade: z.enum(['above', 'below']).optional(),
   shadeFabric: z.enum(['white', 'sand', 'grey', 'anthracite']).optional(),
-  building: z.enum(['veranda', 'conservatory']).optional(),
+  building: z.enum(['veranda', 'conservatory', 'carport']).optional(),
   wallGlazing: z.enum(['single', 'double', 'triple']).optional(),
   climate: z.enum(['split', 'underfloor', 'both']).optional(),
   foundation: z.boolean().optional(),
@@ -139,9 +139,9 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
   const roofs = enabledRoofs(tenant)
   const colorIds = tenant.colors.map((color) => color.id)
   const colorOk = colorIds.includes(config.frameColor) || (config.frameColor === 'custom' && tenant.customRal)
-  // Zárt építmény (veranda/télikert) csak ha a gyártó kínálja; ehhez illő tető és (télikertnél) üveg/ajtó oldalfal kell.
+  // Építménytípus (veranda/télikert/carport) csak ha a gyártó kínálja; ehhez illő tető és (télikertnél) üveg/ajtó oldalfal kell.
   const allowedBuildings = availableBuildings(roofs, tenant.sides)
-  const building = isClosedBuilding(config.building) && allowedBuildings.includes(config.building) ? config.building : undefined
+  const building = config.building && allowedBuildings.includes(config.building) ? config.building : undefined
   const roof = building
     ? (BUILDING_ROOFS[building].includes(config.roof) && roofs.includes(config.roof) ? config.roof : BUILDING_ROOFS[building].find((item) => roofs.includes(item))!)
     : roofs.includes(config.roof) ? config.roof : roofs[0]

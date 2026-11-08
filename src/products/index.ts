@@ -16,7 +16,8 @@ export interface ProductInfo {
 
 export const PRODUCTS: readonly ProductInfo[] = [
   { id: 'pergola', slug: 'teraszfedes', label: 'Teraszfedés', short: 'Pergola, veranda, télikert', description: 'Lamellás, üveg- vagy textiltető, oldalzárás, szín és komfort — valós 3D-ben, azonnali irányárral.', status: 'live' },
-  { id: 'carport', slug: 'carport', label: 'Carport és előtető', short: 'Egy- és kétállásos, bejárati előtető', description: 'Alumínium vagy acél váz, polikarbonát, üveg vagy lemeztető; méret, oszlopok, szín és vízelvezetés.', status: 'soon' },
+  // A carport a keretes-tető motoron fut (a pergola konfigurátor negyedik építménytípusa), ezért él.
+  { id: 'carport', slug: 'carport', label: 'Carport és előtető', short: 'Egy- és kétállásos, bejárati előtető', description: 'Alumínium váz fix lemez-, polikarbonát- vagy üvegtetővel; méret, oszlopok, szín, burkolt beálló — valós 3D-ben, azonnali irányárral.', status: 'live' },
   { id: 'fence', slug: 'kerites', label: 'Kerítés és kapu', short: 'Lamellás, lécfalas, tömör; toló- és szárnyas kapu', description: 'Alumínium lamellás vagy lécfalas kerítés telekméretre, kapuval és motorral, folyóméter-árral.', status: 'soon' },
   { id: 'garage-door', slug: 'garazskapu', label: 'Garázskapu', short: 'Szekcionált és billenő, motorral', description: 'Szabvány és egyedi nyílásméret, panelminta, szín, ablak, motor — beépítési ellenőrzéssel.', status: 'soon' },
   { id: 'garden-building', slug: 'kerti-haz', label: 'Kerti ház és szauna', short: 'Tároló, szauna, kerti iroda', description: 'Méret, tető, nyílászárók, terasz és belső elrendezés; később nyaraló és tiny house.', status: 'soon' },

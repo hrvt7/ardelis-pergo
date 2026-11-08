@@ -5,7 +5,7 @@ import { technicalDrawing } from '../src/lib/drawing'
 import { glazingOptions } from '../src/lib/roofs'
 import { doorLeafWidth } from '../src/lib/sides'
 import { DEFAULT_USAGE, estimateEnergy } from '../src/lib/energy'
-import { availableBuildings, buildingIssues, buildingPatch, doorCount, effectiveWallGlazing, glassWallArea, permitNotes } from '../src/lib/buildings'
+import { availableBuildings, buildingIssues, buildingPatch, buildingSpecRows, doorCount, effectiveWallGlazing, glassWallArea, permitNotes } from '../src/lib/buildings'
 import { calculatePrice } from '../src/lib/pricing'
 import { compactToJson, configToCompact } from '../src/lib/shareCode'
 import { createTextSummary, getBom, getSpecCode } from '../src/lib/specification'
@@ -20,9 +20,10 @@ const conservatory = (patch: Partial<PergolaConfig> = {}): PergolaConfig => norm
 
 describe('épülettípusok', () => {
   it('a demó gyártónál mindhárom típus elérhető; ajtó nélküli kínálatnál nincs télikert', () => {
-    expect(availableBuildings(roofs, demoTenant.sides)).toEqual(['pergola', 'veranda', 'conservatory'])
-    expect(availableBuildings(roofs, ['zip', 'glass'])).toEqual(['pergola', 'veranda'])
+    expect(availableBuildings(roofs, demoTenant.sides)).toEqual(['pergola', 'veranda', 'conservatory', 'carport'])
+    expect(availableBuildings(roofs, ['zip', 'glass'])).toEqual(['pergola', 'veranda', 'carport'])
     expect(availableBuildings(['louvered'], demoTenant.sides)).toEqual(['pergola'])
+    expect(availableBuildings(['louvered', 'fixed'], ['zip'])).toEqual(['pergola', 'carport'])
   })
 
   it('télikert: üvegtető, lezárt oldalak, egy ajtó, dőlés, alap és klíma alapból', () => {
@@ -114,6 +115,25 @@ describe('télikert árazás', () => {
     expect(total(conservatory({ foundation: undefined }))).toBeLessThan(total(conservatory()))
     expect(total(conservatory({ climate: undefined }))).toBeLessThan(total(conservatory({ climate: 'split' })))
     expect(total(conservatory({ climate: 'both' }))).toBeGreaterThan(total(conservatory({ climate: 'split' })))
+  })
+
+  it('carport: fix tető, nyitott oldalak, nincs üvegezés/klíma; a link visszaolvassa; szűk szélességre figyelmeztet', () => {
+    const withZip: PergolaConfig = { ...base, roof: 'louvered', sides: { front: 'none', back: 'none', left: 'zip', right: 'none' } }
+    const carport = normalizeConfig(demoTenant, { ...withZip, ...buildingPatch(withZip, 'carport', roofs, demoTenant.sides) })
+    expect(carport.building).toBe('carport')
+    expect(['fixed', 'polycarbonate', 'glass']).toContain(carport.roof)
+    expect(Object.values(carport.sides).every((type, index) => type === 'none' || Object.keys(carport.sides)[index] === 'back')).toBe(true)
+    expect(carport.wallGlazing).toBeUndefined()
+    expect(carport.climate).toBeUndefined()
+    expect(carport.openSides).toEqual(withZip.sides)
+    expect(parseConfig(demoTenant, compactToJson(configToCompact(carport)))).toEqual(carport)
+    expect(configToCompact(carport)).toMatch(/(^|[_-])ep($|[_-])/)
+    expect(buildingSpecRows(carport)[0][1]).toMatch(/Carport/)
+    expect(buildingIssues({ ...carport, width: 2.5 }).some((issue) => issue.level === 'warn')).toBe(true)
+    expect(buildingIssues({ ...carport, width: 5.6, depth: 5.4, height: 2.3 })).toHaveLength(0)
+    // vissza pergolára: a zip visszakerül
+    const back = normalizeConfig(demoTenant, { ...carport, ...buildingPatch(carport, 'pergola', roofs, demoTenant.sides) })
+    expect(back.sides).toEqual(withZip.sides)
   })
 
   it('veranda: a zip-árnyékolós oldal is üvegfal lesz; pergolára visszaváltva a zip visszakerül', () => {

@@ -34,7 +34,7 @@ import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMateri
 import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
 import { doorLeafWidth, sideSegments } from '@/lib/sides'
-import { hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
+import { carportBays, hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit, furnitureLayout } from '@/lib/furniture'
 import { kitchenModules, packPlan } from '@/lib/usePacks'
@@ -1952,7 +1952,40 @@ function SunbedSet() {
 }
 
 /** A választott bútorcsomag a pergola alatt, és kérésre a helyigénye (zöld: kényelmes, sárga: szűkös, piros: nem fér el). */
+/** Személyautó a carport alá: egyszerű, de arányos karosszéria (4,4 × 1,8 × 1,45 m), sötét üvegekkel és kerekekkel. */
+function Car({ color, position, rotation = 0 }: { color: string; position: [number, number, number]; rotation?: number }) {
+  const body = useMemo(() => new THREE.MeshPhysicalMaterial({ color, metalness: 0.75, roughness: 0.28, clearcoat: 0.9, clearcoatRoughness: 0.12 }), [color])
+  useEffect(() => () => body.dispose(), [body])
+  const wheel = (x: number, z: number) => <group key={`${x}${z}`} position={[x, 0.33, z]}><mesh rotation={[0, 0, Math.PI / 2]} castShadow><cylinderGeometry args={[0.33, 0.33, 0.24, 24]} /><meshStandardMaterial color="#15181a" roughness={0.9} /></mesh><mesh rotation={[0, 0, Math.PI / 2]} position={[x > 0 ? 0.125 : -0.125, 0, 0]}><cylinderGeometry args={[0.2, 0.2, 0.01, 20]} /><meshStandardMaterial color="#9ea4a8" metalness={0.8} roughness={0.3} /></mesh></group>
+  return <group position={position} rotation={[0, rotation, 0]} name="car">
+    {/* alváz + karosszéria alsó test (hossz z-irányban) */}
+    <RoundedBox args={[1.8, 0.62, 4.4]} radius={0.12} smoothness={4} position={[0, 0.66, 0]} material={body} castShadow receiveShadow />
+    {/* utastér, kissé hátra tolva, lekerekítve */}
+    <RoundedBox args={[1.62, 0.56, 2.2]} radius={0.18} smoothness={4} position={[0, 1.2, -0.15]} material={body} castShadow />
+    {/* üvegek: szélvédő, hátsó, oldalsó sáv */}
+    <mesh position={[0, 1.22, 0.98]} rotation={[-0.62, 0, 0]}><planeGeometry args={[1.5, 0.62]} /><meshPhysicalMaterial color="#1c262c" metalness={0.2} roughness={0.08} clearcoat={1} side={THREE.DoubleSide} /></mesh>
+    <mesh position={[0, 1.22, -1.28]} rotation={[0.72, 0, 0]}><planeGeometry args={[1.5, 0.56]} /><meshPhysicalMaterial color="#1c262c" metalness={0.2} roughness={0.08} clearcoat={1} side={THREE.DoubleSide} /></mesh>
+    {[-0.82, 0.82].map((x) => <mesh key={x} position={[x, 1.24, -0.15]} rotation={[0, Math.PI / 2, 0]}><planeGeometry args={[1.9, 0.42]} /><meshPhysicalMaterial color="#1c262c" metalness={0.2} roughness={0.08} clearcoat={1} side={THREE.DoubleSide} /></mesh>)}
+    {/* lámpák */}
+    {[-0.6, 0.6].map((x) => <mesh key={`f${x}`} position={[x, 0.78, 2.19]}><boxGeometry args={[0.36, 0.14, 0.04]} /><meshStandardMaterial color="#eef3f5" emissive="#dfe8ee" emissiveIntensity={0.35} /></mesh>)}
+    {[-0.6, 0.6].map((x) => <mesh key={`r${x}`} position={[x, 0.78, -2.19]}><boxGeometry args={[0.36, 0.12, 0.04]} /><meshStandardMaterial color="#b3261e" emissive="#8c1a14" emissiveIntensity={0.4} /></mesh>)}
+    {wheel(-0.82, 1.35)}{wheel(0.82, 1.35)}{wheel(-0.82, -1.35)}{wheel(0.82, -1.35)}
+  </group>
+}
+
+/** Carport: egy vagy két autó a tető alatt, a szélesség szerint (buildings.ts: carportBays); 5,3 m-től kettő. */
+function CarportCars({ config }: { config: PergolaConfig }) {
+  const bays = carportBays(config.width)
+  if (bays === 0) return null
+  // Az autó(k) a beálló közepén, orral kifelé; két autónál egymás mellett, a mezők közepén.
+  const positions = bays === 2 ? [-config.width / 4, config.width / 4] : [0]
+  const colors = ['#2f3a44', '#8d9398']
+  return <group name="terrace-furniture">{positions.map((x, index) => <Car key={x} color={colors[index]} position={[x, 0, Math.min(0.2, config.depth / 2 - 2.5)]} />)}</group>
+}
+
 function Furniture({ config, scene, hideZone = false }: { config: PergolaConfig; scene: SceneSettings; hideZone?: boolean }) {
+  // Carport alatt nem kerti bútor áll, hanem autó.
+  if (config.building === 'carport') return <CarportCars config={config} />
   const set = scene.furniture
   if (set === 'none') return null
   const fit = furnitureFit(set, config)!
@@ -1980,7 +2013,29 @@ function Furniture({ config, scene, hideZone = false }: { config: PergolaConfig;
   </group>
 }
 
+/** Carport-beálló: térkő/beton burkolat fugahálóval a fadeszka helyett (a deszkázat autó alá nem való). */
+function Paving({ config }: { config: PergolaConfig }) {
+  const { width, depth, centerX, centerZ } = deckBounds(config)
+  const stone = 0.4
+  const lines = useMemo(() => {
+    const points: [number, number, number][][] = []
+    for (let x = -width / 2 + stone; x < width / 2 - 0.01; x += stone) points.push([[x, 0.012, -depth / 2], [x, 0.012, depth / 2]])
+    for (let z = -depth / 2 + stone; z < depth / 2 - 0.01; z += stone) points.push([[-width / 2, 0.012, z], [width / 2, 0.012, z]])
+    return points
+  }, [width, depth])
+  return <group position={[centerX, -0.035, centerZ]} name="paving">
+    <mesh position={[0, 0.004, 0]} receiveShadow><boxGeometry args={[width, 0.05, depth]} /><meshStandardMaterial color="#9b9a92" roughness={0.96} /></mesh>
+    <mesh position={[0, -0.02, 0]}><boxGeometry args={[width + 0.1, 0.03, depth + 0.1]} /><meshStandardMaterial color="#6d6c66" roughness={1} /></mesh>
+    {lines.map((segment, index) => <Line key={index} points={segment} color="#7d7c74" lineWidth={1} transparent opacity={0.7} />)}
+  </group>
+}
+
 function Deck({ config }: { config: PergolaConfig }) {
+  if (config.building === 'carport') return <Paving config={config} />
+  return <WoodDeck config={config} />
+}
+
+function WoodDeck({ config }: { config: PergolaConfig }) {
   const wood = usePBR('oak_wood_planks', [3.5, 0.7])
   // Oldalfalnál a burkolat a fal belső síkjáig tart, különben kifut a pergola mellé.
   const { width, depth, centerX, centerZ } = deckBounds(config)

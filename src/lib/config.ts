@@ -1,6 +1,8 @@
 import { configToHash, decodeShareHash, shareHash } from '@/lib/shareCode'
 import { findColor } from './colors'
-import { parseConfig, priceSettingsSchema } from '@/tenants/rules'
+import { buildingPatch } from '@/lib/buildings'
+import { enabledRoofs, normalizeConfig, parseConfig, priceSettingsSchema } from '@/tenants/rules'
+import type { ProductFamily } from '@/products'
 
 export { configToHash }
 import type { Tenant } from '@/tenants/types'
@@ -92,11 +94,20 @@ export function hasStoredDraft(tenant: Tenant) {
   return readStored(configKey(tenant)) !== null
 }
 
-export function loadInitialConfig(tenant: Tenant): PergolaConfig {
+export function loadInitialConfig(tenant: Tenant, product: ProductFamily = 'pergola'): PergolaConfig {
   // A hibás hivatkozás nem akadályozhatja meg az indulást: ilyenkor a piszkozat vagy az alapállapot jön.
   const shared = window.location.hash ? parseConfig(tenant, decodeShareHash(window.location.hash)) : null
   if (shared) return shared
-  return parseConfig(tenant, readStored(configKey(tenant))) ?? tenant.defaultConfig
+  const stored = parseConfig(tenant, readStored(configKey(tenant))) ?? tenant.defaultConfig
+  // Carport útvonalon (/konfigurator/carport) a kezdőállapot carport: a piszkozat vagy az alapterv átállítva.
+  if (product === 'carport' && stored.building !== 'carport') {
+    const preset = tenant.presets.find((item) => item.config.building === 'carport')
+    const base = preset ? { ...tenant.defaultConfig, ...preset.config, sides: { ...tenant.defaultConfig.sides, ...preset.config.sides } } : { ...stored, ...buildingPatch(stored, 'carport', enabledRoofs(tenant), tenant.sides) }
+    return normalizeConfig(tenant, base as PergolaConfig)
+  }
+  // Teraszfedés útvonalon a carport-piszkozat visszavált pergolára (az eredeti oldalakkal): az útvonal családja az irányadó.
+  if (product === 'pergola' && stored.building === 'carport') return normalizeConfig(tenant, { ...stored, ...buildingPatch(stored, 'pergola', enabledRoofs(tenant), tenant.sides) } as PergolaConfig)
+  return stored
 }
 
 /** Admin módban a böngészőben szerkesztett árak, egyébként a gyártó árlistája. */

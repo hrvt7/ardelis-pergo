@@ -5,7 +5,8 @@ import { isWallSide } from './mount'
 import { closedSegments } from './sides'
 import type { BuildingType, ClimateType, PergolaConfig, PriceSettings, RoofType, SideKey, SideType, WallGlazing } from '../types/pergola'
 
-export type ClosedBuilding = Exclude<BuildingType, 'pergola'>
+/** Zárt (oldalfalas) építmények; a carport nyitott, a keretes-tető motor negyedik típusa. */
+export type ClosedBuilding = 'veranda' | 'conservatory'
 
 export interface BuildingInfo {
   label: string
@@ -18,7 +19,14 @@ export interface BuildingInfo {
   traits: string[]
 }
 
-export const BUILDING_TYPES: BuildingType[] = ['pergola', 'veranda', 'conservatory']
+export const BUILDING_TYPES: BuildingType[] = ['pergola', 'veranda', 'conservatory', 'carport']
+
+/** Egy autóállás szélessége (m): ennyitől egy, 5,3 m-től két autó fér el egymás mellett. */
+export const CARPORT_SINGLE_MIN = 2.8
+export const CARPORT_DOUBLE_MIN = 5.3
+export const isCarport = (building: BuildingType | undefined): building is 'carport' => building === 'carport'
+/** Hány autó fér a carport alá a szélesség alapján (0, ha keskenyebb egy állásnál). */
+export const carportBays = (width: number) => (width >= CARPORT_DOUBLE_MIN ? 2 : width >= CARPORT_SINGLE_MIN ? 1 : 0)
 
 export const BUILDING_INFO: Record<BuildingType, BuildingInfo> = {
   pergola: {
@@ -36,12 +44,18 @@ export const BUILDING_INFO: Record<BuildingType, BuildingInfo> = {
     description: 'Hőszigetelt üvegezésű, hőhídmentes profilú, fűtött és hűthető helyiség, alapozott padlóval és ajtóval.',
     traits: ['Hőszigetelt üveg és profil', 'Fűtés / hűtés', 'Alapozott padló'],
   },
+  carport: {
+    label: 'Carport', short: 'Autóbeálló és előtető', season: 'Egész évben',
+    description: 'Nyitott, fix tetős autóbeálló egy vagy két autónak, szabadon álló vagy a házhoz rögzítve; lemez-, polikarbonát- vagy üvegtetővel.',
+    traits: ['Egy- vagy kétállásos', 'Fix tető, nyitott oldalak', 'Burkolt beálló'],
+  },
 }
 
-/** Zárt építményhez választható tetők (mozgó tető nem szigetelhető/zárható megfelelően). */
-export const BUILDING_ROOFS: Record<ClosedBuilding, RoofType[]> = {
+/** Építménytípushoz választható tetők: zártnál a mozgó tető nem zárható, carportnál fix tető kell (hóteher, csapadék). */
+export const BUILDING_ROOFS: Record<Exclude<BuildingType, 'pergola'>, RoofType[]> = {
   veranda: ['glass', 'polycarbonate', 'fixed'],
   conservatory: ['glass', 'fixed'],
+  carport: ['fixed', 'polycarbonate', 'glass'],
 }
 
 export const isClosedBuilding = (building: BuildingType | undefined): building is ClosedBuilding => building === 'veranda' || building === 'conservatory'
@@ -81,6 +95,7 @@ export function availableBuildings(roofs: RoofType[], sides: SideType[]): Buildi
   const result: BuildingType[] = ['pergola']
   if (hasGlassWall && BUILDING_ROOFS.veranda.some((roof) => roofs.includes(roof))) result.push('veranda')
   if (hasGlassWall && hasDoor && sides.includes('glassFixed') && BUILDING_ROOFS.conservatory.some((roof) => roofs.includes(roof))) result.push('conservatory')
+  if (BUILDING_ROOFS.carport.some((roof) => roofs.includes(roof))) result.push('carport')
   return result
 }
 
@@ -98,6 +113,16 @@ export interface BuildingIssue { level: 'warn' | 'info'; text: string }
 
 /** Műszaki/logikai észrevételek a zárt építményhez (nem tiltások: a felhasználó dönt). */
 export function buildingIssues(config: PergolaConfig): BuildingIssue[] {
+  if (isCarport(config.building)) {
+    const issues: BuildingIssue[] = []
+    const bays = carportBays(config.width)
+    if (bays === 0) issues.push({ level: 'warn', text: `${config.width.toFixed(1).replace('.', ',')} m szélesség szűk egy autónak: egy állásnak legalább ${CARPORT_SINGLE_MIN.toFixed(1).replace('.', ',')} m, kényelmesen 3 m kell.` })
+    else if (config.width >= 4.6 && bays === 1) issues.push({ level: 'info', text: `Két autóhoz legalább ${CARPORT_DOUBLE_MIN.toFixed(1).replace('.', ',')} m szélesség javasolt; ekkora méretnél egy autó és egy tároló-sáv fér el.` })
+    if (config.depth < 5) issues.push({ level: 'info', text: 'Egy személyautóhoz legalább 5 m mélység ajánlott (kombinak, SUV-nak 5,5 m), hogy az ajtók és a csomagtartó a tető alatt legyenek.' })
+    if (config.height < 2.1) issues.push({ level: 'warn', text: 'A 2,1 m alatti belmagasság magasabb autónál (SUV, tetőbox) kevés; 2,3 m javasolt.' })
+    if (!config.pitch && (config.roof === 'glass' || config.roof === 'polycarbonate')) issues.push({ level: 'info', text: 'Üveg- és polikarbonát tetőnél pár fokos dőlés javasolt a vízelfolyáshoz (Típus lépés).' })
+    return issues
+  }
   if (!isClosedBuilding(config.building)) return []
   const issues: BuildingIssue[] = []
   const sides = (['front', 'back', 'left', 'right'] as const)
@@ -143,11 +168,22 @@ export function permitNotes(building: BuildingType | undefined): string[] {
     'Egész éves használatnál az épületenergetikai követelmények (hőátbocsátás, tüzelő- és hűtőberendezés) is érintettek lehetnek.',
     'Az irányár nem tartalmazza az engedélyezési tervet, a tervezői és eljárási díjakat.',
   ]
+  if (building === 'carport') return [
+    'A carport nyitott, tetővel fedett szerkezet; a helyi építési szabályzat, a telek beépítettsége és a telekhatártól mért távolság dönti el, hogy bejelentés- vagy engedélyköteles-e. A megrendelés előtt kérj tájékoztatást az építési hatóságtól.',
+    'A tető hóteher-osztályát a telepítés helyének hózónája szerint kell megválasztani; ezt a felmérésen a gyártó ellenőrzi.',
+  ]
   return []
 }
 
 /** A zárt építmény sorai a specifikációhoz, a PDF-hez és a lead-e-mailhez. */
 export function buildingSpecRows(config: PergolaConfig): [string, string][] {
+  if (isCarport(config.building)) {
+    const bays = carportBays(config.width)
+    return [
+      ['Építmény típusa', `Carport · ${bays >= 2 ? 'kétállásos' : bays === 1 ? 'egyállásos' : 'előtető'}`],
+      ['Autóállás', bays >= 2 ? '2 autó egymás mellett' : bays === 1 ? '1 autó' : 'autónak szűk'],
+    ]
+  }
   if (!isClosedBuilding(config.building)) return []
   const rows: [string, string][] = [['Építmény típusa', `${BUILDING_INFO[config.building].label} · ${BUILDING_INFO[config.building].season.toLowerCase()}`]]
   const glazing = effectiveWallGlazing(config)
@@ -171,6 +207,15 @@ export function buildingPatch(config: PergolaConfig, building: BuildingType, roo
   if (building === 'pergola') return { building: undefined, wallGlazing: undefined, climate: undefined, foundation: undefined, ...(config.openSides ? { sides: { ...config.openSides } } : {}), openSides: undefined }
   const allowed = BUILDING_ROOFS[building].filter((roof) => roofs.includes(roof))
   const roof = allowed.includes(config.roof) ? config.roof : (allowed[0] ?? config.roof)
+  // Carport: fix tető, minden nyitott oldal nyitva marad (az oldalzárás kézzel visszatehető), nincs üvegezés/klíma/alap.
+  if (building === 'carport') {
+    const openSides = Object.fromEntries((['front', 'back', 'left', 'right'] as SideKey[]).map((side) => [side, isWallSide(config.mount, side) ? config.sides[side] : 'none'])) as PergolaConfig['sides']
+    return {
+      building, roof, sides: openSides, split: undefined,
+      openSides: config.openSides ?? (config.building ? undefined : { ...config.sides }),
+      wallGlazing: undefined, climate: undefined, foundation: undefined,
+    }
+  }
   const has = (type: SideType) => sides.includes(type)
   const closing: SideType = has('glassFixed') ? 'glassFixed' : has('glass') ? 'glass' : 'none'
   const door: SideType = has('doorSliding') ? 'doorSliding' : has('door') ? 'door' : 'none'
@@ -188,7 +233,7 @@ export function buildingPatch(config: PergolaConfig, building: BuildingType, roo
     roof,
     sides: next,
     // Az eredeti (nyitott) oldalak megőrzése, hogy pergolára visszaváltva helyreálljanak.
-    openSides: config.openSides ?? (isClosedBuilding(config.building) ? undefined : { ...config.sides }),
+    openSides: config.openSides ?? (config.building ? undefined : { ...config.sides }),
     wallGlazing: undefined,
     pitch: building === 'conservatory' && !config.pitch && roof === 'glass' ? 3 : config.pitch,
     climate: building === 'conservatory' ? (config.climate ?? 'split') : undefined,

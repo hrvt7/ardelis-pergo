@@ -90,7 +90,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
       {advice.length > 0 && <ul className="advice-list" aria-label="Szakértői megjegyzések">{advice.map((item) => <li key={item.id} className={item.level}>{item.text}</li>)}</ul>}
       <section className="showroom">
         <div className="showroom-image">
-          {thumbnail ? <img src={thumbnail} alt={`A konfigurált ${config.building === 'conservatory' ? 'télikert' : config.building === 'veranda' ? 'veranda' : 'pergola'} képe`} /> : <div className="showroom-skeleton"><LoaderCircle size={22} className="spin" /><span>A kép a körbeforgás közben elkészül…</span></div>}
+          {thumbnail ? <img src={thumbnail} alt={`A konfigurált ${config.building === 'conservatory' ? 'télikert' : config.building === 'veranda' ? 'veranda' : config.building === 'carport' ? 'carport' : 'pergola'} képe`} /> : <div className="showroom-skeleton"><LoaderCircle size={22} className="spin" /><span>A kép a körbeforgás közben elkészül…</span></div>}
           <button type="button" className="showroom-refresh" onClick={capture} title="Új kép a mostani nézetből"><Camera size={15} /><span>Új kép</span></button>
         </div>
         <label className="showroom-name"><PencilLine size={15} /><input value={projectName} maxLength={48} placeholder="Adj nevet a tervnek, pl. Kovácsék terasza" onChange={(event) => onProjectName(event.target.value)} aria-label="A terv neve" /></label>

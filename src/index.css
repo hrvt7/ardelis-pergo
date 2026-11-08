@@ -2507,6 +2507,9 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 .building-icon .bi-door { fill: rgba(216,255,114,.14); stroke: var(--accent-primary); stroke-width: 1.2; }
 .building-icon .bi-slat { stroke-width: 1.1; opacity: .7; }
 .building-icon .bi-heat { stroke: #f08b49; stroke-width: 1.3; opacity: 0; }
+.building-icon .bi-car { fill: rgba(216,255,114,.12); stroke: var(--text-secondary); stroke-width: 1.2; }
+.building-icon .bi-wheel { fill: var(--surface-app); stroke: var(--text-secondary); stroke-width: 1.2; }
+.building-card.selected .building-icon .bi-car { stroke: var(--accent-primary); }
 .building-card.selected .building-icon { stroke: var(--accent-primary); }
 .building-card.selected .bi-roof, .building-card.selected .bi-post { stroke-dasharray: 1; stroke-dashoffset: 1; animation: bld-draw .7s cubic-bezier(.3,.7,.2,1) .1s forwards; }
 .building-card.selected .bi-pane { animation: bld-glass .6s ease-out .45s both; }

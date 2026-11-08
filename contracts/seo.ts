@@ -38,7 +38,7 @@ export const PERGOLA_FAQS = [
 ] as const
 
 export type SeoPage = {
-  key: 'platform' | 'home' | 'privacy' | 'studio' | 'track' | 'partners' | 'admin' | 'login' | 'notFound'
+  key: 'platform' | 'home' | 'privacy' | 'studio' | 'studio-carport' | 'track' | 'partners' | 'admin' | 'login' | 'notFound'
   path: string
   title: string
   description: string
@@ -79,6 +79,14 @@ const SEO_PAGES: Record<string, SeoPage> = {
     path: '/konfigurator',
     title: 'Élő demó: 3D pergola-, veranda- és télikerttervező | Lamelix',
     description: 'Próbáld ki élőben a Lamelix 3D konfigurátort: valós méretek, motoros lamellák, üvegfal, ajtó, klíma és kiegészítők, azonnali irányár és PDF. Demó mintaárakkal gyártóknak.',
+    robots: INDEX_ROBOTS,
+    indexable: true,
+  },
+  '/konfigurator/carport': {
+    key: 'studio-carport',
+    path: '/konfigurator/carport',
+    title: 'Carport és előtető tervező 3D-ben, azonnali irányárral | Lamelix',
+    description: 'Tervezd meg a carportot vagy előtetőt 3D-ben: egy- vagy kétállásos, szabadon álló vagy a házhoz rögzített, lemez-, polikarbonát- vagy üvegtetővel, szín és LED. Azonnali irányár, PDF, felmérés.',
     robots: INDEX_ROBOTS,
     indexable: true,
   },
@@ -124,7 +132,7 @@ const SEO_PAGES: Record<string, SeoPage> = {
   },
 }
 
-export const SEO_SITEMAP_PATHS = ['/', '/en', '/minta', '/konfigurator', '/adatkezeles'] as const
+export const SEO_SITEMAP_PATHS = ['/', '/en', '/minta', '/konfigurator', '/konfigurator/carport', '/adatkezeles'] as const
 
 export function normalizeSeoPath(pathname: string) {
   if (!pathname || pathname === '/') return '/'

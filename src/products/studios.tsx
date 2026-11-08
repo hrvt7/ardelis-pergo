@@ -6,6 +6,8 @@ import type { ProductFamily } from './index'
 
 const LOADERS: Partial<Record<ProductFamily, () => Promise<{ default: ComponentType }>>> = {
   pergola: () => import('@/pages/PergoStudio'),
+  // Keretes-tető család: a carport ugyanabban a Stúdióban fut (building: 'carport' kezdőállapottal).
+  carport: () => import('@/pages/PergoStudio'),
 }
 
 const STUDIOS: Partial<Record<ProductFamily, LazyExoticComponent<ComponentType>>> = Object.fromEntries(

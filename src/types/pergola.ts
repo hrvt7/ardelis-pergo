@@ -7,7 +7,7 @@ export type ShadeFabric = 'white' | 'sand' | 'grey' | 'anthracite'
 export type RoofType = 'louvered' | 'retractable' | 'fabric' | 'glass' | 'polycarbonate' | 'fixed'
 export type SideType = 'none' | 'zip' | 'glass' | 'glassFramed' | 'glassFixed' | 'door' | 'doorSliding' | 'louver' | 'slatAlu' | 'slatWood'
 /** Építmény-típus: a nyitott pergola mellett zárt veranda (üvegezett terasz) és egész éves télikert. */
-export type BuildingType = 'pergola' | 'veranda' | 'conservatory'
+export type BuildingType = 'pergola' | 'veranda' | 'conservatory' | 'carport'
 /** Oldalfal-üvegezés: edzett (egyrétegű), kétrétegű vagy háromrétegű hőszigetelt. */
 export type WallGlazing = 'single' | 'double' | 'triple'
 /** Télikert fűtés/hűtés: split klíma, padlófűtés vagy mindkettő. */

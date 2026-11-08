@@ -352,7 +352,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   const stepIndex = STEPS.findIndex((item) => item.id === step)
   const [appliedPreset, setAppliedPreset] = useState<string | null>(null)
   const stepLabel = (id: ConfigStep) => STEPS.find((item) => item.id === id)!.label
-  const buildingName = config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : 'Pergola'
+  const buildingName = config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : config.building === 'carport' ? 'Carport' : 'Pergola'
   const [stepTrack, setStepTrack] = useState({ index: stepIndex, dir: 'fwd' as 'fwd' | 'back' })
   if (stepTrack.index !== stepIndex) setStepTrack({ index: stepIndex, dir: stepIndex > stepTrack.index ? 'fwd' : 'back' })
   const stepDir = stepTrack.dir
@@ -385,9 +385,9 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           {step === 'size' && <>
             <ProductChooser />
             {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
-            <SectionTitle title="Mit építesz?" hint="Nyitott pergola, zárt üvegezett veranda vagy egész éves télikert. A választás átállítja a tetőt és az oldalakat, utána minden módosítható." />
+            <SectionTitle title="Mit építesz?" hint="Nyitott pergola, zárt üvegezett veranda, egész éves télikert vagy fix tetős carport. A választás átállítja a tetőt és az oldalakat, utána minden módosítható." />
             <BuildingPicker config={config} prices={prices} onChange={onChange} />
-            <SectionTitle title="Kiinduló csomagok" hint={isClosedBuilding(config.building) ? `A kiválasztott típushoz (${config.building === 'conservatory' ? 'télikert' : 'veranda'}) illő kiinduló terv. Utána minden szabadon módosítható.` : 'Egy koppintással indulhatsz, utána minden szabadon módosítható.'} />
+            <SectionTitle title="Kiinduló csomagok" hint={config.building ? `A kiválasztott típushoz (${config.building === 'conservatory' ? 'télikert' : config.building === 'carport' ? 'carport' : 'veranda'}) illő kiinduló terv. Utána minden szabadon módosítható.` : 'Egy koppintással indulhatsz, utána minden szabadon módosítható.'} />
             <div className="preset-list">{(tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')).length ? tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')) : tenant.presets).map((preset) => <button type="button" key={preset.id} className={appliedPreset === preset.id ? 'applied' : undefined} onClick={() => { onPreset(presetConfig(tenant, preset.config)); setAppliedPreset(preset.id); window.setTimeout(() => setAppliedPreset((current) => (current === preset.id ? null : current)), 1400) }}><strong>{preset.name}</strong><span>{preset.description}</span>{appliedPreset === preset.id ? <Check size={15} /> : <ArrowRight size={15} />}</button>)}</div>
             <p className="split-note">A méreteket, a tetőt, az oldalakat és a színt a következő lépésekben állítod be; a bútor és a környezet a 3D feletti <strong>Nézet</strong> gombnál van.</p>
           </>}
