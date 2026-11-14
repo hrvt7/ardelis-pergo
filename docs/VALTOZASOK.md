@@ -1,5 +1,13 @@
 # Változások
 
+## 4.10 – Bútorok és berendezések Blender-modellekből
+
+- **Új modellek a kódból rajzolt dobozok helyett** (`public/assets/models/furniture/*.glb`, együtt kb. 500 kB): háromszemélyes kanapé puha párnákkal és díszpárnákkal, karfás kültéri szék, lécezett teak asztalok (4, 6 és 8 fős), bárszék háttámlával, kerek bisztróasztal, nyugágy kerékkel és fejpárnával, kisasztal, beépített grill a nyári konyhában.
+- **Jacuzzi:** modellezett akrilhéj körbefutó ülőpaddal és lábtérrel, fúvókák, fejtámlák, kezelőpanel, vízszintes léces szekrény sarokprofilokkal, kétfokú lépcső. A buborékos víz és az éjjeli LED-csík a régi.
+- A csomagok elrendezése, helyigénye és ülőhelyszáma nem változott; a pultok, a hosszú asztalok lapja, a dohányzóasztal és a növények a régiek. A székek anyagonként egy hálóból állnak (a korábbi 6 helyett 3 rajzolási hívás székenként).
+- **Korlát:** a bútorok textúra nélküli, egyszínű anyagokat kapnak (szövet, teak, porfestett alumínium); szemléltetésre valók.
+- Tesztek: `furnitureModels.test.ts` (minden modell méretarányos és a padlón áll).
+
 ## 4.09 – Műszaki jelölések: valódi adatok a gyári dokumentációból
 
 - **Adatlap-kártyák a 3D-ben:** a „Műszaki jelölések” a forgólamellás tetőnél már nem általános mondatokat, hanem az SB 400 referenciarendszer gyári dokumentációjának adatait mutatják, azon az alkatrészen, amiről szólnak: lamella (profil, tömeg, osztás, a terv darabszáma és hossza), lamellahajtás (motorok, forgástartomány, hajtórúd), gerenda, oszlop és talp (rögzítés, alapozás), vízelvezetés, hó- és szélterhelés, LED (ha a tervben van). Az esőérzékelő jelölése csak akkor látszik, ha a tervben van szenzor.

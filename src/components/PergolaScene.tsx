@@ -171,6 +171,30 @@ function RealisticAsset(props: RealisticAssetProps) {
   return <SceneAssetBoundary name={props.url}><Suspense fallback={null}><RealisticAssetContent {...props} /></Suspense></SceneAssetBoundary>
 }
 
+// Blenderben modellezett bútorok és berendezések (méretarányos GLB-k: az origó a padló közepe, az elem +z felé néz).
+const furnitureUrl = (name: string) => assetUrl(`/assets/models/furniture/${name}.glb`)
+type KitModelProps = { name: string; position?: [number, number, number]; rotation?: number }
+function KitModelContent({ name, position = [0, 0, 0], rotation = 0 }: KitModelProps) {
+  const { scene: source } = useGLTF(furnitureUrl(name))
+  const object = useMemo(() => {
+    const copy = source.clone(true)
+    copy.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return
+      child.castShadow = true
+      child.receiveShadow = true
+      if (child.material instanceof THREE.MeshStandardMaterial) child.material.envMapIntensity = 0.7
+    })
+    return copy
+  }, [source])
+  const invalidate = useThree((state) => state.invalidate)
+  const gl = useThree((state) => state.gl)
+  useEffect(() => { refreshShadows(gl); invalidate() }, [gl, invalidate, object])
+  return <primitive object={object} position={position} rotation={[0, rotation, 0]} />
+}
+function KitModel(props: KitModelProps) {
+  return <SceneAssetBoundary name={`furniture ${props.name}`}><Suspense fallback={null}><KitModelContent {...props} /></Suspense></SceneAssetBoundary>
+}
+
 let powderCoatTexture: THREE.DataTexture | null = null
 /** A textúra átlagosan ~0,8-as világosságú: a fa színét ennyivel világosítjuk (kissé), hogy a minta tónusa stimmeljen. */
 const lightenForWood = (hex: string) => `#${new THREE.Color(hex).multiplyScalar(1.1).getHexString()}`
@@ -1941,18 +1965,8 @@ function PlantPot({ position, scale = 1 }: { position: [number, number, number];
   return <RealisticAsset url={assetUrl('/assets/models/potted_plant_02/model.gltf')} position={position} height={0.92 * scale} rotation={position[0] * 0.7} />
 }
 
-const FABRIC = ['#aaa397', '#b8b1a5', '#9e998f']
-
-function Sofa({ width = 2.2 }: { width?: number }) {
-  const cushionWidth = (width - 0.24) / 3
-  return <group>
-    <RoundedBox args={[width, 0.22, 0.83]} position={[0, 0.29, 0]} radius={0.065} smoothness={4} castShadow receiveShadow><meshStandardMaterial color="#5c5b55" roughness={0.96} /></RoundedBox>
-    {[-1, 0, 1].map((index) => <group key={index}>
-      <RoundedBox args={[cushionWidth - 0.025, 0.18, 0.71]} position={[index * cushionWidth, 0.48, 0.035]} radius={0.075} smoothness={5} castShadow><meshStandardMaterial color={FABRIC[index === 0 ? 0 : 1]} roughness={0.98} /></RoundedBox>
-      <RoundedBox args={[cushionWidth - 0.035, 0.48, 0.2]} position={[index * cushionWidth, 0.77, -0.33]} rotation={[-0.13, 0, 0]} radius={0.075} smoothness={5} castShadow><meshStandardMaterial color={FABRIC[index === 1 ? 2 : 1]} roughness={0.98} /></RoundedBox>
-    </group>)}
-    {[-1, 1].map((side) => <RoundedBox key={side} args={[0.16, 0.38, 0.84]} position={[side * (width / 2 - 0.06), 0.49, 0]} radius={0.055} smoothness={4} castShadow><meshStandardMaterial color="#66645d" roughness={0.96} /></RoundedBox>)}
-  </group>
+function Sofa() {
+  return <KitModel name="sofa" />
 }
 
 /** Pihenősarok a zóna (3,0 × 2,6 m) közepén: kanapé, szőnyeg, dohányzóasztal, növény. */
@@ -1966,11 +1980,7 @@ function LoungeSet() {
 }
 
 function DiningChair({ position, rotation }: { position: [number, number, number]; rotation: number }) {
-  return <group position={position} rotation={[0, rotation, 0]}>
-    <RoundedBox args={[0.46, 0.05, 0.46]} position={[0, 0.45, 0]} radius={0.02} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></RoundedBox>
-    <RoundedBox args={[0.46, 0.42, 0.04]} position={[0, 0.69, -0.21]} rotation={[-0.08, 0, 0]} radius={0.018} smoothness={3} castShadow><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></RoundedBox>
-    {[[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x, 0.215, z]} castShadow><boxGeometry args={[0.025, 0.43, 0.025]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>)}
-  </group>
+  return <KitModel name="chair" position={position} rotation={rotation} />
 }
 
 /** Étkező: asztal és székek; a székek a kihúzáshoz szükséges helyen. */
@@ -1979,8 +1989,7 @@ function DiningSet({ seats }: { seats: 6 | 8 }) {
   const width = seats === 8 ? 1.0 : 0.9
   const along = seats === 8 ? [-0.75, 0, 0.75] : [-0.6, 0, 0.6]
   return <group>
-    <RoundedBox args={[length, 0.045, width]} position={[0, 0.75, 0]} radius={0.015} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#9a7652" roughness={0.7} /></RoundedBox>
-    {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x * (length / 2 - 0.12), 0.365, z * (width / 2 - 0.1)]} castShadow><boxGeometry args={[0.06, 0.73, 0.06]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>)}
+    <KitModel name={seats === 8 ? 'table8' : 'table6'} />
     {along.map((x) => <DiningChair key={`a${x}`} position={[x, 0, -(width / 2 + 0.22)]} rotation={0} />)}
     {along.map((x) => <DiningChair key={`b${x}`} position={[x, 0, width / 2 + 0.22]} rotation={Math.PI} />)}
     {seats === 8 && [-1, 1].map((side) => <DiningChair key={`e${side}`} position={[side * (length / 2 + 0.24), 0, 0]} rotation={side * -Math.PI / 2} />)}
@@ -1991,9 +2000,7 @@ function DiningSet({ seats }: { seats: 6 | 8 }) {
 function BistroSet() {
   return <group>
     {[-0.95, 0.95].map((x) => <group key={x} position={[x, 0, 0]}>
-      <mesh position={[0, 0.73, 0]} castShadow receiveShadow><cylinderGeometry args={[0.35, 0.35, 0.035, 32]} /><meshStandardMaterial color="#d7d2c8" roughness={0.6} /></mesh>
-      <mesh position={[0, 0.36, 0]} castShadow><cylinderGeometry args={[0.03, 0.03, 0.7, 12]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
-      <mesh position={[0, 0.01, 0]} castShadow><cylinderGeometry args={[0.22, 0.24, 0.02, 24]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
+      <KitModel name="bistro" />
       <DiningChair position={[0, 0, -0.62]} rotation={0} />
       <DiningChair position={[0, 0, 0.62]} rotation={Math.PI} />
     </group>)}
@@ -2006,29 +2013,20 @@ function BarSet() {
   return <group>
     <RoundedBox args={[2.2, 1.05, 0.6]} position={[0, 0.525, -0.35]} radius={0.02} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#2f3335" roughness={0.75} /></RoundedBox>
     <RoundedBox args={[2.3, 0.05, 0.7]} position={[0, 1.07, -0.35]} radius={0.015} smoothness={3} castShadow receiveShadow><meshStandardMaterial color="#9a7652" roughness={0.6} /></RoundedBox>
-    {[-0.78, -0.26, 0.26, 0.78].map((x) => <group key={x} position={[x, 0, 0.22]}>
-      <mesh position={[0, 0.74, 0]} castShadow><cylinderGeometry args={[0.17, 0.17, 0.04, 20]} /><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></mesh>
-      <mesh position={[0, 0.37, 0]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.72, 10]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
-      <mesh position={[0, 0.01, 0]}><cylinderGeometry args={[0.17, 0.18, 0.02, 20]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
-    </group>)}
+    {[-0.78, -0.26, 0.26, 0.78].map((x) => <KitModel key={x} name="stool" position={[x, 0, 0.22]} rotation={Math.PI} />)}
     <PlantPot position={[1.35, 0.02, -0.6]} scale={0.8} />
   </group>
 }
 
 /** Napozó: két döntött háttámlás nyugágy és egy kisasztal közöttük. */
-/** Egyszerűsített szék a használati csomagokhoz (sok darab kell): 3 háló székenként, hogy a nagy teraszok is gyorsak maradjanak. */
+/** Szék a használati csomagokhoz: ugyanaz a modell, mint az étkezőnél (3 háló székenként). */
 function LiteChair({ position, rotation }: { position: [number, number, number]; rotation: number }) {
-  return <group position={position} rotation={[0, rotation, 0]}>
-    <mesh position={[0, 0.45, 0]} castShadow><boxGeometry args={[0.44, 0.05, 0.44]} /><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></mesh>
-    <mesh position={[0, 0.69, -0.2]} castShadow><boxGeometry args={[0.44, 0.4, 0.04]} /><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></mesh>
-    {[[-0.19, -0.19], [0.19, -0.19], [-0.19, 0.19], [0.19, 0.19]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x, 0.215, z]}><boxGeometry args={[0.025, 0.43, 0.025]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>)}
-  </group>
+  return <KitModel name="chair" position={position} rotation={rotation} />
 }
 /** 4 fős étteremi asztal: 120 × 80 cm, két-két szék a hosszú oldalakon. */
 function Table4() {
   return <group>
-    <mesh position={[0, 0.75, 0]} castShadow receiveShadow><boxGeometry args={[1.2, 0.04, 0.8]} /><meshStandardMaterial color="#9a7652" roughness={0.7} /></mesh>
-    {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x * 0.54, 0.365, z * 0.34]} castShadow><boxGeometry args={[0.05, 0.73, 0.05]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>)}
+    <KitModel name="table4" />
     {[-0.3, 0.3].map((x) => <LiteChair key={`a${x}`} position={[x, 0, -0.62]} rotation={0} />)}
     {[-0.3, 0.3].map((x) => <LiteChair key={`b${x}`} position={[x, 0, 0.62]} rotation={Math.PI} />)}
   </group>
@@ -2057,10 +2055,7 @@ function KitchenRun({ length }: { length: number }) {
       return <group key={`${module.kind}${index}`} position={[module.x, 0, 0]}>
         <mesh position={[0, 0.44, 0.315]}><boxGeometry args={[module.width - 0.04, 0.8, 0.012]} /><meshStandardMaterial color={module.kind === 'fridge' ? '#b9bfc2' : '#3a4043'} metalness={module.kind === 'fridge' ? 0.7 : 0.2} roughness={module.kind === 'fridge' ? 0.35 : 0.7} /></mesh>
         <mesh position={[0, 0.7, 0.335]}><boxGeometry args={[Math.min(0.3, module.width * 0.6), 0.015, 0.02]} /><meshStandardMaterial color="#a8aeb1" metalness={0.8} roughness={0.3} /></mesh>
-        {module.kind === 'grill' && <group position={[0, 0.925, 0.02]}>
-          <mesh position={[0, 0.05, 0]} castShadow><boxGeometry args={[Math.min(module.width - 0.06, 0.78), 0.1, 0.55]} /><meshStandardMaterial color="#1c1f20" metalness={0.7} roughness={0.35} /></mesh>
-          <mesh position={[0, 0.14, -0.2]} rotation={[-0.5, 0, 0]} castShadow><boxGeometry args={[Math.min(module.width - 0.06, 0.78), 0.03, 0.34]} /><meshStandardMaterial color="#b9bfc2" metalness={0.8} roughness={0.3} /></mesh>
-        </group>}
+        {module.kind === 'grill' && <KitModel name="grill" position={[0, 0.9225, 0.02]} />}
         {module.kind === 'sink' && <group position={[0, 0.925, 0.03]}>
           <mesh position={[0, -0.002, 0]}><boxGeometry args={[module.width - 0.16, 0.012, 0.4]} /><meshStandardMaterial color="#7d8487" metalness={0.85} roughness={0.3} /></mesh>
           <mesh position={[0, 0.16, -0.24]} castShadow><cylinderGeometry args={[0.014, 0.014, 0.32, 8]} /><meshStandardMaterial color="#c3c8ca" metalness={0.9} roughness={0.25} /></mesh>
@@ -2076,10 +2071,7 @@ function KitchenIsland({ length, seats }: { length: number; seats: number }) {
   return <group>
     <mesh position={[0, 0.5, -0.05]} castShadow receiveShadow><boxGeometry args={[length, 1.0, 0.7]} /><meshStandardMaterial color="#2f3335" roughness={0.75} /></mesh>
     <mesh position={[0, 1.02, 0.02]} castShadow receiveShadow><boxGeometry args={[length + 0.06, 0.045, 0.95]} /><meshStandardMaterial color="#cfcac0" roughness={0.45} /></mesh>
-    {xs.map((x) => <group key={x} position={[x, 0, 0.74]}>
-      <mesh position={[0, 0.74, 0]} castShadow><cylinderGeometry args={[0.17, 0.17, 0.04, 16]} /><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></mesh>
-      <mesh position={[0, 0.37, 0]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.72, 8]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
-    </group>)}
+    {xs.map((x) => <KitModel key={x} name="stool" position={[x, 0, 0.74]} rotation={Math.PI} />)}
   </group>
 }
 /** Hosszú bárpult a hátsó fal mentén, bárszékekkel a vendégoldalon (+z). */
@@ -2088,22 +2080,14 @@ function BarRun({ length, seats }: { length: number; seats: number }) {
   return <group>
     <mesh position={[0, 0.525, 0]} castShadow receiveShadow><boxGeometry args={[length, 1.05, 0.6]} /><meshStandardMaterial color="#2f3335" roughness={0.75} /></mesh>
     <mesh position={[0, 1.07, 0.05]} castShadow receiveShadow><boxGeometry args={[length + 0.1, 0.05, 0.75]} /><meshStandardMaterial color="#9a7652" roughness={0.6} /></mesh>
-    {xs.map((x) => <group key={x} position={[x, 0, 0.62]}>
-      <mesh position={[0, 0.74, 0]} castShadow><cylinderGeometry args={[0.17, 0.17, 0.04, 16]} /><meshStandardMaterial color="#b7b0a3" roughness={0.95} /></mesh>
-      <mesh position={[0, 0.37, 0]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.72, 8]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
-    </group>)}
+    {xs.map((x) => <KitModel key={x} name="stool" position={[x, 0, 0.62]} rotation={Math.PI} />)}
   </group>
 }
 
 function SunbedSet() {
   return <group>
-    {[-0.75, 0.75].map((x) => <group key={x} position={[x, 0, 0]}>
-      <RoundedBox args={[0.7, 0.08, 1.25]} position={[0, 0.34, 0.3]} radius={0.03} smoothness={3} castShadow receiveShadow><meshStandardMaterial color={FABRIC[1]} roughness={0.98} /></RoundedBox>
-      <RoundedBox args={[0.7, 0.08, 0.75]} position={[0, 0.58, -0.58]} rotation={[-0.75, 0, 0]} radius={0.03} smoothness={3} castShadow><meshStandardMaterial color={FABRIC[0]} roughness={0.98} /></RoundedBox>
-      {[[-0.3, -0.35], [0.3, -0.35], [-0.3, 0.8], [0.3, 0.8]].map(([lx, lz]) => <mesh key={`${lx}${lz}`} position={[lx, 0.15, lz]} castShadow><boxGeometry args={[0.03, 0.3, 0.03]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>)}
-    </group>)}
-    <mesh position={[0, 0.42, 0.1]} castShadow receiveShadow><cylinderGeometry args={[0.22, 0.22, 0.03, 24]} /><meshStandardMaterial color="#d7d2c8" roughness={0.6} /></mesh>
-    <mesh position={[0, 0.2, 0.1]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.4, 10]} /><meshStandardMaterial color="#2a2f31" metalness={0.6} roughness={0.4} /></mesh>
+    {[-0.75, 0.75].map((x) => <KitModel key={x} name="sunbed" position={[x, 0, 0]} />)}
+    <KitModel name="sidetable" position={[0, 0, 0.1]} />
   </group>
 }
 
@@ -2135,7 +2119,7 @@ function Furniture({ config, scene, hideZone = false }: { config: PergolaConfig;
     // Nagy pergolán a csomag rácsban ismétlődik (étterem, kávézó): minden példány a saját zónájában áll.
     : layout.cells.map((cell) => <group key={`${cell.x}:${cell.z}`} position={[cell.x, 0, cell.z]}>
       {FURNITURE_SETS[set].parts.map((part) => <group key={part.kind} position={[part.x, 0, 0]}>
-        {part.kind === 'lounge' ? <LoungeSet /> : part.kind === 'dining6' ? <DiningSet seats={6} /> : part.kind === 'dining8' ? <DiningSet seats={8} /> : part.kind === 'bistro' ? <BistroSet /> : part.kind === 'bar' ? <BarSet /> : part.kind === 'sunbed' ? <SunbedSet /> : <HotTub night={getLighting(scene).night} />}
+        {part.kind === 'lounge' ? <LoungeSet /> : part.kind === 'dining6' ? <DiningSet seats={6} /> : part.kind === 'dining8' ? <DiningSet seats={8} /> : part.kind === 'bistro' ? <BistroSet /> : part.kind === 'bar' ? <BarSet /> : part.kind === 'sunbed' ? <SunbedSet /> : <HotTub night={getLighting(scene).night} shell={<KitModel name="hottub" />} />}
       </group>)}
     </group>)
   const zoneColor = fit.level === 'comfortable' ? '#9be26a' : fit.level === 'tight' ? '#ffc24a' : '#ff5b4a'
