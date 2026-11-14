@@ -1,6 +1,8 @@
 // Termékcsaládok nyilvántartása (docs/TOBBTERMEK-TERV.md). Függőség nélküli, értékeket exportáló modul:
 // a szerver (Edge) és a tesztek is relatív úton importálják, ezért itt nincs React, Vite vagy más import.
 // Egy család akkor „live”, ha van hozzá konfigurátor; a „soon” családok a választóban érdeklődés-méréssel szerepelnek.
+// A „hidden” családok kódja megmarad (későbbi fejlesztés), de az MVP-ben sehol nem jelennek meg: nincs kártya, nincs útvonal
+// (a régi linkek a pergolára irányítanak), és egyetlen gyártó kínálatában sem szerepelnek.
 
 export type ProductFamily = 'pergola' | 'carport' | 'fence' | 'garage-door' | 'garden-building'
 
@@ -11,18 +13,19 @@ export interface ProductInfo {
   label: string
   short: string
   description: string
-  status: 'live' | 'soon'
+  status: 'live' | 'soon' | 'hidden'
 }
 
 export const PRODUCTS: readonly ProductInfo[] = [
+  // MVP: csak a teraszfedés (pergola, veranda, télikert) él; a többi család félretéve (status: 'hidden').
   { id: 'pergola', slug: 'teraszfedes', label: 'Teraszfedés', short: 'Pergola, veranda, télikert', description: 'Lamellás, üveg- vagy textiltető, oldalzárás, szín és komfort — valós 3D-ben, azonnali irányárral.', status: 'live' },
   // A carport a keretes-tető motoron fut (a pergola konfigurátor negyedik építménytípusa), ezért él.
-  { id: 'carport', slug: 'carport', label: 'Carport és előtető', short: 'Egy- és kétállásos, bejárati előtető', description: 'Alumínium váz fix lemez-, polikarbonát- vagy üvegtetővel; méret, oszlopok, szín, burkolt beálló — valós 3D-ben, azonnali irányárral.', status: 'live' },
+  { id: 'carport', slug: 'carport', label: 'Carport és előtető', short: 'Egy- és kétállásos, bejárati előtető', description: 'Alumínium váz fix lemez-, polikarbonát- vagy üvegtetővel; méret, oszlopok, szín, burkolt beálló — valós 3D-ben, azonnali irányárral.', status: 'hidden' },
   // A kerítés a kültéri (lineáris) magon fut: saját konfiguráció, árazó és 3D (CatalogStudio).
-  { id: 'fence', slug: 'kerites', label: 'Kerítés és kapu', short: 'Lamellás, lécfalas, tömör; toló- és szárnyas kapu', description: 'Alumínium, acél, kovácsoltvas, fa vagy WPC kerítés telekméretre, gépkocsikapuval, kiskapuval és motorral — folyóméter-árral.', status: 'live' },
+  { id: 'fence', slug: 'kerites', label: 'Kerítés és kapu', short: 'Lamellás, lécfalas, tömör; toló- és szárnyas kapu', description: 'Alumínium, acél, kovácsoltvas, fa vagy WPC kerítés telekméretre, gépkocsikapuval, kiskapuval és motorral — folyóméter-árral.', status: 'hidden' },
   // A garázskapu saját magon fut (products/garage.ts): típus, nyílásméret, panel, ablak, szín, motor, saját 3D (GarageStudio).
-  { id: 'garage-door', slug: 'garazskapu', label: 'Garázskapu', short: 'Szekcionált, billenő, redőny; motorral', description: 'Nyílásméretre szabott szekcionált, billenő, redőny- vagy oldalra nyíló kapu; panelminta, szigetelés, ablak, szín, motor — valós 3D-ben, azonnali irányárral.', status: 'live' },
-  { id: 'garden-building', slug: 'kerti-haz', label: 'Kerti ház és szauna', short: 'Tároló, szauna, kerti iroda', description: 'Méret, tető, nyílászárók, terasz és belső elrendezés; később nyaraló és tiny house.', status: 'soon' },
+  { id: 'garage-door', slug: 'garazskapu', label: 'Garázskapu', short: 'Szekcionált, billenő, redőny; motorral', description: 'Nyílásméretre szabott szekcionált, billenő, redőny- vagy oldalra nyíló kapu; panelminta, szigetelés, ablak, szín, motor — valós 3D-ben, azonnali irányárral.', status: 'hidden' },
+  { id: 'garden-building', slug: 'kerti-haz', label: 'Kerti ház és szauna', short: 'Tároló, szauna, kerti iroda', description: 'Méret, tető, nyílászárók, terasz és belső elrendezés; később nyaraló és tiny house.', status: 'hidden' },
 ]
 
 export const DEFAULT_PRODUCT: ProductFamily = 'pergola'
@@ -32,8 +35,14 @@ export const PRODUCT_IDS = PRODUCTS.map((product) => product.id) as [ProductFami
 export const productInfo = (id: ProductFamily): ProductInfo => PRODUCTS.find((product) => product.id === id)!
 export const productBySlug = (slug: string | undefined | null): ProductInfo | undefined => (slug ? PRODUCTS.find((product) => product.slug === slug.toLowerCase()) : undefined)
 
-/** A gyártó által kínált családok; megadás nélkül csak a pergola (a meglévő gyártók változatlanul működnek). */
-export const tenantProducts = (tenant: { products?: readonly ProductFamily[] }): ProductFamily[] => (tenant.products?.length ? [...tenant.products] : [DEFAULT_PRODUCT])
+/** Félretett (MVP-ből kivett) család-e: sehol nem jelenik meg, az útvonala a pergolára irányít. */
+export const isHiddenProduct = (id: ProductFamily) => productInfo(id).status === 'hidden'
+
+/** A gyártó által kínált családok; megadás nélkül csak a pergola (a meglévő gyártók változatlanul működnek). A félretett családok kimaradnak. */
+export const tenantProducts = (tenant: { products?: readonly ProductFamily[] }): ProductFamily[] => {
+  const offered = (tenant.products?.length ? [...tenant.products] : [DEFAULT_PRODUCT]).filter((id) => !isHiddenProduct(id))
+  return offered.length ? offered : [DEFAULT_PRODUCT]
+}
 
 /** Érdeklődés-mérés eseményneve egy még nem elérhető családra (a /api/track fogadja). */
 export type InterestEvent = `interest_${ProductFamily}`

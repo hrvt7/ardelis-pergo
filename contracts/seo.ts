@@ -148,7 +148,8 @@ const SEO_PAGES: Record<string, SeoPage> = {
   },
 }
 
-export const SEO_SITEMAP_PATHS = ['/', '/en', '/minta', '/konfigurator', '/konfigurator/carport', '/konfigurator/kerites', '/konfigurator/garazskapu', '/adatkezeles'] as const
+// MVP: a carport, a kerítés és a garázskapu oldala félretéve (src/products: status 'hidden'), ezért nincs a sitemapben.
+export const SEO_SITEMAP_PATHS = ['/', '/en', '/minta', '/konfigurator', '/adatkezeles'] as const
 
 export function normalizeSeoPath(pathname: string) {
   if (!pathname || pathname === '/') return '/'

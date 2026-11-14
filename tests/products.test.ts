@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { productDefaultConfig } from '../src/lib/config'
-import { DEFAULT_PRODUCT, HUB_SLUG, hubPath, INTEREST_EVENTS, interestEvent, productBySlug, productInfo, productPath, PRODUCTS, tenantProducts } from '../src/products'
+import { DEFAULT_PRODUCT, HUB_SLUG, hubPath, INTEREST_EVENTS, interestEvent, isHiddenProduct, productBySlug, productInfo, productPath, PRODUCTS, tenantProducts } from '../src/products'
 import { TRACK_EVENTS } from '../server/analytics'
 import { fenceEngine, garageEngine, getEngine, pergolaEngine } from '../src/products/engines'
 import { calculateGaragePrice, decodeGarageHash, GARAGE_DEFAULTS, GARAGE_PRICE_DEFAULTS } from '../src/products/garage'
@@ -41,10 +41,21 @@ describe('termékcsaládok', () => {
     expect(productPath('embed', 'acme', 'carport')).toBe('/embed/acme/carport')
   })
 
-  it('a gyártó kínálata: megadás nélkül csak pergola; a demó a teraszfedést, a carportot, a kerítést és a garázskaput kínálja', () => {
+  it('a gyártó kínálata: megadás nélkül csak pergola; MVP-ben a félretett családok senkinél nem jelennek meg', () => {
     expect(tenantProducts({})).toEqual(['pergola'])
-    expect(tenantProducts({ products: ['pergola', 'fence'] })).toEqual(['pergola', 'fence'])
-    expect(tenantProducts(demoTenant)).toEqual(['pergola', 'carport', 'fence', 'garage-door'])
+    expect(tenantProducts({ products: ['pergola', 'fence'] })).toEqual(['pergola'])
+    // A demó beállításában szerepelnek, de az MVP csak a teraszfedést (pergola, veranda, télikert) kínálja.
+    expect(tenantProducts(demoTenant)).toEqual(['pergola'])
+    // Ha egy gyártó csak félretett családot adott meg, a pergola marad.
+    expect(tenantProducts({ products: ['garage-door'] })).toEqual(['pergola'])
+  })
+
+  it('MVP: csak a teraszfedés él; a carport, a kerítés, a garázskapu és a kerti ház félretéve', () => {
+    expect(PRODUCTS.filter((product) => !isHiddenProduct(product.id)).map((product) => product.id)).toEqual(['pergola'])
+    for (const id of ['carport', 'fence', 'garage-door', 'garden-building'] as const) expect(isHiddenProduct(id)).toBe(true)
+    expect(isHiddenProduct('pergola')).toBe(false)
+    // A választóban nincs „hamarosan” kártya sem.
+    expect(PRODUCTS.some((product) => product.status === 'soon')).toBe(false)
   })
 
   it('motor: a pergola motorja ugyanazt adja, mint a meglévő érvényesítés, árazás és megosztókód; a kerti háznak még nincs', () => {
@@ -79,7 +90,8 @@ describe('termékcsaládok', () => {
   it('garázskapu-motor: érvényesít, mintaárlistával áraz, `g=` megosztó kódot ad, fejlécet és leírást ír; a típus szűri az opciókat', () => {
     const garage = GARAGE_DEFAULTS
     expect(getEngine('garage-door')).toBe(garageEngine)
-    expect(productInfo('garage-door').status).toBe('live')
+    // MVP-ben félretéve: a motor és a kód megvan, de a család nem jelenik meg.
+    expect(productInfo('garage-door').status).toBe('hidden')
     expect(garageEngine.parse(demoTenant, garage)).toEqual(garage)
     expect(garageEngine.parse(demoTenant, { ...garage, width: 9 })).toBeNull()
     expect(garageEngine.parse(demoTenant, OUTDOOR_DEFAULTS.fence)).toBeNull()

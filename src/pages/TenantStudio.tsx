@@ -1,11 +1,11 @@
 import { Suspense, useEffect, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router'
+import { Navigate, useParams, useSearchParams } from 'react-router'
 import NotFound from '@/pages/NotFound'
 import { DEFAULT_TENANT_ID, getTenant } from '@/tenants'
 import { TenantProvider } from '@/tenants/TenantContext'
 import { applyOverrides } from '@/tenants/overrides'
 import type { Tenant } from '@/tenants/types'
-import { DEFAULT_PRODUCT, HUB_SLUG, productBySlug, tenantProducts, type ProductFamily } from '@/products'
+import { DEFAULT_PRODUCT, HUB_SLUG, isHiddenProduct, productBySlug, productPath, PRODUCTS, tenantProducts, type ProductFamily } from '@/products'
 import { hasStudio, preloadStudio, ProductStudio } from '@/products/studios'
 import ProductSoon from '@/pages/ProductSoon'
 import ProductHub from '@/components/ProductChooser'
@@ -58,6 +58,10 @@ export default function TenantStudio({ mode }: { mode: 'demo' | 'standalone' | '
   const product = params.product && !hub ? productBySlug(params.product) : { id: DEFAULT_PRODUCT, status: 'live' as const }
   const tenant = useEffectiveTenant(base, product?.id ?? DEFAULT_PRODUCT)
   if (!base || !product) return <NotFound />
+  // MVP: a félretett családok (carport, kerítés, garázskapu, kerti ház) régi linkjei és a választó – amikor csak egy család
+  // maradt benne – a pergola konfigurátorra visznek.
+  const hubEmpty = hub && tenantProducts(base).length < 2 && !(base.demo && PRODUCTS.some((item) => item.status === 'soon'))
+  if (hubEmpty || (!hub && isHiddenProduct(product.id))) return <Navigate to={productPath(mode, base.id, DEFAULT_PRODUCT)} replace />
   if (!tenant) return <PageLoading />
   if (product.id !== DEFAULT_PRODUCT && !tenant.demo && !tenantProducts(tenant).includes(product.id)) return <NotFound />
   const embed = mode === 'embed'

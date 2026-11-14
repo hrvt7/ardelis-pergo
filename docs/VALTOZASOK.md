@@ -1,5 +1,13 @@
 # Változások
 
+## 4.05 – MVP: csak a teraszfedés (pergola, veranda, télikert) marad a kalkulátorban
+
+- **Félretett termékek:** a carport, a kerítés és kapu, a garázskapu, valamint a kerti ház/szauna egyelőre kikerült a kalkulátorból (`src/products`: `status: 'hidden'`). A kódjuk megmaradt a későbbi fejlesztéshez, de sehol nem jelennek meg: nincs termékválasztó kártya, nincs „Másik termék” link a fejlécben, és egyetlen gyártó kínálatában sem szerepelnek.
+- **Régi linkek:** a `/konfigurator/carport`, `/kerites`, `/garazskapu` és a termékválasztó (`/termekek`) a pergola konfigurátorra irányít (a `/k/<gyártó>/…` és az `/embed/<gyártó>/…` útvonalakon is).
+- **SEO:** a három félretett oldal kikerült a sitemapből.
+- A pergola-konfigurátor (pergola, veranda, télikert) változatlan.
+- Tesztek: `products.test.ts` (csak a teraszfedés él, a félretett családok senki kínálatában nincsenek), `seo.test.ts` (a félretett oldalak nincsenek a sitemapben).
+
 ## 4.04 – Prémium csomag: közös visszajelzések, mozgás, termékválasztó, tervrendszer
 
 **A — Közös funkciók minden konfigurátorban**
