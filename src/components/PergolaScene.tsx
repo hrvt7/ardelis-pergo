@@ -46,6 +46,7 @@ import { deckBounds } from '@/lib/deck'
 import { SolarPanels } from '@/components/SceneExtras'
 import LouvreRoof from '@/components/LouvreRoof'
 import { SB400, sb400Post } from '@/lib/sb400'
+import { SB400_SOURCE, sb400Details, type Sb400DetailId } from '@/lib/sb400Details'
 import Car from '@/components/models/Car'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
@@ -1111,7 +1112,6 @@ function LedStrip({ args, position, night, color = '#ffc87a', level = 0.8 }: { a
 }
 
 const HOTSPOTS = {
-  motor: { title: 'Csendes, rejtett motor', text: 'A lamellák vezérlése a gerendába integrált motorházban kap helyet.' },
   led: { title: 'Hangulatfény árnyalatokban', text: 'A periméter LED nem vakít, hanem a terasz anyagait emeli ki.' },
   drain: { title: 'Rejtett vízelvezetés az oszlopban', text: 'A víz a tetőpályából a gerendán, majd az oszlopon belül távozik.' },
   sensor: { title: 'Esőben automata védelem', text: 'A szenzorcsomag az eső érzékelésekor zárt lamellapozíciót ad.' },
@@ -1119,22 +1119,38 @@ const HOTSPOTS = {
 }
 
 function Hotspots({ config, posts }: { config: PergolaConfig; posts: [number, number][] }) {
-  const [active, setActive] = useState<keyof typeof HOTSPOTS | null>(null)
+  const [active, setActive] = useState<string | null>(null)
   const { width, depth, height } = config
   const front = posts.filter(([, z]) => z > 0).sort((a, b) => b[0] - a[0])
   const drain = front[0]
   const post = front[front.length - 1]
-  const points: { id: keyof typeof HOTSPOTS; position: [number, number, number] }[] = [
-    { id: 'motor', position: [width / 2, height + 0.18, depth / 2 - 0.25] },
-    { id: 'led', position: [-width / 2 + 0.2, height - 0.15, depth / 2 - 0.12] },
-    ...(drain ? [{ id: 'drain' as const, position: [drain[0], 0.5, drain[1]] as [number, number, number] }] : []),
-    { id: 'sensor', position: [-width / 2 + 0.2, height + 0.35, -depth / 2 + 0.2] },
-    ...(post && post !== drain ? [{ id: 'post' as const, position: [post[0], 0.15, post[1]] as [number, number, number] }] : []),
-  ]
-  // Csak a tervben meglévő részletek kapnak jelölést: lamellamotor és szenzor mozgó tetőnél, LED ha van.
-  const movable = config.roof === 'louvered'
-  const shown = points.filter((point) => (point.id === 'motor' || point.id === 'sensor' ? movable : point.id === 'led' ? config.led : true))
-  return <group>{shown.map((point) => <group key={point.id} position={point.position}><Html center zIndexRange={[12, 0]}><button type="button" className={`hotspot ${active === point.id ? 'active' : ''}`} aria-label={HOTSPOTS[point.id].title} onClick={(event) => { event.stopPropagation(); setActive(active === point.id ? null : point.id) }}><span>+</span></button>{active === point.id && <div className="hotspot-card"><button type="button" aria-label="Előnykártya bezárása" onClick={() => setActive(null)}>×</button><strong>{HOTSPOTS[point.id].title}</strong><p>{HOTSPOTS[point.id].text}</p></div>}</Html></group>)}</group>
+  type Point = { id: string; position: [number, number, number]; title: string; text?: string; rows?: [string, string][]; note?: string; source?: string }
+  let points: Point[]
+  if (config.roof === 'louvered') {
+    // Forgólamellás tető: a kártyák a gyári adatlap adatait mutatják, a jelölés azon az alkatrészen ül, amiről szól.
+    const driveSide = isWallSide(config.mount, 'right') && !isWallSide(config.mount, 'left') ? -1 : 1
+    const anchor = post ?? drain
+    const place: Record<Sb400DetailId, [number, number, number] | null> = {
+      louvre: [bayCenter(config, 0) - bayWidth(config) * 0.15, height + 0.1, 0],
+      drive: [driveSide * (width / 2), height + 0.2, depth * 0.12],
+      frame: [-driveSide * width * 0.22, height, depth / 2],
+      post: anchor ? [anchor[0], 0.2, anchor[1]] : null,
+      water: [-driveSide * (width / 2 - 0.09), height - 0.09, -depth * 0.2],
+      load: [driveSide * width * 0.2, height + 0.12, -depth * 0.28],
+      led: [-driveSide * (width / 2 - 0.2), height - 0.15, depth / 2 - 0.12],
+    }
+    points = sb400Details(config).flatMap((detail) => { const position = place[detail.id]; return position ? [{ ...detail, position, source: SB400_SOURCE }] : [] })
+    if (config.sensors) points.push({ id: 'sensor', position: [-width / 2 + 0.2, height + 0.35, -depth / 2 + 0.2], ...HOTSPOTS.sensor })
+  } else {
+    const generic: { id: keyof typeof HOTSPOTS; position: [number, number, number] }[] = [
+      { id: 'led', position: [-width / 2 + 0.2, height - 0.15, depth / 2 - 0.12] },
+      ...(drain ? [{ id: 'drain' as const, position: [drain[0], 0.5, drain[1]] as [number, number, number] }] : []),
+      ...(post && post !== drain ? [{ id: 'post' as const, position: [post[0], 0.15, post[1]] as [number, number, number] }] : []),
+    ]
+    // Csak a tervben meglévő részletek kapnak jelölést (LED csak akkor, ha van).
+    points = generic.filter((point) => (point.id === 'led' ? config.led : true)).map((point) => ({ ...point, ...HOTSPOTS[point.id] }))
+  }
+  return <group>{points.map((point) => <group key={point.id} position={point.position}><Html center zIndexRange={[12, 0]}><button type="button" className={`hotspot ${active === point.id ? 'active' : ''}`} aria-label={point.title} onClick={(event) => { event.stopPropagation(); setActive(active === point.id ? null : point.id) }}><span>+</span></button>{active === point.id && <div className={`hotspot-card ${point.rows ? 'has-spec' : ''} ${point.position[1] < 1 ? 'opens-up' : ''}`}><button type="button" aria-label="Kártya bezárása" onClick={() => setActive(null)}>×</button><strong>{point.title}</strong>{point.text && <p>{point.text}</p>}{point.rows && <dl>{point.rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}{point.note && <p>{point.note}</p>}{point.source && <small>{point.source}</small>}</div>}</Html></group>)}</group>
 }
 
 function Person({ config }: { config: PergolaConfig }) {

@@ -1,5 +1,12 @@
 # Változások
 
+## 4.09 – Műszaki jelölések: valódi adatok a gyári dokumentációból
+
+- **Adatlap-kártyák a 3D-ben:** a „Műszaki jelölések” a forgólamellás tetőnél már nem általános mondatokat, hanem az SB 400 referenciarendszer gyári dokumentációjának adatait mutatják, azon az alkatrészen, amiről szólnak: lamella (profil, tömeg, osztás, a terv darabszáma és hossza), lamellahajtás (motorok, forgástartomány, hajtórúd), gerenda, oszlop és talp (rögzítés, alapozás), vízelvezetés, hó- és szélterhelés, LED (ha a tervben van). Az esőérzékelő jelölése csak akkor látszik, ha a tervben van szenzor.
+- **Forrásmegjelölés:** minden kártya alján ott a forrás és az, hogy a végleges adatokat a gyártó ajánlata rögzíti. Más rendszert forgalmazó gyártónál ezeket az adatokat a saját adatlapjából kell megadni (`src/lib/sb400Details.ts`).
+- A talajközeli jelölések kártyája felfelé nyílik, hogy ne lógjon ki a nézetből. A többi tetőtípus jelölései változatlanok.
+- Tesztek: `sb400Details.test.ts` (darabszám és hossz az adatlap szerint, modulos terv, kulcsadatok, LED-kártya feltétele).
+
 ## 4.08 – Választható háztípus és új kert (Blenderben modellezve)
 
 - **Háztípus-választó:** „A házad” panelen a homlokzat anyaga mellett a ház típusa is választható: az eddigi fa–cink ház, egy modern lapostetős (kétszintes kubus tetőterasszal, léc-betéttel, napelemekkel) és egy nyeregtetős, oromfalas családi ház. Mindkét új ház Blenderben készült (`public/assets/models/houses/*.glb`, együtt kb. 320 kB), a forrásszkript a Blender-fájlban van.

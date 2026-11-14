@@ -236,6 +236,13 @@ a { color: inherit; } svg { flex-shrink: 0; }
 .hotspot-card > button { position: absolute; right: 4px; top: 3px; width: 26px; height: 26px; border: 0; background: transparent; color: var(--text-secondary); }
 .hotspot-card strong { display: block; padding-right: 13px; font: 600 14.5px/1.35 'Plus Jakarta Sans', sans-serif; }
 .hotspot-card p { margin: 6px 0 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.5; }
+.hotspot-card.has-spec { width: 286px; }
+.hotspot-card.opens-up { top: auto; bottom: -15px; }
+.hotspot-card dl { margin: 9px 0 0; display: grid; gap: 0; }
+.hotspot-card dl > div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; padding: 5px 0; border-top: 1px solid rgba(255,255,255,.09); font-size: 12.5px; line-height: 1.4; }
+.hotspot-card dt { color: var(--text-secondary); }
+.hotspot-card dd { margin: 0; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.hotspot-card small { display: block; margin-top: 8px; padding-top: 7px; border-top: 1px solid rgba(255,255,255,.09); color: var(--text-secondary); font-size: 11px; line-height: 1.4; opacity: .8; }
 .scene-poster { position: absolute; inset: 0; z-index: 10; background: #727f78; display: grid; place-items: center; overflow: hidden; transition: opacity .7s ease; }
 .scene-poster.is-leaving { opacity: 0; pointer-events: none; }
 .loader-status strong { font-variant-numeric: tabular-nums; }
@@ -387,7 +394,7 @@ a { color: inherit; } svg { flex-shrink: 0; }
   .mobile-price-bar { position: fixed; z-index: 35; bottom: 0; left: 0; right: 0; min-height: 65px; padding: 8px 14px calc(8px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(18,23,22,.97); backdrop-filter: blur(14px); border-top: 1px solid var(--surface-border); }
   .mobile-price-bar span, .mobile-price-bar strong { display: block; } .mobile-price-bar span { color: var(--text-secondary); font-size: var(--text-xs); } .mobile-price-bar strong { font: 500 17.5px/1.4 'Plus Jakarta Sans', sans-serif; font-variant-numeric: tabular-nums; } .mobile-price-bar button { min-height: 44px; display: flex; align-items: center; gap: 4px; border: 0; background: transparent; color: var(--accent-primary); font-size: var(--text-md); padding: 0 3px 0 10px; }
   .toast { bottom: 77px; width: max-content; justify-content: center; font-size: var(--text-md); }
-  .hotspot-card { width: 175px; } .hotspot { width: 23px; height: 23px; }
+  .hotspot-card { width: 175px; } .hotspot-card.has-spec { width: 240px; } .hotspot-card dl > div { grid-template-columns: 82px minmax(0, 1fr); } .hotspot { width: 23px; height: 23px; }
   .modal-backdrop { padding: 12px; align-items: end; } .modal-dialog { max-height: 91dvh; padding: 18px; border-radius: 12px 12px 0 0; } .tariff-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 480px) {
