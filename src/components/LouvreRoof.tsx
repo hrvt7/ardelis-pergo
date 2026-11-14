@@ -58,15 +58,23 @@ export interface LouvreRoofProps {
   frameMaterial: THREE.Material
   segments: number
   showLabels: boolean
+  /** a lamella vége és a gerenda közti hézag (alap: LOUVRE.endGap) */
+  endGap?: number
+  /** a lamella esése: a hajtásoldali vég ennyivel magasabban ül (SB 400: 20 mm) */
+  fall?: number
+  /** hosszanti ereszek a két oldalgerenda belső síkján (SB 400: 91,6 × 75) */
+  gutters?: boolean
 }
 
-export default function LouvreRoof({ width, depth, height, beam, beamHeight, angle, driveSide, mechanism, reveal = false, slow = false, rain = false, roofMaterial, frameMaterial, segments, showLabels }: LouvreRoofProps) {
+export default function LouvreRoof({ width, depth, height, beam, beamHeight, angle, driveSide, mechanism, reveal = false, slow = false, rain = false, roofMaterial, frameMaterial, segments, showLabels, endGap = LOUVRE.endGap, fall = 0, gutters = false }: LouvreRoofProps) {
   const gl = useThree((s) => s.gl)
   const invalidate = useThree((s) => s.invalidate)
   const beamTop = height + beamHeight / 2
-  const layout = useMemo(() => louvreLayout(width, depth, beam, beamTop), [width, depth, beam, beamTop])
+  const layout = useMemo(() => louvreLayout(width, depth, beam, beamTop, endGap), [width, depth, beam, beamTop, endGap])
   const innerHalf = (depth - beam) / 2
-  const plan = useMemo(() => drivePlan(layout.z, layout.axleY, beamTop, innerHalf - 0.04), [layout, beamTop, innerHalf])
+  // a hajtásoldalon a tengely `fall`-lal magasabban van: a hajtókar, a rúd és a motor ehhez igazodik
+  const driveAxle = layout.axleY + fall
+  const plan = useMemo(() => drivePlan(layout.z, driveAxle, beamTop, innerHalf - 0.04), [layout, driveAxle, beamTop, innerHalf])
   const n = layout.z.length
   const total = n * layout.modules.length
   const modLen = layout.modules[0].length
@@ -103,21 +111,23 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
   const rods = useRef<(THREE.Mesh | null)[]>([])
   const covers = useRef<(THREE.Group | null)[]>([])
   const live = useRef({ angle: -1, shown: mechanism || reveal ? 1 : 0, wave: 0, rain, slowUntil: 0 })
-  const tools = useMemo(() => ({ m: new THREE.Matrix4(), part: new THREE.Matrix4(), q: new THREE.Quaternion(), p: new THREE.Vector3(), s: new THREE.Vector3(1, 1, 1), x: new THREE.Vector3(1, 0, 0), target: new THREE.Vector3() }), [])
+  const tools = useMemo(() => ({ m: new THREE.Matrix4(), part: new THREE.Matrix4(), q: new THREE.Quaternion(), p: new THREE.Vector3(), s: new THREE.Vector3(1, 1, 1), x: new THREE.Vector3(1, 0, 0), target: new THREE.Vector3(), tilt: new THREE.Quaternion() }), [])
   const offsets = useMemo(() => ({
     capL: new THREE.Matrix4().makeTranslation(-(modLen / 2 + 0.004), 0, 0),
     capR: new THREE.Matrix4().makeTranslation(modLen / 2 + 0.004, 0, 0),
-    crank: new THREE.Matrix4().makeTranslation(driveSide * (modLen / 2 + LOUVRE.endGap + 0.004), 0, 0),
+    crank: new THREE.Matrix4().makeTranslation(driveSide * (modLen / 2 + endGap + 0.004), 0, 0),
     shaft: new THREE.Matrix4().makeTranslation(driveSide * (modLen / 2 + 0.012), 0, 0),
-  }), [modLen, driveSide])
+  }), [modLen, driveSide, endGap])
 
   const write = (deg: number) => {
     const { m, part, q, p, s, x } = tools
-    q.setFromAxisAngle(x, -(deg * Math.PI) / 180)
+    // előbb a nyitás a lamella saját tengelye körül, utána az esés (a hajtásoldali vég emelkedik)
+    tools.tilt.setFromAxisAngle(tools.p.set(0, 0, 1), driveSide * Math.atan2(fall, modLen))
+    q.setFromAxisAngle(x, -(deg * Math.PI) / 180).premultiply(tools.tilt)
     let k = 0
     layout.modules.forEach((mod) => {
       for (let i = 0; i < n; i++, k++) {
-        p.set(mod.x, layout.axleY, layout.z[i])
+        p.set(mod.x, layout.axleY + fall / 2, layout.z[i])
         m.compose(p, q, s)
         blades.current?.setMatrixAt(k, m)
         caps.current?.setMatrixAt(k * 2, part.multiplyMatrices(m, offsets.capL))
@@ -131,21 +141,21 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
     const [pz, py] = crankPin(deg)
     layout.modules.forEach((_, j) => {
       const bar = bars.current[j]
-      if (bar) bar.position.set(0, layout.axleY + py, pz)
+      if (bar) bar.position.set(0, driveAxle + py, pz)
       const motor = motors.current[j]
       const rod = rods.current[j]
       if (motor && rod) {
         motor.updateWorldMatrix(true, false)
-        const target = tools.target.set(0, layout.axleY + py + DRIVE.lug, layout.z[plan.lugIndex] + pz)
+        const target = tools.target.set(0, driveAxle + py + DRIVE.lug, layout.z[plan.lugIndex] + pz)
         motor.parent?.localToWorld(target)
         motor.lookAt(target)
-        const len = Math.hypot(layout.z[plan.lugIndex] + pz - plan.pivot[0], layout.axleY + py + DRIVE.lug - plan.pivot[1])
+        const len = Math.hypot(layout.z[plan.lugIndex] + pz - plan.pivot[0], driveAxle + py + DRIVE.lug - plan.pivot[1])
         rod.scale.set(1, 1, Math.max(0.001, len - DRIVE.body))
       }
     })
   }
 
-  useLayoutEffect(() => { live.current.angle = -1 }, [layout, geo])
+  useLayoutEffect(() => { live.current.angle = -1 }, [layout, geo, fall, endGap])
   // A címkék csak közelről (a hajtásoldali kamera) jelennek meg; távolról egymásra csúsznának.
   const [near, setNear] = useState(false)
   const nearRef = useRef(false)
@@ -213,9 +223,15 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
       {/* záróprofilok a lamellasor két végén */}
       {frontSeal > 0.004 && <mesh material={roofMaterial} position={[mod.x, layout.axleY + 0.006, innerHalf - frontSeal / 2]} castShadow receiveShadow><boxGeometry args={[mod.length, 0.022, frontSeal]} /></mesh>}
       {backSeal > 0.004 && <mesh material={roofMaterial} position={[mod.x, layout.axleY + 0.006, -innerHalf + backSeal / 2]} castShadow receiveShadow><boxGeometry args={[mod.length, 0.022, backSeal]} /></mesh>}
+      {/* hosszanti ereszek a gerendák belső síkján, a gerenda aljával egy szintben (91,6 × 75, elöl 58 magas) */}
+      {gutters && [-1, 1].map((side) => <group key={`g${side}`} position={[mod.x + side * (mod.inner / 2), height - beamHeight / 2, 0]}>
+        <mesh material={frameMaterial} position={[-side * 0.0458, 0.0015, 0]} receiveShadow><boxGeometry args={[0.0916, 0.003, depth - beam]} /></mesh>
+        <mesh material={frameMaterial} position={[-side * 0.001, 0.0375, 0]}><boxGeometry args={[0.002, 0.075, depth - beam]} /></mesh>
+        <mesh material={frameMaterial} position={[-side * 0.0906, 0.029, 0]} castShadow><boxGeometry args={[0.002, 0.058, depth - beam]} /></mesh>
+      </group>)}
       {/* hajtórúd 20×20×2 a csapokon */}
       <group position={[driveX[j] + driveSide * 0.026, 0, 0]}>
-        <group ref={(g) => { bars.current[j] = g }} position={[0, layout.axleY + py0, pz0]}>
+        <group ref={(g) => { bars.current[j] = g }} position={[0, driveAxle + py0, pz0]}>
           <mesh material={mats.drive} position={[0, 0.012, (layout.z[0] + layout.z[n - 1]) / 2]} castShadow><boxGeometry args={[0.02, 0.02, layout.z[n - 1] - layout.z[0] + 0.06]} /></mesh>
           <mesh material={mats.motor} position={[0, DRIVE.lug / 2 + 0.006, layout.z[plan.lugIndex]]}><boxGeometry args={[0.014, DRIVE.lug + 0.012, 0.05]} /></mesh>
         </group>

@@ -3,15 +3,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Cog, Pause, Play, X } from 'lucide-react'
 import { crankPin, demoAngle, demoSeconds, DRIVE, drivePlan, LOUVRE, louvreLayout, louvreMetrics, louvreProfile, motorLength, pauseDemo, startDemoClock } from '@/lib/louvreSystem'
+import { SB400 } from '@/lib/sb400'
 import type { PergolaConfig } from '@/types/pergola'
 
 const PHASE_LABEL = { closed: 'Zárt · vízzáró', opening: 'Nyílik', open: 'Teljesen nyitva', closing: 'Záródik' } as const
 const fmt = (value: number, digits = 0) => value.toFixed(digits).replace('.', ',')
 
 export default function MechanismPanel({ config, onClose }: { config: PergolaConfig; onClose: () => void }) {
-  const beamTop = config.height + 0.115
-  const layout = useMemo(() => louvreLayout(config.width, config.depth, 0.19, beamTop), [config.width, config.depth, beamTop])
-  const plan = useMemo(() => drivePlan(layout.z, layout.axleY, beamTop, (config.depth - 0.19) / 2 - 0.04), [layout, beamTop, config.depth])
+  // ugyanaz a váz, mint a jelenetben: SB 400 gerenda, a hajtásoldali tengely 20 mm-rel magasabban
+  const beamTop = config.height + SB400.strutH / 2
+  const layout = useMemo(() => louvreLayout(config.width, config.depth, SB400.strutW, beamTop, SB400.endGap), [config.width, config.depth, beamTop])
+  const driveAxle = layout.axleY + SB400.fall
+  const plan = useMemo(() => drivePlan(layout.z, driveAxle, beamTop, (config.depth - SB400.strutW) / 2 - 0.04), [layout, driveAxle, beamTop, config.depth])
   const profilePath = useMemo(() => louvreProfile(10).map(([x, y], i) => `${i ? 'L' : 'M'}${(x * 1000).toFixed(1)} ${(-y * 1000).toFixed(1)}`).join(' ') + 'Z', [])
   const [paused, setPaused] = useState(false)
   const angleRef = useRef<HTMLElement>(null)
@@ -29,7 +32,7 @@ export default function MechanismPanel({ config, onClose }: { config: PergolaCon
     const tick = () => {
       const { angle, phase } = demoAngle(demoSeconds())
       const m = louvreMetrics(angle)
-      const len = motorLength(plan, layout.z, layout.axleY, angle) * 1000
+      const len = motorLength(plan, layout.z, driveAxle, angle) * 1000
       if (angleRef.current) angleRef.current.textContent = `${fmt(angle)}°`
       if (openRef.current) openRef.current.textContent = `${fmt(m.open)}%`
       if (gapRef.current) gapRef.current.textContent = m.sealed ? 'átfed' : `${fmt(m.gap)} mm`
@@ -46,7 +49,7 @@ export default function MechanismPanel({ config, onClose }: { config: PergolaCon
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [plan, layout])
+  }, [plan, layout, driveAxle])
 
   const togglePause = () => { pauseDemo(!paused); setPaused(!paused) }
 

@@ -93,15 +93,15 @@ export interface LouvreLayout {
 
 /**
  * A lamellák elrendezése a szerkezet méretéből. `beam` a gerenda szélessége (a jelenetben 0,19 m),
- * `beamTop` a gerenda teteje. Szélesebb szerkezet több, egyforma modulra oszlik (max. 4 m / modul).
+ * `beamTop` a gerenda teteje, `endGap` a lamella vége és a gerenda közti hézag (SB 400 gyári váznál 20 mm). Szélesebb szerkezet több, egyforma modulra oszlik (max. 4 m / modul).
  */
-export function louvreLayout(width: number, depth: number, beam: number, beamTop: number): LouvreLayout {
+export function louvreLayout(width: number, depth: number, beam: number, beamTop: number, endGap: number = LOUVRE.endGap): LouvreLayout {
   const count = Math.max(1, Math.ceil(width / LOUVRE.maxModuleWidth - 1e-6))
   const modW = width / count
   const modules: ModuleLayout[] = Array.from({ length: count }, (_, i) => {
     const x = -width / 2 + modW * (i + 0.5)
     const inner = modW - beam
-    return { x, inner, length: Math.max(0.2, inner - 2 * LOUVRE.endGap) }
+    return { x, inner, length: Math.max(0.2, inner - 2 * endGap) }
   })
   // a lamellasor zárt állásban n × 200 + 15,8 mm-t fed; a maradékot elöl-hátul a záró profil tölti ki
   const clear = Math.max(LOUVRE.width, depth - beam)
