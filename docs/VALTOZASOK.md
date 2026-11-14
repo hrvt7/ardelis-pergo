@@ -1,5 +1,13 @@
 # Változások
 
+## 4.07 – Forgólamellás tető: SB 400 gyári váz a 3D-ben
+
+- **Gyári váz:** a forgólamellás tetőnél a 3D-váz az SB 400 nyilvános adatlapjának méreteiből épül, a megadott méretre paraméteresen (`src/lib/sb400.ts`): gerenda 85 × 212, oszlop 85 × 150 a gerenda külső síkjában, befelé nyúló 8 mm-es talplemez (sarkon 142,5 × 200, közbenső oszlopnál 200 × 200) horgonycsavarokkal. A többi tetőtípus váza változatlan.
+- **Lamellák:** a lamella vége és a gerenda között 20 mm hézag (a lamellahossz így befoglaló szélesség − 210 mm), és a lamella a hajtásoldalon 20 mm-rel magasabban ül (a tengely 43, illetve 23 mm-rel a gerenda teteje alatt); a hajtókar, a hajtórúd és a motor ehhez igazodik, a „Működés” panel ugyanebből számol.
+- **Ereszek:** hosszanti eresz (91,6 × 75) a két oldalgerenda belső síkján. Az általános elülső díszléc a forgólamellás tetőnél nem jelenik meg.
+- **Korlátok:** a profilok tömör külső kontúrok (belső kamrák, sarokösszekötők, csavarozás nélkül); a műszaki rajz (`drawing.ts`) és az oldalfalak továbbra is az általános gerendaszélességgel számolnak. A 3D szemléltető, nem gyártási rajz.
+- Tesztek: `sb400.test.ts` (profilméretek, lamellahossz, 34 lamella 7 m-en, tengelymagasságok, motorhossz, oszlop- és talphelyek).
+
 ## 4.06 – Gyártói nyitóoldal: domain-, sebesség- és hitelességi javítások, élő 3D hero, belépés, tölcsérmérés, admin mobilon
 
 - **Domain:** a canonical, og:url/og:image, hreflang, sitemap és robots a Vercel éles címét használja, ha a `PUBLIC_SITE_URL` még a régi `ardelis-pergo.vercel.app` (a megosztási kép eddig 404-et adott).
