@@ -1,7 +1,7 @@
 // A vásárló házának kinézete a 3D jelenetben: homlokzat anyaga és színe, nyílászárók színe.
 // Csak látvány — az árat nem befolyásolja, de segít eldönteni, milyen színű pergola illik a házhoz.
 import type { CSSProperties } from 'react'
-import type { SceneSettings, WallFinish } from '@/types/pergola'
+import type { HouseStyle, SceneSettings, WallFinish } from '@/types/pergola'
 import { hexDistance } from '@/lib/colors'
 
 export interface HouseSwatch {
@@ -18,6 +18,24 @@ export interface WindowSwatch extends HouseSwatch {
   /** A pergolához ajánlott katalógusszín kódja (a nyílászárókhoz igazításhoz). */
   match: string
 }
+
+export type HouseLookSettings = Pick<SceneSettings, 'houseStyle' | 'wallFinish' | 'wallColor' | 'windowColor'>
+
+export const HOUSE_STYLES: HouseStyle[] = ['classic', 'modern', 'gable']
+export const HOUSE_STYLE_INFO: Record<HouseStyle, { label: string; description: string }> = {
+  classic: { label: 'Fa–cink', description: 'Földszintes, fa burkolattal' },
+  modern: { label: 'Lapostetős', description: 'Modern, kétszintes kubus' },
+  gable: { label: 'Nyeregtetős', description: 'Oromfalas családi ház' },
+}
+
+/**
+ * A modellezett (modern, nyeregtetős) házak saját méretei méterben: a pergola a főtömeg közepe (x = 0) elé kerül,
+ * a főtömeg homlokzata `main` széles, jobbra `annex` széles melléképület csatlakozik vele egy síkban.
+ */
+export const STYLED_HOUSE = { main: 10, annex: 5.5, depth: 9 } as const
+
+/** A modellezett ház léptéke: a pergola (kétoldalt 0,6 m ráhagyással) férjen el a főtömeg homlokzata előtt. */
+export const styledHouseScale = (pergolaWidth: number) => Math.max(1, (pergolaWidth + 1.2) / STYLED_HOUSE.main)
 
 export const WALL_FINISH_INFO: Record<WallFinish, { label: string; description: string }> = {
   plaster: { label: 'Vakolt', description: 'Színezett nemesvakolat' },
@@ -64,7 +82,8 @@ export const WINDOW_COLORS: WindowSwatch[] = [
   { id: 'walnut', name: 'Dió', hex: '#5e3d26', kind: 'wood', match: 'FA DIÓ' },
 ]
 
-export const DEFAULT_HOUSE: Pick<SceneSettings, 'wallFinish' | 'wallColor' | 'windowColor'> = {
+export const DEFAULT_HOUSE: Required<HouseLookSettings> = {
+  houseStyle: 'classic',
   wallFinish: 'cedar',
   wallColor: WALL_COLORS.cedar[0].hex,
   windowColor: 'anthracite',
@@ -100,12 +119,13 @@ export function houseSummary(look: Pick<SceneSettings, 'wallFinish' | 'wallColor
 }
 
 /** Mentett beállítás beolvasása: minden mező külön ellenőrizve, hibás érték helyett alapérték. */
-export function parseHouseLook(value: unknown): Pick<SceneSettings, 'wallFinish' | 'wallColor' | 'windowColor'> {
+export function parseHouseLook(value: unknown): Required<HouseLookSettings> {
   const input = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>
   const wallFinish = (['plaster', 'brick', 'cedar'] as const).find((item) => item === input.wallFinish) ?? DEFAULT_HOUSE.wallFinish
   const wallColor = typeof input.wallColor === 'string' && HEX.test(input.wallColor) ? input.wallColor.toLowerCase() : defaultWallColor(wallFinish)
   const windowColor = WINDOW_COLORS.some((item) => item.id === input.windowColor) ? String(input.windowColor) : DEFAULT_HOUSE.windowColor
-  return { wallFinish, wallColor, windowColor }
+  const houseStyle = HOUSE_STYLES.find((item) => item === input.houseStyle) ?? DEFAULT_HOUSE.houseStyle
+  return { houseStyle, wallFinish, wallColor, windowColor }
 }
 
 const storageKey = (tenantId: string) => `pergo-house-v1:${tenantId}`
@@ -114,8 +134,8 @@ export function loadHouseLook(tenantId: string) {
   try { return parseHouseLook(JSON.parse(localStorage.getItem(storageKey(tenantId)) ?? 'null')) } catch { return parseHouseLook(null) }
 }
 
-export function saveHouseLook(tenantId: string, look: Pick<SceneSettings, 'wallFinish' | 'wallColor' | 'windowColor'>) {
-  try { localStorage.setItem(storageKey(tenantId), JSON.stringify({ wallFinish: look.wallFinish, wallColor: look.wallColor, windowColor: look.windowColor })) } catch { /* privát mód */ }
+export function saveHouseLook(tenantId: string, look: HouseLookSettings) {
+  try { localStorage.setItem(storageKey(tenantId), JSON.stringify({ houseStyle: look.houseStyle ?? DEFAULT_HOUSE.houseStyle, wallFinish: look.wallFinish, wallColor: look.wallColor, windowColor: look.windowColor })) } catch { /* privát mód */ }
 }
 
 /** Fotón mért szín korrekciója: az árnyékos fotók sötétebbek a valós homlokzatnál, ezért enyhén világosítunk. */

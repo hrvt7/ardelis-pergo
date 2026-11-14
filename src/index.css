@@ -1652,6 +1652,7 @@ button.diagram-core.selected span { color: var(--accent-primary); }
 .house-finish-grid button:hover { border-color: rgba(228,233,218,.28); }
 .house-finish-grid button.selected { border-color: rgba(216,255,114,.6); background: var(--accent-subtle); }
 .house-finish-preview { display: block; height: 46px; border-radius: var(--radius-sm); }
+.house-style-preview { display: grid; place-items: center; background: linear-gradient(180deg, rgba(150,190,215,.22), rgba(120,150,110,.18)); overflow: hidden; }
 .house-finish-text { display: flex; flex-direction: column; padding: 0 3px; min-width: 0; }
 .house-finish-text strong { font-size: var(--text-base); }
 .house-finish-text small { color: var(--text-secondary); font-size: var(--text-xs); line-height: 1.3; }

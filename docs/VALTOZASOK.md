@@ -1,5 +1,14 @@
 # Változások
 
+## 4.08 – Választható háztípus és új kert (Blenderben modellezve)
+
+- **Háztípus-választó:** „A házad” panelen a homlokzat anyaga mellett a ház típusa is választható: az eddigi fa–cink ház, egy modern lapostetős (kétszintes kubus tetőterasszal, léc-betéttel, napelemekkel) és egy nyeregtetős, oromfalas családi ház. Mindkét új ház Blenderben készült (`public/assets/models/houses/*.glb`, együtt kb. 320 kB), a forrásszkript a Blender-fájlban van.
+- **Testreszabás megmaradt:** az új házakon is állítható a homlokzat (vakolt / tégla / fa és színe) és a nyílászárók színe; éjjel az ablakok és a fali lámpák világítanak. L- és U-alakú elrendezésnél a szárnyak a választott házhoz illő anyagot kapnak. A választást a böngésző megjegyzi; az alap továbbra is a fa–cink ház.
+- **Új kert (minden háztípusnál):** a léckerítés helyett vízszintes léces kerítéstáblák, belül nyírt sövény a telekhatáron, ültetőládák bukszusgömbökkel a homlokzat előtt (falas oldalon és önálló pergolánál nincs), kerti lámpák a lépőkövek mentén (éjjel világítanak). A fák, cserjék és dézsák maradtak.
+- **Betöltés:** modellezett háznál a 3,5 MB-os fa–cink ház nem töltődik le.
+- **Korlátok:** a házak szemléltető modellek (egyszerű tömegek, textúra nélküli tető és burkolatok); 9 m-nél szélesebb pergolánál a modellezett ház arányosan megnő, hogy a pergola elférjen előtte. Csak látvány, az árat nem befolyásolja.
+- Tesztek: `houseStyles.test.ts` (típusok, mentés, lépték, a GLB-k színezhető részei), `house.test.ts` (mentett érték a háztípussal).
+
 ## 4.07 – Forgólamellás tető: SB 400 gyári váz a 3D-ben
 
 - **Gyári váz:** a forgólamellás tetőnél a 3D-váz az SB 400 nyilvános adatlapjának méreteiből épül, a megadott méretre paraméteresen (`src/lib/sb400.ts`): gerenda 85 × 212, oszlop 85 × 150 a gerenda külső síkjában, befelé nyúló 8 mm-es talplemez (sarkon 142,5 × 200, közbenső oszlopnál 200 × 200) horgonycsavarokkal. A többi tetőtípus váza változatlan.

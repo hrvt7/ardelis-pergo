@@ -5,9 +5,9 @@ import { createPortal } from 'react-dom'
 import { Check, Palette, Pipette, Wand2 } from 'lucide-react'
 import { PhotoColorDialog } from '@/components/ColorPicker'
 import { describeColor, normalizeColorCode, pickCatalogColor } from '@/lib/colors'
-import { findWindowColor, finishPreview, WALL_COLORS, WALL_FINISH_INFO, WINDOW_COLORS, defaultWallColor, wallColorHex, wallColorName, type WindowSwatch } from '@/lib/house'
+import { findWindowColor, finishPreview, HOUSE_STYLES, HOUSE_STYLE_INFO, WALL_COLORS, WALL_FINISH_INFO, WINDOW_COLORS, defaultWallColor, wallColorHex, wallColorName, type WindowSwatch } from '@/lib/house'
 import { useTenant } from '@/tenants/TenantContext'
-import type { PergolaConfig, SceneSettings, WallFinish } from '@/types/pergola'
+import type { HouseStyle, PergolaConfig, SceneSettings, WallFinish } from '@/types/pergola'
 
 type Props = {
   config: PergolaConfig
@@ -20,6 +20,16 @@ type Props = {
 }
 
 const FINISHES: WallFinish[] = ['plaster', 'brick', 'cedar']
+
+/** A háztípus sziluettje a választókártyán. */
+function StyleIcon({ style }: { style: HouseStyle }) {
+  const glass = 'rgba(160,205,220,.55)'
+  return <svg viewBox="0 0 96 46" width="100%" height="46" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+    {style === 'classic' && <><path d="M6 24 L48 8 L90 24 L90 27 L6 27 Z" fill="#5b6468" /><rect x="10" y="27" width="76" height="15" fill="#8a5a3c" /><rect x="34" y="29" width="28" height="13" fill={glass} /><rect x="16" y="31" width="10" height="7" fill={glass} /><rect x="70" y="31" width="10" height="7" fill={glass} /></>}
+    {style === 'modern' && <><rect x="10" y="6" width="52" height="36" fill="#e9e6df" /><rect x="62" y="24" width="26" height="18" fill="#e9e6df" /><rect x="9" y="5" width="54" height="2.5" fill="#262b2e" /><rect x="62" y="22.5" width="27" height="2" fill="#262b2e" /><rect x="24" y="27" width="24" height="15" fill={glass} /><rect x="15" y="11" width="15" height="9" fill={glass} /><rect x="42" y="11" width="15" height="9" fill={glass} /><rect x="32.5" y="10" width="7" height="11" fill="#9a6a42" /><rect x="68" y="30" width="14" height="7" fill={glass} /></>}
+    {style === 'gable' && <><path d="M8 26 L36 4 L64 26 Z" fill="#ece8df" /><rect x="12" y="26" width="48" height="16" fill="#ece8df" /><path d="M5 27 L36 2.5 L67 27 L63.5 27 L36 6.5 L8.5 27 Z" fill="#2a2f33" /><rect x="64" y="27" width="24" height="15" fill="#ece8df" /><rect x="63" y="25.5" width="26" height="2" fill="#262b2e" /><rect x="24" y="29" width="24" height="13" fill={glass} /><rect x="28" y="14" width="16" height="8" fill={glass} /><rect x="69" y="31" width="14" height="6" fill={glass} /></>}
+  </svg>
+}
 
 /** Kis ablak ikon a keret színével (fa hatásúnál erezettel). */
 function WindowIcon({ swatch }: { swatch: WindowSwatch }) {
@@ -73,7 +83,24 @@ export default function HouseLook({ config, scene, photoUrl, onSceneChange, onCh
   const swatches = WALL_COLORS[finish]
   const custom = !swatches.some((item) => item.hex.toLowerCase() === hex)
   const windowSwatch = findWindowColor(scene.windowColor)
+  const style = scene.houseStyle ?? 'classic'
+  // A modellezett házak vakolt homlokzattal mutatnak a legjobban: az eredeti fa burkolatról váltva fehér vakolatot kapnak,
+  // a fa–cink házra visszaváltva pedig (ha a homlokzathoz nem nyúltak) visszajön az eredeti fa.
+  const pickStyle = (next: HouseStyle) => {
+    if (next === style) return
+    const patch: Partial<SceneSettings> = { houseStyle: next }
+    if (next !== 'classic' && finish === 'cedar' && hex === defaultWallColor('cedar')) { patch.wallFinish = 'plaster'; patch.wallColor = defaultWallColor('plaster') }
+    if (next === 'classic' && finish === 'plaster' && hex === defaultWallColor('plaster')) { patch.wallFinish = 'cedar'; patch.wallColor = defaultWallColor('cedar') }
+    onSceneChange(patch)
+  }
   return <section className="house-look" aria-label="A házad">
+    <div className="house-look-head"><span><strong>Ház típusa</strong><small>Melyik hasonlít a tiédre?</small></span></div>
+    <div className="house-finish-grid" role="radiogroup" aria-label="Ház típusa">
+      {HOUSE_STYLES.map((item) => <button type="button" role="radio" aria-checked={style === item} key={item} className={style === item ? 'selected' : ''} onClick={() => pickStyle(item)}>
+        <span className="house-finish-preview house-style-preview"><StyleIcon style={item} /></span>
+        <span className="house-finish-text"><strong>{HOUSE_STYLE_INFO[item].label}</strong><small>{HOUSE_STYLE_INFO[item].description}</small></span>
+      </button>)}
+    </div>
     <div className="house-look-head"><span><strong>Homlokzat</strong><small>Milyen a házad fala?</small></span></div>
     <div className="house-finish-grid" role="radiogroup" aria-label="Homlokzat anyaga">
       {FINISHES.map((item) => {

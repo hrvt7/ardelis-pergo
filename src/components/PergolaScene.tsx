@@ -6,7 +6,7 @@ import { ContactShadows, Environment, Html, Line, OrbitControls, RoundedBox, use
 import * as THREE from 'three'
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
-import type { CameraFocus, CameraView, PergolaConfig, RoofGlazing, SceneSettings, SideKey, SideType } from '@/types/pergola'
+import type { CameraFocus, CameraView, HouseStyle, PergolaConfig, RoofGlazing, SceneSettings, SideKey, SideType } from '@/types/pergola'
 import PhotoRig, { ShadowCatcher } from '@/components/PhotoRig'
 import { PHOTO_GROUP } from '@/lib/photoScene'
 import { cameraMotion } from '@/lib/cameraMotion'
@@ -32,7 +32,7 @@ import { glassPanels } from '@/lib/glass'
 import { WOOD_HEXES } from '@/lib/colors'
 import { getHouseAsset, HOUSE_RAW } from '@/lib/houseAsset'
 import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
-import { isOriginalCedar, wallColorHex } from '@/lib/house'
+import { isOriginalCedar, STYLED_HOUSE, styledHouseScale, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
 import { doorLeafWidth, sideSegments } from '@/lib/sides'
 import { carportBays, hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
@@ -1446,7 +1446,9 @@ function prefetchSceneAssets(scene: SceneSettings) {
   if (scene.photoMode || prefetchedHdr === hdr) return
   prefetchedHdr = hdr
   try {
-    getHouseAsset().catch(() => undefined)
+    if ((scene.houseStyle ?? 'classic') === 'classic') getHouseAsset().catch(() => undefined)
+    else useGLTF.preload(STYLED_HOUSE_URL[scene.houseStyle as Exclude<HouseStyle, 'classic'>])
+    Object.values(GARDEN_KIT).forEach((url) => useGLTF.preload(url))
     useEnvironment.preload({ files: hdr })
     // A másik két napszak HDR-je tétlen időben töltődik, így a nappal/éjszaka váltás nem vár hálózatra.
     const others = Object.values(HDR_FILES).map(pick).filter((file) => file !== hdr)
@@ -1461,7 +1463,11 @@ function prefetchSceneAssets(scene: SceneSettings) {
   }
 }
 
-type HouseLook = Pick<SceneSettings, 'wallFinish' | 'wallColor' | 'windowColor'>
+type HouseLook = Pick<SceneSettings, 'wallFinish' | 'wallColor' | 'windowColor'> & { houseStyle: HouseStyle }
+
+// Blenderben modellezett házak és kertelemek (a hálók neve adja a szerepüket: wall, frame, glass, interior, lamp…).
+const STYLED_HOUSE_URL: Record<Exclude<HouseStyle, 'classic'>, string> = { modern: assetUrl('/assets/models/houses/house_modern.glb'), gable: assetUrl('/assets/models/houses/house_gable.glb') }
+const GARDEN_KIT = { hedge: assetUrl('/assets/models/garden/hedge.glb'), planter: assetUrl('/assets/models/garden/planter.glb'), bollard: assetUrl('/assets/models/garden/bollard.glb'), fence: assetUrl('/assets/models/garden/fence.glb') }
 
 
 /**
@@ -1469,8 +1475,14 @@ type HouseLook = Pick<SceneSettings, 'wallFinish' | 'wallColor' | 'windowColor'>
  * profilja közvetlenül a homlokzaton ül. A ház úgy méreteződik, hogy az eresz
  * mindig a pergola fölé essen (magas pergolánál arányosan nagyobb a ház).
  */
-function getHouseLayout(config: PergolaConfig) {
+function getHouseLayout(config: PergolaConfig, style: HouseStyle = 'classic') {
   const attached = hasBackWall(config.mount)
+  if (style !== 'classic') {
+    // Modellezett ház: a pergola a főtömeg közepe elé kerül; jobbra a melléképület nyúlik túl (a kert ehhez igazodik).
+    const scale = styledHouseScale(config.width)
+    const frontZ = attached ? -config.depth / 2 - 0.185 : -config.depth / 2 - 4.6
+    return { frontZ, attached, width: (STYLED_HOUSE.main + 2 * STYLED_HOUSE.annex) * scale, scale, depth: STYLED_HOUSE.depth * scale }
+  }
   // A ház léptéke a pergola szélességétől és az oszlopmagasságtól függ, a tető dőlésétől NEM:
   // a dőlés csak a hátsó (fali) élt emeli, a ház mérete nem változhat vele (arányos marad).
   const scale = Math.max(Math.max(17, config.width + 6) / HOUSE_RAW.width, (config.height + 0.32) / HOUSE_RAW.eave)
@@ -1611,6 +1623,133 @@ function House({ config, look, night }: { config: PergolaConfig; look: HouseLook
   </group>
 }
 
+type StyledMats = { glass: THREE.MeshPhysicalMaterial; rail: THREE.MeshPhysicalMaterial; interior: THREE.MeshStandardMaterial; lamp: THREE.MeshStandardMaterial }
+/** Éjjel az ablakok mögött meleg fény, a fali lámpák világítanak. */
+function setStyledNight({ glass, interior, lamp }: StyledMats, night: boolean) {
+  glass.emissive.set(night ? '#b8733f' : '#000000')
+  glass.emissiveIntensity = night ? 0.4 : 0
+  interior.color.set(night ? '#3a3026' : '#59626a')
+  interior.emissive.set(night ? '#c88a52' : '#000000')
+  interior.emissiveIntensity = night ? 0.6 : 0
+  lamp.emissiveIntensity = night ? 3 : 0
+}
+type StyledPart = { mesh: THREE.Mesh; geometry: THREE.BufferGeometry; matrix: THREE.Matrix4 }
+
+/**
+ * Blenderben modellezett ház (modern lapostetős vagy nyeregtetős). A GLB hálóinak neve adja a szerepüket:
+ * `wall*` a választott homlokzatot kapja (méterarányos doboz-vetítéssel), `frame*` a nyílászárók színét,
+ * `glass*` és `interior*` éjjel meleg fényt, `lamp*` a fali lámpák. A homlokzat síkja a modell z = 0 síkja.
+ */
+function StyledHouse({ config, look, night, style }: { config: PergolaConfig; look: HouseLook; night: boolean; style: Exclude<HouseStyle, 'classic'> }) {
+  const { scene: source } = useGLTF(STYLED_HOUSE_URL[style])
+  const plaster = useTexture({ diff: assetUrl(pbrPath('plastered_wall_04', 'diff')), normal: assetUrl(pbrPath('plastered_wall_04', 'nor_gl')), rough: assetUrl(pbrPath('plastered_wall_04', 'rough')) })
+  const invalidate = useThree((state) => state.invalidate)
+  const gl = useThree((state) => state.gl)
+  const layout = getHouseLayout(config, style)
+  const prepared = useMemo(() => {
+    const object = source.clone(true)
+    const mats: StyledMats = {
+      glass: new THREE.MeshPhysicalMaterial({ name: 'styled-glass', color: '#dcebe8', roughness: 0.05, metalness: 0, transparent: true, opacity: 0.4, depthWrite: false, envMapIntensity: 1.25 }),
+      rail: new THREE.MeshPhysicalMaterial({ name: 'styled-railglass', color: '#e3f0ee', roughness: 0.04, transparent: true, opacity: 0.24, depthWrite: false, envMapIntensity: 1.2, side: THREE.DoubleSide }),
+      interior: new THREE.MeshStandardMaterial({ name: 'styled-interior', color: '#59626a', roughness: 0.9 }),
+      lamp: new THREE.MeshStandardMaterial({ name: 'styled-lamp', color: '#e9e2d2', emissive: '#ffc27a', emissiveIntensity: 0, roughness: 0.4 }),
+    }
+    const walls: StyledPart[] = []
+    const frames: THREE.Mesh[] = []
+    object.updateMatrixWorld(true)
+    object.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return
+      child.castShadow = true
+      child.receiveShadow = true
+      const name = child.name
+      if (/^wall/.test(name)) walls.push({ mesh: child, geometry: child.geometry, matrix: child.matrixWorld.clone() })
+      else if (/^frame/.test(name)) frames.push(child)
+      else if (/^glass/.test(name)) { child.material = mats.glass; child.castShadow = false; child.renderOrder = 2 }
+      else if (/^railglass/.test(name)) { child.material = mats.rail; child.castShadow = false; child.renderOrder = 2 }
+      else if (/^interior/.test(name)) { child.material = mats.interior; child.castShadow = false }
+      else if (/^lamp/.test(name)) { child.material = mats.lamp; child.castShadow = false }
+      else if (child.material instanceof THREE.MeshStandardMaterial) child.material.envMapIntensity = 0.7
+    })
+    return { object, mats, walls, frames }
+  }, [source])
+  useEffect(() => () => Object.values(prepared.mats).forEach((material) => material.dispose()), [prepared])
+  const facadeHex = wallColorHex(look.wallFinish, look.wallColor)
+  useLayoutEffect(() => {
+    const finish = getFacadeFinish(look.wallFinish, facadeHex, plaster)
+    const created = prepared.walls.map((part) => {
+      const geometry = boxProjectedGeometry(part.geometry, part.matrix, layout.scale, finish.uPerM, finish.vPerM)
+      part.mesh.geometry = geometry
+      part.mesh.material = finish.material
+      return geometry
+    })
+    refreshShadows(gl)
+    invalidate()
+    return () => { prepared.walls.forEach((part) => { part.mesh.geometry = part.geometry }); created.forEach((geometry) => geometry.dispose()) }
+  }, [prepared, look.wallFinish, facadeHex, layout.scale, plaster, gl, invalidate])
+  useLayoutEffect(() => {
+    const material = getFrameMaterial(look.windowColor)
+    prepared.frames.forEach((mesh) => { mesh.material = material })
+    invalidate()
+  }, [prepared, look.windowColor, invalidate])
+  useEffect(() => {
+    setStyledNight(prepared.mats, night)
+    refreshShadows(gl)
+    invalidate()
+  }, [night, prepared, gl, invalidate])
+  return <group name="house">
+    <primitive object={prepared.object} position={[0, 0, layout.frontZ]} scale={layout.scale} />
+    {[-2.75, 2.75].map((x) => <pointLight key={x} position={[x * layout.scale, 2.5 * layout.scale, layout.frontZ + 0.35]} color="#ffd09a" intensity={night ? 5 : 0} distance={5} decay={2} />)}
+  </group>
+}
+
+/**
+ * Kertelem-sor: egy GLB összes hálója példányosítva a megadott helyekre (x, z, elforgatás, lépték).
+ * A `lamp*` nevű hálók éjjel világítanak.
+ */
+function KitInstances({ url, places, night = false, shadows = true }: { url: string; places: [number, number, number, number][]; night?: boolean; shadows?: boolean }) {
+  const { scene: source } = useGLTF(url)
+  const invalidate = useThree((state) => state.invalidate)
+  const gl = useThree((state) => state.gl)
+  const parts = useMemo(() => {
+    const list: { geometry: THREE.BufferGeometry; material: THREE.Material; matrix: THREE.Matrix4; lamp: boolean }[] = []
+    source.updateMatrixWorld(true)
+    source.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return
+      const material = (Array.isArray(child.material) ? child.material[0] : child.material).clone()
+      if (material instanceof THREE.MeshStandardMaterial) material.envMapIntensity = 0.7
+      list.push({ geometry: child.geometry, material, matrix: child.matrixWorld.clone(), lamp: /^lamp/.test(child.name) })
+    })
+    return list
+  }, [source])
+  useEffect(() => () => parts.forEach((part) => part.material.dispose()), [parts])
+  const refs = useRef<(THREE.InstancedMesh | null)[]>([])
+  const key = places.map((place) => place.map((value) => value.toFixed(3)).join(',')).join('|')
+  useLayoutEffect(() => {
+    const placement = new THREE.Matrix4()
+    const matrix = new THREE.Matrix4()
+    const rotation = new THREE.Quaternion()
+    const up = new THREE.Vector3(0, 1, 0)
+    parts.forEach((part, index) => {
+      const mesh = refs.current[index]
+      if (!mesh) return
+      places.forEach(([x, z, turn, size], instance) => {
+        placement.compose(new THREE.Vector3(x, 0, z), rotation.setFromAxisAngle(up, turn), new THREE.Vector3(size, size, size))
+        mesh.setMatrixAt(instance, matrix.multiplyMatrices(placement, part.matrix))
+      })
+      mesh.instanceMatrix.needsUpdate = true
+      mesh.computeBoundingSphere()
+    })
+    refreshShadows(gl)
+    invalidate()
+  }, [parts, key, gl, invalidate]) // eslint-disable-line react-hooks/exhaustive-deps -- a `key` a helyek tartalmát követi
+  useEffect(() => {
+    parts.forEach((part) => { if (part.lamp && part.material instanceof THREE.MeshStandardMaterial) { part.material.emissive.set('#ffc27a'); part.material.emissiveIntensity = night ? 3.2 : 0 } })
+    invalidate()
+  }, [parts, night, invalidate])
+  if (!places.length) return null
+  return <>{parts.map((part, index) => <instancedMesh key={`${index}-${places.length}`} ref={(mesh) => { refs.current[index] = mesh }} args={[part.geometry, part.material, places.length]} castShadow={shadows && !part.lamp} receiveShadow />)}</>
+}
+
 // ── Oldalfalak (sarok- és fülkerögzítés) ──────────────────────────────────
 // ── Ház-oldalszárny (L- és U-alakú ház) ──────────────────────────────────
 // A sarok- és fülkerögzítésnél nem szabadon álló fal, hanem a ház földszinti
@@ -1621,8 +1760,8 @@ const RAW_STOREY = 2.9 // a ház földszintje a modell saját egységében
 
 type WingSpec = { side: 'left' | 'right'; sx: number; inner: number; outer: number; zBack: number; zFront: number; height: number; scale: number }
 
-function getWingSpecs(config: PergolaConfig): WingSpec[] {
-  const layout = getHouseLayout(config)
+function getWingSpecs(config: PergolaConfig, style: HouseStyle = 'classic'): WingSpec[] {
+  const layout = getHouseLayout(config, style)
   const zBack = layout.frontZ - 0.9
   const zFront = layout.frontZ + Math.max(config.depth + 1.5, 5.2)
   const height = Math.max(RAW_STOREY * layout.scale + 0.42, config.height + roofRise(config) * 0.5 + 0.5)
@@ -1724,22 +1863,23 @@ function HouseWing({ spec, config, finish, kit }: { spec: WingSpec; config: Perg
   </group>
 }
 
-function useHouseKit(night: boolean): HouseKit {
-  const source = use(getHouseAsset())
+function useHouseKit(night: boolean, style: HouseStyle): HouseKit {
+  // A modellezett házaknál a szárny saját (a házzal egyező) anyagokat kap; a fa–cink ház modellje ilyenkor be sem töltődik.
+  const source = style === 'classic' ? use(getHouseAsset()) : null
   const kit = useMemo(() => {
     const byMesh = (pattern: RegExp, fallback: THREE.Material) => {
       let found: THREE.Material | null = null
-      source.traverse((child) => {
+      source?.traverse((child) => {
         if (found || !(child instanceof THREE.Mesh) || !pattern.test(child.name)) return
         found = Array.isArray(child.material) ? child.material[0] : child.material
       })
       return found ?? fallback
     }
-    const zinc = new THREE.MeshStandardMaterial({ name: 'wing-zinc', color: '#697276', metalness: 0.78, roughness: 0.42, envMapIntensity: 0.66 })
+    const zinc = source ? new THREE.MeshStandardMaterial({ name: 'wing-zinc', color: '#697276', metalness: 0.78, roughness: 0.42, envMapIntensity: 0.66 }) : new THREE.MeshStandardMaterial({ name: 'wing-coping', color: '#262b2e', metalness: 0.45, roughness: 0.45, envMapIntensity: 0.7 })
     return {
       trim: byMesh(/^Main_two_panel_slider_frames$/, new THREE.MeshStandardMaterial({ color: '#0c0f10', roughness: 0.34, metalness: 0.4 })),
       glass: byMesh(/^Main_two_panel_slider_glass$/, new THREE.MeshPhysicalMaterial({ color: '#e6f2ee', roughness: 0.03, transparent: true, opacity: 0.38, depthWrite: false })),
-      stone: byMesh(/^step$/, new THREE.MeshStandardMaterial({ color: '#bcc0c7', roughness: 0.8 })),
+      stone: byMesh(/^step$/, new THREE.MeshStandardMaterial({ color: source ? '#bcc0c7' : '#6f7275', roughness: 0.85 })),
       zinc,
       // Világos belső tér az üveg mögött (függöny/belső fal hatás); éjjel meleg fény.
       interiorDay: new THREE.MeshStandardMaterial({ name: 'wing-interior-day', color: '#7d8589', roughness: 0.85 }),
@@ -1757,23 +1897,23 @@ function useFacadeFinish(look: HouseLook): FacadeFinish {
 }
 
 function HouseWingsContent({ config, look, night }: { config: PergolaConfig; look: HouseLook; night: boolean }) {
-  const baseKit = useHouseKit(night)
+  const baseKit = useHouseKit(night, look.houseStyle)
   const finish = useFacadeFinish(look)
   const kit = useMemo(() => ({ ...baseKit, trim: getFrameMaterial(look.windowColor) }), [baseKit, look.windowColor])
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
-  const specs = useMemo(() => getWingSpecs(config), [config])
+  const specs = useMemo(() => getWingSpecs(config, look.houseStyle), [config, look.houseStyle])
   useEffect(() => { refreshShadows(gl); invalidate() }, [gl, invalidate, finish, kit, specs, night])
   return <>{specs.map((spec) => <HouseWing key={spec.side} spec={spec} config={config} finish={finish} kit={kit} />)}</>
 }
 
 /** Ideiglenes tömeg, amíg a ház anyagai betöltődnek — a pergola sosem „lóg a levegőben”. */
-function WingPlaceholder({ config }: { config: PergolaConfig }) {
-  return <>{getWingSpecs(config).map((spec) => <mesh key={spec.side} position={[(spec.inner + spec.outer) / 2, spec.height / 2, (spec.zBack + spec.zFront) / 2]} castShadow receiveShadow><boxGeometry args={[WING_DEPTH, spec.height, spec.zFront - spec.zBack]} /><meshStandardMaterial color="#8d6a52" roughness={0.85} /></mesh>)}</>
+function WingPlaceholder({ config, style }: { config: PergolaConfig; style: HouseStyle }) {
+  return <>{getWingSpecs(config, style).map((spec) => <mesh key={spec.side} position={[(spec.inner + spec.outer) / 2, spec.height / 2, (spec.zBack + spec.zFront) / 2]} castShadow receiveShadow><boxGeometry args={[WING_DEPTH, spec.height, spec.zFront - spec.zBack]} /><meshStandardMaterial color={style === 'classic' ? '#8d6a52' : '#cfccc4'} roughness={0.85} /></mesh>)}</>
 }
 
 function HouseWings({ config, look, night }: { config: PergolaConfig; look: HouseLook; night: boolean }) {
-  const placeholder = <WingPlaceholder config={config} />
+  const placeholder = <WingPlaceholder config={config} style={look.houseStyle} />
   return <group name="house-wings">
     <SceneAssetBoundary name="house wings" fallback={placeholder}>
       <Suspense fallback={placeholder}><HouseWingsContent config={config} look={look} night={night} /></Suspense>
@@ -2062,10 +2202,23 @@ function hasSwingDoor(config: PergolaConfig, side: SideKey) {
 }
 
 function Garden({ config, scene, quality }: { config: PergolaConfig; scene: SceneSettings; quality: QualitySettings }) {
-  const house = getHouseLayout(config)
+  const house = getHouseLayout(config, scene.houseStyle ?? 'classic')
+  const night = scene.time === 'night'
+  // Nyírt sövény a két telekhatáron (a kerítésen belül), a ház vonalától az utcáig.
+  const boundary = house.width / 2 + 1.05
+  const hedgeFrom = house.frontZ + 0.9
+  const hedgeCount = Math.max(0, Math.floor((8.3 - hedgeFrom) / 2))
+  const hedges = [-1, 1].flatMap((side) => Array.from({ length: hedgeCount }, (_, index): [number, number, number, number] => [side * (boundary - 0.55), hedgeFrom + 1 + index * 2, Math.PI / 2, 1]))
+  // Ültetőládák a homlokzat előtt, a pergola két oldalán (falas oldalon és önálló pergolánál nincs).
+  const planters = house.attached ? (['left', 'right'] as const).filter((side) => !isWallSide(config.mount, side)).map((side): [number, number, number, number] => [(side === 'left' ? -1 : 1) * (config.width / 2 + 2.15), house.frontZ + 0.42, 0, 1]) : []
+  // Kerti lámpák a lépőkövek mentén, a pergola előtt.
+  const bollards = [4.1, 5.75, 7.4].filter((z) => z > config.depth / 2 + 0.7).flatMap((z): [number, number, number, number][] => [[-0.95, z, 0, 1], [0.95, z, 0, 1]])
   const sideX = house.width / 2 + 2.1
   const rearZ = house.frontZ - house.depth - 0.85
   return <group>
+    <KitInstances url={GARDEN_KIT.hedge} places={hedges} />
+    <KitInstances url={GARDEN_KIT.planter} places={planters} />
+    <KitInstances url={GARDEN_KIT.bollard} places={bollards} night={night} />
     <Tree position={[-sideX, -0.05, house.frontZ - 1.5]} scale={1.12} wind={scene.wind} />
     <Tree position={[sideX, -0.05, house.frontZ - 2.1]} scale={1.28} wind={scene.wind} />
     {quality.enableExtraPlants && <Tree position={[sideX + 1.4, -0.05, 4.6]} scale={0.86} wind={scene.wind} />}
@@ -2076,36 +2229,21 @@ function Garden({ config, scene, quality }: { config: PergolaConfig; scene: Scen
   </group>
 }
 
-function FenceLine({ x, fromZ, toZ }: { x: number; fromZ: number; toZ: number }) {
-  const geometry = useMemo(() => {
-    const count = Math.max(2, Math.floor(Math.abs(toZ - fromZ) / 0.24))
-    const parts: THREE.BoxGeometry[] = []
-    for (let index = 0; index < count; index++) {
-      const z = fromZ + (toZ - fromZ) * (index / Math.max(1, count - 1))
-      const part = new THREE.BoxGeometry(0.075, 1.06, 0.075)
-      part.translate(0, 0.53, z)
-      parts.push(part)
-    }
-    const merged = mergeGeometries(parts, false)
-    parts.forEach((part) => part.dispose())
-    if (!merged) throw new Error('A kerítésgeometria nem hozható létre.')
-    return merged
-  }, [fromZ, toZ])
-  useEffect(() => () => geometry.dispose(), [geometry])
-  return <group><mesh geometry={geometry} position={[x, 0, 0]} castShadow receiveShadow><meshStandardMaterial color="#8c8575" roughness={0.9} /></mesh>{[0.35, 0.82].map((y) => <mesh key={y} position={[x, y, (fromZ + toZ) / 2]} castShadow><boxGeometry args={[0.065, 0.075, Math.abs(toZ - fromZ) + 0.1]} /><meshStandardMaterial color="#777264" roughness={0.9} /></mesh>)}</group>
-}
-
 function Neighborhood({ config, scene }: { config: PergolaConfig; scene: SceneSettings }) {
-  const house = getHouseLayout(config)
+  const house = getHouseLayout(config, scene.houseStyle ?? 'classic')
   const boundary = house.width / 2 + 1.05
   const night = scene.time === 'night'
+  // Vízszintes léces kerítés (2 m-es táblák) a két telekhatáron, a ház hátsó sarkától az utcáig.
+  const fenceFrom = house.frontZ - house.depth + 0.4
+  const fenceCount = Math.max(1, Math.round((8.55 - fenceFrom) / 2))
+  const fenceStep = (8.55 - fenceFrom) / fenceCount
+  const fence = [-1, 1].flatMap((side) => Array.from({ length: fenceCount }, (_, index): [number, number, number, number] => [side * boundary, fenceFrom + (index + 0.5) * fenceStep, Math.PI / 2, fenceStep / 2]))
   return <group>
     <mesh position={[0, -0.045, 12.6]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[46, 5.4]} /><meshStandardMaterial color="#3f4648" roughness={0.94} /></mesh>
     <mesh position={[0, -0.005, 9.25]} receiveShadow><boxGeometry args={[46, 0.09, 1.25]} /><meshStandardMaterial color="#aaa99f" roughness={0.96} /></mesh>
     <mesh position={[0, 0.025, 9.92]} receiveShadow><boxGeometry args={[46, 0.14, 0.16]} /><meshStandardMaterial color="#c2c0b4" roughness={0.9} /></mesh>
     {Array.from({ length: 7 }, (_, index) => <mesh key={index} position={[0, 0.005, 3.2 + index * 0.82]} receiveShadow><boxGeometry args={[1.15, 0.055, 0.68]} /><meshStandardMaterial color={index % 2 ? '#b8b3a6' : '#c4bfb2'} roughness={0.94} /></mesh>)}
-    <FenceLine x={-boundary} fromZ={house.frontZ - house.depth + 0.4} toZ={8.55} />
-    <FenceLine x={boundary} fromZ={house.frontZ - house.depth + 0.4} toZ={8.55} />
+    <OptionalSceneAsset name="garden fence"><KitInstances url={GARDEN_KIT.fence} places={fence} /></OptionalSceneAsset>
     {[-12.2, 12.2].map((x) => <group key={x} position={[x, 0, 9.05]}><mesh position={[0, 1.65, 0]} castShadow><cylinderGeometry args={[0.045, 0.065, 3.3, 10]} /><meshStandardMaterial color="#303a3d" metalness={0.55} roughness={0.42} /></mesh><mesh position={[0, 3.28, 0]}><boxGeometry args={[0.34, 0.12, 0.34]} /><meshStandardMaterial color="#ffe0aa" emissive="#ffc576" emissiveIntensity={night ? 3.2 : 0.08} /></mesh>{night && <pointLight position={[0, 3.05, 0]} color="#ffd09a" intensity={5} distance={5} decay={2} />}</group>)}
   </group>
 }
@@ -2787,7 +2925,7 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
   const studio = scene.ground === 'studio'
   // Az árnyékkamera a pergolára és a közvetlen környezetére illeszkedik: ugyanazon a felbontáson élesebb árnyék.
   const shadowExtent = scene.sunStudy || scene.photoMode ? lighting.shadowExtent : Math.min(lighting.shadowExtent, Math.max(7, Math.max(config.width, config.depth) / 2 + 4.5))
-  const houseLook = useMemo<HouseLook>(() => ({ wallFinish: scene.wallFinish, wallColor: scene.wallColor, windowColor: scene.windowColor }), [scene.wallFinish, scene.wallColor, scene.windowColor])
+  const houseLook = useMemo<HouseLook>(() => ({ houseStyle: scene.houseStyle ?? 'classic', wallFinish: scene.wallFinish, wallColor: scene.wallColor, windowColor: scene.windowColor }), [scene.houseStyle, scene.wallFinish, scene.wallColor, scene.windowColor])
   // Eső bekapcsolásakor (nyitott forgólamellás tető esőérzékelővel): a kamera a hajtásoldalra közelít, a burkolat
   // felemelkedik, a lamellák lassan zárnak, majd a kamera visszatér és a hajtás eltűnik. 0 = nincs, 1 = közelítés, 2 = zárás.
   const [rainShow, setRainShow] = useState<0 | 1 | 2>(0)
@@ -2819,7 +2957,7 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     {studio && !scene.photoMode && <StudioEnvironment config={config} night={lighting.night} />}
     {!studio && !scene.photoMode && <Ground scene={scene} />}
     {!studio && !scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} look={houseLook} night={lighting.night} />}
-    {!studio && !scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house"><House config={config} look={houseLook} night={lighting.night} /></OptionalSceneAsset>{lighting.night && <Stars />}</>}
+    {!studio && !scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house">{houseLook.houseStyle === 'classic' ? <House config={config} look={houseLook} night={lighting.night} /> : <StyledHouse key={houseLook.houseStyle} config={config} look={houseLook} night={lighting.night} style={houseLook.houseStyle} />}</OptionalSceneAsset>{lighting.night && <Stars />}</>}
     {pergola}
     {!scene.photoMode && <ContactShadows key={`${config.width}-${config.depth}-${config.height}-${config.mount}`} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality.contactShadowResolution} frames={1} color="#10171d" />}
     {scene.rain && <Rain config={config} quality={quality} />}
@@ -3004,16 +3142,20 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
     const timer = window.setTimeout(() => setDecorativeReady(true), 180)
     return () => window.clearTimeout(timer)
   }, [ready, decorativeReady, contextLost])
+  // Modellezett háznál a (3,5 MB-os) fa–cink ház nem töltődik be: a GLB a jelenettel együtt érkezik.
+  const styledHouse = (scene.houseStyle ?? 'classic') !== 'classic'
   useEffect(() => {
+    if (styledHouse) return
     let alive = true
     getHouseAsset().then(() => { if (alive) setHouseReady(true) }, () => { if (alive) setHouseReady(true) })
     return () => { alive = false }
-  }, [])
+  }, [styledHouse])
+  const houseOk = houseReady || styledHouse
   useEffect(() => {
-    if (!ready || !decorativeReady || !houseReady || assetsLoading || loaded) return
+    if (!ready || !decorativeReady || !houseOk || assetsLoading || loaded) return
     const timer = window.setTimeout(() => setLoaded(true), 600)
     return () => window.clearTimeout(timer)
-  }, [ready, decorativeReady, houseReady, assetsLoading, loaded])
+  }, [ready, decorativeReady, houseOk, assetsLoading, loaded])
   // Felső korlát a várakozásra: ha a ház vagy a növényzet lassan jön (gyenge hálózat, háttérbe tett lap),
   // a pergola 8 s után akkor is megjelenik — a díszítőelemek utólag úsznak be, nem a posztert nézi a látogató.
   useEffect(() => {
@@ -3028,7 +3170,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
   }, [loaded])
   // A százalék a tényleges szakaszokból áll össze (nem a letöltés-számláló 99%-án ragad, amíg a ház és a
   // környezet jön): kód kész 12 · eszközök letöltése 50 · első képkocka 15 · ház 12 · díszítés 8 = 97, a 100 a feltárulás.
-  const composite = 12 + 0.5 * Math.min(100, Math.max(0, assetProgress)) + (ready ? 15 : 0) + (houseReady ? 12 : 0) + (decorativeReady ? 8 : 0)
+  const composite = 12 + 0.5 * Math.min(100, Math.max(0, assetProgress)) + (ready ? 15 : 0) + (houseOk ? 12 : 0) + (decorativeReady ? 8 : 0)
   const progressTarget = Math.min(97, Math.round(composite))
   if (progressTarget > shownProgress) setShownProgress(progressTarget)
   const loaderMessage = shownProgress < 40 ? 'Modell betöltése' : shownProgress < 75 ? 'Anyagok és környezet' : 'Jelenet felépítése'

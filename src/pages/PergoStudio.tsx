@@ -91,7 +91,7 @@ export default function PergoStudio() {
   const [prices, setPrices] = useState<PriceSettings>(() => loadPrices(tenant, admin))
   // A ház kinézete (homlokzat, nyílászárók) a böngészőben megmarad: a vásárló háza nem változik két látogatás között.
   const [scene, setScene] = useState<SceneSettings>(() => ({ ...DEFAULT_SCENE, ...loadHouseLook(tenant.id) }))
-  useEffect(() => { saveHouseLook(tenant.id, scene) }, [tenant.id, scene.wallFinish, scene.wallColor, scene.windowColor]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { saveHouseLook(tenant.id, scene) }, [tenant.id, scene.houseStyle, scene.wallFinish, scene.wallColor, scene.windowColor]) // eslint-disable-line react-hooks/exhaustive-deps
   const [step, setStep] = useState<ConfigStep>('size')
   // Mobilon az alsó lap három állású: kicsi (csak lépés), fél (a 3D felül látszik), teljes.
   const [sheet, setSheet] = useState<SheetState>('peek')
@@ -288,7 +288,7 @@ export default function PergoStudio() {
   const updateScene = useCallback((patch: Partial<SceneSettings>) => {
     // A ház kinézetének módosításakor a kamera az áttekintő nézetbe áll, hogy a ház és a pergola együtt látsszon.
     const current = sceneRef.current
-    if (('wallFinish' in patch || 'wallColor' in patch || 'windowColor' in patch) && current.autoCamera && !current.photoMode && !current.sunStudy) overview()
+    if (('houseStyle' in patch || 'wallFinish' in patch || 'wallColor' in patch || 'windowColor' in patch) && current.autoCamera && !current.photoMode && !current.sunStudy) overview()
     setScene((value) => ({ ...value, ...patch }))
   }, [overview])
   useEffect(() => { sceneRef.current = scene }, [scene])
@@ -485,7 +485,7 @@ export default function PergoStudio() {
       {modal === 'energy' && <Suspense fallback={null}><EnergyDialog config={config} prices={prices} usage={energyUsage} onUsageChange={setEnergyUsage} onConfigChange={updateConfig} onClose={() => setModal(null)} /></Suspense>}
       <input ref={photoInput} className="visually-hidden-input" type="file" accept={PHOTO_ACCEPT} tabIndex={-1} aria-hidden="true" onChange={(event) => { const file = event.target.files?.[0]; if (file) handlePhoto(file); event.target.value = '' }} />
       {modal === 'ar' && <Suspense fallback={null}><ArDialog shareUrl={buildArUrl(config)} onClose={() => setModal(null)} onPhoto={() => { if (scene.photoUrl) updateScene({ photoMode: true, sunStudy: false }); else openPhotoPicker() }} /></Suspense>}
-      {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(productDefaultConfig(tenant, product)); setScene((current) => ({ ...DEFAULT_SCENE, wallFinish: current.wallFinish, wallColor: current.wallColor, windowColor: current.windowColor })); setView('perspective'); setStep('size'); setToast('Az alapkonfiguráció visszaállt.') }} onClose={() => setModal(null)} />}
+      {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(productDefaultConfig(tenant, product)); setScene((current) => ({ ...DEFAULT_SCENE, houseStyle: current.houseStyle, wallFinish: current.wallFinish, wallColor: current.wallColor, windowColor: current.windowColor })); setView('perspective'); setStep('size'); setToast('Az alapkonfiguráció visszaállt.') }} onClose={() => setModal(null)} />}
       {homeHref && (homeHref.startsWith('/') ? <Link className="studio-home-link" to={homeHref}>Kezdőlap</Link> : <a className="studio-home-link" href={homeHref} target="_top" rel="noreferrer">Kezdőlap</a>)}
     </div>
   )

@@ -35,9 +35,9 @@ describe('ház kinézete', () => {
   })
 
   it('hibás vagy hiányzó mentett értéknél alapértéket ad', () => {
-    expect(parseHouseLook(null)).toEqual({ wallFinish: 'cedar', wallColor: defaultWallColor('cedar'), windowColor: 'anthracite' })
-    expect(parseHouseLook({ wallFinish: 'marble', wallColor: 'red', windowColor: 'pink' })).toEqual({ wallFinish: 'cedar', wallColor: defaultWallColor('cedar'), windowColor: 'anthracite' })
-    expect(parseHouseLook({ wallFinish: 'plaster', wallColor: '#ABCDEF', windowColor: 'white' })).toEqual({ wallFinish: 'plaster', wallColor: '#abcdef', windowColor: 'white' })
+    expect(parseHouseLook(null)).toEqual({ houseStyle: 'classic', wallFinish: 'cedar', wallColor: defaultWallColor('cedar'), windowColor: 'anthracite' })
+    expect(parseHouseLook({ houseStyle: 'castle', wallFinish: 'marble', wallColor: 'red', windowColor: 'pink' })).toEqual({ houseStyle: 'classic', wallFinish: 'cedar', wallColor: defaultWallColor('cedar'), windowColor: 'anthracite' })
+    expect(parseHouseLook({ houseStyle: 'gable', wallFinish: 'plaster', wallColor: '#ABCDEF', windowColor: 'white' })).toEqual({ houseStyle: 'gable', wallFinish: 'plaster', wallColor: '#abcdef', windowColor: 'white' })
     // Anyagváltásnál hiányzó szín: az anyag alapszíne.
     expect(parseHouseLook({ wallFinish: 'brick' }).wallColor).toBe(defaultWallColor('brick'))
     expect(wallColorHex('plaster', undefined)).toBe(defaultWallColor('plaster'))

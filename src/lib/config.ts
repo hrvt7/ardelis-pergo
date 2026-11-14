@@ -31,6 +31,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   climateRun: 'off',
   wallLouverOpen: false,
   quality: 'auto',
+  houseStyle: 'classic',
   wallFinish: 'cedar',
   wallColor: '#8a5a3c',
   windowColor: 'anthracite',
