@@ -1,5 +1,13 @@
 # Változások
 
+## 4.11 – Laptopon is szabadon mozgatható a 3D kép
+
+- **Érintőpad, mint a telefonon:** két ujjas görgetéssel a kép eltolható oldalra és fel-le (térképszerűen, a tartalom az ujjakkal együtt mozog), csípéssel nagyítható. Eddig a két ujjas görgetés nagyított, eltolni csak jobb gombbal lehetett.
+- **Egérrel:** a görgő a kurzor alatti pont felé nagyít (eddig mindig a pergola közepe felé); a bal gomb forgat, a jobb gomb vagy Shift + húzás tol.
+- A kép legfeljebb 2,5 m-re mozdulhat el a pergolától, hogy a szerkezet ne vesszen el. A telefonos vezérlés nem változott.
+- Laptopon is megjelenik egyszer a mozgatási tipp a megfelelő szöveggel.
+- Tesztek: `desktopCamera.test.ts` (görgetés vagy csípés felismerése, egérgörgő, megkezdett mozdulat, célpont határa).
+
 ## 4.10 – Bútorok és berendezések Blender-modellekből
 
 - **Új modellek a kódból rajzolt dobozok helyett** (`public/assets/models/furniture/*.glb`, együtt kb. 500 kB): háromszemélyes kanapé puha párnákkal és díszpárnákkal, karfás kültéri szék, lécezett teak asztalok (4, 6 és 8 fős), bárszék háttámlával, kerek bisztróasztal, nyugágy kerékkel és fejpárnával, kisasztal, beépített grill a nyári konyhában.

@@ -25,6 +25,7 @@ import { sceneSunVector } from '@/lib/sceneSun'
 import { daylightBalance, sunPosition } from '@/lib/lightBalance'
 import { bayBoundaries, bayCenter, bayWidth, hasCenterPost, moduleCount } from '@/lib/modules'
 import { fitDistance, maxOrbitDistance } from '@/lib/cameraFit'
+import { classifyWheel, clampTarget } from '@/lib/desktopCamera'
 import type { ShadeResult } from '@/components/ShadeProbe'
 import type { FurnitureSet } from '@/types/pergola'
 import { kelvinToHex } from '@/lib/color'
@@ -2574,6 +2575,53 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     return () => c.removeEventListener('start', takeOver)
   }, [view])
 
+  // Laptopon is úgy, mint a telefonon: két ujjas érintőpad-görgetés tolja a képet (térképszerűen), csípés és egérgörgő
+  // nagyít (a kurzor felé). A célpont a pergola körüli dobozban marad, hogy a szerkezet ne vesszen el.
+  // Az érintőképernyő nem küld görgetést, így a görgetéskezelő mindenhol fut; a kurzor felé nagyítás csak nem érintős eszközön
+  // (telefonon a csípés marad a megszokott, a kép közepe felé).
+  const finePointer = useMemo(() => { try { return !window.matchMedia('(pointer: coarse)').matches } catch { return true } }, [])
+  useEffect(() => {
+    const c = controls.current
+    const element = gl.domElement
+    if (!c || view === 'sofa') return
+    const size = { width: config.width, depth: config.depth, height: config.height }
+    const right = new THREE.Vector3()
+    const up = new THREE.Vector3()
+    const shift = new THREE.Vector3()
+    let lastPan = -Infinity
+    const keepInside = () => {
+      const [x, y, z] = clampTarget([c.target.x, c.target.y, c.target.z], size)
+      if (x === c.target.x && y === c.target.y && z === c.target.z) return
+      shift.set(x, y, z).sub(c.target)
+      c.target.add(shift)
+      camera.position.add(shift)
+    }
+    const onWheel = (event: WheelEvent) => {
+      const now = performance.now()
+      if (classifyWheel({ deltaX: event.deltaX, deltaY: event.deltaY, deltaMode: event.deltaMode, ctrlKey: event.ctrlKey, wheelDeltaY: (event as WheelEvent & { wheelDeltaY?: number }).wheelDeltaY }, lastPan, now) === 'zoom') return
+      lastPan = now
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      transitioning.current = false
+      showcase.current = 0
+      idle.current = 0
+      // Egy képpontnyi görgetés a célpont távolságában egy képpontnyi elmozdulás (a tartalom az ujjakkal együtt mozog).
+      const perspective = camera as THREE.PerspectiveCamera
+      const distance = camera.position.distanceTo(c.target)
+      const metersPerPixel = (2 * distance * Math.tan((perspective.fov * Math.PI) / 360)) / Math.max(1, element.clientHeight)
+      camera.matrix.extractBasis(right, up, shift)
+      shift.copy(right).multiplyScalar(event.deltaX * metersPerPixel).addScaledVector(up, -event.deltaY * metersPerPixel)
+      c.target.add(shift)
+      camera.position.add(shift)
+      keepInside()
+      c.update()
+      invalidate()
+    }
+    element.addEventListener('wheel', onWheel, { passive: false, capture: true })
+    c.addEventListener('end', keepInside)
+    return () => { element.removeEventListener('wheel', onWheel, { capture: true }); c.removeEventListener('end', keepInside) }
+  }, [view, camera, gl, invalidate, config.width, config.depth, config.height])
+
   // Mobilon a félig nyitott alsó lap mögé ne kerüljön a pergola: a képet feljebb toljuk (nézet-eltolás).
   const size = useThree((state) => state.size)
   useEffect(() => {
@@ -2733,7 +2781,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
       controls.current.update(); invalidate()
     } else if (autoRotate && idle.current > 2 && autoFrame.current >= 1 / 30) { autoFrame.current = 0; invalidate() }
   })
-  return <OrbitControls ref={controls} makeDefault enabled={view !== 'sofa'} enableDamping dampingFactor={0.07} minDistance={1.1} maxDistance={maxOrbitDistance(config)} maxPolarAngle={view === 'interior' ? Math.PI * 0.86 : Math.PI / 1.98} autoRotate={autoRotate && view !== 'sofa'} autoRotateSpeed={0.4} onStart={() => { transitioning.current = false; firstFlight.current = false; showcase.current = 0; idle.current = 0 }} />
+  return <OrbitControls ref={controls} makeDefault enabled={view !== 'sofa'} enableDamping dampingFactor={0.07} minDistance={1.1} maxDistance={maxOrbitDistance(config)} maxPolarAngle={view === 'interior' ? Math.PI * 0.86 : Math.PI / 1.98} zoomToCursor={finePointer} autoRotate={autoRotate && view !== 'sofa'} autoRotateSpeed={0.4} onStart={() => { transitioning.current = false; firstFlight.current = false; showcase.current = 0; idle.current = 0 }} />
 }
 
 /** Az égbolt-képeken (HDR) a nap iránya: equirect u koordináta → szög az xz síkban. */
