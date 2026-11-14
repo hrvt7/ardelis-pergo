@@ -131,17 +131,18 @@ function HBars({ items, empty }: { items: { key: string; count: number }[]; empt
 const DAY = 86_400_000
 
 /** „Ma teendő”: a következő lépésre váró érdeklődők a kor szerint (új: első hívás, kapcsolatban: 3 nap, ajánlat: 5 nap után utánkövetés). */
-function TodayCard({ leads, now, onOpen }: { leads: LeadRow[]; now: number; onOpen: (ref: string) => void }) {
+function TodayCard({ leads, now, onOpen, onAll }: { leads: LeadRow[]; now: number; onOpen: (ref: string) => void; onAll: () => void }) {
   const age = (lead: LeadRow) => (now - new Date(lead.created_at).getTime()) / DAY
   const tasks = leads.flatMap((lead) => {
     if (lead.status === 'new') return [{ lead, why: age(lead) < 1 ? 'Új, első hívás' : `Új, ${Math.floor(age(lead))} napja vár`, weight: 3 + age(lead) }]
     if (lead.status === 'contacted' && age(lead) > 3) return [{ lead, why: 'Utánkövetés: nincs ajánlat', weight: 2 }]
     if (lead.status === 'offered' && age(lead) > 5) return [{ lead, why: 'Ajánlat nyomon követése', weight: 2.5 }]
     return []
-  }).sort((a, b) => b.weight - a.weight).slice(0, 5)
+  }).sort((a, b) => b.weight - a.weight)
+  const shown = tasks.slice(0, 5)
   return <section className="card today">
-    <header><h3>Ma teendő</h3>{tasks.length > 0 && <span className="check-count">{tasks.length}</span>}</header>
-    {tasks.length === 0 ? <p className="admin-hint">Nincs teendő. Minden érdeklődő kezelve van.</p> : <ul className="recent">{tasks.map(({ lead, why }) => <li key={lead.ref}>
+    <header><h3>Ma teendő</h3>{tasks.length > 0 && <span className="check-count" title={`${tasks.length} érdeklődő vár a következő lépésre`}>{tasks.length}</span>}{tasks.length > shown.length && <button type="button" className="ghost-link today-all" onClick={onAll}>Összes ({tasks.length})</button>}</header>
+    {tasks.length === 0 ? <p className="admin-hint">Nincs teendő. Minden érdeklődő kezelve van.</p> : <ul className="recent">{shown.map(({ lead, why }) => <li key={lead.ref}>
       <button type="button" className="today-row" onClick={() => onOpen(lead.ref)}><span className="avatar">{initials(lead.customer_name)}</span><div><strong>{lead.customer_name}</strong><small>{why}</small></div></button>
       <a className="icon-btn call" href={`tel:${lead.phone.replace(/[^+0-9]/g, '')}`} aria-label={`${lead.customer_name} hívása`} title="Hívás"><PhoneCall size={15} /></a>
     </li>)}</ul>}
@@ -184,7 +185,7 @@ export default function AdminOverview({ leads, events, onOpenLeads, onOpenLead, 
     </div>
     <div className="dash-grid">
       {setupOpen && checklist && <div className="span-2"><Checklist items={checklist} /></div>}
-      <TodayCard leads={leads} now={now} onOpen={onOpenLead} />
+      <TodayCard leads={leads} now={now} onOpen={onOpenLead} onAll={onOpenLeads} />
       <PipelineCard leads={leads} />
       <section className="card span-2">
         <header><h3>Érkező érdeklődők</h3><button type="button" className="ghost-link report-btn" onClick={() => window.print()}><FileText size={13} />Jelentés (PDF)</button><div className="seg" role="group" aria-label="Időszak">{RANGES.map((value) => <button type="button" key={value} className={range === value ? 'is-on' : ''} onClick={() => setRange(value)}>{value} nap</button>)}</div></header>

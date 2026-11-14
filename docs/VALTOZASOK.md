@@ -1,5 +1,17 @@
 # Változások
 
+## 4.06 – Gyártói nyitóoldal: domain-, sebesség- és hitelességi javítások, élő 3D hero, belépés, tölcsérmérés, admin mobilon
+
+- **Domain:** a canonical, og:url/og:image, hreflang, sitemap és robots a Vercel éles címét használja, ha a `PUBLIC_SITE_URL` még a régi `ardelis-pergo.vercel.app` (a megosztási kép eddig 404-et adott).
+- **Előre renderelt szöveg:** a `/` és az `/en` HTML-je tartalmazza az oldal fő szövegét (képernyőolvasó-szerűen rejtve, a React lecseréli), így a keresők és az AI-motorok JavaScript nélkül is látják.
+- **Sebesség:** a nyitóoldal már nem tölti elő a three.js-t (külön `react` darab a React-maggal, a Babel- és a Vite-előtöltő segédekkel; a konfigurátor és a belépő lusta). Saját tárhelyű betűk (`@fontsource`, ugyanazok a betűk), nincs Google Fonts kérés. A nyitócím nem vár a belépő animációra.
+- **Élő 3D hero:** a termékképernyőn a konfigurátor valódi lamellás teteje (`HeroLouvre`, `LouvreRoof`), görgetésre nyíló lamellákkal, lamellaszög-csúszkával és három katalógusszínnel; a képernyőkép a poszter, WebGL2 nélkül vagy `?gl=0`-val az marad.
+- **Hitelesség:** a „Legnépszerűbb” címke kikerült; a demóűrlap nem kínál carportot; a számlálók a valódi számot mutatják animáció előtt is; béta-jelzés a demó és az árak alatt.
+- **Gyártói belépés:** `/belepes` (azonosító → `/k/<azonosító>/admin`), fejlécből, mobilon ikonként, láblécből; `/login` és `/admin` ide irányít.
+- **Tölcsérmérés:** `src/lib/funnel.ts` – demókattintás, élő demó, űrlap kezdés/küldés, belépés, 3D használat Vercel Web Analytics eseményként, UTM-forrással; a demókérő e-mailben „Forrás” sor. Bekapcsolás: Web Analytics a Vercelben + `VITE_VERCEL_ANALYTICS=1`.
+- **Admin:** telefonon az áttekintés a „Ma teendő” listával kezd, a teendőszám a teljes listát mutatja „Összes” linkkel; érdeklődő-soronként egy koppintásos hívás; a nevek nem vágódnak le; márkaszínű csúszka.
+- Tesztek: `tests/platformLogin.test.ts`.
+
 ## 4.05 – MVP: csak a teraszfedés (pergola, veranda, télikert) marad a kalkulátorban
 
 - **Félretett termékek:** a carport, a kerítés és kapu, a garázskapu, valamint a kerti ház/szauna egyelőre kikerült a kalkulátorból (`src/products`: `status: 'hidden'`). A kódjuk megmaradt a későbbi fejlesztéshez, de sehol nem jelennek meg: nincs termékválasztó kártya, nincs „Másik termék” link a fejlécben, és egyetlen gyártó kínálatában sem szerepelnek.

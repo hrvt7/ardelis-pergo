@@ -52,7 +52,7 @@ export function CountingStats({ items }: { items: StatItem[] }) {
     return () => { window.removeEventListener('scroll', check); window.removeEventListener('resize', check) }
   }, [live])
   return <div className="lx-stats" ref={ref}>
-    {items.map((item) => <div key={item.label}><strong>{live ? <StatCounter target={item.value} durationMs={1400} /> : <span className="pui-stat">0</span>}{item.suffix && <small>{item.suffix}</small>}</strong><span>{item.label}</span></div>)}
+    {items.map((item) => <div key={item.label}><strong>{live ? <StatCounter target={item.value} durationMs={1400} /> : <span className="pui-stat">{item.value}</span>}{item.suffix && <small>{item.suffix}</small>}</strong><span>{item.label}</span></div>)}
   </div>
 }
 

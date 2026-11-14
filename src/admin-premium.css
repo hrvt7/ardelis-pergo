@@ -120,3 +120,36 @@ kbd{font:600 10.5px/1 ui-monospace,monospace;padding:3px 6px;border-radius:5px;b
 @media (prefers-reduced-motion:reduce){.tab-fade,.dash .kpi,.dash .card,.dash>div,.toast,.palette,.pipe-bar i{animation:none!important}}
 
 @media (min-width:1100px){.dash .kpis{grid-template-columns:repeat(6,minmax(0,1fr))}.dash .kpi strong{font-size:clamp(22px,2vw,30px)}}
+
+/* Érdeklődő-sor + egy koppintásos hívás a sor végén */
+.tr-wrap{display:grid;grid-template-columns:minmax(0,1fr) 48px;align-items:center;gap:4px}
+.tr-wrap .tr-call,.tr-call-head{width:44px;height:44px;display:inline-grid;place-items:center;justify-self:center}
+.tr-wrap .tr-call{border-radius:12px;color:var(--accent-primary);background:color-mix(in oklab,var(--accent-primary) 12%,transparent)}
+.tr-wrap .tr-call:hover{background:color-mix(in oklab,var(--accent-primary) 22%,transparent)}
+@media (max-width:760px){.tr-wrap{border-bottom:1px solid var(--a-edge)}.tr-wrap .tr{border-bottom:0}}
+
+/* Telefonon az áttekintés a teendőkkel kezd: kit kell most felhívni, utána a számok */
+@media (max-width:760px){
+  .dash{display:flex;flex-direction:column;gap:14px}
+  .dash .dash-grid{display:contents}
+  .dash .card.today{order:-1}
+  .dash .kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .dash .kpi{padding:10px 10px 12px}
+  .dash .kpi strong{font-size:20px}
+  .dash .kpi .kpi-spark,.dash .kpi .kpi-ring,.dash .kpi small{display:none}
+}
+
+/* Csúszkák a márkaszínnel, telefonon is kényelmes célponttal */
+.embed-height input[type=range]{accent-color:var(--accent-primary);height:44px}
+@media (max-width:760px){
+  /* a teendő-szám és a „Feldolgozatlan” KPI egymás mellett az első képernyőn */
+  .dash .kpis .kpi:nth-child(2){order:-1}
+  /* telefonon a név sosem vágódik le: inkább két sorba törik */
+  .tr .who b{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25}
+  .tr .num.strong{font-size:var(--text-sm)}
+}
+/* Ma teendő: a hívás gomb mindig a sor jobb szélén, az „Összes” link a fejlécben */
+.today .recent li{grid-template-columns:minmax(0,1fr) 44px}
+.today .recent li .icon-btn.call{width:44px;height:44px;justify-self:end}
+.today header{display:flex;align-items:center;gap:10px}.today .today-all{margin-left:auto}
+@media (max-width:760px){.dash .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}

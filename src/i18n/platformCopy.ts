@@ -1,6 +1,6 @@
 // A Lamelix B2B főoldal teljes szövegtára, nyelvenként. A magyar a hivatkozási nyelv; az angol típusszinten
 // ugyanazt a szerkezetet kényszeríti ki, így egyetlen szöveg sem maradhat ki.
-import { EVERY_PLAN, PLANS, SETUP_INCLUDES, type PlanId } from '@/lib/platformPricing'
+import { EVERY_PLAN, PLANS, SETUP_INCLUDES, type PlanId } from '../lib/platformPricing'
 import type { Lang } from './lang'
 
 /** Címsor kiemeléssel: [előtte, kiemelt (<em>), utána]. */
@@ -15,7 +15,7 @@ const hu = {
   nav: {
     brandAria: 'Lamelix – az oldal teteje', brandSmall: 'gyártóknak', mainAria: 'Fő navigáció', footerAria: 'Lábléc',
     benefits: 'Előnyök', showcase: 'Bemutató', features: 'Funkciók', live: 'Működés élőben', how: 'Működés', pricing: 'Árak', faq: 'GYIK',
-    liveDemo: 'Élő demó', requestDemo: 'Kérek demót', langAria: 'Nyelv', langName: { hu: 'Magyar', en: 'English' },
+    liveDemo: 'Élő demó', requestDemo: 'Kérek demót', login: 'Gyártói belépés', langAria: 'Nyelv', langName: { hu: 'Magyar', en: 'English' },
   },
   hero: {
     eyebrow: 'Saját márkás 3D konfigurátor · pergola, veranda, télikert',
@@ -28,6 +28,7 @@ const hu = {
     chipB: { label: 'Új érdeklődő · most', name: 'Kovács Péter · Sárvár', detail: 'Aero 5,0 × 4,0 m · falhoz' },
     chipC: { title: 'QR-kódos terv', sub: 'egy kattintással a vevő tervéhez' },
     browserUrl: 'konfigurator.ceged.hu', adminUrl: 'Lamelix · gyártói admin',
+    control: { angle: 'Lamellaszög', color: 'Szerkezet színe', group: 'Próbálja ki a 3D tetőt', colors: { anthracite: 'Antracit (RAL 7016)', white: 'Fehér (RAL 9016)', walnut: 'Dió fa hatás' } },
   },
   marquee: ['Bioklimatikus lamella', 'Eltolható tető', 'Üvegtető', 'ZIP screen', 'Tolóüveg', 'LED és fűtés', 'AR-nézet', 'Fotóba helyezés', 'Árnyékelemzés', 'Ármátrix', 'PDF-összefoglaló', 'QR-kód', 'Gyártói admin'],
   statement: { aria: 'Miért', text: 'A vevő este tizenegykor tervez – a saját teraszára, az Ön áraival. Ön reggel egy kész, beárazott tervet kap, telefonszámmal együtt.' },
@@ -101,10 +102,11 @@ const hu = {
     sub: '20 perces online bemutató: a konfigurátort már az Ön logójával és egy termékével mutatjuk meg, és átbeszéljük, mi kell az induláshoz.',
     points: ['Kipróbálhatja telefonon is', 'Hozza magával az árlistáját, és megmutatjuk az ármátrixban'], writeUs: 'Vagy írjon: ',
     liveNote: '',
+    beta: 'Béta: az első gyártópartnerekkel együtt fejlesztjük tovább, az Ön igényei alapján.',
   },
   form: {
     name: 'Név *', company: 'Cég *', email: 'E-mail *', phone: 'Telefon', website: 'Weboldal', websitePlaceholder: 'ceged.hu', product: 'Termék',
-    products: { pergola: 'Pergola', veranda: 'Veranda / télikert', 'pergola+outdoor': 'Pergola + egyéb outdoor termék', carport: 'Carport / előtető', other: 'Egyéb' },
+    products: { pergola: 'Pergola', veranda: 'Veranda / télikert', 'pergola+outdoor': 'Pergola + egyéb outdoor termék', other: 'Egyéb' },
     planLegend: 'Melyik csomag érdekli?', planUnsure: 'Még nem tudom', message: 'Üzenet', messagePlaceholder: 'Például: milyen termékeik vannak, és mikor indulnának?',
     consent: 'Hozzájárulok, hogy a megadott adataimat a demó egyeztetéséhez felhasználják.', privacyLink: 'Adatkezelési tájékoztató', submit: 'Demót kérek', sending: 'Küldés…',
     note: 'Egy munkanapon belül válaszolunk. Az adatait nem adjuk tovább.', failed: 'A küldés nem sikerült.', offline: 'Nincs kapcsolat a szerverrel.',
@@ -147,7 +149,7 @@ const en: PlatformCopy = {
   nav: {
     brandAria: 'Lamelix – top of the page', brandSmall: 'for manufacturers', mainAria: 'Main navigation', footerAria: 'Footer',
     benefits: 'Benefits', showcase: 'Showcase', features: 'Features', live: 'Live mechanics', how: 'How it works', pricing: 'Pricing', faq: 'FAQ',
-    liveDemo: 'Live demo', requestDemo: 'Request a demo', langAria: 'Language', langName: { hu: 'Magyar', en: 'English' },
+    liveDemo: 'Live demo', requestDemo: 'Request a demo', login: 'Manufacturer login', langAria: 'Language', langName: { hu: 'Magyar', en: 'English' },
   },
   hero: {
     eyebrow: 'White-label 3D configurator · pergolas, verandas, conservatories',
@@ -160,6 +162,7 @@ const en: PlatformCopy = {
     chipB: { label: 'New lead · just now', name: 'Péter Kovács · Sárvár', detail: 'Aero 5.0 × 4.0 m · wall-mounted' },
     chipC: { title: 'QR-coded design', sub: 'one click to the customer’s design' },
     browserUrl: 'configurator.yourcompany.com', adminUrl: 'Lamelix · manufacturer admin',
+    control: { angle: 'Louvre angle', color: 'Frame colour', group: 'Try the 3D roof', colors: { anthracite: 'Anthracite (RAL 7016)', white: 'White (RAL 9016)', walnut: 'Walnut wood look' } },
   },
   marquee: ['Bioclimatic louvres', 'Sliding roof', 'Glass roof', 'ZIP screen', 'Sliding glass', 'LED and heating', 'AR view', 'Photo placement', 'Shade analysis', 'Price matrix', 'PDF summary', 'QR code', 'Manufacturer admin'],
   statement: { aria: 'Why', text: 'Your customer designs at eleven at night – for their own terrace, with your prices. In the morning you get a finished, priced design, phone number included.' },
@@ -237,10 +240,11 @@ const en: PlatformCopy = {
     sub: 'A 20-minute online presentation: we show the configurator with your logo and one of your products, and go through what is needed to get started.',
     points: ['Try it on your phone too', 'Bring your price list and we’ll show it in the price matrix'], writeUs: 'Or write to us: ',
     liveNote: 'The interface of the live demo is currently in Hungarian.',
+    beta: 'Beta: we are developing it further together with our first manufacturer partners, based on your needs.',
   },
   form: {
     name: 'Name *', company: 'Company *', email: 'E-mail *', phone: 'Phone', website: 'Website', websitePlaceholder: 'yourcompany.com', product: 'Product',
-    products: { pergola: 'Pergola', veranda: 'Veranda / conservatory', 'pergola+outdoor': 'Pergola + other outdoor product', carport: 'Carport / canopy', other: 'Other' },
+    products: { pergola: 'Pergola', veranda: 'Veranda / conservatory', 'pergola+outdoor': 'Pergola + other outdoor product', other: 'Other' },
     planLegend: 'Which plan are you interested in?', planUnsure: 'Not sure yet', message: 'Message', messagePlaceholder: 'For example: what products do you make, and when would you like to start?',
     consent: 'I agree that the data I provided may be used to arrange the demo.', privacyLink: 'Privacy notice (Hungarian)', submit: 'Request a demo', sending: 'Sending…',
     note: 'We reply within one business day. We do not share your data.', failed: 'Sending failed.', offline: 'No connection to the server.',

@@ -667,3 +667,43 @@ html:has(.pf-page) { scroll-behavior: auto; }
 .pf-live-note{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:22px;padding:22px 24px;border-radius:18px;border:1px solid var(--pf-edge);background:linear-gradient(135deg,rgba(216,255,114,.07),rgba(255,255,255,.02))}
 .pf-live-note h3{margin:0 0 6px;font-size:18px}.pf-live-note p{margin:0;max-width:64ch;color:var(--pf-muted);line-height:1.6;font-size:14.5px}
 @media (max-width:760px){.pf-sim{aspect-ratio:4/3}.pf-live-note{flex-direction:column;align-items:flex-start}}
+
+/* Élő 3D a hero képernyőn: a képernyőkép a poszter, fölötte a lamellás tető; kész állapotban áttűnik */
+.pf-live3d { position: relative; }
+.pf-live3d-canvas { position: absolute; inset: 0; opacity: 0; transition: opacity .9s cubic-bezier(.2,.7,.2,1); }
+.pf-live3d.is-ready .pf-live3d-canvas { opacity: 1; }
+.pf-live3d-canvas canvas { display: block; }
+.pf-live3d-panel { position: absolute; left: 14px; top: 14px; display: flex; align-items: center; gap: 16px; padding: 8px 10px 8px 14px; border-radius: 12px; background: #0d1210; border: 1px solid var(--pf-edge); color: var(--pf-text, #f3f2ec); font-size: 14px; }
+.pf-live3d-angle { display: grid; gap: 2px; min-width: 150px; }
+.pf-live3d-angle span { display: flex; justify-content: space-between; gap: 10px; color: var(--pf-muted); }
+.pf-live3d-angle output { color: var(--pf-accent); font-variant-numeric: tabular-nums; font-weight: 700; }
+.pf-live3d-angle input { width: 100%; height: 44px; accent-color: var(--pf-accent); margin: 0; }
+.pf-live3d-colors { display: flex; gap: 2px; }
+.pf-live3d-colors button { position: relative; width: 44px; height: 44px; border: 0; padding: 0; border-radius: 50%; background: transparent !important; cursor: pointer; }
+.pf-live3d-colors button::before { content: ''; position: absolute; inset: 6px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.55); }
+.pf-live3d-colors button[style]::before { background: var(--sw); }
+.pf-live3d-colors button[aria-checked="true"]::after { content: ''; position: absolute; inset: 5px; border-radius: 50%; box-shadow: 0 0 0 2px var(--pf-accent); }
+@media (max-width: 620px) { .pf-hero .pf-chip-b { display: none; } .pf-live3d-panel { left: 8px; right: 8px; top: 8px; gap: 8px; padding: 6px 8px; } .pf-live3d-angle { min-width: 0; flex: 1; } }
+
+/* Béta-jelzés a demó szekcióban */
+.pf-demo-beta { display: flex; gap: 10px; align-items: baseline; margin: 18px 0 0; color: var(--pf-muted); font-size: 14.5px; }
+.pf-demo-beta b { flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--pf-accent); color: #0b1210; font-size: 13px; }
+
+/* Gyártói belépés */
+.pf-login { min-height: 100svh; display: grid; place-items: center; padding: 32px 20px; }
+.pf-login-card { width: min(440px, 100%); display: grid; gap: 18px; padding: 34px 30px; border-radius: 20px; background: #0d1210; border: 1px solid var(--pf-edge); }
+.pf-login-card h1 { margin: 6px 0 0; font-size: 30px; letter-spacing: -.03em; }
+.pf-login-card p { margin: 0; color: var(--pf-muted); font-size: 15px; line-height: 1.6; }
+.pf-login-card label { display: grid; gap: 8px; font-size: 14px; }
+.pf-login-card input { height: 48px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--pf-edge-hi); background: #121917; color: inherit; font: inherit; }
+.pf-login-card .pf-btn { justify-content: center; }
+.pf-login-error { color: #ffb4a6 !important; }
+.pf-login-back { font-size: 14px; color: var(--pf-muted); }
+
+/* Telefonon a belépés ikonként a fejlécben (a szöveges link ott rejtve van) */
+.pf-login-icon { display: none; width: 44px; height: 44px; place-items: center; border-radius: 50%; border: 1px solid var(--pf-edge-hi); color: var(--pf-text); }
+@media (max-width: 620px) { .pf-login-icon { display: inline-grid; } }
+
+.pf-live3d-angle input::-webkit-slider-thumb { width: 22px; height: 22px; }
+.pf-live3d-angle input::-moz-range-thumb { width: 22px; height: 22px; }
+.pf-pricing-beta { justify-content: center; margin-top: 10px; }

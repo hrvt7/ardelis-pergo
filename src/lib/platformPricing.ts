@@ -5,7 +5,7 @@
 // Felépítés: a vevői élmény (3D, irányár, AR, fotóba helyezés, PDF, QR) MINDEN csomagban azonos, a csomagok
 // a gyártó üzleti igényeiben különböznek (statisztika, beágyazások száma, márkák, white-label, támogatás).
 
-import type { Lang } from '@/i18n/lang'
+import type { Lang } from '../i18n/lang'
 
 export type PlanId = 'start' | 'pro' | 'partner'
 

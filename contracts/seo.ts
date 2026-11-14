@@ -138,6 +138,14 @@ const SEO_PAGES: Record<string, SeoPage> = {
     robots: PRIVATE_ROBOTS,
     indexable: false,
   },
+  '/belepes': {
+    key: 'login',
+    path: '/belepes',
+    title: 'Gyártói belépés | Lamelix',
+    description: 'Belépés a Lamelix gyártói adminfelületére a gyártói azonosítóval és jelszóval.',
+    robots: PRIVATE_ROBOTS,
+    indexable: false,
+  },
   '/login': {
     key: 'login',
     path: '/login',

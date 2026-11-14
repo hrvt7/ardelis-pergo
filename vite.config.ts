@@ -4,13 +4,35 @@ import react from "@vitejs/plugin-react"
 import { defineConfig, loadEnv, type Plugin } from "vite"
 import fs from "node:fs"
 import { buildStructuredData, getSeoPage, SEO_SITEMAP_PATHS } from "./contracts/seo"
+import { PLATFORM_COPY } from "./src/i18n/platformCopy"
 
 const __dirname = import.meta.dirname
 
 // Statikus robots.txt és sitemap.xml a buildbe (korábban a Kimi Node-szerver
 // adta ki őket). Az abszolút URL-ekhez a PUBLIC_SITE_URL kell.
 const DEFAULT_SITE = "https://lamelix.vercel.app"
+/** A kanonikus cím: saját domain (PUBLIC_SITE_URL), de a régi ardelis-pergo cím helyett a Vercel éles címe. */
+function siteOrigin(configured: string | undefined) {
+  if (configured && !/ardelis-pergo\.vercel\.app/.test(configured)) return configured
+  return process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : DEFAULT_SITE
+}
 const esc = (value: string) => value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")
+
+/** A gyártói nyitóoldal szövege a HTML-ben is (képernyőolvasó-szerűen rejtve): a keresők és az AI-válaszmotorok JavaScript nélkül
+ * is látják, miről szól az oldal. A React az első renderrel lecseréli. Ugyanabból a szövegtárból készül, mint az oldal. */
+function prerenderedCopy(lang: "hu" | "en") {
+  const c = PLATFORM_COPY[lang]
+  const em = (parts: readonly string[]) => esc(parts.join(""))
+  const plans = Object.values(c.pricing.plans) as { name: string; tagline: string; features: string[] }[]
+  return `<div class="prerender-copy" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">`
+    + `<h1>${esc(`${c.hero.line1} ${c.hero.line2} ${c.hero.line3}`.replace(/\u00ad/g, ""))}</h1><p>${esc(c.hero.lead)}</p>`
+    + `<ul>${c.hero.proof.map((item) => `<li>${esc(item)}</li>`).join("")}</ul><p>${esc(c.statement.text)}</p>`
+    + `<h2>${em(c.benefits.title)}</h2><h2>${em(c.pricing.title)}</h2><p>${esc(c.pricing.sub)}</p>`
+    + plans.map((plan) => `<h3>${esc(plan.name)}</h3><p>${esc(plan.tagline)}</p><ul>${plan.features.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>`).join("")
+    + `<p>${esc(c.pricing.fineprint)}</p><h2>${em(c.demo.title)}</h2><p>${esc(c.demo.sub)}</p><p>${esc(c.demo.beta)}</p>`
+    + `<h2>${em(c.faq.title)}</h2>${c.faq.items.map((item) => `<h3>${esc(item.q)}</h3><p>${esc(item.a)}</p>`).join("")}`
+    + `<p><a href="/konfigurator">${esc(c.nav.liveDemo)}</a> · <a href="#demo">${esc(c.nav.requestDemo)}</a></p></div>`
+}
 
 /** Az index.html-ből oldalankénti, előre kitöltött fejlécű változat: a keresők és a közösségi előnézet-robotok JavaScript nélkül is a helyes címet látják. */
 function prerenderedHead(html: string, pathname: string, origin: string) {
@@ -37,6 +59,7 @@ function prerenderedHead(html: string, pathname: string, origin: string) {
     .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${esc(page.description)}" />`)
     .replace(/<meta name="robots"[^>]*>/, `<meta name="robots" content="${page.robots}" />`)
     .replace("</head>", `    ${meta.join("\n    ")}\n    ${ld}\n  </head>`)
+    .replace('<div id="root"></div>', page.key === "platform" ? `<div id="root">${prerenderedCopy(english ? "en" : "hu")}</div>` : '<div id="root"></div>')
     .replace(/<noscript>[\s\S]*?<\/noscript>/, page.key === "platform" ? "$&" : `<noscript><h1>${esc(page.title)}</h1><p>${esc(page.description)}</p><p><a href="/">Lamelix – 3D konfigurátor gyártóknak</a></p></noscript>`)
 }
 
@@ -75,7 +98,7 @@ export default defineConfig(({ mode }) => {
       // Helyi /api/lead — élesben a Vercel függvény (api/lead.ts) szolgálja ki.
       devServer({ entry: "server/dev.ts", exclude: [/^\/(?!api\/).*$/] }),
       react(),
-      staticSeo(env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL),
+      staticSeo(siteOrigin(env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL)),
     ],
     server: { port: 3000 },
     // Előre optimalizált függőségek: különben fejlesztés közben az első AR-megnyitás teljes oldal-újratöltést okozna.
@@ -99,6 +122,9 @@ export default defineConfig(({ mode }) => {
           // Rollup a lustán betöltött SceneEffects / ArDialog csomagba teszi, így mobilon
           // nem töltődnek le. (Kézi besorolásuk körkörös csomagfüggést és üres oldalt okozott.)
           manualChunks(id) {
+            // A React magja, a Babel-segédek és a Vite előtöltő-segédje külön darabban: különben a r3f-darabba kerülnek,
+            // és a three.js a nyitóoldalon is előtöltődik.
+            if (/node_modules\/(react|react-dom|scheduler|@babel\/runtime)\//.test(id) || id.includes("vite/preload-helper") || id.includes("commonjsHelpers")) return "react"
             if (id.includes("node_modules/three/examples/jsm/exporters")) return undefined
             if (id.includes("node_modules/three/")) return "three"
             if (id.includes("node_modules/@react-three/postprocessing")) return undefined

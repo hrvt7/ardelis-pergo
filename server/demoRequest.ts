@@ -26,6 +26,8 @@ const demoSchema = z.object({
   plan: z.enum(DEMO_PLANS).default('unsure'),
   lang: z.enum(['hu', 'en']).default('hu'),
   message: z.string().trim().max(2000).optional().default(''),
+  /** Honnan jött (UTM-forrás / hivatkozó), csak az értesítő e-mailbe kerül. */
+  source: z.string().trim().max(160).optional().default(''),
   consent: z.literal(true, { message: 'Az adatkezelés elfogadása szükséges.' }),
   /** Rejtett mező: ember nem tölti ki. */
   fax: z.string().max(200).optional().default(''),
@@ -63,7 +65,7 @@ function limited(key: string, now: number) {
 function emailHtml(input: DemoRequest, ref: string, origin = '') {
   const rows: [string, string][] = [
     ['Név', input.name], ['Cég', input.company], ['E-mail', input.email], ['Telefon', input.phone || '—'],
-    ['Weboldal', input.website || '—'], ['Termék', PRODUCT_LABEL[input.product]], ['Választott csomag', PLAN_LABEL[input.plan]], ['Az oldal nyelve', input.lang === 'en' ? 'Angol (EN) – angolul válaszolj' : 'Magyar'],
+    ['Weboldal', input.website || '—'], ['Termék', PRODUCT_LABEL[input.product]], ['Választott csomag', PLAN_LABEL[input.plan]], ['Az oldal nyelve', input.lang === 'en' ? 'Angol (EN) – angolul válaszolj' : 'Magyar'], ['Forrás', input.source || '—'],
   ]
   return `<!doctype html><html lang="hu"><body style="margin:0;background:#f3f4f1;font-family:Arial,sans-serif;color:#141816">
 <div style="max-width:620px;margin:0 auto;padding:24px">${origin ? `<p style="margin:0 0 14px"><img src="${escapeHtml(origin)}/brand/lamelix-email-light.png" width="110" height="32" alt="Lamelix" style="border:0"></p>` : ''}<div style="background:#fff;border-radius:14px;padding:26px">

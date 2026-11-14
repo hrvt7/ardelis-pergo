@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, Copy, Download, ExternalLink, Flame, GripVertical, KanbanSquare, List, Mail, Phone, Search, X } from 'lucide-react'
+import { Check, Copy, Download, ExternalLink, Flame, GripVertical, KanbanSquare, List, Mail, Phone, PhoneCall, Search, X } from 'lucide-react'
 import { formatHuf } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
 import { initials, LEAD_STATUSES, leadsToCsv, STATUS_COLORS, timeAgo, type LeadRow } from '@/lib/adminLeads'
@@ -184,15 +184,16 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, o
       })}
     </div> : shown.length === 0 ? <div className="card empty"><EmptyArt /><strong>{leads.length === 0 ? 'Még nem érkezett érdeklődő.' : 'Nincs a szűrésnek megfelelő érdeklődő.'}</strong><p>{leads.length === 0 ? 'Amint valaki felmérést kér a konfigurátorban, itt jelenik meg.' : 'Próbálj másik státuszt vagy keresőszót.'}</p></div> :
       <div className="card table" role="table">
-        <div className="tr th" role="row"><span>Ügyfél</span><span>Település</span><span>Tető</span><span className="num">Irányár</span><span>Státusz</span><span className="num">Érkezett</span></div>
-        {shown.map((lead) => <button type="button" role="row" key={lead.ref} className={`tr${openRef === lead.ref ? ' is-open' : ''}`} onClick={() => setOpenRef(lead.ref)}>
+        <div className="tr-wrap" role="row"><div className="tr th"><span>Ügyfél</span><span>Település</span><span>Tető</span><span className="num">Irányár</span><span>Státusz</span><span className="num">Érkezett</span></div><span className="tr-call-head" aria-hidden="true" /></div>
+        {/* Soronként egy koppintásos hívás a sor mellett (a sor maga a részleteket nyitja) */}
+        {shown.map((lead) => <div role="row" key={lead.ref} className="tr-wrap"><button type="button" className={`tr${openRef === lead.ref ? ' is-open' : ''}`} onClick={() => setOpenRef(lead.ref)}>
           <span className="who"><span className="avatar">{initials(lead.customer_name)}{lead.status === 'new' && now - new Date(lead.created_at).getTime() < 86_400_000 && <i className="new-dot" title="Új érdeklődő" />}</span><span><b>{lead.customer_name}</b><small className="only-wide">{lead.ref} <TierBadge lead={lead} /></small><small className="only-narrow">{[lead.city, roofName(lead), timeAgo(lead.created_at, now)].filter((part) => part && part !== '—').join(' · ')} <TierBadge lead={lead} /></small></span></span>
           <span className="muted">{lead.city}</span>
           <span className="muted">{roofName(lead)}</span>
           <span className="num strong">{formatHuf(lead.estimate_gross)}</span>
           <span><span className="pill" style={{ ['--pill' as string]: STATUS_COLORS[lead.status] }}>{STATUS_LABEL[lead.status] ?? lead.status}</span></span>
           <span className="num muted">{timeAgo(lead.created_at, now)}</span>
-        </button>)}
+        </button><a className="icon-btn call tr-call" href={`tel:${lead.phone.replace(/[^+0-9]/g, '')}`} aria-label={`${lead.customer_name} hívása`} title="Hívás"><PhoneCall size={16} /></a></div>)}
       </div>}
     {open && <Drawer key={open.ref} lead={open} now={now} quotes={quotes && { quotes: quotes.all.filter((quote) => quote.leadRef === open.ref), create: quotes.create, withdraw: quotes.withdraw }} onClose={() => setOpenRef(null)} onUpdate={onUpdate} />}
   </div>
