@@ -39,6 +39,8 @@ import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
 import { doorLeafWidth, sideSegments } from '@/lib/sides'
 import { carportBays, hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
+import { ModularCameraRig, ModularDimensions, ModularGroundExtras, ModularHouseModel, type ModularView } from '@/components/ModularHouseScene'
+import type { ModularHouseConfig } from '@/products/modularHouse'
 import { FAN_DIAMETER, FAN_DROP, fanLayout } from '@/lib/fans'
 import { FURNITURE_SETS, furnitureFit, furnitureLayout } from '@/lib/furniture'
 import { kitchenModules, packPlan } from '@/lib/usePacks'
@@ -3065,7 +3067,10 @@ function SceneRegistration() {
   return null
 }
 
-function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade, walk = false, viewShiftX = 0 }: { walk?: boolean; viewShiftX?: number; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
+/** A modulház nézet bemenete: a ház konfigurációja, a kameranézet és a méretcímkék. */
+export type ModularSceneInput = { config: ModularHouseConfig; view: ModularView; dimensions: boolean }
+
+function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade, walk = false, viewShiftX = 0, modular = null }: { modular?: ModularSceneInput | null; walk?: boolean; viewShiftX?: number; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const target = getLighting(scene)
   // Az égbolt-kép és a be/ki jellegű dolgok (csillagok, éjszakai fények, LED) a napszak-átmenet közepén váltanak (LightingMood).
   const targetKey = `${target.hdr}|${target.night}`
@@ -3074,7 +3079,7 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
   const lighting = { ...target, night: shownNight, hdr: shownKey.slice(0, shownKey.lastIndexOf('|')) }
   const studio = scene.ground === 'studio'
   // Az árnyékkamera a pergolára és a közvetlen környezetére illeszkedik: ugyanazon a felbontáson élesebb árnyék.
-  const shadowExtent = scene.sunStudy || scene.photoMode ? lighting.shadowExtent : Math.min(lighting.shadowExtent, Math.max(7, Math.max(config.width, config.depth) / 2 + 4.5))
+  const shadowExtent = modular ? Math.max(11, lighting.shadowExtent) : scene.sunStudy || scene.photoMode ? lighting.shadowExtent : Math.min(lighting.shadowExtent, Math.max(7, Math.max(config.width, config.depth) / 2 + 4.5))
   const houseLook = useMemo<HouseLook>(() => ({ houseStyle: scene.houseStyle ?? 'classic', wallFinish: scene.wallFinish, wallColor: scene.wallColor, windowColor: scene.windowColor }), [scene.houseStyle, scene.wallFinish, scene.wallColor, scene.windowColor])
   // Eső bekapcsolásakor (nyitott forgólamellás tető esőérzékelővel): a kamera a hajtásoldalra közelít, a burkolat
   // felemelkedik, a lamellák lassan zárnak, majd a kamera visszatér és a hajtás eltűnik. 0 = nincs, 1 = közelítés, 2 = zárás.
@@ -3096,6 +3101,26 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
   const { photoX, photoY, photoScale, photoRotation, photoTilt, photoLens } = scene
   const placement = useMemo(() => ({ photoX, photoY, photoScale, photoRotation, photoTilt, photoLens }), [photoX, photoY, photoScale, photoRotation, photoTilt, photoLens])
   const pergola = <group name={PHOTO_GROUP} position={scene.photoMode ? [scene.photoX, scene.photoY, 0] : [0, 0, 0]} rotation={[0, scene.photoMode ? THREE.MathUtils.degToRad(scene.photoRotation) : 0, 0]} scale={scene.photoMode ? scene.photoScale : 1}><PergolaModel config={config} scene={scene} rainShow={rainShow} night={shownNight} onSideSelect={onSideSelect} onSceneChange={onSceneChange} />{scene.photoMode && <ShadowCatcher size={Math.max(config.width, config.depth) + 6} opacity={lighting.night ? 0.25 : 0.42} />}{!scene.photoMode && !coreOnly && <OptionalSceneAsset name="terrace furniture"><Furniture config={config} scene={scene} hideZone={view === 'sofa'} /></OptionalSceneAsset>}</group>
+  // Modulház: ugyanaz a vászon, fény, égbolt és talaj, csak a pergola, a ház és a kert helyett a típusház áll a középen.
+  if (modular) {
+    const sceneNoPhoto = { ...scene, photoMode: false }
+    return <>
+      <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|modular|${modular.config.facade}|${modular.config.roof}`} />
+      <FogFollow />
+      <LightingMood target={target} targetKey={targetKey} shownNight={shownNight} onSwap={setShownKey} rain={false} quality={quality} studio={studio} shadowExtent={shadowExtent} fogEnabled />
+      {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
+      {studio && <color attach="background" args={[lighting.night ? '#1b1f22' : '#e8e5de']} />}
+      {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={wantsSmallHdr(quality.tier) ? smallHdr(lighting.hdr) : lighting.hdr} background={!studio} backgroundBlurriness={0} backgroundIntensity={lighting.night ? 0.55 : 0.95} environmentIntensity={lighting.environment * quality.environmentIntensity} environmentRotation={[0, lighting.envRotation, 0]} backgroundRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
+      {studio ? <mesh name="essential-studio-floor" rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.002, 0]} receiveShadow><planeGeometry args={[600, 600]} /><meshStandardMaterial color={lighting.night ? '#555851' : '#dad7cf'} roughness={0.92} /></mesh>
+        : <><Ground scene={sceneNoPhoto} /><ModularGroundExtras config={modular.config} /></>}
+      <OptionalSceneAsset name="modular house"><ModularHouseModel config={modular.config} night={lighting.night} /></OptionalSceneAsset>
+      {modular.dimensions && <ModularDimensions config={modular.config} />}
+      {scene.showPerson && <OptionalSceneAsset name="180 cm reference person"><RealisticAsset url={assetUrl('/assets/models/scale_person/person.glb')} position={[1, 0.035, 5.2]} height={1.8} rotation={0.28} /></OptionalSceneAsset>}
+      {lighting.night && !studio && <Stars />}
+      {!EFFECTS_DISABLED && !coreOnly && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} /></Suspense></SceneAssetBoundary>}
+      <ModularCameraRig config={modular.config} view={modular.view} autoRotate={scene.autoRotate} />
+    </>
+  }
   return <>
     <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}|${scene.wallColor}|${scene.windowColor}`} />
     {!scene.photoMode && <FogFollow />}
@@ -3240,7 +3265,7 @@ function FirstFrameReady({ onReady }: { onReady: () => void }) {
   return null
 }
 
-export default memo(function PergolaScene({ config, scene, view, focus = null, viewShift = 0, onSideSelect, onSceneChange, onShade, walk = false, viewShiftX = 0 }: { /** Bejárás: első személyű kamera és séta. */ walk?: boolean; /** Vízszintes nézeteltolás a vászonszélesség arányában (üveges felület). */ viewShiftX?: number; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
+export default memo(function PergolaScene({ config, scene, view, focus = null, viewShift = 0, onSideSelect, onSceneChange, onShade, walk = false, viewShiftX = 0, modular = null }: { /** Modulház nézet: a pergola helyén a típusház (ugyanabban a vásznon). */ modular?: ModularSceneInput | null; /** Bejárás: első személyű kamera és séta. */ walk?: boolean; /** Vízszintes nézeteltolás a vászonszélesség arányában (üveges felület). */ viewShiftX?: number; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const [ready, setReady] = useState(false)
   const [decorativeReady, setDecorativeReady] = useState(false)
   // A nézet csak akkor tárul fel, ha a ház és a környezet is betöltött: addig 0–100% töltőképernyő fedi a jelenetet.
@@ -3366,6 +3391,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
             onShade={onShade}
             walk={walk}
             viewShiftX={viewShiftX}
+            modular={modular}
           />
         </Suspense></QualityContext.Provider>
         <FrameGovernor enabled={loaded && scene.quality === 'auto'} onSlow={onSlow} />

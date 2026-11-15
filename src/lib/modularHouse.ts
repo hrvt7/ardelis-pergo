@@ -1,5 +1,8 @@
 // Modulház: a React nélküli mag a src/products/modularHouse.ts-ben van (a szerver is azt használja);
 // itt csak a böngészős rész: piszkozat a localStorage-ban, megosztó link.
+import { useGLTF } from '@react-three/drei'
+import { assetUrl } from '@/lib/assetUrl'
+import { MODULAR_MODELS } from '@/products/modularHouse'
 import { decodeModularHash, encodeModularHash, MODULAR_DEFAULTS, parseModularConfig, type ModularHouseConfig } from '@/products/modularHouse'
 
 const KEY = 'lamelix-config-modular-v1'
@@ -26,4 +29,9 @@ export function createModularShareUrl(config: ModularHouseConfig) {
 /** Van-e a böngészőben mentett, az alaptól eltérő piszkozat (link nélkül nyitva). */
 export function hasModularDraft(config: ModularHouseConfig) {
   try { return !window.location.hash && localStorage.getItem(KEY) !== null && JSON.stringify(config) !== JSON.stringify(MODULAR_DEFAULTS) } catch { return false }
+}
+
+/** A ház modelljének előtöltése (a konfigurátor megnyitásakor), hogy a „Mit építesz?” váltás azonnali legyen. */
+export function preloadModularHouse(config: Pick<ModularHouseConfig, 'model'>) {
+  useGLTF.preload(assetUrl(MODULAR_MODELS[config.model].glb))
 }

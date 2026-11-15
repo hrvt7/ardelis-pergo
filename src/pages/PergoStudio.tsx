@@ -32,7 +32,9 @@ import { isClosedBuilding } from '@/lib/buildings'
 import { BuildingPicker, type ModularChoice } from '@/components/BuildingControls'
 import { offersModularHouse } from '@/products'
 import { MODULAR_PRICE_DEFAULTS } from '@/products/modularHouse'
-import { ChangePill, SceneToolbar, StudioHeader, WelcomeBack, type ToolItem } from '@/components/studio/StudioChrome'
+import { MODULAR_VIEWS, useModularStudio } from '@/components/useModularStudio'
+import { preloadModularHouse } from '@/lib/modularHouse'
+import { ChangePill, SceneToolbar, StudioHeader, StudioViewSettings, WelcomeBack, type ToolItem } from '@/components/studio/StudioChrome'
 import { usePresentation } from '@/components/studio/studioState'
 import PanelPrice from '@/components/studio/PanelPrice'
 import CameraViewMenu from '@/components/studio/CameraViewMenu'
@@ -50,8 +52,6 @@ const timeForClock = (hour: number): SceneSettings['time'] => (hour >= 20 || hou
 const ArDialog = lazy(() => import('@/components/ArDialog'))
 const SunStudyPanel = lazy(() => import('@/components/SunStudyPanel'))
 import MechanismPanel from '@/components/MechanismPanel'
-// A modulház nézet csak akkor töltődik be, ha a vásárló a „Mit építesz?” választóban a modulházat választja.
-const ModularWorkspace = lazy(() => import('@/components/ModularWorkspace'))
 const BudgetDialog = lazy(() => import('@/components/BudgetDialog'))
 const MoodPanel = lazy(() => import('@/components/MoodPanel'))
 const AdvisorDialog = lazy(() => import('@/components/AdvisorDialog'))
@@ -119,6 +119,9 @@ export default function PergoStudio() {
     try { return new URLSearchParams(window.location.search).get('ar') === '1' && window.matchMedia('(pointer: coarse)').matches ? 'ar' : null } catch { return null }
   })
   const [toast, setToast] = useState('')
+  // Modulház: ugyanaz a vászon és panel, csak a modell, a lépések és az ár cserélődik (nincs újratöltés).
+  const modular = useModularStudio({ active: modularMode, notify: setToast })
+  useEffect(() => { if (modularOffered) preloadModularHouse(modular.config) }, [modularOffered, modular.config])
   const [exporting, setExporting] = useState(false)
   // Egyszer megmutatjuk, hogyan mozgatható a jelenet (telefonon és laptopon más a mozdulat): az első húzásnál (vagy 7 mp után) eltűnik, és nem jön vissza.
   const coarsePointer = useMemo(() => { try { return window.matchMedia('(pointer: coarse)').matches } catch { return false } }, [])
@@ -408,12 +411,12 @@ export default function PergoStudio() {
       const textInput = target instanceof HTMLInputElement && !['range', 'checkbox', 'radio', 'button'].includes(target.type)
       if (textInput || ['TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable) return
       event.preventDefault()
-      if (key === 'y' || event.shiftKey) redo()
-      else undo()
+      if (key === 'y' || event.shiftKey) (modularMode ? modular.redo : redo)()
+      else (modularMode ? modular.undo : undo)()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [undo, redo])
+  }, [undo, redo, modularMode, modular.undo, modular.redo])
 
   const handleShare = async () => {
     const url = createShareUrl(config)
@@ -480,39 +483,44 @@ export default function PergoStudio() {
   const modularChoice: ModularChoice | undefined = modularOffered ? {
     selected: modularMode,
     priceNote: `${formatHuf(MODULAR_PRICE_DEFAULTS.perM2Net.a45)} / m²`,
-    onSelect: () => { setModularMode(true); window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`) },
+    onSelect: () => enterModular(),
   } : undefined
-  if (modularMode && modularChoice) {
-    // Visszaváltás pergolára / verandára / télikertre: a keretes konfiguráció ott folytatódik, ahol abbahagyták.
-    const exitModular = (patch: Partial<PergolaConfig>) => {
-      setModularMode(false)
-      window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`)
-      if (Object.keys(patch).length) updateConfig(patch)
-      setStep('size')
-    }
-    return <Suspense fallback={null}><ModularWorkspace typePicker={<BuildingPicker config={config} prices={prices} onChange={exitModular} modular={modularChoice} />} /></Suspense>
+  // Visszaváltás pergolára / verandára / télikertre / carportra: a keretes konfiguráció ott folytatódik, ahol abbahagyták.
+  const exitModular = (patch: Partial<PergolaConfig>) => {
+    setModularMode(false)
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`)
+    if (Object.keys(patch).length) updateConfig(patch)
+    setStep('size')
   }
-
+  const enterModular = () => {
+    setModularMode(true)
+    modular.setStep('model')
+    // A pergolához kötött jelenet-módok (fotó, árnyék, működés, eső, bejárás) a háznál nem értelmezettek.
+    updateScene({ photoMode: false, sunStudy: false, mechanism: false, rain: false, exploded: false })
+    if (walking) exitWalk()
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`)
+  }
   return (
     <div className={`app-shell layout-a ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''}`}>
-      <StudioHeader onHome={() => setView('perspective')} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setModal('info')} onReset={() => setModal('reset')} />
+      <StudioHeader onHome={() => (modularMode ? modular.setView('perspective') : setView('perspective'))} canUndo={modularMode ? modular.canUndo : history.current.past.length > 0} canRedo={modularMode ? modular.canRedo : history.current.future.length > 0} onUndo={modularMode ? modular.undo : undo} onRedo={modularMode ? modular.redo : redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setModal('info')} onReset={() => (modularMode ? (window.confirm('Visszaállítod a modulházat az alapkonfigurációra?') && modular.reset()) : setModal('reset'))} />
 
       <main className="studio-shell" id="top">
         <section className={`viewer-panel ${scene.photoMode ? 'photo-preview' : ''}`} aria-label="3D előnézet">
           {scene.photoMode && scene.photoUrl && <img className="photo-backdrop" src={scene.photoUrl} alt="A feltöltött teraszfotó háttere" />}
-          <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={walking ? undefined : handleSideSelect} onSceneChange={updateScene} onShade={setShade} walk={walking} viewShiftX={viewShiftX} />
+          <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={walking || modularMode ? undefined : handleSideSelect} onSceneChange={updateScene} modular={modularMode ? { config: modular.config, view: modular.view, dimensions: scene.showDimensions } : null} onShade={setShade} walk={walking} viewShiftX={viewShiftX} />
           {walking && <WalkOverlay onExit={exitWalk} touch={coarsePointer || isNarrow} roofBlocked={walkRoofBlocked} />}
-          <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1><span className="kinetic" key={ROOF_LABELS[config.roof]}>{ROOF_LABELS[config.roof].split(' · ')[0]}</span> <i>/</i> <span className="kinetic" key={`w${config.width}`}>{config.width.toFixed(1).replace('.', ',')}</span><small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>
+          {modularMode ? <div className="viewer-heading"><span>ÉLŐ ÉPÍTÉSZETI JELENET</span><h1><span className="kinetic" key={modular.model.name}>{modular.model.name}</span> <i>/</i> <span className="kinetic">{modular.model.grossArea.toFixed(1).replace('.', ',')}</span><small> m²</small></h1><p>{modular.model.title} · {modular.model.footprint.width.toFixed(2).replace('.', ',')} × {modular.model.footprint.depth.toFixed(2).replace('.', ',')} m</p></div>
+            : <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1><span className="kinetic" key={ROOF_LABELS[config.roof]}>{ROOF_LABELS[config.roof].split(' · ')[0]}</span> <i>/</i> <span className="kinetic" key={`w${config.width}`}>{config.width.toFixed(1).replace('.', ',')}</span><small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>}
           <div className="viewer-live"><i />VALÓS IDEJŰ 3D</div>
-          <SceneToolbar leading={<CameraViewMenu views={cameraViewsFor(config.building === 'carport' ? 'carport' : product).map((item) => ({ ...item, icon: CAMERA_ICONS[item.id] ?? View }))} value={view} onChange={(id) => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} />} time={scene.time} onTimeChange={(time) => updateScene({ time, dayTime: time === 'day' ? 13 : time === 'sunset' ? 18 : 22 })}
-            viewPanel={<SceneSettingsPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onPhotoUpload={handlePhoto} />}
-            quick={[
+          <SceneToolbar leading={modularMode ? <CameraViewMenu views={MODULAR_VIEWS.map((item) => ({ ...item, icon: View }))} value={modular.view} onChange={modular.setView} /> : <CameraViewMenu views={cameraViewsFor(config.building === 'carport' ? 'carport' : product).map((item) => ({ ...item, icon: CAMERA_ICONS[item.id] ?? View }))} value={view} onChange={(id) => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} />} time={scene.time} onTimeChange={(time) => updateScene({ time, dayTime: time === 'day' ? 13 : time === 'sunset' ? 18 : 22 })}
+            viewPanel={modularMode ? <StudioViewSettings productName="a ház" view={{ time: scene.time, environment: scene.ground !== 'studio', showPerson: Boolean(scene.showPerson), dimensions: scene.showDimensions, autoRotate: scene.autoRotate }} onChange={(patch) => updateScene({ ...(patch.time ? { time: patch.time, dayTime: patch.time === 'day' ? 13 : patch.time === 'sunset' ? 18 : 22 } : {}), ...(patch.environment !== undefined ? { ground: patch.environment ? 'terrace' : 'studio' } : {}), ...(patch.showPerson !== undefined ? { showPerson: patch.showPerson } : {}), ...(patch.dimensions !== undefined ? { showDimensions: patch.dimensions } : {}), ...(patch.autoRotate !== undefined ? { autoRotate: patch.autoRotate } : {}) })} /> : <SceneSettingsPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onPhotoUpload={handlePhoto} />}
+            quick={modularMode ? [] : [
               { id: 'walk', icon: Footprints, label: 'Bejárás', className: 'walk-launch', title: 'Bejárás első személyű nézetben, emberi szemmagasságból', active: walking, run: () => (walking ? exitWalk() : enterWalk()) },
               { id: 'rain', icon: CloudRain, label: 'Eső', className: 'icon-rain', title: 'Eső be- és kikapcsolása', active: scene.rain, run: () => updateScene({ rain: !scene.rain }) },
               ...(arHidden ? [] : [{ id: 'ar', icon: Rotate3d, label: 'AR', className: 'ar-launch icon-ar', title: arPath === 'desktop' ? 'Nézd meg a kertedben valós méretben — telefonon (QR-kód)' : 'Nézd meg valós méretben a saját kertedben (AR)', run: () => { if (!admin) { track(tenant.id, 'ar'); noteEngagement(tenant.id, 'ar') } if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') } }]),
             ]}
-            toolsBusy={scene.sunStudy || scene.photoMode || mechanismOn || scene.exploded}
-            tools={([
+            toolsBusy={!modularMode && (scene.sunStudy || scene.photoMode || mechanismOn || scene.exploded)}
+            tools={modularMode ? [] : ([
               { id: 'sun', icon: SunMedium, name: 'Árnyékelemzés', note: 'Valós napállás a saját helyszíneden, dátum és óra szerint', active: scene.sunStudy, run: toggleSunStudy },
               { id: 'photo', icon: scene.photoUrl ? Image : ImagePlus, name: 'Fotóba helyezés', note: config.building === 'carport' ? (scene.photoUrl ? 'A carport a saját udvarod fotóján' : 'Töltsd fel az udvarod fotóját, és helyezd rá a carportot') : (scene.photoUrl ? 'A pergola a saját teraszod fotóján' : 'Töltsd fel a teraszod fotóját, és helyezd rá a pergolát'), active: scene.photoMode, run: () => { if (!scene.photoUrl) openPhotoPicker(); else updateScene({ photoMode: !scene.photoMode, sunStudy: false }) } },
               ...(config.roof === 'louvered' ? [{ id: 'mechanism', icon: Cog, name: 'Működés-bemutató', note: 'A lamellahajtás mozgásban, valós gyári adatokkal', active: mechanismOn, run: () => updateScene({ mechanism: !scene.mechanism, sunStudy: false, photoMode: false, exploded: false }) }] : []),
@@ -523,29 +531,36 @@ export default function PergoStudio() {
             ] as ToolItem[]).filter(({ id }) => !(config.building === 'carport' && id === 'advisor'))}
             presentation={presentation} onPresentation={() => setPresentation(!presentation)} onExport={handleExport} onShare={handleShare} />
           {scene.rain && config.sensors && isMovableRoof(config.roof) && <div className="automation-status" role="status"><ShieldCheck size={16} /><span><strong>Esőautomata aktív</strong>{config.roof === 'retractable' ? 'A tolótető biztonságos, zárt pozícióban.' : 'A tetőlamellák biztonságos, zárt pozícióban.'}</span></div>}
-          {scene.time === 'night' && !scene.sunStudy && !mechanismOn && !moodHidden && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot is-mood${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MoodPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onClose={() => setMoodHidden(true)} /></div></Suspense>}
+          {scene.time === 'night' && !modularMode && !scene.sunStudy && !mechanismOn && !moodHidden && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot is-mood${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MoodPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onClose={() => setMoodHidden(true)} /></div></Suspense>}
           {mechanismOn && <Suspense fallback={null}><div className={`sun-panel-slot is-mechanism${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MechanismPanel config={config} onClose={() => updateScene({ mechanism: false })} /></div></Suspense>}
           {scene.sunStudy && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><SunStudyPanel scene={scene} shade={shade} onChange={updateScene} onClose={toggleSunStudy} /></div></Suspense>}
-          {view === 'sofa' && <div className="pov-note" role="status"><Armchair size={16} /><span><strong>Kanapé panoráma</strong>Húzd a képet a körbenézéshez · a nyilakkal is forgatható</span></div>}
+          {!modularMode && view === 'sofa' && <div className="pov-note" role="status"><Armchair size={16} /><span><strong>Kanapé panoráma</strong>Húzd a képet a körbenézéshez · a nyilakkal is forgatható</span></div>}
           {rotateHint && view !== 'sofa' && !scene.photoMode && !welcomeBack && <div className="pov-note rotate-hint" role="status"><Rotate3d size={16} /><span><strong>Húzd a forgatáshoz</strong>{coarsePointer ? 'Két ujjal nagyíthatsz' : 'Jobb gombbal vagy két ujjas görgetéssel mozgatod · görgővel, csípéssel nagyítasz'}</span></div>}
-          {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
+          {presentation && modularMode && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{modular.model.title} · bruttó {modular.model.grossArea.toFixed(1).replace('.', ',')} m²</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
+          {presentation && !modularMode && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
           {scene.photoMode ? <PhotoBar placement={{ photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt, photoLens: scene.photoLens }} coarse={isNarrow || window.matchMedia('(pointer: coarse)').matches} onChange={(next) => updateScene(next)} onReset={() => updateScene({ ...DEFAULT_PLACEMENT })} onReplace={openPhotoPicker} onDelete={deleteUserPhoto} onDone={() => updateScene({ photoMode: false })} />
             : null}
-          {welcomeBack && <WelcomeBack summary={`${config.width.toFixed(1).replace('.', ',')} × ${config.depth.toFixed(1).replace('.', ',')} m · ${formatHuf(price.totalGross)}`} onContinue={() => setWelcomeBack(false)} onFresh={() => { replaceConfig(productDefaultConfig(tenant, product)); setProjectName(''); setWelcomeBack(false); goStep('size') }} />}
-          {!presentation && <ChangePill change={change} onUndo={() => { undo(); setChange(null) }} />}
-          <div className="viewer-footer"><span>{scene.photoMode ? 'HELYI FOTÓS ELŐNÉZET' : '1 egység = 1 méter'}</span><span>{price.area.toFixed(1).replace('.', ',')} m²</span>{tenant.platformCredit !== false && <a className="platform-credit" href="/" target="_blank" rel="noopener" title="3D konfigurátor: Lamelix"><LamelixLogo variant="symbol" tone="onDark" height={11} title={null} />Lamelix</a>}</div>
+          {welcomeBack && !modularMode && <WelcomeBack summary={`${config.width.toFixed(1).replace('.', ',')} × ${config.depth.toFixed(1).replace('.', ',')} m · ${formatHuf(price.totalGross)}`} onContinue={() => setWelcomeBack(false)} onFresh={() => { replaceConfig(productDefaultConfig(tenant, product)); setProjectName(''); setWelcomeBack(false); goStep('size') }} />}
+          {!presentation && (modularMode ? <ChangePill change={modular.change} onUndo={() => { modular.undo(); modular.clearChange() }} /> : <ChangePill change={change} onUndo={() => { undo(); setChange(null) }} />)}
+          <div className="viewer-footer"><span>{scene.photoMode ? 'HELYI FOTÓS ELŐNÉZET' : '1 egység = 1 méter'}</span><span>{modularMode ? `bruttó ${modular.model.grossArea.toFixed(1).replace('.', ',')} m² · nettó ${modular.model.netArea.toFixed(1).replace('.', ',')} m²` : `${price.area.toFixed(1).replace('.', ',')} m²`}</span>{tenant.platformCredit !== false && <a className="platform-credit" href="/" target="_blank" rel="noopener" title="3D konfigurátor: Lamelix"><LamelixLogo variant="symbol" tone="onDark" height={11} title={null} />Lamelix</a>}</div>
         </section>
 
-        <ConfiguratorControls modular={modularChoice} config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={(next) => { goStep(next); if (isNarrow) setMobileControlsOpen(true) }} onSideSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} sheet={sheetView} onSheetChange={setSheet} onAdvisor={() => setModal('advisor')} energyCost={energyCost} onEnergy={() => setModal('energy')} footer={<PanelPrice gross={price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />} />
-        <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={admin ? () => setModal('prices') : undefined} onExport={handleExport} onShare={handleShare} onBudget={() => setModal('budget')} collapsed={!detailsOpen} onToggleCollapse={() => setDetailsOpen((open) => !open)} energyCost={energyCost} onEnergy={() => setModal('energy')} />
+        {modularMode && modularChoice ? <>
+          {modular.controls({ typePicker: <BuildingPicker config={config} prices={prices} onChange={exitModular} modular={modularChoice} />, footer: <PanelPrice gross={modular.price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />, mobileOpen: sheetView !== 'peek', onMobileToggle: () => setSheet(sheetView === 'peek' ? 'full' : 'peek') })}
+          {modular.pricePanel({ detailsOpen, onToggle: () => setDetailsOpen((open) => !open) })}
+        </> : <>
+          <ConfiguratorControls modular={modularChoice} config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={(next) => { goStep(next); if (isNarrow) setMobileControlsOpen(true) }} onSideSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} sheet={sheetView} onSheetChange={setSheet} onAdvisor={() => setModal('advisor')} energyCost={energyCost} onEnergy={() => setModal('energy')} footer={<PanelPrice gross={price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />} />
+          <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={admin ? () => setModal('prices') : undefined} onExport={handleExport} onShare={handleShare} onBudget={() => setModal('budget')} collapsed={!detailsOpen} onToggleCollapse={() => setDetailsOpen((open) => !open)} energyCost={energyCost} onEnergy={() => setModal('energy')} />
+        </>}
       </main>
 
-      <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong data-value={price.totalGross}><AnimatedPrice value={price.totalGross} /></strong><PriceDeltaPop value={price.totalGross} /></div><button type="button" onClick={() => {
+      <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong data-value={modularMode ? modular.price.totalGross : price.totalGross}><AnimatedPrice value={modularMode ? modular.price.totalGross : price.totalGross} /></strong><PriceDeltaPop value={modularMode ? modular.price.totalGross : price.totalGross} /></div><button type="button" onClick={() => {
+        if (modularMode) { modular.setStep(modular.step === 'summary' ? 'model' : 'summary'); setSheet('full'); return }
         const action = mobileBarAction(step)
         if (action.kind === 'step') { goStep(action.step); setMobileControlsOpen(true); return }
         setSheet('full')
         window.setTimeout(() => document.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 260)
-      }}>{mobileBarAction(step).label}<ChevronRight size={16} /></button></div>
+      }}>{modularMode ? (modular.step === 'summary' ? 'Tovább tervezés' : 'Összegzés') : mobileBarAction(step).label}<ChevronRight size={16} /></button></div>
       {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label="Értesítés bezárása" onClick={() => setToast('')}><X size={16} /></button></div>}
       {modal === 'prices' && admin && <PriceSettingsDialog prices={prices} onChange={setPrices} onReset={() => { setPrices(tenant.prices); setToast('A gyártói árlista visszaállt.') }} onClose={() => setModal(null)} />}
       {modal === 'info' && <InfoDialog onClose={() => setModal(null)} />}

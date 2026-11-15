@@ -1,5 +1,12 @@
 # Változások
 
+## 4.33 – Modulház: azonnali csere ugyanabban a 3D jelenetben, javított házmodell
+
+- **Nincs újratöltés:** a „Mit építesz?” választóban a Modulházra váltva a ház ugyanabban a 3D vásznon, a pergola helyén jelenik meg (ugyanaz a fény, égbolt, talaj és eszköztár); a beállítópanel és az ár a modulházéra vált. Korábban egy külön jelenet töltődött be töltőképernyővel. A modell a konfigurátor megnyitásakor előtöltődik.
+- **Környezet:** a ház a konfigurátor környezet-beállítását követi: alapból semleges háttér, a „Családi ház” környezetben fű, járda és kavicssáv. Napszak, 180 cm-es figura, méretcímkék és forgatás a Nézet panelből (a pergolához kötött eszközök – bejárás, eső, AR, árnyékelemzés, fotó – modulháznál nem jelennek meg).
+- **Házmodell javítások:** a tetőcserép-sorok és a tetőlap, valamint a homlokdeszka, az oromszegély és a tetőlap egybeeső felületei villództak (z-fighting) – szétválasztva; a bádogozás matt antracit (korábban lilásan csillogott); az ablaküveg fényvisszaverőbb, így nem látni át az üres belső téren; tágabb kamerakeret.
+- Tesztek: a meglévő `modularHouse.test.ts` (GLB szerepnevek, valós méret) és `modelCompression.test.ts` az új modellen.
+
 ## 4.32 – Egy konfigurátor: carport és modulház a „Mit építesz?” választóban
 
 - **Egy oldal, egy kalkulátor:** a „Mit építesz?” választóban Pergola, Veranda, Télikert, **Carport** és **Modulház** kártya van. A választásra a középső 3D modell és a beállítópanel tartalma cserélődik; új oldal, külön kalkulátor vagy termékválasztó nem nyílik.
