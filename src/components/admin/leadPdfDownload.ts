@@ -24,3 +24,17 @@ export async function downloadLeadPdf(tenant: Tenant, lead: LeadRow, input: Lead
   link.remove()
   window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
+
+/** A terv műszaki rajza DXF-ként (valós mm, rétegekkel), ugyanabból a rajzlapból, ami a PDF-ben van. */
+export async function downloadLeadDxf(tenant: Tenant, lead: LeadRow, input: LeadPdfInput) {
+  const [{ sheetDrawing }, { drawingToDxfBytes }] = await Promise.all([import('@/lib/pdfDocument'), import('@/lib/dxf')])
+  const bytes = drawingToDxfBytes(sheetDrawing(input.config, tenant))
+  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/dxf' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = leadPdfFileName(tenant, lead, input.config).replace(/\.pdf$/, '.dxf')
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+}

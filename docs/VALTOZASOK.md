@@ -1,5 +1,13 @@
 # Változások
 
+## 4.18 – DXF-export a műszaki rajzból (gyártói admin)
+
+- Az érdeklődő adatlapján a PDF mellett új „DXF (CAD)” gomb: a terv műszaki rajza (homlokzat, alaprajz, metszet, szövegmező) AutoCAD R12 DXF-ként, amit minden CAD-program megnyit (AutoCAD, LibreCAD, BricsCAD, DWG TrueView).
+- Valós mm-ben: a rajz egyetlen méretaránnyal készül, a DXF ezzel felszorozva 1:1-ben tartalmazza a geometriát, így CAD-ben lemérve a pergola valódi méretei jönnek ki (pl. 5,00 m széles terv → 5000 mm-es vonal).
+- Rétegek: KONTUR, RESZLET, SEGEDVONAL, HALVANY, KIEMELES, SZOVEG; a rejtett (szaggatott) vonalak DASHED vonaltípussal. A magyar ékezetes betűk CP1250 kódlappal helyesek.
+- A DXF ugyanabból a rajzlapból készül, mint a PDF melléklete (`sheetDrawing`), így a kettő mindig egyezik. Tájékoztató rajz, nem gyártási terv (a rajz szövegmezője is így jelöli).
+- Új: `src/lib/dxf.ts`; teszt: `tests/dxf.test.ts`. Ellenőrizve: ezdxf-fel hibátlanul beolvasható, képre renderelve a rajz és az ékezetek helyesek; a demó adminban a letöltés működik.
+
 ## 4.17 – Időpontfoglaló link a felmérési kérelem után
 
 - Új beállítás az adminban (Beállítások → Cég és kapcsolat): „Időpontfoglaló link (https)”, pl. Calendly vagy Google Naptár foglalóoldal. Csak https:// kezdetű cím menthető (szerveroldalon is ellenőrizve); üresen hagyva nincs link.

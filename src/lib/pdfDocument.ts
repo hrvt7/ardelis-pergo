@@ -2,7 +2,7 @@
 // szerveren is felépíthető. Négy oldal: borító, konfiguráció + anyaglista, ár + teendők, műszaki rajz.
 import { findShadeFabric, ROOF_SHADE_INFO } from './roofShade'
 import type { Content, ContentTable, TDocumentDefinitions, TableCell } from 'pdfmake/interfaces'
-import { drawingLevels, POST, technicalDrawing } from './drawing'
+import { drawingLevels, POST, technicalDrawing, type DrawingResult } from './drawing'
 import { isWallSide, MOUNT_LABELS, postPositions, wallLabel } from './mount'
 import { formatHuf, formatNumber } from './pricing'
 import { ROOF_INFO, GLAZING_INFO, effectiveGlazing, roofRise } from './roofs'
@@ -58,6 +58,35 @@ export interface PdfInput {
 
 const m2 = (value: number) => formatNumber(value, 2)
 const hu = (date: Date) => date.toLocaleDateString('hu-HU', { year: 'numeric', month: '2-digit', day: '2-digit' })
+
+/** A PDF műszaki rajzlapja (A4 fekvő, a margókon belül) – a DXF-export is ebből készül, így a kettő mindig egyezik. */
+export function sheetDrawing(config: PergolaConfig, tenant: Tenant, date = new Date()): DrawingResult {
+  const sheetW = PDF_SHEET.width
+  const sheetH = PDF_SHEET.height
+  const brand = tenant.brand.name
+  const code = getSpecCode(config)
+  const roof = ROOF_INFO[config.roof]
+  const tenantRoof = tenant.roofs[config.roof]
+  const roofName = tenantRoof?.name ?? roof.name
+  const roofShort = tenantRoof?.short ?? roof.short
+  const levels = drawingLevels(config)
+  const contact = [tenant.brand.legalName, tenant.brand.address, tenant.brand.phone, tenant.brand.email, tenant.brand.website].filter(Boolean).join(' · ')
+  const dateText = hu(date)
+  return technicalDrawing(config, {
+    brand,
+    contact: tenant.demo ? `${tenant.brand.legalName} · bemutató konfiguráció` : contact,
+    title: `${config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : 'Pergola'} – ${roofName} ${roofShort} · ${MOUNT_LABELS[config.mount].toLowerCase()}`,
+    code,
+    date: dateText,
+    notes: [
+      'Méretek cm-ben, szintek m-ben, a kész járófelülettől (±0,00) mérve.',
+      `A névleges magasság (${Math.round(config.height * 100)}) a keretgerenda tengelyére értendő; a szabad belmagasság ${Math.round(levels.beamBottom * 100)}.`,
+      'Statikai méretezést nem tartalmaz. Az alapozás, a falrögzítés és a hó-/szélteher a helyszíni felmérés és a gyártói típusstatika szerint.',
+      `Szín: ${colorSummary(tenant, config)}, porszórt alumínium.`,
+      'Az alaprajz +1,00 m-en vett vízszintes metszet; a metszősík fölötti elemek szaggatottan.',
+    ],
+  }, sheetW, sheetH)
+}
 
 export function buildPdfDefinition({ config, price, tenant, image, imageAspect = 16 / 10, shareUrl, date = new Date(), energyUsage = DEFAULT_USAGE, projectName, house }: PdfInput): TDocumentDefinitions {
   const brand = tenant.brand.name
@@ -252,21 +281,7 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
 
   // ---------- Melléklet: műszaki rajz (A4 fekvő) ----------
   const sheetW = PDF_SHEET.width
-  const sheetH = PDF_SHEET.height
-  const drawing = technicalDrawing(config, {
-    brand,
-    contact: tenant.demo ? `${tenant.brand.legalName} · bemutató konfiguráció` : contact,
-    title: `${config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : 'Pergola'} – ${roofName} ${roofShort} · ${MOUNT_LABELS[config.mount].toLowerCase()}`,
-    code,
-    date: dateText,
-    notes: [
-      'Méretek cm-ben, szintek m-ben, a kész járófelülettől (±0,00) mérve.',
-      `A névleges magasság (${Math.round(config.height * 100)}) a keretgerenda tengelyére értendő; a szabad belmagasság ${Math.round(levels.beamBottom * 100)}.`,
-      'Statikai méretezést nem tartalmaz. Az alapozás, a falrögzítés és a hó-/szélteher a helyszíni felmérés és a gyártói típusstatika szerint.',
-      `Szín: ${colorSummary(tenant, config)}, porszórt alumínium.`,
-      'Az alaprajz +1,00 m-en vett vízszintes metszet; a metszősík fölötti elemek szaggatottan.',
-    ],
-  }, sheetW, sheetH)
+  const drawing = sheetDrawing(config, tenant, date)
 
   // ---------- 3. oldal: ár, teendők, kapcsolat ----------
   const step = (number: string, title: string, text: string): Content => ({
