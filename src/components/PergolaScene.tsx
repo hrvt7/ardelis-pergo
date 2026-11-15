@@ -2435,7 +2435,7 @@ function seatPosition(config: Pick<PergolaConfig, 'width' | 'depth'>, furniture:
   return fit.alongWidth ? local : [local[1], -local[0]]
 }
 
-function CameraController({ view, focus, viewShift, revealed, config, autoRotate, furniture, mechanism = false, autoCamera = true, houseFrontZ = null, walk = false }: { walk?: boolean; view: CameraView; focus: CameraFocus | null; viewShift: number; revealed: boolean; config: PergolaConfig; autoRotate: boolean; furniture: FurnitureSet; mechanism?: boolean; autoCamera?: boolean; houseFrontZ?: number | null }) {
+function CameraController({ view, focus, viewShift, revealed, config, autoRotate, furniture, mechanism = false, autoCamera = true, houseFrontZ = null, walk = false, viewShiftX = 0 }: { walk?: boolean; viewShiftX?: number; view: CameraView; focus: CameraFocus | null; viewShift: number; revealed: boolean; config: PergolaConfig; autoRotate: boolean; furniture: FurnitureSet; mechanism?: boolean; autoCamera?: boolean; houseFrontZ?: number | null }) {
   const { camera, gl, invalidate } = useThree()
   const controls = useRef<OrbitControlsType>(null)
   const destination = useRef(new THREE.Vector3(12, 7, 14))
@@ -2673,11 +2673,13 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
   const size = useThree((state) => state.size)
   useEffect(() => {
     const perspectiveCamera = camera as THREE.PerspectiveCamera
-    if (viewShift > 0) perspectiveCamera.setViewOffset(size.width, size.height, 0, Math.round(size.height * viewShift), size.width, size.height)
+    // Üveges felületnél a panel a kép fölött lebeg: a nézet vízszintesen is eltolódik, hogy a pergola a szabad rész közepén legyen.
+    if (walk) return
+    if (viewShift > 0 || viewShiftX > 0) perspectiveCamera.setViewOffset(size.width, size.height, Math.round(size.width * viewShiftX), Math.round(size.height * viewShift), size.width, size.height)
     else perspectiveCamera.clearViewOffset()
     perspectiveCamera.updateProjectionMatrix()
     invalidate()
-  }, [viewShift, size.width, size.height, camera, invalidate])
+  }, [viewShift, viewShiftX, walk, size.width, size.height, camera, invalidate])
 
   // Egyszeri fókusz: a kiválasztott oldal elé fordul (enyhén oldalról és felülről, hogy a mélység is
   // látsszon), vagy bemutató körbeforgás. A felhasználó bármikor átveheti az irányítást.
@@ -3063,7 +3065,7 @@ function SceneRegistration() {
   return null
 }
 
-function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade, walk = false }: { walk?: boolean; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
+function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade, walk = false, viewShiftX = 0 }: { walk?: boolean; viewShiftX?: number; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const target = getLighting(scene)
   // Az égbolt-kép és a be/ki jellegű dolgok (csillagok, éjszakai fények, LED) a napszak-átmenet közepén váltanak (LightingMood).
   const targetKey = `${target.hdr}|${target.night}`
@@ -3114,7 +3116,7 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} /></Suspense></SceneAssetBoundary>}
     {scene.photoMode
       ? <PhotoRig config={config} placement={placement} onCommit={(next) => onSceneChange(next)} />
-      : <><TurntableDriver fullTurn={studio && !hasBackWall(config.mount)} /><CameraController walk={walk} view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} mechanism={config.roof === 'louvered' && (!!scene.mechanism || rainShow > 0)} autoCamera={scene.autoCamera} houseFrontZ={studio || hasBackWall(config.mount) ? null : getHouseLayout(config, scene.houseStyle ?? 'classic').frontZ} />{walk && <WalkController config={config} scene={scene} />}</>}
+      : <><TurntableDriver fullTurn={studio && !hasBackWall(config.mount)} /><CameraController walk={walk} viewShiftX={viewShiftX} view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} mechanism={config.roof === 'louvered' && (!!scene.mechanism || rainShow > 0)} autoCamera={scene.autoCamera} houseFrontZ={studio || hasBackWall(config.mount) ? null : getHouseLayout(config, scene.houseStyle ?? 'classic').frontZ} />{walk && <WalkController config={config} scene={scene} />}</>}
   </>
 }
 
@@ -3238,7 +3240,7 @@ function FirstFrameReady({ onReady }: { onReady: () => void }) {
   return null
 }
 
-export default memo(function PergolaScene({ config, scene, view, focus = null, viewShift = 0, onSideSelect, onSceneChange, onShade, walk = false }: { /** Bejárás: első személyű kamera és séta. */ walk?: boolean; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
+export default memo(function PergolaScene({ config, scene, view, focus = null, viewShift = 0, onSideSelect, onSceneChange, onShade, walk = false, viewShiftX = 0 }: { /** Bejárás: első személyű kamera és séta. */ walk?: boolean; /** Vízszintes nézeteltolás a vászonszélesség arányában (üveges felület). */ viewShiftX?: number; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const [ready, setReady] = useState(false)
   const [decorativeReady, setDecorativeReady] = useState(false)
   // A nézet csak akkor tárul fel, ha a ház és a környezet is betöltött: addig 0–100% töltőképernyő fedi a jelenetet.
@@ -3363,6 +3365,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
             onSceneChange={onSceneChange}
             onShade={onShade}
             walk={walk}
+            viewShiftX={viewShiftX}
           />
         </Suspense></QualityContext.Provider>
         <FrameGovernor enabled={loaded && scene.quality === 'auto'} onSlow={onSlow} />

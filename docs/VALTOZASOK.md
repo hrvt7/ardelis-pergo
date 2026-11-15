@@ -1,5 +1,13 @@
 # Változások
 
+## 4.26 – Üveges felületi változat kipróbálásra (?style=glass)
+
+- **Üveges stílus:** a `?style=glass` paraméterrel a 3D kép a teljes szélességet kapja, a beállítópanel, a részletek, az eszközsor és a menük elmosott, áttetsző üvegként lebegnek fölötte; a pergola a szabadon látható rész közepére kerül (a nézet a panel felével balra tolódik). Mobilon az alsó lap és a sáv üveges. Betű: Outfit.
+- A jelenlegi stílus marad az alapértelmezett; `?style=soft` visszaállítja. A választást a böngésző megjegyzi.
+- Olvashatóság: a panel 72%-os sötétítése a legvilágosabb háttér fölött is legalább 6,6:1 (fő szöveg) és 5:1 (másodlagos szöveg) kontrasztot ad (számolt). Ahol a böngésző nem tud elmosni, a panel tömör sötét.
+- Új függőség: `@fontsource-variable/outfit` (saját tárhelyű, latin-ext alkészlettel: ő, ű).
+- Tesztek: `uiStyle.test.ts` (paraméter és megjegyzett érték, panelszélesség, nézeteltolás).
+
 ## 4.25 – Bejárás: első személyű séta a pergola körül és alatt
 
 - **Bejárás gomb** a jelenet eszközsorában (lábnyom ikon): a kamera 0,7 mp alatt a pergola elé, kívülre repül, 175 cm-es szemmagasságba, a pergola felé nézve. Kilépés a jobb felső gombbal (asztalon Esc-kel is); utána vissza az áttekintő nézet, a konfiguráció változatlan.

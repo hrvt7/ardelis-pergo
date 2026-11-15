@@ -35,6 +35,7 @@ import PanelPrice from '@/components/studio/PanelPrice'
 import CameraViewMenu from '@/components/studio/CameraViewMenu'
 import WalkOverlay from '@/components/studio/WalkOverlay'
 import { buildWalkArea } from '@/lib/walkArea'
+import { glassViewShiftX, resolveUiStyle, UI_STYLE_KEY } from '@/lib/uiStyle'
 import { cameraViewsFor } from '@/lib/cameraViews'
 import { mobileBarAction } from '@/lib/configSteps'
 import { DEFAULT_USAGE, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
@@ -329,6 +330,12 @@ export default function PergoStudio() {
     window.addEventListener('keydown', close)
     return () => window.removeEventListener('keydown', close)
   }, [detailsOpen])
+  // Felületi stílus: ?style=glass (üveges panelek a 3D fölött) vagy a jelenlegi; a választást a böngésző megjegyzi.
+  const [uiStyle] = useState(() => { try { return resolveUiStyle(window.location.search, localStorage.getItem(UI_STYLE_KEY)) } catch { return resolveUiStyle(window.location.search, null) } })
+  useEffect(() => { try { if (new URLSearchParams(window.location.search).has('style')) localStorage.setItem(UI_STYLE_KEY, uiStyle) } catch { /* privát mód */ } }, [uiStyle])
+  const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth)
+  useEffect(() => { const update = () => setViewportWidth(window.innerWidth); window.addEventListener('resize', update); return () => window.removeEventListener('resize', update) }, [])
+  const viewShiftX = uiStyle === 'glass' && !isNarrow ? glassViewShiftX(viewportWidth, viewportWidth) : 0
   // Bejárás: első személyű nézet emberi szemmagasságban; a konfiguráció és a jelenet ugyanaz.
   const [walking, setWalking] = useState(false)
   const enterWalk = useCallback(() => {
@@ -455,13 +462,13 @@ export default function PergoStudio() {
   const summary = <SummaryPanel onFix={updateConfig} shareUrl={createShareUrl(config)} config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={() => setModal('energy')} onExport={handleExport} exporting={exporting} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} />
 
   return (
-    <div className={`app-shell layout-a ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''}`}>
+    <div className={`app-shell layout-a ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''}`}>
       <StudioHeader onHome={() => setView('perspective')} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setModal('info')} onReset={() => setModal('reset')} />
 
       <main className="studio-shell" id="top">
         <section className={`viewer-panel ${scene.photoMode ? 'photo-preview' : ''}`} aria-label="3D előnézet">
           {scene.photoMode && scene.photoUrl && <img className="photo-backdrop" src={scene.photoUrl} alt="A feltöltött teraszfotó háttere" />}
-          <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={walking ? undefined : handleSideSelect} onSceneChange={updateScene} onShade={setShade} walk={walking} />
+          <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={walking ? undefined : handleSideSelect} onSceneChange={updateScene} onShade={setShade} walk={walking} viewShiftX={viewShiftX} />
           {walking && <WalkOverlay onExit={exitWalk} touch={coarsePointer || isNarrow} roofBlocked={walkRoofBlocked} />}
           <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1><span className="kinetic" key={ROOF_LABELS[config.roof]}>{ROOF_LABELS[config.roof].split(' · ')[0]}</span> <i>/</i> <span className="kinetic" key={`w${config.width}`}>{config.width.toFixed(1).replace('.', ',')}</span><small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>
           <div className="viewer-live"><i />VALÓS IDEJŰ 3D</div>

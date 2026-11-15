@@ -2994,3 +2994,53 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
   .walk-stick { left: 20px; bottom: 150px; width: 120px; height: 120px; }
 }
 @media (prefers-reduced-motion: reduce) { .walk-hint { animation: none; } .walk-stick-knob { transition: none; } }
+
+/* ==========================================================================
+   4.26 – Üveges („glass”) felületi változat, kipróbálásra: ?style=glass
+   A 3D kép a teljes szélességet kapja, a panelek elmosott, áttetsző üvegként lebegnek fölötte.
+   Betű: Outfit. A panel sötétítése (72%) a legvilágosabb háttér fölött is AA kontrasztot ad (számolt).
+   ========================================================================== */
+.layout-a.style-glass {
+  --font-ui: 'Outfit Variable', 'Inter Variable', system-ui, sans-serif; --font-display: 'Outfit Variable', 'Manrope Variable', system-ui, sans-serif;
+  --glass: rgba(22,24,27,.72); --glass-strong: rgba(18,20,23,.8); --glass-card: rgba(255,255,255,.07); --glass-card-hover: rgba(255,255,255,.12);
+  --glass-line: rgba(255,255,255,.16); --glass-blur: blur(26px) saturate(150%);
+  --text-secondary: #D3D6DA; --text-soft: #E3E5E8; --surface-card: var(--glass-card); --surface-raised: var(--glass-card-hover); --surface-border: rgba(255,255,255,.1);
+  font-family: var(--font-ui);
+}
+.layout-a.style-glass .step-heading h2, .layout-a.style-glass .section-title h3 { font-family: var(--font-display); }
+.layout-a.style-glass .step-heading h2 { font-weight: 500; letter-spacing: -.015em; }
+.layout-a.style-glass .panel-price-value > strong, .layout-a.style-glass .total-price > strong, .layout-a.style-glass .mobile-price-bar strong { font-family: var(--font-display); font-weight: 300; }
+.layout-a.style-glass .app-header { background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); }
+
+/* Üvegpanelek: a beállítópanel, a részletek, az eszközsor, a menük. */
+.layout-a.style-glass .controls-panel, .layout-a.style-glass .price-panel:not(.is-collapsed), .layout-a.style-glass .view-popover, .layout-a.style-glass .camera-menu-list, .layout-a.style-glass .walk-hint {
+  background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-line); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 24px 60px rgba(0,0,0,.35);
+}
+.layout-a.style-glass .panel-dock, .layout-a.style-glass .control-tabs, .layout-a.style-glass .segmented, .layout-a.style-glass .number-with-unit, .layout-a.style-glass .price-mode { background: rgba(0,0,0,.28); border-color: var(--glass-line); }
+.layout-a.style-glass .roof-options > button, .layout-a.style-glass .roof-card, .layout-a.style-glass .building-card, .layout-a.style-glass .extra-card, .layout-a.style-glass .preset-list button, .layout-a.style-glass .mech-cta,
+.layout-a.style-glass .monthly-example, .layout-a.style-glass .budget-trigger, .layout-a.style-glass .energy-trigger.is-panel { background: var(--glass-card); border-color: rgba(255,255,255,.06); }
+.layout-a.style-glass .roof-options > button.selected, .layout-a.style-glass .roof-card.selected, .layout-a.style-glass .building-card.selected, .layout-a.style-glass .extra-card.is-on { background: rgba(196,240,60,.14); border-color: var(--accent-primary); }
+.layout-a.style-glass .weather-toolbar button, .layout-a.style-glass .camera-toolbar, .layout-a.style-glass .walk-badge, .layout-a.style-glass .pov-note, .layout-a.style-glass .change-pill {
+  background: rgba(22,24,27,.55); border-color: var(--glass-line); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+}
+.layout-a.style-glass .weather-toolbar button.selected, .layout-a.style-glass .camera-toolbar button.selected { background: var(--accent-primary); color: var(--ink-1000); }
+
+/* Asztali nézet: a 3D kitölti a teret, a panel fölötte lebeg (a kép a panel felével balra tolva, lásd uiStyle.ts). */
+@media (min-width: 821px) and (not ((orientation: landscape) and (max-height: 520px) and (pointer: coarse))) {
+  .layout-a.style-glass .viewer-panel { inset: 0; border-radius: 0; }
+  .layout-a.style-glass .viewer-panel::after { background: linear-gradient(180deg, rgba(7,12,11,.32), transparent 22%, transparent 75%, rgba(7,12,11,.3)); }
+  .layout-a.style-glass .controls-panel { top: var(--gutter); background: var(--glass); }
+  .layout-a.style-glass .weather-toolbar, .layout-a.style-glass .automation-status, .layout-a.style-glass .sun-panel-slot, .layout-a.style-glass .view-popover { right: calc(var(--panel-w) + var(--gutter) * 3); }
+  .layout-a.style-glass .viewer-footer { right: calc(var(--panel-w) + var(--gutter) * 3); }
+  .layout-a.style-glass .walk-exit { right: calc(var(--panel-w) + var(--gutter) * 3); }
+  .layout-a.style-glass .price-panel:not(.is-collapsed) { top: var(--gutter); }
+}
+/* Mobil: lebegő üveglap és üveges alsó sáv. */
+@media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .layout-a.style-glass .mobile-price-bar { background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-top: 1px solid var(--glass-line); }
+}
+/* Ha a böngésző nem tud elmosni, a panel tömör sötét marad (olvasható). */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .layout-a.style-glass .controls-panel, .layout-a.style-glass .price-panel:not(.is-collapsed), .layout-a.style-glass .mobile-price-bar { background: #1A1C1F; }
+}
