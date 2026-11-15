@@ -67,7 +67,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId: tenant.id,
-          product,
+          product: productFamily === 'modular-house' ? productFamily : product,
           config,
           customer: {
             name: field('customerName'),

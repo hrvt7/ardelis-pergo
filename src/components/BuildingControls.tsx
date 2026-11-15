@@ -41,14 +41,32 @@ function BuildingIcon({ type }: { type: BuildingType }) {
   </svg>
 }
 
-/** „Mit építesz?": pergola / veranda / télikert, csak a gyártó kínálatából. */
-export function BuildingPicker({ config, prices, onChange }: { config: PergolaConfig; prices: PriceSettings; onChange: Change }) {
+function ModularIcon() {
+  return <svg width={52} height={36} viewBox="0 0 52 36" aria-hidden="true" className="building-icon building-icon-modular">
+    <path d="M5 16L26 5l21 11" className="bi-roof" pathLength={1} />
+    <path d="M9 14v18M43 14v18" className="bi-post" pathLength={1} />
+    <rect x="13" y="20" width="7" height="6" className="bi-pane" /><rect x="31" y="20" width="7" height="6" className="bi-pane" />
+    <rect x="23" y="20" width="6" height="12" className="bi-door" />
+    <path d="M3 32h46" className="bi-ground bi-slab" />
+  </svg>
+}
+
+/** A modulház kártyája a választóban: nem keretes építmény, hanem a konfigurátoron belüli külön modell (ModularWorkspace). */
+export interface ModularChoice {
+  selected: boolean
+  onSelect: () => void
+  /** A kártyán megjelenő ár-jelzés (pl. „445 000 Ft / m² nettó”). */
+  priceNote: string
+}
+
+/** „Mit építesz?": pergola / veranda / télikert (és ha a gyártó kínálja, modulház), csak a gyártó kínálatából. */
+export function BuildingPicker({ config, prices, onChange, modular }: { config: PergolaConfig; prices: PriceSettings; onChange: Change; modular?: ModularChoice }) {
   const { tenant } = useTenant()
   const roofs = enabledRoofs(tenant)
-  // A carport külön termék, saját kalkulátorral (/konfigurator/carport): itt nem választható.
-  const available: BuildingType[] = availableBuildings(roofs, tenant.sides).filter((type) => type !== 'carport')
-  if (available.length < 2) return null
-  const current: BuildingType = config.building ?? 'pergola'
+  // Minden építménytípus ugyanebben a konfigurátorban választható (a carport is): a modell, a lépések és az ár átáll.
+  const available: BuildingType[] = availableBuildings(roofs, tenant.sides)
+  if (available.length < 2 && !modular) return null
+  const current: BuildingType | 'modular' = modular?.selected ? 'modular' : config.building ?? 'pergola'
   const base = tenantPrice(tenant, config, prices).totalGross
   const patchFor = (building: BuildingType) => buildingPatch(config, building, roofs, tenant.sides)
   const delta = (building: BuildingType) => tenantPrice(tenant, normalizeConfig(tenant, { ...config, ...patchFor(building) }), prices).totalGross - base
@@ -56,12 +74,18 @@ export function BuildingPicker({ config, prices, onChange }: { config: PergolaCo
     {BUILDING_TYPES.filter((type) => available.includes(type)).map((type, index) => {
       const info = BUILDING_INFO[type]
       const selected = current === type
-      return <button type="button" role="radio" aria-checked={selected} key={type} style={{ ['--i' as string]: index }} className={`building-card building-${type}${selected ? ' selected' : ''}`} onClick={() => !selected && onChange(patchFor(type))}>
-        <span className="building-card-head"><BuildingIcon type={type} /><span><strong>{info.label}</strong><small>{info.short}</small></span><em>{selected ? 'Kiválasztva' : signed(delta(type))}</em></span>
+      // Modulház nézetből visszaváltva az árkülönbség nem értelmezhető (más termék), ezért ott nem jelenik meg.
+      return <button type="button" role="radio" aria-checked={selected} key={type} style={{ ['--i' as string]: index }} className={`building-card building-${type}${selected ? ' selected' : ''}`} onClick={() => !selected && onChange(modular?.selected && type === (config.building ?? 'pergola') ? {} : patchFor(type))}>
+        <span className="building-card-head"><BuildingIcon type={type} /><span><strong>{info.label}</strong><small>{info.short}</small></span><em>{selected ? 'Kiválasztva' : modular?.selected ? '' : signed(delta(type))}</em></span>
         <span className="building-card-text">{info.description}</span>
         <span className="building-card-traits"><span className="building-season">{info.season}</span>{info.traits.map((trait) => <span key={trait}>{trait}</span>)}</span>
       </button>
     })}
+    {modular && <button type="button" role="radio" aria-checked={modular.selected} style={{ ['--i' as string]: available.length }} className={`building-card building-modular${modular.selected ? ' selected' : ''}`} onClick={() => !modular.selected && modular.onSelect()}>
+      <span className="building-card-head"><ModularIcon /><span><strong>Modulház</strong><small>Típusház valós méretben</small></span><em>{modular.selected ? 'Kiválasztva' : modular.priceNote}</em></span>
+      <span className="building-card-text">Előregyártott, darus emeléssel telepített családi ház; kívül kulcsrakész, belül emelt szerkezetkész.</span>
+      <span className="building-card-traits"><span className="building-season">Egész évben</span><span>Típusház</span><span>Pontalapozással</span></span>
+    </button>}
   </div>
 }
 

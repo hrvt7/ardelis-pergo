@@ -18,7 +18,7 @@ import HouseLook, { WindowMatch } from '@/components/HouseLook'
 import { findWindowColor, finishPreview, houseSummary, wallColorHex, wallColorName } from '@/lib/house'
 import { describeColor } from '@/lib/colors'
 import ColorPicker from '@/components/ColorPicker'
-import { BuildingIssues, BuildingPicker, ClimateSection, WallGlazingPicker } from '@/components/BuildingControls'
+import { BuildingIssues, BuildingPicker, ClimateSection, WallGlazingPicker, type ModularChoice } from '@/components/BuildingControls'
 import { BUILDING_ROOFS, isClosedBuilding } from '@/lib/buildings'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
 
@@ -42,6 +42,8 @@ interface Props {
   onSheetChange: (sheet: SheetState) => void
   /** A tanácsadó megnyitása (4 kérdés → javasolt konfiguráció). */
   onAdvisor?: () => void
+  /** A „Mit építesz?” választó modulház-kártyája (ha a gyártó kínálja). */
+  modular?: ModularChoice
   /** Üzemeltetési költség: becsült éves összeg és a részletek megnyitása. */
   energyCost?: number | null
   onEnergy?: () => void
@@ -315,11 +317,12 @@ export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneCha
   )
 }
 
-export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, sheet, onSheetChange, onAdvisor, energyCost, onEnergy, footer }: Props) {
+export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, sheet, onSheetChange, onAdvisor, energyCost, onEnergy, footer, modular }: Props) {
   const { tenant, product } = useTenant()
   const { limits } = tenant
-  // A carport külön termék (saját kalkulátor ugyanezen a motoron): nincs típusválasztó, és a pergola-komfort opciók sem jelennek meg.
-  const carport = product === 'carport'
+  // A carport ugyanennek a konfigurátornak egy építménytípusa (a „Mit építesz?” választóból): a pergola-komfort opciók
+  // (bútor, fűtés, ventilátor stb.) nem jelennek meg hozzá. A régi /carport útvonal is ide, carport kezdőállapottal érkezik.
+  const carport = config.building === 'carport' || product === 'carport'
   const panelRef = useRef<HTMLElement>(null)
   const mobileOpen = sheet !== 'peek'
   const sheetGesture = useSheetGesture(panelRef, sheet, onSheetChange)
@@ -380,11 +383,9 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           <div className="step-heading"><span>0{stepIndex + 1} · {STEPS[stepIndex].short}</span><h2>{step === 'size' ? buildingName : stepLabel(step)}</h2></div>
 
           {step === 'size' && <>
-            {!carport && <>
-              {onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
-              <SectionTitle title="Mit építesz?" hint="Nyitott pergola, zárt üvegezett veranda vagy egész éves télikert. A választás átállítja a tetőt és az oldalakat, utána minden módosítható." />
-              <BuildingPicker config={config} prices={prices} onChange={onChange} />
-            </>}
+            {!carport && onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
+            <SectionTitle title="Mit építesz?" hint={`Pergola, veranda, télikert, carport${modular ? ' vagy modulház' : ''}. A választás átállítja a modellt, a lépéseket és az árat; utána minden módosítható.`} />
+            <BuildingPicker config={config} prices={prices} onChange={onChange} modular={modular} />
             <SectionTitle title="Kiinduló csomagok" hint={config.building ? `A kiválasztott típushoz (${config.building === 'conservatory' ? 'télikert' : config.building === 'carport' ? 'carport' : 'veranda'}) illő kiinduló terv. Utána minden szabadon módosítható.` : 'Egy koppintással indulhatsz, utána minden szabadon módosítható.'} />
             <div className="preset-list">{(tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')).length ? tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')) : tenant.presets).map((preset) => <button type="button" key={preset.id} className={[appliedPreset === preset.id ? 'applied' : '', preset.featured ? 'is-featured' : ''].filter(Boolean).join(' ') || undefined} onClick={() => { onPreset(presetConfig(tenant, preset.config)); setAppliedPreset(preset.id); window.setTimeout(() => setAppliedPreset((current) => (current === preset.id ? null : current)), 1400) }}><strong>{preset.name}{preset.featured && <em className="preset-badge">Legnépszerűbb</em>}</strong><span>{preset.description}</span>{appliedPreset === preset.id ? <Check size={15} /> : <ArrowRight size={15} />}</button>)}</div>
             <p className="split-note">A méreteket, a tetőt, az oldalakat és a színt a következő lépésekben állítod be; a bútor és a környezet a 3D feletti <strong>Nézet</strong> gombnál van.</p>

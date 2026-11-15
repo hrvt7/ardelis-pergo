@@ -1,6 +1,7 @@
-// Modulház konfigurátor: saját mag (products/modularHouse.ts), saját 3D (ModularHouseScene), a garázskapu-stúdió
-// héjával és paneljeivel. Különálló termék: nem kapcsolódik a pergolához.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+// Modulház nézet a konfigurátoron belül: ugyanaz az oldal és héj (fejléc, 3D, vezérlőpanel, árpanel), csak a középső
+// modell a valós méretű típusház, a lépések és az ár a modulházé. A PergoStudio jeleníti meg, ha a „Mit építesz?”
+// választóban a Modulház van kiválasztva. Saját mag: products/modularHouse.ts; 3D: ModularHouseScene.
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Box, Check, ChevronRight, Download, Info, Link2, Maximize2, MoveUpRight, PanelRight, Ruler, SquareDashed, View, X } from 'lucide-react'
 import { Link } from 'react-router'
 import ModularHouseControls, { type ModularStep } from '@/components/ModularHouseControls'
@@ -9,7 +10,8 @@ import ModularHouseScene, { type ModularSceneSettings, type ModularView } from '
 import LeadForm from '@/components/LeadForm'
 import { AnimatedPrice, PriceDeltaPop } from '@/components/PricePanel'
 import { ChangePill, SceneToolbar, StudioHeader, StudioViewSettings, WelcomeBack } from '@/components/studio/StudioChrome'
-import { useChangePill, usePriceCollapse, usePresentation, useSceneThumbnail } from '@/components/studio/studioState'
+import { useChangePill, usePresentation, useSceneThumbnail } from '@/components/studio/studioState'
+import PanelPrice from '@/components/studio/PanelPrice'
 import { DEFAULT_STUDIO_TIME } from '@/lib/studioLighting'
 import { useTenant } from '@/tenants/TenantContext'
 import { createModularShareUrl, hasModularDraft, loadModularConfig, persistModularConfig } from '@/lib/modularHouse'
@@ -29,12 +31,13 @@ const NOTES = [
   'A 3D modell az alaprajz méretei szerint készült; a magasságok és a tetőhajlás becsültek.',
 ]
 
-export default function ModularHouseStudio() {
+export default function ModularWorkspace({ typePicker }: { /** A „Mit építesz?” választó (innen lehet visszaváltani pergolára). */ typePicker: ReactNode }) {
   const { homeHref } = useTenant()
   const [config, setConfig] = useState<ModularHouseConfig>(loadModularConfig)
   const [scene, setScene] = useState<ModularSceneSettings>({ time: DEFAULT_STUDIO_TIME, showPerson: false, dimensions: true, environment: true, autoRotate: false })
   const [presentation, setPresentation] = usePresentation()
-  const [priceCollapsed, togglePrice] = usePriceCollapse()
+  // Mint a pergolánál: alul egy élő ár, a teljes kalkuláció a „Részletek” gombra nyílik a panel mellett.
+  const [detailsOpen, setDetailsOpen] = useState(false)
   const [change, announceChange, clearChange] = useChangePill()
   const [welcomeBack, setWelcomeBack] = useState(() => hasModularDraft(config))
   const [view, setView] = useState<ModularView>('perspective')
@@ -95,7 +98,7 @@ export default function ModularHouseStudio() {
     <div className="summary-footnote"><Info size={14} /><span>A piszkozat a böngésződben marad. Csak az űrlap elküldésekor jön létre valós, adatbázisban rögzített projekt.</span></div>
   </div>
 
-  return <div className={`app-shell catalog-studio ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>
+  return <div className={`app-shell layout-a modular-mode ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''}`}>
     <StudioHeader onHome={() => setView('perspective')} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onReset={reset} />
     <main className="studio-shell">
       <section className="viewer-panel" aria-label="Modulház 3D előnézet"><ModularHouseScene config={config} scene={scene} view={view} />
@@ -107,8 +110,8 @@ export default function ModularHouseStudio() {
         {!presentation && <ChangePill change={change} onUndo={() => { undo(); clearChange() }} />}
         {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{headline}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
       </section>
-      <ModularHouseControls config={config} step={step} summary={summary} mobileOpen={mobileOpen} onMobileToggle={() => setMobileOpen(!mobileOpen)} onStep={setStep} onChange={update} />
-      <CatalogPricePanel collapsed={priceCollapsed} onToggleCollapse={togglePrice} heading={{ eyebrow: MODULAR_LABELS.finish[config.finish], title: model.title, measure: `${formatNumber(price.area)} m² × ${formatHuf(MODULAR_PRICE_DEFAULTS.perM2Net[config.model])} / m² nettó` }} price={price} exporting={exporting} delta={delta} onExport={exportPdf} onShare={share}
+      <ModularHouseControls config={config} step={step} summary={summary} typePicker={typePicker} footer={<PanelPrice gross={price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />} mobileOpen={mobileOpen} onMobileToggle={() => setMobileOpen(!mobileOpen)} onStep={setStep} onChange={update} />
+      <CatalogPricePanel collapsed={!detailsOpen} onToggleCollapse={() => setDetailsOpen((open) => !open)} heading={{ eyebrow: MODULAR_LABELS.finish[config.finish], title: model.title, measure: `${formatNumber(price.area)} m² × ${formatHuf(MODULAR_PRICE_DEFAULTS.perM2Net[config.model])} / m² nettó` }} price={price} exporting={exporting} delta={delta} onExport={exportPdf} onShare={share}
         installation={null} totalNote="A gyártó m²-árából · nem ajánlattétel" disclaimer={`Tájékoztató irányár. Nincs benne: ${MODULAR_NOT_INCLUDED.slice(0, 4).join(', ').toLowerCase()}.`} />
     </main>
     <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong data-value={price.totalGross}><AnimatedPrice value={price.totalGross} /></strong><PriceDeltaPop value={price.totalGross} /></div><button type="button" onClick={() => { setStep(step === 'summary' ? 'model' : 'summary'); setMobileOpen(true) }}>{step === 'summary' ? 'Tovább tervezés' : 'Összegzés'}<ChevronRight size={16} /></button></div>

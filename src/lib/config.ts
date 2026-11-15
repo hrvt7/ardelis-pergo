@@ -113,8 +113,6 @@ export function loadInitialConfig(tenant: Tenant, product: ProductFamily = 'perg
   const stored = parseConfig(tenant, readStored(configKey(tenant, product))) ?? productDefaultConfig(tenant, product)
   // Carport útvonalon a kezdőállapot mindig carport.
   if (product === 'carport' && stored.building !== 'carport') return productDefaultConfig(tenant, product)
-  // Teraszfedés útvonalon a carport-piszkozat visszavált pergolára (az eredeti oldalakkal): az útvonal családja az irányadó.
-  if (product === 'pergola' && stored.building === 'carport') return normalizeConfig(tenant, { ...stored, ...buildingPatch(stored, 'pergola', enabledRoofs(tenant), tenant.sides) } as PergolaConfig)
   return stored
 }
 

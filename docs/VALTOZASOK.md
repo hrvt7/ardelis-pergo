@@ -1,5 +1,13 @@
 # Változások
 
+## 4.32 – Egy konfigurátor: carport és modulház a „Mit építesz?” választóban
+
+- **Egy oldal, egy kalkulátor:** a „Mit építesz?” választóban Pergola, Veranda, Télikert, **Carport** és **Modulház** kártya van. A választásra a középső 3D modell és a beállítópanel tartalma cserélődik; új oldal, külön kalkulátor vagy termékválasztó nem nyílik.
+- **Carport:** korábban külön útvonalon (`/konfigurator/carport`) élt és a választóból hiányzott; most ugyanitt választható, a carporthoz tartozó lépésekkel és extrákkal. A carport-piszkozat a konfigurátorban carport marad (eddig pergolára váltott vissza).
+- **Modulház (A45):** a pergola helyén a valós méretű típusház; a panel ugyanabban a felépítésben (jobb oldalt, lépésfülek, alul élő ár és „Részletek”) a modulház lépéseit mutatja: Típus (benne a „Mit építesz?” választó a visszaváltáshoz) → Kivitel → Megjelenés → Összegzés. Árazás változatlanul a gyártó m²-árával (4.31). A `#h=` megosztó link modulház nézetben nyit; a választás gyártónként megmarad.
+- **Visszavonva (4.31):** a külön Modulház termék, a `/konfigurator/modulhaz` útvonal, a termékválasztó-kártya és a fejléc „Másik termék” linkje. A modulház-motor megmaradt a lead-végponthoz (`product: modular-house`), a lead-e-mail linkje a konfigurátorra mutat.
+- Tesztek: `products.test.ts` (a modulház nem külön kalkulátor: rejtett család, útvonala a konfigurátor; `offersModularHouse`).
+
 ## 4.31 – Modulház: új, különálló termék (A45)
 
 - **Új termékcsalád: Modulház** (`/konfigurator/modulhaz`, `/k/<gyártó>/modulhaz`). Saját kalkulátor, nem kapcsolódik a pergolához. A termékválasztóban (`/konfigurator/termekek`) a „Teraszfedés: pergola, veranda, télikert” mellett jelenik meg, a fejlécben a „Másik termék” link vezet ide. A demó gyártó kínálja.

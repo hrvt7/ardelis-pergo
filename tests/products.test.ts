@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { productDefaultConfig } from '../src/lib/config'
-import { DEFAULT_PRODUCT, HUB_SLUG, hubPath, INTEREST_EVENTS, interestEvent, isHiddenProduct, productBySlug, productInfo, productPath, PRODUCTS, tenantProducts } from '../src/products'
+import { DEFAULT_PRODUCT, HUB_SLUG, hubPath, INTEREST_EVENTS, interestEvent, isHiddenProduct, offersModularHouse, productBySlug, productInfo, productPath, PRODUCTS, tenantProducts } from '../src/products'
 import { TRACK_EVENTS } from '../server/analytics'
 import { fenceEngine, garageEngine, getEngine, modularHouseEngine, pergolaEngine } from '../src/products/engines'
 import { calculateModularPrice, decodeModularHash, MODULAR_DEFAULTS, MODULAR_PRICE_DEFAULTS } from '../src/products/modularHouse'
@@ -45,16 +45,21 @@ describe('termékcsaládok', () => {
   it('a gyártó kínálata: megadás nélkül csak pergola; MVP-ben a félretett családok senkinél nem jelennek meg', () => {
     expect(tenantProducts({})).toEqual(['pergola'])
     expect(tenantProducts({ products: ['pergola', 'fence'] })).toEqual(['pergola'])
-    // A demó a teraszfedést (pergola, veranda, télikert) és a modulházat kínálja; a félretett családok kimaradnak.
-    expect(tenantProducts(demoTenant)).toEqual(['pergola', 'modular-house'])
+    // A demó beállításában szerepelnek, de az MVP csak a teraszfedést kínálja külön kalkulátorként;
+    // a modulház a konfigurátoron belül választható (offersModularHouse), nem külön termékként.
+    expect(tenantProducts(demoTenant)).toEqual(['pergola'])
+    expect(offersModularHouse(demoTenant)).toBe(true)
+    expect(offersModularHouse({ products: ['pergola'] })).toBe(false)
     // Ha egy gyártó csak félretett családot adott meg, a pergola marad.
     expect(tenantProducts({ products: ['garage-door'] })).toEqual(['pergola'])
   })
 
-  it('MVP: a teraszfedés és a modulház él; a carport, a kerítés, a garázskapu és a kerti ház félretéve', () => {
-    expect(PRODUCTS.filter((product) => !isHiddenProduct(product.id)).map((product) => product.id)).toEqual(['pergola', 'modular-house'])
-    expect(productBySlug('modulhaz')?.id).toBe('modular-house')
-    expect(productPath('demo', 'demo', 'modular-house')).toBe('/konfigurator/modulhaz')
+  it('MVP: csak a teraszfedés él külön kalkulátorként; a modulház a konfigurátoron belül, a többi félretéve', () => {
+    expect(PRODUCTS.filter((product) => !isHiddenProduct(product.id)).map((product) => product.id)).toEqual(['pergola'])
+    // nincs külön oldala: a lead-e-mail linkje a pergola-konfigurátorra mutat (a #h= kód nyitja a modulház nézetet)
+    expect(isHiddenProduct('modular-house')).toBe(true)
+    expect(productPath('demo', 'demo', 'modular-house')).toBe('/konfigurator')
+    expect(productPath('standalone', 'acme', 'modular-house')).toBe('/k/acme')
     for (const id of ['carport', 'fence', 'garage-door', 'garden-building'] as const) expect(isHiddenProduct(id)).toBe(true)
     expect(isHiddenProduct('pergola')).toBe(false)
     // A választóban nincs „hamarosan” kártya sem.

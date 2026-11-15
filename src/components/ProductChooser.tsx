@@ -16,7 +16,6 @@ const PRODUCT_IMAGES: Partial<Record<ProductFamily, string>> = {
   carport: '/assets/products/carport.webp',
   fence: '/assets/products/fence.webp',
   'garage-door': '/assets/products/garage.webp',
-  'modular-house': '/assets/products/modulhaz.webp',
 }
 
 /** Kártyakép betöltés közben csillogó helykitöltővel (mint a ui.live kártyái). */

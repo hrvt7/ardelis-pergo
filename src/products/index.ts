@@ -19,8 +19,10 @@ export interface ProductInfo {
 export const PRODUCTS: readonly ProductInfo[] = [
   // MVP: csak a teraszfedés (pergola, veranda, télikert) él; a többi család félretéve (status: 'hidden').
   { id: 'pergola', slug: 'teraszfedes', label: 'Teraszfedés', short: 'Pergola, veranda, télikert', description: 'Lamellás, üveg- vagy textiltető, oldalzárás, szín és komfort — valós 3D-ben, azonnali irányárral.', status: 'live' },
-  // Modulház: saját mag (products/modularHouse.ts), valós méretű típusházak; egyelőre az A45.
-  { id: 'modular-house', slug: 'modulhaz', label: 'Modulház', short: 'Típusházak valós méretben', description: 'Előregyártott modulház: típus, kivitel, homlokzat és nyílászárók — valós méretű 3D-ben, a gyártó m²-árával.', status: 'live' },
+  // Modulház: nem külön kalkulátor, hanem a teraszfedés-konfigurátoron belül választható („Mit építesz?” → Modulház);
+  // saját mag (products/modularHouse.ts) és motor a lead-végponthoz. Ezért nincs saját kártyája és útvonala (hidden),
+  // a link a pergola-konfigurátorra mutat (lásd productPath), a `#h=` megosztó kód nyitja meg a modulház nézetet.
+  { id: 'modular-house', slug: 'modulhaz', label: 'Modulház', short: 'Típusházak valós méretben', description: 'Előregyártott modulház a konfigurátoron belül: típus, kivitel, homlokzat és nyílászárók, a gyártó m²-árával.', status: 'hidden' },
   // A carport a keretes-tető motoron fut (a pergola konfigurátor negyedik építménytípusa), ezért él.
   { id: 'carport', slug: 'carport', label: 'Carport és előtető', short: 'Egy- és kétállásos, bejárati előtető', description: 'Alumínium váz fix lemez-, polikarbonát- vagy üvegtetővel; méret, oszlopok, szín, burkolt beálló — valós 3D-ben, azonnali irányárral.', status: 'hidden' },
   // A kerítés a kültéri (lineáris) magon fut: saját konfiguráció, árazó és 3D (CatalogStudio).
@@ -40,6 +42,9 @@ export const productBySlug = (slug: string | undefined | null): ProductInfo | un
 /** Félretett (MVP-ből kivett) család-e: sehol nem jelenik meg, az útvonala a pergolára irányít. */
 export const isHiddenProduct = (id: ProductFamily) => productInfo(id).status === 'hidden'
 
+/** Kínálja-e a gyártó a modulházat a konfigurátoron belül (a „Mit építesz?” választóban). */
+export const offersModularHouse = (tenant: { products?: readonly ProductFamily[] }) => Boolean(tenant.products?.includes('modular-house'))
+
 /** A gyártó által kínált családok; megadás nélkül csak a pergola (a meglévő gyártók változatlanul működnek). A félretett családok kimaradnak. */
 export const tenantProducts = (tenant: { products?: readonly ProductFamily[] }): ProductFamily[] => {
   const offered = (tenant.products?.length ? [...tenant.products] : [DEFAULT_PRODUCT]).filter((id) => !isHiddenProduct(id))
@@ -56,7 +61,7 @@ const basePath = (mode: 'demo' | 'standalone' | 'embed', tenantId: string) => (m
 /** A konfigurátor útvonala egy családhoz, a megjelenítési mód szerint. A pergola a rövid, megszokott útvonalon marad. */
 export function productPath(mode: 'demo' | 'standalone' | 'embed', tenantId: string, id: ProductFamily): string {
   const base = basePath(mode, tenantId)
-  return id === DEFAULT_PRODUCT ? base : `${base}/${productInfo(id).slug}`
+  return id === DEFAULT_PRODUCT || id === 'modular-house' ? base : `${base}/${productInfo(id).slug}`
 }
 
 /** A termékválasztó oldal szelete: /konfigurator/termekek, /k/<gyártó>/termekek. Egyetlen család sem kaphatja ezt a szeletet. */
