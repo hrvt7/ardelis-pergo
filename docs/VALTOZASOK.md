@@ -1,5 +1,13 @@
 # Változások
 
+## 4.27 – Gyártói admin: világos „dashboard” stílus
+
+- **Új megjelenés:** sötét oldalsáv lime pill aktív menüponttal, világos munkaterület lekerekített keretben, fehér kártyák finom árnyékkal, pill gombok és keresőmező, lime grafikonvonal és sávok, sötét buborék a grafikonon, zöld/piros változás-jelzők, fehér részletek-panel. Betű: Poppins.
+- A belépő, az áttekintés, az érdeklődők (tábla és kanban), a beágyazás és a beállítások (ármátrixszal) is az új stílust kapja; telefonon az alsó navigáció sötét marad.
+- Olvashatóság (számolt): fő szöveg 18:1, másodlagos szöveg 5,3–5,8:1, zöld szövegkiemelés 5,6–6,1:1, mezőszegély 3,2:1. A státusz- és pontszám-címkék szövege világos háttéren sötétített árnyalatot kap.
+- A konfigurátor és a nyitóoldal változatlan. Logika, adatok változatlanok.
+- Új függőség: `@fontsource/poppins` (400, 500, 600; saját tárhelyről, latin-ext alkészlettel).
+
 ## 4.26 – Üveges felületi változat kipróbálásra (?style=glass)
 
 - **Üveges stílus:** a `?style=glass` paraméterrel a 3D kép a teljes szélességet kapja, a beállítópanel, a részletek, az eszközsor és a menük elmosott, áttetsző üvegként lebegnek fölötte; a pergola a szabadon látható rész közepére kerül (a nézet a panel felével balra tolódik). Mobilon az alsó lap és a sáv üveges. Betű: Outfit.

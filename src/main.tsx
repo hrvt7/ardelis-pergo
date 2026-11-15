@@ -22,6 +22,10 @@ import '@fontsource-variable/inter/index.css'
 import '@fontsource-variable/manrope/index.css'
 // Üveges felületi változat (?style=glass): Outfit.
 import '@fontsource-variable/outfit/index.css'
+// Gyártói admin (világos felület): Poppins.
+import '@fontsource/poppins/400.css'
+import '@fontsource/poppins/500.css'
+import '@fontsource/poppins/600.css'
 import './index.css'
 import App from './App.tsx'
 // Vercel Web Analytics: csak ha a projektben be van kapcsolva és VITE_VERCEL_ANALYTICS=1 (különben a szkript 404-et adna).

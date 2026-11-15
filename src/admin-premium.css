@@ -153,3 +153,117 @@ kbd{font:600 10.5px/1 ui-monospace,monospace;padding:3px 6px;border-radius:5px;b
 .today .recent li .icon-btn.call{width:44px;height:44px;justify-self:end}
 .today header{display:flex;align-items:center;gap:10px}.today .today-all{margin-left:auto}
 @media (max-width:760px){.dash .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ==========================================================================
+   4.27 – Gyártói admin, világos „dashboard” stílus (Ádám referenciája):
+   sötét oldalsáv lime aktív pill-lel, világos munkaterület, fehér lekerekített kártyák,
+   lime oszlopok és sávok, zöld/piros változás-jelzők, Poppins betű.
+   Kontraszt (számolt): fő szöveg 18:1, másodlagos #5F6672 5,3–5,8:1, zöld szöveg #3B6E0F 5,6–6,1:1.
+   ========================================================================== */
+.admin-page.admin-light{
+  --text-primary:#111418;--a-muted:#5F6672;--a-edge:#E6E8EC;--a-edge-hi:#D5D9DF;--a-card:#FFFFFF;
+  --accent-primary:#3B6E0F;--accent-hover:#2F5A0B;--accent-subtle:#EEF8D9;--lime-fill:#C4F03C;--lime-fill-hover:#B3E02B;--ink-1000:#111418;
+  --font-ui:'Poppins',system-ui,sans-serif;--ap-glow:rgba(196,240,60,.18);
+  font-family:var(--font-ui);color:var(--text-primary);background:#E9EBEE;
+}
+/* Sötét oldalsáv: a saját sötét tokenjeivel. */
+.admin-light .admin-side{--text-primary:#F4F5F6;--a-muted:#A7ACB3;--a-edge:rgba(255,255,255,.08);--a-edge-hi:rgba(255,255,255,.14);--accent-primary:#C4F03C;
+  background:#0F1110;border-right:0;backdrop-filter:none;color:#F4F5F6}
+.admin-light .admin-nav button{border-radius:999px;font-weight:500}
+.admin-light .admin-nav button:hover{background:rgba(255,255,255,.06)}
+.admin-light .admin-nav button.is-on{background:var(--lime-fill);color:#111418;box-shadow:none}
+.admin-light .admin-nav button.is-on svg{color:#111418}
+.admin-light .admin-nav button.is-on::before{display:none}
+.admin-light .admin-nav button.is-on em{background:#111418;color:var(--lime-fill)}
+.admin-light .brand-mark{background:var(--lime-fill);box-shadow:none}
+.admin-light .admin-eyebrow{color:var(--a-muted)}
+
+/* Munkaterület. */
+.admin-light .admin-layout{background:#E9EBEE}
+@media (min-width:861px){.admin-light .admin-main{margin:12px 12px 12px 0;padding:0 32px 90px;min-height:calc(100dvh - 24px);border-radius:28px;background:#F4F5F7}}
+.admin-light .admin-top{background:linear-gradient(180deg,#F4F5F7 70%,rgba(244,245,247,0));backdrop-filter:none;border-radius:28px 28px 0 0}
+.admin-light .admin-top h1{font-weight:600;letter-spacing:-.02em}
+.admin-light .admin-savebar{background:linear-gradient(rgba(244,245,247,0),#F4F5F7 45%)}
+
+/* Kártyák. */
+.admin-light .kpi,.admin-light .card,.admin-light .admin-section,.admin-light .admin-card,.admin-light .board-card{background:#FFFFFF;border-color:var(--a-edge);border-radius:20px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px -16px rgba(16,24,40,.12)}
+.admin-light .kpi strong{font-weight:600;letter-spacing:-.02em}
+.admin-light .kpi-head em.up{color:#15803D;background:#DCFCE7}.admin-light .kpi-head em.down{color:#B91C1C;background:#FEE2E2}
+.admin-light .kpi-spark-line,.admin-light .kpi-ring-fill{stroke:#7CB518}
+.admin-light .kpi-ring-track{stroke:#EEF0F3}
+.admin-light .card h3,.admin-light .admin-section h2{font-weight:600}
+.admin-light .board-col{background:#EDEFF2;border-color:transparent}
+.admin-light .board-card:hover{box-shadow:0 12px 24px -14px rgba(16,24,40,.25)}
+
+/* Gombok, mezők, fülek. */
+.admin-light .btn{border-radius:999px;background:#FFFFFF;border-color:var(--a-edge-hi);box-shadow:none;color:var(--text-primary)}
+.admin-light .btn:hover:not(:disabled){background:#F1F3F5;border-color:#C9CED6}
+.admin-light .btn.primary,.admin-light .admin-save{background:var(--lime-fill);color:#111418;border-color:transparent;box-shadow:none}
+.admin-light .btn.primary:hover,.admin-light .admin-save:hover:not(:disabled){background:var(--lime-fill-hover)}
+.admin-light .admin-save{border-radius:999px}
+.admin-light .btn.ghost{background:none;border-color:transparent}
+.admin-light .icon-btn{background:#FFFFFF;border-color:var(--a-edge-hi);border-radius:999px}
+.admin-light .admin-form input:not([type=checkbox]),.admin-light .admin-form textarea,.admin-light .admin-form select,.admin-light .admin-login input,.admin-light .drawer textarea,.admin-light .search{background:#FFFFFF;border-color:#8A9099;color:var(--text-primary)}
+.admin-light .search{border-radius:999px}
+.admin-light .admin-form input:focus,.admin-light .admin-form textarea:focus,.admin-light .admin-login input:focus,.admin-light .drawer textarea:focus,.admin-light .search:focus-within{border-color:#3B6E0F;box-shadow:0 0 0 3px rgba(196,240,60,.35)}
+.admin-light .admin-check input{accent-color:#3B6E0F}
+.admin-light .seg,.admin-light .matrix-scroll{background:#EEF0F3;border-color:transparent;border-radius:999px}
+.admin-light .matrix-scroll{border-radius:16px;background:#FFFFFF;border-color:var(--a-edge)}
+.admin-light .seg button{border-radius:999px}
+.admin-light .seg button.is-on{background:#111418;color:#FFFFFF;box-shadow:none}
+.admin-light .tabs button.is-on{border-bottom-color:#7CB518}
+.admin-light .tabs b,.admin-light .board-col>header b,.admin-light .matrix-tabs button em,.admin-light .funnel-step em{background:#EEF0F3}
+.admin-light .matrix-tabs button{background:#FFFFFF}
+.admin-light .matrix-tabs button.is-on{background:var(--lime-fill);border-color:transparent;color:#111418}
+.admin-light .matrix-table th{background:#F7F8FA}
+.admin-light .matrix-table td{border-bottom-color:var(--a-edge)}
+.admin-light .matrix-table tbody tr:hover td{background:#F7F8FA}
+
+/* Táblázat, sorok, panelek. */
+.admin-light button.tr:hover{background:#F4F5F7}
+.admin-light button.tr.is-open{background:#F3FAE3;box-shadow:inset 0 0 0 1px #CDEB8B}
+.admin-light .avatar{background:#EEF0F3;border-color:transparent;color:#111418}
+.admin-light .pill,.admin-light .tier,.admin-light .status-chips button.is-on,.admin-light .score-head strong{color:color-mix(in srgb,var(--pill,#111418) 40%,#111418)}
+.admin-light .pill{background:color-mix(in srgb,var(--pill,#888) 22%,#fff);border-color:transparent}
+.admin-light .status-chips button{background:#FFFFFF}
+.admin-light .drawer{background:#FFFFFF;border-left-color:var(--a-edge);box-shadow:-30px 0 80px -30px rgba(16,24,40,.35)}
+.admin-light .drawer-actions{background:#FFFFFF}
+.admin-light .drawer-scrim{background:rgba(17,20,24,.35)}
+.admin-light .drawer-price,.admin-light .pipe-forecast{background:#F3FAE3;border-color:#D7EEA8}
+.admin-light .customer-note{background:#F4F5F7}
+.admin-light .embed-code{background:#111418;color:#D9F99D}
+.admin-light .palette{background:#FFFFFF}
+.admin-light .palette-scrim{background:rgba(17,20,24,.35)}
+.admin-light .toast{background:#FFFFFF;color:#111418;box-shadow:0 18px 44px -12px rgba(16,24,40,.3)}
+
+/* Grafikonok: lime oszlopok és sávok, sötét buborék. */
+.admin-light .area-line{stroke:#7CB518;filter:none}
+.admin-light .area-dot{fill:#FFFFFF;stroke:#7CB518}
+.admin-light .area-grid{stroke:#E6E8EC}
+.admin-light .area-cursor{stroke:#C9CED6}
+.admin-light .area-axis{fill:#5F6672}
+.admin-light .area-tip{background:#111418;color:#FFFFFF;border-color:transparent}
+.admin-light .area-tip small{color:#C7CBD0}
+.admin-light .hbars div,.admin-light .stackbar,.admin-light .pipe-bar,.admin-light .score-bar{background:#EEF0F3}
+.admin-light .hbars i{background:var(--lime-fill)}
+.admin-light .funnel-bar{background:color-mix(in srgb,#C4F03C calc(100% * var(--shade)),#EEF0F3);border-color:transparent;color:#111418}
+.admin-light .checklist li.is-done .check-dot{background:var(--lime-fill)}
+.admin-light .checklist li.is-done b{text-decoration-color:#9AA0A8}
+.admin-light .ps-roof{fill:rgba(196,240,60,.25);stroke:#3B6E0F}.admin-light .ps-louver{stroke:#7CB518}
+
+/* Hibák és figyelmeztetések világos háttéren. */
+.admin-light .admin-message.is-error,.admin-light .matrix-errors{color:#B91C1C;background:#FEF2F2;border-color:#FCA5A5}
+.admin-light .admin-message.is-ok{background:#F3FAE3;border-color:#CDEB8B}
+.admin-light .lead-pdf p[role=alert],.admin-light .matrix-tabs button.is-error{color:#B91C1C}
+.admin-light .demo-ribbon{background:#FFF7E6;border-color:#F5C66B;color:#111418}.admin-light .demo-ribbon b,.admin-light .demo-ribbon button{color:#8A5A00;border-color:#E6B24F}
+
+/* Telefon: az alsó navigáció sötét marad. */
+@media (max-width:860px){
+  .admin-light .admin-side{background:#0F1110}
+  .admin-light .admin-main{background:#F4F5F7}
+  .admin-light .admin-nav button{border-radius:14px}
+}
+.admin-light .admin-top{margin:0 -32px 26px;padding:20px 32px 16px}
+.admin-light .kpi:has(.kpi-ring) small{padding-right:54px}
+@media (max-width:860px){.admin-light .admin-top{margin:0 -16px 18px;padding:16px 16px 12px;border-radius:0}}
+.admin-light .admin-login .admin-powered svg{filter:brightness(0);opacity:.75}

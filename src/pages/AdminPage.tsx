@@ -79,7 +79,7 @@ function AdminForTenant({ base }: { base: Tenant }) {
   }
 
   if (!token) {
-    return <main className="admin-page"><form className="admin-card admin-login" onSubmit={login}>
+    return <main className="admin-page admin-light"><form className="admin-card admin-login" onSubmit={login}>
       <span className="brand-mark">{base.brand.name.slice(0, 1)}</span>
       <div><span className="admin-eyebrow">{base.brand.name} · gyártói admin</span>
       <h1>Üdv újra!</h1><p className="admin-hint">Add meg a jelszót a belépéshez.</p></div>
@@ -90,7 +90,7 @@ function AdminForTenant({ base }: { base: Tenant }) {
     </form></main>
   }
 
-  if (overrides === undefined) return <main className="admin-page"><p className="admin-card" role="status">Betöltés…</p></main>
+  if (overrides === undefined) return <main className="admin-page admin-light"><p className="admin-card" role="status">Betöltés…</p></main>
 
   return <AdminShell base={base} token={token} overrides={overrides} onExpired={logout} onLogout={logout}>
     <AdminEditor base={base} initial={overrides} storage={storage} saving={saving} message={message}
@@ -210,7 +210,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
   const quotes = demo
     ? { all: [], create: async () => ({ ok: false as const, error: 'Demó módban az ajánlat nem küldhető ki.' }), withdraw: async () => false }
     : { all: quoteApi.quotes ?? [], create: quoteApi.create, withdraw: quoteApi.withdraw }
-  return <main className="admin-page">
+  return <main className="admin-page admin-light">
     <div className="admin-layout">
       <aside className="admin-side">
         <div className="admin-brand"><span className="brand-mark">{base.brand.name.slice(0, 1)}</span><div><strong>{base.brand.name}{base.brand.suffix && <small> {base.brand.suffix}</small>}</strong><span>Gyártói admin</span></div></div>
