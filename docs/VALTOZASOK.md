@@ -1,5 +1,12 @@
 # Változások
 
+## 4.30 – A45 típusház valós méretben (demó)
+
+- **Új háztípus a „Ház típusa” választóban:** „A45 modulház” (Álomterasz A45 típusú modulháza). A ház nem skálázódik a pergolával: 9,23 × 5,28 m külső méret, 27 cm-es külső fal, a nyílászárók a gyártói alaprajz szerinti helyen és méretben. A pergola a bejárati (hosszabbik) homlokzat közepe elé kerül.
+- **Becsült értékek** (a metszetrajz megérkezéséig): padlószint +0,35 m, belmagasság 2,70 m, 30°-os nyeregtető 50 cm-es ereszkiállással, betoncserép fedés. A modell demó célú, nem gyártási dokumentáció.
+- A modell Blenderben készült (`public/assets/models/houses/house_a45.glb`, meshopt-tömörítve, 36 KB); a hálók szerepnév szerint: `wall`, `frame`, `glass`, `interior`, `trim`, `plinth`, `roof`, `step`. A homlokzat és a nyílászárók színe a meglévő választókkal állítható.
+- Tesztek: `houseStyles.test.ts` (négy háztípus; az A45 léptéke 1 bármely pergolaszélességnél; a GLB falainak befoglalója 9,23 × 5,28 m, homlokzat a z = 0 síkon).
+
 ## 4.29 – Lépések átrendezése: 7 logikus lépés, duplikáció nélkül
 
 - **Új sorrend:** Típus → Elhelyezés és méret → Tető → Oldalak → Szín → Komfort → Összegzés. Az Elhelyezés (házhoz kapcsolódás) a méretek elé került, mert az határozza meg, melyik oldal szabad.

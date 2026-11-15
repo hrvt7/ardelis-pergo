@@ -1510,7 +1510,7 @@ function prefetchSceneAssets(scene: SceneSettings) {
 type HouseLook = Pick<SceneSettings, 'wallFinish' | 'wallColor' | 'windowColor'> & { houseStyle: HouseStyle }
 
 // Blenderben modellezett házak és kertelemek (a hálók neve adja a szerepüket: wall, frame, glass, interior, lamp…).
-const STYLED_HOUSE_URL: Record<Exclude<HouseStyle, 'classic'>, string> = { modern: assetUrl('/assets/models/houses/house_modern.glb'), gable: assetUrl('/assets/models/houses/house_gable.glb') }
+const STYLED_HOUSE_URL: Record<Exclude<HouseStyle, 'classic'>, string> = { modern: assetUrl('/assets/models/houses/house_modern.glb'), gable: assetUrl('/assets/models/houses/house_gable.glb'), a45: assetUrl('/assets/models/houses/house_a45.glb') }
 const GARDEN_KIT = { hedge: assetUrl('/assets/models/garden/hedge.glb'), planter: assetUrl('/assets/models/garden/planter.glb'), bollard: assetUrl('/assets/models/garden/bollard.glb'), fence: assetUrl('/assets/models/garden/fence.glb') }
 
 
@@ -1723,7 +1723,7 @@ function StyledHouse({ config, look, night, style }: { config: PergolaConfig; lo
   }, [night, prepared, gl, invalidate])
   return <group name="house">
     <primitive object={prepared.object} position={[0, 0, layout.frontZ]} scale={layout.scale} />
-    {[-2.75, 2.75].map((x) => <pointLight key={x} position={[x * layout.scale, 2.5 * layout.scale, layout.frontZ + 0.35]} color="#ffd09a" intensity={night ? 5 : 0} distance={5} decay={2} />)}
+    {style !== 'a45' && [-2.75, 2.75].map((x) => <pointLight key={x} position={[x * layout.scale, 2.5 * layout.scale, layout.frontZ + 0.35]} color="#ffd09a" intensity={night ? 5 : 0} distance={5} decay={2} />)}
   </group>
 }
 
