@@ -12,7 +12,13 @@ alter table public.tenant_events enable row level security;
 
 -- Atomikus növelés: egy esemény = +1 az adott nap számlálóján.
 create or replace function public.track_event(p_tenant text, p_name text) returns void
-language sql as $$
+language sql
+set search_path = ''
+as $$
   insert into public.tenant_events (tenant_id, day, name, count) values (p_tenant, current_date, p_name, 1)
   on conflict (tenant_id, day, name) do update set count = public.tenant_events.count + 1;
 $$;
+
+-- Csak a szerver (service role) hívhatja RPC-n; a böngésző (anon/authenticated) nem.
+revoke execute on function public.track_event(text, text) from public, anon, authenticated;
+grant execute on function public.track_event(text, text) to service_role;

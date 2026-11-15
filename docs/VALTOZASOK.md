@@ -1,5 +1,12 @@
 # Változások
 
+## 4.42 – Éles Supabase-adatbázis (Lamelix, eu-west-2) sémával feltöltve
+
+- **Az éles projekt (`qxigqugywemokbnidokf`, Vercel Marketplace-szervezet) üres volt:** a leadek, ajánlatok, statisztika és admin-beállítások mentése táblák nélkül nem működött volna. Felkerült a `supabase/*.sql` teljes tartalma egy migrációban (`lamelix_initial_schema`): `leads`, `quotes`, `tenant_settings`, `tenant_events` + `track_event()`, `demo_requests`, indexekkel.
+- **Hozzáférés:** minden táblán RLS, szabály nélkül; az `anon`/`authenticated` szerep semmit nem ér el, csak a szerveroldali `service_role` ír és olvas (ellenőrizve). A `track_event()` rögzített `search_path`-szal, RPC-n csak a service role hívhatja; a Supabase saját `rls_auto_enable()` eseménytrigger-függvényéről a nyilvános futtatási jog lekerült. A biztonsági tanácsadó csak az „RLS szabály nélkül” tájékoztatót jelzi, ez szándékos.
+- `supabase/events.sql` frissítve (search_path, jogosultságok), hogy a repó és az éles séma egyezzen.
+- Nem ellenőrzött: hogy a Vercel `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` erre a projektre mutat-e (a Vercel-csatlakozónak nincs joga a környezeti változókat olvasni); élő teszt-lead még nem ment át.
+
 ## 4.41 – Bemutató app: telepíthető webapp offline gyorsítótárral, bemutató eszköz mód fix ultra minőséggel
 
 - **Service worker (új):** a konfigurátor oldalairól (/konfigurator, /k/<id>, /embed/<id>) regisztrál, csak éles buildben, https-en (helyi próbához localhoston), az előnézeti buildben nem. A hash-elt build-fájlok és a public/assets jelenet-eszközei (GLB, GLTF, BIN, HDR, textúrák, képek, betűk) cache-first, az oldalbetöltés network-first (3,5 mp után vagy hálózat nélkül a tárolt oldal / index.html jön). Az **/api/\* soha nem kerül tárba**, az admin (/k/<id>/admin), az ajánlat-megtekintő (/ajanlat/…) és a belépés mindig hálózatról jön. A második indítástól az alkalmazás és a már letöltött 3D-fájlok tárból töltődnek; a 3D megjelenítés sebessége ettől nem változik.
