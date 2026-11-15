@@ -1,5 +1,14 @@
 # Változások
 
+## 4.12 – Szabad 3D navigáció asztalon és mobilon, követő kamera javítások
+
+- **Forgatás (bal gomb / egy ujj):** körbe minden irányból; felülnézet és alulnézet is elérhető. Lefelé addig fordítható, amíg a kamera a talaj fölött marad (közelről a tető alá is benézhet, távolról nem süllyed a föld alá). Eddig a vízszintesnél (90°) lejjebb nem lehetett forgatni.
+- **Mozgatás (jobb gomb, Shift/Ctrl/Cmd + bal gomb, két ujj, érintőpadon két ujjas görgetés):** oldalra és fel-le; az ujj/kurzor alatti felület együtt mozog a mozdulattal. A forgáspont a pergola körül, a környezettel együtt szabadon mozgatható; fal (ház, szárny) mögé nem. A határnál a kép finoman megáll (eddig az elengedéskor visszaugrott).
+- **Nagyítás (görgő, csípés):** asztalon a kurzor felé. A kamera nem hatol át a modellen: a mozdulat elején a forgáspont a kurzor (az ujjak, a kép közepe) alatti felületre kerül, így a kamera az oszlop, gerenda, fal előtt 0,8 m-re megáll. Kifelé nagyításnál sem süllyed a talajba.
+- **Követő kamera:** önálló pergolánál a hátsó oldalra fordulva nem áll a házba (a homlokzat elé, magasabbra kerül); a ventilátor hozzáadása akkor is alulnézetbe visz, ha már alulnézetben voltunk, de közben elforgattuk a képet, és pontosan a célállásba érkezik; kikapcsolt követő kameránál a méret-, rögzítés- és bútorváltás nem mozdítja el a kamerát (a nézetgombok továbbra is igen).
+- Laptopon egyszer megjelenik az új mozgatási tipp. A pergola geometriája, a funkciók, az árkalkuláció és a PDF nem változott.
+- Tesztek: `desktopCamera.test.ts` (görgetés vagy csípés, forgáspont-határ falnál, talajkorlát, felületre ugró forgáspont, ház előtti kameraállás).
+
 ## 4.11 – Laptopon is szabadon mozgatható a 3D kép
 
 - **Érintőpad, mint a telefonon:** két ujjas görgetéssel a kép eltolható oldalra és fel-le (térképszerűen, a tartalom az ujjakkal együtt mozog), csípéssel nagyítható. Eddig a két ujjas görgetés nagyított, eltolni csak jobb gombbal lehetett.

@@ -25,7 +25,7 @@ import { sceneSunVector } from '@/lib/sceneSun'
 import { daylightBalance, sunPosition } from '@/lib/lightBalance'
 import { bayBoundaries, bayCenter, bayWidth, hasCenterPost, moduleCount } from '@/lib/modules'
 import { fitDistance, maxOrbitDistance } from '@/lib/cameraFit'
-import { classifyWheel, clampTarget } from '@/lib/desktopCamera'
+import { classifyWheel, clampTarget, groundPolarLimit, keepClearOfHouse, pivotDepth } from '@/lib/desktopCamera'
 import type { ShadeResult } from '@/components/ShadeProbe'
 import type { FurnitureSet } from '@/types/pergola'
 import { kelvinToHex } from '@/lib/color'
@@ -2472,7 +2472,7 @@ function seatPosition(config: Pick<PergolaConfig, 'width' | 'depth'>, furniture:
   return fit.alongWidth ? local : [local[1], -local[0]]
 }
 
-function CameraController({ view, focus, viewShift, revealed, config, autoRotate, furniture, mechanism = false }: { view: CameraView; focus: CameraFocus | null; viewShift: number; revealed: boolean; config: PergolaConfig; autoRotate: boolean; furniture: FurnitureSet; mechanism?: boolean }) {
+function CameraController({ view, focus, viewShift, revealed, config, autoRotate, furniture, mechanism = false, autoCamera = true, houseFrontZ = null }: { view: CameraView; focus: CameraFocus | null; viewShift: number; revealed: boolean; config: PergolaConfig; autoRotate: boolean; furniture: FurnitureSet; mechanism?: boolean; autoCamera?: boolean; houseFrontZ?: number | null }) {
   const { camera, gl, invalidate } = useThree()
   const controls = useRef<OrbitControlsType>(null)
   const destination = useRef(new THREE.Vector3(12, 7, 14))
@@ -2562,7 +2562,16 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
       firstFlight.current = false
     }
   }, [view, config.width, config.depth, config.height, config.mount, furniture, camera, gl, invalidate, beginMove, mechanism])
-  useEffect(() => { applyView() }, [applyView])
+  // A nézetváltás (kameragombok, Működés) mindig odarepül. Méret-, rögzítés- vagy bútorváltásnál csak akkor igazodik
+  // a kamera, ha a követő kamera be van kapcsolva; kikapcsolva ott marad, ahová a felhasználó állította.
+  const lastApplied = useRef<{ view: CameraView; mechanism: boolean } | null>(null)
+  useEffect(() => {
+    const previous = lastApplied.current
+    lastApplied.current = { view, mechanism }
+    if (previous && previous.view === view && previous.mechanism === mechanism && !autoCamera) return
+    applyView()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- az autoCamera kapcsolása önmagában ne mozdítsa a kamerát
+  }, [applyView])
 
   useEffect(() => { if (revealed) invalidate() }, [revealed, invalidate])
 
@@ -2575,36 +2584,96 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     return () => c.removeEventListener('start', takeOver)
   }, [view])
 
-  // Laptopon is úgy, mint a telefonon: két ujjas érintőpad-görgetés tolja a képet (térképszerűen), csípés és egérgörgő
-  // nagyít (a kurzor felé). A célpont a pergola körüli dobozban marad, hogy a szerkezet ne vesszen el.
-  // Az érintőképernyő nem küld görgetést, így a görgetéskezelő mindenhol fut; a kurzor felé nagyítás csak nem érintős eszközön
-  // (telefonon a csípés marad a megszokott, a kép közepe felé).
+  // Szabad 3D navigáció (földgömb-szerű), asztalon és telefonon:
+  // - bal gomb / egy ujj: forgatás a célpont körül; jobb gomb, Shift/Ctrl/Cmd + bal gomb, két ujj: eltolás;
+  //   görgő / csípés: nagyítás (asztalon a kurzor felé); érintőpadon két ujjas görgetés: eltolás (mint a telefonon).
+  // - Minden mozdulat elején a forgáspont a kép közepén (eltolásnál, nagyításnál a kurzor / az ujjak alatt) lévő, a
+  //   mostani célpontnál közelebbi felületre ugrik, a nézet változatlan marad: így a kamera nem hatol át az oszlopon,
+  //   gerendán, falon, és az eltolás az ujj alatti felülettel együtt mozog.
+  // - A célpont a pergola körüli dobozban marad (folyamatosan, nem visszaugrással), a kamera pedig a talaj fölött.
   const finePointer = useMemo(() => { try { return !window.matchMedia('(pointer: coarse)').matches } catch { return true } }, [])
+  const scene3d = useThree((state) => state.scene)
   useEffect(() => {
     const c = controls.current
     const element = gl.domElement
     if (!c || view === 'sofa') return
     const size = { width: config.width, depth: config.depth, height: config.height }
+    const walls = { back: hasBackWall(config.mount), left: isWallSide(config.mount, 'left'), right: isWallSide(config.mount, 'right') }
     const right = new THREE.Vector3()
     const up = new THREE.Vector3()
     const shift = new THREE.Vector3()
+    const forward = new THREE.Vector3()
+    const ndc = new THREE.Vector2()
+    const raycaster = new THREE.Raycaster()
     let lastPan = -Infinity
+    let lastZoom = -Infinity
+    const pointers = new Map<number, { x: number; y: number }>()
     const keepInside = () => {
-      const [x, y, z] = clampTarget([c.target.x, c.target.y, c.target.z], size)
+      if (transitioning.current) return
+      const [x, y, z] = clampTarget([c.target.x, c.target.y, c.target.z], size, walls)
       if (x === c.target.x && y === c.target.y && z === c.target.z) return
       shift.set(x, y, z).sub(c.target)
       c.target.add(shift)
       camera.position.add(shift)
     }
+    // A felületek, amelyekre a forgáspont ugorhat: a látható hálók, a sűrű példányosított növényzet (fű) nélkül.
+    const surfaces = () => {
+      const list: THREE.Object3D[] = []
+      scene3d.traverseVisible((object) => {
+        if (!(object instanceof THREE.Mesh) || object instanceof THREE.SkinnedMesh) return
+        if (object instanceof THREE.InstancedMesh && object.count > 64) return
+        const material = Array.isArray(object.material) ? object.material[0] : object.material
+        if (material && material.side === THREE.BackSide) return
+        list.push(object)
+      })
+      return list
+    }
+    /** `at`: képernyőpont (kliens-koordináta) — nélküle a kamera nézési tengelye. */
+    const repivot = (at?: { x: number; y: number }) => {
+      camera.updateMatrixWorld()
+      camera.getWorldDirection(forward)
+      if (at) {
+        const rect = element.getBoundingClientRect()
+        ndc.set(((at.x - rect.left) / rect.width) * 2 - 1, -((at.y - rect.top) / rect.height) * 2 + 1)
+        raycaster.setFromCamera(ndc, camera)
+      } else raycaster.set(camera.position, forward)
+      const current = shift.copy(c.target).sub(camera.position).dot(forward)
+      raycaster.far = current
+      const hit = raycaster.intersectObjects(surfaces(), false).find((item) => {
+        const [x, y, z] = clampTarget([item.point.x, item.point.y, item.point.z], size, walls)
+        return Math.abs(x - item.point.x) + Math.abs(y - item.point.y) + Math.abs(z - item.point.z) < 1e-6
+      })
+      const depth = pivotDepth(hit ? shift.copy(hit.point).sub(camera.position).dot(forward) : null, current, c.minDistance)
+      if (depth === null) return
+      c.target.copy(camera.position).addScaledVector(forward, depth)
+    }
+    const takeOver = () => { transitioning.current = false; firstFlight.current = false; showcase.current = 0; idle.current = 0 }
+    const onPointerDown = (event: PointerEvent) => {
+      if (!c.enabled) return
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+      takeOver()
+      if (event.pointerType !== 'mouse') {
+        // Telefon: egy ujj forgat (a kép közepén lévő pont körül), két ujj tol és nagyít (az ujjak közötti pont felé).
+        if (pointers.size === 1) repivot()
+        else if (pointers.size === 2) { const [p, q] = [...pointers.values()]; repivot({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 }) }
+        return
+      }
+      const panning = event.button === 2 || (event.button === 0 && (event.shiftKey || event.ctrlKey || event.metaKey))
+      repivot(panning ? { x: event.clientX, y: event.clientY } : undefined)
+    }
+    const onPointerUp = (event: PointerEvent) => { pointers.delete(event.pointerId) }
     const onWheel = (event: WheelEvent) => {
       const now = performance.now()
-      if (classifyWheel({ deltaX: event.deltaX, deltaY: event.deltaY, deltaMode: event.deltaMode, ctrlKey: event.ctrlKey, wheelDeltaY: (event as WheelEvent & { wheelDeltaY?: number }).wheelDeltaY }, lastPan, now) === 'zoom') return
+      if (classifyWheel({ deltaX: event.deltaX, deltaY: event.deltaY, deltaMode: event.deltaMode, ctrlKey: event.ctrlKey, wheelDeltaY: (event as WheelEvent & { wheelDeltaY?: number }).wheelDeltaY }, lastPan, now) === 'zoom') {
+        // Nagyítás befelé: a mozdulat elején a forgáspont a kurzor alatti felületre ugrik, így a kamera előtte megáll.
+        if (event.deltaY < 0 && now - lastZoom > 250) { takeOver(); repivot({ x: event.clientX, y: event.clientY }) }
+        lastZoom = now
+        return
+      }
       lastPan = now
       event.preventDefault()
       event.stopImmediatePropagation()
-      transitioning.current = false
-      showcase.current = 0
-      idle.current = 0
+      takeOver()
       // Egy képpontnyi görgetés a célpont távolságában egy képpontnyi elmozdulás (a tartalom az ujjakkal együtt mozog).
       const perspective = camera as THREE.PerspectiveCamera
       const distance = camera.position.distanceTo(c.target)
@@ -2617,10 +2686,23 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
       c.update()
       invalidate()
     }
+    // A jobb gombos eltolás ne nyisson helyi menüt (az OrbitControls is tiltja; biztosra megyünk).
+    const onMenu = (event: Event) => event.preventDefault()
+    element.addEventListener('pointerdown', onPointerDown, { capture: true })
+    element.addEventListener('pointerup', onPointerUp)
+    element.addEventListener('pointercancel', onPointerUp)
     element.addEventListener('wheel', onWheel, { passive: false, capture: true })
-    c.addEventListener('end', keepInside)
-    return () => { element.removeEventListener('wheel', onWheel, { capture: true }); c.removeEventListener('end', keepInside) }
-  }, [view, camera, gl, invalidate, config.width, config.depth, config.height])
+    element.addEventListener('contextmenu', onMenu)
+    c.addEventListener('change', keepInside)
+    return () => {
+      element.removeEventListener('pointerdown', onPointerDown, { capture: true })
+      element.removeEventListener('pointerup', onPointerUp)
+      element.removeEventListener('pointercancel', onPointerUp)
+      element.removeEventListener('wheel', onWheel, { capture: true })
+      element.removeEventListener('contextmenu', onMenu)
+      c.removeEventListener('change', keepInside)
+    }
+  }, [view, camera, gl, scene3d, invalidate, config.width, config.depth, config.height, config.mount])
 
   // Mobilon a félig nyitott alsó lap mögé ne kerüljön a pergola: a képet feljebb toljuk (nézet-eltolás).
   const size = useThree((state) => state.size)
@@ -2663,6 +2745,8 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     target.current.copy(center).multiplyScalar(0.62).setY(h * 0.45)
     destination.current.copy(center).addScaledVector(normal, distance).addScaledVector(tangent, distance * 0.38)
     destination.current.y = h * 1.05 + 1.3
+    // Önálló pergolánál a hátsó oldal felé a ház áll: a kamera a homlokzat elé, magasabbra kerül, nem a házba.
+    destination.current.set(...keepClearOfHouse([destination.current.x, destination.current.y, destination.current.z], houseFrontZ))
     beginMove()
     invalidate()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- csak új fókuszkérésre fusson
@@ -2730,6 +2814,11 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
 
   useFrame((_, delta) => {
     if (!controls.current || view === 'sofa') return
+    // Lefelé addig forgatható, amíg a kamera a talaj fölött marad (közelről a tető alá is benézhet).
+    // Az automatikus repülés közben nincs korlát (az útvonal maga a talaj fölött tartja a kamerát, és pontosan a célállásba kell érnie).
+    controls.current.maxPolarAngle = transitioning.current ? Math.PI : groundPolarLimit(controls.current.target.y, camera.position.distanceTo(controls.current.target))
+    // Kifelé nagyításnál a határ a mozdulat után szűkül: ilyenkor azonnal a talaj fölé emeljük a kamerát (ne süllyedjen bele).
+    if (!transitioning.current && controls.current.getPolarAngle() > controls.current.maxPolarAngle + 1e-4) { controls.current.update(); invalidate() }
     idle.current += delta
     autoFrame.current += delta
     // A berepülés csak akkor induljon, amikor a betöltőkép már eltűnt.
@@ -2781,7 +2870,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
       controls.current.update(); invalidate()
     } else if (autoRotate && idle.current > 2 && autoFrame.current >= 1 / 30) { autoFrame.current = 0; invalidate() }
   })
-  return <OrbitControls ref={controls} makeDefault enabled={view !== 'sofa'} enableDamping dampingFactor={0.07} minDistance={1.1} maxDistance={maxOrbitDistance(config)} maxPolarAngle={view === 'interior' ? Math.PI * 0.86 : Math.PI / 1.98} zoomToCursor={finePointer} autoRotate={autoRotate && view !== 'sofa'} autoRotateSpeed={0.4} onStart={() => { transitioning.current = false; firstFlight.current = false; showcase.current = 0; idle.current = 0 }} />
+  return <OrbitControls ref={controls} makeDefault enabled={view !== 'sofa'} enableRotate enablePan enableZoom screenSpacePanning enableDamping dampingFactor={0.08} rotateSpeed={0.9} minDistance={0.8} maxDistance={maxOrbitDistance(config)} minPolarAngle={0.02} zoomToCursor={finePointer} autoRotate={autoRotate && view !== 'sofa'} autoRotateSpeed={0.4} onStart={() => { transitioning.current = false; firstFlight.current = false; showcase.current = 0; idle.current = 0 }} />
 }
 
 /** Az égbolt-képeken (HDR) a nap iránya: equirect u koordináta → szög az xz síkban. */
@@ -3014,7 +3103,7 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} /></Suspense></SceneAssetBoundary>}
     {scene.photoMode
       ? <PhotoRig config={config} placement={placement} onCommit={(next) => onSceneChange(next)} />
-      : <CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} mechanism={config.roof === 'louvered' && (!!scene.mechanism || rainShow > 0)} />}
+      : <CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} mechanism={config.roof === 'louvered' && (!!scene.mechanism || rainShow > 0)} autoCamera={scene.autoCamera} houseFrontZ={studio || hasBackWall(config.mount) ? null : getHouseLayout(config, scene.houseStyle ?? 'classic').frontZ} />}
   </>
 }
 
@@ -3242,7 +3331,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
           gl.shadowMap.autoUpdate = false
           refreshShadows(gl)
           gl.domElement.dataset.pergolaCanvas = 'true'
-          gl.domElement.setAttribute('aria-label', 'Interaktív, valósághű 3D pergola. Forgatás egérrel vagy érintéssel.')
+          gl.domElement.setAttribute('aria-label', 'Interaktív, valósághű 3D pergola. Bal gombbal vagy egy ujjal forgatható, jobb gombbal vagy két ujjal mozgatható, görgővel vagy csípéssel nagyítható.')
           gl.domElement.setAttribute('role', 'img')
         }}
       >

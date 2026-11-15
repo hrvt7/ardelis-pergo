@@ -106,10 +106,12 @@ export default function PergoStudio() {
   const [exporting, setExporting] = useState(false)
   // Egyszer megmutatjuk, hogyan mozgatható a jelenet (telefonon és laptopon más a mozdulat): az első húzásnál (vagy 7 mp után) eltűnik, és nem jön vissza.
   const coarsePointer = useMemo(() => { try { return window.matchMedia('(pointer: coarse)').matches } catch { return false } }, [])
-  const [rotateHint, setRotateHint] = useState(() => { try { return localStorage.getItem('pergo-rotate-hint') !== '1' } catch { return false } })
+  // Az asztali tipp új (jobb gombos mozgatás): saját kulccsal, hogy aki a régit már látta, ezt egyszer még megkapja.
+  const hintKey = coarsePointer ? 'pergo-rotate-hint' : 'pergo-rotate-hint-desktop-2'
+  const [rotateHint, setRotateHint] = useState(() => { try { return localStorage.getItem(hintKey) !== '1' } catch { return false } })
   useEffect(() => {
     if (!rotateHint) return
-    const done = () => { setRotateHint(false); try { localStorage.setItem('pergo-rotate-hint', '1') } catch { /* privát mód */ } }
+    const done = () => { setRotateHint(false); try { localStorage.setItem(hintKey, '1') } catch { /* privát mód */ } }
     const canvas = document.querySelector('.scene-canvas-wrap')
     canvas?.addEventListener('pointerdown', done, { once: true })
     // Az időzítő csak a kész jelenettől indul (a töltőképernyő alatt a tipp nem látszik, lásd CSS).
@@ -119,7 +121,7 @@ export default function PergoStudio() {
     const observer = canvas ? new MutationObserver(arm) : null
     if (canvas) observer?.observe(canvas, { attributes: true, attributeFilter: ['data-scene-ready'] })
     return () => { canvas?.removeEventListener('pointerdown', done); observer?.disconnect(); window.clearTimeout(timer) }
-  }, [rotateHint])
+  }, [rotateHint, hintKey])
   const [presentation, setPresentation] = usePresentation()
   const [delta, setDelta] = useState<{ amount: number; label: string } | null>(null)
   // Kontextus-kamera, változás-jelző és rezgés.
@@ -213,7 +215,8 @@ export default function PergoStudio() {
     if (!current.autoCamera || current.photoMode || current.sunStudy) return
     const sides = (['front', 'back', 'left', 'right'] as SideKey[]).find((side) => before.sides[side] !== after.sides[side] || before.split?.[side] !== after.split?.[side])
     if (sides) { setView('perspective'); focusSide(sides); return }
-    if ((after.fans ?? 0) > (before.fans ?? 0)) { setView('interior'); return }
+    // Ventilátor: alulnézet a tető alá — akkor is odarepül, ha már alulnézetben voltunk, de közben elforgatták a képet.
+    if ((after.fans ?? 0) > (before.fans ?? 0)) { setView('interior'); setFocus({ id: ++focusSeq.current, kind: 'overview' }); return }
     // Új tetőárnyékoló: kihúzva, áttekintő nézetből mutatjuk (alulról a kameragombsorral nézhető).
     if (after.roofShade && after.roofShade !== before.roofShade) { setScene((value) => ({ ...value, shadeOut: 100 })); overview(); return }
     if (before.frameColor !== after.frameColor || before.customRal !== after.customRal || before.roofColor !== after.roofColor || before.roofRal !== after.roofRal) { overview(); return }
@@ -464,7 +467,7 @@ export default function PergoStudio() {
           {mechanismOn && <Suspense fallback={null}><div className={`sun-panel-slot is-mechanism${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MechanismPanel config={config} onClose={() => updateScene({ mechanism: false })} /></div></Suspense>}
           {scene.sunStudy && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><SunStudyPanel scene={scene} shade={shade} onChange={updateScene} onClose={toggleSunStudy} /></div></Suspense>}
           {view === 'sofa' && <div className="pov-note" role="status"><Armchair size={16} /><span><strong>Kanapé panoráma</strong>Húzd a képet a körbenézéshez · a nyilakkal is forgatható</span></div>}
-          {rotateHint && view !== 'sofa' && !scene.photoMode && !welcomeBack && <div className="pov-note rotate-hint" role="status"><Rotate3d size={16} /><span><strong>Húzd a forgatáshoz</strong>{coarsePointer ? 'Két ujjal nagyíthatsz' : 'Két ujjal görgetve mozgatod · csípéssel vagy görgővel nagyítasz'}</span></div>}
+          {rotateHint && view !== 'sofa' && !scene.photoMode && !welcomeBack && <div className="pov-note rotate-hint" role="status"><Rotate3d size={16} /><span><strong>Húzd a forgatáshoz</strong>{coarsePointer ? 'Két ujjal nagyíthatsz' : 'Jobb gombbal vagy két ujjas görgetéssel mozgatod · görgővel, csípéssel nagyítasz'}</span></div>}
           {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
           {scene.photoMode ? <PhotoBar placement={{ photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt, photoLens: scene.photoLens }} coarse={isNarrow || window.matchMedia('(pointer: coarse)').matches} onChange={(next) => updateScene(next)} onReset={() => updateScene({ ...DEFAULT_PLACEMENT })} onReplace={openPhotoPicker} onDelete={deleteUserPhoto} onDone={() => updateScene({ photoMode: false })} />
             : <div className="camera-toolbar" aria-label="Kamera nézetek">{CAMERA_VIEWS.filter(({ id }) => !(product === 'carport' && id === 'sofa')).map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} aria-pressed={view === id} onClick={() => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} title={`${label} nézet`}><Icon size={16} /><span>{label}</span></button>)}</div>}
