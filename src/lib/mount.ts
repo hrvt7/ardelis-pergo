@@ -3,34 +3,34 @@
 // és a szerveroldali e-mailhez. Tiszta TypeScript, böngészőben és szerveren is fut.
 import type { MountType, PergolaConfig, SideKey } from '../types/pergola'
 import { bayBoundaries, bayCenter, bayWidth, moduleCount } from './modules'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 export const MOUNT_TYPES: MountType[] = ['wall', 'corner-left', 'corner-right', 'niche', 'freestanding']
 
-export const MOUNT_LABELS: Record<MountType, string> = {
+export const MOUNT_LABELS: Record<MountType, string> = localized(() => ({
   wall: tr('Falhoz csatlakozó', 'An der Hauswand'),
   'corner-left': tr('L-alakú ház sarkába, balra', 'In die Ecke eines L-Hauses, links'),
   'corner-right': tr('L-alakú ház sarkába, jobbra', 'In die Ecke eines L-Hauses, rechts'),
   niche: tr('U-alakú ház két szárnya közé', 'Zwischen zwei Flügel eines U-Hauses'),
   freestanding: tr('Önálló', 'Freistehend'),
-}
+}))
 
 /** Rövid címke a fejlécekhez és az árpanelhez. */
-export const MOUNT_SHORT: Record<MountType, string> = {
+export const MOUNT_SHORT: Record<MountType, string> = localized(() => ({
   wall: tr('Fal menti', 'Wandanbau'),
   'corner-left': 'L-sarok · bal',
   'corner-right': 'L-sarok · jobb',
   niche: tr('U-fülke', 'U-Nische'),
   freestanding: tr('Önálló', 'Freistehend'),
-}
+}))
 
-export const MOUNT_DESCRIPTIONS: Record<MountType, string> = {
+export const MOUNT_DESCRIPTIONS: Record<MountType, string> = localized(() => ({
   wall: tr('A házfalra rögzítve, két elülső oszloppal', 'An der Hauswand befestigt, mit zwei vorderen Stehern'),
   'corner-left': tr('A ház és a bal oldali szárny sarkában, egy oszloppal', 'In der Ecke von Haus und linkem Flügel, mit einem Steher'),
   'corner-right': tr('A ház és a jobb oldali szárny sarkában, egy oszloppal', 'In der Ecke von Haus und rechtem Flügel, mit einem Steher'),
   niche: tr('A ház két szárnya között, elülső oszlop nélkül', 'Zwischen den beiden Hausflügeln, ohne vorderen Steher'),
   freestanding: tr('Négy oszlopon, bárhol a kertben', 'Auf vier Stehern, überall im Garten'),
-}
+}))
 
 /** A spec-kódban használt egybetűs jel (régi kódok: W és F változatlan). */
 export const MOUNT_CODES: Record<MountType, string> = { wall: 'W', 'corner-left': 'L', 'corner-right': 'R', niche: 'N', freestanding: 'F' }

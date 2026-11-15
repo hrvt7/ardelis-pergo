@@ -5,7 +5,7 @@
 // Első fél: elöl/hátul a bal (−x), oldalt az elülső (kert felőli, +z) fél.
 import { isWallSide } from './mount'
 import type { PergolaConfig, PriceSettings, SideKey, SideType } from '../types/pergola'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 export interface SideInfo {
   label: string
@@ -26,7 +26,7 @@ export interface SideInfo {
 
 export const SIDE_TYPES: SideType[] = ['none', 'zip', 'glass', 'glassFramed', 'glassFixed', 'door', 'doorSliding', 'louver', 'slatAlu', 'slatWood']
 
-export const SIDE_INFO: Record<SideType, SideInfo> = {
+export const SIDE_INFO: Record<SideType, SideInfo> = localized(() => ({
   none: { label: tr('Nyitott', 'Offen'), description: tr('Szabad kilátás, szellős terasz', 'Freie Sicht, luftige Terrasse'), spec: '0', share: '0', priceKey: null, value: 0, motorized: false, movable: null },
   zip: { label: tr('ZIP screen', 'ZIP-Screen'), description: tr('Motoros, szélálló árnyékoló, a kazettába tűnik', 'Motorisierter, windstabiler Sonnenschutz, verschwindet in der Kassette'), spec: 'Z', share: 'z', priceKey: 'zipPerM2Net', value: 1.4, motorized: true, movable: 'roll' },
   glass: { label: tr('Tolóüveg', 'Glasschiebewand'), description: tr('Keret nélküli, 10 mm edzett üveg, félre tolható', 'Rahmenlos, 10 mm ESG, zur Seite schiebbar'), spec: 'G', share: 'g', priceKey: 'glassPerM2Net', value: 2.4, motorized: false, movable: 'slide' },
@@ -37,17 +37,17 @@ export const SIDE_INFO: Record<SideType, SideInfo> = {
   louver: { label: tr('Lamellafal', 'Lamellenwand'), description: tr('Állítható alumínium lamellák, belátásvédelem', 'Verstellbare Aluminiumlamellen, Sichtschutz'), spec: 'L', share: 'l', priceKey: 'louverWallPerM2Net', value: 1.8, motorized: false, movable: 'tilt' },
   slatAlu: { label: tr('Alu lécfal', 'Alu-Lattenwand'), description: tr('Fix alumínium lécek, a szerkezet színében', 'Feste Aluminiumlatten in Konstruktionsfarbe'), spec: 'A', share: 'a', priceKey: 'slatAluPerM2Net', value: 1.3, motorized: false, movable: null },
   slatWood: { label: tr('Fa lécfal', 'Holz-Lattenwand'), description: tr('Hőkezelt fa lécek, meleg hatás', 'Thermoholz-Latten, warme Optik'), spec: 'W', share: 'w', priceKey: 'slatWoodPerM2Net', value: 1.2, motorized: false, movable: null },
-}
+}))
 
-export const SIDE_LABELS = Object.fromEntries(SIDE_TYPES.map((type) => [type, SIDE_INFO[type].label])) as Record<SideType, string>
+export const SIDE_LABELS = localized(() => (Object.fromEntries(SIDE_TYPES.map((type) => [type, SIDE_INFO[type].label])) as Record<SideType, string>))
 
 /** A félbe osztott oldal két felének neve. */
-export const HALF_NAMES: Record<SideKey, [string, string]> = {
+export const HALF_NAMES: Record<SideKey, [string, string]> = localized(() => ({
   front: [tr('bal fél', 'linke Hälfte'), tr('jobb fél', 'rechte Hälfte')],
   back: [tr('bal fél', 'linke Hälfte'), tr('jobb fél', 'rechte Hälfte')],
   left: [tr('elülső fél', 'vordere Hälfte'), tr('hátsó fél', 'hintere Hälfte')],
   right: [tr('elülső fél', 'vordere Hälfte'), tr('hátsó fél', 'hintere Hälfte')],
-}
+}))
 
 export interface SideSegment {
   type: SideType

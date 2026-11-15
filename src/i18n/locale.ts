@@ -39,3 +39,41 @@ export function tenantIdFromPath(pathname: string): string | null {
   const match = /^\/(?:k|embed)\/([a-z0-9-]+)(?:\/|$)/i.exec(pathname)
   return match ? match[1].toLowerCase() : null
 }
+
+/**
+ * Nyelvfüggő modulszintű tábla (pl. ROOF_INFO): a tartalom a hozzáféréskor, az AKTUÁLIS nyelven jön létre,
+ * nyelvenként egyszer (gyorsítótárban). Így a szerver egy kérésen belül (withLocale) a gyártó nyelvén
+ * olvassa ugyanazt a táblát, a böngészőben pedig a betöltéskor beállított nyelven.
+ * A táblát ne módosítsd: nyelvenként külön példány van.
+ */
+export function localized<T extends object>(factory: () => T): T {
+  const cache = new Map<Locale, T>()
+  const value = (): T => {
+    let table = cache.get(current)
+    if (!table) { table = factory(); cache.set(current, table) }
+    return table
+  }
+  // A cél a jelenlegi nyelvű tábla (tömbnél tömb, így az Array.isArray és a hossz is helyes).
+  return new Proxy(value(), {
+    get: (_target, key) => {
+      const table = value()
+      const result = Reflect.get(table, key, table)
+      return typeof result === 'function' ? result.bind(table) : result
+    },
+    has: (_target, key) => Reflect.has(value(), key),
+    ownKeys: () => Reflect.ownKeys(value()),
+    getOwnPropertyDescriptor: (_target, key) => Reflect.getOwnPropertyDescriptor(value(), key),
+    set: () => false,
+    deleteProperty: () => false,
+  })
+}
+
+/**
+ * Szinkron számítás a megadott nyelven (szerver: a gyártó nyelve egy kérésen belül), utána visszaáll.
+ * A függvényben ne legyen await: a nyelv modulszintű, egy aszinkron szünet alatt más kérés futhatna.
+ */
+export function withLocale<T>(locale: Locale, fn: () => T): T {
+  const previous = current
+  current = locale
+  try { return fn() } finally { current = previous }
+}

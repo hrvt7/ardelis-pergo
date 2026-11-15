@@ -54,7 +54,7 @@ const ArDialog = lazy(() => import('@/components/ArDialog'))
 const SunStudyPanel = lazy(() => import('@/components/SunStudyPanel'))
 import MechanismPanel from '@/components/MechanismPanel'
 import { LANDSCAPE_PHONE_QUERY, SHEET_LAYOUT_QUERY } from '@/lib/viewport'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 const BudgetDialog = lazy(() => import('@/components/BudgetDialog'))
 const MoodPanel = lazy(() => import('@/components/MoodPanel'))
 const AdvisorDialog = lazy(() => import('@/components/AdvisorDialog'))
@@ -71,9 +71,9 @@ const CAMERA_ICONS: Partial<Record<CameraView, typeof View>> = { perspective: Vi
 
 /** Folyamatosan húzható mezők: gyors egymásutánjuk egy visszavonási lépés. */
 const CONTINUOUS_KEYS = new Set(['width', 'depth', 'height', 'pitch'])
-const CHANGE_LABELS: Record<string, string> = {
+const CHANGE_LABELS: Record<string, string> = localized(() => ({
   width: tr('Szélesség', 'Breite'), depth: tr('Mélység', 'Tiefe'), height: tr('Magasság', 'Höhe'), mount: tr('Rögzítés', 'Montage'), roof: tr('Tetőrendszer', 'Dachsystem'), frameColor: tr('Szerkezetszín', 'Konstruktionsfarbe'), customRal: tr('Egyedi szín', 'Sonderfarbe'), roofColor: tr('Tető / lamellák színe', 'Farbe Dach / Lamellen'), roofRal: tr('Tető / lamellák színe', 'Farbe Dach / Lamellen'), sides: tr('Oldalkialakítás', 'Seitengestaltung'), louverAngle: tr('Lamellaszög', 'Lamellenwinkel'), screenOpen: tr('ZIP nyitottság', 'ZIP-Öffnung'), led: tr('Periméter LED', 'Umlaufende LED'), heaters: tr('Teraszfűtés', 'Terrassenheizung'), speakers: 'Hangrendszer', sensors: 'Szenzorcsomag', solar: tr('Napelemes tető', 'Photovoltaik-Dach'), split: 'Osztott oldal', ledRgb: tr('Színváltós LED', 'Farbwechsel-LED'), fans: tr('Mennyezeti ventilátor', 'Deckenventilator'), smartHome: tr('Okosotthon-vezérlés', 'Smart-Home-Steuerung'), roofShade: tr('Tetőárnyékoló', 'Dachbeschattung'), shadeFabric: tr('Árnyékoló színe', 'Farbe der Beschattung')
-}
+}))
 
 const savedKey = (tenant: Tenant) => `pergo-atelier-saved-v3:${tenant.id}`
 

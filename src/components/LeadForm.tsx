@@ -6,7 +6,7 @@ import { PRODUCT_LABELS, type ProductFamily } from '@contracts/catalog'
 import { useTenant } from '@/tenants/TenantContext'
 import { bookingLink } from '@/lib/booking'
 import { buyerProductName, firstInvalid, validateLead, type LeadFieldName } from '@/lib/leadValidation'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 interface Props {
   productFamily: ProductFamily | 'garage-door' | 'modular-house'
@@ -21,7 +21,7 @@ interface Props {
 type LeadResponse = { ok: true; ref: string } | { ok: false; error: string; field?: string }
 
 /** A szerver által hibásnak jelzett mező olvasható neve. */
-const FIELD_NAMES: Record<string, string> = {
+const FIELD_NAMES: Record<string, string> = localized(() => ({
   'customer.name': tr('a nevet', 'den Namen'),
   'customer.email': tr('az e-mail-címet', 'die E-Mail-Adresse'),
   'customer.phone': tr('a telefonszámot (csak számjegy, szóköz, +, -, /, zárójel)', 'die Telefonnummer (nur Ziffern, Leerzeichen, +, -, /, Klammern)'),
@@ -30,7 +30,7 @@ const FIELD_NAMES: Record<string, string> = {
   'customer.region': tr('a megyét', 'das Bundesland'),
   'customer.address': tr('a címet', 'die Adresse'),
   'customer.notes': tr('a megjegyzést', 'die Anmerkung'),
-}
+}))
 
 export default function LeadForm({ productFamily, config, house }: Props) {
   const { tenant, embed, product } = useTenant()

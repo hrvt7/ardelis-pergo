@@ -9,7 +9,7 @@ import { Link } from 'react-router'
 import { useTenant } from '@/tenants/TenantContext'
 import { hubPath, interestEvent, productInfo, productPath, PRODUCTS, tenantProducts, type ProductFamily } from '@/products'
 import { track } from '@/lib/analytics'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 /** A termékek saját 3D-jelenetéből készült kártyakép (aranyóra, családi ház környezetben). */
 const PRODUCT_IMAGES: Partial<Record<ProductFamily, string>> = {
@@ -27,11 +27,11 @@ function HubImage({ id, label }: { id: ProductFamily; label: string }) {
   return <div className={`product-hub-media${loaded ? ' is-loaded' : ''}`}><img src={assetUrl(src)} alt={`${label}${tr(' — 3D látvány', ' — 3D-Ansicht')}`} loading="lazy" decoding="async" onLoad={() => setLoaded(true)} /></div>
 }
 
-const HOW_IT_WORKS = [
+const HOW_IT_WORKS = localized(() => ([
   { title: tr('Tervezd meg', 'Planen Sie'), text: tr('Méret, kivitel, szín — a 3D azonnal mutatja.', 'Größe, Ausführung, Farbe — die 3D-Ansicht zeigt es sofort.') },
   { title: tr('Lásd az árat', 'Preis sehen'), text: tr('Tételes irányár minden módosítás után.', 'Detaillierter Richtpreis nach jeder Änderung.') },
   { title: tr('Kérj felmérést', 'Aufmaß anfragen'), text: tr('A terv és az ár egy kattintással a gyártóhoz kerül.', 'Entwurf und Preis gehen mit einem Klick an den Hersteller.') },
-]
+]))
 
 /** A választóban megjelenő családok: a gyártó élő kínálata, a demónál a még nem elérhetők is (érdeklődés-mérés). */
 function useHubItems() {

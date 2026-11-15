@@ -2,7 +2,7 @@
 // szükséges szabad hely (székek kihúzása 75 cm, közlekedés legalább 60 cm).
 import type { FurnitureSet, PergolaConfig } from '@/types/pergola'
 import { isPack, packPlan, type PackItem, type PackPlan } from './usePacks'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 export interface FurnitureSpec {
   label: string
@@ -20,7 +20,7 @@ export interface FurnitureSpec {
   pack?: { audience: string }
 }
 
-export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec> = {
+export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec> = localized(() => ({
   lounge: { label: tr('Pihenősarok', 'Lounge-Ecke'), people: tr('4–5 fő', '4–5 Pers.'), description: tr('3 személyes kanapé, dohányzóasztal', '3-Sitzer-Sofa, Couchtisch'), zone: [3.0, 2.6], parts: [{ kind: 'lounge', x: 0 }], seats: 5, repeatable: false },
   dining6: { label: tr('Étkező 6 főre', 'Essplatz für 6'), people: tr('6 fő', '6 Pers.'), description: tr('180 × 90 cm asztal, 6 szék', 'Tisch 180 × 90 cm, 6 Stühle'), zone: [3.0, 2.4], parts: [{ kind: 'dining6', x: 0 }], seats: 6, repeatable: true },
   dining8: { label: tr('Étkező 8 főre', 'Essplatz für 8'), people: tr('8 fő', '8 Pers.'), description: tr('220 × 100 cm asztal, 8 szék', 'Tisch 220 × 100 cm, 8 Stühle'), zone: [3.7, 2.5], parts: [{ kind: 'dining8', x: 0 }], seats: 8, repeatable: true },
@@ -39,17 +39,17 @@ export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec
   banquet: { label: tr('Bankett / rendezvény', 'Bankett / Event'), people: tr('hosszú asztalok', 'lange Tische'), description: tr('Hosszú asztalok 60 cm-es ülésosztással, sorok közt közlekedősávval', 'Lange Tische mit 60 cm Sitzteilung, Gehweg zwischen den Reihen'), zone: [4.2, 2.4], parts: [{ kind: 'dining6', x: 0 }], seats: 12, repeatable: false, pack: { audience: tr('Rendezvényhelyszín, borászat, szálloda', 'Eventlocation, Weingut, Hotel') } },
   mixed: { label: tr('Vegyes terasz', 'Gemischte Terrasse'), people: tr('pihenő, étkező, bisztró, bár', 'Lounge, Essplatz, Bistro, Bar'), description: tr('Váltakozó zónák: pihenősarok, étkező, bisztró-asztal, hátsó bárpult — nagy teraszon sem ismétlődik ugyanaz egymás mellett', 'Wechselnde Bereiche: Lounge, Essplatz, Bistrotisch, Bar hinten — auch auf großen Terrassen wiederholt sich nichts nebeneinander'), zone: [3.4, 2.8], parts: [{ kind: 'lounge', x: 0 }], seats: 11, repeatable: false, pack: { audience: tr('Szálloda, vendégház, étterem, családi terasz', 'Hotel, Gästehaus, Restaurant, Familienterrasse') } },
   barLounge: { label: tr('Bár + lounge', 'Bar + Lounge'), people: tr('bárpult és pihenő sarkok', 'Bartheke und Lounge-Ecken'), description: tr('Bárpult bárszékekkel a hátsó fal mentén, előtte pihenő sarkok', 'Bartheke mit Barhockern an der Rückwand, davor Lounge-Ecken'), zone: [3.4, 4.6], parts: [{ kind: 'lounge', x: 0 }], seats: 9, repeatable: false, pack: { audience: tr('Szálloda, borbár, étterem', 'Hotel, Weinbar, Restaurant') } },
-}
+}))
 
 export const FURNITURE_ORDER: FurnitureSet[] = ['lounge', 'dining6', 'dining8', 'combo', 'bistro', 'bar', 'sunbed', 'spa', 'loungeSpa', 'diningSpa', 'none']
 /** Használati csomagok a kiválasztóban, a lakossági bútorok után. */
 /** A választó csoportjai: egy listában, használat szerint rendezve (a „Üresen” külön, a lista végén). */
-export const FURNITURE_GROUPS: { id: string; label: string; sets: FurnitureSet[] }[] = [
+export const FURNITURE_GROUPS: { id: string; label: string; sets: FurnitureSet[] }[] = localized(() => ([
   { id: 'home', label: tr('Otthon és pihenés', 'Zuhause und Entspannung'), sets: ['lounge', 'dining6', 'dining8', 'combo', 'sunbed'] },
   { id: 'kitchen', label: tr('Konyha és étkezés', 'Küche und Essen'), sets: ['summerKitchen', 'kitchenDining'] },
   { id: 'wellness', label: tr('Wellness', 'Wellness'), sets: ['spa', 'loungeSpa', 'diningSpa'] },
   { id: 'hospitality', label: tr('Vendéglátás és rendezvény', 'Gastronomie und Events'), sets: ['mixed', 'restaurant', 'bistro', 'bar', 'barLounge', 'banquet'] },
-]
+]))
 
 export const PACK_ORDER: FurnitureSet[] = ['mixed', 'summerKitchen', 'kitchenDining', 'restaurant', 'banquet', 'barLounge']
 

@@ -1,3 +1,4 @@
+import { localized, tr } from '../i18n/locale'
 // Lead-pontozás: mennyire „forró” egy érdeklődő a beküldéskor csatolt viselkedési jelek és az űrlap alapján.
 // Tiszta függvények (szerver és admin is használja); a jelek csak a vevő hozzájárulásával, a kérelemmel együtt érkeznek.
 
@@ -31,7 +32,7 @@ export interface LeadScore {
   blind: boolean
 }
 
-export const TIER_LABELS: Record<LeadTier, string> = { hot: 'Forró', warm: 'Meleg', cold: 'Hideg' }
+export const TIER_LABELS: Record<LeadTier, string> = localized(() => ({ hot: tr('Forró', 'Heiß'), warm: tr('Meleg', 'Warm'), cold: tr('Hideg', 'Kalt') }))
 export const TIER_COLORS: Record<LeadTier, string> = { hot: '#ff8a65', warm: '#ffc457', cold: '#9fb3a6' }
 
 export interface ScoreInput {

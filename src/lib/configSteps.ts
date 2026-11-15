@@ -1,8 +1,8 @@
 import type { ConfigStep } from '@/types/pergola'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 /** A pergola-konfigurátor lépései, sorrendben (a panel fülei és a mobil „Tovább” gomb is ebből dolgozik). */
-export const STEPS: { id: ConfigStep; label: string; short: string }[] = [
+export const STEPS: { id: ConfigStep; label: string; short: string }[] = localized(() => ([
   { id: 'size', label: tr('Típus', 'Typ'), short: tr('Mit építesz', 'Was bauen Sie') },
   { id: 'mount', label: tr('Méret', 'Größe'), short: tr('Elhelyezés és méret', 'Montage und Größe') },
   { id: 'roof', label: tr('Tető', 'Dach'), short: tr('Tetőrendszer', 'Dachsystem') },
@@ -10,7 +10,7 @@ export const STEPS: { id: ConfigStep; label: string; short: string }[] = [
   { id: 'color', label: tr('Szín', 'Farbe'), short: tr('Felület', 'Oberfläche') },
   { id: 'extras', label: tr('Komfort', 'Komfort'), short: tr('Komfort és vezérlés', 'Komfort und Steuerung') },
   { id: 'summary', label: tr('Összegzés', 'Übersicht'), short: tr('Felmérés', 'Aufmaß') },
-]
+]))
 
 /** A következő lépés; az utolsón null. */
 export function nextStep(step: ConfigStep): ConfigStep | null {

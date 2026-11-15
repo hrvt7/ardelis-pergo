@@ -7,17 +7,17 @@ import { COMPASS_POINTS, compassLabel, formatClock, sunDay } from '@/lib/sun'
 import { DEFAULT_SITE, isoDate, lookupPostalCode, studyDate, studySun } from '@/lib/sunSite'
 import type { SceneSettings, TimeOfDay } from '@/types/pergola'
 import { isSheetLayout } from '@/lib/viewport'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 /** Mágneses elhajlás Magyarországon (2026, kb. +5,5°): a telefon iránytűje mágneses északot mutat. */
 const DECLINATION = 5.5
 
-const DATE_PRESETS: { label: string; month: number; day: number }[] = [
+const DATE_PRESETS: { label: string; month: number; day: number }[] = localized(() => ([
   { label: tr('Jún. 21.', '21. Juni'), month: 6, day: 21 },
   { label: tr('Júl. 15.', '15. Juli'), month: 7, day: 15 },
   { label: tr('Szept. 23.', '23. Sept.'), month: 9, day: 23 },
   { label: tr('Dec. 21.', '21. Dez.'), month: 12, day: 21 },
-]
+]))
 
 function timeOfDayForSun(elevation: number): TimeOfDay {
   return elevation < -4 ? 'night' : elevation < 12 ? 'sunset' : 'day'

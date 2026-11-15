@@ -9,13 +9,13 @@ import { colorSummary } from '@/lib/colors'
 import { enabledRoofs, normalizeConfig, roofLabels, tenantPrice } from '@/tenants/rules'
 import type { Tenant } from '@/tenants/types'
 import type { FurnitureSet, PergolaConfig, PriceSettings, RoofType, SideKey, SideType } from '@/types/pergola'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 const ROOF_VALUE = Object.fromEntries(Object.entries(ROOF_INFO).map(([roof, info]) => [roof, info.value])) as Record<RoofType, number>
 const SIDE_VALUE = Object.fromEntries(Object.entries(SIDE_INFO).map(([type, info]) => [type, info.value])) as Record<SideType, number>
 const SIZE_STEPS = 9
 const SIDES: SideKey[] = ['front', 'back', 'left', 'right']
-const SIDE_NAMES: Record<SideKey, string> = { front: tr('Elülső oldal', 'Vordere Seite'), back: tr('Hátsó oldal', 'Hintere Seite'), left: 'Bal oldal', right: 'Jobb oldal' }
+const SIDE_NAMES: Record<SideKey, string> = localized(() => ({ front: tr('Elülső oldal', 'Vordere Seite'), back: tr('Hátsó oldal', 'Hintere Seite'), left: 'Bal oldal', right: 'Jobb oldal' }))
 const EXTRA_LOSS = { led: 1, speakers: 0.7, sensors: 1, heater: 0.8, color: 0.9, solar: 1.1, rgb: 0.4, fan: 0.6, smartHome: 0.5, roofShade: 0.7 }
 
 export interface BudgetPlan {

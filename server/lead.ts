@@ -20,6 +20,8 @@ import { PRODUCT_IDS, productInfo, productPath } from '../src/products'
 import { getEngine } from '../src/products/engines'
 import { buildingSpecRows } from '../src/lib/buildings'
 import { resolveTenant } from './tenantAdmin'
+import { getTenant } from '../src/tenants'
+import { tr, withLocale, type Locale } from '../src/i18n/locale'
 import { roofLabels } from '../src/tenants/rules'
 import type { Tenant } from '../src/tenants/types'
 import { hasPrivacyUrl } from '../src/tenants/privacy'
@@ -131,51 +133,59 @@ export function siteOrigin(request: Request, env: LeadEnv) {
 
 /** A konfiguráció olvasható sorai (e-mailhez, adatbázishoz). */
 export function describeConfig(tenant: Tenant, config: PergolaConfig, price: PriceBreakdown): [string, string][] {
+  return withLocale(tenant.locale ?? 'hu', () => describeConfigIn(tenant, config, price))
+}
+
+function describeConfigIn(tenant: Tenant, config: PergolaConfig, price: PriceBreakdown): [string, string][] {
   const labels = roofLabels(tenant)
   const color = colorSummary(tenant, config)
   const sides = (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => `${SIDE_NAMES[side]}: ${isWallSide(config.mount, side) ? wallLabel(side).toLowerCase() : sideSummary(config, side)}`).join(' · ')
-  const extras = [config.led && (config.ledRgb ? 'színváltós RGB+W LED' : 'periméter LED'), config.heaters > 0 && `${config.heaters} db fűtés`, config.speakers && 'hangrendszer', config.sensors && 'eső- és szélszenzor', Boolean(config.fans) && `${config.fans} db mennyezeti ventilátor`, config.smartHome && 'okosotthon-vezérlés', config.roofShade && roofShadeSummary(config), config.solar && 'napelemes tető'].filter(Boolean).join(', ')
+  const extras = [config.led && (config.ledRgb ? tr('színváltós RGB+W LED', 'Farbwechsel-LED RGB+W') : tr('periméter LED', 'umlaufende LED')), config.heaters > 0 && `${config.heaters} ${tr('db fűtés', 'Stk. Heizung')}`, config.speakers && tr('hangrendszer', 'Soundsystem'), config.sensors && tr('eső- és szélszenzor', 'Regen- und Windsensor'), Boolean(config.fans) && `${config.fans} ${tr('db mennyezeti ventilátor', 'Stk. Deckenventilator')}`, config.smartHome && tr('okosotthon-vezérlés', 'Smart-Home-Steuerung'), config.roofShade && roofShadeSummary(config), config.solar && tr('napelemes tető', 'Photovoltaik-Dach')].filter(Boolean).join(', ')
   return [
-    ['Tetőrendszer', labels[config.roof]],
+    [tr('Tetőrendszer', 'Dachsystem'), labels[config.roof]],
     ...buildingSpecRows(config),
-    ['Méret (sz × m × m)', `${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} × ${formatNumber(config.height, 2)} m · ${formatNumber(price.area)} m²`],
-    ['Rögzítés', MOUNT_LABELS[config.mount]],
-    ['Szín', color],
-    ['Oldalak', sides],
-    ['Kiegészítők', extras || 'nincs'],
-    ['Konfigurációs kód', getSpecCode(config)],
+    [tr('Méret (sz × m × m)', 'Größe (B × T × H)'), `${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} × ${formatNumber(config.height, 2)} m · ${formatNumber(price.area)} m²`],
+    [tr('Rögzítés', 'Montage'), MOUNT_LABELS[config.mount]],
+    [tr('Szín', 'Farbe'), color],
+    [tr('Oldalak', 'Seiten'), sides],
+    [tr('Kiegészítők', 'Zubehör'), extras || tr('nincs', 'keines')],
+    [tr('Konfigurációs kód', 'Konfigurationscode'), getSpecCode(config)],
   ]
 }
 
 function managerEmailHtml(record: LeadRecord) {
+  return withLocale(record.tenant.locale ?? 'hu', () => managerEmailHtmlIn(record))
+}
+
+function managerEmailHtmlIn(record: LeadRecord) {
   const { tenant, input, price } = record
   const rows = (pairs: [string, string][]) => pairs.map(([label, value]) => `<tr><td style="padding:6px 12px 6px 0;color:#62727a;vertical-align:top;white-space:nowrap">${escapeHtml(label)}</td><td style="padding:6px 0;font-weight:600">${escapeHtml(value)}</td></tr>`).join('')
   const score = scoreLead({ estimate_gross: price.totalGross, notes: input.customer.notes, address: input.customer.address, engagement: input.engagement })
   const customer: [string, string][] = [
-    ['Érdeklődés', `${TIER_LABELS[score.tier]} (${score.score}/100)${score.reasons.length ? ` – ${score.reasons.join(' · ')}` : ''}`],
-    ['Név', input.customer.name],
-    ['Telefon', input.customer.phone],
-    ['E-mail', input.customer.email],
-    ['Helyszín', [input.customer.postalCode, input.customer.city, input.customer.address].filter(Boolean).join(' ')],
-    ['Régió', input.customer.region],
-    ...(input.customer.notes ? [['Megjegyzés', input.customer.notes] as [string, string]] : []),
-    ...(input.house ? [['A háza (3D alapján)', input.house] as [string, string]] : []),
+    [tr('Érdeklődés', 'Interesse'), `${TIER_LABELS[score.tier]} (${score.score}/100)${score.reasons.length ? ` – ${score.reasons.join(' · ')}` : ''}`],
+    [tr('Név', 'Name'), input.customer.name],
+    [tr('Telefon', 'Telefon'), input.customer.phone],
+    [tr('E-mail', 'E-Mail'), input.customer.email],
+    [tr('Helyszín', 'Standort'), [input.customer.postalCode, input.customer.city, input.customer.address].filter(Boolean).join(' ')],
+    [tr('Régió', 'Region'), input.customer.region],
+    ...(input.customer.notes ? [[tr('Megjegyzés', 'Anmerkung'), input.customer.notes] as [string, string]] : []),
+    ...(input.house ? [[tr('A háza (3D alapján)', 'Haus (laut 3D)'), input.house] as [string, string]] : []),
   ]
-  const lines: [string, string][] = [...price.lines.map((line) => [line.label, formatMoney(line.amountNet, tenant.currency)] as [string, string]), ['Telepítés', formatMoney(price.installationNet, tenant.currency)]]
-  return `<!doctype html><html lang="hu"><body style="margin:0;background:#f1f4f4;font-family:Arial,Helvetica,sans-serif;color:#233039">
+  const lines: [string, string][] = [...price.lines.map((line) => [line.label, formatMoney(line.amountNet, tenant.currency)] as [string, string]), [tr('Telepítés', 'Montage'), formatMoney(price.installationNet, tenant.currency)]]
+  return `<!doctype html><html lang="${tr('hu', 'de')}"><body style="margin:0;background:#f1f4f4;font-family:Arial,Helvetica,sans-serif;color:#233039">
 <div style="max-width:640px;margin:0 auto;padding:24px">
-<p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">ÚJ FELMÉRÉSI KÉRELEM · ${escapeHtml(record.ref)}</p>
-<h1 style="font-size:22px;margin:0 0 4px">${escapeHtml(input.customer.name)} – ${escapeHtml(formatMoney(price.totalGross, tenant.currency))} bruttó irányár</h1>
+<p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">${tr('ÚJ FELMÉRÉSI KÉRELEM', 'NEUE AUFMASS-ANFRAGE')} · ${escapeHtml(record.ref)}</p>
+<h1 style="font-size:22px;margin:0 0 4px">${escapeHtml(input.customer.name)} – ${escapeHtml(formatMoney(price.totalGross, tenant.currency))} ${tr('bruttó irányár', 'Richtpreis brutto')}</h1>
 <p style="margin:0 0 20px;color:#62727a">${escapeHtml(input.customer.city)} · ${escapeHtml(record.headline)}</p>
-<div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">Ügyfél</h2><table style="border-collapse:collapse;font-size:14px">${rows(customer)}</table>
-<p style="margin:12px 0 0"><a href="tel:${escapeHtml(input.customer.phone.replace(/[^+0-9]/g, ''))}" style="color:#007fae">Hívás</a> · <a href="mailto:${escapeHtml(input.customer.email)}" style="color:#007fae">Válasz e-mailben</a></p></div>
-<div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">Konfiguráció</h2><table style="border-collapse:collapse;font-size:14px">${rows(record.spec)}</table>
-<p style="margin:12px 0 0"><a href="${escapeHtml(record.configUrl)}" style="color:#007fae">Megnyitás a 3D konfigurátorban →</a></p></div>
-<div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">Irányár (nettó tételek)</h2><table style="border-collapse:collapse;font-size:14px">${rows(lines)}</table>
-<p style="margin:12px 0 0;font-size:15px"><strong>Nettó: ${escapeHtml(formatMoney(price.totalNet, tenant.currency))} · Bruttó: ${escapeHtml(formatMoney(price.totalGross, tenant.currency))}</strong></p>
-<p style="margin:6px 0 0;font-size:12px;color:#62727a">A szerver a(z) ${escapeHtml(tenant.brand.name)} árlistájával számolta újra.</p></div>
-${record.bom.length ? `<div style="background:#fff;border-radius:8px;padding:16px 20px"><h2 style="font-size:15px;margin:0 0 8px">Tájékoztató anyaglista</h2><table style="border-collapse:collapse;font-size:13px">${rows(record.bom)}</table></div>` : ''}
-<p style="font-size:11px;color:#8a979d;margin-top:16px">Forrás: ${escapeHtml(input.source)}${input.pageUrl ? ` · ${escapeHtml(input.pageUrl)}` : ''} · ${escapeHtml(record.createdAt.toISOString())}</p>
+<div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">${tr('Ügyfél', 'Kunde')}</h2><table style="border-collapse:collapse;font-size:14px">${rows(customer)}</table>
+<p style="margin:12px 0 0"><a href="tel:${escapeHtml(input.customer.phone.replace(/[^+0-9]/g, ''))}" style="color:#007fae">${tr('Hívás', 'Anrufen')}</a> · <a href="mailto:${escapeHtml(input.customer.email)}" style="color:#007fae">${tr('Válasz e-mailben', 'Per E-Mail antworten')}</a></p></div>
+<div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">${tr('Konfiguráció', 'Konfiguration')}</h2><table style="border-collapse:collapse;font-size:14px">${rows(record.spec)}</table>
+<p style="margin:12px 0 0"><a href="${escapeHtml(record.configUrl)}" style="color:#007fae">${tr('Megnyitás a 3D konfigurátorban →', 'Im 3D-Konfigurator öffnen →')}</a></p></div>
+<div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">${tr('Irányár (nettó tételek)', 'Richtpreis (Nettopositionen)')}</h2><table style="border-collapse:collapse;font-size:14px">${rows(lines)}</table>
+<p style="margin:12px 0 0;font-size:15px"><strong>${tr('Nettó', 'Netto')}: ${escapeHtml(formatMoney(price.totalNet, tenant.currency))} · ${tr('Bruttó', 'Brutto')}: ${escapeHtml(formatMoney(price.totalGross, tenant.currency))}</strong></p>
+<p style="margin:6px 0 0;font-size:12px;color:#62727a">${tr(`A szerver a(z) ${escapeHtml(tenant.brand.name)} árlistájával számolta újra.`, `Vom Server mit der Preisliste von ${escapeHtml(tenant.brand.name)} neu berechnet.`)}</p></div>
+${record.bom.length ? `<div style="background:#fff;border-radius:8px;padding:16px 20px"><h2 style="font-size:15px;margin:0 0 8px">${tr('Tájékoztató anyaglista', 'Unverbindliche Materialliste')}</h2><table style="border-collapse:collapse;font-size:13px">${rows(record.bom)}</table></div>` : ''}
+<p style="font-size:11px;color:#8a979d;margin-top:16px">${tr('Forrás', 'Quelle')}: ${escapeHtml(input.source)}${input.pageUrl ? ` · ${escapeHtml(input.pageUrl)}` : ''} · ${escapeHtml(record.createdAt.toISOString())}</p>
 ${tenant.platformCredit !== false ? platformFooter(record.configUrl) : ''}
 </div></body></html>`
 }
@@ -184,24 +194,28 @@ ${tenant.platformCredit !== false ? platformFooter(record.configUrl) : ''}
 function platformFooter(configUrl: string) {
   let origin = ''
   try { origin = new URL(configUrl).origin } catch { return '' }
-  return `<p style="margin:18px 0 0;font-size:11px;color:#8a979d"><a href="${escapeHtml(origin)}/" style="text-decoration:none;color:#8a979d"><img src="${escapeHtml(origin)}/brand/lamelix-email-light.png" width="72" height="21" alt="Lamelix" style="vertical-align:middle;border:0;margin-right:6px">3D konfigurátor és lead rendszer</a></p>`
+  return `<p style="margin:18px 0 0;font-size:11px;color:#8a979d"><a href="${escapeHtml(origin)}/" style="text-decoration:none;color:#8a979d"><img src="${escapeHtml(origin)}/brand/lamelix-email-light.png" width="72" height="21" alt="Lamelix" style="vertical-align:middle;border:0;margin-right:6px">${tr('3D konfigurátor és lead rendszer', '3D-Konfigurator und Lead-System')}</a></p>`
 }
 
 export function customerEmailHtml(record: LeadRecord) {
+  return withLocale(record.tenant.locale ?? 'hu', () => customerEmailHtmlIn(record))
+}
+
+function customerEmailHtmlIn(record: LeadRecord) {
   const { tenant, input, price } = record
   const contact = [tenant.brand.phone, tenant.brand.email, tenant.brand.website].filter(Boolean).map((item) => escapeHtml(item!)).join(' · ')
   const booking = bookingLink(tenant)
-  return `<!doctype html><html lang="hu"><body style="margin:0;background:#f1f4f4;font-family:Arial,Helvetica,sans-serif;color:#233039">
+  return `<!doctype html><html lang="${tr('hu', 'de')}"><body style="margin:0;background:#f1f4f4;font-family:Arial,Helvetica,sans-serif;color:#233039">
 <div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:8px;padding:20px 24px">
 <p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">${escapeHtml(tenant.brand.name.toUpperCase())} · ${escapeHtml(record.ref)}</p>
-<h1 style="font-size:20px;margin:0 0 12px">Köszönjük, megkaptuk a felmérési kérelmedet!</h1>
-<p>Kedves ${escapeHtml(input.customer.name)}!</p>
-<p>A(z) ${escapeHtml(tenant.brand.name)} munkatársa hamarosan felveszi veled a kapcsolatot a helyszíni felmérés egyeztetéséhez.</p>
+<h1 style="font-size:20px;margin:0 0 12px">${tr('Köszönjük, megkaptuk a felmérési kérelmedet!', 'Danke, wir haben Ihre Aufmaß-Anfrage erhalten!')}</h1>
+<p>${tr(`Kedves ${escapeHtml(input.customer.name)}!`, `Guten Tag ${escapeHtml(input.customer.name)},`)}</p>
+<p>${tr(`A(z) ${escapeHtml(tenant.brand.name)} munkatársa hamarosan felveszi veled a kapcsolatot a helyszíni felmérés egyeztetéséhez.`, `ein Mitarbeiter von ${escapeHtml(tenant.brand.name)} meldet sich in Kürze bei Ihnen, um das Aufmaß vor Ort zu vereinbaren.`)}</p>
 <p style="margin:16px 0 4px"><strong>${escapeHtml(record.headline)}</strong></p>
-<p style="margin:0 0 16px">Bruttó irányár: <strong>${escapeHtml(formatMoney(price.totalGross, tenant.currency))}</strong> (telepítéssel)</p>
-<p><a href="${escapeHtml(record.configUrl)}" style="color:#007fae">A konfigurációd megnyitása →</a></p>
-${booking ? `<p style="margin:20px 0"><a href="${escapeHtml(booking)}" style="display:inline-block;background:#007fae;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px">Felmérési időpont foglalása →</a></p>` : ''}
-<p style="font-size:12px;color:#62727a">Az irányár tájékoztató jellegű, nem minősül árajánlatnak. A végleges ár helyszíni felmérés után készül.</p>
+<p style="margin:0 0 16px">${tr('Bruttó irányár', 'Richtpreis brutto')}: <strong>${escapeHtml(formatMoney(price.totalGross, tenant.currency))}</strong> ${tr('(telepítéssel)', '(inkl. Montage)')}</p>
+<p><a href="${escapeHtml(record.configUrl)}" style="color:#007fae">${tr('A konfigurációd megnyitása →', 'Ihre Konfiguration öffnen →')}</a></p>
+${booking ? `<p style="margin:20px 0"><a href="${escapeHtml(booking)}" style="display:inline-block;background:#007fae;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px">${tr('Felmérési időpont foglalása →', 'Aufmaß-Termin buchen →')}</a></p>` : ''}
+<p style="font-size:12px;color:#62727a">${tr('Az irányár tájékoztató jellegű, nem minősül árajánlatnak. A végleges ár helyszíni felmérés után készül.', 'Der Richtpreis ist unverbindlich und kein Angebot. Der Endpreis wird nach dem Aufmaß vor Ort erstellt.')}</p>
 ${contact ? `<p style="font-size:12px;color:#62727a">${contact}</p>` : ''}
 </div></div></body></html>`
 }
@@ -277,22 +291,27 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
     return json(400, { ok: false, error: 'Érvénytelen kérés.' })
   }
 
+  // A hibaüzenetek nyelve: a kért gyártóé (ha ismert), különben magyar.
+  const requested = raw && typeof raw === 'object' && 'tenantId' in raw ? getTenant(String((raw as { tenantId: unknown }).tenantId)) : undefined
+  let locale: Locale = requested?.locale ?? 'hu'
+  const say = (hu: string, de: string) => (locale === 'de' ? de : hu)
   const parsed = leadSchema.safeParse(raw)
   if (!parsed.success) {
     const field = parsed.error.issues[0]?.path.join('.') ?? ''
-    return json(422, { ok: false, error: 'Kérlek, ellenőrizd a megadott adatokat.', field })
+    return json(422, { ok: false, error: say('Kérlek, ellenőrizd a megadott adatokat.', 'Bitte prüfen Sie die angegebenen Daten.'), field })
   }
   const input = parsed.data
   const tenant = await resolveTenant(env, input.tenantId)
-  if (!tenant) return json(404, { ok: false, error: 'Ismeretlen konfigurátor.' })
-  if (!hasPrivacyUrl(tenant)) return json(503, { ok: false, error: 'Ennél a konfigurátornál az adatkezelési tájékoztató még nincs beállítva, ezért most nem fogadunk kérelmet. Kérjük, vedd fel a kapcsolatot közvetlenül a gyártóval.' })
-  if (!tenant.regions.includes(input.customer.region)) return json(422, { ok: false, error: 'Kérlek, válassz régiót a listából.', field: 'customer.region' })
+  if (!tenant) return json(404, { ok: false, error: say('Ismeretlen konfigurátor.', 'Unbekannter Konfigurator.') })
+  locale = tenant.locale ?? 'hu'
+  if (!hasPrivacyUrl(tenant)) return json(503, { ok: false, error: say('Ennél a konfigurátornál az adatkezelési tájékoztató még nincs beállítva, ezért most nem fogadunk kérelmet. Kérjük, vedd fel a kapcsolatot közvetlenül a gyártóval.', 'Für diesen Konfigurator ist noch keine Datenschutzerklärung hinterlegt, daher nehmen wir derzeit keine Anfragen an. Bitte kontaktieren Sie den Hersteller direkt.') })
+  if (!tenant.regions.includes(input.customer.region)) return json(422, { ok: false, error: say('Kérlek, válassz régiót a listából.', 'Bitte wählen Sie ein Bundesland aus der Liste.'), field: 'customer.region' })
 
   // A család motorja érvényesít és áraz; a „hamarosan” családokra még nem fogadunk kérelmet.
   const engine = getEngine(input.product)
-  if (!engine) return json(422, { ok: false, error: 'Ehhez a termékhez még nem fogadunk felmérési kérelmet.', field: 'product' })
+  if (!engine) return json(422, { ok: false, error: say('Ehhez a termékhez még nem fogadunk felmérési kérelmet.', 'Für dieses Produkt nehmen wir noch keine Aufmaß-Anfragen an.'), field: 'product' })
   const config = engine.parse(tenant, input.config)
-  if (!config) return json(422, { ok: false, error: 'A konfiguráció nem érvényes. Frissítsd az oldalt, és próbáld újra.', field: 'config' })
+  if (!config) return json(422, { ok: false, error: say('A konfiguráció nem érvényes. Frissítsd az oldalt, és próbáld újra.', 'Die Konfiguration ist ungültig. Bitte Seite neu laden und erneut versuchen.'), field: 'config' })
 
   const now = new Date()
   const ref = makeRef(tenant, now)
@@ -305,15 +324,16 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   // Visszaélés elleni fék (példányonként, legjobb szándékkal): ugyanarról a címről vagy
   // ugyanarra az e-mailre rövid idő alatt csak néhány kérelem mehet ki.
   const limited = rateLimited(clientKey(request), input.customer.email.toLowerCase(), now.getTime())
-  if (limited) return json(429, { ok: false, error: 'Túl sok kérelem érkezett rövid idő alatt. Kérlek, próbáld újra néhány perc múlva.' })
+  if (limited) return json(429, { ok: false, error: say('Túl sok kérelem érkezett rövid idő alatt. Kérlek, próbáld újra néhány perc múlva.', 'Zu viele Anfragen in kurzer Zeit. Bitte in einigen Minuten erneut versuchen.') })
 
-  const price = engine.price(tenant, config)
+  // Az ártételek, a fejléc és a leírás a gyártó nyelvén (szinkron, await nélkül).
+  const price = withLocale(locale, () => engine.price(tenant, config))
   const configUrl = `${siteOrigin(request, env)}${productPath('standalone', tenant.id, input.product)}#${engine.shareHash(config)}`
   // A leírás a pergola (és carport) esetén itt készül, a többi családnál a motor adja.
   const pergola = engine.id === 'pergola' ? (config as PergolaConfig) : null
-  const headline = pergola ? `${roofLabels(tenant)[pergola.roof]} · ${formatNumber(pergola.width, 2)} × ${formatNumber(pergola.depth, 2)} m` : engine.headline?.(tenant, config) ?? productInfo(input.product).label
+  const headline = withLocale(locale, () => pergola ? `${roofLabels(tenant)[pergola.roof]} · ${formatNumber(pergola.width, 2)} × ${formatNumber(pergola.depth, 2)} m` : engine.headline?.(tenant, config) ?? productInfo(input.product).label)
   const spec = pergola ? describeConfig(tenant, pergola, price) : engine.describe?.(tenant, config, price) ?? []
-  const bom = pergola ? getBom(pergola).map((line) => [line.label, line.value] as [string, string]) : []
+  const bom = withLocale(locale, () => pergola ? getBom(pergola).map((line) => [line.label, line.value] as [string, string]) : [])
   const record: LeadRecord = { ref, tenant, input, config, price, configUrl, createdAt: now, headline, spec, bom }
 
   const recipients = tenant.lead.recipients.length ? tenant.lead.recipients : (env.LEAD_FALLBACK_EMAIL ?? '').split(',').map((item) => item.trim()).filter(Boolean)
@@ -326,7 +346,7 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
       return json(200, { ok: true, ref, delivered: 'dev-log' })
     }
     console.error('[lead] Nincs beállítva sem RESEND_API_KEY + címzett, sem Supabase — a lead nem kézbesíthető.')
-    return json(503, { ok: false, error: 'Az űrlap jelenleg nem érhető el. Kérlek, keresd a gyártót telefonon vagy e-mailben.' })
+    return json(503, { ok: false, error: say('Az űrlap jelenleg nem érhető el. Kérlek, keresd a gyártót telefonon vagy e-mailben.', 'Das Formular ist derzeit nicht verfügbar. Bitte kontaktieren Sie den Hersteller telefonisch oder per E-Mail.') })
   }
 
   const results = await Promise.allSettled([
@@ -343,13 +363,13 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   if (emailed.status === 'rejected') console.error('[lead] Gyártói e-mail sikertelen', ref, emailed.reason)
 
   const deliveredSomewhere = (canStore && stored.status === 'fulfilled') || (canEmail && emailed.status === 'fulfilled')
-  if (!deliveredSomewhere) return json(502, { ok: false, error: 'A kérelmet most nem sikerült továbbítani. Kérlek, próbáld újra pár perc múlva.' })
+  if (!deliveredSomewhere) return json(502, { ok: false, error: say('A kérelmet most nem sikerült továbbítani. Kérlek, próbáld újra pár perc múlva.', 'Die Anfrage konnte gerade nicht weitergeleitet werden. Bitte in einigen Minuten erneut versuchen.') })
 
   if (env.RESEND_API_KEY && env.LEAD_SEND_CONFIRMATION !== '0') {
     try {
       await sendEmail(env, {
         to: [input.customer.email],
-        subject: oneLine(`${tenant.brand.name}: megkaptuk a felmérési kérelmedet (${ref})`),
+        subject: oneLine(say(`${tenant.brand.name}: megkaptuk a felmérési kérelmedet (${ref})`, `${tenant.brand.name}: Ihre Aufmaß-Anfrage ist eingegangen (${ref})`)),
         html: customerEmailHtml(record),
         replyTo: tenant.brand.email,
       })

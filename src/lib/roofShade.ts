@@ -2,11 +2,11 @@
 // vagy tető alatti (belül, védett, olcsóbb). Egyetlen igazságforrás az árhoz, a linkhez, a 3D-hez és a szöveghez.
 import { isGlazedRoof } from './roofs'
 import type { PergolaConfig, PriceSettings, RoofShade, RoofType, ShadeFabric } from '../types/pergola'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 export const ROOF_SHADES: RoofShade[] = ['above', 'below']
 
-export const ROOF_SHADE_INFO: Record<RoofShade, { label: string; short: string; description: string; benefit: string; share: string; spec: string; priceKey: keyof Pick<PriceSettings, 'roofShadeAbovePerM2Net' | 'roofShadeBelowPerM2Net'> }> = {
+export const ROOF_SHADE_INFO: Record<RoofShade, { label: string; short: string; description: string; benefit: string; share: string; spec: string; priceKey: keyof Pick<PriceSettings, 'roofShadeAbovePerM2Net' | 'roofShadeBelowPerM2Net'> }> = localized(() => ({
   above: {
     label: tr('Tető feletti árnyékoló', 'Beschattung über dem Dach'),
     short: tr('tető feletti', 'über dem Dach'),
@@ -25,14 +25,14 @@ export const ROOF_SHADE_INFO: Record<RoofShade, { label: string; short: string; 
     spec: 'SB',
     priceKey: 'roofShadeBelowPerM2Net',
   },
-}
+}))
 
-export const SHADE_FABRICS: { id: ShadeFabric; name: string; hex: string; share: string }[] = [
+export const SHADE_FABRICS: { id: ShadeFabric; name: string; hex: string; share: string }[] = localized(() => ([
   { id: 'white', name: tr('Fehér', 'Weiß'), hex: '#ecebe5', share: 'w' },
   { id: 'sand', name: tr('Homok', 'Sand'), hex: '#d6c9ae', share: 's' },
   { id: 'grey', name: tr('Szürke', 'Grau'), hex: '#9b9d9b', share: 'g' },
   { id: 'anthracite', name: tr('Antracit', 'Anthrazit'), hex: '#4a4e50', share: 'a' },
-]
+]))
 
 export const DEFAULT_SHADE_FABRIC: ShadeFabric = 'white'
 

@@ -1,5 +1,13 @@
 # Változások
 
+## 4.47 – Német PDF, ajánlatoldal és e-mailek; a szerver a gyártó nyelvén beszél
+
+- **Szerver a gyártó nyelvén:** a nyelvfüggő szövegtárak (tetők, oldalak, színek, építmények stb.) mostantól a hozzáféréskor, az aktuális nyelven jönnek létre (`localized()`, nyelvenként egyszer). A szerver kérésenként a gyártó nyelvén számol és ír (`withLocale(tenant.locale)`), utána visszaáll magyarra, így egy osztrák kérés nem szivárog át egy magyar gyártóhoz.
+- **Németül (osztrák gyártónál):** a gyártói és a vevői lead-e-mail (tárgy, specifikáció, tételes ár, anyaglista), a lead-végpont hibaüzenetei, az ajánlat tételei és specifikációja, az ajánlat e-mailjei (kiküldés, elfogadás, elutasítás, visszaigazolás), az utánkövető levelek (3. nap: vevő, 7. nap: gyártó), a vevői PDF-összefoglaló a műszaki rajzzal, és az ajánlatoldal (a nyelvet és a pénznemet az ajánlat adja, mert nem gyártói URL-en fut).
+- **Magyar gyártónál nincs változás** (teszttel ellenőrizve).
+- **Még magyar:** a gyártói admin és a havi riport, az adatkezelési tájékoztató (német jogi szöveg jogi átnézést igényel), az ajánlatoldal betöltés előtti üzenetei, a fa hatású színek rendelési kódja.
+- Tesztek: `server-locale.test.ts` (osztrák lead végponttól végpontig: mindkét e-mail németül, euróban, magyar szöveg nélkül; magyar ellenpróba; német hibaüzenet; a nyelv nem szivárog át; ajánlatoldal németül EUR-ral; utánkövető levelek németül), `locale.test.ts` bővítve (a vevői PDF szövegében és rajzán nincs magyar szöveg).
+
 ## 4.47 – Modulház: valódi anyagok (vakolat, betoncserép, betonlábazat), közelebbi nézet, élesebb árnyék
 
 - **Anyagok:** az A45 modulház homlokzata nemesvakolat-szemcsét, a teteje betoncserép-sorokat (normál- és érdességtérképpel), a lábazata és a lépcsője betonfelületet kapott. A színt továbbra is a választott homlokzat-, tető- és nyílászáró-szín adja (a színtérképek világos, színezhető változatok). A GLB-ben nincs UV, ezért betöltéskor a lapok síkjához igazított, méterben mért UV készül (`src/lib/houseSurfaces.ts`): a cserépsorok a gerinccel párhuzamosak, a lejtés mentén nincs nyújtás.

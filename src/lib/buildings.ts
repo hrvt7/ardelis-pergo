@@ -4,7 +4,7 @@
 import { isWallSide } from './mount'
 import { closedSegments } from './sides'
 import type { BuildingType, ClimateType, PergolaConfig, PriceSettings, RoofType, SideKey, SideType, WallGlazing } from '../types/pergola'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 /** Zárt (oldalfalas) építmények; a carport nyitott, a keretes-tető motor negyedik típusa. */
 export type ClosedBuilding = 'veranda' | 'conservatory'
@@ -29,7 +29,7 @@ export const isCarport = (building: BuildingType | undefined): building is 'carp
 /** Hány autó fér a carport alá a szélesség alapján (0, ha keskenyebb egy állásnál). */
 export const carportBays = (width: number) => (width >= CARPORT_DOUBLE_MIN ? 2 : width >= CARPORT_SINGLE_MIN ? 1 : 0)
 
-export const BUILDING_INFO: Record<BuildingType, BuildingInfo> = {
+export const BUILDING_INFO: Record<BuildingType, BuildingInfo> = localized(() => ({
   pergola: {
     label: 'Pergola', short: tr('Nyitott, szellős terasz', 'Offene, luftige Terrasse'), season: tr('Tavasztól őszig', 'Vom Frühling bis Herbst'),
     description: tr('Árnyékolt, nyitott vagy részben zárt terasz állítható lamellákkal vagy fix tetővel.', 'Beschattete, offene oder teilweise geschlossene Terrasse mit verstellbaren Lamellen oder festem Dach.'),
@@ -50,7 +50,7 @@ export const BUILDING_INFO: Record<BuildingType, BuildingInfo> = {
     description: tr('Nyitott, fix tetős autóbeálló egy vagy két autónak, szabadon álló vagy a házhoz rögzítve; lemez-, polikarbonát- vagy üvegtetővel.', 'Offener Stellplatz mit festem Dach für ein oder zwei Autos, freistehend oder am Haus befestigt; mit Blech-, Polycarbonat- oder Glasdach.'),
     traits: [tr('Egy- vagy kétállásos', 'Ein- oder zwei Stellplätze'), tr('Fix tető, nyitott oldalak', 'Festes Dach, offene Seiten'), tr('Burkolt beálló', 'Befestigter Stellplatz')],
   },
-}
+}))
 
 /** Építménytípushoz választható tetők: zártnál a mozgó tető nem zárható, carportnál fix tető kell (hóteher, csapadék). */
 export const BUILDING_ROOFS: Record<Exclude<BuildingType, 'pergola'>, RoofType[]> = {
@@ -68,18 +68,18 @@ export const GLASS_WALL_TYPES: SideType[] = ['glass', 'glassFramed', 'glassFixed
 /** Télikertben csak üveg és ajtó engedett (a zip, lamella és lécfal nem hőszigetelő). */
 export const CONSERVATORY_SIDE_TYPES: SideType[] = ['none', ...GLASS_WALL_TYPES]
 
-export const WALL_GLAZING_INFO: Record<WallGlazing, { label: string; short: string; share: string; priceKey: keyof Pick<PriceSettings, 'wallGlazingDoublePerM2Net' | 'wallGlazingTriplePerM2Net'> | null; ug: string }> = {
+export const WALL_GLAZING_INFO: Record<WallGlazing, { label: string; short: string; share: string; priceKey: keyof Pick<PriceSettings, 'wallGlazingDoublePerM2Net' | 'wallGlazingTriplePerM2Net'> | null; ug: string }> = localized(() => ({
   single: { label: tr('Edzett üveg', 'ESG-Glas'), short: tr('8–10 mm egyrétegű, hideg használatra', '8–10 mm einfach, für Kaltnutzung'), share: 's', priceKey: null, ug: 'Ug ≈ 5,8 W/m²K' },
   double: { label: tr('Kétrétegű hőszigetelt', '2-fach-Wärmeschutzglas'), short: tr('Low-E bevonat, argon töltet', 'Low-E-Beschichtung, Argonfüllung'), share: 'd', priceKey: 'wallGlazingDoublePerM2Net', ug: 'Ug ≈ 1,1 W/m²K' },
   triple: { label: tr('Háromrétegű hőszigetelt', '3-fach-Wärmeschutzglas'), short: tr('Két Low-E réteg, legjobb hőtartás', 'Zwei Low-E-Schichten, beste Wärmedämmung'), share: 't', priceKey: 'wallGlazingTriplePerM2Net', ug: 'Ug ≈ 0,6 W/m²K' },
-}
+}))
 export const WALL_GLAZINGS: WallGlazing[] = ['single', 'double', 'triple']
 
-export const CLIMATE_INFO: Record<ClimateType, { label: string; short: string; share: string }> = {
+export const CLIMATE_INFO: Record<ClimateType, { label: string; short: string; share: string }> = localized(() => ({
   split: { label: tr('Split klíma', 'Split-Klimagerät'), short: tr('Fűtés és hűtés egy készülékkel (inverteres)', 'Heizen und Kühlen mit einem Gerät (Inverter)'), share: 's' },
   underfloor: { label: tr('Padlófűtés', 'Fußbodenheizung'), short: tr('Egyenletes, csendes alapfűtés', 'Gleichmäßige, leise Grundheizung'), share: 'u' },
   both: { label: tr('Padlófűtés + split klíma', 'Fußbodenheizung + Split-Klima'), short: tr('Egész éves komfort, nyáron hűtés', 'Ganzjähriger Komfort, im Sommer Kühlung'), share: 'b' },
-}
+}))
 
 export const hasSplitUnit = (climate: ClimateType | undefined) => climate === 'split' || climate === 'both'
 export const hasUnderfloor = (climate: ClimateType | undefined) => climate === 'underfloor' || climate === 'both'

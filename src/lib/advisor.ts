@@ -7,7 +7,7 @@ import { ROOF_INFO } from './roofs'
 import { enabledRoofs, normalizeConfig, tenantPrice } from '../tenants/rules'
 import type { Tenant } from '../tenants/types'
 import type { FurnitureSet, MountType, PergolaConfig, PriceSettings, RoofType, SideKey, SideType } from '../types/pergola'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 export type AdvisorUse = 'lounge' | 'dining' | 'party'
 export type AdvisorWeather = 'sun' | 'rain' | 'season'
@@ -18,7 +18,7 @@ export interface AdvisorAnswers { use: AdvisorUse; weather: AdvisorWeather; ligh
 
 export interface AdvisorOption<T extends string> { id: T; title: string; text: string }
 
-export const ADVISOR_QUESTIONS = {
+export const ADVISOR_QUESTIONS = localized(() => ({
   use: {
     title: tr('Mire használnád leginkább?', 'Wofür möchten Sie sie vor allem nutzen?'),
     options: [
@@ -52,7 +52,7 @@ export const ADVISOR_QUESTIONS = {
       { id: 'garden', title: tr('Szabadon a kertbe', 'Freistehend im Garten'), text: tr('Medence, kerti sarok', 'Pool, Gartenecke') },
     ] as AdvisorOption<AdvisorPlace>[],
   },
-} as const
+} as const))
 
 export const ADVISOR_ORDER = ['use', 'weather', 'light', 'place'] as const
 

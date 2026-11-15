@@ -57,7 +57,7 @@ import { SB400, sb400Post } from '@/lib/sb400'
 import { SB400_SOURCE, sb400Details, type Sb400DetailId } from '@/lib/sb400Details'
 import Car from '@/components/models/Car'
 import { currentViewportKind, overviewFov, sheetDistanceScale, sofaFov, usesSheetLayout } from '@/lib/viewport'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
 const ShadeProbe = lazy(() => import('@/components/ShadeProbe'))
@@ -1145,12 +1145,12 @@ function LedStrip({ args, position, night, color = '#ffc87a', level = 0.8 }: { a
   return <group position={position}><mesh><boxGeometry args={[args[0] + 0.018, args[1] + 0.014, args[2] + 0.014]} /><meshStandardMaterial color="#151a1c" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, -0.012, 0]}><boxGeometry args={args} /><meshStandardMaterial color="#ffe6bd" emissive={color} emissiveIntensity={night ? 6.25 * level : 0.45} toneMapped={false} /></mesh></group>
 }
 
-const HOTSPOTS = {
+const HOTSPOTS = localized(() => ({
   led: { title: tr('Hangulatfény árnyalatokban', 'Stimmungslicht in Nuancen'), text: tr('A periméter LED nem vakít, hanem a terasz anyagait emeli ki.', 'Die umlaufende LED blendet nicht, sondern betont die Materialien der Terrasse.') },
   drain: { title: tr('Rejtett vízelvezetés az oszlopban', 'Verdeckte Entwässerung im Steher'), text: tr('A víz a tetőpályából a gerendán, majd az oszlopon belül távozik.', 'Das Wasser läuft vom Dach über den Träger und dann im Steher ab.') },
   sensor: { title: tr('Esőben automata védelem', 'Automatischer Schutz bei Regen'), text: tr('A szenzorcsomag az eső érzékelésekor zárt lamellapozíciót ad.', 'Das Sensorpaket schließt die Lamellen, sobald Regen erkannt wird.') },
   post: { title: tr('Merev, pontos alapozás', 'Steife, präzise Fundamentierung'), text: tr('A talplemez és a látható rögzítéspontok a stabil kivitelezést szolgálják.', 'Fußplatte und sichtbare Befestigungspunkte sorgen für eine stabile Ausführung.') },
-}
+}))
 
 function Hotspots({ config, posts }: { config: PergolaConfig; posts: [number, number][] }) {
   const [active, setActive] = useState<string | null>(null)

@@ -11,7 +11,7 @@ import { formatNumber } from './pricing'
 import { normalizeConfig } from '../tenants/rules'
 import type { Tenant } from '../tenants/types'
 import type { PergolaConfig, SideKey, SideType } from '../types/pergola'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 const SIDES: SideKey[] = ['front', 'back', 'left', 'right']
 const m = (value: number) => `${formatNumber(value, 2)} m`
@@ -26,7 +26,7 @@ const openSides = (config: PergolaConfig) => SIDES.filter((side) => !isWallSide(
 const doorSide = (config: PergolaConfig) => SIDES.find((side) => side === 'front' && !isWallSide(config.mount, side)) ?? SIDES.find((side) => !isWallSide(config.mount, side))
 const withSide = (config: PergolaConfig, side: SideKey | undefined, type: SideType): Partial<PergolaConfig> => (side ? { sides: { ...config.sides, [side]: type } } : {})
 
-export const FIX_RULES: Record<string, FixRule> = {
+export const FIX_RULES: Record<string, FixRule> = localized(() => ({
   'carport-narrow': { label: tr(`Szélesség ${m(CARPORT_SINGLE_MIN)}`, `Breite ${m(CARPORT_SINGLE_MIN)}`), candidates: () => [{ width: CARPORT_SINGLE_MIN }] },
   'carport-double': { label: tr(`Két autóhoz: ${m(CARPORT_DOUBLE_MIN)}`, `Für zwei Autos: ${m(CARPORT_DOUBLE_MIN)}`), candidates: () => [{ width: CARPORT_DOUBLE_MIN }] },
   'carport-depth': { label: tr(`Mélység ${m(5)}`, `Tiefe ${m(5)}`), candidates: () => [{ depth: 5 }] },
@@ -47,7 +47,7 @@ export const FIX_RULES: Record<string, FixRule> = {
     candidates: (config) => [{ sides: { ...config.sides, ...Object.fromEntries(SIDES.filter((side) => config.sides[side] === 'glass').map((side) => [side, 'glassFramed'])) } }],
   },
   'rain-sensor': { label: tr('Eső- és szélérzékelő', 'Regen- und Windsensor'), candidates: () => [{ sensors: true }] },
-}
+}))
 
 /** Az összes figyelmeztetés (építmény + szakértői megjegyzés) azonosítóval és szinttel. */
 export function allIssues(config: PergolaConfig): { id: string; level: 'warn' | 'info' }[] {

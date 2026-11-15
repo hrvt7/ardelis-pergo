@@ -5,7 +5,7 @@
 // A gyártó alapszínei (tenant.colors) felár nélküliek; a katalógus többi színe egyedi szín.
 import type { FrameColor, PergolaConfig, RoofType } from '../types/pergola'
 import type { Tenant } from '../tenants/types'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 export type ColorGroup = 'grey' | 'light' | 'dark' | 'brown' | 'metallic' | 'wood' | 'color'
 export type ColorKind = 'ral' | 'db' | 'wood' | 'effect'
@@ -23,7 +23,7 @@ export interface CatalogColor {
   aliases?: string[]
 }
 
-export const COLOR_GROUPS: { id: ColorGroup; label: string }[] = [
+export const COLOR_GROUPS: { id: ColorGroup; label: string }[] = localized(() => ([
   { id: 'grey', label: tr('Szürkék', 'Grautöne') },
   { id: 'light', label: tr('Fehér, krém', 'Weiß, Creme') },
   { id: 'dark', label: tr('Fekete, sötét', 'Schwarz, dunkel') },
@@ -31,11 +31,11 @@ export const COLOR_GROUPS: { id: ColorGroup; label: string }[] = [
   { id: 'metallic', label: tr('Metál', 'Metallic') },
   { id: 'wood', label: tr('Fa hatású', 'Holzoptik') },
   { id: 'color', label: tr('Színes', 'Farbig') },
-]
+]))
 
 const ral = (code: string, name: string, hex: string, group: ColorGroup, popular = false, aliases: string[] = []): CatalogColor => ({ code: `RAL ${code}`, name, hex, group, kind: 'ral', popular, aliases })
 
-export const COLOR_CATALOG: CatalogColor[] = [
+export const COLOR_CATALOG: CatalogColor[] = localized(() => ([
   // Szürkék
   ral('7016', tr('Antracitszürke', 'Anthrazitgrau'), '#373f43', 'grey', true, ['antracit', 'sötétszürke']),
   ral('7021', tr('Feketésszürke', 'Schwarzgrau'), '#2b2f32', 'grey', true, ['sötét antracit']),
@@ -134,7 +134,7 @@ export const COLOR_CATALOG: CatalogColor[] = [
   ral('3009', tr('Oxidvörös', 'Oxidrot'), '#642424', 'color', false, ['piros']),
   ral('3011', tr('Barnásvörös', 'Braunrot'), '#781f19', 'color', false, ['piros']),
   ral('3000', tr('Tűzpiros', 'Feuerrot'), '#af2b1e', 'color', false, ['piros']),
-]
+]))
 
 const BY_CODE = new Map(COLOR_CATALOG.map((color) => [color.code, color]))
 export const WOOD_HEXES = new Set(COLOR_CATALOG.filter((color) => color.kind === 'wood').map((color) => color.hex))

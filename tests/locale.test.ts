@@ -73,3 +73,22 @@ describe('felületi nyelv', () => {
     expect(price.lines.some((line) => line.detail.includes('€'))).toBe(true)
   })
 })
+
+describe('vevői PDF németül', () => {
+  it('a PDF-összefoglaló szövegében nem marad magyar szöveg (EUR gyártó, áramköltség nélkül)', async () => {
+    vi.resetModules()
+    const locale = await import('../src/i18n/locale')
+    locale.setLocale('de')
+    const money = await import('../src/lib/money')
+    money.setDisplayCurrency('EUR')
+    const { buildPdfDefinition } = await import('../src/lib/pdfDocument')
+    const { tenantPrice } = await import('../src/tenants/rules')
+    const { demoAtTenant: tenant } = await import('../src/tenants/demo-at')
+    const config = { ...tenant.defaultConfig, heaters: 1, fans: 1, smartHome: true }
+    const definition = buildPdfDefinition({ config, price: tenantPrice(tenant, config), tenant, shareUrl: 'https://example.test/k/demo-at#x' })
+    const texts = strings(definition.content).filter((text) => text.length > 1 && !/^(data:|https?:)/.test(text))
+    expect(texts.length).toBeGreaterThan(40)
+    expect(texts.filter((text) => HUNGARIAN.test(text))).toEqual([])
+    money.setDisplayCurrency('HUF')
+  })
+})

@@ -5,9 +5,9 @@ import { Cog, Pause, Play, X } from 'lucide-react'
 import { crankPin, demoAngle, demoSeconds, DRIVE, drivePlan, LOUVRE, louvreLayout, louvreMetrics, louvreProfile, motorLength, pauseDemo, startDemoClock } from '@/lib/louvreSystem'
 import { SB400 } from '@/lib/sb400'
 import type { PergolaConfig } from '@/types/pergola'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
-const PHASE_LABEL = { closed: tr('Zárt · vízzáró', 'Geschlossen · wasserdicht'), opening: tr('Nyílik', 'Öffnet'), open: 'Teljesen nyitva', closing: tr('Záródik', 'Schließt') } as const
+const PHASE_LABEL = localized(() => ({ closed: tr('Zárt · vízzáró', 'Geschlossen · wasserdicht'), opening: tr('Nyílik', 'Öffnet'), open: 'Teljesen nyitva', closing: tr('Záródik', 'Schließt') } as const))
 const fmt = (value: number, digits = 0) => value.toFixed(digits).replace('.', ',')
 
 export default function MechanismPanel({ config, onClose }: { config: PergolaConfig; onClose: () => void }) {

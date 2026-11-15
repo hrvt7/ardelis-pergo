@@ -1,11 +1,12 @@
 // Ajánlatok kliensoldali típusai és hookjai (gyártói admin + vevői oldal).
 import { useCallback, useEffect, useState } from 'react'
+import { localized, tr } from '../i18n/locale'
 
 export type QuoteState = 'sent' | 'accepted' | 'declined' | 'superseded' | 'withdrawn' | 'expired'
 
-export const QUOTE_STATE_LABEL: Record<QuoteState, string> = {
-  sent: 'Kiküldve', accepted: 'Elfogadva', declined: 'Elutasítva', superseded: 'Felülírva', withdrawn: 'Visszavonva', expired: 'Lejárt',
-}
+export const QUOTE_STATE_LABEL: Record<QuoteState, string> = localized(() => ({
+  sent: tr('Kiküldve', 'Gesendet'), accepted: tr('Elfogadva', 'Angenommen'), declined: tr('Elutasítva', 'Abgelehnt'), superseded: tr('Felülírva', 'Ersetzt'), withdrawn: tr('Visszavonva', 'Zurückgezogen'), expired: tr('Lejárt', 'Abgelaufen'),
+}))
 export const QUOTE_STATE_COLOR: Record<QuoteState, string> = {
   sent: '#e0a526', accepted: '#2fa46b', declined: '#d1564f', superseded: '#8a979d', withdrawn: '#8a979d', expired: '#8a979d',
 }
@@ -51,6 +52,9 @@ export interface PublicQuote {
   totalNet: number
   totalGross: number
   vatRate: number
+  /** A gyártó nyelve és pénzneme (az ajánlatoldal ezen jelenik meg). */
+  locale?: 'hu' | 'de'
+  currency?: 'HUF' | 'EUR'
   depositPercent: number
   depositGross: number
   note: string | null

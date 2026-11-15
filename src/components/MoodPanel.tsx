@@ -7,14 +7,14 @@ import { formatPrice } from '@/lib/pricing'
 import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import type { PergolaConfig, PriceSettings, SceneSettings } from '@/types/pergola'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
-const TONES = [
+const TONES = localized(() => ([
   { kelvin: 2200, label: tr('Gyertyafény', 'Kerzenlicht') },
   { kelvin: 2700, label: tr('Meleg', 'Warm') },
   { kelvin: 3500, label: tr('Natúr', 'Natur') },
   { kelvin: 4000, label: tr('Hideg', 'Kalt') },
-]
+]))
 
 export default function MoodPanel({ config, scene, prices, onChange, onSceneChange, onClose }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onClose: () => void }) {
   const { tenant } = useTenant()

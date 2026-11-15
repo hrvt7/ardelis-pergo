@@ -10,15 +10,15 @@ import type { Tenant } from '../tenants/types'
 import { CLIMATE_INFO, doorCount } from './buildings'
 import { closedSegments, SIDE_INFO, sideSegments, sideSummary, splitProfiles } from './sides'
 import type { PergolaConfig, PriceBreakdown, RoofType, SideKey } from '../types/pergola'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 /** Alapszínek a gyártó nélküli hívásokhoz (tesztek, régi hívók). */
-const DEFAULT_COLORS: Pick<Tenant, 'colors'> = { colors: [
+const DEFAULT_COLORS: Pick<Tenant, 'colors'> = localized(() => ({ colors: [
   { id: 'anthracite', name: tr('Antracit', 'Anthrazit'), detail: 'RAL 7016', hex: '#343a3d', ral: '7016' },
   { id: 'white', name: tr('Fehér', 'Weiß'), detail: 'RAL 9016', hex: '#dedfd9', ral: '9016' },
   { id: 'black', name: tr('Fekete', 'Schwarz'), detail: 'RAL 9005', hex: '#15191c', ral: '9005' },
   { id: 'bronze', name: tr('Bronz', 'Bronze'), detail: tr('anodizált hatás', 'eloxiert-Optik'), hex: '#705b4c' },
-] }
+] }))
 
 export interface BomLine { label: string; value: string }
 

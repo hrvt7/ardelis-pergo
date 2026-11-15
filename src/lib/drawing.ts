@@ -11,6 +11,7 @@ import { PANEL, panelLayout } from './solar'
 import { doorLeafWidth, sideSegments, type SideSegment } from './sides'
 import { FAN_DIAMETER, fanLayout } from './fans'
 import type { PergolaConfig, SideKey, SideType } from '../types/pergola'
+import { tr } from '../i18n/locale'
 
 /** Keretgerenda szélessége és magassága, oszlop-keresztmetszet (m) — a 3D-modellel egyezik. */
 export const BEAM_W = 0.19
@@ -155,7 +156,7 @@ function viewTitle(svg: Svg, x: number, y: number, title: string, scale: number)
   svg.text(x + width + 2.5, y, `M 1:${scale}`, 2.2, { weight: 'semi', color: MID })
 }
 
-const SIDE_SHORT: Record<SideType, string> = { none: '', zip: 'ZIP screen', glass: 'tolóüveg', glassFramed: 'keretes tolóüveg', glassFixed: 'fix üveg', door: 'nyíló ajtós fal', doorSliding: 'tolóajtós fal', louver: 'lamellafal', slatAlu: 'alu lécfal', slatWood: 'fa lécfal' }
+const SIDE_SHORT: Record<SideType, string> = { none: '', zip: 'ZIP screen', glass: tr('tolóüveg', 'Glasschiebewand'), glassFramed: tr('keretes tolóüveg', 'gerahmte Glasschiebewand'), glassFixed: tr('fix üveg', 'Festverglasung'), door: tr('nyíló ajtós fal', 'Wand mit Drehtür'), doorSliding: tr('tolóajtós fal', 'Wand mit Schiebetür'), louver: 'lamellafal', slatAlu: tr('alu lécfal', 'Alu-Lattenwand'), slatWood: tr('fa lécfal', 'Holz-Lattenwand') }
 /** Osztóprofil szélessége (m), félbe osztott oldal közepén, ha ott nincs oszlop. */
 const MULLION = 0.06
 const WOOD = '#e6d8c0'
@@ -236,19 +237,19 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
   const groundY = elevTop + yTop * k
   const Y = (y: number) => groundY - y * k
   drawElevation()
-  viewTitle(svg, X(xMin), groundY + 3 + 6.5, 'Homlokzat', scale)
+  viewTitle(svg, X(xMin), groundY + 3 + 6.5, tr('Homlokzat', 'Ansicht'), scale)
 
   // ---------- ALAPRAJZ (vízszintes metszet +1,00 m-en) ----------
   const planTop = groundY + 3 + titleSpace + gap + 4
   const Zp = (z: number) => planTop + (z - zMin) * k
   drawPlan()
-  viewTitle(svg, X(xMin), Zp(zMax) + dimSpace + 9.5, 'Alaprajz', scale)
+  viewTitle(svg, X(xMin), Zp(zMax) + dimSpace + 9.5, tr('Alaprajz', 'Grundriss'), scale)
 
   // ---------- A–A METSZET ----------
   const sx0 = x0 + leftColW + gap
   const Zs = (z: number) => sx0 + 4 + (z - zMin) * k
   drawSection()
-  viewTitle(svg, Zs(zMin), groundY + 3 + dimSpace + 6.5, 'A–A metszet', scale)
+  viewTitle(svg, Zs(zMin), groundY + 3 + dimSpace + 6.5, tr('A–A metszet', 'Schnitt A–A'), scale)
 
   // ---------- Megjegyzések + fejléc ----------
   const tbX = sheetWidth - pad - TB_W
@@ -279,7 +280,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       // Szakadásvonal felül.
       svg.line(fx1, Y(yTop), fx2, Y(yTop), 0.18, '#ffffff')
       breakLine(fx1, fx2, Y(yTop))
-      svg.text((fx1 + fx2) / 2, Y(yTop) + 3.4, 'HÁZFAL (NÉZET)', 1.7, { anchor: 'middle', color: SOFT, spacing: 0.2, weight: 'semi' })
+      svg.text((fx1 + fx2) / 2, Y(yTop) + 3.4, tr('HÁZFAL (NÉZET)', 'HAUSWAND (ANSICHT)'), 1.7, { anchor: 'middle', color: SOFT, spacing: 0.2, weight: 'semi' })
       // Fali csatlakozó profil.
       svg.rect(X(-w / 2 - 0.03), Y(h + rise + 0.19), (w + 0.06) * k, 0.3 * k, { stroke: MID, width: 0.18, fill: '#e3e6e4' })
     }
@@ -305,12 +306,12 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     dimChain(svg, [Y(0), Y(levels.roofTop)], left - 6.5, X(-w / 2), true, [cm(levels.roofTop)])
     const lx = X(xMax) + 2
     levelMark(svg, lx, Y(levels.roofTop), levels.roofTop)
-    levelMark(svg, lx, Y(levels.beamBottom), levels.beamBottom, 'szabad belmagasság')
+    levelMark(svg, lx, Y(levels.beamBottom), levels.beamBottom, tr('szabad belmagasság', 'lichte Höhe'))
     if (rise > 0) {
       svg.line(X(-w / 2), Y(levels.roofTop + rise), X(w / 2), Y(levels.roofTop + rise), 0.3, MID, '1.6 1')
-      levelMark(svg, lx, Y(levels.roofTop + rise), levels.roofTop + rise, 'tető hátsó éle')
+      levelMark(svg, lx, Y(levels.roofTop + rise), levels.roofTop + rise, tr('tető hátsó éle', 'Dach-Hinterkante'))
     }
-    levelMark(svg, lx, Y(0), 0, 'járófelület')
+    levelMark(svg, lx, Y(0), 0, tr('járófelület', 'Gehfläche'))
   }
 
   function breakLine(x1: number, x2: number, y: number) {
@@ -393,7 +394,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     if (back) drawWallSection(leftWing ? X(-w / 2 - WALL_T) : X(xMin), Zp(-d / 2 - WALL_T), ((rightWing ? w / 2 + WALL_T : xMax) - (leftWing ? -w / 2 - WALL_T : xMin)) * k, WALL_T * k)
     if (leftWing) drawWallSection(X(-w / 2 - WALL_T), Zp(-d / 2), WALL_T * k, (zMax - -d / 2) * k)
     if (rightWing) drawWallSection(X(w / 2), Zp(-d / 2), WALL_T * k, (zMax - -d / 2) * k)
-    if (back) svg.text(X(-w / 4), Zp(-d / 2 - WALL_T) - 1.2, 'HÁZFAL', 1.8, { anchor: 'middle', color: MID, weight: 'semi', spacing: 0.3 })
+    if (back) svg.text(X(-w / 4), Zp(-d / 2 - WALL_T) - 1.2, tr('HÁZFAL', 'HAUSWAND'), 1.8, { anchor: 'middle', color: MID, weight: 'semi', spacing: 0.3 })
     // A metsző sík fölötti szerkezet szaggatottan: keret és tetőelemek.
     svg.rect(X(-w / 2), Zp(-d / 2), w * k, d * k, { width: 0.35, dash: '2.2 1.1' })
     svg.rect(X(-w / 2 + BEAM_W), Zp(-d / 2 + BEAM_W), (w - 2 * BEAM_W) * k, (d - 2 * BEAM_W) * k, { width: 0.18, stroke: MID, dash: '1.6 1' })
@@ -404,7 +405,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     fans.positions.forEach(([fx, fz]) => {
       svg.circle(X(fx), Zp(fz), (FAN_DIAMETER / 2) * k, { stroke: MID, width: 0.2, dash: '1.4 0.9' })
       svg.circle(X(fx), Zp(fz), 0.1 * k, { stroke: INK, width: 0.25, fill: '#ffffff' })
-      svg.text(X(fx), Zp(fz) + (FAN_DIAMETER / 2) * k + 2.6, `ventilátor Ø${Math.round(FAN_DIAMETER * 100)}`, 1.6, { anchor: 'middle', color: MID, weight: 'semi' })
+      svg.text(X(fx), Zp(fz) + (FAN_DIAMETER / 2) * k + 2.6, tr(`ventilátor Ø${Math.round(FAN_DIAMETER * 100)}`, `Ventilator Ø${Math.round(FAN_DIAMETER * 100)}`), 1.6, { anchor: 'middle', color: MID, weight: 'semi' })
     })
     // Oldalzárások (a metszősíkban, vastagon).
     ;(['front', 'back', 'left', 'right'] as SideKey[]).forEach((side) => {
@@ -476,7 +477,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
       svg.rect(X(px - solar.size[0] / 2), Zp(pz - solar.size[1] / 2), solar.size[0] * k, solar.size[1] * k, { stroke: MID, width: 0.25, dash: '1.8 0.9', fill: '#f2f5f8' })
       svg.line(X(px - solar.size[0] / 2), Zp(pz - solar.size[1] / 2), X(px + solar.size[0] / 2), Zp(pz + solar.size[1] / 2), 0.1, FAINT)
     })
-    const label = solar ? `napelem ${solar.count} × ${PANEL.wp} Wp` : { louvered: 'forgatható lamellák', retractable: 'eltolható lamellacsomag', fabric: 'behúzható ponyva', glass: 'VSG üvegtető', polycarbonate: 'polikarbonát tető', fixed: 'fix tetőpanel' }[roof]
+    const label = solar ? `napelem ${solar.count} × ${PANEL.wp} Wp` : { louvered: tr('forgatható lamellák', 'drehbare Lamellen'), retractable: tr('eltolható lamellacsomag', 'verschiebbares Lamellenpaket'), fabric: tr('behúzható ponyva', 'einfahrbare Membran'), glass: tr('VSG üvegtető', 'VSG-Glasdach'), polycarbonate: tr('polikarbonát tető', 'Polycarbonatdach'), fixed: tr('fix tetőpanel', 'festes Dachpaneel') }[roof]
     // A tetőfelirat ne essen a ventilátor lapátkörébe.
     const fanAlongX = (config.fans ?? 0) > 0 && fanLayout(config).positions.every(([, z]) => z === 0)
     const cx = X(-w / 6)
@@ -600,7 +601,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     dimChain(svg, [Ys(0), Ys(levels.beamBottom), Ys(levels.beamTop), Ys(levels.roofTop)], right, Zs(d / 2), true, [cm(levels.beamBottom), cm(BEAM_H), cm(levels.roofTop - levels.beamTop)])
     if (rise > 0) {
       dimChain(svg, [Ys(0), Ys(levels.roofTop + rise)], right + 6.5, Zs(d / 2), true, [cm(levels.roofTop + rise)])
-      svg.text(Zs(0), Ys(h + rise / 2 + 0.7), `Tetődőlés ${config.pitch}°`, 1.9, { anchor: 'middle', weight: 'semi', color: ACCENT })
+      svg.text(Zs(0), Ys(h + rise / 2 + 0.7), tr(`Tetődőlés ${config.pitch}°`, `Dachneigung ${config.pitch}°`), 1.9, { anchor: 'middle', weight: 'semi', color: ACCENT })
     }
   }
 
@@ -653,7 +654,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
   function drawNotes(x: number, top: number, bottom: number) {
     if (bottom - top < 12) return
     const width = sheetWidth - pad - x
-    svg.text(x, top + 3, 'MEGJEGYZÉSEK', 2, { weight: 'heavy', spacing: 0.3 })
+    svg.text(x, top + 3, tr('MEGJEGYZÉSEK', 'ANMERKUNGEN'), 2, { weight: 'heavy', spacing: 0.3 })
     let y = top + 7
     meta.notes.forEach((note, index) => {
       if (y > bottom - 2) return
@@ -691,22 +692,22 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     svg.text(x + 3, y + 7, meta.brand.toUpperCase(), 4.4, { weight: 'heavy', spacing: 0.5 })
     svg.text(x + 3, y + 11.2, meta.contact, 1.6, { color: MID })
     svg.rect(x + W - 34, y + 3, 31, 6.4, { stroke: 'none', fill: ACCENT })
-    svg.text(x + W - 18.5, y + 7.25, 'TÁJÉKOZTATÓ TERV', 1.9, { weight: 'heavy', anchor: 'middle', color: '#ffffff', spacing: 0.25 })
-    svg.text(x + W - 18.5, y + 12, 'felmérés után véglegesítendő', 1.45, { anchor: 'middle', color: MID })
+    svg.text(x + W - 18.5, y + 7.25, tr('TÁJÉKOZTATÓ TERV', 'UNVERBINDLICHER PLAN'), 1.9, { weight: 'heavy', anchor: 'middle', color: '#ffffff', spacing: 0.25 })
+    svg.text(x + W - 18.5, y + 12, tr('felmérés után véglegesítendő', 'nach Aufmaß zu finalisieren'), 1.45, { anchor: 'middle', color: MID })
     // 2. sor: megnevezés.
-    cell(x, y + 14, W, 10, 'Megnevezés', meta.title, 2.5)
+    cell(x, y + 14, W, 10, tr('Megnevezés', 'Bezeichnung'), meta.title, 2.5)
     // 3. sor: méretarány, mértékegység, dátum, lap.
     const q = W / 4
-    cell(x, y + 24, q, 9, 'Méretarány', `M 1:${scale}`, 2.5)
-    cell(x + q, y + 24, q, 9, 'Méretek', 'cm · szint m', 2.2)
-    cell(x + 2 * q, y + 24, q, 9, 'Dátum', meta.date, 2.2)
+    cell(x, y + 24, q, 9, tr('Méretarány', 'Maßstab'), `M 1:${scale}`, 2.5)
+    cell(x + q, y + 24, q, 9, tr('Méretek', 'Maße'), 'cm · szint m', 2.2)
+    cell(x + 2 * q, y + 24, q, 9, tr('Dátum', 'Datum'), meta.date, 2.2)
     cell(x + 3 * q, y + 24, q, 9, 'Lap', meta.sheet ?? '1 / 1', 2.2)
     // 4. sor: rajzszám + tartalom.
-    cell(x, y + 33, W * 0.55, 9, 'Rajzszám', meta.code, 2.3)
+    cell(x, y + 33, W * 0.55, 9, tr('Rajzszám', 'Plannummer'), meta.code, 2.3)
     cell(x + W * 0.55, y + 33, W * 0.45, 9, 'Tartalom', 'homlokzat · metszet · alaprajz', 1.95, 'semi')
     // 5. sor: tervezői aláírás és pecsét (üresen, a gyártó tervezője tölti ki).
-    cell(x, y + 42, W * 0.62, 20, 'Tervező / ellenőrző — név, aláírás, kamarai szám')
+    cell(x, y + 42, W * 0.62, 20, tr('Tervező / ellenőrző — név, aláírás, kamarai szám', 'Planer / Prüfer — Name, Unterschrift, Kammernummer'))
     svg.line(x + 4, y + 42 + 15.5, x + W * 0.62 - 4, y + 42 + 15.5, 0.13, FAINT)
-    cell(x + W * 0.62, y + 42, W * 0.38, 20, 'Pecsét')
+    cell(x + W * 0.62, y + 42, W * 0.38, 20, tr('Pecsét', 'Stempel'))
   }
 }

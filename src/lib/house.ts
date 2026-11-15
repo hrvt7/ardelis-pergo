@@ -3,7 +3,7 @@
 import type { CSSProperties } from 'react'
 import type { HouseStyle, SceneSettings, WallFinish } from '@/types/pergola'
 import { hexDistance } from '@/lib/colors'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 export interface HouseSwatch {
   id: string
@@ -23,11 +23,11 @@ export interface WindowSwatch extends HouseSwatch {
 export type HouseLookSettings = Pick<SceneSettings, 'houseStyle' | 'wallFinish' | 'wallColor' | 'windowColor'>
 
 export const HOUSE_STYLES: HouseStyle[] = ['classic', 'modern', 'gable']
-export const HOUSE_STYLE_INFO: Record<HouseStyle, { label: string; description: string }> = {
+export const HOUSE_STYLE_INFO: Record<HouseStyle, { label: string; description: string }> = localized(() => ({
   classic: { label: tr('Fa–cink', 'Holz–Zink'), description: tr('Földszintes, fa burkolattal', 'Ebenerdig, mit Holzverkleidung') },
   modern: { label: tr('Lapostetős', 'Flachdach'), description: tr('Modern, kétszintes kubus', 'Moderner, zweistöckiger Kubus') },
   gable: { label: tr('Nyeregtetős', 'Satteldach'), description: tr('Oromfalas családi ház', 'Einfamilienhaus mit Giebel') },
-}
+}))
 
 /**
  * A modellezett (modern, nyeregtetős) házak saját méretei méterben: a pergola a főtömeg közepe (x = 0) elé kerül,
@@ -38,14 +38,14 @@ export const STYLED_HOUSE = { main: 10, annex: 5.5, depth: 9 } as const
 /** A modellezett ház léptéke: a pergola (kétoldalt 0,6 m ráhagyással) férjen el a főtömeg homlokzata előtt. */
 export const styledHouseScale = (pergolaWidth: number) => Math.max(1, (pergolaWidth + 1.2) / STYLED_HOUSE.main)
 
-export const WALL_FINISH_INFO: Record<WallFinish, { label: string; description: string }> = {
+export const WALL_FINISH_INFO: Record<WallFinish, { label: string; description: string }> = localized(() => ({
   plaster: { label: tr('Vakolt', 'Verputzt'), description: tr('Színezett nemesvakolat', 'Durchgefärbter Edelputz') },
   brick: { label: tr('Tégla', 'Ziegel'), description: tr('Látszótégla, klinker', 'Sichtziegel, Klinker') },
   cedar: { label: tr('Fa', 'Holz'), description: tr('Fa vagy fa hatású burkolat', 'Holz- oder Holzoptik-Verkleidung') },
-}
+}))
 
 /** A leggyakoribb homlokzati színek anyagonként. Az első az alapértelmezett. */
-export const WALL_COLORS: Record<WallFinish, HouseSwatch[]> = {
+export const WALL_COLORS: Record<WallFinish, HouseSwatch[]> = localized(() => ({
   plaster: [
     { id: 'white', name: tr('Fehér', 'Weiß'), hex: '#f1efe9', note: tr('a leggyakoribb', 'am häufigsten') },
     { id: 'offwhite', name: tr('Törtfehér', 'Gebrochenes Weiß'), hex: '#ebe3d2' },
@@ -70,10 +70,10 @@ export const WALL_COLORS: Record<WallFinish, HouseSwatch[]> = {
     { id: 'silver', name: tr('Szürkült', 'Vergraut'), hex: '#8f8b84' },
     { id: 'black', name: tr('Fekete', 'Schwarz'), hex: '#2c2b2a' },
   ],
-}
+}))
 
 /** Nyílászárók (ablak-, ajtókeretek, bejárati ajtó) leggyakoribb színei. */
-export const WINDOW_COLORS: WindowSwatch[] = [
+export const WINDOW_COLORS: WindowSwatch[] = localized(() => ([
   { id: 'white', name: tr('Fehér', 'Weiß'), hex: '#efefec', kind: 'solid', match: 'RAL 9016', note: tr('a leggyakoribb', 'am häufigsten') },
   { id: 'anthracite', name: tr('Antracit', 'Anthrazit'), hex: '#363b3e', kind: 'solid', match: 'RAL 7016', note: 'modern' },
   { id: 'black', name: tr('Fekete', 'Schwarz'), hex: '#1c1f21', kind: 'solid', match: 'RAL 9005' },
@@ -81,7 +81,7 @@ export const WINDOW_COLORS: WindowSwatch[] = [
   { id: 'brown', name: tr('Barna', 'Braun'), hex: '#4b3a30', kind: 'solid', match: 'RAL 8019' },
   { id: 'goldenoak', name: tr('Aranytölgy', 'Golden Oak'), hex: '#a8743d', kind: 'wood', match: 'FA ARANYTÖLGY' },
   { id: 'walnut', name: tr('Dió', 'Nuss'), hex: '#5e3d26', kind: 'wood', match: 'FA DIÓ' },
-]
+]))
 
 export const DEFAULT_HOUSE: Required<HouseLookSettings> = {
   houseStyle: 'classic',

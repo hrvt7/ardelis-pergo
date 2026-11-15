@@ -14,7 +14,7 @@ import { doorCount, effectiveWallGlazing, glassWallArea, hasSplitUnit, hasUnderf
 import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, RoofType, SideKey } from '../types/pergola'
 import { formatMoney, roundMoney, type Currency } from './money'
 import { getLocale, INTL_LOCALE } from '../i18n/locale'
-import { tr } from '../i18n/locale'
+import { localized, tr } from '../i18n/locale'
 
 export { formatPrice } from './money'
 
@@ -65,19 +65,19 @@ export const DEFAULT_PRICES: PriceSettings = {
   vatRate: 0.27,
 }
 
-export const ROOF_LABELS = Object.fromEntries(ROOF_TYPES.map((roof) => [roof, `${ROOF_INFO[roof].name} · ${ROOF_INFO[roof].short}`])) as Record<RoofType, string>
+export const ROOF_LABELS = localized(() => (Object.fromEntries(ROOF_TYPES.map((roof) => [roof, `${ROOF_INFO[roof].name} · ${ROOF_INFO[roof].short}`])) as Record<RoofType, string>))
 
 export { SIDE_LABELS } from './sides'
 
 /** Ártételek címe (pl. „Bal oldal · ZIP screen”, nem „Bal oldali oldal”). */
-const SIDE_TITLES: Record<SideKey, string> = { front: tr('Elülső oldal', 'Vordere Seite'), back: tr('Hátsó oldal', 'Hintere Seite'), left: 'Bal oldal', right: 'Jobb oldal' }
+const SIDE_TITLES: Record<SideKey, string> = localized(() => ({ front: tr('Elülső oldal', 'Vordere Seite'), back: tr('Hátsó oldal', 'Hintere Seite'), left: 'Bal oldal', right: 'Jobb oldal' }))
 
-export const SIDE_NAMES: Record<SideKey, string> = {
+export const SIDE_NAMES: Record<SideKey, string> = localized(() => ({
   front: tr('Elülső', 'Vordere'),
   back: tr('Hátsó', 'Hintere'),
   left: 'Bal oldali',
   right: 'Jobb oldali',
-}
+}))
 
 // Az Intl.NumberFormat létrehozása drága (~50 µs): egyszer készül, utána újrahasznosítjuk.
 // (A költségkeret-tervező egy futása több tízezer árat számol.)
