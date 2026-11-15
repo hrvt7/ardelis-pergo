@@ -1,5 +1,12 @@
 # Változások
 
+## 4.14 – Kisebb 3D-modellek, változatlan minőség
+
+- A 17 Blender-modell (bútorok, jacuzzi, modern és nyeregtetős ház, kerti elemek) veszteségmentes meshopt-tömörítést kapott: 889 KB → 457 KB (−49%). A pontok, normálok, anyagok és node-nevek bitre azonosak (az eredetivel összevetve ellenőrizve); kvantálás és szűrő nincs. A böngészőben a drei `useGLTF` bontja ki, kódváltozás nem kellett.
+- A pergola nem érintett (kódból készül). Az alap fa–cink ház és a fák textúráihoz nem nyúltunk, mert ott a tömörítés látható minőségvesztéssel járhat.
+- Új: `npm run models:optimize` (`scripts/optimize-models.mjs`, idempotens) új Blender-export után; `tests/modelCompression.test.ts` jelez, ha egy GLB tömörítetlenül vagy kvantálva kerül be.
+- Új fejlesztői függőségek (csak a szkripthez, az alkalmazásba nem kerülnek): `@gltf-transform/core`, `@gltf-transform/functions`, `@gltf-transform/extensions` (MIT), `meshoptimizer` (MIT).
+
 ## 4.13 – B2B nyitóoldal: új szöveg az értékesítési pitch alapján
 
 - A `/` és `/en` oldal szövege a „digitális értékesítési eszköz” pitchre épül: új hero („A bemutatótól az ajánlatig egy rendszerben”), kijelentés (az ügyfél nem katalógusból képzeli el, hanem maga tervezi meg és hazaviszi), átírt bemutató, funkciók és záró blokk („Nem még egy kalkulátor”). Mindenhol Lamelix név.
