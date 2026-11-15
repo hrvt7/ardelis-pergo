@@ -13,7 +13,7 @@ import { MOUNT_LABELS } from '@/lib/mount'
 import { sideSegments } from '@/lib/sides'
 import { calculatePrice, formatHuf, formatNumber } from '@/lib/pricing'
 import { useTenant } from '@/tenants/TenantContext'
-import { BuildingIssues, PermitNotice } from '@/components/BuildingControls'
+import { BuildingIssues, IssueFixButton, PermitNotice } from '@/components/BuildingControls'
 import { isClosedBuilding } from '@/lib/buildings'
 import { createTextSummary, getBom, getDeliveryEstimate, getSpecCode } from '@/lib/specification'
 import type { PergolaConfig, PriceBreakdown, PriceSettings, SavedConfiguration } from '@/types/pergola'
@@ -38,9 +38,11 @@ interface Props {
   /** PDF-összefoglaló letöltése (ugyanaz, mint az árpanelen; itt is elérhető, mert az árpanel összecsukható). */
   onExport?: () => void
   exporting?: boolean
+  /** Egy kattintásos javítás a figyelmeztetésekhez (ugyanaz az út, mint bármely módosítás: ár, visszavonás). */
+  onFix?: (patch: Partial<PergolaConfig>) => void
 }
 
-export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, onExport, exporting = false, projectName, onProjectName, house, shareUrl }: Props) {
+export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, onExport, exporting = false, onFix, projectName, onProjectName, house, shareUrl }: Props) {
   const { tenant, labels: ROOF_LABELS } = useTenant()
   const [thumbnail, setThumbnail] = useState('')
   const bom = getBom(config)
@@ -104,7 +106,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${projectName.trim() || 'Pergola tervem'} – ${formatHuf(price.totalGross)} bruttó irányár\n${shareUrl ?? window.location.href}`)}`
   return (
     <div className="summary-panel summary-animated">
-      {advice.length > 0 && <ul className="advice-list" aria-label="Szakértői megjegyzések">{advice.map((item) => <li key={item.id} className={item.level}>{item.text}</li>)}</ul>}
+      {advice.length > 0 && <ul className="advice-list" aria-label="Szakértői megjegyzések">{advice.map((item) => <li key={item.id} className={item.level}>{item.text}<IssueFixButton config={config} issueId={item.id} onFix={onFix} /></li>)}</ul>}
       <section className="showroom">
         <div className="showroom-image">
           {thumbnail ? <img src={thumbnail} alt={`A konfigurált ${config.building === 'conservatory' ? 'télikert' : config.building === 'veranda' ? 'veranda' : config.building === 'carport' ? 'carport' : 'pergola'} képe`} /> : <div className="showroom-skeleton"><LoaderCircle size={22} className="spin" /><span>A kép a körbeforgás közben elkészül…</span></div>}
@@ -126,7 +128,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
       {onEnergy && energyCost ? <button type="button" className="energy-trigger is-summary" onClick={onEnergy}><Gauge size={15} /><span><strong>Üzemeltetés ≈ {formatHuf(energyCost)} / év</strong><small>Áramköltség valós tarifával · részletek</small></span><ChevronRight size={14} /></button> : null}
       <div className="summary-actions"><button type="button" onClick={copy}><Clipboard size={15} />Összefoglaló másolása</button><a className="summary-action-link" href={whatsapp} target="_blank" rel="noopener noreferrer"><MessageCircle size={15} />WhatsApp</a><button type="button" onClick={() => onSave('A')}><Save size={15} />Mentés A</button><button type="button" onClick={() => onSave('B')}><Save size={15} />Mentés B</button></div>
 
-      {isClosedBuilding(config.building) && <section className="summary-section building-summary"><BuildingIssues config={config} /><PermitNotice building={config.building} /></section>}
+      {isClosedBuilding(config.building) && <section className="summary-section building-summary"><BuildingIssues config={config} onFix={onFix} /><PermitNotice building={config.building} /></section>}
 
       <section className="summary-section"><div className="summary-section-title"><Code2 size={17} /><h3>Specifikáció</h3></div><div className="spec-code"><span>Konfigurációs kód</span><strong>{getSpecCode(config)}</strong></div><dl className="bom-list">{bom.map((line) => <div key={line.label}><dt>{line.label}</dt><dd>{line.value}</dd></div>)}</dl><p className="bom-note">Tájékoztató anyaglista: szabályalapú becslés, nem gyártási dokumentáció. A végleges méreteket és darabszámokat a felmérés után a gyártó határozza meg.</p><div className="delivery-estimate"><Clock3 size={18} /><span><strong>Tájékoztató átfutási idő</strong>{getDeliveryEstimate(config)}</span></div></section>
 

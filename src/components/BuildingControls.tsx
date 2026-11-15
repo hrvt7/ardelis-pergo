@@ -1,6 +1,7 @@
 // Veranda- és télikert-vezérlők: épülettípus-kártyák, oldalüvegezés, fűtés/hűtés és alap,
 // figyelmeztetések, valamint a hatósági tudnivalók. Az árkülönbség mindig a teljes bruttó irányár változása.
-import { Building2, Info, Landmark, TriangleAlert } from 'lucide-react'
+import { Building2, Info, Landmark, TriangleAlert, Wand2 } from 'lucide-react'
+import { resolveFix } from '@/lib/issueFixes'
 import { availableBuildings, BUILDING_INFO, BUILDING_TYPES, buildingIssues, buildingPatch, CLIMATE_INFO, defaultWallGlazing, effectiveWallGlazing, isClosedBuilding, permitNotes, WALL_GLAZING_INFO, wallGlazingOptions } from '@/lib/buildings'
 import { formatHuf } from '@/lib/pricing'
 import { enabledRoofs, normalizeConfig, tenantPrice } from '@/tenants/rules'
@@ -117,10 +118,19 @@ export function ClimateSection({ config, prices, onChange, scene, onSceneChange 
 }
 
 /** Műszaki/logikai észrevételek: nem tiltások, a felhasználó dönt. */
-export function BuildingIssues({ config }: { config: PergolaConfig }) {
+/** Egy kattintásos javítás gombja (csak ha a javítás ennél a gyártónál ténylegesen megszünteti a jelzést). */
+export function IssueFixButton({ config, issueId, onFix }: { config: PergolaConfig; issueId: string; onFix?: Change }) {
+  const { tenant } = useTenant()
+  if (!onFix) return null
+  const fix = resolveFix(tenant, config, issueId)
+  if (!fix) return null
+  return <button type="button" className="issue-fix" onClick={() => onFix(fix.patch)}><Wand2 size={14} />Javítás: {fix.label}</button>
+}
+
+export function BuildingIssues({ config, onFix }: { config: PergolaConfig; onFix?: Change }) {
   const issues = buildingIssues(config)
   if (!issues.length) return null
-  return <ul className="building-issues" aria-live="polite">{issues.map((issue, index) => <li key={issue.text} className={`issue-${issue.level}`} style={{ ['--i' as string]: index }}>{issue.level === 'warn' ? <TriangleAlert size={17} /> : <Info size={17} />}<span>{issue.text}</span></li>)}</ul>
+  return <ul className="building-issues" aria-live="polite">{issues.map((issue, index) => <li key={issue.id} className={`issue-${issue.level}`} style={{ ['--i' as string]: index }}>{issue.level === 'warn' ? <TriangleAlert size={17} /> : <Info size={17} />}<span>{issue.text}<IssueFixButton config={config} issueId={issue.id} onFix={onFix} /></span></li>)}</ul>
 }
 
 /** Építéshatósági és energetikai tudnivalók (tájékoztató, nem jogi tanács). */

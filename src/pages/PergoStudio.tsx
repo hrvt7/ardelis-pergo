@@ -433,7 +433,7 @@ export default function PergoStudio() {
     setToast(`Konfiguráció ${slot} elmentve ebben a böngészőben.`)
     if (!admin) noteEngagement(tenant.id, 'saved')
   }
-  const summary = <SummaryPanel shareUrl={createShareUrl(config)} config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={() => setModal('energy')} onExport={handleExport} exporting={exporting} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} />
+  const summary = <SummaryPanel onFix={updateConfig} shareUrl={createShareUrl(config)} config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={() => setModal('energy')} onExport={handleExport} exporting={exporting} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} />
 
   return (
     <div className={`app-shell ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>

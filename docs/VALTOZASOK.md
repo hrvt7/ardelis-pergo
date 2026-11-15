@@ -1,5 +1,13 @@
 # Változások
 
+## 4.20 – Figyelmeztetés + egy kattintásos javítás
+
+- Döntés (Ádám, 2026-11-15): a rendszer nem vágja és nem írja át magától a tervet, hanem jelez, és ha van érvényes megoldás, „Javítás: …” gombot kínál. A vevő dönt; a javítás után látja az árváltozást, és vissza is vonhatja.
+- Javítható jelzések: eső-/szélérzékelő nagy lamellás tetőhöz; tetőárnyékoló vagy hővisszaverő üveg üvegtetőhöz; széles tolóüveg helyett kerettel osztott üveg; télikertnél alapozott padló, nyitott oldalak lezárása fix üveggel, ajtó, tetődőlés; verandánál tolóüveg az elülső oldalra; carportnál szélesség, mélység, magasság, dőlés.
+- Gomb csak akkor jelenik meg, ha a javítás ennél a gyártónál ténylegesen működik (a gyártó kínálatához igazított eredményben a jelzés eltűnik, és nem jön helyette új figyelmeztetés). Statikai jellegű jelzésekhez (szélteher, köztes oszlop) szándékosan nincs automatikus javítás.
+- A gyártói mérethatárokon kívüli értékeket továbbra is a normalizálás tartja határon belül (a csúszkák eleve nem engednek kilépni); ez nem változott.
+- Új: `src/lib/issueFixes.ts`, a figyelmeztetések azonosítót kaptak; teszt: `tests/issueFixes.test.ts`. Böngészőben ellenőrizve: a gomb a jelzést megszünteti, az árváltozás látszik, a visszavonás működik.
+
 ## 4.19 – Tájékoztató anyaglista CSV-ben a gyártói adminban
 
 - Az érdeklődő adatlapján a PDF és a DXF mellett új „Anyaglista (CSV)” gomb: a terv adatai (azonosító, vevő, konfigurációs kód, méret, tető, szín), az anyaglista és a tételes nettó árkalkuláció egy Excelben megnyitható táblában (pontosvessző, UTF-8).

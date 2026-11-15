@@ -453,7 +453,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             <SideDiagram config={config} selected={selectedSide} roofName={tenant.roofs[config.roof]?.name ?? ''} onSelect={onSideSelect} />
             {selectedSide === 'roof' ? <div className="selected-side-head"><strong>Tető kijelölve</strong><span>{roofLabelsFor(config.roof)} · a beállításai fent. Koppints egy oldalra a záráshoz.</span></div> : sideSettings(selectedSide)}
             {isClosedBuilding(config.building) && <WallGlazingPicker config={config} prices={prices} onChange={onChange} />}
-            <BuildingIssues config={config} />
+            <BuildingIssues config={config} onFix={onChange} />
             <div className="interaction-hint"><Move size={17} /><p>A tolóüveg és az oldallamella a 3D-ben kattintásra, illetve a fenti gombbal is mozgatható. Egy oldal két részre is osztható, például fele tolóüveg, fele lécfal.</p></div>
           </>}
 
@@ -461,7 +461,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             {isClosedBuilding(config.building) && <>
               <SectionTitle title={config.building === 'conservatory' ? 'Egész éves használat' : 'Zárt tér'} hint={config.building === 'conservatory' ? 'Fűtés, hűtés és az alapozott padló teszi lakótérré a télikertet.' : undefined} />
               <ClimateSection config={config} prices={prices} onChange={onChange} scene={scene} onSceneChange={onSceneChange} />
-              <BuildingIssues config={config} />
+              <BuildingIssues config={config} onFix={onChange} />
             </>}
             {carport && <>
               {/* Carportnál csak az ide illő extrák: világítás és napelemes tető. */}
