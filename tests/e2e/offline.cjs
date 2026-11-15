@@ -26,6 +26,11 @@ const cacheNames = (p) => p.evaluate(() => caches.keys());
   const p = await ctx.newPage(); p.setDefaultTimeout(120000);
   const errors = []; p.on('pageerror', (e) => errors.push(e.message));
   try {
+    log('0) az előtöltési lista minden fájlja létezik (a preview SPA-fallbackje elfedné a 404-et, ezért a tartalomtípust nézzük)');
+    const manifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../dist/offline-manifest.json'), 'utf8'));
+    const missing = manifest.build.concat(manifest.assets).filter((f) => f.url !== '/index.html' && !fs.existsSync(path.resolve(__dirname, '../../dist' + f.url))).map((f) => f.url);
+    ok(missing.length === 0, `minden listázott fájl megvan a dist-ben${missing.length ? ': ' + missing.slice(0, 5).join(', ') : ''}`);
+
     log('1) első betöltés, bemutató mód');
     await p.goto(`${BASE}/konfigurator?bemutato=1`); await sceneReady(p);
     await p.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller, null, { timeout: 60000 });

@@ -1,5 +1,10 @@
 # Változások
 
+## 4.44 – Javítás: a service worker élesben nem települt
+
+- **Hiba: élesben a SW telepítése elbukott**, mert az előtöltési lista egy olyan fájlt is tartalmazott (`legal-….js`), amelyet a Vite a build végén eltávolít (csak CSS-t tartalmazó csomag üres JS-darabja); a Vercel erre 404-et ad, a SW pedig csak teljes alkalmazáshéjjal települ. Helyben a `vite preview` SPA-fallbackje (404 helyett index.html) elfedte. Javítás: a listába csak a ténylegesen kiírt fájlok kerülnek.
+- Tesztek: `tests/e2e/offline.cjs` új 0. lépése ellenőrzi, hogy a lista minden fájlja létezik a dist-ben; a böngészős próba mind a 14 pontja zöld.
+
 ## 4.43 – Supabase MCP és hivatalos Supabase-skillek a repóban
 
 - `.mcp.json`: a Claude Code a repóban dolgozva a `supabase` MCP-szerveren éri el az éles Lamelix-adatbázist (`qxigqugywemokbnidokf`); a belépés gépenként, `claude /mcp` → Authenticate (kulcs nem kerül a repóba).

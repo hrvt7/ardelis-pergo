@@ -137,7 +137,10 @@ function offlineSw(mode: string): Plugin {
         const indexFile = path.join(outDir, "index.html")
         if (!fs.existsSync(indexFile)) return
         const index = fs.readFileSync(indexFile)
-        const manifest = buildOfflineManifest({ buildFiles, publicFiles: [...walkPublic(publicDir, "assets"), ...walkPublic(publicDir, "vendor")], indexHash: sha(index), indexSize: index.byteLength })
+        // A Vite a csak CSS-t tartalmazó csomagok üres JS-darabját a generateBundle után eltávolítja: csak a ténylegesen kiírt fájlok kerülnek a listába
+        // (különben a SW telepítése 404-en bukna).
+        const written = buildFiles.filter((file) => fs.existsSync(path.join(outDir, file.url)))
+        const manifest = buildOfflineManifest({ buildFiles: written, publicFiles: [...walkPublic(publicDir, "assets"), ...walkPublic(publicDir, "vendor")], indexHash: sha(index), indexSize: index.byteLength })
         fs.writeFileSync(path.join(outDir, "offline-manifest.json"), JSON.stringify(manifest))
         await esbuild({
           entryPoints: [path.resolve(__dirname, "src/sw/sw.ts")],
