@@ -2,24 +2,25 @@
 // vagy tető alatti (belül, védett, olcsóbb). Egyetlen igazságforrás az árhoz, a linkhez, a 3D-hez és a szöveghez.
 import { isGlazedRoof } from './roofs'
 import type { PergolaConfig, PriceSettings, RoofShade, RoofType, ShadeFabric } from '../types/pergola'
+import { tr } from '../i18n/locale'
 
 export const ROOF_SHADES: RoofShade[] = ['above', 'below']
 
 export const ROOF_SHADE_INFO: Record<RoofShade, { label: string; short: string; description: string; benefit: string; share: string; spec: string; priceKey: keyof Pick<PriceSettings, 'roofShadeAbovePerM2Net' | 'roofShadeBelowPerM2Net'> }> = {
   above: {
-    label: 'Tető feletti árnyékoló',
-    short: 'tető feletti',
-    description: 'Kívül, az üveg felett futó ponyva, oldalsó vezetősínben',
-    benefit: 'A napot még az üveg előtt fogja meg: alatta érezhetően hűvösebb',
+    label: tr('Tető feletti árnyékoló', 'Beschattung über dem Dach'),
+    short: tr('tető feletti', 'über dem Dach'),
+    description: tr('Kívül, az üveg felett futó ponyva, oldalsó vezetősínben', 'Außen über dem Glas laufendes Tuch, in seitlichen Führungsschienen'),
+    benefit: tr('A napot még az üveg előtt fogja meg: alatta érezhetően hűvösebb', 'Hält die Sonne vor dem Glas ab: darunter spürbar kühler'),
     share: 'a',
     spec: 'SA',
     priceKey: 'roofShadeAbovePerM2Net',
   },
   below: {
-    label: 'Tető alatti árnyékoló',
-    short: 'tető alatti',
-    description: 'Belül, a bordázat alatt futó ponyva, időjárástól védve',
-    benefit: 'Védett helyen, kedvezőbb áron; a fényt szűri, a hőt kevésbé',
+    label: tr('Tető alatti árnyékoló', 'Beschattung unter dem Dach'),
+    short: tr('tető alatti', 'unter dem Dach'),
+    description: tr('Belül, a bordázat alatt futó ponyva, időjárástól védve', 'Innen unter den Sprossen laufendes Tuch, wettergeschützt'),
+    benefit: tr('Védett helyen, kedvezőbb áron; a fényt szűri, a hőt kevésbé', 'Geschützt und günstiger; filtert Licht, Wärme weniger'),
     share: 'b',
     spec: 'SB',
     priceKey: 'roofShadeBelowPerM2Net',
@@ -27,10 +28,10 @@ export const ROOF_SHADE_INFO: Record<RoofShade, { label: string; short: string; 
 }
 
 export const SHADE_FABRICS: { id: ShadeFabric; name: string; hex: string; share: string }[] = [
-  { id: 'white', name: 'Fehér', hex: '#ecebe5', share: 'w' },
-  { id: 'sand', name: 'Homok', hex: '#d6c9ae', share: 's' },
-  { id: 'grey', name: 'Szürke', hex: '#9b9d9b', share: 'g' },
-  { id: 'anthracite', name: 'Antracit', hex: '#4a4e50', share: 'a' },
+  { id: 'white', name: tr('Fehér', 'Weiß'), hex: '#ecebe5', share: 'w' },
+  { id: 'sand', name: tr('Homok', 'Sand'), hex: '#d6c9ae', share: 's' },
+  { id: 'grey', name: tr('Szürke', 'Grau'), hex: '#9b9d9b', share: 'g' },
+  { id: 'anthracite', name: tr('Antracit', 'Anthrazit'), hex: '#4a4e50', share: 'a' },
 ]
 
 export const DEFAULT_SHADE_FABRIC: ShadeFabric = 'white'
@@ -46,5 +47,5 @@ export const roofShadeArea = (config: Pick<PergolaConfig, 'width' | 'depth'>) =>
 /** Rövid leírás (összegzés, kérelem, PDF): „tető feletti motoros árnyékoló, fehér ponyva”. */
 export function roofShadeSummary(config: Pick<PergolaConfig, 'roofShade' | 'shadeFabric'>) {
   if (!config.roofShade) return ''
-  return `${ROOF_SHADE_INFO[config.roofShade].short} motoros árnyékoló, ${findShadeFabric(config.shadeFabric).name.toLowerCase()} ponyva`
+  return tr(`${ROOF_SHADE_INFO[config.roofShade].short} motoros árnyékoló, ${findShadeFabric(config.shadeFabric).name.toLowerCase()} ponyva`, `Motorisierte Beschattung ${ROOF_SHADE_INFO[config.roofShade].short}, Tuch ${findShadeFabric(config.shadeFabric).name.toLowerCase()}`)
 }

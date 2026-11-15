@@ -10,6 +10,7 @@ import { tenantPrice } from '@/tenants/rules'
 import { brightenPhotoColor } from '@/lib/house'
 import { useTenant } from '@/tenants/TenantContext'
 import type { FrameColor, PergolaConfig, PriceSettings } from '@/types/pergola'
+import { tr } from '../i18n/locale'
 
 type Target = 'frame' | 'roof'
 
@@ -61,43 +62,43 @@ export default function ColorPicker({ config, prices, photoUrl, onChange }: { co
 
   return <div className="color-picker">
     {twoToneAvailable && <div className="color-mode">
-      <div className="split-mode" role="radiogroup" aria-label="Színkialakítás">
-        <button type="button" role="radio" aria-checked={!twoTone} className={!twoTone ? 'selected' : ''} onClick={() => setTwoTone(false)}><span className="mode-dot" style={{ background: frameInfo.hex }} />Egyszínű</button>
-        <button type="button" role="radio" aria-checked={twoTone} className={twoTone ? 'selected' : ''} onClick={() => setTwoTone(true)}><span className="mode-dot two" style={{ '--a': frameInfo.hex, '--b': roofInfo.hex } as React.CSSProperties} />Kéttónusú</button>
+      <div className="split-mode" role="radiogroup" aria-label={tr('Színkialakítás', 'Farbgestaltung')}>
+        <button type="button" role="radio" aria-checked={!twoTone} className={!twoTone ? 'selected' : ''} onClick={() => setTwoTone(false)}><span className="mode-dot" style={{ background: frameInfo.hex }} />{tr('Egyszínű', 'Einfarbig')}</button>
+        <button type="button" role="radio" aria-checked={twoTone} className={twoTone ? 'selected' : ''} onClick={() => setTwoTone(true)}><span className="mode-dot two" style={{ '--a': frameInfo.hex, '--b': roofInfo.hex } as React.CSSProperties} />{tr('Kéttónusú', 'Zweifarbig')}</button>
       </div>
-      {twoTone && <div className="half-tabs color-targets" role="tablist" aria-label="Melyik részt színezed?">
+      {twoTone && <div className="half-tabs color-targets" role="tablist" aria-label={tr('Melyik részt színezed?', 'Welchen Teil färben Sie?')}>
         {(['frame', 'roof'] as const).map((item) => { const info = item === 'frame' ? frameInfo : roofInfo; return <button key={item} type="button" role="tab" aria-selected={active === item} className={active === item ? 'selected' : ''} onClick={() => setTarget(item)}>
           <span className="target-swatch" style={{ background: info.hex }} />
-          <span><small>{item === 'frame' ? 'Váz, oszlopok' : part}</small><strong>{info.name}</strong></span>
+          <span><small>{item === 'frame' ? tr('Váz, oszlopok', 'Rahmen, Steher') : part}</small><strong>{info.name}</strong></span>
         </button> })}
       </div>}
     </div>}
 
-    <div className="color-section-head"><strong>Alapszínek</strong><span>felár nélkül</span></div>
+    <div className="color-section-head"><strong>{tr('Alapszínek', 'Standardfarben')}</strong><span>{tr('felár nélkül', 'ohne Aufpreis')}</span></div>
     <div className="material-swatches">{tenant.colors.map((color) => { const selected = current.color === color.id; return <button type="button" key={color.id} className={selected ? 'selected' : ''} aria-pressed={selected} onClick={() => apply(color.id)}>
       <span className="material-sphere" style={{ '--swatch': color.hex } as React.CSSProperties}>{selected && <Check size={16} />}</span><strong>{color.name}</strong><small>{color.detail}</small>
     </button> })}</div>
 
     {tenant.customRal && <>
-      <div className="color-section-head"><strong>További színek</strong><span>egyedi szín · {customRate > 0 ? `+${customRate}%` : 'felár nélkül'}{woodRate > 0 ? `, fa hatású +${woodRate}%` : ''}</span></div>
-      <label className="color-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Keresés: antracit, 7021, homok, dió…" aria-label="Szín keresése névvel vagy kóddal" />{query && <button type="button" aria-label="Keresés törlése" onClick={() => setQuery('')}><X size={14} /></button>}</label>
-      <div className="color-groups" role="tablist" aria-label="Színcsoportok">
-        {[{ id: 'all' as const, label: 'Népszerű' }, ...COLOR_GROUPS].map((item) => <button key={item.id} type="button" role="tab" aria-selected={group === item.id} className={group === item.id ? 'selected' : ''} onClick={() => { setGroup(item.id); setShowAll(false) }}>{item.label}</button>)}
+      <div className="color-section-head"><strong>{tr('További színek', 'Weitere Farben')}</strong><span>{tr('egyedi szín', 'Sonderfarbe')} · {customRate > 0 ? `+${customRate}%` : tr('felár nélkül', 'ohne Aufpreis')}{woodRate > 0 ? `, ${tr('fa hatású', 'Holzoptik')} +${woodRate}%` : ''}</span></div>
+      <label className="color-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tr('Keresés: antracit, 7021, homok, dió…', 'Suche: Anthrazit, 7021, Sand, Nuss…')} aria-label={tr('Szín keresése névvel vagy kóddal', 'Farbe nach Name oder Code suchen')} />{query && <button type="button" aria-label={tr('Keresés törlése', 'Suche löschen')} onClick={() => setQuery('')}><X size={14} /></button>}</label>
+      <div className="color-groups" role="tablist" aria-label={tr('Színcsoportok', 'Farbgruppen')}>
+        {[{ id: 'all' as const, label: tr('Népszerű', 'Beliebt') }, ...COLOR_GROUPS].map((item) => <button key={item.id} type="button" role="tab" aria-selected={group === item.id} className={group === item.id ? 'selected' : ''} onClick={() => { setGroup(item.id); setShowAll(false) }}>{item.label}</button>)}
       </div>
       {visible.length ? <div className="color-grid">{visible.map((color) => <ColorChip key={color.code} color={color} selected={selectedCode === color.code} standard={Boolean(tenant.colors.find((item) => item.ral && `RAL ${item.ral}` === color.code))} onPick={() => applyCode(color.code)} />)}</div>
-        : <p className="color-empty">Nincs ilyen szín a listában. Ha ismered a kódját, add meg lent — a gyártó bármely RAL színre porszór.</p>}
-      {limited && <button type="button" className="color-more" onClick={() => setShowAll(true)}>Összes szín ({COLOR_CATALOG.length})</button>}
+        : <p className="color-empty">{tr('Nincs ilyen szín a listában. Ha ismered a kódját, add meg lent — a gyártó bármely RAL színre porszór.', 'Diese Farbe ist nicht in der Liste. Wenn Sie den Code kennen, geben Sie ihn unten ein — der Hersteller beschichtet in jeder RAL-Farbe.')}</p>}
+      {limited && <button type="button" className="color-more" onClick={() => setShowAll(true)}>{tr('Összes szín', 'Alle Farben')} ({COLOR_CATALOG.length})</button>}
 
       <div className="color-tools">
-        <button type="button" className="color-photo-button" onClick={() => setPhotoOpen(true)}><Pipette size={16} /><span><strong>Szín a házadról</strong><small>Fotón rábökve megkeressük a legközelebbi RAL színt</small></span></button>
-        <label className="color-code-field"><span>Ismered a kódot?</span><input value={codeText} maxLength={24} placeholder="pl. RAL 7035, DB 703" onFocus={() => setTyping(true)} onBlur={() => setTyping(false)} onChange={(event) => { setCodeText(event.target.value); const code = normalizeColorCode(event.target.value); if (code) { const pick = pickCatalogColor(tenant, code); if (pick) apply(pick.color, pick.custom) } }} />
-          <small>{typed ? `${typed.name} · ${typed.code}` : codeText.trim() ? 'Nincs a listánkban — a gyártó egyezteti a pontos árnyalatot.' : 'Bármely RAL szín rendelhető.'}</small></label>
+        <button type="button" className="color-photo-button" onClick={() => setPhotoOpen(true)}><Pipette size={16} /><span><strong>{tr('Szín a házadról', 'Farbe von Ihrem Haus')}</strong><small>{tr('Fotón rábökve megkeressük a legközelebbi RAL színt', 'Antippen im Foto, wir finden die nächste RAL-Farbe')}</small></span></button>
+        <label className="color-code-field"><span>{tr('Ismered a kódot?', 'Kennen Sie den Code?')}</span><input value={codeText} maxLength={24} placeholder={tr('pl. RAL 7035, DB 703', 'z. B. RAL 7035, DB 703')} onFocus={() => setTyping(true)} onBlur={() => setTyping(false)} onChange={(event) => { setCodeText(event.target.value); const code = normalizeColorCode(event.target.value); if (code) { const pick = pickCatalogColor(tenant, code); if (pick) apply(pick.color, pick.custom) } }} />
+          <small>{typed ? `${typed.name} · ${typed.code}` : codeText.trim() ? tr('Nincs a listánkban — a gyártó egyezteti a pontos árnyalatot.', 'Nicht in unserer Liste — der Hersteller stimmt den genauen Farbton ab.') : tr('Bármely RAL szín rendelhető.', 'Jede RAL-Farbe ist bestellbar.')}</small></label>
       </div>
     </>}
 
-    <SelectedCard info={current.info} label={active === 'frame' ? (twoTone ? 'Váz, oszlopok' : 'Szerkezet') : part} surcharge={surcharge} />
+    <SelectedCard info={current.info} label={active === 'frame' ? (twoTone ? tr('Váz, oszlopok', 'Rahmen, Steher') : 'Szerkezet') : part} surcharge={surcharge} />
     {/* A beállítópanel (mobilon alsó lap) saját rétegében a fix pozíció a panelhez igazodna: a párbeszéd a body-ba kerül. */}
-    {photoOpen && createPortal(<PhotoColorDialog photoUrl={photoUrl} targetLabel={active === 'frame' ? (twoTone ? 'a vázra' : 'a szerkezetre') : `a ${part.toLowerCase()}ra`} onApply={(code) => { applyCode(code); setPhotoOpen(false) }} onClose={() => setPhotoOpen(false)} />, document.body)}
+    {photoOpen && createPortal(<PhotoColorDialog photoUrl={photoUrl} targetLabel={active === 'frame' ? (twoTone ? tr('a vázra', 'den Rahmen') : tr('a szerkezetre', 'die Konstruktion')) : tr(`a ${part.toLowerCase()}ra`, `die ${part}`)} onApply={(code) => { applyCode(code); setPhotoOpen(false) }} onClose={() => setPhotoOpen(false)} />, document.body)}
   </div>
 }
 
@@ -105,7 +106,7 @@ function ColorChip({ color, selected, standard, onPick }: { color: CatalogColor;
   return <button type="button" className={`color-chip${selected ? ' selected' : ''}${color.kind === 'wood' ? ' is-wood' : ''}${color.kind === 'db' || color.code.startsWith('RAL 900') && color.group === 'metallic' ? ' is-metal' : ''}`} aria-pressed={selected} title={`${color.name} · ${color.code}`} onClick={onPick}>
     <span className="chip-swatch" style={{ '--swatch': color.hex } as React.CSSProperties}>{selected && <Check size={13} />}</span>
     <strong>{color.kind === 'wood' ? color.name : color.code.replace('RAL ', '')}</strong>
-    <small>{color.kind === 'wood' ? 'fa hatású' : color.name}{standard ? ' · alap' : ''}</small>
+    <small>{color.kind === 'wood' ? tr('fa hatású', 'Holzoptik') : color.name}{standard ? ' · alap' : ''}</small>
   </button>
 }
 
@@ -115,8 +116,8 @@ function SelectedCard({ info, label, surcharge }: { info: ColorInfo; label: stri
     <span>
       <small className="finish-part">{label}</small>
       <strong>{colorLabel(info)}</strong>
-      <small>{info.standard ? 'Gyártói alapszín · felár nélkül' : `${info.kind === 'wood' ? 'Fa hatású bevonat' : 'Egyedi szín'} · ${surcharge > 0 ? `+${formatPrice(surcharge)}` : 'felár nélkül'} · +1–3 hét gyártás`}</small>
-      <small>{info.kind === 'wood' ? 'Fa erezetű szublimációs bevonat porszórt alumíniumon' : info.kind === 'db' ? 'Vascsillámos, finoman csillogó strukturált felület' : 'Matt, UV-álló porszórt felület'} · a képernyő színe tájékoztató</small>
+      <small>{info.standard ? tr('Gyártói alapszín · felár nélkül', 'Standardfarbe des Herstellers · ohne Aufpreis') : `${info.kind === 'wood' ? tr('Fa hatású bevonat', 'Holzoptik-Beschichtung') : tr('Egyedi szín', 'Sonderfarbe')} · ${surcharge > 0 ? `+${formatPrice(surcharge)}` : tr('felár nélkül', 'ohne Aufpreis')} · ${tr('+1–3 hét gyártás', '+1–3 Wochen Fertigung')}`}</small>
+      <small>{info.kind === 'wood' ? tr('Fa erezetű szublimációs bevonat porszórt alumíniumon', 'Sublimations-Holzdekor auf pulverbeschichtetem Aluminium') : info.kind === 'db' ? tr('Vascsillámos, finoman csillogó strukturált felület', 'Eisenglimmer, fein schimmernde Strukturoberfläche') : tr('Matt, UV-álló porszórt felület', 'Matte, UV-beständige Pulverbeschichtung')} · {tr('a képernyő színe tájékoztató', 'Bildschirmfarbe unverbindlich')}</small>
     </span>
   </div>
 }
@@ -131,7 +132,7 @@ function luminance(hex: string) {
  * Fotó → pipetta. Alapból a három legközelebbi katalógusszínt ajánlja (pergola);
  * `onApplyHex` esetén magát a mért színt adja vissza (pl. a ház homlokzatához), egy árnyékmentesített változattal.
  */
-export function PhotoColorDialog({ photoUrl, targetLabel, onApply, onApplyHex, title = 'Szín a házadról', prompt, onClose }: { photoUrl: string | null; targetLabel: string; onApply?: (code: string) => void; onApplyHex?: (hex: string) => void; title?: string; prompt?: string; onClose: () => void }) {
+export function PhotoColorDialog({ photoUrl, targetLabel, onApply, onApplyHex, title = tr('Szín a házadról', 'Farbe von Ihrem Haus'), prompt, onClose }: { photoUrl: string | null; targetLabel: string; onApply?: (code: string) => void; onApplyHex?: (hex: string) => void; title?: string; prompt?: string; onClose: () => void }) {
   const [url, setUrl] = useState(photoUrl)
   const [ownUrl, setOwnUrl] = useState<string | null>(null)
   const [sample, setSample] = useState<{ hex: string; x: number; y: number } | null>(null)
@@ -157,28 +158,28 @@ export function PhotoColorDialog({ photoUrl, targetLabel, onApply, onApplyHex, t
     for (let index = 0; index < data.length; index += 4) { r += data[index]; g += data[index + 1]; b += data[index + 2]; n += 1 }
     setSample({ hex: rgbToHex([r / n, g / n, b / n]), x: fx * 100, y: fy * 100 })
   }
-  return <Modal title={title} eyebrow="PIPETTA" onClose={close} className="photo-color-dialog">
+  return <Modal title={title} eyebrow={tr('PIPETTA', 'PIPETTE')} onClose={close} className="photo-color-dialog">
     {!url ? <label className="photo-color-drop">
       <ImagePlus size={26} />
-      <strong>Tölts fel egy fotót a házadról</strong>
-      <small>Például az ablakkeretről, a kerítésről vagy a homlokzatról. A kép csak ebben a böngészőben marad.</small>
+      <strong>{tr('Tölts fel egy fotót a házadról', 'Laden Sie ein Foto Ihres Hauses hoch')}</strong>
+      <small>{tr('Például az ablakkeretről, a kerítésről vagy a homlokzatról. A kép csak ebben a böngészőben marad.', 'Zum Beispiel vom Fensterrahmen, Zaun oder der Fassade. Das Bild bleibt nur in diesem Browser.')}</small>
       <input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) { const next = URL.createObjectURL(file); setOwnUrl(next); setUrl(next) } }} />
     </label> : <>
-      <p className="photo-color-hint">{prompt ?? 'Bökj rá arra a részre, amelyhez a pergola színét igazítanád.'} Árnyékos vagy fénylő részen a szín torzulhat — próbálj több pontot.</p>
+      <p className="photo-color-hint">{prompt ?? tr('Bökj rá arra a részre, amelyhez a pergola színét igazítanád.', 'Tippen Sie auf den Teil, an den Sie die Pergolafarbe anpassen möchten.')} Árnyékos vagy fénylő részen a szín torzulhat — próbálj több pontot.</p>
       <div className="photo-color-stage">
-        <img src={url} alt="Feltöltött fotó a házról" onPointerDown={pick} draggable={false} />
+        <img src={url} alt={tr('Feltöltött fotó a házról', 'Hochgeladenes Foto des Hauses')} onPointerDown={pick} draggable={false} />
         {sample && <span className="photo-color-marker" style={{ left: `${sample.x}%`, top: `${sample.y}%`, background: sample.hex }} />}
       </div>
       {sample ? <div className="photo-color-results">
-        <div className="photo-color-sample"><i style={{ background: sample.hex }} /><span><small>A fotón mért szín</small><strong>{sample.hex.toUpperCase()}</strong></span></div>
-        {onApplyHex ? [{ hex: sample.hex, name: 'Ahogy a fotón', note: 'a mért szín változtatás nélkül' }, { hex: brightenPhotoColor(sample.hex), name: 'Napfényben', note: 'kicsit világosabb — a fotók általában sötétebbek' }].map((option) => <button type="button" key={option.name} className="photo-color-match" onClick={() => onApplyHex(option.hex)}>
+        <div className="photo-color-sample"><i style={{ background: sample.hex }} /><span><small>{tr('A fotón mért szín', 'Gemessene Farbe im Foto')}</small><strong>{sample.hex.toUpperCase()}</strong></span></div>
+        {onApplyHex ? [{ hex: sample.hex, name: tr('Ahogy a fotón', 'Wie im Foto'), note: tr('a mért szín változtatás nélkül', 'die gemessene Farbe unverändert') }, { hex: brightenPhotoColor(sample.hex), name: tr('Napfényben', 'Im Sonnenlicht'), note: tr('kicsit világosabb — a fotók általában sötétebbek', 'etwas heller — Fotos sind meist dunkler') }].map((option) => <button type="button" key={option.name} className="photo-color-match" onClick={() => onApplyHex(option.hex)}>
           <i style={{ background: option.hex }} /><span><strong>{option.name}</strong><small>{option.note}</small></span><em>Alkalmazom {targetLabel}</em>
         </button>) : matches.map(({ color, distance }) => <button type="button" key={color.code} className="photo-color-match" onClick={() => onApply?.(color.code)}>
           <i style={{ background: color.hex }} /><span><strong>{color.name}</strong><small>{color.code} · {matchLabel(distance)}</small></span><em>Alkalmazom {targetLabel}</em>
         </button>)}
-        <p className="photo-color-note">A fotó színe a fénytől és a kamerától függ; a pontos árnyalatot a gyártói színminta mutatja meg.</p>
-      </div> : <div className="photo-color-results is-empty"><Pipette size={18} /><p className="photo-color-note">Még nem választottál pontot — bökj a képre.</p></div>}
-      <label className="text-action photo-color-change"><ImagePlus size={14} />Másik fotó<input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) { if (ownUrl) URL.revokeObjectURL(ownUrl); const next = URL.createObjectURL(file); setOwnUrl(next); setUrl(next); setSample(null) } }} /></label>
+        <p className="photo-color-note">{tr('A fotó színe a fénytől és a kamerától függ; a pontos árnyalatot a gyártói színminta mutatja meg.', 'Die Fotofarbe hängt von Licht und Kamera ab; den genauen Ton zeigt das Farbmuster des Herstellers.')}</p>
+      </div> : <div className="photo-color-results is-empty"><Pipette size={18} /><p className="photo-color-note">{tr('Még nem választottál pontot — bökj a képre.', 'Noch kein Punkt gewählt — tippen Sie ins Bild.')}</p></div>}
+      <label className="text-action photo-color-change"><ImagePlus size={14} />{tr('Másik fotó', 'Anderes Foto')}<input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) { if (ownUrl) URL.revokeObjectURL(ownUrl); const next = URL.createObjectURL(file); setOwnUrl(next); setUrl(next); setSample(null) } }} /></label>
     </>}
   </Modal>
 }

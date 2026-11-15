@@ -1,5 +1,14 @@
 # Változások
 
+## 4.46 – Német nyelvű vevői konfigurátor (osztrák gyártókhoz)
+
+- **Nyelv gyártónként:** új `Tenant.locale` (`'hu' | 'de'`). A nyelv betöltéskor, a gyártó URL-jéből dől el (`/k/:id`, `/embed/:id`), még az alkalmazás moduljai előtt (`src/i18n/bootLocale.ts`), így a szövegtárak is a jó nyelven jönnek létre. A szövegek a helyükön fordítódnak: `tr('magyar', 'deutsch')`; magyar gyártónál minden változatlan.
+- **Lefordítva (vevői út):** fejléc és eszköztár, a 7 lépés (típus, méret, tető, oldalak, szín, komfort, összegzés), tetők, oldalzárások, rögzítés, építménytípusok és építési figyelmeztetések (osztrák fogalmakkal: Baubehörde, Bauanzeige/Baubewilligung), RAL-színek a hivatalos német RAL-nevekkel, ház- és homlokzatválasztó, bútorcsomagok, ártételek és tételes kalkuláció, összegzés, specifikáció, ajánlatkérő űrlap (Bundesland, osztrák telefonszám-minta), tanácsadó, költségkeret-tervező, árnyékelemzés, AR, fotó mód, bejárás, működés-bemutató, hibaüzenetek.
+- **Számformátum:** német módban osztrák formátum (`de-AT`).
+- **Még magyar (következő lépés):** a vevőnek letölthető PDF, az ajánlatoldal, a szerveroldali e-mailek és szerver-hibaüzenetek, az adatkezelési tájékoztató (német jogi szöveg jogi átnézést igényel), a gyártói admin; a fa hatású színek rendelési kódja (pl. „FA DIÓ”).
+- **[TO VERIFY]:** a német hozzájárulási szöveg jogi átnézése élesítés előtt egy valódi osztrák gyártónál.
+- Tesztek: `locale.test.ts` (URL → gyártó, `tr`, német módban a vevői szövegtárakban és az ártételekben nem marad magyar szöveg, EUR-os tételek). A böngészős ellenőrzés a 7 lépésen 187 magyar maradványról 1-re csökkent (a „FA DIÓ” kód).
+
 ## 4.45 – Pénznem gyártónként (HUF/EUR), osztrák bemutató gyártó
 
 - **EUR-os gyártó:** a gyártó pénzneme (`currency: 'HUF' | 'EUR'`) mostantól a konfigurátorban, az ár-részletezésben, a PDF-ben, az adminban, az ajánlatban, a vevői és gyártói e-mailekben és az anyaglista CSV-ben is érvényes. Az ÁFA-kulcs eddig is gyártónként állítható volt (`prices.vatRate`).

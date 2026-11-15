@@ -1,3 +1,5 @@
+// Elsőként: a felület nyelve (a gyártó URL-jéből), mielőtt bármely szövegtár létrejön.
+import "@/i18n/bootLocale";
 import "@/lib/logger";
 import "@/lib/previewShim";
 import { StrictMode } from 'react'

@@ -5,6 +5,7 @@ import { useTenant } from '@/tenants/TenantContext'
 import { MONEY_FIELDS, type PriceKey } from '@/tenants/priceFields'
 import { ROOF_INFO, ROOF_TYPES } from '@/lib/roofs'
 import type { PriceSettings } from '@/types/pergola'
+import { tr } from '../i18n/locale'
 
 export function Modal({ title, eyebrow, onClose, children, className = '' }: { title: string; eyebrow?: string; onClose: () => void; children: ReactNode; className?: string }) {
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -32,7 +33,7 @@ export function Modal({ title, eyebrow, onClose, children, className = '' }: { t
   return (
     <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <div className={`modal-dialog ${className}`} role="dialog" aria-modal="true" aria-labelledby="modal-title" ref={dialogRef}>
-        <div className="modal-header"><div>{eyebrow && <span>{eyebrow}</span>}<h2 id="modal-title">{title}</h2></div><button type="button" aria-label="Bezárás" onClick={onClose}><X size={20} /></button></div>
+        <div className="modal-header"><div>{eyebrow && <span>{eyebrow}</span>}<h2 id="modal-title">{title}</h2></div><button type="button" aria-label={tr('Bezárás', 'Schließen')} onClick={onClose}><X size={20} /></button></div>
         {children}
       </div>
     </div>
@@ -42,10 +43,10 @@ export function Modal({ title, eyebrow, onClose, children, className = '' }: { t
 
 export function PriceSettingsDialog({ prices, onChange, onReset, onClose }: { prices: PriceSettings; onChange: (prices: PriceSettings) => void; onReset: () => void; onClose: () => void }) {
   const { tenant } = useTenant()
-  const roofFields: { key: PriceKey; label: string; unit: string }[] = ROOF_TYPES.filter((roof) => tenant.roofs[roof]).map((roof) => ({ key: ROOF_INFO[roof].priceKey, label: `${tenant.roofs[roof]!.name} ${tenant.roofs[roof]!.short} alapár`, unit: 'Ft/m²' }))
+  const roofFields: { key: PriceKey; label: string; unit: string }[] = ROOF_TYPES.filter((roof) => tenant.roofs[roof]).map((roof) => ({ key: ROOF_INFO[roof].priceKey, label: `${tenant.roofs[roof]!.name} ${tenant.roofs[roof]!.short} ${tr('alapár', 'Grundpreis')}`, unit: 'Ft/m²' }))
   return (
-    <Modal title="Mintaárak szerkesztése" eyebrow="SZERKESZTHETŐ MINTAÁRAK" onClose={onClose} className="price-settings-modal">
-      <p className="modal-intro">Minden érték nettó forintban értendő, kivéve a százalékos mezőket. A módosítások azonnal újraszámolják a konfigurációt, és csak ebben a böngészőben mentődnek — a beküldött érdeklődőnél a szerver a gyártói árlistával számol.</p>
+    <Modal title={tr('Mintaárak szerkesztése', 'Musterpreise bearbeiten')} eyebrow={tr('SZERKESZTHETŐ MINTAÁRAK', 'BEARBEITBARE MUSTERPREISE')} onClose={onClose} className="price-settings-modal">
+      <p className="modal-intro">{tr('Minden érték nettó forintban értendő, kivéve a százalékos mezőket. A módosítások azonnal újraszámolják a konfigurációt, és csak ebben a böngészőben mentődnek — a beküldött érdeklődőnél a szerver a gyártói árlistával számol.', 'Alle Werte sind Nettobeträge in der Währung des Herstellers, außer den Prozentfeldern. Änderungen berechnen die Konfiguration sofort neu und werden nur in diesem Browser gespeichert — bei einer gesendeten Anfrage rechnet der Server mit der Herstellerpreisliste.')}</p>
       <div className="tariff-grid">
         {[...roofFields, ...MONEY_FIELDS].map((field) => (
           <label key={field.key}><span>{field.label}<small>{unitLabel(field.unit)}</small></span><input type="number" min="0" step={priceInputStep()} value={prices[field.key]} onChange={(event) => onChange({ ...prices, [field.key]: Math.max(0, Number(event.target.value) || 0) })} /></label>
@@ -53,12 +54,12 @@ export function PriceSettingsDialog({ prices, onChange, onReset, onClose }: { pr
       </div>
       <div className="rate-grid">
         {([
-          ['customColorRate', 'Egyedi RAL felár'], ['woodColorRate', 'Fa hatású bevonat felára'], ['installationRate', 'Telepítési arány'], ['vatRate', 'ÁFA kulcs'],
+          ['customColorRate', tr('Egyedi RAL felár', 'Aufpreis Sonder-RAL')], ['woodColorRate', tr('Fa hatású bevonat felára', 'Aufpreis Holzoptik')], ['installationRate', tr('Telepítési arány', 'Montageanteil')], ['vatRate', tr('ÁFA kulcs', 'USt.-Satz')],
         ] as const).map(([key, label]) => (
           <label key={key}><span>{label}</span><div><input type="number" min="0" max="100" step="1" value={Math.round(prices[key] * 100)} onChange={(event) => onChange({ ...prices, [key]: Math.min(100, Math.max(0, Number(event.target.value) || 0)) / 100 })} /><span>%</span></div></label>
         ))}
       </div>
-      <div className="modal-footer"><button type="button" className="text-action" onClick={onReset}><RotateCcw size={15} />Gyártói árlista visszaállítása</button><button type="button" className="primary-action" onClick={onClose}>Kész</button></div>
+      <div className="modal-footer"><button type="button" className="text-action" onClick={onReset}><RotateCcw size={15} />{tr('Gyártói árlista visszaállítása', 'Herstellerpreisliste wiederherstellen')}</button><button type="button" className="primary-action" onClick={onClose}>{tr('Kész', 'Fertig')}</button></div>
     </Modal>
   )
 }
@@ -66,23 +67,23 @@ export function PriceSettingsDialog({ prices, onChange, onReset, onClose }: { pr
 export function InfoDialog({ onClose }: { onClose: () => void }) {
   const { tenant } = useTenant()
   return (
-    <Modal title="A kalkulátorról" eyebrow="ÁTLÁTHATÓ MŰKÖDÉS" onClose={onClose} className="info-modal">
+    <Modal title={tr('A kalkulátorról', 'Über den Kalkulator')} eyebrow={tr('ÁTLÁTHATÓ MŰKÖDÉS', 'TRANSPARENTE FUNKTIONSWEISE')} onClose={onClose} className="info-modal">
       <div className="info-sections">
-        <section><span>01</span><div><h3>Valós idejű paraméteres modell</h3><p>A pergola geometriája a megadott méretekből készül. A konfigurátor nem gyártási terv, statikai számítás vagy helyszíni felmérés helyettesítője.</p></div></section>
-        {tenant.demo ? <section><span>02</span><div><h3>Szerkeszthető irányárak</h3><p>A konfigurátor szerkeszthető mintaárakkal számol. Ezek nem egy konkrét gyártó árlistáját jelenítik meg, és nem minősülnek árajánlatnak; minden tétel módosítható.</p><a href="https://www.tudjukki.hu/arak/elotetok/pergola" target="_blank" rel="noreferrer">Tájékozódás nyilvános árakról <ExternalLink size={13} /></a></div></section> : <section><span>02</span><div><h3>Tájékoztató irányárak</h3><p>Az irányár {tenant.brand.name} aktuális árlistája alapján készül, de nem minősül árajánlatnak. A végleges ár helyszíni felmérés után készül.</p></div></section>}
-        <section><span>03</span><div><h3>Műszaki és jogi ellenőrzés</h3><p>A bejelentési vagy engedélyezési kötelezettség a kialakítástól és a helyi szabályozástól függ. Kivitelezés előtt építészeti, statikai és hatósági ellenőrzés javasolt.</p><a href="https://njt.hu/jogszabaly/2024-280-20-22" target="_blank" rel="noreferrer">280/2024. Korm. rendelet <ExternalLink size={13} /></a></div></section>
-        <section><span>04</span><div><h3>Adatkezelés</h3><p>A piszkozat, a tarifák és a helyi fotó a böngésződben maradnak; megosztáskor a konfiguráció a hivatkozásba kódolódik. Csak a felmérési űrlap tudatos elküldésekor kapja meg {tenant.brand.name} a megadott ügyfél- és projektadatokat.{tenant.brand.privacyUrl && <> <a href={tenant.brand.privacyUrl} target="_blank" rel="noreferrer">Adatkezelési tájékoztató <ExternalLink size={13} /></a></>}</p></div></section>
+        <section><span>01</span><div><h3>{tr('Valós idejű paraméteres modell', 'Parametrisches Echtzeitmodell')}</h3><p>{tr('A pergola geometriája a megadott méretekből készül. A konfigurátor nem gyártási terv, statikai számítás vagy helyszíni felmérés helyettesítője.', 'Die Geometrie der Pergola entsteht aus den eingegebenen Maßen. Der Konfigurator ersetzt keinen Fertigungsplan, keine Statik und kein Aufmaß vor Ort.')}</p></div></section>
+        {tenant.demo ? <section><span>02</span><div><h3>{tr('Szerkeszthető irányárak', 'Bearbeitbare Richtpreise')}</h3><p>{tr('A konfigurátor szerkeszthető mintaárakkal számol. Ezek nem egy konkrét gyártó árlistáját jelenítik meg, és nem minősülnek árajánlatnak; minden tétel módosítható.', 'Der Konfigurator rechnet mit bearbeitbaren Musterpreisen. Sie zeigen nicht die Preisliste eines bestimmten Herstellers und sind kein Angebot; jede Position ist änderbar.')}</p><a href="https://www.tudjukki.hu/arak/elotetok/pergola" target="_blank" rel="noreferrer">{tr('Tájékozódás nyilvános árakról', 'Orientierung an öffentlichen Preisen')} <ExternalLink size={13} /></a></div></section> : <section><span>02</span><div><h3>{tr('Tájékoztató irányárak', 'Unverbindliche Richtpreise')}</h3><p>Az irányár {tenant.brand.name} aktuális árlistája alapján készül, de nem minősül árajánlatnak. A végleges ár helyszíni felmérés után készül.</p></div></section>}
+        <section><span>03</span><div><h3>{tr('Műszaki és jogi ellenőrzés', 'Technische und rechtliche Prüfung')}</h3><p>{tr('A bejelentési vagy engedélyezési kötelezettség a kialakítástól és a helyi szabályozástól függ. Kivitelezés előtt építészeti, statikai és hatósági ellenőrzés javasolt.', 'Anzeige- oder Bewilligungspflicht hängt von Ausführung und örtlichen Vorschriften ab. Vor der Ausführung werden architektonische, statische und behördliche Prüfungen empfohlen.')}</p><a href="https://njt.hu/jogszabaly/2024-280-20-22" target="_blank" rel="noreferrer">280/2024. Korm. rendelet <ExternalLink size={13} /></a></div></section>
+        <section><span>04</span><div><h3>{tr('Adatkezelés', 'Datenschutz')}</h3><p>A piszkozat, a tarifák és a helyi fotó a böngésződben maradnak; megosztáskor a konfiguráció a hivatkozásba kódolódik. Csak a felmérési űrlap tudatos elküldésekor kapja meg {tenant.brand.name} a megadott ügyfél- és projektadatokat.{tenant.brand.privacyUrl && <> <a href={tenant.brand.privacyUrl} target="_blank" rel="noreferrer">{tr('Adatkezelési tájékoztató', 'Datenschutzerklärung')} <ExternalLink size={13} /></a></>}</p></div></section>
       </div>
-      <div className="modal-footer"><span className="version-label">{[tenant.brand.name, tenant.brand.suffix].filter(Boolean).join(' ').toUpperCase()} / KONFIGURÁTOR</span><button type="button" className="primary-action" onClick={onClose}>Megértettem</button></div>
+      <div className="modal-footer"><span className="version-label">{[tenant.brand.name, tenant.brand.suffix].filter(Boolean).join(' ').toUpperCase()} / KONFIGURÁTOR</span><button type="button" className="primary-action" onClick={onClose}>{tr('Megértettem', 'Verstanden')}</button></div>
     </Modal>
   )
 }
 
 export function ResetDialog({ onConfirm, onClose }: { onConfirm: () => void; onClose: () => void }) {
   return (
-    <Modal title="Visszaállítod a konfigurációt?" eyebrow="ÚJ KEZDET" onClose={onClose} className="confirm-modal">
-      <p className="modal-intro">A méretek, oldalfalak és kiegészítők az alapbeállításra állnak vissza.</p>
-      <div className="modal-footer"><button type="button" className="secondary-action" onClick={onClose}>Mégse</button><button type="button" className="primary-action" onClick={() => { onConfirm(); onClose() }}>Visszaállítás</button></div>
+    <Modal title={tr('Visszaállítod a konfigurációt?', 'Konfiguration zurücksetzen?')} eyebrow={tr('ÚJ KEZDET', 'NEUER START')} onClose={onClose} className="confirm-modal">
+      <p className="modal-intro">{tr('A méretek, oldalfalak és kiegészítők az alapbeállításra állnak vissza.', 'Maße, Seitenwände und Zubehör werden auf die Grundeinstellung zurückgesetzt.')}</p>
+      <div className="modal-footer"><button type="button" className="secondary-action" onClick={onClose}>{tr('Mégse', 'Abbrechen')}</button><button type="button" className="primary-action" onClick={() => { onConfirm(); onClose() }}>{tr('Visszaállítás', 'Zurücksetzen')}</button></div>
     </Modal>
   )
 }

@@ -25,6 +25,7 @@ import { isSheetLayout } from '@/lib/viewport'
 import DemoDevicePanel from '@/components/DemoDevicePanel'
 import { useDemoDevice } from '@/lib/demoDevice'
 import { TIER_LABEL, detectQualityTier, qualityAboveDevice, type QualityTier } from '@/lib/quality'
+import { tr } from '../i18n/locale'
 
 // A lépések sorrendje a döntések természetes rendje: mit → mekkora és hogyan áll → tető és zárás → szín → komfort → felmérés.
 // Az azonosítók történeti okból maradtak ('size' = Típus, 'mount' = Elhelyezés és méret, 'roof' = Tető, 'sides' = Oldalak, 'extras' = Komfort).
@@ -69,7 +70,7 @@ function SliderField({ label, value, min, max, step, unit, metric = false, onCha
       <div className="field-heading">
         <label htmlFor={id}>{label}</label>
         <span className="number-with-unit">
-          <input aria-label={`${label} értéke ${metric ? 'centiméterben' : unit}`} type="number" min={min * factor} max={max * factor} step={step * factor} value={draft} onChange={(event) => {
+          <input aria-label={`${label} ${tr('értéke', 'Wert in')} ${metric ? tr('centiméterben', 'Zentimetern') : unit}`} type="number" min={min * factor} max={max * factor} step={step * factor} value={draft} onChange={(event) => {
             const raw = event.target.value
             setDraft(raw)
             if (!raw.trim()) return
@@ -94,7 +95,7 @@ function SliderField({ label, value, min, max, step, unit, metric = false, onCha
 function AdvisorCard({ onOpen }: { onOpen: () => void }) {
   return <button type="button" className="advisor-card" onClick={onOpen}>
     <span className="advisor-card-icon"><WandSparkles size={18} /></span>
-    <span><strong>Nem tudod, hol kezdd?</strong><small>4 egyszerű kérdés, és összeállítjuk a hozzád illő pergolát</small></span>
+    <span><strong>{tr('Nem tudod, hol kezdd?', 'Unsicher, wo Sie anfangen sollen?')}</strong><small>{tr('4 egyszerű kérdés, és összeállítjuk a hozzád illő pergolát', '4 einfache Fragen, und wir stellen Ihre passende Pergola zusammen')}</small></span>
     <ChevronRight size={16} />
   </button>
 }
@@ -111,12 +112,12 @@ function SolarToggle({ config, prices, onChange }: { config: PergolaConfig; pric
     const switched = tenantPrice(tenant, { ...config, roof: 'fixed', solar: true }, prices).totalGross
     return <button type="button" className="extra-card solar-switch" onClick={() => onChange({ roof: 'fixed', solar: true })}>
       <SolarPanel size={20} strokeWidth={1.5} />
-      <span><strong>Napelemes tető</strong><small>A {fixedName} fix tetőre kérhető · {solar.layout.count} panel, ≈ {formatNumber(Math.round(solar.production / 100) * 100, 0)} kWh/év</small><em>Váltás {fixedName} + napelem: {switched >= current ? '+' : '−'}{formatPrice(Math.abs(switched - current))}</em></span>
+      <span><strong>{tr('Napelemes tető', 'Photovoltaik-Dach')}</strong><small>{tr(`A ${fixedName} fix tetőre kérhető`, `Für das feste Dach ${fixedName} erhältlich`)} · {solar.layout.count} {tr('panel', 'Module')}, ≈ {formatNumber(Math.round(solar.production / 100) * 100, 0)} kWh/{tr('év', 'Jahr')}</small><em>{tr('Váltás', 'Wechsel zu')} {fixedName} + {tr('napelem', 'PV')}: {switched >= current ? '+' : '−'}{formatPrice(Math.abs(switched - current))}</em></span>
       <ArrowRight size={16} />
     </button>
   }
   const delta = config.solar ? current - tenantPrice(tenant, { ...config, solar: undefined }, prices).totalGross : tenantPrice(tenant, { ...config, solar: true }, prices).totalGross - current
-  return <Toggle label="Napelemes tető" description={`${solar.layout.count} × 430 Wp = ${formatNumber(solar.layout.kwp, 2)} kWp · ≈ ${formatNumber(Math.round(solar.production / 100) * 100, 0)} kWh/év`} icon={SolarPanel} price={`${config.solar ? '' : '+'}${formatPrice(delta)}`} checked={Boolean(config.solar)} onChange={(solar) => onChange({ solar })} />
+  return <Toggle label={tr('Napelemes tető', 'Photovoltaik-Dach')} description={`${solar.layout.count} × 430 Wp = ${formatNumber(solar.layout.kwp, 2)} kWp · ≈ ${formatNumber(Math.round(solar.production / 100) * 100, 0)} kWh/${tr('év', 'Jahr')}`} icon={SolarPanel} price={`${config.solar ? '' : '+'}${formatPrice(delta)}`} checked={Boolean(config.solar)} onChange={(solar) => onChange({ solar })} />
 }
 
 function Toggle({ label, description, checked, icon: Icon, price, onChange }: { label: string; description: string; checked: boolean; icon?: typeof Sun; price?: string; onChange: (checked: boolean) => void }) {
@@ -138,8 +139,8 @@ function HouseContext({ scene, onEdit }: { scene: SceneSettings; onEdit: () => v
   const hex = wallColorHex(scene.wallFinish, scene.wallColor)
   return <button type="button" className="house-context" onClick={onEdit}>
     <span className="house-swatch" style={finishPreview(scene.wallFinish, hex)} aria-hidden="true" />
-    <span><small>A házad</small><strong>{houseSummary(scene)}</strong></span>
-    <em>Módosítás</em>
+    <span><small>{tr('A házad', 'Ihr Haus')}</small><strong>{houseSummary(scene)}</strong></span>
+    <em>{tr('Módosítás', 'Ändern')}</em>
   </button>
 }
 
@@ -161,16 +162,16 @@ function MountIcon({ mount }: { mount: MountType }) {
 
 function SideDiagram({ config, selected, roofName, onSelect }: { config: PergolaConfig; selected: SideKey | 'roof'; roofName: string; onSelect: (side: SideKey | 'roof') => void }) {
   return (
-    <div className="side-diagram" aria-label="Oldal- és tetőválasztó felülnézet">
+    <div className="side-diagram" aria-label={tr('Oldal- és tetőválasztó felülnézet', 'Draufsicht zur Seiten- und Dachauswahl')}>
       {(['back', 'left', 'right', 'front'] as SideKey[]).map((side) => (
-        <button key={side} type="button" className={`diagram-${side} ${selected === side ? 'selected' : ''} type-${config.sides[side]}${config.split?.[side] && !isWallSide(config.mount, side) ? ' is-split' : ''}`} disabled={isWallSide(config.mount, side)} onClick={() => onSelect(side)} aria-label={`${side === 'front' ? 'Elülső' : side === 'back' ? 'Hátsó' : side === 'left' ? 'Bal' : 'Jobb'} oldal kiválasztása`} aria-pressed={selected === side}>
-          <span>{isWallSide(config.mount, side) ? wallLabel(side) : side === 'front' ? 'Elülső' : side === 'back' ? 'Hátsó' : side === 'left' ? 'Bal' : 'Jobb'}</span>
+        <button key={side} type="button" className={`diagram-${side} ${selected === side ? 'selected' : ''} type-${config.sides[side]}${config.split?.[side] && !isWallSide(config.mount, side) ? ' is-split' : ''}`} disabled={isWallSide(config.mount, side)} onClick={() => onSelect(side)} aria-label={tr(`${side === 'front' ? tr('Elülső', 'Vorne') : side === 'back' ? tr('Hátsó', 'Hinten') : side === 'left' ? 'Bal' : 'Jobb'} oldal kiválasztása`, `${side === 'front' ? 'Vordere' : side === 'back' ? 'Hintere' : side === 'left' ? 'Linke' : 'Rechte'} Seite auswählen`)} aria-pressed={selected === side}>
+          <span>{isWallSide(config.mount, side) ? wallLabel(side) : side === 'front' ? tr('Elülső', 'Vorne') : side === 'back' ? tr('Hátsó', 'Hinten') : side === 'left' ? tr('Bal', 'Links') : tr('Jobb', 'Rechts')}</span>
           {!isWallSide(config.mount, side) && <SideStrip config={config} side={side} />}
         </button>
       ))}
-      <button type="button" className={`diagram-core roof-${config.roof} ${selected === 'roof' ? 'selected' : ''}`} onClick={() => onSelect('roof')} aria-pressed={selected === 'roof'} aria-label="Tetőrendszer kiválasztása">
-        <span>Tető · {roofName}</span>
-        <small>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · koppints a mozgatáshoz</small>
+      <button type="button" className={`diagram-core roof-${config.roof} ${selected === 'roof' ? 'selected' : ''}`} onClick={() => onSelect('roof')} aria-pressed={selected === 'roof'} aria-label={tr('Tetőrendszer kiválasztása', 'Dachsystem auswählen')}>
+        <span>{tr('Tető', 'Dach')} · {roofName}</span>
+        <small>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {tr('koppints a mozgatáshoz', 'zum Bewegen antippen')}</small>
       </button>
     </div>
   )
@@ -183,11 +184,11 @@ function RoofControl({ config, scene, onChange, onSceneChange }: { config: Pergo
   const smart = !!scene.smartLouver && config.roof === 'louvered' && !scene.mechanism
   const tracked = smart ? smartLouver(sceneSunVector(scene)) : null
   if (info.motion === 'tilt') return <>
-    <SliderField label="Lamellaszög" value={tracked ? tracked.angle : config.louverAngle} min={0} max={90} step={1} unit="°" onChange={(louverAngle) => { onChange({ louverAngle }); if (scene.mechanism || scene.smartLouver) onSceneChange({ mechanism: false, smartLouver: false }) }} />
-    {config.roof === 'louvered' && <button type="button" className={`mech-cta smart-cta${smart ? ' selected' : ''}`} aria-pressed={smart} onClick={() => onSceneChange({ smartLouver: !smart, mechanism: false })}><Sun size={16} /><span><strong>{smart ? 'Okos mód: a lamellák a napot követik' : 'Okos mód: kövesse a napot'}</strong><small>{tracked ? SMART_LOUVER_TEXT[tracked.reason] : 'A legnagyobb nyitás, ami még teljes árnyékot ad — a napszak csúszkával együtt mozog'}</small></span></button>}
-    {config.roof === 'louvered' && <button type="button" className={`mech-cta${scene.mechanism ? ' selected' : ''}`} aria-pressed={!!scene.mechanism} onClick={() => onSceneChange({ mechanism: !scene.mechanism, sunStudy: false, exploded: false, smartLouver: false })}><Cog size={16} /><span><strong>{scene.mechanism ? 'Bemutató leállítása' : 'Nézd meg működés közben'}</strong><small>Motor, hajtórúd és lamellák élőben, valós gyári adatokkal</small></span></button>}
+    <SliderField label={tr('Lamellaszög', 'Lamellenwinkel')} value={tracked ? tracked.angle : config.louverAngle} min={0} max={90} step={1} unit="°" onChange={(louverAngle) => { onChange({ louverAngle }); if (scene.mechanism || scene.smartLouver) onSceneChange({ mechanism: false, smartLouver: false }) }} />
+    {config.roof === 'louvered' && <button type="button" className={`mech-cta smart-cta${smart ? ' selected' : ''}`} aria-pressed={smart} onClick={() => onSceneChange({ smartLouver: !smart, mechanism: false })}><Sun size={16} /><span><strong>{smart ? tr('Okos mód: a lamellák a napot követik', 'Smart-Modus: Lamellen folgen der Sonne') : tr('Okos mód: kövesse a napot', 'Smart-Modus: der Sonne folgen')}</strong><small>{tracked ? SMART_LOUVER_TEXT[tracked.reason] : tr('A legnagyobb nyitás, ami még teljes árnyékot ad — a napszak csúszkával együtt mozog', 'Die größte Öffnung, die noch vollen Schatten gibt — bewegt sich mit dem Tageszeit-Regler')}</small></span></button>}
+    {config.roof === 'louvered' && <button type="button" className={`mech-cta${scene.mechanism ? ' selected' : ''}`} aria-pressed={!!scene.mechanism} onClick={() => onSceneChange({ mechanism: !scene.mechanism, sunStudy: false, exploded: false, smartLouver: false })}><Cog size={16} /><span><strong>{scene.mechanism ? tr('Bemutató leállítása', 'Vorführung stoppen') : tr('Nézd meg működés közben', 'In Bewegung ansehen')}</strong><small>{tr('Motor, hajtórúd és lamellák élőben, valós gyári adatokkal', 'Motor, Antriebsstange und Lamellen live, mit realen Herstellerdaten')}</small></span></button>}
   </>
-  return <SliderField label="Tetőnyitás" value={Math.round(config.louverAngle / 0.9)} min={0} max={100} step={1} unit="%" onChange={(open) => onChange({ louverAngle: Math.round(open * 9) / 10 })} />
+  return <SliderField label={tr('Tetőnyitás', 'Dachöffnung')} value={Math.round(config.louverAngle / 0.9)} min={0} max={100} step={1} unit="%" onChange={(open) => onChange({ louverAngle: Math.round(open * 9) / 10 })} />
 }
 
 /** Tetőburkolat-választó (üveg: tiszta / matt / hővisszaverő; polikarbonát: opál / tiszta / hővisszaverő). */
@@ -196,8 +197,8 @@ function GlazingPicker({ config, prices, onChange }: { config: PergolaConfig; pr
   if (!options.length) return null
   const current = effectiveGlazing(config)
   return <div className="glazing-picker">
-    <SectionTitle title={config.roof === 'glass' ? 'Üveg típusa' : 'Polikarbonát típusa'} hint="Tiszta, matt, opál, hővisszaverő vagy füstös: ez dönti el, mennyi fény és hő jut be. A számok tájékoztató értékek." />
-    <div className="glazing-chips" role="radiogroup" aria-label="Tetőburkolat">{options.map((id) => {
+    <SectionTitle title={config.roof === 'glass' ? tr('Üveg típusa', 'Glasart') : tr('Polikarbonát típusa', 'Polycarbonat-Art')} hint={tr('Tiszta, matt, opál, hővisszaverő vagy füstös: ez dönti el, mennyi fény és hő jut be. A számok tájékoztató értékek.', 'Klar, matt, opal, wärmereflektierend oder getönt: das bestimmt, wie viel Licht und Wärme hereinkommt. Die Zahlen sind Richtwerte.')} />
+    <div className="glazing-chips" role="radiogroup" aria-label={tr('Tetőburkolat', 'Dacheindeckung')}>{options.map((id) => {
       const info = GLAZING_INFO[id]
       const priceKey = glazingPriceKey(config.roof, id)
       const price = priceKey ? prices[priceKey] : 0
@@ -218,9 +219,9 @@ function RoofPicker({ config, prices, onChange }: { config: PergolaConfig; price
       const brand = tenant.roofs[roof]!
       const delta = roof === config.roof ? 0 : tenantPrice(tenant, { ...config, roof }, prices).totalGross - current
       return <button type="button" key={roof} className={`roof-card roof-${roof}${config.roof === roof ? ' selected' : ''}`} aria-pressed={config.roof === roof} onClick={() => { onChange({ roof }); if (glazingOptions(roof).length && roof !== config.roof) window.setTimeout(() => document.querySelector('.glazing-picker:not(.wall-glazing)')?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }), 120) }}>
-        <span className="roof-card-head"><RoofIcon roof={roof} /><span><strong>{brand.name}</strong><small>{brand.short}</small></span><em>{roof === config.roof ? 'Kiválasztva' : `${delta > 0 ? '+' : '−'}${formatPrice(Math.abs(delta))}`}</em></span>
+        <span className="roof-card-head"><RoofIcon roof={roof} /><span><strong>{brand.name}</strong><small>{brand.short}</small></span><em>{roof === config.roof ? tr('Kiválasztva', 'Ausgewählt') : `${delta > 0 ? '+' : '−'}${formatPrice(Math.abs(delta))}`}</em></span>
         <span className="roof-card-text">{brand.description}</span>
-        <span className="roof-card-props"><span><b>Árnyék</b>{info.shade}</span><span><b>Eső</b>{info.rain}</span><span><b>Mozgás</b>{info.motion === 'tilt' ? 'Forgatható lamellák' : info.motion === 'slide' ? 'Behúzható / nyitható' : 'Fix'}</span></span>
+        <span className="roof-card-props"><span><b>{tr('Árnyék', 'Schatten')}</b>{info.shade}</span><span><b>{tr('Eső', 'Regen')}</b>{info.rain}</span><span><b>{tr('Mozgás', 'Bewegung')}</b>{info.motion === 'tilt' ? tr('Forgatható lamellák', 'Drehbare Lamellen') : info.motion === 'slide' ? tr('Behúzható / nyitható', 'Einfahrbar / öffenbar') : 'Fix'}</span></span>
       </button>
     })}
   </div>
@@ -290,37 +291,37 @@ export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneCha
   const demoDevice = useDemoDevice()
   const setDayTime = (dayTime: number) => onSceneChange({ dayTime, time: dayTime >= 20 || dayTime < 7 ? 'night' : dayTime >= 17 ? 'sunset' : 'day' })
   const carport = config.building === 'carport'
-  const thing = carport ? 'a carport' : 'a pergola'
+  const thing = carport ? tr('a carport', 'Carport') : tr('a pergola', 'Pergola')
   return (
           <div className="scene-settings-body">
-            <SectionTitle title="Napszak" hint="Állítsd be az időpontot, és nézd meg, hogyan változik a jelenet megvilágítása." />
-            <div className="time-labels"><span>Reggel</span><strong>{String(Math.floor(scene.dayTime)).padStart(2, '0')}:00</strong><span>Éjjel</span></div>
-            <input aria-label="Napszak" className="range-input daylight-range" type="range" min={6} max={23} step={0.25} value={scene.dayTime} onChange={(event) => setDayTime(Number(event.target.value))} />
-            <div className="scene-options compact">{([[13, 'Nappal', Sun], [18, 'Aranyóra', Sunset], [22, 'Éjszaka', Moon]] as const).map(([time, label, Icon]) => <button type="button" key={label} className={scene.time === (time === 13 ? 'day' : time === 18 ? 'sunset' : 'night') ? 'selected' : ''} onClick={() => setDayTime(time)}><Icon size={17} /><span>{label}</span></button>)}</div>
-            {!scene.sunStudy && <div className="inline-setting"><SliderField label="Napirány" value={scene.sunDirection ?? 0} min={0} max={360} step={5} unit="°" onChange={(sunDirection) => onSceneChange({ sunDirection: sunDirection % 360 })} /><p className="split-note">{carport ? 'A nap járásának elforgatása a telek körül: az árnyék oda esik, ahova nálad.' : 'A nap járásának elforgatása a terasz körül: az árnyék oda esik, ahova a te teraszodon.'} Pontos helyszín és dátum szerint az Árnyékelemzésben.</p></div>}
-            <SectionTitle title="Környezet" hint={carport ? 'Családi ház előtt, vagy csak a carport semleges háttér előtt – katalógus-bemutatóhoz.' : 'Családi ház teraszán, vagy csak a pergola semleges háttér előtt – vendéglátós, ipari vagy katalógus-bemutatóhoz.'} />
-            <div className="scene-options compact two" role="radiogroup" aria-label="Környezet">
-              {([['terrace', 'Családi ház', House], ['studio', `Csak ${thing}`, Box]] as const).map(([ground, label, Icon]) => { const active = (scene.ground === 'studio') === (ground === 'studio'); return <button type="button" role="radio" aria-checked={active} key={ground} className={active ? 'selected' : ''} onClick={() => onSceneChange({ ground })}><Icon size={17} /><span>{label}</span></button> })}
+            <SectionTitle title={tr('Napszak', 'Tageszeit')} hint={tr('Állítsd be az időpontot, és nézd meg, hogyan változik a jelenet megvilágítása.', 'Stellen Sie die Uhrzeit ein und sehen Sie, wie sich die Beleuchtung ändert.')} />
+            <div className="time-labels"><span>Reggel</span><strong>{String(Math.floor(scene.dayTime)).padStart(2, '0')}:00</strong><span>{tr('Éjjel', 'Nachts')}</span></div>
+            <input aria-label={tr('Napszak', 'Tageszeit')} className="range-input daylight-range" type="range" min={6} max={23} step={0.25} value={scene.dayTime} onChange={(event) => setDayTime(Number(event.target.value))} />
+            <div className="scene-options compact">{([[13, tr('Nappal', 'Tag'), Sun], [18, tr('Aranyóra', 'Goldene Stunde'), Sunset], [22, tr('Éjszaka', 'Nacht'), Moon]] as const).map(([time, label, Icon]) => <button type="button" key={label} className={scene.time === (time === 13 ? 'day' : time === 18 ? 'sunset' : 'night') ? 'selected' : ''} onClick={() => setDayTime(time)}><Icon size={17} /><span>{label}</span></button>)}</div>
+            {!scene.sunStudy && <div className="inline-setting"><SliderField label={tr('Napirány', 'Sonnenrichtung')} value={scene.sunDirection ?? 0} min={0} max={360} step={5} unit="°" onChange={(sunDirection) => onSceneChange({ sunDirection: sunDirection % 360 })} /><p className="split-note">{carport ? tr('A nap járásának elforgatása a telek körül: az árnyék oda esik, ahova nálad.', 'Den Sonnenlauf um das Grundstück drehen: der Schatten fällt dorthin, wo er bei Ihnen fällt.') : tr('A nap járásának elforgatása a terasz körül: az árnyék oda esik, ahova a te teraszodon.', 'Den Sonnenlauf um die Terrasse drehen: der Schatten fällt dorthin, wo er auf Ihrer Terrasse fällt.')} Pontos helyszín és dátum szerint az Árnyékelemzésben.</p></div>}
+            <SectionTitle title={tr('Környezet', 'Umgebung')} hint={carport ? tr('Családi ház előtt, vagy csak a carport semleges háttér előtt – katalógus-bemutatóhoz.', 'Vor einem Einfamilienhaus oder nur der Carport vor neutralem Hintergrund – für die Katalogpräsentation.') : tr('Családi ház teraszán, vagy csak a pergola semleges háttér előtt – vendéglátós, ipari vagy katalógus-bemutatóhoz.', 'Auf der Terrasse eines Einfamilienhauses oder nur die Pergola vor neutralem Hintergrund – für Gastronomie, Gewerbe oder Katalog.')} />
+            <div className="scene-options compact two" role="radiogroup" aria-label={tr('Környezet', 'Umgebung')}>
+              {([['terrace', tr('Családi ház', 'Einfamilienhaus'), House], ['studio', tr(`Csak ${thing}`, `Nur ${thing}`), Box]] as const).map(([ground, label, Icon]) => { const active = (scene.ground === 'studio') === (ground === 'studio'); return <button type="button" role="radio" aria-checked={active} key={ground} className={active ? 'selected' : ''} onClick={() => onSceneChange({ ground })}><Icon size={17} /><span>{label}</span></button> })}
             </div>
             {/* A berendezés a jelenet része (nem a terméké): itt van, a környezet mellett, nem a lépések között. */}
             {!carport && <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />}
             <div className="scene-toggle-grid">
-              <Toggle label="180 cm-es figura" description="A méretek szemléltetéséhez" checked={scene.showPerson} onChange={(showPerson) => onSceneChange({ showPerson })} />
-              <Toggle label="Méretcímkék" description="Aktuális méretek centiméterben" checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
-              <Toggle label="Műszaki jelölések" description="Részletek a 3D modellen" checked={scene.showHotspots} onChange={(showHotspots) => onSceneChange({ showHotspots })} />
-              <Toggle label="Feliratok a 3D-ben" description="Kattintási tippek és a Működés címkéi" checked={scene.labels !== false} onChange={(labels) => onSceneChange({ labels })} />
-              <Toggle label="Robbantott nézet" description="A szerkezet elemei szétválasztva" checked={scene.exploded} onChange={(exploded) => onSceneChange({ exploded })} />
-              <Toggle label="Automata forgatás" description="Koppintásra megáll" checked={scene.autoRotate} onChange={(autoRotate) => onSceneChange({ autoRotate })} />
-              <Toggle label="Követő kamera" description={carport ? 'A választáshoz fordul (szín, tető)' : 'A választáshoz fordul (oldal, szín, ventilátor)'} checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
+              <Toggle label={tr('180 cm-es figura', '180-cm-Figur')} description={tr('A méretek szemléltetéséhez', 'Zur Veranschaulichung der Größe')} checked={scene.showPerson} onChange={(showPerson) => onSceneChange({ showPerson })} />
+              <Toggle label={tr('Méretcímkék', 'Maßangaben')} description={tr('Aktuális méretek centiméterben', 'Aktuelle Maße in Zentimetern')} checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
+              <Toggle label={tr('Műszaki jelölések', 'Technische Markierungen')} description={tr('Részletek a 3D modellen', 'Details am 3D-Modell')} checked={scene.showHotspots} onChange={(showHotspots) => onSceneChange({ showHotspots })} />
+              <Toggle label={tr('Feliratok a 3D-ben', 'Beschriftungen in 3D')} description={tr('Kattintási tippek és a Működés címkéi', 'Klick-Tipps und Beschriftungen der Funktionsvorführung')} checked={scene.labels !== false} onChange={(labels) => onSceneChange({ labels })} />
+              <Toggle label={tr('Robbantott nézet', 'Explosionsansicht')} description={tr('A szerkezet elemei szétválasztva', 'Die Bauteile auseinandergezogen')} checked={scene.exploded} onChange={(exploded) => onSceneChange({ exploded })} />
+              <Toggle label={tr('Automata forgatás', 'Automatisch drehen')} description={tr('Koppintásra megáll', 'Stoppt beim Antippen')} checked={scene.autoRotate} onChange={(autoRotate) => onSceneChange({ autoRotate })} />
+              <Toggle label={tr('Követő kamera', 'Mitführende Kamera')} description={carport ? tr('A választáshoz fordul (szín, tető)', 'Dreht sich zur Auswahl (Farbe, Dach)') : tr('A választáshoz fordul (oldal, szín, ventilátor)', 'Dreht sich zur Auswahl (Seite, Farbe, Ventilator)')} checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
             </div>
-            <label className="select-field"><span>3D minőség</span><select value={demoDevice ? 'ultra' : scene.quality} disabled={demoDevice} aria-describedby={demoDevice ? 'quality-locked' : undefined} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus ({TIER_LABEL[detectedTier].toLowerCase()} ezen az eszközön)</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="medium">Közepes</option><option value="low">Alacsony</option></select></label>
-            {demoDevice && <p id="quality-locked" className="field-hint" role="note">A bemutató eszköz mód rögzíti: Ultra (automatikus visszaléptetés nélkül).</p>}
+            <label className="select-field"><span>{tr('3D minőség', '3D-Qualität')}</span><select value={demoDevice ? 'ultra' : scene.quality} disabled={demoDevice} aria-describedby={demoDevice ? 'quality-locked' : undefined} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus ({TIER_LABEL[detectedTier].toLowerCase()} ezen az eszközön)</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="medium">{tr('Közepes', 'Mittel')}</option><option value="low">Alacsony</option></select></label>
+            {demoDevice && <p id="quality-locked" className="field-hint" role="note">{tr('A bemutató eszköz mód rögzíti: Ultra (automatikus visszaléptetés nélkül).', 'Im Vorführgerät-Modus fixiert: Ultra (ohne automatisches Zurückstufen).')}</p>}
             {!demoDevice && qualityAboveDevice(scene.quality, detectedTier) && <p className="field-hint quality-hint" role="note">Ezen az eszközön a(z) {TIER_LABEL[scene.quality as QualityTier].toLowerCase()} szint akadozhat. Az Automatikus a gép teljesítményéhez igazítja a képet.</p>}
             <DemoDevicePanel />
             <div className="photo-mode">
-              <div><Image size={18} /><span><strong>Előnézet saját fotóval</strong><small>A kép csak ebben a böngészőben jelenik meg.</small></span></div>
-              <label className="upload-button"><Upload size={15} />Fotó feltöltése<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoUpload(file); event.target.value = '' }} /></label>
-              {scene.photoUrl && <><Toggle label="Fotós előnézet" description="Pergola a saját teraszodon" checked={scene.photoMode} onChange={(photoMode) => onSceneChange({ photoMode })} />{scene.photoMode && <div className="photo-transform"><SliderField label="Vízszintes pozíció" value={scene.photoX} min={-8} max={8} step={0.05} unit="m" onChange={(photoX) => onSceneChange({ photoX })} /><SliderField label="Függőleges pozíció" value={scene.photoY} min={-5} max={5} step={0.05} unit="m" onChange={(photoY) => onSceneChange({ photoY })} /><SliderField label="Méret a fotón" value={scene.photoScale} min={0.15} max={4} step={0.05} unit="×" onChange={(photoScale) => onSceneChange({ photoScale })} /><SliderField label="Elforgatás" value={Math.round(scene.photoRotation)} min={-180} max={180} step={1} unit="°" onChange={(photoRotation) => onSceneChange({ photoRotation })} /><SliderField label="Nézőszög" value={scene.photoTilt} min={0} max={60} step={1} unit="°" onChange={(photoTilt) => onSceneChange({ photoTilt })} /></div>}</>}
+              <div><Image size={18} /><span><strong>{tr('Előnézet saját fotóval', 'Vorschau mit eigenem Foto')}</strong><small>{tr('A kép csak ebben a böngészőben jelenik meg.', 'Das Bild erscheint nur in diesem Browser.')}</small></span></div>
+              <label className="upload-button"><Upload size={15} />{tr('Fotó feltöltése', 'Foto hochladen')}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoUpload(file); event.target.value = '' }} /></label>
+              {scene.photoUrl && <><Toggle label={tr('Fotós előnézet', 'Fotovorschau')} description={tr('Pergola a saját teraszodon', 'Pergola auf Ihrer eigenen Terrasse')} checked={scene.photoMode} onChange={(photoMode) => onSceneChange({ photoMode })} />{scene.photoMode && <div className="photo-transform"><SliderField label={tr('Vízszintes pozíció', 'Horizontale Position')} value={scene.photoX} min={-8} max={8} step={0.05} unit="m" onChange={(photoX) => onSceneChange({ photoX })} /><SliderField label={tr('Függőleges pozíció', 'Vertikale Position')} value={scene.photoY} min={-5} max={5} step={0.05} unit="m" onChange={(photoY) => onSceneChange({ photoY })} /><SliderField label={tr('Méret a fotón', 'Größe im Foto')} value={scene.photoScale} min={0.15} max={4} step={0.05} unit="×" onChange={(photoScale) => onSceneChange({ photoScale })} /><SliderField label={tr('Elforgatás', 'Drehung')} value={Math.round(scene.photoRotation)} min={-180} max={180} step={1} unit="°" onChange={(photoRotation) => onSceneChange({ photoRotation })} /><SliderField label={tr('Nézőszög', 'Blickwinkel')} value={scene.photoTilt} min={0} max={60} step={1} unit="°" onChange={(photoTilt) => onSceneChange({ photoTilt })} /></div>}</>}
             </div>
           </div>
   )
@@ -357,12 +358,12 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   const [halfSide, setHalfSide] = useState(selectedSide)
   if (halfSide !== selectedSide) { setHalfSide(selectedSide); setHalf(0) }
   const sideSettings = (side: SideKey) => isWallSide(config.mount, side)
-    ? <div className="selected-side-head"><strong>{sideNames[side]}</strong><span>{wallLabel(side)} · rögzítési oldal</span></div>
+    ? <div className="selected-side-head"><strong>{sideNames[side]}</strong><span>{wallLabel(side)} · {tr('rögzítési oldal', 'Befestigungsseite')}</span></div>
     : <>
       <SideSettings side={side} sideName={sideNames[side]} config={config} scene={scene} prices={prices} half={half} onHalfChange={setHalf} onChange={onChange} onSceneChange={onSceneChange} />
-      {hasZip && <div className="inline-setting"><SliderField label="ZIP screen nyitottsága" value={config.screenOpen} min={0} max={100} step={1} unit="%" onChange={(screenOpen) => onChange({ screenOpen })} /></div>}
+      {hasZip && <div className="inline-setting"><SliderField label={tr('ZIP screen nyitottsága', 'Öffnung des ZIP-Screens')} value={config.screenOpen} min={0} max={100} step={1} unit="%" onChange={(screenOpen) => onChange({ screenOpen })} /></div>}
       {[config.sides[side], config.split?.[side]].some((type) => type === 'door' || type === 'doorSliding') && <button type="button" className={`mech-cta${config.doorMirror?.[side] ? ' selected' : ''}`} aria-pressed={!!config.doorMirror?.[side]} onClick={() => onChange({ doorMirror: { ...config.doorMirror, [side]: !config.doorMirror?.[side] } })}>
-        <ArrowLeftRight size={18} /><span><strong>Nyitás a másik oldalra</strong><small>{config.sides[side] === 'doorSliding' || config.split?.[side] === 'doorSliding' ? 'A tolószárny a másik sarokból indul' : 'A zsanér a másik sarokban – a szárny a másik irányba nyílik'}</small></span>
+        <ArrowLeftRight size={18} /><span><strong>{tr('Nyitás a másik oldalra', 'Öffnung zur anderen Seite')}</strong><small>{config.sides[side] === 'doorSliding' || config.split?.[side] === 'doorSliding' ? tr('A tolószárny a másik sarokból indul', 'Der Schiebeflügel startet in der anderen Ecke') : tr('A zsanér a másik sarokban – a szárny a másik irányba nyílik', 'Scharnier in der anderen Ecke – der Flügel öffnet in die andere Richtung')}</small></span>
       </button>}
     </>
   const roofLabelsFor = (roof: RoofType) => `${tenant.roofs[roof]?.name ?? ''} · ${tenant.roofs[roof]?.short ?? ''}`
@@ -370,7 +371,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   const stepIndex = STEPS.findIndex((item) => item.id === step)
   const [appliedPreset, setAppliedPreset] = useState<string | null>(null)
   const stepLabel = (id: ConfigStep) => STEPS.find((item) => item.id === id)!.label
-  const buildingName = config.building === 'conservatory' ? 'Télikert' : config.building === 'veranda' ? 'Veranda' : config.building === 'carport' ? 'Carport' : 'Pergola'
+  const buildingName = config.building === 'conservatory' ? tr('Télikert', 'Wintergarten') : config.building === 'veranda' ? 'Veranda' : config.building === 'carport' ? 'Carport' : 'Pergola'
   const [stepTrack, setStepTrack] = useState({ index: stepIndex, dir: 'fwd' as 'fwd' | 'back' })
   if (stepTrack.index !== stepIndex) setStepTrack({ index: stepIndex, dir: stepIndex > stepTrack.index ? 'fwd' : 'back' })
   const stepDir = stepTrack.dir
@@ -380,16 +381,16 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
     const distance = event.changedTouches[0].clientX - touchStart.current
     if (Math.abs(distance) > 55) go(stepIndex + (distance < 0 ? 1 : -1))
   }
-  const sideNames: Record<SideKey, string> = { front: 'Elülső oldal', back: 'Hátsó oldal', left: 'Bal oldal', right: 'Jobb oldal' }
+  const sideNames: Record<SideKey, string> = { front: tr('Elülső oldal', 'Vordere Seite'), back: tr('Hátsó oldal', 'Hintere Seite'), left: tr('Bal oldal', 'Linke Seite'), right: tr('Jobb oldal', 'Rechte Seite') }
 
   return (
-    <aside ref={panelRef} className={`controls-panel glass-panel sheet-${sheet} ${mobileOpen ? 'is-mobile-open' : ''}`} aria-label="Pergola beállításai" onTouchStart={(event) => { touchStart.current = event.touches[0].clientX }} onTouchEnd={touchEnd}>
-      <button type="button" className="sheet-toggle" aria-expanded={mobileOpen} aria-label={sheet === 'peek' ? 'Pergola beállításainak megnyitása' : 'Beállítások összecsukása a 3D nézethez'} {...sheetGesture}><span className="sheet-handle" aria-hidden="true" /><span><SlidersHorizontal size={16} />{sheet === 'peek' ? 'Beállítások' : sheet === 'half' ? `${stepIndex + 1}/${STEPS.length} · ${stepLabel(step)}` : 'Vissza a 3D nézethez'}</span><ChevronDown size={16} /></button>
+    <aside ref={panelRef} className={`controls-panel glass-panel sheet-${sheet} ${mobileOpen ? 'is-mobile-open' : ''}`} aria-label={tr('Pergola beállításai', 'Pergola-Einstellungen')} onTouchStart={(event) => { touchStart.current = event.touches[0].clientX }} onTouchEnd={touchEnd}>
+      <button type="button" className="sheet-toggle" aria-expanded={mobileOpen} aria-label={sheet === 'peek' ? tr('Pergola beállításainak megnyitása', 'Pergola-Einstellungen öffnen') : tr('Beállítások összecsukása a 3D nézethez', 'Einstellungen für die 3D-Ansicht einklappen')} {...sheetGesture}><span className="sheet-handle" aria-hidden="true" /><span><SlidersHorizontal size={16} />{sheet === 'peek' ? tr('Beállítások', 'Einstellungen') : sheet === 'half' ? `${stepIndex + 1}/${STEPS.length} · ${stepLabel(step)}` : tr('Vissza a 3D nézethez', 'Zurück zur 3D-Ansicht')}</span><ChevronDown size={16} /></button>
       <div className="config-head">
-        <div><span>Konfiguráció</span><strong>{String(stepIndex + 1).padStart(2, '0')} / {String(STEPS.length).padStart(2, '0')}</strong></div>
+        <div><span>{tr('Konfiguráció', 'Konfiguration')}</span><strong>{String(stepIndex + 1).padStart(2, '0')} / {String(STEPS.length).padStart(2, '0')}</strong></div>
         <span className="mini-summary">{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {MOUNT_SHORT[config.mount]}</span>
       </div>
-      <div className="control-tabs" ref={tabsRef} role="tablist" aria-label="Konfigurációs lépések">
+      <div className="control-tabs" ref={tabsRef} role="tablist" aria-label={tr('Konfigurációs lépések', 'Konfigurationsschritte')}>
         {STEPS.map((item, index) => (
           <button key={item.id} type="button" role="tab" aria-selected={step === item.id} className={`${step === item.id ? 'active' : ''} ${index < stepIndex ? 'complete' : ''}`} onClick={() => onStepChange(item.id)} title={stepLabel(item.id)}>
             <span className="step-dot">{index < stepIndex ? <Check size={11} /> : index + 1}</span><span>{stepLabel(item.id)}</span>
@@ -402,65 +403,65 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
 
           {step === 'size' && <>
             {!carport && onAdvisor && <AdvisorCard onOpen={onAdvisor} />}
-            <SectionTitle title="Mit építesz?" hint={`Pergola, veranda, télikert, carport${modular ? ' vagy modulház' : ''}. A választás átállítja a modellt, a lépéseket és az árat; utána minden módosítható.`} />
+            <SectionTitle title={tr('Mit építesz?', 'Was bauen Sie?')} hint={tr(`Pergola, veranda, télikert, carport${modular ? ' vagy modulház' : ''}. A választás átállítja a modellt, a lépéseket és az árat; utána minden módosítható.`, `Pergola, Veranda, Wintergarten, Carport${modular ? ' oder Modulhaus' : ''}. Die Wahl stellt Modell, Schritte und Preis um; danach ist alles änderbar.`)} />
             <BuildingPicker config={config} prices={prices} onChange={onChange} modular={modular} />
-            <SectionTitle title="Kiinduló csomagok" hint={config.building ? `A kiválasztott típushoz (${config.building === 'conservatory' ? 'télikert' : config.building === 'carport' ? 'carport' : 'veranda'}) illő kiinduló terv. Utána minden szabadon módosítható.` : 'Egy koppintással indulhatsz, utána minden szabadon módosítható.'} />
-            <div className="preset-list">{(tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')).length ? tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')) : tenant.presets).map((preset) => <button type="button" key={preset.id} className={[appliedPreset === preset.id ? 'applied' : '', preset.featured ? 'is-featured' : ''].filter(Boolean).join(' ') || undefined} onClick={() => { onPreset(presetConfig(tenant, preset.config)); setAppliedPreset(preset.id); window.setTimeout(() => setAppliedPreset((current) => (current === preset.id ? null : current)), 1400) }}><strong>{preset.name}{preset.featured && <em className="preset-badge">Legnépszerűbb</em>}</strong><span>{preset.description}</span>{appliedPreset === preset.id ? <Check size={15} /> : <ArrowRight size={15} />}</button>)}</div>
-            <p className="split-note">A méreteket, a tetőt, az oldalakat és a színt a következő lépésekben állítod be; a bútor és a környezet a 3D feletti <strong>Nézet</strong> gombnál van.</p>
+            <SectionTitle title={tr('Kiinduló csomagok', 'Startpakete')} hint={config.building ? tr(`A kiválasztott típushoz (${config.building === 'conservatory' ? 'télikert' : config.building === 'carport' ? 'carport' : 'veranda'}) illő kiinduló terv. Utána minden szabadon módosítható.`, `Startentwurf passend zum gewählten Typ (${config.building === 'conservatory' ? 'Wintergarten' : config.building === 'carport' ? 'Carport' : 'Veranda'}). Danach ist alles frei änderbar.`) : tr('Egy koppintással indulhatsz, utána minden szabadon módosítható.', 'Mit einem Tippen starten, danach ist alles frei änderbar.')} />
+            <div className="preset-list">{(tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')).length ? tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === (config.building ?? 'pergola')) : tenant.presets).map((preset) => <button type="button" key={preset.id} className={[appliedPreset === preset.id ? 'applied' : '', preset.featured ? 'is-featured' : ''].filter(Boolean).join(' ') || undefined} onClick={() => { onPreset(presetConfig(tenant, preset.config)); setAppliedPreset(preset.id); window.setTimeout(() => setAppliedPreset((current) => (current === preset.id ? null : current)), 1400) }}><strong>{preset.name}{preset.featured && <em className="preset-badge">{tr('Legnépszerűbb', 'Am beliebtesten')}</em>}</strong><span>{preset.description}</span>{appliedPreset === preset.id ? <Check size={15} /> : <ArrowRight size={15} />}</button>)}</div>
+            <p className="split-note">{tr('A méreteket, a tetőt, az oldalakat és a színt a következő lépésekben állítod be; a bútor és a környezet a 3D feletti ', 'Größe, Dach, Seiten und Farbe stellen Sie in den nächsten Schritten ein; Möbel und Umgebung finden Sie über der 3D-Ansicht unter ')}<strong>{tr('Nézet', 'Ansicht')}</strong>{tr(' gombnál van.', '.')}</p>
           </>}
 
           {step === 'mount' && <>
-            <SectionTitle title="Elhelyezés" hint="Falhoz rögzítve, sarokban vagy szabadon: ez dönti el, hová kerülnek az oszlopok és a falak. A méret ehhez igazodik." />
+            <SectionTitle title={tr('Elhelyezés', 'Montage')} hint={tr('Falhoz rögzítve, sarokban vagy szabadon: ez dönti el, hová kerülnek az oszlopok és a falak. A méret ehhez igazodik.', 'An der Wand, in der Ecke oder freistehend: das bestimmt, wo Steher und Wände sitzen. Die Größe passt sich daran an.')} />
             <div className="roof-options mount-options">{MOUNT_TYPES.filter((mount) => tenant.mounts.includes(mount)).map((mount) => <button type="button" key={mount} className={config.mount === mount ? 'selected' : ''} aria-pressed={config.mount === mount} onClick={() => onChange({ mount })}><MountIcon mount={mount} /><span><strong>{MOUNT_LABELS[mount]}</strong><small>{MOUNT_DESCRIPTIONS[mount]}</small></span><span className="selection-dot">{config.mount === mount && <Check size={12} />}</span></button>)}</div>
-            <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
+            <SectionTitle title={tr('Külső szerkezeti méretek', 'Konstruktions-Außenmaße')} hint={tr('Írd be az értékeket centiméterben, vagy használd a csúszkákat.', 'Werte in Zentimetern eingeben oder die Regler nutzen.')} />
             {(limits.maxModules ?? 1) > 1 && <>
-              <SectionTitle title="Modulok" hint="Összekapcsolt mezők közös oszlopokkal – hosszú teraszra, vendéglátó terekre. Az ár és az összterület modulonként számolódik." />
-              <div className="scene-options compact four" role="radiogroup" aria-label="Modulok száma">
+              <SectionTitle title={tr('Modulok', 'Module')} hint={tr('Összekapcsolt mezők közös oszlopokkal – hosszú teraszra, vendéglátó terekre. Az ár és az összterület modulonként számolódik.', 'Gekoppelte Felder mit gemeinsamen Stehern – für lange Terrassen und Gastronomie. Preis und Gesamtfläche werden je Modul berechnet.')} />
+              <div className="scene-options compact four" role="radiogroup" aria-label={tr('Modulok száma', 'Anzahl Module')}>
                 {Array.from({ length: Math.min(4, limits.maxModules ?? 1) }, (_, index) => index + 1).map((count) => { const active = moduleCount(config) === count; return <button type="button" role="radio" aria-checked={active} key={count} className={active ? 'selected' : ''} onClick={() => onChange({ modules: count > 1 ? count : undefined, width: Math.round(bayWidth(config) * count * 100) / 100 })}><strong>{count}×</strong></button> })}
               </div>
             </>}
-            <SliderField label={moduleCount(config) > 1 ? 'Szélesség modulonként' : 'Szélesség'} value={bayWidth(config)} min={limits.width[0]} max={limits.width[1]} step={0.05} unit="m" metric onChange={(bay) => onChange({ width: Math.round(bay * moduleCount(config) * 100) / 100 })} />
+            <SliderField label={moduleCount(config) > 1 ? tr('Szélesség modulonként', 'Breite je Modul') : tr('Szélesség', 'Breite')} value={bayWidth(config)} min={limits.width[0]} max={limits.width[1]} step={0.05} unit="m" metric onChange={(bay) => onChange({ width: Math.round(bay * moduleCount(config) * 100) / 100 })} />
             {moduleCount(config) > 1 && <p className="split-note">{modulesLabel(config, (value) => formatNumber(value, 2))} mező · összesen {formatNumber(config.width, 2)} m széles, {moduleCount(config) - 1} közös oszlopsorral.</p>}
-            <SliderField label="Mélység" value={config.depth} min={limits.depth[0]} max={limits.depth[1]} step={0.05} unit="m" metric onChange={(depth) => onChange({ depth })} />
-            <SliderField label="Oszlopmagasság" value={config.height} min={limits.height[0]} max={limits.height[1]} step={0.05} unit="m" metric onChange={(height) => onChange({ height })} />
-            {bayWidth(config) > 6 && <div className="smart-warning"><Columns3 size={18} /><p><strong>Középoszlop javasolt</strong>600 cm feletti mezőnél a műszaki ellenőrzés és egy középoszlop szükséges lehet.</p></div>}
+            <SliderField label={tr('Mélység', 'Tiefe')} value={config.depth} min={limits.depth[0]} max={limits.depth[1]} step={0.05} unit="m" metric onChange={(depth) => onChange({ depth })} />
+            <SliderField label={tr('Oszlopmagasság', 'Steherhöhe')} value={config.height} min={limits.height[0]} max={limits.height[1]} step={0.05} unit="m" metric onChange={(height) => onChange({ height })} />
+            {bayWidth(config) > 6 && <div className="smart-warning"><Columns3 size={18} /><p><strong>{tr('Középoszlop javasolt', 'Mittelsteher empfohlen')}</strong>{tr('600 cm feletti mezőnél a műszaki ellenőrzés és egy középoszlop szükséges lehet.', 'Bei Feldern über 600 cm kann eine technische Prüfung und ein Mittelsteher nötig sein.')}</p></div>}
             <div className="smart-helper"><Sparkles size={18} /><p><strong>{getSizeRecommendation(config).split(' · ')[0]}</strong>{getSizeRecommendation(config).split(' · ')[1]}</p></div>
             <BuildingIssues config={config} onFix={onChange} only={issuesForStep('mount')} />
           </>}
 
           {step === 'color' && <>
             {/* Két, összetartozó döntés: a pergola színe és a ház, amelyhez illenie kell. */}
-            <div className="color-tabs" role="tablist" aria-label="Színek">
+            <div className="color-tabs" role="tablist" aria-label={tr('Színek', 'Farben')}>
               <button type="button" role="tab" aria-selected={colorTab === 'pergola'} className={colorTab === 'pergola' ? 'active' : ''} onClick={() => setColorTab('pergola')}>
                 <span className="color-tab-swatch" style={{ background: frameHex }} aria-hidden="true" />
                 <span><strong>{carport ? 'Carport' : 'Pergola'}</strong><small>{frameName}</small></span>
               </button>
               <button type="button" role="tab" aria-selected={colorTab === 'house'} className={colorTab === 'house' ? 'active' : ''} onClick={() => setColorTab('house')}>
                 <span className="color-tab-swatch" style={finishPreview(scene.wallFinish, wallColorHex(scene.wallFinish, scene.wallColor))} aria-hidden="true" />
-                <span><strong>A házad</strong><small>{wallColorName(scene.wallFinish, scene.wallColor)} · {findWindowColor(scene.windowColor).name.toLowerCase()} ablak</small></span>
+                <span><strong>{tr('A házad', 'Ihr Haus')}</strong><small>{wallColorName(scene.wallFinish, scene.wallColor)} · {findWindowColor(scene.windowColor).name.toLowerCase()} ablak</small></span>
               </button>
             </div>
             {colorTab === 'pergola' ? <div className="color-tab-panel" key="pergola">
-              <SectionTitle title="Porszórt alumínium" hint="Alapszín felár nélkül, vagy bármely RAL szín. A 3D modell azonnal mutatja." />
+              <SectionTitle title={tr('Porszórt alumínium', 'Pulverbeschichtetes Aluminium')} hint={tr('Alapszín felár nélkül, vagy bármely RAL szín. A 3D modell azonnal mutatja.', 'Standardfarbe ohne Aufpreis oder jede RAL-Farbe. Das 3D-Modell zeigt es sofort.')} />
               <div className="house-color-context">
                 <HouseContext scene={scene} onEdit={() => setColorTab('house')} />
                 <WindowMatch config={config} scene={scene} onChange={onChange} />
               </div>
               <ColorPicker config={config} prices={prices} photoUrl={scene.photoUrl ?? null} onChange={onChange} />
             </div> : <div className="color-tab-panel" key="house">
-              <SectionTitle title="A házad" hint="Állítsd be, hogy a 3D ház a tiédre hasonlítson — így látod, milyen pergolaszín illik hozzá. Csak látvány, az árat nem módosítja." />
+              <SectionTitle title={tr('A házad', 'Ihr Haus')} hint={tr('Állítsd be, hogy a 3D ház a tiédre hasonlítson — így látod, milyen pergolaszín illik hozzá. Csak látvány, az árat nem módosítja.', 'Passen Sie das 3D-Haus an Ihres an — so sehen Sie, welche Pergolafarbe dazu passt. Nur Optik, ändert den Preis nicht.')} />
               <HouseLook config={config} scene={scene} photoUrl={scene.photoUrl ?? null} onSceneChange={onSceneChange} onChange={onChange} />
-              <button type="button" className="color-tab-back" onClick={() => setColorTab('pergola')}>Tovább a pergola színéhez</button>
+              <button type="button" className="color-tab-back" onClick={() => setColorTab('pergola')}>{tr('Tovább a pergola színéhez', 'Weiter zur Pergolafarbe')}</button>
             </div>}
           </>}
 
           {step === 'roof' && <>
-            <SectionTitle title="Tetőrendszer" hint={isClosedBuilding(config.building) ? (config.building === 'conservatory' ? 'Télikerthez üveg- vagy fix (szigetelt) tető való: a mozgó tető nem zárható megfelelően.' : 'Verandához üveg-, polikarbonát vagy fix tető való.') : 'A tető típusa határozza meg az árnyékolást, az esővédelmet és az árat.'} />
+            <SectionTitle title={tr('Tetőrendszer', 'Dachsystem')} hint={isClosedBuilding(config.building) ? (config.building === 'conservatory' ? tr('Télikerthez üveg- vagy fix (szigetelt) tető való: a mozgó tető nem zárható megfelelően.', 'Für einen Wintergarten eignet sich ein Glas- oder festes (gedämmtes) Dach: ein bewegliches Dach schließt nicht dicht genug.') : tr('Verandához üveg-, polikarbonát vagy fix tető való.', 'Für eine Veranda eignet sich ein Glas-, Polycarbonat- oder festes Dach.')) : tr('A tető típusa határozza meg az árnyékolást, az esővédelmet és az árat.', 'Der Dachtyp bestimmt Beschattung, Regenschutz und Preis.')} />
             <RoofPicker config={config} prices={prices} onChange={onChange} />
             <GlazingPicker config={config} prices={prices} onChange={onChange} />
             <RoofControl config={config} scene={scene} onChange={onChange} onSceneChange={onSceneChange} />
-            {ROOF_INFO[config.roof].motion === 'none' && <p className="split-note">Fix tető: nincs mozgatható része.</p>}
-            <SliderField label="Tetődőlés" value={config.pitch ?? 0} min={PITCH_RANGE[0]} max={PITCH_RANGE[1]} step={1} unit="°" onChange={(pitch) => onChange({ pitch: pitch || undefined })} />
+            {ROOF_INFO[config.roof].motion === 'none' && <p className="split-note">{tr('Fix tető: nincs mozgatható része.', 'Festes Dach: keine beweglichen Teile.')}</p>}
+            <SliderField label={tr('Tetődőlés', 'Dachneigung')} value={config.pitch ?? 0} min={PITCH_RANGE[0]} max={PITCH_RANGE[1]} step={1} unit="°" onChange={(pitch) => onChange({ pitch: pitch || undefined })} />
             {(config.pitch ?? 0) > 0 && <p className="split-note">A tető hátsó (fali) éle {roofRise(config).toFixed(2).replace('.', ',')} m-rel magasabb az elülső oszlopmagasságnál, így a csapadék előre folyik le.</p>}
             <RoofShadeOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
             <SolarToggle config={config} prices={prices} onChange={onChange} />
@@ -468,53 +469,53 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           </>}
 
           {step === 'sides' && <>
-            <SectionTitle title="Melyik oldalt zárod?" hint="Koppints egy oldalra a felülnézeten vagy a 3D modellen. A középső mező a tető." />
+            <SectionTitle title={tr('Melyik oldalt zárod?', 'Welche Seite schließen Sie?')} hint={tr('Koppints egy oldalra a felülnézeten vagy a 3D modellen. A középső mező a tető.', 'Tippen Sie auf eine Seite in der Draufsicht oder im 3D-Modell. Das mittlere Feld ist das Dach.')} />
             <SideDiagram config={config} selected={selectedSide} roofName={tenant.roofs[config.roof]?.name ?? ''} onSelect={onSideSelect} />
-            {selectedSide === 'roof' ? <div className="selected-side-head"><strong>Tető kijelölve</strong><span>{roofLabelsFor(config.roof)} · a beállításai a <button type="button" className="inline-link" onClick={() => onStepChange('roof')}>Tető lépésben</button> vannak. Koppints egy oldalra a záráshoz.</span></div> : sideSettings(selectedSide)}
+            {selectedSide === 'roof' ? <div className="selected-side-head"><strong>{tr('Tető kijelölve', 'Dach ausgewählt')}</strong><span>{roofLabelsFor(config.roof)} · {tr('a beállításai a ', 'Einstellungen im ')}<button type="button" className="inline-link" onClick={() => onStepChange('roof')}>{tr('Tető lépésben', 'Schritt Dach')}</button>{tr(' vannak. Koppints egy oldalra a záráshoz.', '. Tippen Sie auf eine Seite, um sie zu schließen.')}</span></div> : sideSettings(selectedSide)}
             {isClosedBuilding(config.building) && <WallGlazingPicker config={config} prices={prices} onChange={onChange} />}
             <BuildingIssues config={config} onFix={onChange} only={issuesForStep('sides')} />
-            <div className="interaction-hint"><Move size={17} /><p>A tolóüveg és az oldallamella a 3D-ben kattintásra, illetve a fenti gombbal is mozgatható. Egy oldal két részre is osztható, például fele tolóüveg, fele lécfal.</p></div>
+            <div className="interaction-hint"><Move size={17} /><p>{tr('A tolóüveg és az oldallamella a 3D-ben kattintásra, illetve a fenti gombbal is mozgatható. Egy oldal két részre is osztható, például fele tolóüveg, fele lécfal.', 'Glasschiebewand und Seitenlamellen lassen sich in 3D per Klick oder mit der Schaltfläche oben bewegen. Eine Seite kann auch geteilt werden, z. B. halb Glasschiebewand, halb Lattenwand.')}</p></div>
           </>}
 
           {step === 'extras' && <>
             {isClosedBuilding(config.building) && <>
-              <SectionTitle title={config.building === 'conservatory' ? 'Egész éves használat' : 'Zárt tér'} hint={config.building === 'conservatory' ? 'Fűtés, hűtés és az alapozott padló teszi lakótérré a télikertet.' : undefined} />
+              <SectionTitle title={config.building === 'conservatory' ? tr('Egész éves használat', 'Ganzjährige Nutzung') : tr('Zárt tér', 'Geschlossener Raum')} hint={config.building === 'conservatory' ? tr('Fűtés, hűtés és az alapozott padló teszi lakótérré a télikertet.', 'Heizung, Kühlung und ein fundamentierter Boden machen den Wintergarten zum Wohnraum.') : undefined} />
               <ClimateSection config={config} prices={prices} onChange={onChange} scene={scene} onSceneChange={onSceneChange} />
               <BuildingIssues config={config} onFix={onChange} only={issuesForStep('extras')} />
             </>}
             {carport && <>
               {/* Carportnál csak az ide illő extrák: világítás és napelemes tető. */}
-              <SectionTitle title="Világítás" hint="Minden opció azonnal megjelenik a modellen és a tételes árban. A napelemes tető a Tető lépésben választható." />
+              <SectionTitle title={tr('Világítás', 'Beleuchtung')} hint={tr('Minden opció azonnal megjelenik a modellen és a tételes árban. A napelemes tető a Tető lépésben választható.', 'Jede Option erscheint sofort am Modell und im detaillierten Preis. Das Photovoltaik-Dach wählen Sie im Schritt Dach.')} />
               <div className="extra-grid">
-                {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett világítás a beállóban" icon={LampCeiling} price={`${formatPrice(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ledRgb: undefined })} />}
+                {tenant.extras.led && <Toggle label={tr('Periméter LED', 'Umlaufende LED')} description={tr('Rejtett világítás a beállóban', 'Indirekte Beleuchtung im Stellplatz')} icon={LampCeiling} price={`${formatPrice(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ledRgb: undefined })} />}
               </div>
             </>}
             {!carport && <>
-            <SectionTitle title="Világítás és hangulat" hint="Minden opció azonnal megjelenik a modellen és a tételes árban." />
+            <SectionTitle title={tr('Világítás és hangulat', 'Licht und Stimmung')} hint={tr('Minden opció azonnal megjelenik a modellen és a tételes árban.', 'Jede Option erscheint sofort am Modell und im detaillierten Preis.')} />
             <div className="extra-grid">
-              {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett, beépített világítás" icon={LampCeiling} price={`${formatPrice(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ...(led ? {} : { ledRgb: undefined }) })} />}
+              {tenant.extras.led && <Toggle label={tr('Periméter LED', 'Umlaufende LED')} description={tr('Rejtett, beépített világítás', 'Indirekte, integrierte Beleuchtung')} icon={LampCeiling} price={`${formatPrice(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ...(led ? {} : { ledRgb: undefined }) })} />}
               <RgbOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
-              {tenant.extras.speakers && <Toggle label="Bluetooth hangrendszer" description="Egy pár beépített hangszóró" icon={Zap} price={formatPrice(prices.speakerPairNet)} checked={config.speakers} onChange={(speakers) => onChange({ speakers })} />}
+              {tenant.extras.speakers && <Toggle label={tr('Bluetooth hangrendszer', 'Bluetooth-Soundsystem')} description={tr('Egy pár beépített hangszóró', 'Ein Paar eingebaute Lautsprecher')} icon={Zap} price={formatPrice(prices.speakerPairNet)} checked={config.speakers} onChange={(speakers) => onChange({ speakers })} />}
             </div>
-            <SectionTitle title="Hő és légmozgás" hint="Fűtés a hűvös estékre, ventilátor a nyári hőségre." />
-            {limits.maxHeaters > 0 && <div className="stepper-row"><span><strong>Infravörös teraszfűtés</strong><small>{formatPrice(prices.heaterUnitNet)} / db</small></span><div className="stepper"><button type="button" aria-label="Fűtőpanel csökkentése" disabled={config.heaters === 0} onClick={() => onChange({ heaters: Math.max(0, config.heaters - 1) })}><Minus size={15} /></button><span>{config.heaters} db</span><button type="button" aria-label="Fűtőpanel növelése" disabled={config.heaters >= limits.maxHeaters} onClick={() => onChange({ heaters: Math.min(limits.maxHeaters, config.heaters + 1) })}><Plus size={15} /></button></div></div>}
+            <SectionTitle title={tr('Hő és légmozgás', 'Wärme und Luftbewegung')} hint={tr('Fűtés a hűvös estékre, ventilátor a nyári hőségre.', 'Heizung für kühle Abende, Ventilator für die Sommerhitze.')} />
+            {limits.maxHeaters > 0 && <div className="stepper-row"><span><strong>{tr('Infravörös teraszfűtés', 'Infrarot-Terrassenheizung')}</strong><small>{formatPrice(prices.heaterUnitNet)} / {tr('db', 'Stk.')}</small></span><div className="stepper"><button type="button" aria-label={tr('Fűtőpanel csökkentése', 'Heizstrahler verringern')} disabled={config.heaters === 0} onClick={() => onChange({ heaters: Math.max(0, config.heaters - 1) })}><Minus size={15} /></button><span>{config.heaters} db</span><button type="button" aria-label={tr('Fűtőpanel növelése', 'Heizstrahler erhöhen')} disabled={config.heaters >= limits.maxHeaters} onClick={() => onChange({ heaters: Math.min(limits.maxHeaters, config.heaters + 1) })}><Plus size={15} /></button></div></div>}
             <FanOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
-            <SectionTitle title="Vezérlés" hint={sensorsApplicable(config) ? 'Automatika és egy appból irányítható rendszer.' : 'Egy appból irányítható rendszer. Eső- és szélszenzor mozgó tetőhöz vagy ZIP-screenhez választható.'} />
+            <SectionTitle title={tr('Vezérlés', 'Steuerung')} hint={sensorsApplicable(config) ? tr('Automatika és egy appból irányítható rendszer.', 'Automatik und ein per App steuerbares System.') : tr('Egy appból irányítható rendszer. Eső- és szélszenzor mozgó tetőhöz vagy ZIP-screenhez választható.', 'Ein per App steuerbares System. Regen- und Windsensor für bewegliche Dächer oder ZIP-Screens wählbar.')} />
             <div className="extra-grid">
-              {tenant.extras.sensors && sensorsApplicable(config) && <Toggle label="Eső- és szélszenzor" description="Automata tetőzárás esőben" icon={CloudRain} price={formatPrice(prices.sensorsNet)} checked={config.sensors} onChange={(sensors) => onChange({ sensors })} />}
+              {tenant.extras.sensors && sensorsApplicable(config) && <Toggle label={tr('Eső- és szélszenzor', 'Regen- und Windsensor')} description={tr('Automata tetőzárás esőben', 'Automatisches Schließen bei Regen')} icon={CloudRain} price={formatPrice(prices.sensorsNet)} checked={config.sensors} onChange={(sensors) => onChange({ sensors })} />}
               <SmartHomeOption config={config} prices={prices} onChange={onChange} />
             </div>
             </>}
-            {onEnergy &&<button type="button" className="energy-trigger" onClick={onEnergy}><Gauge size={16} /><span><strong>{energyCost ? `Üzemeltetés ≈ ${formatPrice(energyCost)} / év` : 'Üzemeltetési költség'}</strong><small>{energyCost ? 'Áramköltség a valós lakossági tarifával · részletek' : 'Nincs áramfogyasztó a tervben'}</small></span><ChevronRight size={15} /></button>}
+            {onEnergy &&<button type="button" className="energy-trigger" onClick={onEnergy}><Gauge size={16} /><span><strong>{energyCost ? `${tr('Üzemeltetés', 'Betrieb')} ≈ ${formatPrice(energyCost)} / ${tr('év', 'Jahr')}` : tr('Üzemeltetési költség', 'Betriebskosten')}</strong><small>{energyCost ? tr('Áramköltség a valós lakossági tarifával · részletek', 'Stromkosten mit realem Haushaltstarif · Details') : tr('Nincs áramfogyasztó a tervben', 'Kein Stromverbraucher in der Planung')}</small></span><ChevronRight size={15} /></button>}
           </>}
 
           {step === 'summary' && summary}
         </div>
 
       </div>
-      <div className={`panel-dock${step === 'summary' ? ' is-summary' : ''}`}>{footer}<div className="step-navigation"><button type="button" disabled={stepIndex === 0} onClick={() => go(stepIndex - 1)}><ArrowLeft size={16} />Vissza</button>{stepIndex === STEPS.length - 1
-        ? <button type="button" className="next-step" onClick={() => scrollRef.current?.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Felmérést kérek<ArrowRight size={16} /></button>
-        : <button type="button" className="next-step" onClick={() => go(stepIndex + 1)}>{stepIndex === STEPS.length - 2 ? 'Összegzés' : 'Következő'}<ArrowRight size={16} /></button>}</div></div>
+      <div className={`panel-dock${step === 'summary' ? ' is-summary' : ''}`}>{footer}<div className="step-navigation"><button type="button" disabled={stepIndex === 0} onClick={() => go(stepIndex - 1)}><ArrowLeft size={16} />{tr('Vissza', 'Zurück')}</button>{stepIndex === STEPS.length - 1
+        ? <button type="button" className="next-step" onClick={() => scrollRef.current?.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{tr('Felmérést kérek', 'Aufmaß anfragen')}<ArrowRight size={16} /></button>
+        : <button type="button" className="next-step" onClick={() => go(stepIndex + 1)}>{stepIndex === STEPS.length - 2 ? tr('Összegzés', 'Übersicht') : tr('Következő', 'Weiter')}<ArrowRight size={16} /></button>}</div></div>
     </aside>
   )
 }

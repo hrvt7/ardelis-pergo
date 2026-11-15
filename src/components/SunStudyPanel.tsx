@@ -7,15 +7,16 @@ import { COMPASS_POINTS, compassLabel, formatClock, sunDay } from '@/lib/sun'
 import { DEFAULT_SITE, isoDate, lookupPostalCode, studyDate, studySun } from '@/lib/sunSite'
 import type { SceneSettings, TimeOfDay } from '@/types/pergola'
 import { isSheetLayout } from '@/lib/viewport'
+import { tr } from '../i18n/locale'
 
 /** Mágneses elhajlás Magyarországon (2026, kb. +5,5°): a telefon iránytűje mágneses északot mutat. */
 const DECLINATION = 5.5
 
 const DATE_PRESETS: { label: string; month: number; day: number }[] = [
-  { label: 'Jún. 21.', month: 6, day: 21 },
-  { label: 'Júl. 15.', month: 7, day: 15 },
-  { label: 'Szept. 23.', month: 9, day: 23 },
-  { label: 'Dec. 21.', month: 12, day: 21 },
+  { label: tr('Jún. 21.', '21. Juni'), month: 6, day: 21 },
+  { label: tr('Júl. 15.', '15. Juli'), month: 7, day: 15 },
+  { label: tr('Szept. 23.', '23. Sept.'), month: 9, day: 23 },
+  { label: tr('Dec. 21.', '21. Dez.'), month: 12, day: 21 },
 ]
 
 function timeOfDayForSun(elevation: number): TimeOfDay {
@@ -60,7 +61,7 @@ function ShadeChart({ result, hour, sunrise, sunset, onPick }: { result: ShadeRe
   const area = curve.length ? `${line} L${x(curve[curve.length - 1].hour).toFixed(1)},${height} L${x(curve[0].hour).toFixed(1)},${height} Z` : ''
   const ticks = [6, 9, 12, 15, 18, 21].filter((tick) => tick > sunrise && tick < sunset)
   return <div className="shade-chart">
-    <svg viewBox={`0 0 ${width} ${height + 14}`} role="img" aria-label="A pergola alatti árnyék aránya a nap folyamán" onClick={(event) => {
+    <svg viewBox={`0 0 ${width} ${height + 14}`} role="img" aria-label={tr('A pergola alatti árnyék aránya a nap folyamán', 'Schattenanteil unter der Pergola im Tagesverlauf')} onClick={(event) => {
       const box = event.currentTarget.getBoundingClientRect()
       onPick(sunrise + ((event.clientX - box.left) / box.width) * span)
     }}>
@@ -87,7 +88,7 @@ export default function SunStudyPanel({ scene, shade, onChange, onClose }: { sce
   const [playing, setPlaying] = useState(false)
   // Mobilon a beállítások összecsukva indulnak, hogy a 3D-ben látszódjon az árnyék.
   const [showSettings, setShowSettings] = useState(() => typeof window === 'undefined' || !isSheetLayout())
-  const monthNames = ['jan.', 'febr.', 'márc.', 'ápr.', 'máj.', 'jún.', 'júl.', 'aug.', 'szept.', 'okt.', 'nov.', 'dec.']
+  const monthNames = ['jan.', 'febr.', tr('márc.', 'März'), tr('ápr.', 'Apr.'), tr('máj.', 'Mai'), tr('jún.', 'Juni'), tr('júl.', 'Juli'), 'aug.', 'szept.', 'okt.', 'nov.', 'dec.']
   const hourRef = useRef(scene.sunHour)
   useEffect(() => { hourRef.current = scene.sunHour }, [scene.sunHour])
 
@@ -143,16 +144,16 @@ export default function SunStudyPanel({ scene, shade, onChange, onClose }: { sce
   const sunnyQuarters = shade?.curve.length ?? 0
   const shadedQuarters = shade?.curve.filter((point) => point.shade >= 70).length ?? 0
 
-  return <section className="sun-panel" aria-label="Árnyékelemzés">
+  return <section className="sun-panel" aria-label={tr('Árnyékelemzés', 'Schattenanalyse')}>
     <header>
-      <div><SunMedium size={16} /><span><strong>Árnyékelemzés</strong><small>Valós napállás a megadott helyen</small></span></div>
-      <button type="button" className="sun-close" aria-label="Árnyékelemzés bezárása" onClick={onClose}><X size={16} /></button>
+      <div><SunMedium size={16} /><span><strong>{tr('Árnyékelemzés', 'Schattenanalyse')}</strong><small>{tr('Valós napállás a megadott helyen', 'Realer Sonnenstand am angegebenen Ort')}</small></span></div>
+      <button type="button" className="sun-close" aria-label={tr('Árnyékelemzés bezárása', 'Schattenanalyse schließen')} onClick={onClose}><X size={16} /></button>
     </header>
 
     <div className="sun-result" aria-live="polite">
       <div>
-        <span>Árnyék a pergola alatt</span>
-        <strong>{!sunUp ? 'Nincs napsütés' : shadeNow === null ? 'Számítás…' : `${shadeNow}%`}</strong>
+        <span>{tr('Árnyék a pergola alatt', 'Schatten unter der Pergola')}</span>
+        <strong>{!sunUp ? tr('Nincs napsütés', 'Kein Sonnenschein') : shadeNow === null ? tr('Számítás…', 'Berechnung…') : `${shadeNow}%`}</strong>
       </div>
       <div className="sun-meta">
         <span>{formatClock(scene.sunHour)} · nap {Math.round(sun.azimuth)}° {compassLabel(sun.azimuth)}, {Math.max(0, sun.elevation).toFixed(0)}° magasan</span>
@@ -164,8 +165,8 @@ export default function SunStudyPanel({ scene, shade, onChange, onClose }: { sce
     {shade && sunnyQuarters > 0 && <p className="sun-summary">Aznap {(sunnyQuarters / 4).toFixed(1).replace('.', ',')} napos órából {(shadedQuarters / 4).toFixed(1).replace('.', ',')} órán át legalább 70% árnyék a pergola alatt.</p>}
 
     <div className="sun-time">
-      <button type="button" className="sun-play" aria-label={playing ? 'Lejátszás megállítása' : 'A nap lejátszása'} onClick={() => { if (!playing && scene.sunHour >= sunset - 0.25) setHour(sunrise); setPlaying(!playing) }}>{playing ? <Pause size={15} /> : <Play size={15} />}</button>
-      <input id="sun-hour" aria-label="Időpont" className="range-input" type="range" min={Math.floor(sunrise * 4) / 4} max={Math.ceil(sunset * 4) / 4} step={1 / 12} value={scene.sunHour} onChange={(event) => setHour(Number(event.target.value))} />
+      <button type="button" className="sun-play" aria-label={playing ? tr('Lejátszás megállítása', 'Wiedergabe anhalten') : tr('A nap lejátszása', 'Tagesverlauf abspielen')} onClick={() => { if (!playing && scene.sunHour >= sunset - 0.25) setHour(sunrise); setPlaying(!playing) }}>{playing ? <Pause size={15} /> : <Play size={15} />}</button>
+      <input id="sun-hour" aria-label={tr('Időpont', 'Uhrzeit')} className="range-input" type="range" min={Math.floor(sunrise * 4) / 4} max={Math.ceil(sunset * 4) / 4} step={1 / 12} value={scene.sunHour} onChange={(event) => setHour(Number(event.target.value))} />
       <strong>{formatClock(scene.sunHour)}</strong>
     </div>
 
@@ -179,36 +180,36 @@ export default function SunStudyPanel({ scene, shade, onChange, onClose }: { sce
       <span>Nap</span>
       <div className="sun-chips">
         {DATE_PRESETS.map((preset) => <button type="button" key={preset.label} className={date[1] === preset.month && date[2] === preset.day ? 'selected' : ''} onClick={() => setDate(preset.month, preset.day)}>{preset.label}</button>)}
-        <input id="sun-date" aria-label="Dátum" type="date" value={isoDate(date)} onChange={(event) => { if (event.target.value) onChange({ sunDate: event.target.value }) }} />
+        <input id="sun-date" aria-label={tr('Dátum', 'Datum')} type="date" value={isoDate(date)} onChange={(event) => { if (event.target.value) onChange({ sunDate: event.target.value }) }} />
       </div>
     </div>
 
     <div className="sun-field">
-      <span>Helyszín</span>
+      <span>{tr('Helyszín', 'Standort')}</span>
       <div className="sun-location">
-        <input id="sun-postal" inputMode="numeric" autoComplete="postal-code" maxLength={4} placeholder="Irányítószám" value={postal} onChange={(event) => { void submitPostal(event.target.value.replace(/\D/g, '').slice(0, 4)) }} />
-        <small>{postalState === 'loading' ? 'Keresés…' : postalState === 'missing' ? 'Nincs ilyen irányítószám' : postalState === 'error' ? 'A lista nem tölthető be' : `${site.name}${site.region && site.region !== site.name ? `, ${site.region}` : ''}${scene.site ? '' : ' (alapértelmezett)'}`}</small>
+        <input id="sun-postal" inputMode="numeric" autoComplete="postal-code" maxLength={4} placeholder={tr('Irányítószám', 'Postleitzahl')} value={postal} onChange={(event) => { void submitPostal(event.target.value.replace(/\D/g, '').slice(0, 4)) }} />
+        <small>{postalState === 'loading' ? tr('Keresés…', 'Suche…') : postalState === 'missing' ? tr('Nincs ilyen irányítószám', 'Postleitzahl nicht gefunden') : postalState === 'error' ? tr('A lista nem tölthető be', 'Die Liste kann nicht geladen werden') : `${site.name}${site.region && site.region !== site.name ? `, ${site.region}` : ''}${scene.site ? '' : tr(' (alapértelmezett)', ' (Standard)')}`}</small>
       </div>
     </div>
 
     <div className="sun-field">
-      <span>Tájolás <small>— merre néz a pergola kert felőli eleje?</small></span>
+      <span>{tr('Tájolás', 'Ausrichtung')} <small>{tr('— merre néz a pergola kert felőli eleje?', '— wohin zeigt die gartenseitige Front der Pergola?')}</small></span>
       <div className="sun-facing">
         {COMPASS_POINTS.map((label, index) => <button type="button" key={label} className={Math.round(scene.facing / 45) % 8 === index && scene.facing % 45 === 0 ? 'selected' : ''} onClick={() => onChange({ facing: index * 45 })}>{label}</button>)}
       </div>
       <div className="sun-facing-fine">
-        <input id="sun-facing" aria-label="Tájolás fokban" className="range-input" type="range" min={0} max={359} step={1} value={scene.facing} onChange={(event) => onChange({ facing: Number(event.target.value) })} />
+        <input id="sun-facing" aria-label={tr('Tájolás fokban', 'Ausrichtung in Grad')} className="range-input" type="range" min={0} max={359} step={1} value={scene.facing} onChange={(event) => onChange({ facing: Number(event.target.value) })} />
         <strong>{scene.facing}° {compassLabel(scene.facing)}</strong>
       </div>
       {canUseCompass && <button type="button" className="sun-compass" onClick={() => { void measureCompass() }} disabled={compassState === 'reading'}>
         {compassState === 'reading' ? <LocateFixed size={14} /> : <Compass size={14} />}
-        {compassState === 'reading' ? 'Mérés… tartsd mozdulatlanul' : 'Mérés a telefon iránytűjével'}
+        {compassState === 'reading' ? tr('Mérés… tartsd mozdulatlanul', 'Messung… bitte ruhig halten') : tr('Mérés a telefon iránytűjével', 'Mit dem Kompass des Handys messen')}
       </button>}
-      {compassState === 'failed' && <small className="sun-hint">Az iránytű itt nem érhető el. Állítsd be kézzel, vagy nyisd meg az oldalt közvetlenül a telefon böngészőjében.</small>}
-      <small className="sun-hint">Állj háttal a házfalnak: amerre nézel, az a pergola eleje. Iránytűs mérésnél a telefon vízszintesen, a teteje a kert felé.</small>
+      {compassState === 'failed' && <small className="sun-hint">{tr('Az iránytű itt nem érhető el. Állítsd be kézzel, vagy nyisd meg az oldalt közvetlenül a telefon böngészőjében.', 'Der Kompass ist hier nicht verfügbar. Manuell einstellen oder die Seite direkt im Handy-Browser öffnen.')}</small>}
+      <small className="sun-hint">{tr('Állj háttal a házfalnak: amerre nézel, az a pergola eleje. Iránytűs mérésnél a telefon vízszintesen, a teteje a kert felé.', 'Stellen Sie sich mit dem Rücken zur Hauswand: Ihre Blickrichtung ist die Front der Pergola. Beim Messen das Handy waagrecht halten, Oberkante zum Garten.')}</small>
     </div>
     </>}
 
-    <p className="sun-note">Napállás csillagászati számítással (±0,02°). Számít a pergola szerkezete, a ZIP-roló és a ház; az üveg átengedi a fényt. A szomszéd fái, épületei nincsenek a modellben.</p>
+    <p className="sun-note">{tr('Napállás csillagászati számítással (±0,02°). Számít a pergola szerkezete, a ZIP-roló és a ház; az üveg átengedi a fényt. A szomszéd fái, épületei nincsenek a modellben.', 'Sonnenstand per astronomischer Berechnung (±0,02°). Berücksichtigt werden Pergola, ZIP-Screen und Haus; Glas lässt Licht durch. Bäume und Gebäude der Nachbarn sind nicht im Modell.')}</p>
   </section>
 }

@@ -11,18 +11,19 @@ import { ProductSwitch } from '@/components/ProductChooser'
 import TenantMark from '@/components/TenantMark'
 import { useTenant } from '@/tenants/TenantContext'
 import { STUDIO_TIMES, type StudioTime } from '@/lib/studioLighting'
+import { tr } from '../../i18n/locale'
 
 export interface StudioView { time: StudioTime; environment: boolean; showPerson: boolean; dimensions: boolean; autoRotate: boolean }
 
-export function StudioHeader({ onHome, canUndo, canRedo, onUndo, onRedo, presentation, onPresentation, onInfo, infoLabel = 'Tudnivalók', onReset }: { onHome: () => void; canUndo: boolean; canRedo: boolean; onUndo: () => void; onRedo: () => void; presentation: boolean; onPresentation: () => void; onInfo?: () => void; infoLabel?: string; onReset: () => void }) {
+export function StudioHeader({ onHome, canUndo, canRedo, onUndo, onRedo, presentation, onPresentation, onInfo, infoLabel = tr('Tudnivalók', 'Hinweise'), onReset }: { onHome: () => void; canUndo: boolean; canRedo: boolean; onUndo: () => void; onRedo: () => void; presentation: boolean; onPresentation: () => void; onInfo?: () => void; infoLabel?: string; onReset: () => void }) {
   const { tenant } = useTenant()
   return <header className="app-header">
-    <a className="brand" href="#top" aria-label={`${tenant.brand.name} kezdőnézet`} onClick={(event) => { event.preventDefault(); onHome() }}><TenantMark tenant={tenant} /></a>
-    <div className="project-identity"><span>ÉPÍTÉSZETI KONFIGURÁTOR</span><ProductSwitch /></div>
+    <a className="brand" href="#top" aria-label={`${tenant.brand.name} ${tr('kezdőnézet', 'Startansicht')}`} onClick={(event) => { event.preventDefault(); onHome() }}><TenantMark tenant={tenant} /></a>
+    <div className="project-identity"><span>{tr('ÉPÍTÉSZETI KONFIGURÁTOR', 'ARCHITEKTUR-KONFIGURATOR')}</span><ProductSwitch /></div>
     <div className="header-actions">
       <FullscreenControl />
-      <div className="history-actions"><button type="button" aria-label="Visszavonás" title="Visszavonás · Ctrl+Z" onClick={onUndo} disabled={!canUndo}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" title="Ismétlés · Ctrl+Shift+Z" onClick={onRedo} disabled={!canRedo}><Redo2 size={17} /></button></div>
-      <button type="button" className="header-text-button presentation-toggle" aria-label={presentation ? 'Vissza a szerkesztéshez' : 'Bemutató nézet: a panelek elrejtése, csak a terv látszik'} title={presentation ? 'Vissza a szerkesztéshez' : 'A panelek elrejtése, csak a terv látszik'} onClick={onPresentation}><Presentation size={16} /><span>{presentation ? 'Szerkesztés' : 'Bemutató nézet'}</span></button>
+      <div className="history-actions"><button type="button" aria-label={tr('Visszavonás', 'Rückgängig')} title={tr('Visszavonás · Ctrl+Z', 'Rückgängig · Strg+Z')} onClick={onUndo} disabled={!canUndo}><Undo2 size={17} /></button><button type="button" aria-label={tr('Ismétlés', 'Wiederholen')} title={tr('Ismétlés · Ctrl+Shift+Z', 'Wiederholen · Strg+Umschalt+Z')} onClick={onRedo} disabled={!canRedo}><Redo2 size={17} /></button></div>
+      <button type="button" className="header-text-button presentation-toggle" aria-label={presentation ? tr('Vissza a szerkesztéshez', 'Zurück zur Bearbeitung') : tr('Bemutató nézet: a panelek elrejtése, csak a terv látszik', 'Präsentationsansicht: Panels ausblenden, nur der Entwurf ist sichtbar')} title={presentation ? tr('Vissza a szerkesztéshez', 'Zurück zur Bearbeitung') : tr('A panelek elrejtése, csak a terv látszik', 'Panels ausblenden, nur der Entwurf ist sichtbar')} onClick={onPresentation}><Presentation size={16} /><span>{presentation ? tr('Szerkesztés', 'Bearbeiten') : tr('Bemutató nézet', 'Präsentation')}</span></button>
       {onInfo && <button type="button" className="header-text-button" aria-label={infoLabel} onClick={onInfo}><Info size={16} /><span>{infoLabel}</span></button>}
       <ResetButton onReset={onReset} />
     </div>
@@ -37,7 +38,7 @@ function ResetButton({ onReset }: { onReset: () => void }) {
     const timer = window.setTimeout(() => setArmed(false), 3500)
     return () => window.clearTimeout(timer)
   }, [armed])
-  return <button type="button" className={`header-text-button reset-button${armed ? ' is-armed' : ''}`} aria-label={armed ? 'Biztosan újrakezded? A mostani terv elvész. Kattints újra a megerősítéshez.' : 'Újrakezdés: minden beállítás visszaáll'} title="Minden beállítás visszaáll az alapra" onClick={() => { if (armed) { setArmed(false); onReset() } else setArmed(true) }}><RotateCcw size={16} /><span aria-live="polite">{armed ? 'Biztosan? Kattints újra' : 'Újrakezdés'}</span></button>
+  return <button type="button" className={`header-text-button reset-button${armed ? ' is-armed' : ''}`} aria-label={armed ? tr('Biztosan újrakezded? A mostani terv elvész. Kattints újra a megerősítéshez.', 'Wirklich neu beginnen? Der aktuelle Entwurf geht verloren. Zum Bestätigen erneut klicken.') : tr('Újrakezdés: minden beállítás visszaáll', 'Neu beginnen: alle Einstellungen werden zurückgesetzt')} title={tr('Minden beállítás visszaáll az alapra', 'Alle Einstellungen werden zurückgesetzt')} onClick={() => { if (armed) { setArmed(false); onReset() } else setArmed(true) }}><RotateCcw size={16} /><span aria-live="polite">{armed ? tr('Biztosan? Kattints újra', 'Sicher? Erneut klicken') : tr('Újrakezdés', 'Neu beginnen')}</span></button>
 }
 
 export type ToolItem = { id: string; icon: LucideIcon; name: string; note: string; active?: boolean; run: () => void }
@@ -52,17 +53,17 @@ const TIME_ICONS: Record<StudioTime, LucideIcon> = { day: Sun, sunset: Sunset, n
 /** A „Nézet és vizualizáció” panel termékfüggetlen tartalma (a kerítés és a garázskapu ezt használja). */
 export function StudioViewSettings({ view, productName, onChange }: { view: StudioView; productName: string; onChange: (patch: Partial<StudioView>) => void }) {
   return <div className="scene-settings-body">
-    <div className="section-title"><h3>Napszak</h3><p>A jelenet megvilágítása: déli nap, meleg aranyóra vagy esti fények.</p></div>
-    <div className="scene-options compact" role="radiogroup" aria-label="Napszak">{STUDIO_TIMES.map(({ id, label }) => { const Icon = TIME_ICONS[id]; return <button type="button" role="radio" aria-checked={view.time === id} key={id} className={view.time === id ? 'selected' : ''} onClick={() => onChange({ time: id })}><Icon size={17} /><span>{label}</span></button> })}</div>
-    <div className="section-title"><h3>Környezet</h3><p>Családi ház a háttérben, vagy csak a termék semleges háttér előtt – katalógus-bemutatóhoz.</p></div>
-    <div className="scene-options compact two" role="radiogroup" aria-label="Környezet">
-      <button type="button" role="radio" aria-checked={view.environment} className={view.environment ? 'selected' : ''} onClick={() => onChange({ environment: true })}><House size={17} /><span>Családi ház</span></button>
+    <div className="section-title"><h3>{tr('Napszak', 'Tageszeit')}</h3><p>{tr('A jelenet megvilágítása: déli nap, meleg aranyóra vagy esti fények.', 'Beleuchtung der Szene: Mittagssonne, warme goldene Stunde oder Abendlicht.')}</p></div>
+    <div className="scene-options compact" role="radiogroup" aria-label={tr('Napszak', 'Tageszeit')}>{STUDIO_TIMES.map(({ id, label }) => { const Icon = TIME_ICONS[id]; return <button type="button" role="radio" aria-checked={view.time === id} key={id} className={view.time === id ? 'selected' : ''} onClick={() => onChange({ time: id })}><Icon size={17} /><span>{label}</span></button> })}</div>
+    <div className="section-title"><h3>{tr('Környezet', 'Umgebung')}</h3><p>{tr('Családi ház a háttérben, vagy csak a termék semleges háttér előtt – katalógus-bemutatóhoz.', 'Einfamilienhaus im Hintergrund oder nur das Produkt vor neutralem Hintergrund – für die Katalogpräsentation.')}</p></div>
+    <div className="scene-options compact two" role="radiogroup" aria-label={tr('Környezet', 'Umgebung')}>
+      <button type="button" role="radio" aria-checked={view.environment} className={view.environment ? 'selected' : ''} onClick={() => onChange({ environment: true })}><House size={17} /><span>{tr('Családi ház', 'Einfamilienhaus')}</span></button>
       <button type="button" role="radio" aria-checked={!view.environment} className={!view.environment ? 'selected' : ''} onClick={() => onChange({ environment: false })}><Box size={17} /><span>Csak {productName}</span></button>
     </div>
     <div className="scene-toggle-grid">
-      <ToggleRow label="180 cm-es figura" description="A méretek szemléltetéséhez" checked={view.showPerson} onChange={(showPerson) => onChange({ showPerson })} />
-      <ToggleRow label="Méretcímkék" description="Aktuális méretek centiméterben" checked={view.dimensions} onChange={(dimensions) => onChange({ dimensions })} />
-      <ToggleRow label="Automata forgatás" description="Lassú körbeforgás; húzásra megáll" checked={view.autoRotate} onChange={(autoRotate) => onChange({ autoRotate })} />
+      <ToggleRow label={tr('180 cm-es figura', '180-cm-Figur')} description={tr('A méretek szemléltetéséhez', 'Zur Veranschaulichung der Größe')} checked={view.showPerson} onChange={(showPerson) => onChange({ showPerson })} />
+      <ToggleRow label={tr('Méretcímkék', 'Maßangaben')} description={tr('Aktuális méretek centiméterben', 'Aktuelle Maße in Zentimetern')} checked={view.dimensions} onChange={(dimensions) => onChange({ dimensions })} />
+      <ToggleRow label={tr('Automata forgatás', 'Automatisch drehen')} description={tr('Lassú körbeforgás; húzásra megáll', 'Langsame Drehung; stoppt beim Ziehen')} checked={view.autoRotate} onChange={(autoRotate) => onChange({ autoRotate })} />
     </div>
   </div>
 }
@@ -88,23 +89,23 @@ export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools 
   const quickItems: (ToolItem & { mobileOnly: true })[] = quick.map(({ id, icon, label, title, active, run }) => ({ id: `quick-${id}`, icon, name: label, note: title, active, run, mobileOnly: true }))
   const items: (ToolItem & { mobileOnly?: boolean })[] = [
     ...quickItems,
-    { id: 'view', icon: SlidersHorizontal, name: 'Nézet és vizualizáció', note: 'Napszak, környezet, méretarány, feliratok, forgatás', run: () => setViewOpen(true) },
+    { id: 'view', icon: SlidersHorizontal, name: tr('Nézet és vizualizáció', 'Ansicht und Visualisierung'), note: tr('Napszak, környezet, méretarány, feliratok, forgatás', 'Tageszeit, Umgebung, Maßstab, Beschriftungen, Drehung'), run: () => setViewOpen(true) },
     ...tools,
-    { id: 'presentation', icon: Presentation, name: presentation ? 'Kilépés a bemutatóból' : 'Bemutató mód', note: 'Csak a 3D jelenet, panelek nélkül — ügyfélnek mutatáshoz', active: presentation, run: onPresentation },
-    { id: 'pdf', icon: Download, name: 'PDF összefoglaló', note: 'Műszaki tartalom, kép és tételes irányár', run: onExport },
-    { id: 'share', icon: Link2, name: 'Megosztás', note: 'Hivatkozás erre a konfigurációra', run: onShare },
+    { id: 'presentation', icon: Presentation, name: presentation ? tr('Kilépés a bemutatóból', 'Präsentation beenden') : tr('Bemutató mód', 'Präsentationsmodus'), note: tr('Csak a 3D jelenet, panelek nélkül — ügyfélnek mutatáshoz', 'Nur die 3D-Szene, ohne Panels — zum Zeigen beim Kunden'), active: presentation, run: onPresentation },
+    { id: 'pdf', icon: Download, name: tr('PDF összefoglaló', 'PDF-Zusammenfassung'), note: tr('Műszaki tartalom, kép és tételes irányár', 'Technischer Inhalt, Bild und detaillierter Richtpreis'), run: onExport },
+    { id: 'share', icon: Link2, name: tr('Megosztás', 'Teilen'), note: tr('Hivatkozás erre a konfigurációra', 'Link zu dieser Konfiguration'), run: onShare },
   ]
   return <>
-    <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások">
+    <div className="weather-toolbar" aria-label={tr('Gyors jelenetbeállítások', 'Schnelle Szeneneinstellungen')}>
       {leading}
-      <button type="button" title={`Napszak: ${timeLabel} — váltás`} aria-label={`Napszak: ${timeLabel}`} onClick={() => onTimeChange(nextTime[time])} className={`icon-time icon-${time}${time !== 'day' ? ' selected' : ''}`}><TimeIcon size={17} /><span>{timeLabel}</span></button>
+      <button type="button" title={`${tr('Napszak', 'Tageszeit')}: ${timeLabel} — ${tr('váltás', 'wechseln')}`} aria-label={`${tr('Napszak', 'Tageszeit')}: ${timeLabel}`} onClick={() => onTimeChange(nextTime[time])} className={`icon-time icon-${time}${time !== 'day' ? ' selected' : ''}`}><TimeIcon size={17} /><span>{timeLabel}</span></button>
       {quick.map(({ id, icon: Icon, label, title, active, className, run }) => <button type="button" key={id} className={[className, 'quick-toggle', active ? 'selected' : ''].filter(Boolean).join(' ')} aria-pressed={active === undefined ? undefined : active} title={title} onClick={run}><Icon size={17} /><span>{label}</span></button>)}
-      <button type="button" className={`view-toggle tools-toggle icon-grid ${toolsOpen || viewOpen || toolsBusy ? 'selected' : ''}`} aria-pressed={toolsOpen} aria-expanded={toolsOpen} title="Eszközök: nézet, napszak, környezet, bemutató, PDF, megosztás" onClick={() => { setToolsOpen((open) => !open); setViewOpen(false) }}><LayoutGrid size={17} /><span>Eszközök</span></button>
+      <button type="button" className={`view-toggle tools-toggle icon-grid ${toolsOpen || viewOpen || toolsBusy ? 'selected' : ''}`} aria-pressed={toolsOpen} aria-expanded={toolsOpen} title={tr('Eszközök: nézet, napszak, környezet, bemutató, PDF, megosztás', 'Werkzeuge: Ansicht, Tageszeit, Umgebung, Präsentation, PDF, Teilen')} onClick={() => { setToolsOpen((open) => !open); setViewOpen(false) }}><LayoutGrid size={17} /><span>{tr('Eszközök', 'Werkzeuge')}</span></button>
     </div>
-    {toolsOpen && <div className="view-popover tools-menu glass-panel" role="dialog" aria-label="Eszközök"><div className="view-popover-head"><strong>Eszközök</strong><button type="button" aria-label="Bezárás" onClick={() => setToolsOpen(false)}><X size={16} /></button></div>
+    {toolsOpen && <div className="view-popover tools-menu glass-panel" role="dialog" aria-label={tr('Eszközök', 'Werkzeuge')}><div className="view-popover-head"><strong>{tr('Eszközök', 'Werkzeuge')}</strong><button type="button" aria-label={tr('Bezárás', 'Schließen')} onClick={() => setToolsOpen(false)}><X size={16} /></button></div>
       <div className="tools-list">{items.map(({ id, icon: Icon, name, note, active, run, mobileOnly }) => <button type="button" key={id} className={`tools-item${active ? ' is-active' : ''}${mobileOnly ? ' is-mobile-only' : ''}`} aria-pressed={Boolean(active)} onClick={() => { setToolsOpen(false); run() }}><Icon size={18} /><span><strong>{name}</strong><small>{note}</small></span>{active && <em>Bekapcsolva</em>}</button>)}</div>
     </div>}
-    {viewOpen && <div className="view-popover glass-panel" role="dialog" aria-label="Nézet és vizualizáció"><div className="view-popover-head"><strong>Nézet és vizualizáció</strong><button type="button" aria-label="Bezárás" onClick={() => setViewOpen(false)}><X size={16} /></button></div>{viewPanel}</div>}
+    {viewOpen && <div className="view-popover glass-panel" role="dialog" aria-label={tr('Nézet és vizualizáció', 'Ansicht und Visualisierung')}><div className="view-popover-head"><strong>{tr('Nézet és vizualizáció', 'Ansicht und Visualisierung')}</strong><button type="button" aria-label={tr('Bezárás', 'Schließen')} onClick={() => setViewOpen(false)}><X size={16} /></button></div>{viewPanel}</div>}
   </>
 }
 
@@ -113,15 +114,15 @@ export function ChangePill({ change, onUndo }: { change: PriceChange | null; onU
   if (!change || change.amount === 0) return null
   return <div key={change.id} className={`change-pill ${change.amount < 0 ? 'is-down' : 'is-up'}`} role="status" aria-live="polite">
     <strong>{change.amount > 0 ? '+' : '−'}{formatPrice(Math.abs(change.amount))}</strong><span>{change.label}</span>
-    <button type="button" onClick={onUndo}><Undo2 size={14} />Visszavonás</button>
+    <button type="button" onClick={onUndo}><Undo2 size={14} />{tr('Visszavonás', 'Rückgängig')}</button>
   </div>
 }
 
 /** „Üdv újra” sáv: a mentett piszkozat folytatása vagy új terv (minden konfigurátorban ugyanaz). */
 export function WelcomeBack({ summary, onContinue, onFresh }: { summary: string; onContinue: () => void; onFresh: () => void }) {
   return <div className="welcome-back" role="status">
-    <span><strong>Üdv újra!</strong>Ott folytatod, ahol abbahagytad: {summary}</span>
+    <span><strong>{tr('Üdv újra!', 'Willkommen zurück!')}</strong>Ott folytatod, ahol abbahagytad: {summary}</span>
     <button type="button" className="welcome-primary" onClick={onContinue}>Folytatom</button>
-    <button type="button" onClick={onFresh}>Új terv</button>
+    <button type="button" onClick={onFresh}>{tr('Új terv', 'Neuer Entwurf')}</button>
   </div>
 }

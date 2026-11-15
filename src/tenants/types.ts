@@ -4,6 +4,7 @@
 import type { FrameColor, MountType, PergolaConfig, PriceSettings, RoofType, SideType } from '../types/pergola'
 import type { ProductFamily } from '../products'
 import type { Currency } from '../lib/money'
+import type { Locale } from '../i18n/locale'
 
 export interface TenantRoof {
   /** Rövid terméknév, pl. „Aero” — a 3D-felirat és az árpanel ezt mutatja. */
@@ -67,6 +68,8 @@ export interface Tenant {
    * A Partnerhálózat csomagban kikapcsolható (teljes white-label).
    */
   platformCredit?: boolean
+  /** A vevői felület nyelve (alapértelmezés: magyar). A betöltéskor, az URL-ből dől el (src/i18n/bootLocale.ts). */
+  locale?: Locale
   /** Pénznem: az egységárak, az ajánlat és minden e-mail ebben szerepel. EUR csak teraszfedéssel (a többi termék árazója HUF-os). */
   currency: Currency
   /** Nettó egységárak; a szerver is ebből számol. */

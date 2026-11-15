@@ -3,6 +3,7 @@
 import type { CSSProperties } from 'react'
 import type { HouseStyle, SceneSettings, WallFinish } from '@/types/pergola'
 import { hexDistance } from '@/lib/colors'
+import { tr } from '../i18n/locale'
 
 export interface HouseSwatch {
   id: string
@@ -23,9 +24,9 @@ export type HouseLookSettings = Pick<SceneSettings, 'houseStyle' | 'wallFinish' 
 
 export const HOUSE_STYLES: HouseStyle[] = ['classic', 'modern', 'gable']
 export const HOUSE_STYLE_INFO: Record<HouseStyle, { label: string; description: string }> = {
-  classic: { label: 'Fa–cink', description: 'Földszintes, fa burkolattal' },
-  modern: { label: 'Lapostetős', description: 'Modern, kétszintes kubus' },
-  gable: { label: 'Nyeregtetős', description: 'Oromfalas családi ház' },
+  classic: { label: tr('Fa–cink', 'Holz–Zink'), description: tr('Földszintes, fa burkolattal', 'Ebenerdig, mit Holzverkleidung') },
+  modern: { label: tr('Lapostetős', 'Flachdach'), description: tr('Modern, kétszintes kubus', 'Moderner, zweistöckiger Kubus') },
+  gable: { label: tr('Nyeregtetős', 'Satteldach'), description: tr('Oromfalas családi ház', 'Einfamilienhaus mit Giebel') },
 }
 
 /**
@@ -38,48 +39,48 @@ export const STYLED_HOUSE = { main: 10, annex: 5.5, depth: 9 } as const
 export const styledHouseScale = (pergolaWidth: number) => Math.max(1, (pergolaWidth + 1.2) / STYLED_HOUSE.main)
 
 export const WALL_FINISH_INFO: Record<WallFinish, { label: string; description: string }> = {
-  plaster: { label: 'Vakolt', description: 'Színezett nemesvakolat' },
-  brick: { label: 'Tégla', description: 'Látszótégla, klinker' },
-  cedar: { label: 'Fa', description: 'Fa vagy fa hatású burkolat' },
+  plaster: { label: tr('Vakolt', 'Verputzt'), description: tr('Színezett nemesvakolat', 'Durchgefärbter Edelputz') },
+  brick: { label: tr('Tégla', 'Ziegel'), description: tr('Látszótégla, klinker', 'Sichtziegel, Klinker') },
+  cedar: { label: tr('Fa', 'Holz'), description: tr('Fa vagy fa hatású burkolat', 'Holz- oder Holzoptik-Verkleidung') },
 }
 
 /** A leggyakoribb homlokzati színek anyagonként. Az első az alapértelmezett. */
 export const WALL_COLORS: Record<WallFinish, HouseSwatch[]> = {
   plaster: [
-    { id: 'white', name: 'Fehér', hex: '#f1efe9', note: 'a leggyakoribb' },
-    { id: 'offwhite', name: 'Törtfehér', hex: '#ebe3d2' },
-    { id: 'sand', name: 'Homok', hex: '#dccba7' },
-    { id: 'vanilla', name: 'Vanília', hex: '#ecdba6' },
-    { id: 'peach', name: 'Barack', hex: '#e7c3a5' },
-    { id: 'lightgrey', name: 'Szürke', hex: '#cfcfca' },
-    { id: 'pebble', name: 'Kavics', hex: '#a39f96' },
-    { id: 'graphite', name: 'Grafit', hex: '#55595b' },
+    { id: 'white', name: tr('Fehér', 'Weiß'), hex: '#f1efe9', note: tr('a leggyakoribb', 'am häufigsten') },
+    { id: 'offwhite', name: tr('Törtfehér', 'Gebrochenes Weiß'), hex: '#ebe3d2' },
+    { id: 'sand', name: tr('Homok', 'Sand'), hex: '#dccba7' },
+    { id: 'vanilla', name: tr('Vanília', 'Vanille'), hex: '#ecdba6' },
+    { id: 'peach', name: tr('Barack', 'Apricot'), hex: '#e7c3a5' },
+    { id: 'lightgrey', name: tr('Szürke', 'Grau'), hex: '#cfcfca' },
+    { id: 'pebble', name: tr('Kavics', 'Kiesel'), hex: '#a39f96' },
+    { id: 'graphite', name: tr('Grafit', 'Graphit'), hex: '#55595b' },
   ],
   brick: [
-    { id: 'red', name: 'Vörös', hex: '#9b5640', note: 'hagyományos' },
-    { id: 'brown', name: 'Barna', hex: '#6a4434' },
-    { id: 'sand', name: 'Homok', hex: '#c9a575' },
-    { id: 'anthracite', name: 'Antracit', hex: '#4a4a4b' },
-    { id: 'whitewash', name: 'Festett fehér', hex: '#e7e4dc' },
+    { id: 'red', name: tr('Vörös', 'Rot'), hex: '#9b5640', note: tr('hagyományos', 'traditionell') },
+    { id: 'brown', name: tr('Barna', 'Braun'), hex: '#6a4434' },
+    { id: 'sand', name: tr('Homok', 'Sand'), hex: '#c9a575' },
+    { id: 'anthracite', name: tr('Antracit', 'Anthrazit'), hex: '#4a4a4b' },
+    { id: 'whitewash', name: tr('Festett fehér', 'Weiß gestrichen'), hex: '#e7e4dc' },
   ],
   cedar: [
-    { id: 'natural', name: 'Natúr', hex: '#8a5a3c', note: 'mint a mintaházon' },
-    { id: 'larch', name: 'Vörösfenyő', hex: '#b48858' },
-    { id: 'walnut', name: 'Sötét pác', hex: '#563826' },
-    { id: 'silver', name: 'Szürkült', hex: '#8f8b84' },
-    { id: 'black', name: 'Fekete', hex: '#2c2b2a' },
+    { id: 'natural', name: tr('Natúr', 'Natur'), hex: '#8a5a3c', note: tr('mint a mintaházon', 'wie am Musterhaus') },
+    { id: 'larch', name: tr('Vörösfenyő', 'Lärche'), hex: '#b48858' },
+    { id: 'walnut', name: tr('Sötét pác', 'Dunkel gebeizt'), hex: '#563826' },
+    { id: 'silver', name: tr('Szürkült', 'Vergraut'), hex: '#8f8b84' },
+    { id: 'black', name: tr('Fekete', 'Schwarz'), hex: '#2c2b2a' },
   ],
 }
 
 /** Nyílászárók (ablak-, ajtókeretek, bejárati ajtó) leggyakoribb színei. */
 export const WINDOW_COLORS: WindowSwatch[] = [
-  { id: 'white', name: 'Fehér', hex: '#efefec', kind: 'solid', match: 'RAL 9016', note: 'a leggyakoribb' },
-  { id: 'anthracite', name: 'Antracit', hex: '#363b3e', kind: 'solid', match: 'RAL 7016', note: 'modern' },
-  { id: 'black', name: 'Fekete', hex: '#1c1f21', kind: 'solid', match: 'RAL 9005' },
-  { id: 'silver', name: 'Alumínium', hex: '#a2a6a7', kind: 'metal', match: 'RAL 9006' },
-  { id: 'brown', name: 'Barna', hex: '#4b3a30', kind: 'solid', match: 'RAL 8019' },
-  { id: 'goldenoak', name: 'Aranytölgy', hex: '#a8743d', kind: 'wood', match: 'FA ARANYTÖLGY' },
-  { id: 'walnut', name: 'Dió', hex: '#5e3d26', kind: 'wood', match: 'FA DIÓ' },
+  { id: 'white', name: tr('Fehér', 'Weiß'), hex: '#efefec', kind: 'solid', match: 'RAL 9016', note: tr('a leggyakoribb', 'am häufigsten') },
+  { id: 'anthracite', name: tr('Antracit', 'Anthrazit'), hex: '#363b3e', kind: 'solid', match: 'RAL 7016', note: 'modern' },
+  { id: 'black', name: tr('Fekete', 'Schwarz'), hex: '#1c1f21', kind: 'solid', match: 'RAL 9005' },
+  { id: 'silver', name: tr('Alumínium', 'Aluminium'), hex: '#a2a6a7', kind: 'metal', match: 'RAL 9006' },
+  { id: 'brown', name: tr('Barna', 'Braun'), hex: '#4b3a30', kind: 'solid', match: 'RAL 8019' },
+  { id: 'goldenoak', name: tr('Aranytölgy', 'Golden Oak'), hex: '#a8743d', kind: 'wood', match: 'FA ARANYTÖLGY' },
+  { id: 'walnut', name: tr('Dió', 'Nuss'), hex: '#5e3d26', kind: 'wood', match: 'FA DIÓ' },
 ]
 
 export const DEFAULT_HOUSE: Required<HouseLookSettings> = {
@@ -109,13 +110,13 @@ export function wallColorName(finish: WallFinish, color: string | undefined) {
   const exact = WALL_COLORS[finish].find((item) => item.hex.toLowerCase() === hex)
   if (exact) return exact.name
   const nearest = [...WALL_COLORS[finish]].sort((a, b) => hexDistance(a.hex, hex) - hexDistance(b.hex, hex))[0]
-  return hexDistance(nearest.hex, hex) < 8 ? `${nearest.name} árnyalat` : 'egyedi szín'
+  return hexDistance(nearest.hex, hex) < 8 ? tr(`${nearest.name} árnyalat`, `Ton ${nearest.name}`) : tr('egyedi szín', 'Sonderfarbe')
 }
 
 /** Egysoros leírás az összegzéshez és a gyártónak küldött kérelemhez. */
 export function houseSummary(look: Pick<SceneSettings, 'wallFinish' | 'wallColor' | 'windowColor'>) {
-  const finish = WALL_FINISH_INFO[look.wallFinish]?.label ?? 'Vakolt'
-  return `${finish} homlokzat (${wallColorName(look.wallFinish, look.wallColor).toLowerCase()}) · ${findWindowColor(look.windowColor).name.toLowerCase()} nyílászárók`
+  const finish = WALL_FINISH_INFO[look.wallFinish]?.label ?? tr('Vakolt', 'Verputzt')
+  return tr(`${finish} homlokzat (${wallColorName(look.wallFinish, look.wallColor).toLowerCase()}) · ${findWindowColor(look.windowColor).name.toLowerCase()} nyílászárók`, `Fassade ${finish} (${wallColorName(look.wallFinish, look.wallColor)}) · Fenster ${findWindowColor(look.windowColor).name}`)
 }
 
 /** Mentett beállítás beolvasása: minden mező külön ellenőrizve, hibás érték helyett alapérték. */

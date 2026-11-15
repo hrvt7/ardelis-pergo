@@ -2,6 +2,7 @@
 import { isMovableRoof } from './roofs'
 import { closedSegments } from './sides'
 import type { PergolaConfig } from '../types/pergola'
+import { tr } from '../i18n/locale'
 
 /** RGB-előnézet színei (a valódi vezérlő 16 millió színt tud; ezek a jellemző jelenetek). */
 export const RGB_SWATCHES = [
@@ -18,11 +19,11 @@ export const RGB_SWATCHES = [
 export function smartHomeTargets(config: PergolaConfig) {
   const zips = closedSegments(config).filter((segment) => segment.type === 'zip').length
   return [
-    isMovableRoof(config.roof) ? 'tető' : null,
+    isMovableRoof(config.roof) ? tr('tető', 'Dach') : null,
     zips ? `${zips} ZIP` : null,
     config.led ? (config.ledRgb ? 'RGB LED' : 'LED') : null,
-    config.heaters ? 'fűtés' : null,
-    config.fans ? 'ventilátor' : null,
+    config.heaters ? tr('fűtés', 'Heizung') : null,
+    config.fans ? tr('ventilátor', 'Ventilator') : null,
   ].filter((item): item is string => Boolean(item))
 }
 

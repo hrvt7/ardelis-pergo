@@ -25,6 +25,6 @@ describe('konfigurátor felület (audit H6, H11–H13, H20)', () => {
     expect(read('src/index.css')).toMatch(/\.weather-toolbar > \.quick-toggle \{ display: none; \}/)
   })
   it('a „Kezdőlap” link navigációs landmarkban van', () => {
-    for (const page of ['PergoStudio', 'CatalogStudio', 'GarageStudio']) expect(read(`src/pages/${page}.tsx`)).toMatch(/<nav aria-label="Vissza a kezdőlapra">/)
+    for (const page of ['PergoStudio', 'CatalogStudio', 'GarageStudio']) expect(read(`src/pages/${page}.tsx`)).toMatch(/<nav aria-label=(?:"Vissza a kezdőlapra"|\{tr\('Vissza a kezdőlapra', '[^']+'\)\})>/)
   })
 })

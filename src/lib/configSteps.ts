@@ -1,14 +1,15 @@
 import type { ConfigStep } from '@/types/pergola'
+import { tr } from '../i18n/locale'
 
 /** A pergola-konfigurátor lépései, sorrendben (a panel fülei és a mobil „Tovább” gomb is ebből dolgozik). */
 export const STEPS: { id: ConfigStep; label: string; short: string }[] = [
-  { id: 'size', label: 'Típus', short: 'Mit építesz' },
-  { id: 'mount', label: 'Méret', short: 'Elhelyezés és méret' },
-  { id: 'roof', label: 'Tető', short: 'Tetőrendszer' },
-  { id: 'sides', label: 'Oldalak', short: 'Oldalzárás' },
-  { id: 'color', label: 'Szín', short: 'Felület' },
-  { id: 'extras', label: 'Komfort', short: 'Komfort és vezérlés' },
-  { id: 'summary', label: 'Összegzés', short: 'Felmérés' },
+  { id: 'size', label: tr('Típus', 'Typ'), short: tr('Mit építesz', 'Was bauen Sie') },
+  { id: 'mount', label: tr('Méret', 'Größe'), short: tr('Elhelyezés és méret', 'Montage und Größe') },
+  { id: 'roof', label: tr('Tető', 'Dach'), short: tr('Tetőrendszer', 'Dachsystem') },
+  { id: 'sides', label: tr('Oldalak', 'Seiten'), short: tr('Oldalzárás', 'Seitenelemente') },
+  { id: 'color', label: tr('Szín', 'Farbe'), short: tr('Felület', 'Oberfläche') },
+  { id: 'extras', label: tr('Komfort', 'Komfort'), short: tr('Komfort és vezérlés', 'Komfort und Steuerung') },
+  { id: 'summary', label: tr('Összegzés', 'Übersicht'), short: tr('Felmérés', 'Aufmaß') },
 ]
 
 /** A következő lépés; az utolsón null. */
@@ -23,8 +24,8 @@ export function nextStep(step: ConfigStep): ConfigStep | null {
  */
 export function mobileBarAction(step: ConfigStep): { kind: 'step'; step: ConfigStep; label: string } | { kind: 'lead'; label: string } {
   const next = nextStep(step)
-  if (!next) return { kind: 'lead', label: 'Felmérést kérek' }
-  return { kind: 'step', step: next, label: `Tovább: ${STEPS.find((item) => item.id === next)!.label}` }
+  if (!next) return { kind: 'lead', label: tr('Felmérést kérek', 'Aufmaß anfragen') }
+  return { kind: 'step', step: next, label: `${tr('Tovább', 'Weiter')}: ${STEPS.find((item) => item.id === next)!.label}` }
 }
 
 /**

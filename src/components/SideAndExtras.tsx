@@ -12,6 +12,7 @@ import { CONSERVATORY_SIDE_TYPES } from '@/lib/buildings'
 import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import type { PergolaConfig, PriceSettings, RoofShade, SceneSettings, SideKey, SideType } from '@/types/pergola'
+import { tr } from '../i18n/locale'
 
 const signed = (value: number) => signedPrice(value)
 
@@ -72,34 +73,34 @@ export function SideSettings({ side, sideName, config, scene, prices, half, onHa
   const midPost = side === 'front' && hasCenterPost(config)
 
   return <div className="side-settings">
-    <div className="selected-side-head"><strong>{sideName}</strong><span>{split ? 'Két részre osztva' : SIDE_INFO[config.sides[side]].label}</span></div>
-    <div className="split-mode" role="radiogroup" aria-label={`${sideName} kialakítása`}>
-      <button type="button" role="radio" aria-checked={!split} className={!split ? 'selected' : ''} onClick={() => setSplit(false)}><Square size={14} />Egész oldal</button>
-      <button type="button" role="radio" aria-checked={split} className={split ? 'selected' : ''} onClick={() => setSplit(true)}><SplitSquareHorizontal size={14} />Két fél</button>
+    <div className="selected-side-head"><strong>{sideName}</strong><span>{split ? tr('Két részre osztva', 'In zwei Teile geteilt') : SIDE_INFO[config.sides[side]].label}</span></div>
+    <div className="split-mode" role="radiogroup" aria-label={tr(`${sideName} kialakítása`, `${sideName}: Gestaltung`)}>
+      <button type="button" role="radio" aria-checked={!split} className={!split ? 'selected' : ''} onClick={() => setSplit(false)}><Square size={14} />{tr('Egész oldal', 'Ganze Seite')}</button>
+      <button type="button" role="radio" aria-checked={split} className={split ? 'selected' : ''} onClick={() => setSplit(true)}><SplitSquareHorizontal size={14} />{tr('Két fél', 'Zwei Hälften')}</button>
     </div>
     {split && <>
-      <div className="half-tabs" role="tablist" aria-label="Melyik felet állítod?">
+      <div className="half-tabs" role="tablist" aria-label={tr('Melyik felet állítod?', 'Welche Hälfte stellen Sie ein?')}>
         {([0, 1] as const).map((index) => <button key={index} type="button" role="tab" aria-selected={activeHalf === index} className={activeHalf === index ? 'selected' : ''} onClick={() => onHalfChange(index)}>
           <span className={`half-mark half-${index}`} aria-hidden="true"><i /><i /></span>
           <span><small>{HALF_NAMES[side][index]}</small><strong>{SIDE_INFO[typeOf(index)].label}</strong></span>
         </button>)}
       </div>
-      <p className="split-note">{midPost ? 'A két fél a középoszlopnál találkozik, külön osztóprofil nem kell.' : `A két fél között függőleges osztóprofil fut (${formatPrice(prices.splitProfileNet)} + telepítés).`}</p>
+      <p className="split-note">{midPost ? tr('A két fél a középoszlopnál találkozik, külön osztóprofil nem kell.', 'Die Hälften treffen sich am Mittelsteher, ein eigenes Teilungsprofil ist nicht nötig.') : tr(`A két fél között függőleges osztóprofil fut (${formatPrice(prices.splitProfileNet)} + telepítés).`, `Zwischen den Hälften läuft ein senkrechtes Teilungsprofil (${formatPrice(prices.splitProfileNet)} + Montage).`)}</p>
     </>}
-    <div className="side-type-grid" role="radiogroup" aria-label={split ? `${HALF_NAMES[side][activeHalf]} típusa` : `${sideName} típusa`}>
+    <div className="side-type-grid" role="radiogroup" aria-label={split ? `${HALF_NAMES[side][activeHalf]}: ${tr('típusa', 'Typ')}` : `${sideName}: ${tr('típusa', 'Typ')}`}>
       {types.map((type) => {
         const info = SIDE_INFO[type]
         const selected = current === type
         return <button type="button" role="radio" aria-checked={selected} key={type} className={`side-type-card${selected ? ' selected' : ''}`} onClick={() => onChange(patchFor(type))}>
           <SideIcon type={type} />
           <span className="side-type-text"><strong>{info.label}</strong><small>{info.description}</small></span>
-          <em>{selected ? 'Kiválasztva' : signed(delta(type))}</em>
+          <em>{selected ? tr('Kiválasztva', 'Ausgewählt') : signed(delta(type))}</em>
         </button>
       })}
     </div>
-    {hasType('glass', 'glassFramed') && <button type="button" className="side-motion-control" aria-pressed={scene.glassOpen} onClick={() => onSceneChange({ glassOpen: !scene.glassOpen })}><Move size={17} /><span>{scene.glassOpen ? 'Tolóüveg bezárása' : 'Tolóüveg eltolása'}</span></button>}
-    {hasType('door', 'doorSliding') && <button type="button" className="side-motion-control door-toggle" aria-pressed={scene.doorOpen} onClick={() => onSceneChange({ doorOpen: !scene.doorOpen })}><DoorOpen size={17} /><span>{scene.doorOpen ? 'Ajtó bezárása' : 'Ajtó kinyitása'}</span></button>}
-    {hasType('louver') && <button type="button" className="side-motion-control" aria-pressed={scene.wallLouverOpen} onClick={() => onSceneChange({ wallLouverOpen: !scene.wallLouverOpen })}><Layers3 size={17} /><span>{scene.wallLouverOpen ? 'Oldallamellák zárása' : 'Oldallamellák döntése'}</span></button>}
+    {hasType('glass', 'glassFramed') && <button type="button" className="side-motion-control" aria-pressed={scene.glassOpen} onClick={() => onSceneChange({ glassOpen: !scene.glassOpen })}><Move size={17} /><span>{scene.glassOpen ? tr('Tolóüveg bezárása', 'Glasschiebewand schließen') : tr('Tolóüveg eltolása', 'Glasschiebewand öffnen')}</span></button>}
+    {hasType('door', 'doorSliding') && <button type="button" className="side-motion-control door-toggle" aria-pressed={scene.doorOpen} onClick={() => onSceneChange({ doorOpen: !scene.doorOpen })}><DoorOpen size={17} /><span>{scene.doorOpen ? tr('Ajtó bezárása', 'Tür schließen') : tr('Ajtó kinyitása', 'Tür öffnen')}</span></button>}
+    {hasType('louver') && <button type="button" className="side-motion-control" aria-pressed={scene.wallLouverOpen} onClick={() => onSceneChange({ wallLouverOpen: !scene.wallLouverOpen })}><Layers3 size={17} /><span>{scene.wallLouverOpen ? tr('Oldallamellák zárása', 'Seitenlamellen schließen') : tr('Oldallamellák döntése', 'Seitenlamellen kippen')}</span></button>}
   </div>
 }
 
@@ -122,14 +123,14 @@ export function RgbOption({ config, scene, prices, onChange, onSceneChange }: Co
     {tenant.extras.rgb && config.led && <div className={`sub-option${config.ledRgb ? ' is-on' : ''}`}>
       <button type="button" className="sub-option-head" role="switch" aria-checked={Boolean(config.ledRgb)} onClick={() => onChange({ ledRgb: config.ledRgb ? undefined : true })}>
         <Palette size={17} strokeWidth={1.6} />
-        <span><strong>Színváltós RGB+W LED</strong><small>Fehér és bármilyen szín, jelenetek appból</small></span>
+        <span><strong>{tr('Színváltós RGB+W LED', 'Farbwechsel-LED RGB+W')}</strong><small>{tr('Fehér és bármilyen szín, jelenetek appból', 'Weiß und jede Farbe, Szenen per App')}</small></span>
         <em>+{formatPrice(prices.ledRgbPerMeterNet)} / fm</em>
         <span className={`switch-track ${config.ledRgb ? 'is-on' : ''}`} aria-hidden="true"><span /></span>
       </button>
       {config.ledRgb && <div className="rgb-preview">
-        <small>Nézd meg este — koppints egy színre</small>
-        <div className="rgb-swatches" role="radiogroup" aria-label="LED színe">
-          <button type="button" role="radio" aria-checked={!scene.ledColor} className={`rgb-white${!scene.ledColor ? ' selected' : ''}`} title="Meleg fehér" aria-label="Meleg fehér" onClick={() => onSceneChange({ ledColor: null })} />
+        <small>{tr('Nézd meg este — koppints egy színre', 'Abends ansehen — Farbe antippen')}</small>
+        <div className="rgb-swatches" role="radiogroup" aria-label={tr('LED színe', 'LED-Farbe')}>
+          <button type="button" role="radio" aria-checked={!scene.ledColor} className={`rgb-white${!scene.ledColor ? ' selected' : ''}`} title={tr('Meleg fehér', 'Warmweiß')} aria-label={tr('Meleg fehér', 'Warmweiß')} onClick={() => onSceneChange({ ledColor: null })} />
           {RGB_SWATCHES.map((swatch) => <button type="button" role="radio" aria-checked={scene.ledColor === swatch.hex} key={swatch.hex} className={scene.ledColor === swatch.hex ? 'selected' : ''} style={{ '--swatch': swatch.hex } as React.CSSProperties} title={swatch.name} aria-label={swatch.name} onClick={() => showColor(swatch.hex)} />)}
         </div>
       </div>}
@@ -143,12 +144,12 @@ export function FanOption({ config, scene, prices, onChange, onSceneChange }: Co
   const fans = config.fans ?? 0
   return <>
     {tenant.extras.fans && <div className="stepper-row fan-row">
-      <span><strong><Fan size={15} strokeWidth={1.6} />Mennyezeti ventilátor</strong><small>Kültéri DC motor, Ø132 cm · {formatPrice(prices.fanUnitNet)} / db</small></span>
-      <div className="stepper"><button type="button" aria-label="Ventilátor csökkentése" disabled={fans === 0} onClick={() => onChange({ fans: fans > 1 ? fans - 1 : undefined })}><Minus size={15} /></button><span>{fans} db</span><button type="button" aria-label="Ventilátor növelése" disabled={fans >= 2} onClick={() => onChange({ fans: fans + 1 })}><Plus size={15} /></button></div>
+      <span><strong><Fan size={15} strokeWidth={1.6} />{tr('Mennyezeti ventilátor', 'Deckenventilator')}</strong><small>{tr('Kültéri DC motor, Ø132 cm', 'Outdoor-DC-Motor, Ø 132 cm')} · {formatPrice(prices.fanUnitNet)} / {tr('db', 'Stk.')}</small></span>
+      <div className="stepper"><button type="button" aria-label={tr('Ventilátor csökkentése', 'Ventilator verringern')} disabled={fans === 0} onClick={() => onChange({ fans: fans > 1 ? fans - 1 : undefined })}><Minus size={15} /></button><span>{fans} db</span><button type="button" aria-label={tr('Ventilátor növelése', 'Ventilator erhöhen')} disabled={fans >= 2} onClick={() => onChange({ fans: fans + 1 })}><Plus size={15} /></button></div>
     </div>}
     {fans > 0 && <>
-      {config.height < FAN_MIN_HEIGHT && <p className="fan-warning">{`Alacsony belmagasság: ${String(FAN_MIN_HEIGHT).replace('.', ',')} m oszlopmagasság alatt a lapátok 2,1 m alá kerülhetnek. Felméréskor ellenőrizzük, vagy válassz magasabb oszlopot.`}</p>}
-      <button type="button" className="side-motion-control" aria-pressed={scene.fanOn} onClick={() => onSceneChange({ fanOn: !scene.fanOn })}><Power size={16} /><span>{scene.fanOn ? 'Ventilátor kikapcsolása' : 'Ventilátor bekapcsolása a 3D-ben'}</span></button>
+      {config.height < FAN_MIN_HEIGHT && <p className="fan-warning">{tr(`Alacsony belmagasság: ${String(FAN_MIN_HEIGHT).replace('.', ',')} m oszlopmagasság alatt a lapátok 2,1 m alá kerülhetnek. Felméréskor ellenőrizzük, vagy válassz magasabb oszlopot.`, `Geringe Raumhöhe: unter ${String(FAN_MIN_HEIGHT).replace('.', ',')} m Steherhöhe können die Flügel unter 2,1 m liegen. Wir prüfen das beim Aufmaß, oder wählen Sie höhere Steher.`)}</p>}
+      <button type="button" className="side-motion-control" aria-pressed={scene.fanOn} onClick={() => onSceneChange({ fanOn: !scene.fanOn })}><Power size={16} /><span>{scene.fanOn ? tr('Ventilátor kikapcsolása', 'Ventilator ausschalten') : tr('Ventilátor bekapcsolása a 3D-ben', 'Ventilator in 3D einschalten')}</span></button>
     </>}
   </>
 }
@@ -160,7 +161,7 @@ export function SmartHomeOption({ config, prices, onChange }: Omit<ComfortProps,
   return <>
     {tenant.extras.smartHome && <button type="button" className={`extra-card smart-home-card ${config.smartHome ? 'is-on' : ''}`} role="switch" aria-checked={Boolean(config.smartHome)} onClick={() => onChange({ smartHome: config.smartHome ? undefined : true })}>
       <House size={20} strokeWidth={1.5} />
-      <span><strong>Okosotthon-vezérlés</strong><small>{targets.length ? `Egy appból: ${targets.join(' · ')}` : 'A később hozzáadott elektromos opciókat is kezeli'} — időzítés, jelenetek, Google / Alexa / Siri</small><em>{formatPrice(prices.smartHomeNet)}</em></span>
+      <span><strong>{tr('Okosotthon-vezérlés', 'Smart-Home-Steuerung')}</strong><small>{targets.length ? `${tr('Egy appból', 'Per App')}: ${targets.join(' · ')}` : tr('A később hozzáadott elektromos opciókat is kezeli', 'Steuert auch später hinzugefügte elektrische Optionen')}{tr(' — időzítés, jelenetek, Google / Alexa / Siri', ' — Zeitpläne, Szenen, Google / Alexa / Siri')}</small><em>{formatPrice(prices.smartHomeNet)}</em></span>
       <span className={`switch-track ${config.smartHome ? 'is-on' : ''}`} aria-hidden="true"><span /></span>
     </button>}
   </>
@@ -187,30 +188,30 @@ export function RoofShadeOption({ config, scene, prices, onChange, onSceneChange
   const delta = (kind: RoofShade | undefined) => tenantPrice(tenant, { ...config, roofShade: kind, shadeFabric: kind ? config.shadeFabric ?? DEFAULT_SHADE_FABRIC : undefined }, prices).totalGross - current
   const glass = config.roof === 'glass'
   const options: { id: RoofShade | 'none'; label: string; description: string }[] = [
-    { id: 'none', label: 'Árnyékoló nélkül', description: glass ? 'Teljes napfény — nyáron délben meleg lehet alatta' : 'Opál, szórt fény, árnyékoló nélkül' },
+    { id: 'none', label: tr('Árnyékoló nélkül', 'Ohne Beschattung'), description: glass ? tr('Teljes napfény — nyáron délben meleg lehet alatta', 'Volle Sonne — mittags im Sommer kann es darunter warm werden') : tr('Opál, szórt fény, árnyékoló nélkül', 'Opal, diffuses Licht, ohne Beschattung') },
     ...ROOF_SHADES.map((kind) => ({ id: kind, label: ROOF_SHADE_INFO[kind].label, description: ROOF_SHADE_INFO[kind].benefit })),
   ]
   const selected = config.roofShade ?? 'none'
   return <div className="roof-shade-option">
-    <div className="roof-shade-head"><strong>Motoros árnyékoló</strong><small>{glass ? 'Üvegtető alatt nyáron gyorsan meleg lesz: a ponyva a napot megfogja, esőben az üveg véd.' : 'A polikarbonát szórt fényt ad; a ponyvával teljes árnyékot kapsz, amikor kell.'}</small></div>
-    <div className="side-type-grid roof-shade-grid" role="radiogroup" aria-label="Tetőárnyékoló">
+    <div className="roof-shade-head"><strong>{tr('Motoros árnyékoló', 'Motorisierte Beschattung')}</strong><small>{glass ? tr('Üvegtető alatt nyáron gyorsan meleg lesz: a ponyva a napot megfogja, esőben az üveg véd.', 'Unter einem Glasdach wird es im Sommer schnell warm: die Markise fängt die Sonne ab, bei Regen schützt das Glas.') : tr('A polikarbonát szórt fényt ad; a ponyvával teljes árnyékot kapsz, amikor kell.', 'Polycarbonat gibt diffuses Licht; mit der Markise bekommen Sie bei Bedarf vollen Schatten.')}</small></div>
+    <div className="side-type-grid roof-shade-grid" role="radiogroup" aria-label={tr('Tetőárnyékoló', 'Dachbeschattung')}>
       {options.map((option) => {
         const on = selected === option.id
         const kind = option.id === 'none' ? undefined : option.id
         return <button type="button" role="radio" aria-checked={on} key={option.id} className={`side-type-card${on ? ' selected' : ''}`} onClick={() => onChange({ roofShade: kind, shadeFabric: kind ? config.shadeFabric ?? DEFAULT_SHADE_FABRIC : undefined })}>
           <ShadeIcon kind={option.id} />
           <span className="side-type-text"><strong>{option.label}</strong><small>{option.description}</small></span>
-          <em>{on ? 'Kiválasztva' : signed(delta(kind))}</em>
+          <em>{on ? tr('Kiválasztva', 'Ausgewählt') : signed(delta(kind))}</em>
         </button>
       })}
     </div>
     {config.roofShade && <>
-      <div className="roof-shade-fabrics" role="radiogroup" aria-label="Ponyva színe">
+      <div className="roof-shade-fabrics" role="radiogroup" aria-label={tr('Ponyva színe', 'Tuchfarbe')}>
         <span>Ponyva</span>
         {SHADE_FABRICS.map((fabric) => <button type="button" role="radio" aria-checked={config.shadeFabric === fabric.id} key={fabric.id} className={config.shadeFabric === fabric.id ? 'selected' : ''} title={fabric.name} onClick={() => onChange({ shadeFabric: fabric.id })}><i style={{ background: fabric.hex }} /><small>{fabric.name}</small></button>)}
       </div>
-      <button type="button" className="side-motion-control" aria-pressed={scene.shadeOut > 50} onClick={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })}><Move size={17} /><span>{scene.shadeOut > 50 ? 'Árnyékoló behúzása' : 'Árnyékoló kihúzása'}</span></button>
-      <p className="split-note">{formatPrice(prices[ROOF_SHADE_INFO[config.roofShade].priceKey])} / m² nettó · {formatNumber(roofShadeArea(config), 2)} m² · távirányítóval{config.smartHome ? ', az okosotthon-appból is' : ''}{config.sensors ? '; a szélérzékelő erős szélben automatikusan behúzza' : ''}.</p>
+      <button type="button" className="side-motion-control" aria-pressed={scene.shadeOut > 50} onClick={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })}><Move size={17} /><span>{scene.shadeOut > 50 ? tr('Árnyékoló behúzása', 'Beschattung einfahren') : tr('Árnyékoló kihúzása', 'Beschattung ausfahren')}</span></button>
+      <p className="split-note">{formatPrice(prices[ROOF_SHADE_INFO[config.roofShade].priceKey])} / m² {tr('nettó', 'netto')} · {formatNumber(roofShadeArea(config), 2)} m² · {tr('távirányítóval', 'mit Fernbedienung')}{config.smartHome ? tr(', az okosotthon-appból is', ', auch per Smart-Home-App') : ''}{config.sensors ? tr('; a szélérzékelő erős szélben automatikusan behúzza', '; der Windsensor fährt sie bei starkem Wind automatisch ein') : ''}.</p>
     </>}
   </div>
 }

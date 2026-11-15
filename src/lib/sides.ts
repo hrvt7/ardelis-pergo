@@ -5,6 +5,7 @@
 // Első fél: elöl/hátul a bal (−x), oldalt az elülső (kert felőli, +z) fél.
 import { isWallSide } from './mount'
 import type { PergolaConfig, PriceSettings, SideKey, SideType } from '../types/pergola'
+import { tr } from '../i18n/locale'
 
 export interface SideInfo {
   label: string
@@ -26,26 +27,26 @@ export interface SideInfo {
 export const SIDE_TYPES: SideType[] = ['none', 'zip', 'glass', 'glassFramed', 'glassFixed', 'door', 'doorSliding', 'louver', 'slatAlu', 'slatWood']
 
 export const SIDE_INFO: Record<SideType, SideInfo> = {
-  none: { label: 'Nyitott', description: 'Szabad kilátás, szellős terasz', spec: '0', share: '0', priceKey: null, value: 0, motorized: false, movable: null },
-  zip: { label: 'ZIP screen', description: 'Motoros, szélálló árnyékoló, a kazettába tűnik', spec: 'Z', share: 'z', priceKey: 'zipPerM2Net', value: 1.4, motorized: true, movable: 'roll' },
-  glass: { label: 'Tolóüveg', description: 'Keret nélküli, 10 mm edzett üveg, félre tolható', spec: 'G', share: 'g', priceKey: 'glassPerM2Net', value: 2.4, motorized: false, movable: 'slide' },
-  glassFramed: { label: 'Keretes tolóüveg', description: 'Alumínium keretes, tömített tolóelemek', spec: 'K', share: 'k', priceKey: 'glassFramedPerM2Net', value: 2.2, motorized: false, movable: 'slide' },
-  glassFixed: { label: 'Fix üveg', description: 'Szélfogó üvegfal, nem nyitható', spec: 'F', share: 'f', priceKey: 'glassFixedPerM2Net', value: 1.9, motorized: false, movable: null },
-  door: { label: 'Nyíló ajtós üvegfal', description: 'Fix üvegfal középen nyíló, keretes üvegajtóval', spec: 'D', share: 'd', priceKey: 'glassFixedPerM2Net', value: 2.3, motorized: false, movable: 'swing' },
-  doorSliding: { label: 'Tolóajtós üvegfal', description: 'Fix üvegfal tolóajtóval, szűk bejárathoz is', spec: 'T', share: 't', priceKey: 'glassFixedPerM2Net', value: 2.5, motorized: false, movable: 'slide' },
-  louver: { label: 'Lamellafal', description: 'Állítható alumínium lamellák, belátásvédelem', spec: 'L', share: 'l', priceKey: 'louverWallPerM2Net', value: 1.8, motorized: false, movable: 'tilt' },
-  slatAlu: { label: 'Alu lécfal', description: 'Fix alumínium lécek, a szerkezet színében', spec: 'A', share: 'a', priceKey: 'slatAluPerM2Net', value: 1.3, motorized: false, movable: null },
-  slatWood: { label: 'Fa lécfal', description: 'Hőkezelt fa lécek, meleg hatás', spec: 'W', share: 'w', priceKey: 'slatWoodPerM2Net', value: 1.2, motorized: false, movable: null },
+  none: { label: tr('Nyitott', 'Offen'), description: tr('Szabad kilátás, szellős terasz', 'Freie Sicht, luftige Terrasse'), spec: '0', share: '0', priceKey: null, value: 0, motorized: false, movable: null },
+  zip: { label: tr('ZIP screen', 'ZIP-Screen'), description: tr('Motoros, szélálló árnyékoló, a kazettába tűnik', 'Motorisierter, windstabiler Sonnenschutz, verschwindet in der Kassette'), spec: 'Z', share: 'z', priceKey: 'zipPerM2Net', value: 1.4, motorized: true, movable: 'roll' },
+  glass: { label: tr('Tolóüveg', 'Glasschiebewand'), description: tr('Keret nélküli, 10 mm edzett üveg, félre tolható', 'Rahmenlos, 10 mm ESG, zur Seite schiebbar'), spec: 'G', share: 'g', priceKey: 'glassPerM2Net', value: 2.4, motorized: false, movable: 'slide' },
+  glassFramed: { label: tr('Keretes tolóüveg', 'Gerahmte Glasschiebewand'), description: tr('Alumínium keretes, tömített tolóelemek', 'Aluminiumgerahmte, abgedichtete Schiebeelemente'), spec: 'K', share: 'k', priceKey: 'glassFramedPerM2Net', value: 2.2, motorized: false, movable: 'slide' },
+  glassFixed: { label: tr('Fix üveg', 'Festverglasung'), description: tr('Szélfogó üvegfal, nem nyitható', 'Windschutz-Glaswand, nicht öffenbar'), spec: 'F', share: 'f', priceKey: 'glassFixedPerM2Net', value: 1.9, motorized: false, movable: null },
+  door: { label: tr('Nyíló ajtós üvegfal', 'Glaswand mit Drehtür'), description: tr('Fix üvegfal középen nyíló, keretes üvegajtóval', 'Festverglasung mit mittiger, gerahmter Glas-Drehtür'), spec: 'D', share: 'd', priceKey: 'glassFixedPerM2Net', value: 2.3, motorized: false, movable: 'swing' },
+  doorSliding: { label: tr('Tolóajtós üvegfal', 'Glaswand mit Schiebetür'), description: tr('Fix üvegfal tolóajtóval, szűk bejárathoz is', 'Festverglasung mit Schiebetür, auch für schmale Zugänge'), spec: 'T', share: 't', priceKey: 'glassFixedPerM2Net', value: 2.5, motorized: false, movable: 'slide' },
+  louver: { label: tr('Lamellafal', 'Lamellenwand'), description: tr('Állítható alumínium lamellák, belátásvédelem', 'Verstellbare Aluminiumlamellen, Sichtschutz'), spec: 'L', share: 'l', priceKey: 'louverWallPerM2Net', value: 1.8, motorized: false, movable: 'tilt' },
+  slatAlu: { label: tr('Alu lécfal', 'Alu-Lattenwand'), description: tr('Fix alumínium lécek, a szerkezet színében', 'Feste Aluminiumlatten in Konstruktionsfarbe'), spec: 'A', share: 'a', priceKey: 'slatAluPerM2Net', value: 1.3, motorized: false, movable: null },
+  slatWood: { label: tr('Fa lécfal', 'Holz-Lattenwand'), description: tr('Hőkezelt fa lécek, meleg hatás', 'Thermoholz-Latten, warme Optik'), spec: 'W', share: 'w', priceKey: 'slatWoodPerM2Net', value: 1.2, motorized: false, movable: null },
 }
 
 export const SIDE_LABELS = Object.fromEntries(SIDE_TYPES.map((type) => [type, SIDE_INFO[type].label])) as Record<SideType, string>
 
 /** A félbe osztott oldal két felének neve. */
 export const HALF_NAMES: Record<SideKey, [string, string]> = {
-  front: ['bal fél', 'jobb fél'],
-  back: ['bal fél', 'jobb fél'],
-  left: ['elülső fél', 'hátsó fél'],
-  right: ['elülső fél', 'hátsó fél'],
+  front: [tr('bal fél', 'linke Hälfte'), tr('jobb fél', 'rechte Hälfte')],
+  back: [tr('bal fél', 'linke Hälfte'), tr('jobb fél', 'rechte Hälfte')],
+  left: [tr('elülső fél', 'vordere Hälfte'), tr('hátsó fél', 'hintere Hälfte')],
+  right: [tr('elülső fél', 'vordere Hälfte'), tr('hátsó fél', 'hintere Hälfte')],
 }
 
 export interface SideSegment {

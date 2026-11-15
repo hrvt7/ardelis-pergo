@@ -8,6 +8,7 @@ import { signedPrice } from '@/lib/money'
 import { enabledRoofs, normalizeConfig, tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import type { BuildingType, ClimateType, PergolaConfig, PriceSettings, SceneSettings } from '@/types/pergola'
+import { tr } from '../i18n/locale'
 
 type Change = (patch: Partial<PergolaConfig>) => void
 
@@ -71,21 +72,21 @@ export function BuildingPicker({ config, prices, onChange, modular }: { config: 
   const base = tenantPrice(tenant, config, prices).totalGross
   const patchFor = (building: BuildingType) => buildingPatch(config, building, roofs, tenant.sides)
   const delta = (building: BuildingType) => tenantPrice(tenant, normalizeConfig(tenant, { ...config, ...patchFor(building) }), prices).totalGross - base
-  return <div className="building-picker" role="radiogroup" aria-label="Építmény típusa">
+  return <div className="building-picker" role="radiogroup" aria-label={tr('Építmény típusa', 'Bauwerkstyp')}>
     {BUILDING_TYPES.filter((type) => available.includes(type)).map((type, index) => {
       const info = BUILDING_INFO[type]
       const selected = current === type
       // Modulház nézetből visszaváltva az árkülönbség nem értelmezhető (más termék), ezért ott nem jelenik meg.
       return <button type="button" role="radio" aria-checked={selected} key={type} style={{ ['--i' as string]: index }} className={`building-card building-${type}${selected ? ' selected' : ''}`} onClick={() => !selected && onChange(modular?.selected && type === (config.building ?? 'pergola') ? {} : patchFor(type))}>
-        <span className="building-card-head"><BuildingIcon type={type} /><span><strong>{info.label}</strong><small>{info.short}</small></span><em>{selected ? 'Kiválasztva' : modular?.selected ? '' : signed(delta(type))}</em></span>
+        <span className="building-card-head"><BuildingIcon type={type} /><span><strong>{info.label}</strong><small>{info.short}</small></span><em>{selected ? tr('Kiválasztva', 'Ausgewählt') : modular?.selected ? '' : signed(delta(type))}</em></span>
         <span className="building-card-text">{info.description}</span>
         <span className="building-card-traits"><span className="building-season">{info.season}</span>{info.traits.map((trait) => <span key={trait}>{trait}</span>)}</span>
       </button>
     })}
     {modular && <button type="button" role="radio" aria-checked={modular.selected} style={{ ['--i' as string]: available.length }} className={`building-card building-modular${modular.selected ? ' selected' : ''}`} onClick={() => !modular.selected && modular.onSelect()}>
-      <span className="building-card-head"><ModularIcon /><span><strong>Modulház</strong><small>Típusház valós méretben</small></span><em>{modular.selected ? 'Kiválasztva' : modular.priceNote}</em></span>
-      <span className="building-card-text">Előregyártott, darus emeléssel telepített családi ház; kívül kulcsrakész, belül emelt szerkezetkész.</span>
-      <span className="building-card-traits"><span className="building-season">Egész évben</span><span>Típusház</span><span>Pontalapozással</span></span>
+      <span className="building-card-head"><ModularIcon /><span><strong>{tr('Modulház', 'Modulhaus')}</strong><small>{tr('Típusház valós méretben', 'Typenhaus in Originalgröße')}</small></span><em>{modular.selected ? tr('Kiválasztva', 'Ausgewählt') : modular.priceNote}</em></span>
+      <span className="building-card-text">{tr('Előregyártott, darus emeléssel telepített családi ház; kívül kulcsrakész, belül emelt szerkezetkész.', 'Vorgefertigtes, per Kran versetztes Einfamilienhaus; außen schlüsselfertig, innen Ausbauhaus.')}</span>
+      <span className="building-card-traits"><span className="building-season">{tr('Egész évben', 'Ganzjährig')}</span><span>{tr('Típusház', 'Typenhaus')}</span><span>{tr('Pontalapozással', 'Mit Punktfundamenten')}</span></span>
     </button>}
   </div>
 }
@@ -96,15 +97,15 @@ export function WallGlazingPicker({ config, prices, onChange }: { config: Pergol
   if (!options.length) return null
   const current = effectiveWallGlazing(config)
   return <div className="glazing-picker wall-glazing">
-    <div className="section-title"><h3>Oldalüvegezés</h3><p>{config.building === 'conservatory' ? 'A télikert hőszigetelt üvegezést kap: a Low-E bevonat és a gáztöltet csökkenti a hőveszteséget.' : 'Az edzett üveg hideg térhez elég; hőszigetelt üveggel a veranda hűvösebb időben is kellemesebb.'}</p></div>
-    <div className="glazing-chips" role="radiogroup" aria-label="Oldalüvegezés">{options.map((id) => {
+    <div className="section-title"><h3>{tr('Oldalüvegezés', 'Seitenverglasung')}</h3><p>{config.building === 'conservatory' ? tr('A télikert hőszigetelt üvegezést kap: a Low-E bevonat és a gáztöltet csökkenti a hőveszteséget.', 'Der Wintergarten erhält Wärmeschutzglas: Low-E-Beschichtung und Gasfüllung senken den Wärmeverlust.') : tr('Az edzett üveg hideg térhez elég; hőszigetelt üveggel a veranda hűvösebb időben is kellemesebb.', 'ESG reicht für einen Kaltraum; mit Wärmeschutzglas ist die Veranda auch bei kühlerem Wetter angenehmer.')}</p></div>
+    <div className="glazing-chips" role="radiogroup" aria-label={tr('Oldalüvegezés', 'Seitenverglasung')}>{options.map((id) => {
       const info = WALL_GLAZING_INFO[id]
       const price = info.priceKey ? prices[info.priceKey] : 0
       return <button type="button" key={id} role="radio" aria-checked={current === id} className={`glazing-chip wall-glazing-${id}${current === id ? ' selected' : ''}`} onClick={() => onChange({ wallGlazing: id === defaultWallGlazing(config.building) ? undefined : id })}>
         <span className="glazing-swatch" aria-hidden="true" /><strong>{info.label}</strong><small>{info.short}</small><small className="ug">{info.ug}</small><em>{price > 0 ? `+${formatPrice(price)} / m²` : 'Alapkivitel'}</em>
       </button>
     })}</div>
-    <p className="split-note">Az Ug-értékek tájékoztató jellegűek; a pontos adat a gyártói adatlapon szerepel.</p>
+    <p className="split-note">{tr('Az Ug-értékek tájékoztató jellegűek; a pontos adat a gyártói adatlapon szerepel.', 'Die Ug-Werte sind Richtwerte; genaue Daten stehen im Herstellerdatenblatt.')}</p>
   </div>
 }
 
@@ -116,29 +117,29 @@ export function ClimateSection({ config, prices, onChange, scene, onSceneChange 
   if (!isClosedBuilding(config.building)) return null
   if (config.building === 'veranda') {
     const conservatory = availableBuildings(enabledRoofs(tenant), tenant.sides).includes('conservatory')
-    return <div className="building-note"><Info size={18} /><p><strong>A veranda nem fűtött tér</strong>Hideg időben is védett, de egész éves, fűtött használathoz hőszigetelt télikert kell.{conservatory && <> <button type="button" className="link-button" onClick={() => onChange(buildingPatch(config, 'conservatory', enabledRoofs(tenant), tenant.sides))}>Váltás télikertre</button></>}</p></div>
+    return <div className="building-note"><Info size={18} /><p><strong>{tr('A veranda nem fűtött tér', 'Die Veranda ist kein beheizter Raum')}</strong>Hideg időben is védett, de egész éves, fűtött használathoz hőszigetelt télikert kell.{conservatory && <> <button type="button" className="link-button" onClick={() => onChange(buildingPatch(config, 'conservatory', enabledRoofs(tenant), tenant.sides))}>{tr('Váltás télikertre', 'Zum Wintergarten wechseln')}</button></>}</p></div>
   }
   const base = tenantPrice(tenant, config, prices).totalGross
   const delta = (climate: ClimateType | 'none') => tenantPrice(tenant, { ...config, climate: climate === 'none' ? undefined : climate }, prices).totalGross - base
   const current = config.climate ?? 'none'
   return <div className="climate-section">
-    <div className="glazing-chips climate-chips" role="radiogroup" aria-label="Fűtés és hűtés">{CLIMATES.map((id) => {
+    <div className="glazing-chips climate-chips" role="radiogroup" aria-label={tr('Fűtés és hűtés', 'Heizen und Kühlen')}>{CLIMATES.map((id) => {
       const selected = current === id
-      const info = id === 'none' ? { label: 'Nincs', short: 'Később kerül a térbe' } : CLIMATE_INFO[id]
+      const info = id === 'none' ? { label: tr('Nincs', 'Keine'), short: tr('Később kerül a térbe', 'Kommt später in den Raum') } : CLIMATE_INFO[id]
       return <button type="button" key={id} role="radio" aria-checked={selected} className={`glazing-chip climate-${id}${selected ? ' selected' : ''}`} onClick={() => onChange({ climate: id === 'none' ? undefined : id })}>
-        <span className="glazing-swatch" aria-hidden="true" /><strong>{info.label}</strong><small>{info.short}</small><em>{selected ? 'Kiválasztva' : signed(delta(id))}</em>
+        <span className="glazing-swatch" aria-hidden="true" /><strong>{info.label}</strong><small>{info.short}</small><em>{selected ? tr('Kiválasztva', 'Ausgewählt') : signed(delta(id))}</em>
       </button>
     })}</div>
-    {config.climate && <div className="climate-run" role="radiogroup" aria-label="Klíma működése a modellen">
-      <span>Működés a modellen</span>
-      {(['off', 'cool', 'heat'] as const).filter((mode) => mode !== 'cool' || config.climate !== 'underfloor').map((mode) => <button type="button" key={mode} role="radio" aria-checked={scene.climateRun === mode} className={`climate-run-${mode}${scene.climateRun === mode ? ' on' : ''}`} onClick={() => onSceneChange({ climateRun: mode })}>{mode === 'off' ? 'Ki' : mode === 'cool' ? 'Hűtés' : 'Fűtés'}</button>)}
+    {config.climate && <div className="climate-run" role="radiogroup" aria-label={tr('Klíma működése a modellen', 'Klimabetrieb am Modell')}>
+      <span>{tr('Működés a modellen', 'Funktion am Modell')}</span>
+      {(['off', 'cool', 'heat'] as const).filter((mode) => mode !== 'cool' || config.climate !== 'underfloor').map((mode) => <button type="button" key={mode} role="radio" aria-checked={scene.climateRun === mode} className={`climate-run-${mode}${scene.climateRun === mode ? ' on' : ''}`} onClick={() => onSceneChange({ climateRun: mode })}>{mode === 'off' ? 'Ki' : mode === 'cool' ? tr('Hűtés', 'Kühlen') : tr('Fűtés', 'Heizen')}</button>)}
     </div>}
     <button type="button" className={`extra-card${config.foundation ? ' is-on' : ''}`} role="switch" aria-checked={Boolean(config.foundation)} onClick={() => onChange({ foundation: config.foundation ? undefined : true })}>
       <Building2 size={20} strokeWidth={1.5} />
-      <span><strong>Alap és szigetelt padló</strong><small>Alapozás, vízszigetelés, padlószerkezet</small><em>{formatPrice(prices.foundationPerM2Net)} / m²</em></span>
+      <span><strong>{tr('Alap és szigetelt padló', 'Fundament und gedämmter Boden')}</strong><small>{tr('Alapozás, vízszigetelés, padlószerkezet', 'Fundament, Abdichtung, Bodenaufbau')}</small><em>{formatPrice(prices.foundationPerM2Net)} / m²</em></span>
       <span className={`switch-track${config.foundation ? ' is-on' : ''}`} aria-hidden="true"><span /></span>
     </button>
-    <p className="split-note">A fűtés-hűtés teljesítményét és a padló felépítését a felmérés után tervezi a gyártó; az ár irányár.</p>
+    <p className="split-note">{tr('A fűtés-hűtés teljesítményét és a padló felépítését a felmérés után tervezi a gyártó; az ár irányár.', 'Heiz-/Kühlleistung und Bodenaufbau plant der Hersteller nach dem Aufmaß; der Preis ist ein Richtpreis.')}</p>
   </div>
 }
 
@@ -164,8 +165,8 @@ export function PermitNotice({ building }: { building: PergolaConfig['building']
   const notes = permitNotes(building)
   if (!notes.length) return null
   return <details className="permit-notice">
-    <summary><Landmark size={17} /><span>Építési hatósági teendők</span></summary>
+    <summary><Landmark size={17} /><span>{tr('Építési hatósági teendők', 'Baubehördliche Schritte')}</span></summary>
     <ul>{notes.map((note) => <li key={note}>{note}</li>)}</ul>
-    <p className="permit-disclaimer">Tájékoztató jellegű, nem jogi tanács. A helyi szabályok megrendelés előtt az illetékes hatóságnál ellenőrizendők.</p>
+    <p className="permit-disclaimer">{tr('Tájékoztató jellegű, nem jogi tanács. A helyi szabályok megrendelés előtt az illetékes hatóságnál ellenőrizendők.', 'Unverbindlich, keine Rechtsberatung. Die örtlichen Vorschriften sind vor der Bestellung bei der zuständigen Behörde zu prüfen.')}</p>
   </details>
 }

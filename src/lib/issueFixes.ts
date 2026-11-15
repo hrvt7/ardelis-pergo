@@ -11,6 +11,7 @@ import { formatNumber } from './pricing'
 import { normalizeConfig } from '../tenants/rules'
 import type { Tenant } from '../tenants/types'
 import type { PergolaConfig, SideKey, SideType } from '../types/pergola'
+import { tr } from '../i18n/locale'
 
 const SIDES: SideKey[] = ['front', 'back', 'left', 'right']
 const m = (value: number) => `${formatNumber(value, 2)} m`
@@ -26,26 +27,26 @@ const doorSide = (config: PergolaConfig) => SIDES.find((side) => side === 'front
 const withSide = (config: PergolaConfig, side: SideKey | undefined, type: SideType): Partial<PergolaConfig> => (side ? { sides: { ...config.sides, [side]: type } } : {})
 
 export const FIX_RULES: Record<string, FixRule> = {
-  'carport-narrow': { label: `Szélesség ${m(CARPORT_SINGLE_MIN)}`, candidates: () => [{ width: CARPORT_SINGLE_MIN }] },
-  'carport-double': { label: `Két autóhoz: ${m(CARPORT_DOUBLE_MIN)}`, candidates: () => [{ width: CARPORT_DOUBLE_MIN }] },
-  'carport-depth': { label: `Mélység ${m(5)}`, candidates: () => [{ depth: 5 }] },
-  'carport-height': { label: `Magasság ${m(2.3)}`, candidates: () => [{ height: 2.3 }] },
-  'carport-pitch': { label: 'Dőlés 5°', candidates: () => [{ pitch: 5 }] },
-  'cons-pitch': { label: 'Dőlés 5°', candidates: () => [{ pitch: 5 }] },
-  'roof-heat': { label: 'Hővisszaverő tetőüveg', candidates: () => [{ glazing: 'heat' }, { glazing: 'tinted' }] },
-  'glass-heat': { label: 'Tetőárnyékoló hozzáadása', candidates: () => [{ roofShade: 'below' }, { roofShade: 'above' }] },
-  'cons-foundation': { label: 'Alapozott padló', candidates: () => [{ foundation: true }] },
+  'carport-narrow': { label: tr(`Szélesség ${m(CARPORT_SINGLE_MIN)}`, `Breite ${m(CARPORT_SINGLE_MIN)}`), candidates: () => [{ width: CARPORT_SINGLE_MIN }] },
+  'carport-double': { label: tr(`Két autóhoz: ${m(CARPORT_DOUBLE_MIN)}`, `Für zwei Autos: ${m(CARPORT_DOUBLE_MIN)}`), candidates: () => [{ width: CARPORT_DOUBLE_MIN }] },
+  'carport-depth': { label: tr(`Mélység ${m(5)}`, `Tiefe ${m(5)}`), candidates: () => [{ depth: 5 }] },
+  'carport-height': { label: tr(`Magasság ${m(2.3)}`, `Höhe ${m(2.3)}`), candidates: () => [{ height: 2.3 }] },
+  'carport-pitch': { label: tr('Dőlés 5°', 'Neigung 5°'), candidates: () => [{ pitch: 5 }] },
+  'cons-pitch': { label: tr('Dőlés 5°', 'Neigung 5°'), candidates: () => [{ pitch: 5 }] },
+  'roof-heat': { label: tr('Hővisszaverő tetőüveg', 'Wärmereflektierendes Dachglas'), candidates: () => [{ glazing: 'heat' }, { glazing: 'tinted' }] },
+  'glass-heat': { label: tr('Tetőárnyékoló hozzáadása', 'Dachbeschattung hinzufügen'), candidates: () => [{ roofShade: 'below' }, { roofShade: 'above' }] },
+  'cons-foundation': { label: tr('Alapozott padló', 'Fundamentboden'), candidates: () => [{ foundation: true }] },
   'cons-open': {
-    label: 'Nyitott oldalak lezárása fix üveggel',
+    label: tr('Nyitott oldalak lezárása fix üveggel', 'Offene Seiten mit Festverglasung schließen'),
     candidates: (config) => [{ sides: { ...config.sides, ...Object.fromEntries(openSides(config).map((side) => [side, 'glassFixed'])) } }],
   },
-  'cons-door': { label: 'Ajtó az elülső oldalra', candidates: (config) => [withSide(config, doorSide(config), 'door'), withSide(config, doorSide(config), 'doorSliding')] },
-  'veranda-access': { label: 'Tolóüveg az elülső oldalra', candidates: (config) => [withSide(config, doorSide(config), 'glass'), withSide(config, doorSide(config), 'door')] },
+  'cons-door': { label: tr('Ajtó az elülső oldalra', 'Tür an die Vorderseite'), candidates: (config) => [withSide(config, doorSide(config), 'door'), withSide(config, doorSide(config), 'doorSliding')] },
+  'veranda-access': { label: tr('Tolóüveg az elülső oldalra', 'Glasschiebewand an die Vorderseite'), candidates: (config) => [withSide(config, doorSide(config), 'glass'), withSide(config, doorSide(config), 'door')] },
   'wide-glass': {
-    label: 'Kerettel osztott üveg',
+    label: tr('Kerettel osztott üveg', 'Gerahmtes, geteiltes Glas'),
     candidates: (config) => [{ sides: { ...config.sides, ...Object.fromEntries(SIDES.filter((side) => config.sides[side] === 'glass').map((side) => [side, 'glassFramed'])) } }],
   },
-  'rain-sensor': { label: 'Eső- és szélérzékelő', candidates: () => [{ sensors: true }] },
+  'rain-sensor': { label: tr('Eső- és szélérzékelő', 'Regen- und Windsensor'), candidates: () => [{ sensors: true }] },
 }
 
 /** Az összes figyelmeztetés (építmény + szakértői megjegyzés) azonosítóval és szinttel. */

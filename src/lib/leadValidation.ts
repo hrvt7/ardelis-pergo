@@ -1,3 +1,4 @@
+import { tr } from '../i18n/locale'
 // Az ajánlatkérő űrlap kliensoldali ellenőrzése: mezőnként érthető magyar hibaüzenet.
 // A szerver ugyanezeket újra ellenőrzi; ez csak azt szolgálja, hogy a vásárló lássa, mit kell javítania.
 
@@ -23,13 +24,13 @@ export function validateLead(values: LeadFormValues): Partial<Record<LeadFieldNa
   const phone = values.phone.trim()
   const email = values.email.trim()
   const city = values.city.trim()
-  if (name.length < 2) errors.customerName = 'Add meg a neved (legalább 2 karakter).'
-  if (!phone) errors.phone = 'Add meg a telefonszámod, hogy egyeztetni tudjunk.'
-  else if (!PHONE.test(phone) || phone.replace(/\D/g, '').length < 6) errors.phone = 'A telefonszámban csak számjegy, szóköz és + - / ( ) lehet, pl. +36 30 123 4567.'
-  if (!email) errors.email = 'Add meg az e-mail-címed.'
-  else if (!EMAIL.test(email)) errors.email = 'Az e-mail-cím formátuma nem jó, pl. nev@email.hu.'
-  if (city.length < 2) errors.city = 'Add meg a települést, ahol a felmérés lenne.'
-  if (!values.consent) errors.consent = 'A kérelem elküldéséhez fogadd el az adatkezelést.'
+  if (name.length < 2) errors.customerName = tr('Add meg a neved (legalább 2 karakter).', 'Bitte Namen angeben (mindestens 2 Zeichen).')
+  if (!phone) errors.phone = tr('Add meg a telefonszámod, hogy egyeztetni tudjunk.', 'Bitte Telefonnummer angeben, damit wir uns abstimmen können.')
+  else if (!PHONE.test(phone) || phone.replace(/\D/g, '').length < 6) errors.phone = tr('A telefonszámban csak számjegy, szóköz és + - / ( ) lehet, pl. +36 30 123 4567.', 'Die Telefonnummer darf nur Ziffern, Leerzeichen und + - / ( ) enthalten, z. B. +43 664 1234567.')
+  if (!email) errors.email = tr('Add meg az e-mail-címed.', 'Bitte E-Mail-Adresse angeben.')
+  else if (!EMAIL.test(email)) errors.email = tr('Az e-mail-cím formátuma nem jó, pl. nev@email.hu.', 'Das E-Mail-Format ist ungültig, z. B. name@beispiel.at.')
+  if (city.length < 2) errors.city = tr('Add meg a települést, ahol a felmérés lenne.', 'Bitte den Ort des Aufmaßes angeben.')
+  if (!values.consent) errors.consent = tr('A kérelem elküldéséhez fogadd el az adatkezelést.', 'Bitte stimmen Sie der Datenverarbeitung zu, um die Anfrage zu senden.')
   return errors
 }
 

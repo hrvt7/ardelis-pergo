@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Maximize2, Minimize2, Share, X } from 'lucide-react'
+import { tr } from '../i18n/locale'
 
 const HINT_KEY = 'lamelix-fs-hint'
 const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
@@ -17,16 +18,16 @@ export default function FullscreenControl() {
   }, [])
   if (typeof window === 'undefined' || isStandalone()) return null
   const toggle = () => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => undefined) }
-  if (canFull) return <button type="button" className="fs-button" aria-label={full ? 'Kilépés a teljes képernyőből' : 'Teljes képernyő'} title={full ? 'Kilépés a teljes képernyőből' : 'Teljes képernyő'} onClick={toggle}>{full ? <Minimize2 size={17} /> : <Maximize2 size={17} />}</button>
+  if (canFull) return <button type="button" className="fs-button" aria-label={full ? tr('Kilépés a teljes képernyőből', 'Vollbild beenden') : tr('Teljes képernyő', 'Vollbild')} title={full ? tr('Kilépés a teljes képernyőből', 'Vollbild beenden') : tr('Teljes képernyő', 'Vollbild')} onClick={toggle}>{full ? <Minimize2 size={17} /> : <Maximize2 size={17} />}</button>
   if (!isIPhone()) return null
   let dismissed = false
   try { dismissed = localStorage.getItem(HINT_KEY) === '1' } catch { /* nincs tárhely */ }
   return <>
-    <button type="button" className="fs-button" aria-label="Teljes képernyő: hogyan?" title="Teljes képernyő" onClick={() => setHint(true)}><Maximize2 size={17} /></button>
-    {(hint || !dismissed) && hint && <div className="fs-hint" role="dialog" aria-label="Teljes képernyős használat">
-      <button type="button" className="fs-hint-close" aria-label="Bezárás" onClick={() => { setHint(false); try { localStorage.setItem(HINT_KEY, '1') } catch { /* nincs tárhely */ } }}><X size={16} /></button>
-      <strong>Teljes képernyőn, böngészősáv nélkül</strong>
-      <p>Safariban koppints a <Share size={14} /> Megosztás gombra, majd <b>Hozzáadás a kezdőképernyőhöz</b>. Az így létrejött Lamelix ikon teljes képernyőn nyílik meg, fekvő tájolásban is.</p>
+    <button type="button" className="fs-button" aria-label={tr('Teljes képernyő: hogyan?', 'Vollbild: wie?')} title={tr('Teljes képernyő', 'Vollbild')} onClick={() => setHint(true)}><Maximize2 size={17} /></button>
+    {(hint || !dismissed) && hint && <div className="fs-hint" role="dialog" aria-label={tr('Teljes képernyős használat', 'Vollbild-Nutzung')}>
+      <button type="button" className="fs-hint-close" aria-label={tr('Bezárás', 'Schließen')} onClick={() => { setHint(false); try { localStorage.setItem(HINT_KEY, '1') } catch { /* nincs tárhely */ } }}><X size={16} /></button>
+      <strong>{tr('Teljes képernyőn, böngészősáv nélkül', 'Im Vollbild, ohne Browserleiste')}</strong>
+      <p>{tr('Safariban koppints a', 'Tippen Sie in Safari auf die')} <Share size={14} /> {tr('Megosztás gombra, majd', 'Teilen-Schaltfläche, dann')} <b>{tr('Hozzáadás a kezdőképernyőhöz', 'Zum Home-Bildschirm')}</b>{tr('. Az így létrejött Lamelix ikon teljes képernyőn nyílik meg, fekvő tájolásban is.', '. Das so erstellte Lamelix-Symbol öffnet im Vollbild, auch im Querformat.')}</p>
     </div>}
   </>
 }

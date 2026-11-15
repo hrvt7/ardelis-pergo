@@ -6,6 +6,7 @@ import { PRODUCT_LABELS, type ProductFamily } from '@contracts/catalog'
 import { useTenant } from '@/tenants/TenantContext'
 import { bookingLink } from '@/lib/booking'
 import { buyerProductName, firstInvalid, validateLead, type LeadFieldName } from '@/lib/leadValidation'
+import { tr } from '../i18n/locale'
 
 interface Props {
   productFamily: ProductFamily | 'garage-door' | 'modular-house'
@@ -21,14 +22,14 @@ type LeadResponse = { ok: true; ref: string } | { ok: false; error: string; fiel
 
 /** A szerver által hibásnak jelzett mező olvasható neve. */
 const FIELD_NAMES: Record<string, string> = {
-  'customer.name': 'a nevet',
-  'customer.email': 'az e-mail-címet',
-  'customer.phone': 'a telefonszámot (csak számjegy, szóköz, +, -, /, zárójel)',
-  'customer.postalCode': 'az irányítószámot',
-  'customer.city': 'a település nevét',
-  'customer.region': 'a megyét',
-  'customer.address': 'a címet',
-  'customer.notes': 'a megjegyzést',
+  'customer.name': tr('a nevet', 'den Namen'),
+  'customer.email': tr('az e-mail-címet', 'die E-Mail-Adresse'),
+  'customer.phone': tr('a telefonszámot (csak számjegy, szóköz, +, -, /, zárójel)', 'die Telefonnummer (nur Ziffern, Leerzeichen, +, -, /, Klammern)'),
+  'customer.postalCode': tr('az irányítószámot', 'die Postleitzahl'),
+  'customer.city': tr('a település nevét', 'den Ort'),
+  'customer.region': tr('a megyét', 'das Bundesland'),
+  'customer.address': tr('a címet', 'die Adresse'),
+  'customer.notes': tr('a megjegyzést', 'die Anmerkung'),
 }
 
 export default function LeadForm({ productFamily, config, house }: Props) {
@@ -107,7 +108,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
       if (!response.ok || !data || !data.ok) {
         const fieldName = data && !data.ok && data.field ? FIELD_NAMES[data.field] : undefined
         track(tenant.id, 'lead_error')
-        setError(fieldName ? `Kérlek, ellenőrizd ${fieldName}.` : data && !data.ok ? data.error : 'A kérelem elküldése nem sikerült. Ellenőrizd a kapcsolatot, és próbáld újra.')
+        setError(fieldName ? tr(`Kérlek, ellenőrizd ${fieldName}.`, `Bitte prüfen Sie ${fieldName}.`) : data && !data.ok ? data.error : tr('A kérelem elküldése nem sikerült. Ellenőrizd a kapcsolatot, és próbáld újra.', 'Die Anfrage konnte nicht gesendet werden. Bitte Verbindung prüfen und erneut versuchen.'))
         return
       }
       setResult({ publicRef: data.ref })
@@ -122,27 +123,27 @@ export default function LeadForm({ productFamily, config, house }: Props) {
     }
   }
 
-  if (result) return <div className="thank-you real-lead-success" role="status"><span className="success-burst" aria-hidden="true"><svg viewBox="0 0 52 52" width="44" height="44"><circle className="success-ring" cx="26" cy="26" r="23" fill="none" strokeWidth="3" /><path className="success-tick" d="M15 27.5l8 8 15-17" fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" /></svg><i /><i /><i /><i /><i /><i /></span><div><span>KÉRELEM RÖGZÍTVE</span><h4>A felmérési kérelmedet megkaptuk.</h4><p>Azonosító: <strong>{result.publicRef}</strong></p><p>Az adataid és a konfigurációd alapján {tenant.brand.name} felveszi veled a kapcsolatot a részletek egyeztetéséhez. Érdemes megőrizni az azonosítót.</p>{booking && <a className="booking-cta" href={booking} target="_blank" rel="noopener noreferrer"><CalendarCheck size={17} />Foglalj most felmérési időpontot</a>}{import.meta.env.VITE_PREVIEW_MODE === '1' && <p><strong>Előnézeti mód:</strong> a kérelem nem lett elküldve, csak a folyamatot mutatja.</p>}<small>Az irányár nem minősül kötelező érvényű árajánlatnak. A végleges műszaki tartalom helyszíni felmérés után készül.</small></div></div>
+  if (result) return <div className="thank-you real-lead-success" role="status"><span className="success-burst" aria-hidden="true"><svg viewBox="0 0 52 52" width="44" height="44"><circle className="success-ring" cx="26" cy="26" r="23" fill="none" strokeWidth="3" /><path className="success-tick" d="M15 27.5l8 8 15-17" fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" /></svg><i /><i /><i /><i /><i /><i /></span><div><span>{tr('KÉRELEM RÖGZÍTVE', 'ANFRAGE ERFASST')}</span><h4>{tr('A felmérési kérelmedet megkaptuk.', 'Wir haben Ihre Aufmaß-Anfrage erhalten.')}</h4><p>{tr('Azonosító', 'Kennung')}: <strong>{result.publicRef}</strong></p><p>{tr(`Az adataid és a konfigurációd alapján ${tenant.brand.name} felveszi veled a kapcsolatot a részletek egyeztetéséhez. Érdemes megőrizni az azonosítót.`, `Auf Basis Ihrer Daten und Konfiguration meldet sich ${tenant.brand.name} bei Ihnen, um die Details abzustimmen. Bitte bewahren Sie die Kennung auf.`)}</p>{booking && <a className="booking-cta" href={booking} target="_blank" rel="noopener noreferrer"><CalendarCheck size={17} />{tr('Foglalj most felmérési időpontot', 'Jetzt Aufmaß-Termin buchen')}</a>}{import.meta.env.VITE_PREVIEW_MODE === '1' && <p><strong>{tr('Előnézeti mód:', 'Vorschaumodus:')}</strong> {tr('a kérelem nem lett elküldve, csak a folyamatot mutatja.', 'die Anfrage wurde nicht gesendet, nur der Ablauf wird gezeigt.')}</p>}<small>{tr('Az irányár nem minősül kötelező érvényű árajánlatnak. A végleges műszaki tartalom helyszíni felmérés után készül.', 'Der Richtpreis ist kein verbindliches Angebot. Der endgültige technische Inhalt wird nach dem Aufmaß vor Ort erstellt.')}</small></div></div>
 
   return <form ref={formRef} className="real-lead-form" noValidate onSubmit={submit} onFocus={() => track(tenant.id, 'lead_start')}>
-    <div className="lead-form-intro"><span><MapPin size={16} />{productFamily === 'garage-door' ? 'Garázskapu' : productFamily === 'modular-house' ? 'Modulház' : buyerProductName(PRODUCT_LABELS[productFamily])}</span><p>A konfigurációt és az irányárat a kérelmedhez csatoljuk, hogy a felmérés egyeztetése konkrét műszaki elképzelésből induljon.</p></div>
+    <div className="lead-form-intro"><span><MapPin size={16} />{productFamily === 'garage-door' ? tr('Garázskapu', 'Garagentor') : productFamily === 'modular-house' ? tr('Modulház', 'Modulhaus') : buyerProductName(PRODUCT_LABELS[productFamily])}</span><p>{tr('A konfigurációt és az irányárat a kérelmedhez csatoljuk, hogy a felmérés egyeztetése konkrét műszaki elképzelésből induljon.', 'Konfiguration und Richtpreis werden Ihrer Anfrage beigefügt, damit die Aufmaß-Abstimmung von einem konkreten technischen Entwurf ausgeht.')}</p></div>
     <div className="lead-grid">
-      <label><span>Név *</span><input {...fieldProps('customerName')} autoComplete="name" required minLength={2} maxLength={120} placeholder="Teljes név" />{fieldError('customerName')}</label>
-      <label><span>Telefon *</span><input {...fieldProps('phone')} type="tel" autoComplete="tel" required minLength={6} maxLength={40} pattern="[+0-9 \(\)\/\-]{6,40}" title="Csak számjegy, szóköz és + - / ( ) karakter" placeholder="+36 30 123 4567" />{fieldError('phone')}</label>
-      <label><span>E-mail *</span><input {...fieldProps('email')} type="email" autoComplete="email" required maxLength={320} pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Pl. nev@email.hu" placeholder="nev@email.hu" />{fieldError('email')}</label>
-      <label><span>Település *</span><input {...fieldProps('city')} autoComplete="address-level2" required minLength={2} maxLength={120} placeholder="Település" />{fieldError('city')}</label>
+      <label><span>{tr('Név *', 'Name *')}</span><input {...fieldProps('customerName')} autoComplete="name" required minLength={2} maxLength={120} placeholder={tr('Teljes név', 'Vollständiger Name')} />{fieldError('customerName')}</label>
+      <label><span>{tr('Telefon', 'Telefon')} *</span><input {...fieldProps('phone')} type="tel" autoComplete="tel" required minLength={6} maxLength={40} pattern="[+0-9 \(\)\/\-]{6,40}" title={tr('Csak számjegy, szóköz és + - / ( ) karakter', 'Nur Ziffern, Leerzeichen und + - / ( )')} placeholder={tr('+36 30 123 4567', '+43 664 1234567')} />{fieldError('phone')}</label>
+      <label><span>E-mail *</span><input {...fieldProps('email')} type="email" autoComplete="email" required maxLength={320} pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title={tr('Pl. nev@email.hu', 'z. B. name@beispiel.at')} placeholder={tr('nev@email.hu', 'name@beispiel.at')} />{fieldError('email')}</label>
+      <label><span>{tr('Település *', 'Ort *')}</span><input {...fieldProps('city')} autoComplete="address-level2" required minLength={2} maxLength={120} placeholder={tr('Település', 'Ort')} />{fieldError('city')}</label>
     </div>
-    <details className="lead-more"><summary>További adatok (nem kötelező)</summary><div className="lead-grid">
-      <label><span>Megye *</span><select name="county" autoComplete="address-level1" required defaultValue={tenant.regions.includes('Vas') ? 'Vas' : tenant.regions[0]}>{tenant.regions.map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
-      <label><span>Irányítószám</span><input name="postalCode" autoComplete="postal-code" maxLength={12} inputMode="numeric" placeholder="9600" /></label>
-      <label className="lead-wide"><span>Cím / helyszín</span><input name="address" autoComplete="street-address" maxLength={220} placeholder="Utca, házszám" /></label>
-      <label className="lead-wide"><span>Megjegyzés</span><textarea name="notes" rows={3} maxLength={2000} placeholder="Pl. várható kezdés, meglévő szerkezet, megközelítés…" /></label>
+    <details className="lead-more"><summary>{tr('További adatok (nem kötelező)', 'Weitere Angaben (optional)')}</summary><div className="lead-grid">
+      <label><span>{tr('Megye', 'Bundesland')} *</span><select name="county" autoComplete="address-level1" required defaultValue={tenant.regions.includes('Vas') ? 'Vas' : tenant.regions[0]}>{tenant.regions.map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
+      <label><span>{tr('Irányítószám', 'Postleitzahl')}</span><input name="postalCode" autoComplete="postal-code" maxLength={12} inputMode="numeric" placeholder="9600" /></label>
+      <label className="lead-wide"><span>{tr('Cím / helyszín', 'Adresse / Standort')}</span><input name="address" autoComplete="street-address" maxLength={220} placeholder={tr('Utca, házszám', 'Straße, Hausnummer')} /></label>
+      <label className="lead-wide"><span>{tr('Megjegyzés', 'Anmerkung')}</span><textarea name="notes" rows={3} maxLength={2000} placeholder={tr('Pl. várható kezdés, meglévő szerkezet, megközelítés…', 'z. B. geplanter Beginn, bestehende Konstruktion, Zufahrt…')} /></label>
     </div></details>
     <label className="honeypot" aria-hidden="true">Weboldal<input name="website" tabIndex={-1} autoComplete="off" /></label>
-    <label className={`consent-row${fieldErrors.consent ? ' is-invalid' : ''}`}><input type="checkbox" name="consent" checked={consent} onChange={(event) => { setConsent(event.target.checked); clearField('consent') }} aria-invalid={fieldErrors.consent ? true : undefined} aria-describedby={fieldErrors.consent ? 'lead-err-consent' : undefined} /><span><ShieldCheck size={15} aria-hidden="true" />Hozzájárulok, hogy a felmérési kérelem egyeztetéséhez {tenant.brand.legalName} kezelje a megadott adataimat.{tenant.brand.privacyUrl && <> <a href={tenant.brand.privacyUrl} target="_blank" rel="noreferrer">Adatkezelési tájékoztató</a>.</>} A kérelem nem minősül megrendelésnek.</span></label>
+    <label className={`consent-row${fieldErrors.consent ? ' is-invalid' : ''}`}><input type="checkbox" name="consent" checked={consent} onChange={(event) => { setConsent(event.target.checked); clearField('consent') }} aria-invalid={fieldErrors.consent ? true : undefined} aria-describedby={fieldErrors.consent ? 'lead-err-consent' : undefined} /><span><ShieldCheck size={15} aria-hidden="true" />{tr(`Hozzájárulok, hogy a felmérési kérelem egyeztetéséhez ${tenant.brand.legalName} kezelje a megadott adataimat.`, `Ich willige ein, dass ${tenant.brand.legalName} meine angegebenen Daten zur Abstimmung der Aufmaß-Anfrage verarbeitet.`)}{tenant.brand.privacyUrl && <> <a href={tenant.brand.privacyUrl} target="_blank" rel="noreferrer">{tr('Adatkezelési tájékoztató', 'Datenschutzerklärung')}</a>.</>} {tr('A kérelem nem minősül megrendelésnek.', 'Die Anfrage ist keine Bestellung.')}</span></label>
     {fieldError('consent')}
     {error && <p className="form-error" role="alert">{error}</p>}
-    <button className={`lead-submit${pending ? ' is-pending' : ''}`} type="submit" disabled={pending} aria-disabled={pending || undefined}>{pending ? 'Küldés…' : 'Felmérési kérelem elküldése'}{pending ? <span className="lead-spinner" aria-hidden="true" /> : <ArrowRight size={16} />}</button>
-    <small className="privacy-note"><LockKeyhole size={13} />A fotós helyi előnézet képe nem kerül feltöltésre. Az űrlap csak a fenti, általad megadott adatokat küldi.</small>
+    <button className={`lead-submit${pending ? ' is-pending' : ''}`} type="submit" disabled={pending} aria-disabled={pending || undefined}>{pending ? tr('Küldés…', 'Wird gesendet…') : tr('Felmérési kérelem elküldése', 'Aufmaß-Anfrage senden')}{pending ? <span className="lead-spinner" aria-hidden="true" /> : <ArrowRight size={16} />}</button>
+    <small className="privacy-note"><LockKeyhole size={13} />{tr('A fotós helyi előnézet képe nem kerül feltöltésre. Az űrlap csak a fenti, általad megadott adatokat küldi.', 'Das Bild der lokalen Fotovorschau wird nicht hochgeladen. Das Formular sendet nur die oben von Ihnen eingegebenen Daten.')}</small>
   </form>
 }

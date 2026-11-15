@@ -4,6 +4,7 @@
 import { isWallSide } from './mount'
 import { closedSegments } from './sides'
 import type { BuildingType, ClimateType, PergolaConfig, PriceSettings, RoofType, SideKey, SideType, WallGlazing } from '../types/pergola'
+import { tr } from '../i18n/locale'
 
 /** Zárt (oldalfalas) építmények; a carport nyitott, a keretes-tető motor negyedik típusa. */
 export type ClosedBuilding = 'veranda' | 'conservatory'
@@ -30,24 +31,24 @@ export const carportBays = (width: number) => (width >= CARPORT_DOUBLE_MIN ? 2 :
 
 export const BUILDING_INFO: Record<BuildingType, BuildingInfo> = {
   pergola: {
-    label: 'Pergola', short: 'Nyitott, szellős terasz', season: 'Tavasztól őszig',
-    description: 'Árnyékolt, nyitott vagy részben zárt terasz állítható lamellákkal vagy fix tetővel.',
-    traits: ['Nyitott oldalak', 'Mozgatható tető', 'Gyors telepítés'],
+    label: 'Pergola', short: tr('Nyitott, szellős terasz', 'Offene, luftige Terrasse'), season: tr('Tavasztól őszig', 'Vom Frühling bis Herbst'),
+    description: tr('Árnyékolt, nyitott vagy részben zárt terasz állítható lamellákkal vagy fix tetővel.', 'Beschattete, offene oder teilweise geschlossene Terrasse mit verstellbaren Lamellen oder festem Dach.'),
+    traits: ['Nyitott oldalak', tr('Mozgatható tető', 'Bewegliches Dach'), tr('Gyors telepítés', 'Schnelle Montage')],
   },
   veranda: {
-    label: 'Veranda', short: 'Zárt üvegezett terasz', season: 'Tavasztól késő őszig',
-    description: 'Üvegfalakkal zárt, nem fűtött (hideg) tér: szél, eső és hűvös estén is használható, de nem egész éves lakótér.',
-    traits: ['Üveg- vagy fix tető', 'Üvegfal ajtóval', 'Nem hőszigetelt'],
+    label: 'Veranda', short: tr('Zárt üvegezett terasz', 'Geschlossene verglaste Terrasse'), season: tr('Tavasztól késő őszig', 'Vom Frühling bis Spätherbst'),
+    description: tr('Üvegfalakkal zárt, nem fűtött (hideg) tér: szél, eső és hűvös estén is használható, de nem egész éves lakótér.', 'Mit Glaswänden geschlossener, unbeheizter (Kalt-)Raum: bei Wind, Regen und kühlen Abenden nutzbar, aber kein ganzjähriger Wohnraum.'),
+    traits: [tr('Üveg- vagy fix tető', 'Glas- oder festes Dach'), tr('Üvegfal ajtóval', 'Glaswand mit Tür'), tr('Nem hőszigetelt', 'Nicht wärmegedämmt')],
   },
   conservatory: {
-    label: 'Télikert', short: 'Egész éves, fűtött tér', season: 'Egész évben',
-    description: 'Hőszigetelt üvegezésű, hőhídmentes profilú, fűtött és hűthető helyiség, alapozott padlóval és ajtóval.',
-    traits: ['Hőszigetelt üveg és profil', 'Fűtés / hűtés', 'Alapozott padló'],
+    label: tr('Télikert', 'Wintergarten'), short: tr('Egész éves, fűtött tér', 'Ganzjähriger, beheizter Raum'), season: tr('Egész évben', 'Ganzjährig'),
+    description: tr('Hőszigetelt üvegezésű, hőhídmentes profilú, fűtött és hűthető helyiség, alapozott padlóval és ajtóval.', 'Raum mit Wärmeschutzverglasung und thermisch getrennten Profilen, beheiz- und kühlbar, mit Fundamentboden und Tür.'),
+    traits: [tr('Hőszigetelt üveg és profil', 'Wärmeschutzglas und -profil'), tr('Fűtés / hűtés', 'Heizung / Kühlung'), tr('Alapozott padló', 'Fundamentboden')],
   },
   carport: {
-    label: 'Carport', short: 'Autóbeálló és előtető', season: 'Egész évben',
-    description: 'Nyitott, fix tetős autóbeálló egy vagy két autónak, szabadon álló vagy a házhoz rögzítve; lemez-, polikarbonát- vagy üvegtetővel.',
-    traits: ['Egy- vagy kétállásos', 'Fix tető, nyitott oldalak', 'Burkolt beálló'],
+    label: 'Carport', short: tr('Autóbeálló és előtető', 'Autostellplatz und Vordach'), season: tr('Egész évben', 'Ganzjährig'),
+    description: tr('Nyitott, fix tetős autóbeálló egy vagy két autónak, szabadon álló vagy a házhoz rögzítve; lemez-, polikarbonát- vagy üvegtetővel.', 'Offener Stellplatz mit festem Dach für ein oder zwei Autos, freistehend oder am Haus befestigt; mit Blech-, Polycarbonat- oder Glasdach.'),
+    traits: [tr('Egy- vagy kétállásos', 'Ein- oder zwei Stellplätze'), tr('Fix tető, nyitott oldalak', 'Festes Dach, offene Seiten'), tr('Burkolt beálló', 'Befestigter Stellplatz')],
   },
 }
 
@@ -68,16 +69,16 @@ export const GLASS_WALL_TYPES: SideType[] = ['glass', 'glassFramed', 'glassFixed
 export const CONSERVATORY_SIDE_TYPES: SideType[] = ['none', ...GLASS_WALL_TYPES]
 
 export const WALL_GLAZING_INFO: Record<WallGlazing, { label: string; short: string; share: string; priceKey: keyof Pick<PriceSettings, 'wallGlazingDoublePerM2Net' | 'wallGlazingTriplePerM2Net'> | null; ug: string }> = {
-  single: { label: 'Edzett üveg', short: '8–10 mm egyrétegű, hideg használatra', share: 's', priceKey: null, ug: 'Ug ≈ 5,8 W/m²K' },
-  double: { label: 'Kétrétegű hőszigetelt', short: 'Low-E bevonat, argon töltet', share: 'd', priceKey: 'wallGlazingDoublePerM2Net', ug: 'Ug ≈ 1,1 W/m²K' },
-  triple: { label: 'Háromrétegű hőszigetelt', short: 'Két Low-E réteg, legjobb hőtartás', share: 't', priceKey: 'wallGlazingTriplePerM2Net', ug: 'Ug ≈ 0,6 W/m²K' },
+  single: { label: tr('Edzett üveg', 'ESG-Glas'), short: tr('8–10 mm egyrétegű, hideg használatra', '8–10 mm einfach, für Kaltnutzung'), share: 's', priceKey: null, ug: 'Ug ≈ 5,8 W/m²K' },
+  double: { label: tr('Kétrétegű hőszigetelt', '2-fach-Wärmeschutzglas'), short: tr('Low-E bevonat, argon töltet', 'Low-E-Beschichtung, Argonfüllung'), share: 'd', priceKey: 'wallGlazingDoublePerM2Net', ug: 'Ug ≈ 1,1 W/m²K' },
+  triple: { label: tr('Háromrétegű hőszigetelt', '3-fach-Wärmeschutzglas'), short: tr('Két Low-E réteg, legjobb hőtartás', 'Zwei Low-E-Schichten, beste Wärmedämmung'), share: 't', priceKey: 'wallGlazingTriplePerM2Net', ug: 'Ug ≈ 0,6 W/m²K' },
 }
 export const WALL_GLAZINGS: WallGlazing[] = ['single', 'double', 'triple']
 
 export const CLIMATE_INFO: Record<ClimateType, { label: string; short: string; share: string }> = {
-  split: { label: 'Split klíma', short: 'Fűtés és hűtés egy készülékkel (inverteres)', share: 's' },
-  underfloor: { label: 'Padlófűtés', short: 'Egyenletes, csendes alapfűtés', share: 'u' },
-  both: { label: 'Padlófűtés + split klíma', short: 'Egész éves komfort, nyáron hűtés', share: 'b' },
+  split: { label: tr('Split klíma', 'Split-Klimagerät'), short: tr('Fűtés és hűtés egy készülékkel (inverteres)', 'Heizen und Kühlen mit einem Gerät (Inverter)'), share: 's' },
+  underfloor: { label: tr('Padlófűtés', 'Fußbodenheizung'), short: tr('Egyenletes, csendes alapfűtés', 'Gleichmäßige, leise Grundheizung'), share: 'u' },
+  both: { label: tr('Padlófűtés + split klíma', 'Fußbodenheizung + Split-Klima'), short: tr('Egész éves komfort, nyáron hűtés', 'Ganzjähriger Komfort, im Sommer Kühlung'), share: 'b' },
 }
 
 export const hasSplitUnit = (climate: ClimateType | undefined) => climate === 'split' || climate === 'both'
@@ -116,11 +117,11 @@ export function buildingIssues(config: PergolaConfig): BuildingIssue[] {
   if (isCarport(config.building)) {
     const issues: BuildingIssue[] = []
     const bays = carportBays(config.width)
-    if (bays === 0) issues.push({ id: 'carport-narrow', level: 'warn', text: `${config.width.toFixed(1).replace('.', ',')} m szélesség szűk egy autónak: egy állásnak legalább ${CARPORT_SINGLE_MIN.toFixed(1).replace('.', ',')} m, kényelmesen 3 m kell.` })
-    else if (config.width >= 4.6 && bays === 1) issues.push({ id: 'carport-double', level: 'info', text: `Két autóhoz legalább ${CARPORT_DOUBLE_MIN.toFixed(1).replace('.', ',')} m szélesség javasolt; ekkora méretnél egy autó és egy tároló-sáv fér el.` })
-    if (config.depth < 5) issues.push({ id: 'carport-depth', level: 'info', text: 'Egy személyautóhoz legalább 5 m mélység ajánlott (kombinak, SUV-nak 5,5 m), hogy az ajtók és a csomagtartó a tető alatt legyenek.' })
-    if (config.height < 2.1) issues.push({ id: 'carport-height', level: 'warn', text: 'A 2,1 m alatti belmagasság magasabb autónál (SUV, tetőbox) kevés; 2,3 m javasolt.' })
-    if (!config.pitch && (config.roof === 'glass' || config.roof === 'polycarbonate')) issues.push({ id: 'carport-pitch', level: 'info', text: 'Üveg- és polikarbonát tetőnél pár fokos dőlés javasolt a vízelfolyáshoz.' })
+    if (bays === 0) issues.push({ id: 'carport-narrow', level: 'warn', text: tr(`${config.width.toFixed(1).replace('.', ',')} m szélesség szűk egy autónak: egy állásnak legalább ${CARPORT_SINGLE_MIN.toFixed(1).replace('.', ',')} m, kényelmesen 3 m kell.`, `${config.width.toFixed(1).replace('.', ',')} m Breite ist für ein Auto knapp: ein Stellplatz braucht mindestens ${CARPORT_SINGLE_MIN.toFixed(1).replace('.', ',')} m, bequem 3 m.`) })
+    else if (config.width >= 4.6 && bays === 1) issues.push({ id: 'carport-double', level: 'info', text: tr(`Két autóhoz legalább ${CARPORT_DOUBLE_MIN.toFixed(1).replace('.', ',')} m szélesség javasolt; ekkora méretnél egy autó és egy tároló-sáv fér el.`, `Für zwei Autos werden mindestens ${CARPORT_DOUBLE_MIN.toFixed(1).replace('.', ',')} m Breite empfohlen; bei dieser Größe passen ein Auto und ein Abstellstreifen.`) })
+    if (config.depth < 5) issues.push({ id: 'carport-depth', level: 'info', text: tr('Egy személyautóhoz legalább 5 m mélység ajánlott (kombinak, SUV-nak 5,5 m), hogy az ajtók és a csomagtartó a tető alatt legyenek.', 'Für einen Pkw werden mindestens 5 m Tiefe empfohlen (Kombi, SUV: 5,5 m), damit Türen und Kofferraum unter dem Dach liegen.') })
+    if (config.height < 2.1) issues.push({ id: 'carport-height', level: 'warn', text: tr('A 2,1 m alatti belmagasság magasabb autónál (SUV, tetőbox) kevés; 2,3 m javasolt.', 'Unter 2,1 m lichter Höhe ist es für höhere Autos (SUV, Dachbox) zu wenig; 2,3 m empfohlen.') })
+    if (!config.pitch && (config.roof === 'glass' || config.roof === 'polycarbonate')) issues.push({ id: 'carport-pitch', level: 'info', text: tr('Üveg- és polikarbonát tetőnél pár fokos dőlés javasolt a vízelfolyáshoz.', 'Bei Glas- und Polycarbonatdächern wird ein paar Grad Neigung für den Wasserablauf empfohlen.') })
     return issues
   }
   if (!isClosedBuilding(config.building)) return []
@@ -138,21 +139,21 @@ export function buildingIssues(config: PergolaConfig): BuildingIssue[] {
   const hasSlidingGlass = segments.some((type) => type === 'glass' || type === 'glassFramed')
   // Túl rövid falszakasz ajtónak (nyíló szárny ~0,95 m, toló ~0,6–1,3 m).
   const shortDoor = closedSegments(config).find((segment) => isDoorType(segment.type) && segment.length < 1.2)
-  if (shortDoor) issues.push({ id: 'short-door', level: 'warn', text: `Az ajtós falszakasz csak ${shortDoor.length.toFixed(1).replace('.', ',')} m hosszú, ez szűk a bejárathoz. Válassz hosszabb oldalt, vagy ne ossz fel.` })
+  if (shortDoor) issues.push({ id: 'short-door', level: 'warn', text: tr(`Az ajtós falszakasz csak ${shortDoor.length.toFixed(1).replace('.', ',')} m hosszú, ez szűk a bejárathoz. Válassz hosszabb oldalt, vagy ne ossz fel.`, `Der Wandabschnitt mit Tür ist nur ${shortDoor.length.toFixed(1).replace('.', ',')} m lang, das ist für einen Zugang knapp. Wählen Sie eine längere Seite oder teilen Sie nicht.`) })
   // Üveg- és polikarbonát tető alatti túlmelegedés: tiszta/matt/opál burkolat tetőárnyékoló nélkül.
   if ((config.roof === 'glass' || config.roof === 'polycarbonate') && !config.roofShade) {
     const g = config.glazing ?? (config.roof === 'glass' ? 'clear' : 'opal')
-    if (g === 'clear' || g === 'satin' || g === 'opal') issues.push({ id: 'roof-heat', level: 'info', text: 'Nyáron az üvegtető alatt erősen felmelegedhet a tér. Hővisszaverő vagy füstös burkolat, illetve tetőárnyékoló (Extrák) sokat javít rajta.' })
+    if (g === 'clear' || g === 'satin' || g === 'opal') issues.push({ id: 'roof-heat', level: 'info', text: tr('Nyáron az üvegtető alatt erősen felmelegedhet a tér. Hővisszaverő vagy füstös burkolat, illetve tetőárnyékoló (Extrák) sokat javít rajta.', 'Im Sommer kann es unter dem Glasdach sehr warm werden. Wärmereflektierende oder getönte Eindeckung bzw. eine Dachbeschattung (Extras) hilft deutlich.') })
   }
   if (config.building === 'conservatory') {
-    if (!config.foundation) issues.push({ id: 'cons-foundation', level: 'warn', text: 'Alapozás nélkül a télikert nem használható egész évben: kapcsold be az alapozott padlót (Extrák).' })
-    if (open > 0) issues.push({ id: 'cons-open', level: 'warn', text: `${open === 1 ? 'Egy oldal' : `${open} oldal`} nyitott. A télikert zárt, fűtött tér: zárd le üveggel vagy ajtóval.` })
-    if (!hasDoor) issues.push({ id: 'cons-door', level: 'warn', text: 'Nincs ajtó. A télikertbe legalább egy bejárati ajtó kell (nyíló vagy toló).' })
-    if (!config.climate) issues.push({ id: 'cons-climate', level: 'info', text: 'Egész éves használathoz válassz fűtést vagy hűtést.' })
-    if (!config.pitch) issues.push({ id: 'cons-pitch', level: 'info', text: 'Üvegtetőnél pár fokos dőlés javasolt a vízelfolyáshoz és a tisztán tartáshoz.' })
+    if (!config.foundation) issues.push({ id: 'cons-foundation', level: 'warn', text: tr('Alapozás nélkül a télikert nem használható egész évben: kapcsold be az alapozott padlót (Extrák).', 'Ohne Fundament ist der Wintergarten nicht ganzjährig nutzbar: Fundamentboden einschalten (Extras).') })
+    if (open > 0) issues.push({ id: 'cons-open', level: 'warn', text: tr(`${open === 1 ? 'Egy oldal' : `${open} oldal`} nyitott. A télikert zárt, fűtött tér: zárd le üveggel vagy ajtóval.`, `${open === 1 ? 'Eine Seite ist' : `${open} Seiten sind`} offen. Der Wintergarten ist ein geschlossener, beheizter Raum: mit Glas oder Tür schließen.`) })
+    if (!hasDoor) issues.push({ id: 'cons-door', level: 'warn', text: tr('Nincs ajtó. A télikertbe legalább egy bejárati ajtó kell (nyíló vagy toló).', 'Keine Tür. Der Wintergarten braucht mindestens eine Eingangstür (Dreh- oder Schiebetür).') })
+    if (!config.climate) issues.push({ id: 'cons-climate', level: 'info', text: tr('Egész éves használathoz válassz fűtést vagy hűtést.', 'Für ganzjährige Nutzung Heizung oder Kühlung wählen.') })
+    if (!config.pitch) issues.push({ id: 'cons-pitch', level: 'info', text: tr('Üvegtetőnél pár fokos dőlés javasolt a vízelfolyáshoz és a tisztán tartáshoz.', 'Bei Glasdächern wird ein paar Grad Neigung für Wasserablauf und Sauberkeit empfohlen.') })
   } else {
-    if (open >= 2) issues.push({ id: 'veranda-open', level: 'info', text: `${open} oldal nyitott. A veranda általában legalább három oldalról zárt.` })
-    if (!hasDoor && !hasSlidingGlass) issues.push({ id: 'veranda-access', level: 'info', text: 'Nincs sem ajtó, sem tolóüveg: nehezen lesz bejárható a zárt tér.' })
+    if (open >= 2) issues.push({ id: 'veranda-open', level: 'info', text: tr(`${open} oldal nyitott. A veranda általában legalább három oldalról zárt.`, `${open} Seiten sind offen. Eine Veranda ist meist an mindestens drei Seiten geschlossen.`) })
+    if (!hasDoor && !hasSlidingGlass) issues.push({ id: 'veranda-access', level: 'info', text: tr('Nincs sem ajtó, sem tolóüveg: nehezen lesz bejárható a zárt tér.', 'Weder Tür noch Glasschiebewand: der geschlossene Raum ist schwer zugänglich.') })
   }
   return issues
 }
@@ -160,17 +161,17 @@ export function buildingIssues(config: PergolaConfig): BuildingIssue[] {
 /** Tájékoztató az építéshatósági és energetikai teendőkről (nem jogi tanács). */
 export function permitNotes(building: BuildingType | undefined): string[] {
   if (building === 'veranda') return [
-    'A zárt, tartósan álló szerkezet (veranda) a település helyi építési szabályzata és a telek adatai (beépítettség, telekhatár-távolság) alapján bejelentés- vagy engedélykötelessé válhat.',
-    'Kérj tájékoztatást az illetékes építési hatóságtól (jegyző/főépítész) a megrendelés előtt. A településképi bejelentés helyi rendelettől függhet.',
+    tr('A zárt, tartósan álló szerkezet (veranda) a település helyi építési szabályzata és a telek adatai (beépítettség, telekhatár-távolság) alapján bejelentés- vagy engedélykötelessé válhat.', 'Eine geschlossene, dauerhaft errichtete Konstruktion (Veranda) kann je nach Bauordnung des Bundeslandes, Bebauungsplan und Grundstücksdaten (Bebauungsdichte, Grenzabstand) anzeige- oder bewilligungspflichtig sein.'),
+    tr('Kérj tájékoztatást az illetékes építési hatóságtól (jegyző/főépítész) a megrendelés előtt. A településképi bejelentés helyi rendelettől függhet.', 'Holen Sie vor der Bestellung Auskunft bei der zuständigen Baubehörde (Gemeinde) ein. Ortsbildvorgaben können je nach Gemeinde gelten.'),
   ]
   if (building === 'conservatory') return [
-    'A télikert zárt, fűtött helyiség, ezért jellemzően építéshatósági eljárás (egyszerű bejelentés vagy építési engedély) tárgya. Ez a telek adatai és a helyi építési szabályzat szerint dől el, ezért a tervezés előtt egyeztess az illetékes hatósággal vagy jogosult tervezővel.',
-    'Egész éves használatnál az épületenergetikai követelmények (hőátbocsátás, tüzelő- és hűtőberendezés) is érintettek lehetnek.',
-    'Az irányár nem tartalmazza az engedélyezési tervet, a tervezői és eljárási díjakat.',
+    tr('A télikert zárt, fűtött helyiség, ezért jellemzően építéshatósági eljárás (egyszerű bejelentés vagy építési engedély) tárgya. Ez a telek adatai és a helyi építési szabályzat szerint dől el, ezért a tervezés előtt egyeztess az illetékes hatósággal vagy jogosult tervezővel.', 'Ein Wintergarten ist ein geschlossener, beheizter Raum und daher meist Gegenstand eines Bauverfahrens (Bauanzeige oder Baubewilligung). Das hängt von Grundstück und Bauordnung des Bundeslandes ab; stimmen Sie sich vor der Planung mit der Baubehörde oder einem befugten Planer ab.'),
+    tr('Egész éves használatnál az épületenergetikai követelmények (hőátbocsátás, tüzelő- és hűtőberendezés) is érintettek lehetnek.', 'Bei ganzjähriger Nutzung können auch energietechnische Anforderungen (Wärmedurchgang, Heiz- und Kühlanlagen) betroffen sein.'),
+    tr('Az irányár nem tartalmazza az engedélyezési tervet, a tervezői és eljárási díjakat.', 'Der Richtpreis enthält keine Einreichplanung, Planungs- oder Verfahrenskosten.'),
   ]
   if (building === 'carport') return [
-    'A carport nyitott, tetővel fedett szerkezet; a helyi építési szabályzat, a telek beépítettsége és a telekhatártól mért távolság dönti el, hogy bejelentés- vagy engedélyköteles-e. A megrendelés előtt kérj tájékoztatást az építési hatóságtól.',
-    'A tető hóteher-osztályát a telepítés helyének hózónája szerint kell megválasztani; ezt a felmérésen a gyártó ellenőrzi.',
+    tr('A carport nyitott, tetővel fedett szerkezet; a helyi építési szabályzat, a telek beépítettsége és a telekhatártól mért távolság dönti el, hogy bejelentés- vagy engedélyköteles-e. A megrendelés előtt kérj tájékoztatást az építési hatóságtól.', 'Ein Carport ist eine offene, überdachte Konstruktion; Bauordnung, Bebauungsdichte und Grenzabstand entscheiden, ob er anzeige- oder bewilligungspflichtig ist. Holen Sie vor der Bestellung Auskunft bei der Baubehörde ein.'),
+    tr('A tető hóteher-osztályát a telepítés helyének hózónája szerint kell megválasztani; ezt a felmérésen a gyártó ellenőrzi.', 'Die Schneelastklasse des Dachs richtet sich nach der Schneelastzone am Aufstellort; der Hersteller prüft das beim Aufmaß.'),
   ]
   return []
 }
@@ -180,19 +181,19 @@ export function buildingSpecRows(config: PergolaConfig): [string, string][] {
   if (isCarport(config.building)) {
     const bays = carportBays(config.width)
     return [
-      ['Építmény típusa', `Carport · ${bays >= 2 ? 'kétállásos' : bays === 1 ? 'egyállásos' : 'előtető'}`],
-      ['Autóállás', bays >= 2 ? '2 autó egymás mellett' : bays === 1 ? '1 autó' : 'autónak szűk'],
+      [tr('Építmény típusa', 'Bauwerkstyp'), `Carport · ${bays >= 2 ? tr('kétállásos', 'zwei Stellplätze') : bays === 1 ? tr('egyállásos', 'ein Stellplatz') : tr('előtető', 'Vordach')}`],
+      [tr('Autóállás', 'Stellplätze'), bays >= 2 ? tr('2 autó egymás mellett', '2 Autos nebeneinander') : bays === 1 ? tr('1 autó', '1 Auto') : tr('autónak szűk', 'für ein Auto zu schmal')],
     ]
   }
   if (!isClosedBuilding(config.building)) return []
-  const rows: [string, string][] = [['Építmény típusa', `${BUILDING_INFO[config.building].label} · ${BUILDING_INFO[config.building].season.toLowerCase()}`]]
+  const rows: [string, string][] = [[tr('Építmény típusa', 'Bauwerkstyp'), `${BUILDING_INFO[config.building].label} · ${BUILDING_INFO[config.building].season.toLowerCase()}`]]
   const glazing = effectiveWallGlazing(config)
-  if (glazing) rows.push(['Oldalüvegezés', `${WALL_GLAZING_INFO[glazing].label} · ${WALL_GLAZING_INFO[glazing].ug}`])
+  if (glazing) rows.push([tr('Oldalüvegezés', 'Seitenverglasung'), `${WALL_GLAZING_INFO[glazing].label} · ${WALL_GLAZING_INFO[glazing].ug}`])
   const doors = doorCount(config)
-  if (doors.hinged + doors.sliding > 0) rows.push(['Ajtó', [doors.hinged ? `${doors.hinged} db nyíló` : '', doors.sliding ? `${doors.sliding} db toló` : ''].filter(Boolean).join(' + ')])
-  if (config.climate) rows.push(['Fűtés / hűtés', CLIMATE_INFO[config.climate].label])
-  if (config.foundation) rows.push(['Alap és padló', 'Alapozott, szigetelt padlószerkezet'])
-  if (config.building === 'conservatory') rows.push(['Profilrendszer', 'Hőhídmentes alumínium'])
+  if (doors.hinged + doors.sliding > 0) rows.push([tr('Ajtó', 'Tür'), [doors.hinged ? `${doors.hinged} ${tr('db nyíló', 'Drehtür(en)')}` : '', doors.sliding ? `${doors.sliding} ${tr('db toló', 'Schiebetür(en)')}` : ''].filter(Boolean).join(' + ')])
+  if (config.climate) rows.push([tr('Fűtés / hűtés', 'Heizung / Kühlung'), CLIMATE_INFO[config.climate].label])
+  if (config.foundation) rows.push([tr('Alap és padló', 'Fundament und Boden'), tr('Alapozott, szigetelt padlószerkezet', 'Fundamentierter, gedämmter Bodenaufbau')])
+  if (config.building === 'conservatory') rows.push(['Profilrendszer', tr('Hőhídmentes alumínium', 'Thermisch getrenntes Aluminium')])
   return rows
 }
 

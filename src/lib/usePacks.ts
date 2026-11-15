@@ -3,6 +3,7 @@
 // betartásával. Tiszta számítás (nincs 3D-függőség), így tesztelhető. Koordináták: x a szélesség, z a mélység mentén,
 // a hátsó fal / hátsó oszlopsor z < 0 oldalon van, minden elem előlapja +z felé néz (forgatás 0).
 import type { FurnitureSet, PergolaConfig } from '@/types/pergola'
+import { tr } from '../i18n/locale'
 
 export type PackKind = 'table4' | 'longTable' | 'kitchen' | 'island' | 'barRun' | 'dining6' | 'dining8' | 'lounge'
 export interface PackItem { kind: PackKind; x: number; z: number; rot: number; /** Hossz méterben (konyhasor, bár, hosszú asztal, sziget). */ length?: number; seats?: number }
@@ -101,7 +102,7 @@ function restaurant(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan {
   const items: PackItem[] = []
   for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) items.push({ kind: 'table4', x: round2((col - (cols - 1) / 2) * pitchX), z: round2((row - (rows - 1) / 2) * pitchZ), rot: 0, seats: 4 })
   const seats = items.length * 4
-  return { items, seats, bounds: boundsOf(items, extentOf), areaPerSeat: round2((w * d) / seats), benchmark: BENCH.restaurant, notes: ['Asztalok közt legalább 1,0 m, a székek mögött közlekedősáv: a rács ezt tartja.'] }
+  return { items, seats, bounds: boundsOf(items, extentOf), areaPerSeat: round2((w * d) / seats), benchmark: BENCH.restaurant, notes: [tr('Asztalok közt legalább 1,0 m, a székek mögött közlekedősáv: a rács ezt tartja.', 'Mindestens 1,0 m zwischen den Tischen, hinter den Stühlen ein Gehweg: das Raster hält das ein.')] }
 }
 
 function summerKitchen(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan {
@@ -109,7 +110,7 @@ function summerKitchen(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan
   const length = kitchenLength(w)
   const runZ = -d / 2 + BACK_GAP + KITCHEN_DEPTH / 2
   const items: PackItem[] = [{ kind: 'kitchen', x: 0, z: round2(runZ), rot: 0, length }]
-  const notes: string[] = ['Munkafelület a grill két oldalán, a mosogató mellett szabad fal: a főzőzóna szélvédett.']
+  const notes: string[] = [tr('Munkafelület a grill két oldalán, a mosogató mellett szabad fal: a főzőzóna szélvédett.', 'Arbeitsfläche beidseits des Grills, freie Wand neben der Spüle: die Kochzone ist windgeschützt.')]
   let seats = 0
   const islandNeed = KITCHEN_DEPTH + BACK_GAP + WORK_AISLE + 0.9 + 0.5 + 0.2
   if (d >= islandNeed) {
@@ -117,7 +118,7 @@ function summerKitchen(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan
     const islandZ = runZ + KITCHEN_DEPTH / 2 + WORK_AISLE + 0.45
     seats = Math.floor(islandLength / SEAT_PITCH)
     items.push({ kind: 'island', x: 0, z: round2(islandZ), rot: 0, length: islandLength, seats })
-  } else notes.push(`Szigetpult és bárszékek ${(islandNeed + FRAME).toFixed(1).replace('.', ',')} m mélységtől férnek el.`)
+  } else notes.push(tr(`Szigetpult és bárszékek ${(islandNeed + FRAME).toFixed(1).replace('.', ',')} m mélységtől férnek el.`, `Kochinsel und Barhocker passen ab ${(islandNeed + FRAME).toFixed(1).replace('.', ',')} m Tiefe.`))
   return { items, seats, bounds: boundsOf(items, extentOf), areaPerSeat: seats ? round2((w * d) / seats) : null, benchmark: null, notes }
 }
 
@@ -135,7 +136,7 @@ function kitchenDining(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan
   let seats = 0
   for (let col = 0; col < cols; col++) { items.push({ kind: tableKind, x: round2((col - (cols - 1) / 2) * pitch), z: round2(tableZ), rot: 0, seats: tableKind === 'dining8' ? 8 : 6 }); seats += tableKind === 'dining8' ? 8 : 6 }
   // A konyhasor területe miatt a m²/fő itt nem összehasonlítható a vendéglátós irányértékkel, ezért nem jelenítjük meg.
-  return { items, seats, bounds: boundsOf(items, extentOf), areaPerSeat: null, benchmark: null, notes: ['A konyhasor és az étkező egy tető alatt: rövid útvonal a tálaláshoz.'] }
+  return { items, seats, bounds: boundsOf(items, extentOf), areaPerSeat: null, benchmark: null, notes: [tr('A konyhasor és az étkező egy tető alatt: rövid útvonal a tálaláshoz.', 'Küchenzeile und Essplatz unter einem Dach: kurze Wege zum Servieren.')] }
 }
 
 function banquet(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan {
@@ -151,7 +152,7 @@ function banquet(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan {
   const items: PackItem[] = []
   for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) items.push({ kind: 'longTable', x: round2((col - (cols - 1) / 2) * pitchX), z: round2((row - (rows - 1) / 2) * pitchZ), rot: 0, length, seats: perSide * 2 })
   const seats = items.length * perSide * 2
-  return { items, seats, bounds: boundsOf(items, extentOf), areaPerSeat: round2((w * d) / seats), benchmark: BENCH.banquet, notes: ['Hosszú asztalok 60 cm-es ülésosztással; a sorok közt legalább 0,8 m közlekedősáv marad.'] }
+  return { items, seats, bounds: boundsOf(items, extentOf), areaPerSeat: round2((w * d) / seats), benchmark: BENCH.banquet, notes: [tr('Hosszú asztalok 60 cm-es ülésosztással; a sorok közt legalább 0,8 m közlekedősáv marad.', 'Lange Tische mit 60 cm Sitzteilung; zwischen den Reihen bleiben mindestens 0,8 m Gehweg.')] }
 }
 
 function barLounge(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan {
@@ -165,7 +166,7 @@ function barLounge(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan {
   const zones = fillRow(w, loungeZ, 0)
   const items2: PackItem[] = [...items, ...zones]
   const seats = stools + zones.reduce((sum, item) => sum + (item.seats ?? 0), 0)
-  return { items: items2, seats, bounds: boundsOf(items2, extentOf), areaPerSeat: round2((w * d) / seats), benchmark: BENCH.hotel, notes: ['Bárpult a hátsó fal mentén, előtte váltakozó pihenő- és étkezőzónák: esti vendégtér szállodának, bornak, koktélbárnak.'] }
+  return { items: items2, seats, bounds: boundsOf(items2, extentOf), areaPerSeat: round2((w * d) / seats), benchmark: BENCH.hotel, notes: [tr('Bárpult a hátsó fal mentén, előtte váltakozó pihenő- és étkezőzónák: esti vendégtér szállodának, bornak, koktélbárnak.', 'Bar entlang der Rückwand, davor wechselnde Lounge- und Essbereiche: Abendbereich für Hotel, Wein- oder Cocktailbar.')] }
 }
 
 /** A zónák sorrendje egy soron belül: a szomszédos elemek soha nem egyformák (pihenő → étkező → bisztró-asztal → tükrözött pihenő …). */
@@ -215,8 +216,8 @@ function mixed(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan {
     items.push({ kind: 'barRun', x: 0, z: round2(barZ), rot: 0, length, seats: stools })
     seats += stools
     top = barZ + 0.35 + 0.6 + 0.6
-    notes.push('Bárpult a hátsó fal mentén, előtte a zónák.')
-  } else if (d >= 4.9) notes.push('Bárpult 3,4 m szélességtől kerül a hátsó falhoz.')
+    notes.push(tr('Bárpult a hátsó fal mentén, előtte a zónák.', 'Bar entlang der Rückwand, davor die Bereiche.'))
+  } else if (d >= 4.9) notes.push(tr('Bárpult 3,4 m szélességtől kerül a hátsó falhoz.', 'Die Bar kommt ab 3,4 m Breite an die Rückwand.'))
   // A sorok a bárpult mögötti (vagy ennek hiányában a teljes) mélységen osztoznak; a maradék szabad hely a sorok közé kerül.
   const avail = d / 2 - top
   const rowCount = Math.max(1, Math.min(3, Math.floor(avail / ROW + 1e-9)))
@@ -228,7 +229,7 @@ function mixed(config: Pick<PergolaConfig, 'width' | 'depth'>): PackPlan {
     items.push(...rowItems)
     seats += rowItems.reduce((sum, item) => sum + (item.seats ?? 0), 0)
   }
-  notes.push('A zónák váltakoznak (pihenő, étkező, bisztró-asztal), a közlekedősáv a sorok közt szabad marad.')
+  notes.push(tr('A zónák váltakoznak (pihenő, étkező, bisztró-asztal), a közlekedősáv a sorok közt szabad marad.', 'Die Bereiche wechseln sich ab (Lounge, Essplatz, Bistrotisch), der Gehweg zwischen den Reihen bleibt frei.'))
   return { items, seats, bounds: boundsOf(items, extentOf), areaPerSeat: seats ? round2((w * d) / seats) : null, benchmark: BENCH.hotel, notes }
 }
 

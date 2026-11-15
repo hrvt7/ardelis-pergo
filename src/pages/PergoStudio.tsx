@@ -54,6 +54,7 @@ const ArDialog = lazy(() => import('@/components/ArDialog'))
 const SunStudyPanel = lazy(() => import('@/components/SunStudyPanel'))
 import MechanismPanel from '@/components/MechanismPanel'
 import { LANDSCAPE_PHONE_QUERY, SHEET_LAYOUT_QUERY } from '@/lib/viewport'
+import { tr } from '../i18n/locale'
 const BudgetDialog = lazy(() => import('@/components/BudgetDialog'))
 const MoodPanel = lazy(() => import('@/components/MoodPanel'))
 const AdvisorDialog = lazy(() => import('@/components/AdvisorDialog'))
@@ -71,7 +72,7 @@ const CAMERA_ICONS: Partial<Record<CameraView, typeof View>> = { perspective: Vi
 /** Folyamatosan húzható mezők: gyors egymásutánjuk egy visszavonási lépés. */
 const CONTINUOUS_KEYS = new Set(['width', 'depth', 'height', 'pitch'])
 const CHANGE_LABELS: Record<string, string> = {
-  width: 'Szélesség', depth: 'Mélység', height: 'Magasság', mount: 'Rögzítés', roof: 'Tetőrendszer', frameColor: 'Szerkezetszín', customRal: 'Egyedi szín', roofColor: 'Tető / lamellák színe', roofRal: 'Tető / lamellák színe', sides: 'Oldalkialakítás', louverAngle: 'Lamellaszög', screenOpen: 'ZIP nyitottság', led: 'Periméter LED', heaters: 'Teraszfűtés', speakers: 'Hangrendszer', sensors: 'Szenzorcsomag', solar: 'Napelemes tető', split: 'Osztott oldal', ledRgb: 'Színváltós LED', fans: 'Mennyezeti ventilátor', smartHome: 'Okosotthon-vezérlés', roofShade: 'Tetőárnyékoló', shadeFabric: 'Árnyékoló színe'
+  width: tr('Szélesség', 'Breite'), depth: tr('Mélység', 'Tiefe'), height: tr('Magasság', 'Höhe'), mount: tr('Rögzítés', 'Montage'), roof: tr('Tetőrendszer', 'Dachsystem'), frameColor: tr('Szerkezetszín', 'Konstruktionsfarbe'), customRal: tr('Egyedi szín', 'Sonderfarbe'), roofColor: tr('Tető / lamellák színe', 'Farbe Dach / Lamellen'), roofRal: tr('Tető / lamellák színe', 'Farbe Dach / Lamellen'), sides: tr('Oldalkialakítás', 'Seitengestaltung'), louverAngle: tr('Lamellaszög', 'Lamellenwinkel'), screenOpen: tr('ZIP nyitottság', 'ZIP-Öffnung'), led: tr('Periméter LED', 'Umlaufende LED'), heaters: tr('Teraszfűtés', 'Terrassenheizung'), speakers: 'Hangrendszer', sensors: 'Szenzorcsomag', solar: tr('Napelemes tető', 'Photovoltaik-Dach'), split: 'Osztott oldal', ledRgb: tr('Színváltós LED', 'Farbwechsel-LED'), fans: tr('Mennyezeti ventilátor', 'Deckenventilator'), smartHome: tr('Okosotthon-vezérlés', 'Smart-Home-Steuerung'), roofShade: tr('Tetőárnyékoló', 'Dachbeschattung'), shadeFabric: tr('Árnyékoló színe', 'Farbe der Beschattung')
 }
 
 const savedKey = (tenant: Tenant) => `pergo-atelier-saved-v3:${tenant.id}`
@@ -89,7 +90,7 @@ function loadSaved(tenant: Tenant): SavedConfiguration[] {
 
 export default function PergoStudio() {
   const { tenant, labels: ROOF_LABELS, admin, embed, homeHref, product } = useTenant()
-  usePageSeo(product === 'carport' ? '/konfigurator/carport' : '/konfigurator', { noindex: embed || !tenant.demo, title: tenant.demo ? undefined : `${tenant.brand.name} · ${product === 'carport' ? 'carport' : 'pergola'} konfigurátor` })
+  usePageSeo(product === 'carport' ? '/konfigurator/carport' : '/konfigurator', { noindex: embed || !tenant.demo, title: tenant.demo ? undefined : `${tenant.brand.name} · ${product === 'carport' ? 'Carport' : 'Pergola'} ${tr('konfigurátor', 'Konfigurator')}` })
   const [config, setConfig] = useState<PergolaConfig>(() => loadInitialConfig(tenant, product))
   // Visszatérő látogató: ha piszkozatból (nem linkből) indultunk, és az nem az alapterv, felajánljuk a folytatást.
   const [welcomeBack, setWelcomeBack] = useState(() => !window.location.hash && JSON.stringify(config) !== JSON.stringify(normalizeConfig(tenant, productDefaultConfig(tenant, product))) && hasStoredDraft(tenant, product))
@@ -255,7 +256,7 @@ export default function PergoStudio() {
     if (lightsOn && !eveningShown.current && current.time !== 'night') {
       eveningShown.current = true
       setScene((value) => ({ ...value, time: 'night', dayTime: 21.5 }))
-      setToast('Esti nézetre váltottunk, hogy lásd a fényeket. Nappalra a felső sávban válthatsz vissza.')
+      setToast(tr('Esti nézetre váltottunk, hogy lásd a fényeket. Nappalra a felső sávban válthatsz vissza.', 'Wir haben auf Abend umgeschaltet, damit Sie das Licht sehen. Oben können Sie zurück auf Tag schalten.'))
     }
   }, [focusSide, overview])
 
@@ -293,7 +294,7 @@ export default function PergoStudio() {
     const PAIRED: Record<string, string> = { customRal: 'frameColor', roofRal: 'roofColor', ledRgb: 'led', shadeFabric: 'roofShade' }
     const changedKeys = [...new Set(Object.keys(nextOrPatch).filter((key) => key !== 'louverAngle' && key !== 'screenOpen' && JSON.stringify((next as unknown as Record<string, unknown>)[key]) !== JSON.stringify((config as unknown as Record<string, unknown>)[key])).map((key) => (PAIRED[key] && key in nextOrPatch && PAIRED[key] in nextOrPatch ? PAIRED[key] : key)))]
     const changed = changedKeys[0]
-    const label = changedKeys.length > 1 ? 'Több módosítás' : changed ? CHANGE_LABELS[changed] ?? 'Konfiguráció' : 'Beállítás'
+    const label = changedKeys.length > 1 ? tr('Több módosítás', 'Mehrere Änderungen') : changed ? CHANGE_LABELS[changed] ?? tr('Konfiguráció', 'Konfiguration') : tr('Beállítás', 'Einstellung')
     setDelta({ amount: nextPrice.totalGross - price.totalGross, label })
     setChange({ id: Date.now(), amount: nextPrice.totalGross - price.totalGross, label })
     // Finom visszajelzés érintőképernyőn (csúszka húzásakor ritkítva).
@@ -350,7 +351,7 @@ export default function PergoStudio() {
   }, [focusSide, overview])
   const [shade, setShade] = useState<ShadeResult | null>(null)
   const [moodHidden, setMoodHidden] = useState(false)
-  const applyAdvice = useCallback((next: PergolaConfig, furniture: FurnitureSet) => { replaceConfig(next); setScene((current) => ({ ...current, furniture })); setView('perspective'); setStep('size'); setModal(null); setToast('A javasolt pergola betöltve. Innen minden szabadon módosítható; visszavonás: ↶') }, [replaceConfig])
+  const applyAdvice = useCallback((next: PergolaConfig, furniture: FurnitureSet) => { replaceConfig(next); setScene((current) => ({ ...current, furniture })); setView('perspective'); setStep('size'); setModal(null); setToast(tr('A javasolt pergola betöltve. Innen minden szabadon módosítható; visszavonás: ↶', 'Die vorgeschlagene Pergola ist geladen. Alles ist frei änderbar; rückgängig: ↶')) }, [replaceConfig])
   // Az élő ár a panel alján; a részletes kalkuláció csak kérésre nyílik (ne takarja a 3D-t).
   const [detailsOpen, setDetailsOpen] = useState(false)
   useEffect(() => {
@@ -433,15 +434,15 @@ export default function PergoStudio() {
     const url = createShareUrl(config)
     // A címsorban csak a hash frissül (beágyazott nézetben az útvonal maradjon /embed/).
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#${shareHash(config)}`)
-    try { await copyShareUrl(url); setToast('Megosztható hivatkozás a vágólapra másolva.') }
-    catch { setToast('A hivatkozás frissült a címsorban; onnan másolhatod.') }
+    try { await copyShareUrl(url); setToast(tr('Megosztható hivatkozás a vágólapra másolva.', 'Teilbarer Link in die Zwischenablage kopiert.')) }
+    catch { setToast(tr('A hivatkozás frissült a címsorban; onnan másolhatod.', 'Der Link wurde in der Adresszeile aktualisiert; dort können Sie ihn kopieren.')) }
     if (!admin) { track(tenant.id, 'share'); noteEngagement(tenant.id, 'share') }
   }
   const handleExport = async () => {
     setExporting(true)
     if (!admin) { track(tenant.id, 'pdf'); noteEngagement(tenant.id, 'pdf') }
-    try { await exportPergolaPdf(config, price, tenant, ROOF_LABELS, createShareUrl(config), energyUsage, projectName.trim() || undefined, houseSummary(scene)); setToast('A PDF-összefoglaló elkészült.') }
-    catch (error) { console.error(error); setToast('A PDF nem készült el. Próbáld újra, vagy frissítsd az oldalt.') }
+    try { await exportPergolaPdf(config, price, tenant, ROOF_LABELS, createShareUrl(config), energyUsage, projectName.trim() || undefined, houseSummary(scene)); setToast(tr('A PDF-összefoglaló elkészült.', 'Die PDF-Zusammenfassung ist fertig.')) }
+    catch (error) { console.error(error); setToast(tr('A PDF nem készült el. Próbáld újra, vagy frissítsd az oldalt.', 'Das PDF konnte nicht erstellt werden. Bitte erneut versuchen oder die Seite neu laden.')) }
     finally { setExporting(false) }
   }
   const photoKey = tenant.id
@@ -461,11 +462,11 @@ export default function PergoStudio() {
       setPresentation(false)
       savePlacement(photoKey, DEFAULT_PLACEMENT)
       void savePhoto(photoKey, file)
-      setToast('Fotó mód: húzd a pergolát a helyére, majd állítsd a méretét és a forgatást. A kép nem hagyja el az eszközödet.')
+      setToast(tr('Fotó mód: húzd a pergolát a helyére, majd állítsd a méretét és a forgatást. A kép nem hagyja el az eszközödet.', 'Fotomodus: Ziehen Sie die Pergola an ihren Platz, dann Größe und Drehung einstellen. Das Bild verlässt Ihr Gerät nicht.'))
     }
     probe.onerror = () => {
       URL.revokeObjectURL(url)
-      setToast('Ezt a képet a böngésző nem tudja megnyitni. Kérlek, JPG, PNG vagy WebP fotót válassz.')
+      setToast(tr('Ezt a képet a böngésző nem tudja megnyitni. Kérlek, JPG, PNG vagy WebP fotót válassz.', 'Dieses Bild kann der Browser nicht öffnen. Bitte ein JPG-, PNG- oder WebP-Foto wählen.'))
     }
     probe.src = url
   }
@@ -475,7 +476,7 @@ export default function PergoStudio() {
     void deletePhoto(photoKey)
     clearPlacement(photoKey)
     setScene((current) => ({ ...current, ...DEFAULT_PLACEMENT, photoUrl: undefined, photoMode: false }))
-    setToast('A fotó törölve. Vissza a 3D jelenethez.')
+    setToast(tr('A fotó törölve. Vissza a 3D jelenethez.', 'Foto gelöscht. Zurück zur 3D-Szene.'))
   }
   const photoInput = useRef<HTMLInputElement>(null)
   const openPhotoPicker = () => photoInput.current?.click()
@@ -486,7 +487,7 @@ export default function PergoStudio() {
       const without = current.filter((savedItem) => savedItem.id !== slot)
       return slot === 'A' ? [item, ...without.filter((savedItem) => savedItem.id === 'B')].slice(0, 2) : [...without.filter((savedItem) => savedItem.id === 'A'), item].slice(0, 2)
     })
-    setToast(`Konfiguráció ${slot} elmentve ebben a böngészőben.`)
+    setToast(`${tr('Konfiguráció ${slot} elmentve ebben a böngészőben.', 'Konfiguration ${slot} in diesem Browser gespeichert.')}`)
     if (!admin) noteEngagement(tenant.id, 'saved')
   }
   const summary = <SummaryPanel onFix={updateConfig} shareUrl={createShareUrl(config)} config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={openEnergy} onExport={handleExport} exporting={exporting} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} />
@@ -516,44 +517,44 @@ export default function PergoStudio() {
       <StudioHeader onHome={() => (modularMode ? modular.setView('perspective') : setView('perspective'))} canUndo={modularMode ? modular.canUndo : history.current.past.length > 0} canRedo={modularMode ? modular.canRedo : history.current.future.length > 0} onUndo={modularMode ? modular.undo : undo} onRedo={modularMode ? modular.redo : redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setModal('info')} onReset={() => (modularMode ? (window.confirm('Visszaállítod a modulházat az alapkonfigurációra?') && modular.reset()) : setModal('reset'))} />
 
       <main className="studio-shell" id="top">
-        <section className={`viewer-panel ${scene.photoMode ? 'photo-preview' : ''}`} aria-label="3D előnézet">
-          {scene.photoMode && scene.photoUrl && <img className="photo-backdrop" src={scene.photoUrl} alt="A feltöltött teraszfotó háttere" />}
+        <section className={`viewer-panel ${scene.photoMode ? 'photo-preview' : ''}`} aria-label={tr('3D előnézet', '3D-Vorschau')}>
+          {scene.photoMode && scene.photoUrl && <img className="photo-backdrop" src={scene.photoUrl} alt={tr('A feltöltött teraszfotó háttere', 'Hintergrund aus dem hochgeladenen Terrassenfoto')} />}
           <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={walking || modularMode ? undefined : handleSideSelect} onSceneChange={updateScene} modular={modularMode ? { config: modular.config, view: modular.view, dimensions: scene.showDimensions } : null} onShade={setShade} walk={walking} viewShiftX={viewShiftX} />
           {walking && <WalkOverlay onExit={exitWalk} touch={coarsePointer || isNarrow} roofBlocked={walkRoofBlocked} />}
-          {modularMode ? <div className="viewer-heading"><span>ÉLŐ ÉPÍTÉSZETI JELENET</span><h1><span className="kinetic" key={modular.model.name}>{modular.model.name}</span> <i>/</i> <span className="kinetic">{modular.model.grossArea.toFixed(1).replace('.', ',')}</span><small> m²</small></h1><p>{modular.model.title} · {modular.model.footprint.width.toFixed(2).replace('.', ',')} × {modular.model.footprint.depth.toFixed(2).replace('.', ',')} m</p></div>
-            : <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1><span className="kinetic" key={ROOF_LABELS[config.roof]}>{ROOF_LABELS[config.roof].split(' · ')[0]}</span> <i>/</i> <span className="kinetic" key={`w${config.width}`}>{config.width.toFixed(1).replace('.', ',')}</span><small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>}
-          <div className="viewer-live"><i />VALÓS IDEJŰ 3D</div>
+          {modularMode ? <div className="viewer-heading"><span>{tr('ÉLŐ ÉPÍTÉSZETI JELENET', 'LIVE-ARCHITEKTURSZENE')}</span><h1><span className="kinetic" key={modular.model.name}>{modular.model.name}</span> <i>/</i> <span className="kinetic">{modular.model.grossArea.toFixed(1).replace('.', ',')}</span><small> m²</small></h1><p>{modular.model.title} · {modular.model.footprint.width.toFixed(2).replace('.', ',')} × {modular.model.footprint.depth.toFixed(2).replace('.', ',')} m</p></div>
+            : <div className="viewer-heading"><span>{scene.photoMode ? tr('SAJÁT TERASZ / ELŐNÉZET', 'EIGENE TERRASSE / VORSCHAU') : tr('ÉLŐ ÉPÍTÉSZETI JELENET', 'LIVE-ARCHITEKTURSZENE')}</span><h1><span className="kinetic" key={ROOF_LABELS[config.roof]}>{ROOF_LABELS[config.roof].split(' · ')[0]}</span> <i>/</i> <span className="kinetic" key={`w${config.width}`}>{config.width.toFixed(1).replace('.', ',')}</span><small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m {tr('mély', 'tief')}</p></div>}
+          <div className="viewer-live"><i />{tr('VALÓS IDEJŰ 3D', 'ECHTZEIT-3D')}</div>
           <SceneToolbar leading={modularMode ? <CameraViewMenu views={MODULAR_VIEWS.map((item) => ({ ...item, icon: View }))} value={modular.view} onChange={modular.setView} /> : <CameraViewMenu views={cameraViewsFor(config.building === 'carport' ? 'carport' : product).map((item) => ({ ...item, icon: CAMERA_ICONS[item.id] ?? View }))} value={view} onChange={(id) => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} />} time={scene.time} onTimeChange={(time) => updateScene({ time, dayTime: time === 'day' ? 13 : time === 'sunset' ? 18 : 22 })}
-            viewPanel={modularMode ? <StudioViewSettings productName="a ház" view={{ time: scene.time, environment: scene.ground !== 'studio', showPerson: Boolean(scene.showPerson), dimensions: scene.showDimensions, autoRotate: scene.autoRotate }} onChange={(patch) => updateScene({ ...(patch.time ? { time: patch.time, dayTime: patch.time === 'day' ? 13 : patch.time === 'sunset' ? 18 : 22 } : {}), ...(patch.environment !== undefined ? { ground: patch.environment ? 'terrace' : 'studio' } : {}), ...(patch.showPerson !== undefined ? { showPerson: patch.showPerson } : {}), ...(patch.dimensions !== undefined ? { showDimensions: patch.dimensions } : {}), ...(patch.autoRotate !== undefined ? { autoRotate: patch.autoRotate } : {}) })} /> : <SceneSettingsPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onPhotoUpload={handlePhoto} />}
+            viewPanel={modularMode ? <StudioViewSettings productName={tr('a ház', 'das Haus')} view={{ time: scene.time, environment: scene.ground !== 'studio', showPerson: Boolean(scene.showPerson), dimensions: scene.showDimensions, autoRotate: scene.autoRotate }} onChange={(patch) => updateScene({ ...(patch.time ? { time: patch.time, dayTime: patch.time === 'day' ? 13 : patch.time === 'sunset' ? 18 : 22 } : {}), ...(patch.environment !== undefined ? { ground: patch.environment ? 'terrace' : 'studio' } : {}), ...(patch.showPerson !== undefined ? { showPerson: patch.showPerson } : {}), ...(patch.dimensions !== undefined ? { showDimensions: patch.dimensions } : {}), ...(patch.autoRotate !== undefined ? { autoRotate: patch.autoRotate } : {}) })} /> : <SceneSettingsPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onPhotoUpload={handlePhoto} />}
             quick={modularMode ? [] : [
-              { id: 'walk', icon: Footprints, label: 'Bejárás', className: 'walk-launch', title: 'Bejárás első személyű nézetben, emberi szemmagasságból', active: walking, run: () => (walking ? exitWalk() : enterWalk()) },
-              { id: 'rain', icon: CloudRain, label: 'Eső', className: 'icon-rain', title: 'Eső be- és kikapcsolása', active: scene.rain, run: () => updateScene({ rain: !scene.rain }) },
-              ...(arHidden ? [] : [{ id: 'ar', icon: Rotate3d, label: 'AR', className: 'ar-launch icon-ar', title: arPath === 'desktop' ? 'Nézd meg a kertedben valós méretben — telefonon (QR-kód)' : 'Nézd meg valós méretben a saját kertedben (AR)', run: () => { if (!admin) { track(tenant.id, 'ar'); noteEngagement(tenant.id, 'ar') } if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') } }]),
+              { id: 'walk', icon: Footprints, label: tr('Bejárás', 'Rundgang'), className: 'walk-launch', title: tr('Bejárás első személyű nézetben, emberi szemmagasságból', 'Rundgang in der Ich-Perspektive, auf Augenhöhe'), active: walking, run: () => (walking ? exitWalk() : enterWalk()) },
+              { id: 'rain', icon: CloudRain, label: tr('Eső', 'Regen'), className: 'icon-rain', title: tr('Eső be- és kikapcsolása', 'Regen ein- und ausschalten'), active: scene.rain, run: () => updateScene({ rain: !scene.rain }) },
+              ...(arHidden ? [] : [{ id: 'ar', icon: Rotate3d, label: 'AR', className: 'ar-launch icon-ar', title: arPath === 'desktop' ? tr('Nézd meg a kertedben valós méretben — telefonon (QR-kód)', 'In Originalgröße im eigenen Garten ansehen — am Handy (QR-Code)') : tr('Nézd meg valós méretben a saját kertedben (AR)', 'In Originalgröße im eigenen Garten ansehen (AR)'), run: () => { if (!admin) { track(tenant.id, 'ar'); noteEngagement(tenant.id, 'ar') } if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') } }]),
             ]}
             toolsBusy={!modularMode && (scene.sunStudy || scene.photoMode || mechanismOn || scene.exploded)}
             tools={modularMode ? [] : ([
-              { id: 'sun', icon: SunMedium, name: 'Árnyékelemzés', note: 'Valós napállás a saját helyszíneden, dátum és óra szerint', active: scene.sunStudy, run: toggleSunStudy },
-              { id: 'photo', icon: scene.photoUrl ? Image : ImagePlus, name: 'Fotóba helyezés', note: config.building === 'carport' ? (scene.photoUrl ? 'A carport a saját udvarod fotóján' : 'Töltsd fel az udvarod fotóját, és helyezd rá a carportot') : (scene.photoUrl ? 'A pergola a saját teraszod fotóján' : 'Töltsd fel a teraszod fotóját, és helyezd rá a pergolát'), active: scene.photoMode, run: () => { if (!scene.photoUrl) openPhotoPicker(); else updateScene({ photoMode: !scene.photoMode, sunStudy: false }) } },
-              ...(config.roof === 'louvered' ? [{ id: 'mechanism', icon: Cog, name: 'Működés-bemutató', note: 'A lamellahajtás mozgásban, valós gyári adatokkal', active: mechanismOn, run: () => updateScene({ mechanism: !scene.mechanism, sunStudy: false, photoMode: false, exploded: false }) }] : []),
-              { id: 'exploded', icon: Layers, name: 'Robbantott nézet', note: 'A szerkezet elemei szétválasztva', active: scene.exploded, run: () => updateScene({ exploded: !scene.exploded, mechanism: false }) },
-              { id: 'budget', icon: Wallet, name: 'Költségkeret-tervező', note: 'Add meg a keretet, megmutatjuk, mi fér bele', active: false, run: () => setModal('budget') },
-              { id: 'energy', icon: Gauge, name: energyCost ? `Üzemeltetés ≈ ${formatPrice(energyCost)} / év` : 'Üzemeltetési költség', note: 'Áramköltség a valós lakossági tarifával', active: false, run: () => setModal('energy') },
-              { id: 'advisor', icon: WandSparkles, name: 'Tanácsadó', note: '4 kérdés, és javaslunk egy hozzád illő kivitelt', active: false, run: () => setModal('advisor') },
+              { id: 'sun', icon: SunMedium, name: tr('Árnyékelemzés', 'Schattenanalyse'), note: tr('Valós napállás a saját helyszíneden, dátum és óra szerint', 'Realer Sonnenstand an Ihrem Standort, nach Datum und Uhrzeit'), active: scene.sunStudy, run: toggleSunStudy },
+              { id: 'photo', icon: scene.photoUrl ? Image : ImagePlus, name: tr('Fotóba helyezés', 'Ins Foto setzen'), note: config.building === 'carport' ? (scene.photoUrl ? tr('A carport a saját udvarod fotóján', 'Der Carport auf dem Foto Ihres Hofs') : tr('Töltsd fel az udvarod fotóját, és helyezd rá a carportot', 'Laden Sie ein Foto Ihres Hofs hoch und platzieren Sie den Carport')) : (scene.photoUrl ? tr('A pergola a saját teraszod fotóján', 'Die Pergola auf dem Foto Ihrer Terrasse') : tr('Töltsd fel a teraszod fotóját, és helyezd rá a pergolát', 'Laden Sie ein Foto Ihrer Terrasse hoch und platzieren Sie die Pergola')), active: scene.photoMode, run: () => { if (!scene.photoUrl) openPhotoPicker(); else updateScene({ photoMode: !scene.photoMode, sunStudy: false }) } },
+              ...(config.roof === 'louvered' ? [{ id: 'mechanism', icon: Cog, name: tr('Működés-bemutató', 'Funktionsvorführung'), note: tr('A lamellahajtás mozgásban, valós gyári adatokkal', 'Der Lamellenantrieb in Bewegung, mit realen Herstellerdaten'), active: mechanismOn, run: () => updateScene({ mechanism: !scene.mechanism, sunStudy: false, photoMode: false, exploded: false }) }] : []),
+              { id: 'exploded', icon: Layers, name: tr('Robbantott nézet', 'Explosionsansicht'), note: tr('A szerkezet elemei szétválasztva', 'Die Bauteile auseinandergezogen'), active: scene.exploded, run: () => updateScene({ exploded: !scene.exploded, mechanism: false }) },
+              { id: 'budget', icon: Wallet, name: tr('Költségkeret-tervező', 'Budgetplaner'), note: tr('Add meg a keretet, megmutatjuk, mi fér bele', 'Budget eingeben, wir zeigen, was hineinpasst'), active: false, run: () => setModal('budget') },
+              { id: 'energy', icon: Gauge, name: energyCost ? `${tr('Üzemeltetés', 'Betrieb')} ≈ ${formatPrice(energyCost)} / ${tr('év', 'Jahr')}` : tr('Üzemeltetési költség', 'Betriebskosten'), note: tr('Áramköltség a valós lakossági tarifával', 'Stromkosten mit realem Haushaltstarif'), active: false, run: () => setModal('energy') },
+              { id: 'advisor', icon: WandSparkles, name: tr('Tanácsadó', 'Berater'), note: tr('4 kérdés, és javaslunk egy hozzád illő kivitelt', '4 Fragen, und wir schlagen eine passende Ausführung vor'), active: false, run: () => setModal('advisor') },
             ] as ToolItem[]).filter(({ id }) => !(config.building === 'carport' && id === 'advisor') && !(id === 'energy' && !energySupported))}
             presentation={presentation} onPresentation={() => setPresentation(!presentation)} onExport={handleExport} onShare={handleShare} />
-          {scene.rain && config.sensors && isMovableRoof(config.roof) && <div className="automation-status" role="status"><ShieldCheck size={16} /><span><strong>Esőautomata aktív</strong>{config.roof === 'retractable' ? 'A tolótető biztonságos, zárt pozícióban.' : 'A tetőlamellák biztonságos, zárt pozícióban.'}</span></div>}
+          {scene.rain && config.sensors && isMovableRoof(config.roof) && <div className="automation-status" role="status"><ShieldCheck size={16} /><span><strong>{tr('Esőautomata aktív', 'Regenautomatik aktiv')}</strong>{config.roof === 'retractable' ? tr('A tolótető biztonságos, zárt pozícióban.', 'Das Schiebedach ist sicher geschlossen.') : tr('A tetőlamellák biztonságos, zárt pozícióban.', 'Die Dachlamellen sind sicher geschlossen.')}</span></div>}
           {scene.time === 'night' && !modularMode && !scene.sunStudy && !mechanismOn && !moodHidden && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot is-mood${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MoodPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onClose={() => setMoodHidden(true)} /></div></Suspense>}
           {mechanismOn && <Suspense fallback={null}><div className={`sun-panel-slot is-mechanism${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MechanismPanel config={config} onClose={() => updateScene({ mechanism: false })} /></div></Suspense>}
           {scene.sunStudy && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><SunStudyPanel scene={scene} shade={shade} onChange={updateScene} onClose={toggleSunStudy} /></div></Suspense>}
-          {!modularMode && view === 'sofa' && <div className="pov-note" role="status"><Armchair size={16} /><span><strong>Kanapé panoráma</strong>Húzd a képet a körbenézéshez · a nyilakkal is forgatható</span></div>}
-          {rotateHint && view !== 'sofa' && !scene.photoMode && !welcomeBack && <div className="pov-note rotate-hint" role="status"><Rotate3d size={16} /><span><strong>Húzd a forgatáshoz</strong>{coarsePointer ? 'Két ujjal nagyíthatsz' : 'Jobb gombbal vagy két ujjas görgetéssel mozgatod · görgővel, csípéssel nagyítasz'}</span></div>}
-          {presentation && modularMode && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{modular.model.title} · bruttó {modular.model.grossArea.toFixed(1).replace('.', ',')} m²</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
-          {presentation && !modularMode && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
+          {!modularMode && view === 'sofa' && <div className="pov-note" role="status"><Armchair size={16} /><span><strong>{tr('Kanapé panoráma', 'Sofa-Panorama')}</strong>{tr('Húzd a képet a körbenézéshez · a nyilakkal is forgatható', 'Bild ziehen zum Umsehen · auch mit den Pfeiltasten drehbar')}</span></div>}
+          {rotateHint && view !== 'sofa' && !scene.photoMode && !welcomeBack && <div className="pov-note rotate-hint" role="status"><Rotate3d size={16} /><span><strong>{tr('Húzd a forgatáshoz', 'Zum Drehen ziehen')}</strong>{coarsePointer ? tr('Két ujjal nagyíthatsz', 'Mit zwei Fingern zoomen') : tr('Jobb gombbal vagy két ujjas görgetéssel mozgatod · görgővel, csípéssel nagyítasz', 'Rechte Maustaste oder Zwei-Finger-Wischen verschiebt · Mausrad oder Pinch zoomt')}</span></div>}
+          {presentation && modularMode && <div className="presentation-note"><span>{tr('ÜGYFÉL-BEMUTATÓ', 'KUNDENPRÄSENTATION')}</span><strong>{modular.model.title} · bruttó {modular.model.grossArea.toFixed(1).replace('.', ',')} m²</strong><small>{tr('Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez', 'Szene zum Drehen ziehen · ESC zum Bearbeiten')}</small></div>}
+          {presentation && !modularMode && <div className="presentation-note"><span>{tr('ÜGYFÉL-BEMUTATÓ', 'KUNDENPRÄSENTATION')}</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>{tr('Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez', 'Szene zum Drehen ziehen · ESC zum Bearbeiten')}</small></div>}
           {scene.photoMode ? <PhotoBar placement={{ photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt, photoLens: scene.photoLens }} coarse={isNarrow || window.matchMedia('(pointer: coarse)').matches} onChange={(next) => updateScene(next)} onReset={() => updateScene({ ...DEFAULT_PLACEMENT })} onReplace={openPhotoPicker} onDelete={deleteUserPhoto} onDone={() => updateScene({ photoMode: false })} />
             : null}
           {welcomeBack && !modularMode && <WelcomeBack summary={`${config.width.toFixed(1).replace('.', ',')} × ${config.depth.toFixed(1).replace('.', ',')} m · ${formatPrice(price.totalGross)}`} onContinue={() => setWelcomeBack(false)} onFresh={() => { replaceConfig(productDefaultConfig(tenant, product)); setProjectName(''); setWelcomeBack(false); goStep('size') }} />}
           {!presentation && (modularMode ? <ChangePill change={modular.change} onUndo={() => { modular.undo(); modular.clearChange() }} /> : <ChangePill change={change} onUndo={() => { undo(); setChange(null) }} />)}
-          <div className="viewer-footer"><span>{scene.photoMode ? 'HELYI FOTÓS ELŐNÉZET' : '1 egység = 1 méter'}</span><span>{modularMode ? `bruttó ${modular.model.grossArea.toFixed(1).replace('.', ',')} m² · nettó ${modular.model.netArea.toFixed(1).replace('.', ',')} m²` : `${price.area.toFixed(1).replace('.', ',')} m²`}</span>{tenant.platformCredit !== false && <a className="platform-credit" href="/" target="_blank" rel="noopener" title="3D konfigurátor: Lamelix"><LamelixLogo variant="symbol" tone="onDark" height={11} title={null} />Lamelix</a>}</div>
+          <div className="viewer-footer"><span>{scene.photoMode ? tr('HELYI FOTÓS ELŐNÉZET', 'LOKALE FOTOVORSCHAU') : tr('1 egység = 1 méter', '1 Einheit = 1 Meter')}</span><span>{modularMode ? `bruttó ${modular.model.grossArea.toFixed(1).replace('.', ',')} m² · nettó ${modular.model.netArea.toFixed(1).replace('.', ',')} m²` : `${price.area.toFixed(1).replace('.', ',')} m²`}</span>{tenant.platformCredit !== false && <a className="platform-credit" href="/" target="_blank" rel="noopener" title={tr('3D konfigurátor: Lamelix', '3D-Konfigurator: Lamelix')}><LamelixLogo variant="symbol" tone="onDark" height={11} title={null} />Lamelix</a>}</div>
         </section>
 
         {modularMode && modularChoice ? <>
@@ -565,23 +566,23 @@ export default function PergoStudio() {
         </>}
       </main>
 
-      <div className="mobile-price-bar"><div><span>Bruttó irányár</span><strong data-value={modularMode ? modular.price.totalGross : price.totalGross}><AnimatedPrice value={modularMode ? modular.price.totalGross : price.totalGross} /></strong><PriceDeltaPop value={modularMode ? modular.price.totalGross : price.totalGross} /></div><button type="button" onClick={() => {
+      <div className="mobile-price-bar"><div><span>{tr('Bruttó irányár', 'Richtpreis brutto')}</span><strong data-value={modularMode ? modular.price.totalGross : price.totalGross}><AnimatedPrice value={modularMode ? modular.price.totalGross : price.totalGross} /></strong><PriceDeltaPop value={modularMode ? modular.price.totalGross : price.totalGross} /></div><button type="button" onClick={() => {
         if (modularMode) { modular.setStep(modular.step === 'summary' ? 'model' : 'summary'); setSheet('full'); return }
         const action = mobileBarAction(step)
         if (action.kind === 'step') { goStep(action.step); setMobileControlsOpen(true); return }
         setSheet('full')
         window.setTimeout(() => document.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 260)
-      }}>{modularMode ? (modular.step === 'summary' ? 'Tovább tervezés' : 'Összegzés') : mobileBarAction(step).label}<ChevronRight size={16} /></button></div>
-      {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label="Értesítés bezárása" onClick={() => setToast('')}><X size={16} /></button></div>}
-      {modal === 'prices' && admin && <PriceSettingsDialog prices={prices} onChange={setPrices} onReset={() => { setPrices(tenant.prices); setToast('A gyártói árlista visszaállt.') }} onClose={() => setModal(null)} />}
+      }}>{modularMode ? (modular.step === 'summary' ? tr('Tovább tervezés', 'Weiter planen') : tr('Összegzés', 'Übersicht')) : mobileBarAction(step).label}<ChevronRight size={16} /></button></div>
+      {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
+      {modal === 'prices' && admin && <PriceSettingsDialog prices={prices} onChange={setPrices} onReset={() => { setPrices(tenant.prices); setToast(tr('A gyártói árlista visszaállt.', 'Die Herstellerpreisliste wurde wiederhergestellt.')) }} onClose={() => setModal(null)} />}
       {modal === 'info' && <InfoDialog onClose={() => setModal(null)} />}
-      {modal === 'budget' && <Suspense fallback={null}><BudgetDialog config={config} prices={prices} furniture={scene.furniture} currentGross={price.totalGross} onApply={(next) => { updateConfig(next); setModal(null); setToast('A terv a keretösszegedhez igazítva. Visszavonás: ↶') }} onClose={() => setModal(null)} /></Suspense>}
+      {modal === 'budget' && <Suspense fallback={null}><BudgetDialog config={config} prices={prices} furniture={scene.furniture} currentGross={price.totalGross} onApply={(next) => { updateConfig(next); setModal(null); setToast(tr('A terv a keretösszegedhez igazítva. Visszavonás: ↶', 'Der Entwurf wurde an Ihr Budget angepasst. Rückgängig: ↶')) }} onClose={() => setModal(null)} /></Suspense>}
       {modal === 'advisor' && <Suspense fallback={null}><AdvisorDialog prices={prices} onApply={applyAdvice} onClose={() => setModal(null)} /></Suspense>}
       {modal === 'energy' && energySupported && <Suspense fallback={null}><EnergyDialog config={config} prices={prices} usage={energyUsage} onUsageChange={setEnergyUsage} onConfigChange={updateConfig} onClose={() => setModal(null)} /></Suspense>}
       <input ref={photoInput} className="visually-hidden-input" type="file" accept={PHOTO_ACCEPT} tabIndex={-1} aria-hidden="true" onChange={(event) => { const file = event.target.files?.[0]; if (file) handlePhoto(file); event.target.value = '' }} />
       {modal === 'ar' && <Suspense fallback={null}><ArDialog shareUrl={buildArUrl(config)} onClose={() => setModal(null)} onPhoto={() => { if (scene.photoUrl) updateScene({ photoMode: true, sunStudy: false }); else openPhotoPicker() }} /></Suspense>}
-      {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(productDefaultConfig(tenant, product)); setScene((current) => ({ ...DEFAULT_SCENE, houseStyle: current.houseStyle, wallFinish: current.wallFinish, wallColor: current.wallColor, windowColor: current.windowColor })); setView('perspective'); setStep('size'); setToast('Az alapkonfiguráció visszaállt.') }} onClose={() => setModal(null)} />}
-      {homeHref && <nav aria-label="Vissza a kezdőlapra">{homeHref.startsWith('/') ? <Link className="studio-home-link" to={homeHref}>Kezdőlap</Link> : <a className="studio-home-link" href={homeHref} target="_top" rel="noreferrer">Kezdőlap</a>}</nav>}
+      {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(productDefaultConfig(tenant, product)); setScene((current) => ({ ...DEFAULT_SCENE, houseStyle: current.houseStyle, wallFinish: current.wallFinish, wallColor: current.wallColor, windowColor: current.windowColor })); setView('perspective'); setStep('size'); setToast(tr('Az alapkonfiguráció visszaállt.', 'Die Grundkonfiguration wurde wiederhergestellt.')) }} onClose={() => setModal(null)} />}
+      {homeHref && <nav aria-label={tr('Vissza a kezdőlapra', 'Zurück zur Startseite')}>{homeHref.startsWith('/') ? <Link className="studio-home-link" to={homeHref}>{tr('Kezdőlap', 'Startseite')}</Link> : <a className="studio-home-link" href={homeHref} target="_top" rel="noreferrer">{tr('Kezdőlap', 'Startseite')}</a>}</nav>}
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { describeColor, normalizeColorCode, pickCatalogColor } from '@/lib/color
 import { findWindowColor, finishPreview, HOUSE_STYLES, HOUSE_STYLE_INFO, WALL_COLORS, WALL_FINISH_INFO, WINDOW_COLORS, defaultWallColor, wallColorHex, wallColorName, type WindowSwatch } from '@/lib/house'
 import { useTenant } from '@/tenants/TenantContext'
 import type { HouseStyle, PergolaConfig, SceneSettings, WallFinish } from '@/types/pergola'
+import { tr } from '../i18n/locale'
 
 type Props = {
   config: PergolaConfig
@@ -67,11 +68,11 @@ export function WindowMatch({ config, scene, onChange }: Pick<Props, 'config' | 
   const swatch = findWindowColor(scene.windowColor)
   const match = usePergolaMatch(config)(swatch)
   if (!match.pick || !match.info) return null
-  if (match.same) return <div className="house-match is-matched"><Check size={16} /><p><strong>A pergola illik a nyílászárókhoz</strong>Mindkettő {match.info.name.toLowerCase()} — ez a legbiztosabb, időtálló párosítás.</p></div>
+  if (match.same) return <div className="house-match is-matched"><Check size={16} /><p><strong>{tr('A pergola illik a nyílászárókhoz', 'Die Pergola passt zu den Fenstern')}</strong>{tr(`Mindkettő ${match.info.name.toLowerCase()} — ez a legbiztosabb, időtálló párosítás.`, `Beide ${match.info.name} — die sicherste, zeitlose Kombination.`)}</p></div>
   const pick = match.pick
   return <div className="house-match">
     <span className="house-match-pair" aria-hidden="true"><WindowIcon swatch={swatch} /><i style={match.info.kind === 'wood' ? { background: `repeating-linear-gradient(90deg, ${match.info.hex} 0 5px, rgba(0,0,0,.18) 5px 6px)` } : { background: match.info.hex }} /></span>
-    <p><strong>Igazítsd a nyílászárókhoz?</strong>A pergola leggyakrabban az ablakkeretek színét kapja. A ház nyílászárói: {swatch.name.toLowerCase()}.</p>
+    <p><strong>{tr('Igazítsd a nyílászárókhoz?', 'An die Fenster anpassen?')}</strong>{tr(`A pergola leggyakrabban az ablakkeretek színét kapja. A ház nyílászárói: ${swatch.name.toLowerCase()}.`, `Die Pergola bekommt meist die Farbe der Fensterrahmen. Fenster am Haus: ${swatch.name}.`)}</p>
     <button type="button" onClick={() => onChange({ frameColor: pick.color, customRal: pick.custom, roofColor: undefined, roofRal: undefined })}><Wand2 size={14} />Pergola: {match.info.name} · {match.info.code}</button>
   </div>
 }
@@ -93,16 +94,16 @@ export default function HouseLook({ config, scene, photoUrl, onSceneChange, onCh
     if (next === 'classic' && finish === 'plaster' && hex === defaultWallColor('plaster')) { patch.wallFinish = 'cedar'; patch.wallColor = defaultWallColor('cedar') }
     onSceneChange(patch)
   }
-  return <section className="house-look" aria-label="A házad">
-    <div className="house-look-head"><span><strong>Ház típusa</strong><small>Melyik hasonlít a tiédre?</small></span></div>
-    <div className="house-finish-grid" role="radiogroup" aria-label="Ház típusa">
+  return <section className="house-look" aria-label={tr('A házad', 'Ihr Haus')}>
+    <div className="house-look-head"><span><strong>{tr('Ház típusa', 'Haustyp')}</strong><small>{tr('Melyik hasonlít a tiédre?', 'Welches ähnelt Ihrem?')}</small></span></div>
+    <div className="house-finish-grid" role="radiogroup" aria-label={tr('Ház típusa', 'Haustyp')}>
       {HOUSE_STYLES.map((item) => <button type="button" role="radio" aria-checked={style === item} key={item} className={style === item ? 'selected' : ''} onClick={() => pickStyle(item)}>
         <span className="house-finish-preview house-style-preview"><StyleIcon style={item} /></span>
         <span className="house-finish-text"><strong>{HOUSE_STYLE_INFO[item].label}</strong><small>{HOUSE_STYLE_INFO[item].description}</small></span>
       </button>)}
     </div>
-    <div className="house-look-head"><span><strong>Homlokzat</strong><small>Milyen a házad fala?</small></span></div>
-    <div className="house-finish-grid" role="radiogroup" aria-label="Homlokzat anyaga">
+    <div className="house-look-head"><span><strong>Homlokzat</strong><small>{tr('Milyen a házad fala?', 'Wie ist Ihre Hauswand?')}</small></span></div>
+    <div className="house-finish-grid" role="radiogroup" aria-label={tr('Homlokzat anyaga', 'Fassadenmaterial')}>
       {FINISHES.map((item) => {
         const selected = finish === item
         const previewHex = selected ? hex : defaultWallColor(item)
@@ -113,8 +114,8 @@ export default function HouseLook({ config, scene, photoUrl, onSceneChange, onCh
       })}
     </div>
 
-    <div className="house-look-head"><span><strong>Homlokzat színe</strong><small>{wallColorName(finish, hex)}</small></span></div>
-    <div className="house-swatches" role="radiogroup" aria-label="Homlokzat színe">
+    <div className="house-look-head"><span><strong>{tr('Homlokzat színe', 'Fassadenfarbe')}</strong><small>{wallColorName(finish, hex)}</small></span></div>
+    <div className="house-swatches" role="radiogroup" aria-label={tr('Homlokzat színe', 'Fassadenfarbe')}>
       {swatches.map((item) => {
         const selected = item.hex.toLowerCase() === hex
         return <button type="button" role="radio" aria-checked={selected} key={item.id} className={selected ? 'selected' : ''} title={item.note ? `${item.name} — ${item.note}` : item.name} onClick={() => onSceneChange({ wallColor: item.hex })}>
@@ -122,19 +123,19 @@ export default function HouseLook({ config, scene, photoUrl, onSceneChange, onCh
           <small>{item.name}</small>
         </button>
       })}
-      <label className={`house-swatch-custom ${custom ? 'selected' : ''}`} title="Bármilyen szín kiválasztása">
+      <label className={`house-swatch-custom ${custom ? 'selected' : ''}`} title={tr('Bármilyen szín kiválasztása', 'Beliebige Farbe wählen')}>
         <span className="house-swatch" style={custom ? finishPreview(finish, hex) : undefined}>{custom ? <Check size={14} /> : <Palette size={15} />}</span>
         <small>Egyedi</small>
-        <input type="color" value={hex} aria-label="Egyedi homlokzatszín" onChange={(event) => onSceneChange({ wallColor: event.target.value })} />
+        <input type="color" value={hex} aria-label={tr('Egyedi homlokzatszín', 'Eigene Fassadenfarbe')} onChange={(event) => onSceneChange({ wallColor: event.target.value })} />
       </label>
-      <button type="button" className="house-swatch-photo" title="Szín a házadról készült fotóról" onClick={() => setPhotoOpen(true)}>
+      <button type="button" className="house-swatch-photo" title={tr('Szín a házadról készült fotóról', 'Farbe aus einem Foto Ihres Hauses')} onClick={() => setPhotoOpen(true)}>
         <span className="house-swatch"><Pipette size={15} /></span>
-        <small>Fotóról</small>
+        <small>{tr('Fotóról', 'Aus Foto')}</small>
       </button>
     </div>
 
-    <div className="house-look-head"><span><strong>Nyílászárók</strong><small>Ablakok, teraszajtó, bejárati ajtó · {windowSwatch.name.toLowerCase()}</small></span></div>
-    <div className="house-windows" role="radiogroup" aria-label="Nyílászárók színe">
+    <div className="house-look-head"><span><strong>{tr('Nyílászárók', 'Fenster')}</strong><small>Ablakok, teraszajtó, bejárati ajtó · {windowSwatch.name.toLowerCase()}</small></span></div>
+    <div className="house-windows" role="radiogroup" aria-label={tr('Nyílászárók színe', 'Fensterfarbe')}>
       {WINDOW_COLORS.map((item) => {
         const selected = item.id === windowSwatch.id
         return <button type="button" role="radio" aria-checked={selected} key={item.id} className={selected ? 'selected' : ''} title={item.note ? `${item.name} — ${item.note}` : item.name} onClick={() => onSceneChange({ windowColor: item.id })}>
@@ -144,7 +145,7 @@ export default function HouseLook({ config, scene, photoUrl, onSceneChange, onCh
       })}
     </div>
     <WindowMatch config={config} scene={scene} onChange={onChange} />
-    <p className="house-look-note">Csak a 3D látványt módosítja, az árat nem. A beállítást a böngésző megjegyzi.</p>
-    {photoOpen && createPortal(<PhotoColorDialog photoUrl={photoUrl} title="Homlokzat színe fotóról" targetLabel="a homlokzatra" prompt="Bökj a házad falára, lehetőleg napos, egyenletes részre." onApplyHex={(value) => { onSceneChange({ wallColor: value }); setPhotoOpen(false) }} onClose={() => setPhotoOpen(false)} />, document.body)}
+    <p className="house-look-note">{tr('Csak a 3D látványt módosítja, az árat nem. A beállítást a böngésző megjegyzi.', 'Ändert nur die 3D-Ansicht, nicht den Preis. Der Browser merkt sich die Einstellung.')}</p>
+    {photoOpen && createPortal(<PhotoColorDialog photoUrl={photoUrl} title={tr('Homlokzat színe fotóról', 'Fassadenfarbe aus Foto')} targetLabel={tr('a homlokzatra', 'die Fassade')} prompt={tr('Bökj a házad falára, lehetőleg napos, egyenletes részre.', 'Tippen Sie auf die Hauswand, möglichst auf eine sonnige, gleichmäßige Stelle.')} onApplyHex={(value) => { onSceneChange({ wallColor: value }); setPhotoOpen(false) }} onClose={() => setPhotoOpen(false)} />, document.body)}
   </section>
 }

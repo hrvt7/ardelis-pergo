@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import { Footprints, X } from 'lucide-react'
 import { EYE_HEIGHT } from '@/lib/walkArea'
 import { setStick } from '@/lib/walkInput'
+import { tr } from '../../i18n/locale'
 
 const HINT_KEY = 'pergo-walk-hint'
 const STICK_RADIUS = 46
@@ -24,7 +25,7 @@ function Joystick() {
   }
   const release = () => { pointer.current = null; setKnob([0, 0]); setStick(0, 0) }
   useEffect(() => () => setStick(0, 0), [])
-  return <div ref={base} className="walk-stick" role="application" aria-label="Séta: húzd a kívánt irányba"
+  return <div ref={base} className="walk-stick" role="application" aria-label={tr('Séta: húzd a kívánt irányba', 'Gehen: in die gewünschte Richtung ziehen')}
     onPointerDown={(event) => { pointer.current = event.pointerId; event.currentTarget.setPointerCapture(event.pointerId); update(event) }}
     onPointerMove={(event) => { if (event.pointerId === pointer.current) update(event) }}
     onPointerUp={release} onPointerCancel={release}>
@@ -49,13 +50,13 @@ export default function WalkOverlay({ onExit, touch, roofBlocked }: { onExit: ()
   }, [onExit])
   return <>
     <div className="walk-badge" role="status"><Footprints size={15} aria-hidden="true" /><span>Bejárás · {Math.round(EYE_HEIGHT * 100)} cm szemmagasság</span></div>
-    <button type="button" className="walk-exit" onClick={onExit}><X size={16} aria-hidden="true" />Kilépés a bejárásból</button>
+    <button type="button" className="walk-exit" onClick={onExit}><X size={16} aria-hidden="true" />{tr('Kilépés a bejárásból', 'Rundgang beenden')}</button>
     {touch && <Joystick />}
-    {roofBlocked && <div className="walk-note" role="status">A pergola belmagassága kisebb a szemmagasságnál, ezért a tető alá nem lehet besétálni.</div>}
+    {roofBlocked && <div className="walk-note" role="status">{tr('A pergola belmagassága kisebb a szemmagasságnál, ezért a tető alá nem lehet besétálni.', 'Die lichte Höhe der Pergola liegt unter Augenhöhe, daher kann man nicht unter das Dach gehen.')}</div>}
     {hint && <div className="walk-hint" role="status">
-      <strong>Így járhatod be</strong>
-      <span>{touch ? 'Húzd a képet: körbenézel · Bal alsó kör: sétálsz' : 'Húzd a képet: körbenézel · W A S D vagy nyilak: sétálsz'}</span>
-      <span>Kilépés: jobb felső gomb{touch ? '' : ' vagy Esc'}</span>
+      <strong>{tr('Így járhatod be', 'So gehen Sie hindurch')}</strong>
+      <span>{touch ? tr('Húzd a képet: körbenézel · Bal alsó kör: sétálsz', 'Bild ziehen: umsehen · Kreis links unten: gehen') : tr('Húzd a képet: körbenézel · W A S D vagy nyilak: sétálsz', 'Bild ziehen: umsehen · W A S D oder Pfeile: gehen')}</span>
+      <span>{tr('Kilépés: jobb felső gomb', 'Beenden: Schaltfläche oben rechts')}{touch ? '' : tr(' vagy Esc', ' oder Esc')}</span>
     </div>}
   </>
 }

@@ -5,8 +5,9 @@ import { Cog, Pause, Play, X } from 'lucide-react'
 import { crankPin, demoAngle, demoSeconds, DRIVE, drivePlan, LOUVRE, louvreLayout, louvreMetrics, louvreProfile, motorLength, pauseDemo, startDemoClock } from '@/lib/louvreSystem'
 import { SB400 } from '@/lib/sb400'
 import type { PergolaConfig } from '@/types/pergola'
+import { tr } from '../i18n/locale'
 
-const PHASE_LABEL = { closed: 'Zárt · vízzáró', opening: 'Nyílik', open: 'Teljesen nyitva', closing: 'Záródik' } as const
+const PHASE_LABEL = { closed: tr('Zárt · vízzáró', 'Geschlossen · wasserdicht'), opening: tr('Nyílik', 'Öffnet'), open: 'Teljesen nyitva', closing: tr('Záródik', 'Schließt') } as const
 const fmt = (value: number, digits = 0) => value.toFixed(digits).replace('.', ',')
 
 export default function MechanismPanel({ config, onClose }: { config: PergolaConfig; onClose: () => void }) {
@@ -35,7 +36,7 @@ export default function MechanismPanel({ config, onClose }: { config: PergolaCon
       const len = motorLength(plan, layout.z, driveAxle, angle) * 1000
       if (angleRef.current) angleRef.current.textContent = `${fmt(angle)}°`
       if (openRef.current) openRef.current.textContent = `${fmt(m.open)}%`
-      if (gapRef.current) gapRef.current.textContent = m.sealed ? 'átfed' : `${fmt(m.gap)} mm`
+      if (gapRef.current) gapRef.current.textContent = m.sealed ? tr('átfed', 'überlappt') : `${fmt(m.gap)} mm`
       if (motorRef.current) motorRef.current.textContent = `${fmt(len)} mm`
       if (phaseRef.current) phaseRef.current.textContent = PHASE_LABEL[phase]
       if (fillRef.current) fillRef.current.style.width = `${(angle / LOUVRE.maxAngle) * 100}%`
@@ -56,13 +57,13 @@ export default function MechanismPanel({ config, onClose }: { config: PergolaCon
   const count = layout.z.length * layout.modules.length
   const [cx0, cy0] = crankPin(0)
   const xs = [-200, 0, 200]
-  return <section className="sun-panel mech-panel" aria-label="A lamellás tető működése">
+  return <section className="sun-panel mech-panel" aria-label={tr('A lamellás tető működése', 'So funktioniert das Lamellendach')}>
     <header>
-      <div><Cog size={16} /><span><strong>Így működik</strong><small>Valós gyári adatok: profil, osztás, hajtás</small></span></div>
-      <button type="button" className="sun-close" aria-label="Működés bemutató bezárása" onClick={onClose}><X size={16} /></button>
+      <div><Cog size={16} /><span><strong>{tr('Így működik', 'So funktioniert es')}</strong><small>{tr('Valós gyári adatok: profil, osztás, hajtás', 'Reale Herstellerdaten: Profil, Teilung, Antrieb')}</small></span></div>
+      <button type="button" className="sun-close" aria-label={tr('Működés bemutató bezárása', 'Funktionsvorführung schließen')} onClick={onClose}><X size={16} /></button>
     </header>
 
-    <svg className="mech-sketch" viewBox="-330 -175 660 240" role="img" aria-label="Három lamella oldalnézetben a hajtókarokkal és a hajtórúddal">
+    <svg className="mech-sketch" viewBox="-330 -175 660 240" role="img" aria-label={tr('Három lamella oldalnézetben a hajtókarokkal és a hajtórúddal', 'Drei Lamellen in Seitenansicht mit Kurbeln und Antriebsstange')}>
       <rect x="-320" y="-43" width="640" height="120" className="mech-beam" />
       <g ref={cranksRef}>{xs.map((x) => <g key={x} data-at={`translate(${x} 0)`} transform={`translate(${x} 0)`}><line x1="0" y1="0" x2={cx0 * 1000} y2={-cy0 * 1000} className="mech-crank" /><circle cx={cx0 * 1000} cy={-cy0 * 1000} r="7" className="mech-pin" /></g>)}</g>
       <g ref={bladesRef}>{xs.map((x) => <g key={x} data-at={`translate(${x} 0)`} transform={`translate(${x} 0)`}><path d={profilePath} className="mech-blade" /><circle r="9" className="mech-axle" /></g>)}</g>
@@ -71,18 +72,18 @@ export default function MechanismPanel({ config, onClose }: { config: PergolaCon
 
     <div className="mech-progress" aria-hidden="true"><i ref={fillRef} /></div>
     <dl className="mech-readout" aria-live="off">
-      <div><dt>Lamellaszög</dt><dd ref={angleRef}>0°</dd></div>
-      <div><dt>Nyitott felület</dt><dd ref={openRef}>0%</dd></div>
-      <div><dt>Lamellaköz</dt><dd ref={gapRef}>átfed</dd></div>
+      <div><dt>{tr('Lamellaszög', 'Lamellenwinkel')}</dt><dd ref={angleRef}>0°</dd></div>
+      <div><dt>{tr('Nyitott felület', 'Offene Fläche')}</dt><dd ref={openRef}>0%</dd></div>
+      <div><dt>{tr('Lamellaköz', 'Lamellenabstand')}</dt><dd ref={gapRef}>{tr('átfed', 'überlappt')}</dd></div>
       <div><dt>Motor hossza</dt><dd ref={motorRef}>{fmt(DRIVE.motorClosed * 1000)} mm</dd></div>
     </dl>
-    <div className="mech-state"><span ref={phaseRef}>Zárt · vízzáró</span><button type="button" className="sun-play" aria-label={paused ? 'Lejátszás' : 'Megállítás'} onClick={togglePause}>{paused ? <Play size={15} /> : <Pause size={15} />}</button></div>
+    <div className="mech-state"><span ref={phaseRef}>{tr('Zárt · vízzáró', 'Geschlossen · wasserdicht')}</span><button type="button" className="sun-play" aria-label={paused ? tr('Lejátszás', 'Abspielen') : tr('Megállítás', 'Anhalten')} onClick={togglePause}>{paused ? <Play size={15} /> : <Pause size={15} />}</button></div>
 
     <ul className="mech-specs">
       <li><strong>{count}</strong><span>lamella</span></li>
-      <li><strong>200</strong><span>mm osztás</span></li>
-      <li><strong>0–110°</strong><span>forgás</span></li>
-      <li><strong>{fmt(DRIVE.force)} N</strong><span>lineáris motor</span></li>
+      <li><strong>200</strong><span>{tr('mm osztás', 'mm Teilung')}</span></li>
+      <li><strong>0–110°</strong><span>{tr('forgás', 'Drehung')}</span></li>
+      <li><strong>{fmt(DRIVE.force)} N</strong><span>{tr('lineáris motor', 'Linearmotor')}</span></li>
     </ul>
     <p className="sun-note">Egy motor tolja a gerendán futó hajtórudat; minden lamella végén egy 115 mm-es kar kapcsolódik rá, így az összes lamella egyszerre, ugyanannyit fordul. Zárt állásban a lamellák pereme a szomszéd vízcsatornájába lóg: {LOUVRE.sealAngle}° alatt a tető vízzáró. Referencia: 215,8 × 39,8 mm-es forgólamellás rendszer gyári műszaki adatai; a partnergyártó saját profiljával pontosítható.</p>
   </section>

@@ -3,6 +3,7 @@
 // sávval, és ezt rögzíti a böngésző saját MediaRecorder-e. A kamerát a PergolaScene mozgatja (sceneRegistry).
 import { coverCrop } from './photoPlacement'
 import { getOrbitDriver } from './sceneRegistry'
+import { tr } from '../i18n/locale'
 
 /** A felvétel hossza (mp) és a kamera kilengése, ha a ház miatt nem járható körbe (fok, a kiinduló nézettől mindkét irányba). */
 export const VIDEO_SECONDS = 10
@@ -72,7 +73,7 @@ function drawOverlay(context: CanvasRenderingContext2D, width: number, height: n
   context.fillText(overlay.price, width - pad, height - pad)
   context.fillStyle = 'rgba(255,255,255,0.7)'
   context.font = `500 ${small}px system-ui, sans-serif`
-  context.fillText('bruttó irányár', width - pad, height - pad - big * 1.25)
+  context.fillText(tr('bruttó irányár', 'Richtpreis brutto'), width - pad, height - pad - big * 1.25)
 }
 
 const frame = () => new Promise<number>((resolve) => requestAnimationFrame(resolve))
@@ -82,14 +83,14 @@ export async function recordTurntable(overlay: VideoOverlay, onProgress?: (progr
   const source = document.querySelector<HTMLCanvasElement>('canvas[data-pergola-canvas="true"]')
   const driver = getOrbitDriver()
   const mime = typeof MediaRecorder !== 'undefined' ? pickVideoMime((type) => MediaRecorder.isTypeSupported(type)) : null
-  if (!source || !source.width || !driver || !mime) throw new Error('A videó ebben a böngészőben nem készíthető el.')
+  if (!source || !source.width || !driver || !mime) throw new Error(tr('A videó ebben a böngészőben nem készíthető el.', 'Das Video kann in diesem Browser nicht erstellt werden.'))
 
   const size = videoSize(source.width, source.height)
   const output = document.createElement('canvas')
   output.width = size.width
   output.height = size.height
   const context = output.getContext('2d')
-  if (!context) throw new Error('A videó ebben a böngészőben nem készíthető el.')
+  if (!context) throw new Error(tr('A videó ebben a böngészőben nem készíthető el.', 'Das Video kann in diesem Browser nicht erstellt werden.'))
   const photo = document.querySelector<HTMLImageElement>('img.photo-backdrop')
   const draw = () => {
     if (photo?.complete && photo.naturalWidth > 0) {
@@ -132,6 +133,6 @@ export async function recordTurntable(overlay: VideoOverlay, onProgress?: (progr
     stream.getTracks().forEach((track) => track.stop())
     driver.end()
   }
-  if (!chunks.length) throw new Error('A videó üres maradt.')
+  if (!chunks.length) throw new Error(tr('A videó üres maradt.', 'Das Video ist leer geblieben.'))
   return { blob: new Blob(chunks, { type: mime.split(';')[0] }), extension: videoExtension(mime) }
 }

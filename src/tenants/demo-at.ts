@@ -20,6 +20,7 @@ export const demoAtTenant: Tenant = {
     privacyUrl: '/adatkezeles',
   },
   platformCredit: false,
+  locale: 'de',
   currency: 'EUR',
   prices: {
     louveredPerM2Net: 420,

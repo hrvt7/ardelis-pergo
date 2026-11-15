@@ -57,6 +57,7 @@ import { SB400, sb400Post } from '@/lib/sb400'
 import { SB400_SOURCE, sb400Details, type Sb400DetailId } from '@/lib/sb400Details'
 import Car from '@/components/models/Car'
 import { currentViewportKind, overviewFov, sheetDistanceScale, sofaFov, usesSheetLayout } from '@/lib/viewport'
+import { tr } from '../i18n/locale'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
 const ShadeProbe = lazy(() => import('@/components/ShadeProbe'))
@@ -489,7 +490,7 @@ function Sb400PostModel({ at, width, depth, height, color }: { at: [number, numb
 function WallAttachment({ config, color }: { config: PergolaConfig; color: string }) {
   const { width, depth, height } = config
   const backZ = -depth / 2
-  return <group aria-label="Fali szerelőlemez és vízvető">
+  return <group aria-label={tr('Fali szerelőlemez és vízvető', 'Wandmontageplatte und Wasserabweiser')}>
     <Beam args={[width + 0.06, 0.3, 0.035]} position={[0, height + 0.04, backZ - 0.105]} color={color} radius={0.006} />
     <mesh position={[0, height + 0.225, backZ - 0.015]} rotation={[-0.12, 0, 0]} castShadow>
       <boxGeometry args={[width + 0.08, 0.026, 0.32]} />
@@ -581,7 +582,7 @@ function GlassWall({ length, height, color, opened, onToggle, framed = false, la
         <Beam args={[panelWidth - 0.03, 0.06, 0.05]} position={[0, 0.13, 0]} color={color} radius={0.006} />
         <Beam args={[panelWidth - 0.03, 0.05, 0.05]} position={[0, usableHeight + 0.07, 0]} color={color} radius={0.006} />
       </> : <Beam args={[0.025, usableHeight, 0.045]} position={[-panelWidth / 2, usableHeight / 2 + 0.1, 0]} color={color} radius={0.004} />}{index === 0 && <Beam args={[0.025, 0.31, 0.035]} position={[panelWidth / 2 - 0.1, 1.12, 0.065]} color="#8d9597" radius={0.008} />}</group>
-  })}<Beam args={[length, 0.055, 0.12]} position={[0, 0.07, 0]} color={color} radius={0.006} /><Beam args={[length, 0.065, 0.11]} position={[0, height - 0.14, 0]} color={color} radius={0.006} /><mesh position={[0, 0.102, 0.035]}><boxGeometry args={[length - 0.08, 0.012, 0.018]} /><meshStandardMaterial color="#8b9293" metalness={0.85} roughness={0.26} /></mesh>{label && <Html position={[0, 0.3, 0.08]} center className="interaction-label" zIndexRange={[7, 0]}>{opened ? 'Üveg bezárása' : 'Üveg eltolása'}</Html>}</group>
+  })}<Beam args={[length, 0.055, 0.12]} position={[0, 0.07, 0]} color={color} radius={0.006} /><Beam args={[length, 0.065, 0.11]} position={[0, height - 0.14, 0]} color={color} radius={0.006} /><mesh position={[0, 0.102, 0.035]}><boxGeometry args={[length - 0.08, 0.012, 0.018]} /><meshStandardMaterial color="#8b9293" metalness={0.85} roughness={0.26} /></mesh>{label && <Html position={[0, 0.3, 0.08]} center className="interaction-label" zIndexRange={[7, 0]}>{opened ? tr('Üveg bezárása', 'Glas schließen') : tr('Üveg eltolása', 'Glas verschieben')}</Html>}</group>
 }
 
 function LouverWall({ length, height, color, opened, onToggle, label = true }: { length: number; height: number; color: string; opened: boolean; onToggle: () => void; label?: boolean }) {
@@ -600,7 +601,7 @@ function LouverWall({ length, height, color, opened, onToggle, label = true }: {
     })
     if (moving) { refreshShadows(gl); invalidate() }
   })
-  return <group onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>{Array.from({ length: slatCount }, (_, index) => { const y = 0.16 + index * (usableHeight / slatCount); return <group key={index} ref={(node) => { if (node) slats.current[index] = node }} position={[0, y, 0]} rotation={[0.25, 0, 0]}><Beam args={[length - 0.12, 0.065, 0.105]} position={[0, 0, 0]} color={color} radius={0.02} /></group> })}<Beam args={[0.05, usableHeight, 0.07]} position={[-length / 2 + 0.05, usableHeight / 2 + 0.1, 0]} color={color} /><Beam args={[0.05, usableHeight, 0.07]} position={[length / 2 - 0.05, usableHeight / 2 + 0.1, 0]} color={color} />{label && <Html position={[0, 0.3, 0.08]} center className="interaction-label" zIndexRange={[7, 0]}>{opened ? 'Lamellák zárása' : 'Lamellák döntése'}</Html>}</group>
+  return <group onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>{Array.from({ length: slatCount }, (_, index) => { const y = 0.16 + index * (usableHeight / slatCount); return <group key={index} ref={(node) => { if (node) slats.current[index] = node }} position={[0, y, 0]} rotation={[0.25, 0, 0]}><Beam args={[length - 0.12, 0.065, 0.105]} position={[0, 0, 0]} color={color} radius={0.02} /></group> })}<Beam args={[0.05, usableHeight, 0.07]} position={[-length / 2 + 0.05, usableHeight / 2 + 0.1, 0]} color={color} /><Beam args={[0.05, usableHeight, 0.07]} position={[length / 2 - 0.05, usableHeight / 2 + 0.1, 0]} color={color} />{label && <Html position={[0, 0.3, 0.08]} center className="interaction-label" zIndexRange={[7, 0]}>{opened ? tr('Lamellák zárása', 'Lamellen schließen') : tr('Lamellák döntése', 'Lamellen kippen')}</Html>}</group>
 }
 
 /** Fix (nem nyitható) üvegfal: kb. 1,5 m-es táblák U-profilban, keskeny illesztéssel. */
@@ -1145,10 +1146,10 @@ function LedStrip({ args, position, night, color = '#ffc87a', level = 0.8 }: { a
 }
 
 const HOTSPOTS = {
-  led: { title: 'Hangulatfény árnyalatokban', text: 'A periméter LED nem vakít, hanem a terasz anyagait emeli ki.' },
-  drain: { title: 'Rejtett vízelvezetés az oszlopban', text: 'A víz a tetőpályából a gerendán, majd az oszlopon belül távozik.' },
-  sensor: { title: 'Esőben automata védelem', text: 'A szenzorcsomag az eső érzékelésekor zárt lamellapozíciót ad.' },
-  post: { title: 'Merev, pontos alapozás', text: 'A talplemez és a látható rögzítéspontok a stabil kivitelezést szolgálják.' },
+  led: { title: tr('Hangulatfény árnyalatokban', 'Stimmungslicht in Nuancen'), text: tr('A periméter LED nem vakít, hanem a terasz anyagait emeli ki.', 'Die umlaufende LED blendet nicht, sondern betont die Materialien der Terrasse.') },
+  drain: { title: tr('Rejtett vízelvezetés az oszlopban', 'Verdeckte Entwässerung im Steher'), text: tr('A víz a tetőpályából a gerendán, majd az oszlopon belül távozik.', 'Das Wasser läuft vom Dach über den Träger und dann im Steher ab.') },
+  sensor: { title: tr('Esőben automata védelem', 'Automatischer Schutz bei Regen'), text: tr('A szenzorcsomag az eső érzékelésekor zárt lamellapozíciót ad.', 'Das Sensorpaket schließt die Lamellen, sobald Regen erkannt wird.') },
+  post: { title: tr('Merev, pontos alapozás', 'Steife, präzise Fundamentierung'), text: tr('A talplemez és a látható rögzítéspontok a stabil kivitelezést szolgálják.', 'Fußplatte und sichtbare Befestigungspunkte sorgen für eine stabile Ausführung.') },
 }
 
 function Hotspots({ config, posts }: { config: PergolaConfig; posts: [number, number][] }) {
@@ -1183,7 +1184,7 @@ function Hotspots({ config, posts }: { config: PergolaConfig; posts: [number, nu
     // Csak a tervben meglévő részletek kapnak jelölést (LED csak akkor, ha van).
     points = generic.filter((point) => (point.id === 'led' ? config.led : true)).map((point) => ({ ...point, ...HOTSPOTS[point.id] }))
   }
-  return <group>{points.map((point) => <group key={point.id} position={point.position}><Html center zIndexRange={[12, 0]}><button type="button" className={`hotspot ${active === point.id ? 'active' : ''}`} aria-label={point.title} onClick={(event) => { event.stopPropagation(); setActive(active === point.id ? null : point.id) }}><span>+</span></button>{active === point.id && <div className={`hotspot-card ${point.rows ? 'has-spec' : ''} ${point.position[1] < 1 ? 'opens-up' : ''}`}><button type="button" aria-label="Kártya bezárása" onClick={() => setActive(null)}>×</button><strong>{point.title}</strong>{point.text && <p>{point.text}</p>}{point.rows && <dl>{point.rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}{point.note && <p>{point.note}</p>}{point.source && <small>{point.source}</small>}</div>}</Html></group>)}</group>
+  return <group>{points.map((point) => <group key={point.id} position={point.position}><Html center zIndexRange={[12, 0]}><button type="button" className={`hotspot ${active === point.id ? 'active' : ''}`} aria-label={point.title} onClick={(event) => { event.stopPropagation(); setActive(active === point.id ? null : point.id) }}><span>+</span></button>{active === point.id && <div className={`hotspot-card ${point.rows ? 'has-spec' : ''} ${point.position[1] < 1 ? 'opens-up' : ''}`}><button type="button" aria-label={tr('Kártya bezárása', 'Karte schließen')} onClick={() => setActive(null)}>×</button><strong>{point.title}</strong>{point.text && <p>{point.text}</p>}{point.rows && <dl>{point.rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}{point.note && <p>{point.note}</p>}{point.source && <small>{point.source}</small>}</div>}</Html></group>)}</group>
 }
 
 function Person({ config }: { config: PergolaConfig }) {
@@ -1438,8 +1439,8 @@ function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'nig
     }
   })
   const x = scene.exploded
-  return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => realLouvres ? <Sb400PostModel key={index} at={[x, z]} width={width} depth={depth} height={(z < 0 ? height + rise : height) - SB400.strutH / 2} color={color} /> : <DetailedPost key={index} position={[x, z]} height={z < 0 ? height + rise : height} color={color} />)}{x && postPositions[0] && <Html position={[postPositions[0][0], height / 2, postPositions[0][1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">Oszlopok</span></Html>}<ExplodePart ex={ex} dy={0.55} label="Gerendák" labelAt={[width / 2 - 0.2, height + 0.3, depth / 2]} show={x}><StructuralBeam args={[realLouvres ? width - beamW : width + 0.1, beamH, beamW]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[realLouvres ? width - beamW : width + 0.1, beamH, beamW]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[beamW, beamH, realLouvres ? depth + beamW : depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[beamW, beamH, realLouvres ? depth + beamW : depth]} position={[width / 2, height, 0]} color={color} />{bayBoundaries(config).map((x) => <StructuralBeam key={x} args={[beamW, beamH, depth]} position={[x, height, 0]} color={color} />)}</ExplodePart>
-    <ExplodePart ex={ex} dy={1.0} label="Vízelvezetés" labelAt={[-width / 2 + 0.4, height + 0.3, depth / 2]} show={x && !realLouvres}>
+  return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => realLouvres ? <Sb400PostModel key={index} at={[x, z]} width={width} depth={depth} height={(z < 0 ? height + rise : height) - SB400.strutH / 2} color={color} /> : <DetailedPost key={index} position={[x, z]} height={z < 0 ? height + rise : height} color={color} />)}{x && postPositions[0] && <Html position={[postPositions[0][0], height / 2, postPositions[0][1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">Oszlopok</span></Html>}<ExplodePart ex={ex} dy={0.55} label={tr('Gerendák', 'Träger')} labelAt={[width / 2 - 0.2, height + 0.3, depth / 2]} show={x}><StructuralBeam args={[realLouvres ? width - beamW : width + 0.1, beamH, beamW]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[realLouvres ? width - beamW : width + 0.1, beamH, beamW]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[beamW, beamH, realLouvres ? depth + beamW : depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[beamW, beamH, realLouvres ? depth + beamW : depth]} position={[width / 2, height, 0]} color={color} />{bayBoundaries(config).map((x) => <StructuralBeam key={x} args={[beamW, beamH, depth]} position={[x, height, 0]} color={color} />)}</ExplodePart>
+    <ExplodePart ex={ex} dy={1.0} label={tr('Vízelvezetés', 'Entwässerung')} labelAt={[-width / 2 + 0.4, height + 0.3, depth / 2]} show={x && !realLouvres}>
     {!realLouvres && tilt(<>
     <GutterChannel length={width - 0.18} position={[0, height + 0.04, depth / 2 - 0.105]} color={color} />
     <GutterChannel length={width - 0.18} position={[0, height + 0.04, -depth / 2 + 0.105]} color={color} />
@@ -1454,7 +1455,7 @@ function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'nig
     {drainPost && <mesh position={[drainPost[0], 0.14, drainPost[1] + (realLouvres ? 0.065 : 0.095)]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.08, 0.025, 8, 20, Math.PI / 2]} /><PowderCoat color={color} /></mesh>}
     {!realLouvres && <RoundedBox args={[0.28, 0.19, 0.34]} position={[width / 2 - 0.02, height + 0.12, depth / 2 - 0.25]} radius={0.035} smoothness={4} castShadow><PowderCoat color={color} /></RoundedBox>}
     <group position={[-width / 2 + 0.2, height + 0.32 + rise, -depth / 2 + 0.2]}><mesh><cylinderGeometry args={[0.045, 0.055, 0.12, 16]} /><meshStandardMaterial color="#31383a" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, 0.075, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.034, 16]} /><meshPhysicalMaterial color="#8aa0a4" roughness={0.1} clearcoat={1} /></mesh></group>
-    <ExplodePart ex={ex} dy={1.6} label={roof === 'fabric' ? 'Textiltető' : isGlazedRoof(roof) ? 'Üvegtető' : roof === 'fixed' ? 'Fix tető' : 'Tetőlamellák'} labelAt={[0, height + 0.5 + rise / 2, -depth / 4]} show={x}>
+    <ExplodePart ex={ex} dy={1.6} label={roof === 'fabric' ? tr('Textiltető', 'Textildach') : isGlazedRoof(roof) ? tr('Üvegtető', 'Glasdach') : roof === 'fixed' ? tr('Fix tető', 'Festes Dach') : tr('Tetőlamellák', 'Dachlamellen')} labelAt={[0, height + 0.5 + rise / 2, -depth / 4]} show={x}>
     <RoofSwap roofKey={roof} settled={settled} height={height}>{tilt(<>
     {roof === 'retractable' && <LouverBlades key={louverCount} geometry={geometry} width={width} depth={depth} height={height} count={louverCount} retractable angle={effectiveAngle} color={roofColor} />}
     {/* Modulos kivitelnél mezőnként külön lamellasor a közös gerendák között; a hajtás címkéi csak a hajtásoldali mezőn. */}
@@ -2940,7 +2941,7 @@ function CompassRose({ config, facing }: { config: PergolaConfig; facing: number
     <mesh rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.5, 0.54, 64]} /><meshBasicMaterial color="#d8ff72" transparent opacity={0.85} toneMapped={false} /></mesh>
     {[0, 1, 2, 3].map((index) => <mesh key={index} rotation={[-Math.PI / 2, 0, (index * Math.PI) / 2]}><planeGeometry args={[0.02, 1.2]} /><meshBasicMaterial color="#ffffff" transparent opacity={0.45} toneMapped={false} /></mesh>)}
     <mesh geometry={arrow} rotation={[-Math.PI / 2, 0, Math.PI]} position={[0, 0.004, 0]}><meshBasicMaterial color="#d8ff72" toneMapped={false} side={THREE.DoubleSide} /></mesh>
-    <Html position={[0, 0.05, 0.84]} center className="compass-label">É</Html>
+    <Html position={[0, 0.05, 0.84]} center className="compass-label">{tr('É', 'N')}</Html>
     <Html position={[0, 0.05, -0.8]} center className="compass-label is-minor">D</Html>
   </group>
 }
@@ -2987,7 +2988,7 @@ function PerfProbe({ quality }: { quality: QualitySettings }) {
         const triangles = (geometry.index ? geometry.index.count : geometry.getAttribute('position').count) / 3 * ((mesh as THREE.InstancedMesh).isInstancedMesh ? (mesh as THREE.InstancedMesh).count : 1)
         let label = ''
         for (let node: THREE.Object3D | null = mesh; node; node = node.parent) if (node.name) { label = node.name; break }
-        totals.set(label || '(névtelen)', (totals.get(label || '(névtelen)') ?? 0) + triangles)
+        totals.set(label || tr('(névtelen)', '(ohne Namen)'), (totals.get(label || tr('(névtelen)', '(ohne Namen)')) ?? 0) + triangles)
       })
       breakdown.current = [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([name, count]) => `${name}: ${Math.round(count / 1000)}k`).join(' | ')
       ;(window as unknown as { __perfTop?: string }).__perfTop = breakdown.current
@@ -3171,12 +3172,12 @@ function FallbackDrawing({ config }: { config: PergolaConfig }) {
     let alive = true
     // A rajzoló csak hibánál töltődik be: a normál indulást nem terheli.
     import('@/lib/drawing').then(({ technicalDrawing }) => {
-      if (alive) setSvg(technicalDrawing(config, { brand: tenant.brand.name, contact: '', title: 'Pergola – méretarányos rajz', code: getSpecCode(config), date: new Date().toLocaleDateString('hu-HU'), notes: [] }).svg)
+      if (alive) setSvg(technicalDrawing(config, { brand: tenant.brand.name, contact: '', title: tr('Pergola – méretarányos rajz', 'Pergola – maßstäbliche Zeichnung'), code: getSpecCode(config), date: new Date().toLocaleDateString('hu-HU'), notes: [] }).svg)
     }).catch(() => { if (alive) setSvg('') })
     return () => { alive = false }
   }, [config, tenant.brand.name])
   if (!svg) return null
-  return <div className="fallback-drawing" aria-label="A konfigurált pergola méretarányos rajza" dangerouslySetInnerHTML={{ __html: svg }} />
+  return <div className="fallback-drawing" aria-label={tr('A konfigurált pergola méretarányos rajza', 'Maßstäbliche Zeichnung der konfigurierten Pergola')} dangerouslySetInnerHTML={{ __html: svg }} />
 }
 
 
@@ -3197,8 +3198,8 @@ function ScenePoster({ message, onRetry, percent, leaving = false, config }: { m
   const { tenant } = useTenant()
   const failed = Boolean(onRetry) || Boolean(config)
   return <div className={`scene-poster${failed ? ' is-error' : ''}${leaving ? ' is-leaving' : ''}`} role={failed ? 'alert' : 'status'} aria-live="polite">
-    {failed ? <img className="scene-poster-image" src={assetUrl('/assets/pergo-hero.webp')} alt={`${tenant.brand.name} pergola statikus előnézete`} /> : <div className="poster-skeleton"><span /><span /><span /><span /></div>}
-    <div className="branded-loader"><div className="loader-brand">{tenant.demo ? <LamelixLogo height={30} title={null} /> : <>{tenant.brand.name}{tenant.brand.suffix && <small> {tenant.brand.suffix}</small>}</>}</div>{!failed && <><BuildAnim /><div className="loader-track"><span style={{ width: `${Math.max(2, progress)}%` }} /></div></>}<div className="loader-status"><span>{message ?? 'Építészeti jelenet előkészítése'}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{failed && <p className="fallback-note">A konfigurálás, az árkalkuláció, a PDF és a felmérési kérelem 3D nélkül is teljes értékűen működik.</p>}{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>3D újraindítása</button>}</div>
+    {failed ? <img className="scene-poster-image" src={assetUrl('/assets/pergo-hero.webp')} alt={tr(`${tenant.brand.name} pergola statikus előnézete`, `Statische Vorschau der Pergola von ${tenant.brand.name}`)} /> : <div className="poster-skeleton"><span /><span /><span /><span /></div>}
+    <div className="branded-loader"><div className="loader-brand">{tenant.demo ? <LamelixLogo height={30} title={null} /> : <>{tenant.brand.name}{tenant.brand.suffix && <small> {tenant.brand.suffix}</small>}</>}</div>{!failed && <><BuildAnim /><div className="loader-track"><span style={{ width: `${Math.max(2, progress)}%` }} /></div></>}<div className="loader-status"><span>{message ?? tr('Építészeti jelenet előkészítése', 'Architekturszene wird vorbereitet')}</span>{!failed && <strong>{Math.round(progress)}%</strong>}</div>{failed && <p className="fallback-note">{tr('A konfigurálás, az árkalkuláció, a PDF és a felmérési kérelem 3D nélkül is teljes értékűen működik.', 'Konfiguration, Preiskalkulation, PDF und Aufmaß-Anfrage funktionieren auch ohne 3D vollständig.')}</p>}{onRetry && <button type="button" className="scene-retry" onClick={onRetry}>{tr('3D újraindítása', '3D neu starten')}</button>}</div>
     {failed && config && <FallbackDrawing config={config} />}
   </div>
 }
@@ -3211,7 +3212,7 @@ class SceneErrorBoundary extends Component<{ children: ReactNode; onRetry: () =>
     this.props.onFatal()
   }
   render() {
-    if (this.state.failed) return <ScenePoster message="A 3D nézet ezen az eszközön most nem érhető el. A konfigurációd megmaradt." onRetry={this.props.onRetry} config={this.props.config} />
+    if (this.state.failed) return <ScenePoster message={tr('A 3D nézet ezen az eszközön most nem érhető el. A konfigurációd megmaradt.', 'Die 3D-Ansicht ist auf diesem Gerät gerade nicht verfügbar. Ihre Konfiguration bleibt erhalten.')} onRetry={this.props.onRetry} config={this.props.config} />
     return this.props.children
   }
 }
@@ -3378,12 +3379,12 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
   const composite = 12 + 0.5 * Math.min(100, Math.max(0, assetProgress)) + (ready ? 15 : 0) + (houseOk ? 12 : 0) + (decorativeReady ? 8 : 0)
   const progressTarget = Math.min(97, Math.round(composite))
   if (progressTarget > shownProgress) setShownProgress(progressTarget)
-  const loaderMessage = shownProgress < 40 ? 'Modell betöltése' : shownProgress < 75 ? 'Anyagok és környezet' : 'Jelenet felépítése'
+  const loaderMessage = shownProgress < 40 ? tr('Modell betöltése', 'Modell wird geladen') : shownProgress < 75 ? tr('Anyagok és környezet', 'Materialien und Umgebung') : tr('Jelenet felépítése', 'Szene wird aufgebaut')
   const coreScene = coreOnly || !decorativeReady
-  if (!webglSupported()) return <div className="scene-canvas-wrap" data-scene-ready="false"><ScenePoster message="Ez az eszköz nem támogatja a 3D nézetet. A konfigurálás, az ár és az ajánlatkérés így is teljes értékű." config={config} /></div>
+  if (!webglSupported()) return <div className="scene-canvas-wrap" data-scene-ready="false"><ScenePoster message={tr('Ez az eszköz nem támogatja a 3D nézetet. A konfigurálás, az ár és az ajánlatkérés így is teljes értékű.', 'Dieses Gerät unterstützt die 3D-Ansicht nicht. Konfiguration, Preis und Anfrage funktionieren trotzdem vollständig.')} config={config} /></div>
   return <div ref={wrapRef} className="scene-canvas-wrap" data-scene-ready={loaded}>
-    {!posterGone && !contextLost && <ScenePoster percent={loaded ? 100 : shownProgress} message={loaded ? 'Kész' : loaderMessage} leaving={loaded} />}
-    {contextLost && <ScenePoster message="A grafikai kapcsolat megszakadt. A konfigurációd megmaradt." onRetry={retry} config={config} />}
+    {!posterGone && !contextLost && <ScenePoster percent={loaded ? 100 : shownProgress} message={loaded ? tr('Kész', 'Fertig') : loaderMessage} leaving={loaded} />}
+    {contextLost && <ScenePoster message={tr('A grafikai kapcsolat megszakadt. A konfigurációd megmaradt.', 'Die Grafikverbindung wurde unterbrochen. Ihre Konfiguration bleibt erhalten.')} onRetry={retry} config={config} />}
     <SceneErrorBoundary key={`boundary-${attempt}`} onRetry={retry} onFatal={onFatal} config={config}>
       <Canvas
         key={`canvas-${attempt}`}
@@ -3399,7 +3400,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
           gl.shadowMap.autoUpdate = false
           refreshShadows(gl)
           gl.domElement.dataset.pergolaCanvas = 'true'
-          gl.domElement.setAttribute('aria-label', 'Interaktív, valósághű 3D pergola. Bal gombbal vagy egy ujjal forgatható, jobb gombbal vagy két ujjal mozgatható, görgővel vagy csípéssel nagyítható.')
+          gl.domElement.setAttribute('aria-label', tr('Interaktív, valósághű 3D pergola. Bal gombbal vagy egy ujjal forgatható, jobb gombbal vagy két ujjal mozgatható, görgővel vagy csípéssel nagyítható.', 'Interaktive, realistische 3D-Pergola. Mit linker Maustaste oder einem Finger drehen, mit rechter Maustaste oder zwei Fingern verschieben, mit Mausrad oder Pinch zoomen.'))
           gl.domElement.setAttribute('role', 'img')
         }}
       >

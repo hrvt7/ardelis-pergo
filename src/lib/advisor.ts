@@ -7,6 +7,7 @@ import { ROOF_INFO } from './roofs'
 import { enabledRoofs, normalizeConfig, tenantPrice } from '../tenants/rules'
 import type { Tenant } from '../tenants/types'
 import type { FurnitureSet, MountType, PergolaConfig, PriceSettings, RoofType, SideKey, SideType } from '../types/pergola'
+import { tr } from '../i18n/locale'
 
 export type AdvisorUse = 'lounge' | 'dining' | 'party'
 export type AdvisorWeather = 'sun' | 'rain' | 'season'
@@ -19,36 +20,36 @@ export interface AdvisorOption<T extends string> { id: T; title: string; text: s
 
 export const ADVISOR_QUESTIONS = {
   use: {
-    title: 'Mire használnád leginkább?',
+    title: tr('Mire használnád leginkább?', 'Wofür möchten Sie sie vor allem nutzen?'),
     options: [
-      { id: 'lounge', title: 'Pihenésre', text: 'Kanapé, kávé, olvasás' },
-      { id: 'dining', title: 'Közös étkezésre', text: 'Asztal 6 főre' },
-      { id: 'party', title: 'Vendégvárásra', text: 'Pihenő és étkező együtt' },
+      { id: 'lounge', title: tr('Pihenésre', 'Zum Entspannen'), text: tr('Kanapé, kávé, olvasás', 'Sofa, Kaffee, Lesen') },
+      { id: 'dining', title: tr('Közös étkezésre', 'Zum gemeinsamen Essen'), text: tr('Asztal 6 főre', 'Tisch für 6') },
+      { id: 'party', title: tr('Vendégvárásra', 'Für Gäste'), text: tr('Pihenő és étkező együtt', 'Lounge und Essplatz zusammen') },
     ] as AdvisorOption<AdvisorUse>[],
   },
   weather: {
-    title: 'Mikor szeretnéd használni?',
+    title: tr('Mikor szeretnéd használni?', 'Wann möchten Sie sie nutzen?'),
     options: [
-      { id: 'sun', title: 'Napos napokon', text: 'Elég, ha árnyékot ad' },
-      { id: 'rain', title: 'Esőben is', text: 'Ne kelljen beszaladni' },
-      { id: 'season', title: 'Tavasztól őszig', text: 'Szélben, hűvös estéken is' },
+      { id: 'sun', title: tr('Napos napokon', 'An sonnigen Tagen'), text: tr('Elég, ha árnyékot ad', 'Schatten reicht') },
+      { id: 'rain', title: tr('Esőben is', 'Auch bei Regen'), text: tr('Ne kelljen beszaladni', 'Ohne hineinlaufen zu müssen') },
+      { id: 'season', title: tr('Tavasztól őszig', 'Vom Frühling bis Herbst'), text: tr('Szélben, hűvös estéken is', 'Auch bei Wind und kühlen Abenden') },
     ] as AdvisorOption<AdvisorWeather>[],
   },
   light: {
-    title: 'Mennyi fényt szeretnél alatta?',
+    title: tr('Mennyi fényt szeretnél alatta?', 'Wie viel Licht möchten Sie darunter?'),
     options: [
-      { id: 'adjustable', title: 'Állíthatót', text: 'Hol árnyék, hol napfény' },
-      { id: 'bright', title: 'Sok fényt', text: 'Világos, a ház se sötétedjen' },
-      { id: 'shade', title: 'Teljes árnyékot', text: 'Hűvös, zárt tető' },
-      { id: 'sky', title: 'Nyitható tetőt', text: 'Néha a csillagos ég' },
+      { id: 'adjustable', title: tr('Állíthatót', 'Einstellbar'), text: tr('Hol árnyék, hol napfény', 'Mal Schatten, mal Sonne') },
+      { id: 'bright', title: tr('Sok fényt', 'Viel Licht'), text: tr('Világos, a ház se sötétedjen', 'Hell, das Haus soll nicht dunkel werden') },
+      { id: 'shade', title: tr('Teljes árnyékot', 'Vollen Schatten'), text: tr('Hűvös, zárt tető', 'Kühl, geschlossenes Dach') },
+      { id: 'sky', title: tr('Nyitható tetőt', 'Öffenbares Dach'), text: tr('Néha a csillagos ég', 'Ab und zu den Sternenhimmel') },
     ] as AdvisorOption<AdvisorLight>[],
   },
   place: {
-    title: 'Hová kerül?',
+    title: tr('Hová kerül?', 'Wo soll sie stehen?'),
     options: [
-      { id: 'wall', title: 'A ház falához', text: 'Teraszra, ajtó elé' },
-      { id: 'corner', title: 'A ház sarkába', text: 'L alakú házrésznél' },
-      { id: 'garden', title: 'Szabadon a kertbe', text: 'Medence, kerti sarok' },
+      { id: 'wall', title: tr('A ház falához', 'An der Hauswand'), text: tr('Teraszra, ajtó elé', 'Auf die Terrasse, vor die Tür') },
+      { id: 'corner', title: tr('A ház sarkába', 'In die Hausecke'), text: tr('L alakú házrésznél', 'Bei einem L-förmigen Hausteil') },
+      { id: 'garden', title: tr('Szabadon a kertbe', 'Freistehend im Garten'), text: tr('Medence, kerti sarok', 'Pool, Gartenecke') },
     ] as AdvisorOption<AdvisorPlace>[],
   },
 } as const
@@ -137,19 +138,19 @@ export function adviseConfig(tenant: Tenant, answers: AdvisorAnswers, prices: Pr
   const short = tenant.roofs[config.roof]?.short ?? ROOF_INFO[config.roof].short
   const reasons: string[] = []
   reasons.push(`${name} · ${short}: ${{
-    adjustable: 'a lamellák szögével percre pontosan állítod, mennyi nap jusson be.',
-    bright: 'átengedi a fényt, így a ház helyiségei sem sötétednek el.',
-    shade: 'zárt, teljes árnyékot ad, nyáron is hűvös marad alatta.',
-    sky: 'szép időben nyitható, esőben egy gombnyomással zárható.',
+    adjustable: tr('a lamellák szögével percre pontosan állítod, mennyi nap jusson be.', 'mit dem Lamellenwinkel stellen Sie exakt ein, wie viel Sonne hereinkommt.'),
+    bright: tr('átengedi a fényt, így a ház helyiségei sem sötétednek el.', 'lässt Licht durch, so werden die Räume im Haus nicht dunkel.'),
+    shade: tr('zárt, teljes árnyékot ad, nyáron is hűvös marad alatta.', 'geschlossen, voller Schatten, auch im Sommer bleibt es darunter kühl.'),
+    sky: tr('szép időben nyitható, esőben egy gombnyomással zárható.', 'bei schönem Wetter offen, bei Regen per Knopfdruck geschlossen.'),
   }[answers.light]}`)
   const furnitureSpec = furniture !== 'none' ? FURNITURE_SETS[furniture] : null
-  if (furnitureSpec) reasons.push(`${config.width.toFixed(1).replace('.', ',')} × ${config.depth.toFixed(1).replace('.', ',')} m — ${furnitureSpec.label.toLowerCase()} (${furnitureSpec.people}) kényelmesen elfér alatta, körbe lehet járni.`)
-  const sideText = (Object.values(config.sides) as SideType[]).some((type) => type === 'glass') ? 'Elöl tolóüveg, oldalt ZIP screen: szélben, hűvösebb estéken is kint maradhatsz.'
-    : (Object.values(config.sides) as SideType[]).some((type) => type === 'zip') ? 'Oldalt ZIP screen: a ferde eső és a szél ellen leengeded, utána eltűnik a kazettában.'
-    : 'Nyitott oldalak: szellős marad, és ez a legkedvezőbb ár.'
+  if (furnitureSpec) reasons.push(tr(`${config.width.toFixed(1).replace('.', ',')} × ${config.depth.toFixed(1).replace('.', ',')} m — ${furnitureSpec.label.toLowerCase()} (${furnitureSpec.people}) kényelmesen elfér alatta, körbe lehet járni.`, `${config.width.toFixed(1).replace('.', ',')} × ${config.depth.toFixed(1).replace('.', ',')} m — ${furnitureSpec.label} (${furnitureSpec.people}) passt bequem darunter, rundum begehbar.`))
+  const sideText = (Object.values(config.sides) as SideType[]).some((type) => type === 'glass') ? tr('Elöl tolóüveg, oldalt ZIP screen: szélben, hűvösebb estéken is kint maradhatsz.', 'Vorne Glasschiebewand, seitlich ZIP-Screen: auch bei Wind und kühleren Abenden draußen sitzen.')
+    : (Object.values(config.sides) as SideType[]).some((type) => type === 'zip') ? tr('Oldalt ZIP screen: a ferde eső és a szél ellen leengeded, utána eltűnik a kazettában.', 'Seitlich ZIP-Screen: gegen Schrägregen und Wind herunterlassen, danach verschwindet er in der Kassette.')
+    : tr('Nyitott oldalak: szellős marad, és ez a legkedvezőbb ár.', 'Offene Seiten: bleibt luftig und ist am günstigsten.')
   reasons.push(sideText)
-  if (config.heaters > 0) reasons.push(`${config.heaters} db infrapanel a hűvös tavaszi és őszi estékre.`)
-  if (config.sensors) reasons.push('Eső- és szélérzékelő: ha elered, a tető magától bezár.')
+  if (config.heaters > 0) reasons.push(tr(`${config.heaters} db infrapanel a hűvös tavaszi és őszi estékre.`, `${config.heaters} Infrarotstrahler für kühle Frühlings- und Herbstabende.`))
+  if (config.sensors) reasons.push(tr('Eső- és szélérzékelő: ha elered, a tető magától bezár.', 'Regen- und Windsensor: bei Regen schließt das Dach von selbst.'))
 
   let alternative: AdvisorResult['alternative'] = null
   const cheaper = (CHEAPER[config.roof] ?? []).find((item) => roofs.includes(item))

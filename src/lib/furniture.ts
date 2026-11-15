@@ -2,6 +2,7 @@
 // szükséges szabad hely (székek kihúzása 75 cm, közlekedés legalább 60 cm).
 import type { FurnitureSet, PergolaConfig } from '@/types/pergola'
 import { isPack, packPlan, type PackItem, type PackPlan } from './usePacks'
+import { tr } from '../i18n/locale'
 
 export interface FurnitureSpec {
   label: string
@@ -20,34 +21,34 @@ export interface FurnitureSpec {
 }
 
 export const FURNITURE_SETS: Record<Exclude<FurnitureSet, 'none'>, FurnitureSpec> = {
-  lounge: { label: 'Pihenősarok', people: '4–5 fő', description: '3 személyes kanapé, dohányzóasztal', zone: [3.0, 2.6], parts: [{ kind: 'lounge', x: 0 }], seats: 5, repeatable: false },
-  dining6: { label: 'Étkező 6 főre', people: '6 fő', description: '180 × 90 cm asztal, 6 szék', zone: [3.0, 2.4], parts: [{ kind: 'dining6', x: 0 }], seats: 6, repeatable: true },
-  dining8: { label: 'Étkező 8 főre', people: '8 fő', description: '220 × 100 cm asztal, 8 szék', zone: [3.7, 2.5], parts: [{ kind: 'dining8', x: 0 }], seats: 8, repeatable: true },
-  combo: { label: 'Pihenő + étkező', people: '6 fő', description: 'Kanapé és 6 fős étkező egymás mellett', zone: [6.0, 2.6], parts: [{ kind: 'lounge', x: -1.5 }, { kind: 'dining6', x: 1.5 }], seats: 6, repeatable: false },
-  spa: { label: 'Jacuzzi', people: '5–6 fős', description: '2 × 2 m-es jacuzzi lépcsővel, körben 30–60 cm szabad hellyel', zone: [2.6, 2.6], parts: [{ kind: 'spa', x: 0 }], seats: 6, repeatable: false },
-  loungeSpa: { label: 'Pihenő + jacuzzi', people: 'kanapé + jacuzzi', description: '3 személyes kanapé, dohányzóasztal és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'lounge', x: -1.3 }, { kind: 'spa', x: 1.5 }], seats: 5, repeatable: false },
-  diningSpa: { label: 'Étkező + jacuzzi', people: '6 fő + jacuzzi', description: '180 × 90 cm asztal 6 székkel és 2 × 2 m-es jacuzzi egymás mellett', zone: [5.6, 2.6], parts: [{ kind: 'dining6', x: -1.3 }, { kind: 'spa', x: 1.5 }], seats: 6, repeatable: false },
+  lounge: { label: tr('Pihenősarok', 'Lounge-Ecke'), people: tr('4–5 fő', '4–5 Pers.'), description: tr('3 személyes kanapé, dohányzóasztal', '3-Sitzer-Sofa, Couchtisch'), zone: [3.0, 2.6], parts: [{ kind: 'lounge', x: 0 }], seats: 5, repeatable: false },
+  dining6: { label: tr('Étkező 6 főre', 'Essplatz für 6'), people: tr('6 fő', '6 Pers.'), description: tr('180 × 90 cm asztal, 6 szék', 'Tisch 180 × 90 cm, 6 Stühle'), zone: [3.0, 2.4], parts: [{ kind: 'dining6', x: 0 }], seats: 6, repeatable: true },
+  dining8: { label: tr('Étkező 8 főre', 'Essplatz für 8'), people: tr('8 fő', '8 Pers.'), description: tr('220 × 100 cm asztal, 8 szék', 'Tisch 220 × 100 cm, 8 Stühle'), zone: [3.7, 2.5], parts: [{ kind: 'dining8', x: 0 }], seats: 8, repeatable: true },
+  combo: { label: tr('Pihenő + étkező', 'Lounge + Essplatz'), people: tr('6 fő', '6 Pers.'), description: tr('Kanapé és 6 fős étkező egymás mellett', 'Sofa und Essplatz für 6 nebeneinander'), zone: [6.0, 2.6], parts: [{ kind: 'lounge', x: -1.5 }, { kind: 'dining6', x: 1.5 }], seats: 6, repeatable: false },
+  spa: { label: tr('Jacuzzi', 'Whirlpool'), people: tr('5–6 fős', '5–6 Pers.'), description: tr('2 × 2 m-es jacuzzi lépcsővel, körben 30–60 cm szabad hellyel', 'Whirlpool 2 × 2 m mit Stufe, rundum 30–60 cm frei'), zone: [2.6, 2.6], parts: [{ kind: 'spa', x: 0 }], seats: 6, repeatable: false },
+  loungeSpa: { label: tr('Pihenő + jacuzzi', 'Lounge + Whirlpool'), people: tr('kanapé + jacuzzi', 'Sofa + Whirlpool'), description: tr('3 személyes kanapé, dohányzóasztal és 2 × 2 m-es jacuzzi egymás mellett', '3-Sitzer-Sofa, Couchtisch und Whirlpool 2 × 2 m nebeneinander'), zone: [5.6, 2.6], parts: [{ kind: 'lounge', x: -1.3 }, { kind: 'spa', x: 1.5 }], seats: 5, repeatable: false },
+  diningSpa: { label: tr('Étkező + jacuzzi', 'Essplatz + Whirlpool'), people: tr('6 fő + jacuzzi', '6 Pers. + Whirlpool'), description: tr('180 × 90 cm asztal 6 székkel és 2 × 2 m-es jacuzzi egymás mellett', 'Tisch 180 × 90 cm mit 6 Stühlen und Whirlpool 2 × 2 m nebeneinander'), zone: [5.6, 2.6], parts: [{ kind: 'dining6', x: -1.3 }, { kind: 'spa', x: 1.5 }], seats: 6, repeatable: false },
   // Vendéglátós és napozós elrendezések: kávézó-terasz, bárpult, nyugágyak.
-  bistro: { label: 'Bisztró', people: '4 fő', description: 'Két 70 cm-es kerek asztal, 2–2 székkel', zone: [3.4, 2.4], parts: [{ kind: 'bistro', x: 0 }], seats: 4, repeatable: true },
-  bar: { label: 'Kültéri bár', people: '4 fő', description: '220 × 60 cm bárpult, 4 bárszék', zone: [3.2, 2.3], parts: [{ kind: 'bar', x: 0 }], seats: 4, repeatable: false },
-  sunbed: { label: 'Napozó', people: '2 fő', description: 'Két nyugágy kisasztallal', zone: [3.2, 2.4], parts: [{ kind: 'sunbed', x: 0 }], seats: 2, repeatable: true },
+  bistro: { label: tr('Bisztró', 'Bistro'), people: tr('4 fő', '4 Pers.'), description: tr('Két 70 cm-es kerek asztal, 2–2 székkel', 'Zwei runde Tische 70 cm, je 2 Stühle'), zone: [3.4, 2.4], parts: [{ kind: 'bistro', x: 0 }], seats: 4, repeatable: true },
+  bar: { label: tr('Kültéri bár', 'Outdoor-Bar'), people: tr('4 fő', '4 Pers.'), description: tr('220 × 60 cm bárpult, 4 bárszék', 'Bartheke 220 × 60 cm, 4 Barhocker'), zone: [3.2, 2.3], parts: [{ kind: 'bar', x: 0 }], seats: 4, repeatable: false },
+  sunbed: { label: tr('Napozó', 'Sonnenliegen'), people: tr('2 fő', '2 Pers.'), description: tr('Két nyugágy kisasztallal', 'Zwei Liegen mit Beistelltisch'), zone: [3.2, 2.4], parts: [{ kind: 'sunbed', x: 0 }], seats: 2, repeatable: true },
   // Használati csomagok: a pergola méretéhez igazodnak (usePacks.ts). A zóna a legkisebb méret, ahol értelmes az elrendezés.
-  restaurant: { label: 'Éttermi terasz', people: 'asztalok rácsban', description: '4 fős asztalok, a méretből adódó darabszámban, közlekedősávokkal', zone: [4.0, 4.6], parts: [{ kind: 'dining6', x: 0 }], seats: 4, repeatable: false, pack: { audience: 'Étterem, kávézó, szálloda terasza' } },
-  summerKitchen: { label: 'Nyári konyha', people: 'főzőzóna', description: 'Konyhasor a hátsó fal mentén: hűtő, grill, mosogató, munkafelületek; nagyobb mélységnél szigetpult bárszékekkel', zone: [2.8, 2.2], parts: [{ kind: 'bar', x: 0 }], seats: 0, repeatable: false, pack: { audience: 'Családi ház, vendégház, panzió' } },
-  kitchenDining: { label: 'Nyári konyha + étkező', people: '6–8 fő', description: 'Konyhasor és étkezőasztal egy tető alatt, tálalási távolsággal', zone: [3.4, 4.2], parts: [{ kind: 'dining6', x: 0 }], seats: 6, repeatable: false, pack: { audience: 'Családi ház, vendégház, panzió' } },
-  banquet: { label: 'Bankett / rendezvény', people: 'hosszú asztalok', description: 'Hosszú asztalok 60 cm-es ülésosztással, sorok közt közlekedősávval', zone: [4.2, 2.4], parts: [{ kind: 'dining6', x: 0 }], seats: 12, repeatable: false, pack: { audience: 'Rendezvényhelyszín, borászat, szálloda' } },
-  mixed: { label: 'Vegyes terasz', people: 'pihenő, étkező, bisztró, bár', description: 'Váltakozó zónák: pihenősarok, étkező, bisztró-asztal, hátsó bárpult — nagy teraszon sem ismétlődik ugyanaz egymás mellett', zone: [3.4, 2.8], parts: [{ kind: 'lounge', x: 0 }], seats: 11, repeatable: false, pack: { audience: 'Szálloda, vendégház, étterem, családi terasz' } },
-  barLounge: { label: 'Bár + lounge', people: 'bárpult és pihenő sarkok', description: 'Bárpult bárszékekkel a hátsó fal mentén, előtte pihenő sarkok', zone: [3.4, 4.6], parts: [{ kind: 'lounge', x: 0 }], seats: 9, repeatable: false, pack: { audience: 'Szálloda, borbár, étterem' } },
+  restaurant: { label: tr('Éttermi terasz', 'Gastgarten'), people: tr('asztalok rácsban', 'Tische im Raster'), description: tr('4 fős asztalok, a méretből adódó darabszámban, közlekedősávokkal', '4er-Tische, Anzahl nach Größe, mit Gehwegen'), zone: [4.0, 4.6], parts: [{ kind: 'dining6', x: 0 }], seats: 4, repeatable: false, pack: { audience: tr('Étterem, kávézó, szálloda terasza', 'Restaurant, Café, Hotelterrasse') } },
+  summerKitchen: { label: tr('Nyári konyha', 'Outdoor-Küche'), people: tr('főzőzóna', 'Kochzone'), description: tr('Konyhasor a hátsó fal mentén: hűtő, grill, mosogató, munkafelületek; nagyobb mélységnél szigetpult bárszékekkel', 'Küchenzeile an der Rückwand: Kühlschrank, Grill, Spüle, Arbeitsflächen; bei größerer Tiefe Kochinsel mit Barhockern'), zone: [2.8, 2.2], parts: [{ kind: 'bar', x: 0 }], seats: 0, repeatable: false, pack: { audience: tr('Családi ház, vendégház, panzió', 'Einfamilienhaus, Gästehaus, Pension') } },
+  kitchenDining: { label: tr('Nyári konyha + étkező', 'Outdoor-Küche + Essplatz'), people: tr('6–8 fő', '6–8 Pers.'), description: tr('Konyhasor és étkezőasztal egy tető alatt, tálalási távolsággal', 'Küchenzeile und Esstisch unter einem Dach, mit Servierabstand'), zone: [3.4, 4.2], parts: [{ kind: 'dining6', x: 0 }], seats: 6, repeatable: false, pack: { audience: tr('Családi ház, vendégház, panzió', 'Einfamilienhaus, Gästehaus, Pension') } },
+  banquet: { label: tr('Bankett / rendezvény', 'Bankett / Event'), people: tr('hosszú asztalok', 'lange Tische'), description: tr('Hosszú asztalok 60 cm-es ülésosztással, sorok közt közlekedősávval', 'Lange Tische mit 60 cm Sitzteilung, Gehweg zwischen den Reihen'), zone: [4.2, 2.4], parts: [{ kind: 'dining6', x: 0 }], seats: 12, repeatable: false, pack: { audience: tr('Rendezvényhelyszín, borászat, szálloda', 'Eventlocation, Weingut, Hotel') } },
+  mixed: { label: tr('Vegyes terasz', 'Gemischte Terrasse'), people: tr('pihenő, étkező, bisztró, bár', 'Lounge, Essplatz, Bistro, Bar'), description: tr('Váltakozó zónák: pihenősarok, étkező, bisztró-asztal, hátsó bárpult — nagy teraszon sem ismétlődik ugyanaz egymás mellett', 'Wechselnde Bereiche: Lounge, Essplatz, Bistrotisch, Bar hinten — auch auf großen Terrassen wiederholt sich nichts nebeneinander'), zone: [3.4, 2.8], parts: [{ kind: 'lounge', x: 0 }], seats: 11, repeatable: false, pack: { audience: tr('Szálloda, vendégház, étterem, családi terasz', 'Hotel, Gästehaus, Restaurant, Familienterrasse') } },
+  barLounge: { label: tr('Bár + lounge', 'Bar + Lounge'), people: tr('bárpult és pihenő sarkok', 'Bartheke und Lounge-Ecken'), description: tr('Bárpult bárszékekkel a hátsó fal mentén, előtte pihenő sarkok', 'Bartheke mit Barhockern an der Rückwand, davor Lounge-Ecken'), zone: [3.4, 4.6], parts: [{ kind: 'lounge', x: 0 }], seats: 9, repeatable: false, pack: { audience: tr('Szálloda, borbár, étterem', 'Hotel, Weinbar, Restaurant') } },
 }
 
 export const FURNITURE_ORDER: FurnitureSet[] = ['lounge', 'dining6', 'dining8', 'combo', 'bistro', 'bar', 'sunbed', 'spa', 'loungeSpa', 'diningSpa', 'none']
 /** Használati csomagok a kiválasztóban, a lakossági bútorok után. */
 /** A választó csoportjai: egy listában, használat szerint rendezve (a „Üresen” külön, a lista végén). */
 export const FURNITURE_GROUPS: { id: string; label: string; sets: FurnitureSet[] }[] = [
-  { id: 'home', label: 'Otthon és pihenés', sets: ['lounge', 'dining6', 'dining8', 'combo', 'sunbed'] },
-  { id: 'kitchen', label: 'Konyha és étkezés', sets: ['summerKitchen', 'kitchenDining'] },
-  { id: 'wellness', label: 'Wellness', sets: ['spa', 'loungeSpa', 'diningSpa'] },
-  { id: 'hospitality', label: 'Vendéglátás és rendezvény', sets: ['mixed', 'restaurant', 'bistro', 'bar', 'barLounge', 'banquet'] },
+  { id: 'home', label: tr('Otthon és pihenés', 'Zuhause und Entspannung'), sets: ['lounge', 'dining6', 'dining8', 'combo', 'sunbed'] },
+  { id: 'kitchen', label: tr('Konyha és étkezés', 'Küche und Essen'), sets: ['summerKitchen', 'kitchenDining'] },
+  { id: 'wellness', label: tr('Wellness', 'Wellness'), sets: ['spa', 'loungeSpa', 'diningSpa'] },
+  { id: 'hospitality', label: tr('Vendéglátás és rendezvény', 'Gastronomie und Events'), sets: ['mixed', 'restaurant', 'bistro', 'bar', 'barLounge', 'banquet'] },
 ]
 
 export const PACK_ORDER: FurnitureSet[] = ['mixed', 'summerKitchen', 'kitchenDining', 'restaurant', 'banquet', 'barLounge']

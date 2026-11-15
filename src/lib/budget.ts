@@ -9,12 +9,13 @@ import { colorSummary } from '@/lib/colors'
 import { enabledRoofs, normalizeConfig, roofLabels, tenantPrice } from '@/tenants/rules'
 import type { Tenant } from '@/tenants/types'
 import type { FurnitureSet, PergolaConfig, PriceSettings, RoofType, SideKey, SideType } from '@/types/pergola'
+import { tr } from '../i18n/locale'
 
 const ROOF_VALUE = Object.fromEntries(Object.entries(ROOF_INFO).map(([roof, info]) => [roof, info.value])) as Record<RoofType, number>
 const SIDE_VALUE = Object.fromEntries(Object.entries(SIDE_INFO).map(([type, info]) => [type, info.value])) as Record<SideType, number>
 const SIZE_STEPS = 9
 const SIDES: SideKey[] = ['front', 'back', 'left', 'right']
-const SIDE_NAMES: Record<SideKey, string> = { front: 'Elülső oldal', back: 'Hátsó oldal', left: 'Bal oldal', right: 'Jobb oldal' }
+const SIDE_NAMES: Record<SideKey, string> = { front: tr('Elülső oldal', 'Vordere Seite'), back: tr('Hátsó oldal', 'Hintere Seite'), left: 'Bal oldal', right: 'Jobb oldal' }
 const EXTRA_LOSS = { led: 1, speakers: 0.7, sensors: 1, heater: 0.8, color: 0.9, solar: 1.1, rgb: 0.4, fan: 0.6, smartHome: 0.5, roofShade: 0.7 }
 
 export interface BudgetPlan {
@@ -124,23 +125,23 @@ export function describeChanges(tenant: Tenant, original: PergolaConfig, next: P
   const labels = roofLabels(tenant)
   const m = (value: number) => value.toFixed(2).replace(/0$/, '').replace('.', ',')
   const changes: string[] = []
-  if (next.width !== original.width || next.depth !== original.depth) changes.push(`Méret: ${m(original.width)} × ${m(original.depth)} → ${m(next.width)} × ${m(next.depth)} m`)
-  if (next.roof !== original.roof) changes.push(`Tető: ${labels[original.roof].split(' · ')[0]} → ${labels[next.roof]}`)
+  if (next.width !== original.width || next.depth !== original.depth) changes.push(tr(`Méret: ${m(original.width)} × ${m(original.depth)} → ${m(next.width)} × ${m(next.depth)} m`, `Größe: ${m(original.width)} × ${m(original.depth)} → ${m(next.width)} × ${m(next.depth)} m`))
+  if (next.roof !== original.roof) changes.push(tr(`Tető: ${labels[original.roof].split(' · ')[0]} → ${labels[next.roof]}`, `Dach: ${labels[original.roof].split(' · ')[0]} → ${labels[next.roof]}`))
   for (const side of SIDES) {
     const before = sideSummary(original, side)
     const after = sideSummary(next, side)
     if (before !== after) changes.push(`${SIDE_NAMES[side]}: ${before} → ${after === 'Nyitott' ? 'nyitott' : after}`)
   }
-  if (original.heaters !== next.heaters) changes.push(next.heaters === 0 ? 'Teraszfűtés nélkül' : `Teraszfűtés: ${original.heaters} → ${next.heaters} db`)
-  if (original.speakers && !next.speakers) changes.push('Hangrendszer nélkül')
-  if (original.led && !next.led) changes.push('LED-világítás nélkül')
-  if (original.sensors && !next.sensors) changes.push('Eső- és szélszenzor nélkül')
-  if (original.solar && !next.solar) changes.push('Napelemes tető nélkül')
-  if (original.ledRgb && next.led && !next.ledRgb) changes.push('Színváltós LED helyett fehér LED')
-  if ((original.fans ?? 0) !== (next.fans ?? 0)) changes.push(next.fans ? `Mennyezeti ventilátor: ${original.fans} → ${next.fans} db` : 'Mennyezeti ventilátor nélkül')
-  if (original.smartHome && !next.smartHome) changes.push('Okosotthon-vezérlés nélkül')
-  if (original.roofShade && original.roofShade !== next.roofShade) changes.push(next.roofShade ? 'Tető feletti helyett tető alatti árnyékoló' : 'Tetőárnyékoló nélkül')
-  if (original.frameColor !== next.frameColor || original.roofColor !== next.roofColor) changes.push(`Szín: ${colorSummary(tenant, original)} → ${colorSummary(tenant, next)}`)
+  if (original.heaters !== next.heaters) changes.push(next.heaters === 0 ? tr('Teraszfűtés nélkül', 'Ohne Terrassenheizung') : tr(`Teraszfűtés: ${original.heaters} → ${next.heaters} db`, `Terrassenheizung: ${original.heaters} → ${next.heaters} Stk.`))
+  if (original.speakers && !next.speakers) changes.push(tr('Hangrendszer nélkül', 'Ohne Soundsystem'))
+  if (original.led && !next.led) changes.push(tr('LED-világítás nélkül', 'Ohne LED-Beleuchtung'))
+  if (original.sensors && !next.sensors) changes.push(tr('Eső- és szélszenzor nélkül', 'Ohne Regen- und Windsensor'))
+  if (original.solar && !next.solar) changes.push(tr('Napelemes tető nélkül', 'Ohne Photovoltaik-Dach'))
+  if (original.ledRgb && next.led && !next.ledRgb) changes.push(tr('Színváltós LED helyett fehér LED', 'Weiße LED statt Farbwechsel-LED'))
+  if ((original.fans ?? 0) !== (next.fans ?? 0)) changes.push(next.fans ? tr(`Mennyezeti ventilátor: ${original.fans} → ${next.fans} db`, `Deckenventilator: ${original.fans} → ${next.fans} Stk.`) : tr('Mennyezeti ventilátor nélkül', 'Ohne Deckenventilator'))
+  if (original.smartHome && !next.smartHome) changes.push(tr('Okosotthon-vezérlés nélkül', 'Ohne Smart-Home-Steuerung'))
+  if (original.roofShade && original.roofShade !== next.roofShade) changes.push(next.roofShade ? tr('Tető feletti helyett tető alatti árnyékoló', 'Beschattung unter statt über dem Dach') : tr('Tetőárnyékoló nélkül', 'Ohne Dachbeschattung'))
+  if (original.frameColor !== next.frameColor || original.roofColor !== next.roofColor) changes.push(tr(`Szín: ${colorSummary(tenant, original)} → ${colorSummary(tenant, next)}`, `Farbe: ${colorSummary(tenant, original)} → ${colorSummary(tenant, next)}`))
   return changes
 }
 
@@ -227,9 +228,9 @@ export function planBudget(tenant: Tenant, original: PergolaConfig, prices: Pric
 
   const byLoss = (a: Candidate, b: Candidate) => a.loss - b.loss || b.total - a.total
   const picks: { id: BudgetPlan['id']; title: string; candidate: Candidate | undefined }[] = [
-    { id: 'balanced', title: 'Legjobb egyensúly', candidate: [...candidates].sort(byLoss)[0] },
-    { id: 'keep-size', title: 'Méret megtartva', candidate: candidates.filter((item) => item.sizeKept).sort(byLoss)[0] },
-    { id: 'keep-equipment', title: 'Felszereltség megtartva', candidate: candidates.filter((item) => item.equipmentKept).sort(byLoss)[0] },
+    { id: 'balanced', title: tr('Legjobb egyensúly', 'Beste Balance'), candidate: [...candidates].sort(byLoss)[0] },
+    { id: 'keep-size', title: tr('Méret megtartva', 'Größe beibehalten'), candidate: candidates.filter((item) => item.sizeKept).sort(byLoss)[0] },
+    { id: 'keep-equipment', title: tr('Felszereltség megtartva', 'Ausstattung beibehalten'), candidate: candidates.filter((item) => item.equipmentKept).sort(byLoss)[0] },
   ]
   const seen = new Set<string>()
   const plans: BudgetPlan[] = []

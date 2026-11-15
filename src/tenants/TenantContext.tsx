@@ -2,6 +2,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { roofLabels } from './rules'
 import { setDisplayCurrency } from '../lib/money'
+import { getLocale } from '../i18n/locale'
 import type { Tenant } from './types'
 import type { RoofType } from '../types/pergola'
 import type { ProductFamily } from '../products'
@@ -27,6 +28,9 @@ export function TenantProvider({ tenant, admin, embed, homeHref, product = 'perg
   // Egy oldal egy gyártót mutat: a felületi árformázás (formatPrice) az ő pénznemében fut.
   // Renderelés közben, a gyerekek előtt állítjuk, hogy már az első kép is jó pénznemmel készüljön.
   setDisplayCurrency(tenant.currency)
+  // A nyelv a betöltéskor dől el (a szövegtárak már létrejöttek). Ha egy kattintás más nyelvű gyártóra
+  // vitt (ritka: belső navigáció), egy teljes újratöltés hozza a jó nyelvet.
+  if (typeof window !== 'undefined' && (tenant.locale ?? 'hu') !== getLocale()) window.location.reload()
   const value = useMemo(() => ({ tenant, product, mode, labels: roofLabels(tenant), admin, embed, homeHref }), [tenant, product, mode, admin, embed, homeHref])
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>
 }

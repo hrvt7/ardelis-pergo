@@ -1,12 +1,13 @@
+import { tr } from '../i18n/locale'
 // Közös napszak-világítás a nem-pergola termékcsaládok jeleneteihez (kerítés, garázskapu), a pergola-jelenet
 // (PergolaScene getLighting) hangolásával: ugyanazok az égboltok, napszínek és ködszínek. A pergola saját, órára
 // állítható világítást használ; itt a három kiinduló napszak elég (nappal / aranyóra / éjszaka).
 export type StudioTime = 'day' | 'sunset' | 'night'
 
 export const STUDIO_TIMES: { id: StudioTime; label: string }[] = [
-  { id: 'day', label: 'Nappal' },
-  { id: 'sunset', label: 'Aranyóra' },
-  { id: 'night', label: 'Éjszaka' },
+  { id: 'day', label: tr('Nappal', 'Tag') },
+  { id: 'sunset', label: tr('Aranyóra', 'Goldene Stunde') },
+  { id: 'night', label: tr('Éjszaka', 'Nacht') },
 ]
 
 /** A pergola-konfigurátorral azonos kiinduló napszak: aranyóra. */
