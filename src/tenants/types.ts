@@ -121,5 +121,7 @@ export interface Tenant {
     subjectPrefix: string
     /** Automatikus utánkövetés (3 nap: vevői emlékeztető, 7 nap: gyártói jelzés). Alapértelmezés: bekapcsolva. */
     followUp?: boolean
+    /** Havi riport e-mailben (tölcsér, érdeklődők, becsült konverzió) minden hónap elején. Alapértelmezés: bekapcsolva. */
+    monthlyReport?: boolean
   }
 }

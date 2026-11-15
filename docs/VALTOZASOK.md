@@ -1,5 +1,14 @@
 # Változások
 
+## 4.21 – Havi riport e-mailben a gyártónak
+
+- Minden hónap 1-jén 6:00-kor (UTC) a gyártó lead-címzettjei összesítőt kapnak az előző naptári hónapról: felmérési kérelmek száma és bruttó irányár-összege (átlaggal), összevetés az előző hónappal, becsült konverzió (kérelem / megnyitás), tölcsér (megnyitás → tervmódosítás → űrlap → kitöltés → kérelem), PDF / AR / megosztás, a hónap érdeklődőinek mostani állapota, a legtöbbet kért tetők, és figyelmeztetés a még „Új” (senki által nem keresett) érdeklődőkről.
+- Csak névtelen napi számlálók és összesítések: név, e-mail, telefonszám nem kerül a levélbe. A konverzió „becsült”, mert eseményszámokból számol, nem egyedi látogatókból.
+- Forgalom nélküli hónapban üres táblák helyett azt javasolja, hogy ellenőrizzék a beágyazást.
+- Kikapcsolható az adminban (Beállítások → Érdeklődők fogadása → „Havi riport e-mailben”); alapból bekapcsolva.
+- Végpont: `GET /api/monthly-report` (CRON_SECRET-tel, mint az utánkövetés); `?dry=1` próbafutás küldés nélkül, `?month=YYYY-MM` adott hónap, `?tenant=id` egy gyártó. Időzítés: `vercel.json` crons.
+- A tölcsérszámítás React nélküli modulba került (`src/lib/statsFunnel.ts`), hogy az Edge-függvény is használhassa. Új: `server/monthlyReport.ts`, `api/monthly-report.ts`; teszt: `tests/monthlyReport.test.ts`.
+
 ## 4.20 – Figyelmeztetés + egy kattintásos javítás
 
 - Döntés (Ádám, 2026-11-15): a rendszer nem vágja és nem írja át magától a tervet, hanem jelez, és ha van érvényes megoldás, „Javítás: …” gombot kínál. A vevő dönt; a javítás után látja az árváltozást, és vissza is vonhatja.

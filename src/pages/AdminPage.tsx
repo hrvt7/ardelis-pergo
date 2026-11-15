@@ -247,6 +247,7 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
   const [recipients, setRecipients] = useState(effective.lead.recipients.join('\n'))
   const [subjectPrefix, setSubjectPrefix] = useState(effective.lead.subjectPrefix)
   const [followUp, setFollowUp] = useState(effective.lead.followUp !== false)
+  const [monthlyReport, setMonthlyReport] = useState(effective.lead.monthlyReport !== false)
   const [matrix, setMatrix] = useState<MatrixDraft>(() => Object.fromEntries(ROOF_TYPES.map((roof) => [roof, pointsToRows(effective.prices.priceMatrix?.[roof])])))
   const [matrixErrors, setMatrixErrors] = useState<MatrixErrors>({})
   const [roofNames, setRoofNames] = useState<Record<string, { name: string; short: string }>>(() => Object.fromEntries(ROOF_TYPES.map((roof) => [roof, { name: effective.roofs[roof]?.name ?? ROOF_INFO[roof].name, short: effective.roofs[roof]?.short ?? ROOF_INFO[roof].short }])))
@@ -285,7 +286,7 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
       sides,
       mounts,
       extras,
-      lead: { recipients: recipients.split(/[\n,;]+/).map((item) => item.trim()).filter(Boolean), subjectPrefix, followUp },
+      lead: { recipients: recipients.split(/[\n,;]+/).map((item) => item.trim()).filter(Boolean), subjectPrefix, followUp, monthlyReport },
       roofNames: Object.fromEntries(ROOF_TYPES.map((roof) => [roof, { name: roofNames[roof].name.trim(), short: roofNames[roof].short.trim() }])) as TenantOverrides['roofNames'],
       limits: { width: [limits.widthMin, limits.widthMax], depth: [limits.depthMin, limits.depthMax], height: [limits.heightMin, limits.heightMax], maxHeaters: limits.maxHeaters },
     }
@@ -306,6 +307,8 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
         <label><span>E-mail tárgy előtag</span><input value={subjectPrefix} onChange={(event) => setSubjectPrefix(event.target.value)} maxLength={80} /></label>
         <label className="admin-check admin-wide"><input type="checkbox" checked={followUp} onChange={(event) => setFollowUp(event.target.checked)} />Automatikus utánkövetés</label>
         <p className="admin-hint admin-wide">Bekapcsolva: 3 nappal a kérelem után a vevő egyetlen emlékeztető e-mailt kap a 3D-terve linkjével és „Időpontot kérek” gombbal, ha a lead még „Új” vagy „Kapcsolatba léptünk”. 7 nap után, ha a lead még mindig „Új”, nektek megy összesítő a válasz nélkül maradt érdeklődőkről. Naponta egyszer fut.</p>
+        <label className="admin-check admin-wide"><input type="checkbox" checked={monthlyReport} onChange={(event) => setMonthlyReport(event.target.checked)} />Havi riport e-mailben</label>
+        <p className="admin-hint admin-wide">Minden hónap 1-jén összesítő az előző hónapról: megnyitások, tervmódosítások, PDF, AR, megosztás, felmérési kérelmek, becsült konverzió és az érdeklődők állapota. Csak névtelen számlálók és összesítések, személyes adat nélkül.</p>
       </Section>
 
       <Section title="Tetőrendszerek (nettó Ft/m² alapár)">

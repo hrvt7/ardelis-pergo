@@ -6,6 +6,7 @@ import { handleDemoRequest } from './demoRequest'
 import { handleAdminQuotes, handleQuote } from './quotes'
 import { handleAdminStats, handleTrack } from './analytics'
 import { handleFollowUp } from './followup'
+import { handleMonthlyReport } from './monthlyReport'
 import { handleAdminLeads, handleAdminLogin, handleAdminSettings, handleTenantRequest } from './tenantAdmin'
 
 const app = new Hono()
@@ -20,6 +21,7 @@ app.on(['GET', 'POST', 'PATCH'], '/api/admin-quotes', (c) => handleAdminQuotes(c
 app.post('/api/track', (c) => handleTrack(c.req.raw, process.env))
 app.get('/api/admin-stats', (c) => handleAdminStats(c.req.raw, process.env))
 app.get('/api/followup', (c) => handleFollowUp(c.req.raw, process.env))
+app.get('/api/monthly-report', (c) => handleMonthlyReport(c.req.raw, process.env))
 app.all('/api/*', (c) => c.json({ ok: false, error: 'Nem található.' }, 404))
 
 export default app
