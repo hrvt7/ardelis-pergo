@@ -28,6 +28,10 @@ A `.claude/skills/` alatt; a Claude Code natívan, az OpenCode kompatibilitási 
 - `lamelix-edge-imports` – az `api/`/`server/` felől elérhető kódban érték-import csak relatív úton (a `@/` alias az Edge-ben nem működik); `tests/edge-imports.test.ts` bejárja az importgráfot.
 - `lamelix-add-roof-type` – új tetőtípus minden érintési pontja (a fordító csak egy részüket jelzi).
 - `lamelix-add-furniture-set` – új bútor- vagy használati csomag; tilos az egyforma készletek klónozása.
+- `supabase`, `supabase-postgres-best-practices` – a Supabase hivatalos skilljei (`npx skills add supabase/agent-skills`, `skills-lock.json`): minden adatbázis-, séma-, RLS- és migrációs munka előtt.
+
+## Supabase MCP
+A `.mcp.json` a `supabase` MCP-szervert a Lamelix éles projektjére köti (`qxigqugywemokbnidokf`, „hrvt7's projects” Vercel-szervezet). Első használatkor terminálban: `claude /mcp` → supabase → Authenticate, és a böngészőben a „hrvt7's projects” szervezetet válaszd. Sémaváltozás csak migrációval, és a `supabase/*.sql` fájl is frissüljön.
 
 ## Hol mi van
 Admin: `src/pages/Admin*.tsx`, `src/components/admin/`. Árazás/tenant: `src/tenants/`, `contracts/`. Lead: `server/lead.ts`, `server/demoRequest.ts`. SEO: `vite.config.ts`, `contracts/seo.ts`. Teendők: `docs/AGENT-BACKLOG.md`.

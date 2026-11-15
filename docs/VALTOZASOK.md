@@ -1,5 +1,10 @@
 # Változások
 
+## 4.43 – Supabase MCP és hivatalos Supabase-skillek a repóban
+
+- `.mcp.json`: a Claude Code a repóban dolgozva a `supabase` MCP-szerveren éri el az éles Lamelix-adatbázist (`qxigqugywemokbnidokf`); a belépés gépenként, `claude /mcp` → Authenticate (kulcs nem kerül a repóba).
+- `.claude/skills/supabase`, `.claude/skills/supabase-postgres-best-practices` (a `supabase/agent-skills` csomagból, másolatként; csak Markdown, futtatható szkript nincs), `skills-lock.json`. Az AGENTS.md skill-listája és Supabase-szakasza frissítve.
+
 ## 4.42 – Éles Supabase-adatbázis (Lamelix, eu-west-2) sémával feltöltve
 
 - **Az éles projekt (`qxigqugywemokbnidokf`, Vercel Marketplace-szervezet) üres volt:** a leadek, ajánlatok, statisztika és admin-beállítások mentése táblák nélkül nem működött volna. Felkerült a `supabase/*.sql` teljes tartalma egy migrációban (`lamelix_initial_schema`): `leads`, `quotes`, `tenant_settings`, `tenant_events` + `track_event()`, `demo_requests`, indexekkel.
