@@ -3048,3 +3048,11 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
   .layout-a.style-glass .controls-panel, .layout-a.style-glass .price-panel:not(.is-collapsed), .layout-a.style-glass .mobile-price-bar { background: #1A1C1F; }
 }
 .inline-link { padding: 0; border: 0; background: none; color: var(--accent-primary); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+/* Ajánlatkérő űrlap: folyó szövegű hozzájárulás (nem flex, mert a link és a pont külön oszlopba esett), mezőnkénti hibák. */
+.consent-row > span, .layout-a .consent-row > span { display: block; }
+.consent-row > span > svg { display: inline-block; vertical-align: -3px; margin-right: 5px; color: var(--accent-primary); }
+.consent-row.is-invalid > span { color: #ffb4a6; }
+.consent-row.is-invalid input { outline: 2px solid #ff9b8a; outline-offset: 2px; }
+.real-lead-form .field-error { display: block; margin-top: 5px; color: #ffb4a6; font-size: var(--text-2xs); line-height: 1.45; }
+.real-lead-form .lead-grid input[aria-invalid="true"] { border-color: #ff9b8a; box-shadow: 0 0 0 3px rgba(255,155,138,.14); }
+.real-lead-form > .field-error { margin: 6px 0 0 26px; }

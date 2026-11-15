@@ -1,5 +1,11 @@
 # Változások
 
+## 4.34 – Ajánlatkérő űrlap: olvasható hozzájárulás, mezőnkénti hibaüzenetek
+
+- **Hiba: a hozzájárulás-szöveg három keskeny oszlopra esett szét** az ajánlatkérő űrlapon (a szöveg, a tájékoztató linkje és a mondat vége külön flex-oszlop lett). Most folyó szövegként, egy bekezdésben jelenik meg.
+- **Hiba: a beküldés gomb pipa nélkül némán tiltott volt.** Most mindig kattintható; beküldéskor minden hiányzó vagy hibás mezőhöz (név, telefon, e-mail, település, hozzájárulás) a mező alatt érthető magyar üzenet jelenik meg, a fókusz az első hibás mezőre ugrik, a mező javításakor az üzenet eltűnik. A szerver továbbra is ugyanígy ellenőriz.
+- Tesztek: `leadValidation.test.ts` (üres és hibás kitöltés, hozzájárulás hiánya, fókuszsorrend, a gomb nem tiltott, a hozzájárulás nem flex).
+
 ## 4.33 – Modulház: azonnali csere ugyanabban a 3D jelenetben, javított házmodell
 
 - **Nincs újratöltés:** a „Mit építesz?” választóban a Modulházra váltva a ház ugyanabban a 3D vásznon, a pergola helyén jelenik meg (ugyanaz a fény, égbolt, talaj és eszköztár); a beállítópanel és az ár a modulházéra vált. Korábban egy külön jelenet töltődött be töltőképernyővel. A modell a konfigurátor megnyitásakor előtöltődik.
