@@ -1,6 +1,6 @@
 # Változások
 
-## 4.47 – Német PDF, ajánlatoldal és e-mailek; a szerver a gyártó nyelvén beszél
+## 4.48 – Német PDF, ajánlatoldal és e-mailek; a szerver a gyártó nyelvén beszél
 
 - **Szerver a gyártó nyelvén:** a nyelvfüggő szövegtárak (tetők, oldalak, színek, építmények stb.) mostantól a hozzáféréskor, az aktuális nyelven jönnek létre (`localized()`, nyelvenként egyszer). A szerver kérésenként a gyártó nyelvén számol és ír (`withLocale(tenant.locale)`), utána visszaáll magyarra, így egy osztrák kérés nem szivárog át egy magyar gyártóhoz.
 - **Németül (osztrák gyártónál):** a gyártói és a vevői lead-e-mail (tárgy, specifikáció, tételes ár, anyaglista), a lead-végpont hibaüzenetei, az ajánlat tételei és specifikációja, az ajánlat e-mailjei (kiküldés, elfogadás, elutasítás, visszaigazolás), az utánkövető levelek (3. nap: vevő, 7. nap: gyártó), a vevői PDF-összefoglaló a műszaki rajzzal, és az ajánlatoldal (a nyelvet és a pénznemet az ajánlat adja, mert nem gyártói URL-en fut).
