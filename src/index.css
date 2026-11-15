@@ -3056,3 +3056,18 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 .real-lead-form .field-error { display: block; margin-top: 5px; color: #ffb4a6; font-size: var(--text-2xs); line-height: 1.45; }
 .real-lead-form .lead-grid input[aria-invalid="true"] { border-color: #ff9b8a; box-shadow: 0 0 0 3px rgba(255,155,138,.14); }
 .real-lead-form > .field-error { margin: 6px 0 0 26px; }
+/* Összegzés: a fő út (kép, adatok, ár, felmérés) felül; a másodlagos eszközök két összecsukható blokkban. */
+.summary-more { margin-top: 12px; border: 1px solid var(--surface-border); border-radius: var(--radius-sm); background: rgba(255,255,255,.025); }
+.summary-more > summary { display: flex; align-items: center; gap: 10px; padding: 13px 14px; cursor: pointer; list-style: none; color: var(--text-primary); }
+.summary-more > summary::-webkit-details-marker { display: none; }
+.summary-more > summary > svg:first-child { color: var(--accent-primary); flex: none; }
+.summary-more > summary span { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.summary-more > summary strong { font-size: var(--text-sm); font-weight: 650; }
+.summary-more > summary small { color: var(--text-secondary); font-size: var(--text-2xs); line-height: 1.4; }
+.summary-more-chevron { flex: none; color: var(--text-secondary); transition: transform .2s; }
+.summary-more[open] .summary-more-chevron { transform: rotate(90deg); }
+.summary-more-body { display: grid; gap: 10px; padding: 0 12px 14px; }
+.summary-more-body > .summary-section { margin-top: 4px; }
+.summary-actions.is-variants { margin: 10px 0; }
+.panel-dock.is-summary .panel-price { display: none; }
+@media (prefers-reduced-motion: reduce) { .summary-more-chevron { transition: none; } }

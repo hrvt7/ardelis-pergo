@@ -31,3 +31,19 @@ describe('ajánlatkérő űrlap ellenőrzése', () => {
     expect(css).toMatch(/\.consent-row > span, \.layout-a \.consent-row > span \{ display: block; \}/)
   })
 })
+
+describe('összegzés és űrlap szerkezete', () => {
+  it('a vevő nem a belső termékcsalád-nevet látja', async () => {
+    const { buyerProductName } = await import('../src/lib/leadValidation')
+    expect(buyerProductName('Pergo · pergola')).toBe('Pergola')
+    expect(buyerProductName('Drive · autóbeálló')).toBe('Autóbeálló')
+  })
+  it('az összegzésben a felmérés-kérés a megosztás és a költségrészletek előtt van, azok összecsukva', () => {
+    const src = readFileSync('src/components/SummaryPanel.tsx', 'utf8')
+    const lead = src.indexOf('lead-section')
+    expect(lead).toBeGreaterThan(src.indexOf('showroom-facts'))
+    expect(lead).toBeLessThan(src.indexOf('Megosztás és mentés'))
+    expect(lead).toBeLessThan(src.indexOf('Költségek és specifikáció'))
+    expect(src).not.toMatch(/Mentés A<|Mentés B</)
+  })
+})

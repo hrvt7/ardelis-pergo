@@ -494,7 +494,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
         </div>
 
       </div>
-      <div className="panel-dock">{footer}<div className="step-navigation"><button type="button" disabled={stepIndex === 0} onClick={() => go(stepIndex - 1)}><ArrowLeft size={16} />Vissza</button>{stepIndex === STEPS.length - 1
+      <div className={`panel-dock${step === 'summary' ? ' is-summary' : ''}`}>{footer}<div className="step-navigation"><button type="button" disabled={stepIndex === 0} onClick={() => go(stepIndex - 1)}><ArrowLeft size={16} />Vissza</button>{stepIndex === STEPS.length - 1
         ? <button type="button" className="next-step" onClick={() => scrollRef.current?.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Felmérést kérek<ArrowRight size={16} /></button>
         : <button type="button" className="next-step" onClick={() => go(stepIndex + 1)}>{stepIndex === STEPS.length - 2 ? 'Összegzés' : 'Következő'}<ArrowRight size={16} /></button>}</div></div>
     </aside>

@@ -36,3 +36,9 @@ export function validateLead(values: LeadFormValues): Partial<Record<LeadFieldNa
 export function firstInvalid(errors: Partial<Record<LeadFieldName, string>>): LeadFieldName | undefined {
   return LEAD_FIELD_ORDER.find((name) => errors[name])
 }
+
+/** A vevőnek szóló terméknév a belső termékcsalád-név nélkül: „Pergo · pergola” → „Pergola”. */
+export function buyerProductName(label: string): string {
+  const name = label.split(' · ').pop() ?? label
+  return name.charAt(0).toLocaleUpperCase('hu') + name.slice(1)
+}

@@ -1,5 +1,13 @@
 # Változások
 
+## 4.35 – Összegzés: felül a felmérés, a többi összecsukva
+
+- **Összegzés újrarendezve (rövidebb út a felmérés kéréséig):** felül a terv képe, neve, fő adatai és az irányár, közvetlenül alatta a felmérési kérelem. A másodlagos eszközök két összecsukható blokkba kerültek: „Megosztás és mentés” (PDF, kép, videó, szöveg másolása, WhatsApp, két változat mentése és összehasonlítása) és „Költségek és specifikáció” (árbontás, keretösszeg, üzemeltetés, anyaglista). Az összegzés panel magassága asztali nézetben kb. 2600 px-ről kb. 1400 px-re csökkent.
+- **Hiba: kétszer látszott az ár** az Összegzés lépésben; az alsó sávban itt már csak a „Felmérést kérek” gomb marad.
+- **Érthetőbb feliratok:** „Mentés A/B” helyett „Mentés „A” / „B” változatként”, magyarázattal; „Összefoglaló másolása” helyett „Szöveg másolása”.
+- **Hiba: az űrlap fejlécében a belső termékcsalád-név látszott** („Pergo · pergola”); most a vevő a „Pergola” nevet látja.
+- Tesztek: `leadValidation.test.ts` (terméknév, az összegzés sorrendje: felmérés a megosztás és a költségrészletek előtt).
+
 ## 4.34 – Ajánlatkérő űrlap: olvasható hozzájárulás, mezőnkénti hibaüzenetek
 
 - **Hiba: a hozzájárulás-szöveg három keskeny oszlopra esett szét** az ajánlatkérő űrlapon (a szöveg, a tájékoztató linkje és a mondat vége külön flex-oszlop lett). Most folyó szövegként, egy bekezdésben jelenik meg.
