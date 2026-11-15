@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Armchair, Cog, Box, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Layers, Maximize2, Rotate3d, Scan, ShieldCheck, SunMedium, View, Wallet, WandSparkles, X } from 'lucide-react'
+import { Armchair, Cog, Box, Footprints, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Layers, Maximize2, Rotate3d, Scan, ShieldCheck, SunMedium, View, Wallet, WandSparkles, X } from 'lucide-react'
 import { Link } from 'react-router'
 import ConfiguratorControls, { SceneSettingsPanel } from '@/components/ConfiguratorControls'
 import { InfoDialog, PriceSettingsDialog, ResetDialog } from '@/components/Dialogs'
@@ -33,6 +33,8 @@ import { ChangePill, SceneToolbar, StudioHeader, WelcomeBack, type ToolItem } fr
 import { usePresentation } from '@/components/studio/studioState'
 import PanelPrice from '@/components/studio/PanelPrice'
 import CameraViewMenu from '@/components/studio/CameraViewMenu'
+import WalkOverlay from '@/components/studio/WalkOverlay'
+import { buildWalkArea } from '@/lib/walkArea'
 import { cameraViewsFor } from '@/lib/cameraViews'
 import { mobileBarAction } from '@/lib/configSteps'
 import { DEFAULT_USAGE, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
@@ -327,6 +329,18 @@ export default function PergoStudio() {
     window.addEventListener('keydown', close)
     return () => window.removeEventListener('keydown', close)
   }, [detailsOpen])
+  // Bejárás: első személyű nézet emberi szemmagasságban; a konfiguráció és a jelenet ugyanaz.
+  const [walking, setWalking] = useState(false)
+  const enterWalk = useCallback(() => {
+    setPresentation(false)
+    setDetailsOpen(false)
+    setScene((current) => ({ ...current, photoMode: false, sunStudy: false, mechanism: false, exploded: false, autoRotate: false }))
+    setView('perspective')
+    if (isNarrow) setSheet('peek')
+    setWalking(true)
+  }, [isNarrow, setPresentation])
+  const exitWalk = useCallback(() => { setWalking(false); overview() }, [overview])
+  const walkRoofBlocked = useMemo(() => walking && buildWalkArea(config, { furniture: 'none', studio: true }).roofBlocked, [walking, config])
   const mechanismOn = config.roof === 'louvered' && !!scene.mechanism && !scene.photoMode && !scene.sunStudy
   const toggleSunStudy = useCallback(() => setScene((current) => {
     if (current.sunStudy) return { ...current, sunStudy: false, time: timeForClock(current.dayTime) }
@@ -441,18 +455,20 @@ export default function PergoStudio() {
   const summary = <SummaryPanel onFix={updateConfig} shareUrl={createShareUrl(config)} config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} onBudget={() => setModal('budget')} energyCost={energyCost} onEnergy={() => setModal('energy')} onExport={handleExport} exporting={exporting} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} />
 
   return (
-    <div className={`app-shell layout-a ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''}`}>
+    <div className={`app-shell layout-a ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''}`}>
       <StudioHeader onHome={() => setView('perspective')} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setModal('info')} onReset={() => setModal('reset')} />
 
       <main className="studio-shell" id="top">
         <section className={`viewer-panel ${scene.photoMode ? 'photo-preview' : ''}`} aria-label="3D előnézet">
           {scene.photoMode && scene.photoUrl && <img className="photo-backdrop" src={scene.photoUrl} alt="A feltöltött teraszfotó háttere" />}
-          <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={handleSideSelect} onSceneChange={updateScene} onShade={setShade} />
+          <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={walking ? undefined : handleSideSelect} onSceneChange={updateScene} onShade={setShade} walk={walking} />
+          {walking && <WalkOverlay onExit={exitWalk} touch={coarsePointer || isNarrow} roofBlocked={walkRoofBlocked} />}
           <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1><span className="kinetic" key={ROOF_LABELS[config.roof]}>{ROOF_LABELS[config.roof].split(' · ')[0]}</span> <i>/</i> <span className="kinetic" key={`w${config.width}`}>{config.width.toFixed(1).replace('.', ',')}</span><small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>
           <div className="viewer-live"><i />VALÓS IDEJŰ 3D</div>
           <SceneToolbar leading={<CameraViewMenu views={cameraViewsFor(product).map((item) => ({ ...item, icon: CAMERA_ICONS[item.id] ?? View }))} value={view} onChange={(id) => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} />} time={scene.time} onTimeChange={(time) => updateScene({ time, dayTime: time === 'day' ? 13 : time === 'sunset' ? 18 : 22 })}
             viewPanel={<SceneSettingsPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onPhotoUpload={handlePhoto} />}
             quick={[
+              { id: 'walk', icon: Footprints, label: 'Bejárás', className: 'walk-launch', title: 'Bejárás első személyű nézetben, emberi szemmagasságból', active: walking, run: () => (walking ? exitWalk() : enterWalk()) },
               { id: 'rain', icon: CloudRain, label: 'Eső', className: 'icon-rain', title: 'Eső be- és kikapcsolása', active: scene.rain, run: () => updateScene({ rain: !scene.rain }) },
               ...(arHidden ? [] : [{ id: 'ar', icon: Rotate3d, label: 'AR', className: 'ar-launch icon-ar', title: arPath === 'desktop' ? 'Nézd meg a kertedben valós méretben — telefonon (QR-kód)' : 'Nézd meg valós méretben a saját kertedben (AR)', run: () => { if (!admin) { track(tenant.id, 'ar'); noteEngagement(tenant.id, 'ar') } if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') } }]),
             ]}

@@ -2974,3 +2974,23 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
   .weather-toolbar .camera-menu .camera-menu-toggle { width: auto; padding: 0 12px; }
   .weather-toolbar .camera-menu .camera-menu-toggle > span { display: inline; }
 }
+
+/* 4.25 – Bejárás (első személyű nézet): diszkrét kezelőfelület a 3D kép fölött. */
+.walk-mode .weather-toolbar, .walk-mode .viewer-heading, .walk-mode .viewer-footer, .walk-mode .studio-home-link, .walk-mode .pov-note, .walk-mode .view-popover,
+.walk-mode .dimension-label, .walk-mode .person-label, .walk-mode .hotspot, .walk-mode .hotspot-card, .walk-mode .sun-panel-slot, .walk-mode .automation-status { display: none !important; }
+.walk-badge { position: absolute; z-index: 8; left: 24px; top: 22px; display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: rgba(14,15,17,.72); backdrop-filter: blur(10px); color: #F4F5F6; font-size: 14px; font-weight: 500; pointer-events: none; }
+.walk-badge svg { color: var(--accent-primary); }
+.walk-exit { position: absolute; z-index: 8; right: 20px; top: 20px; min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--accent-primary); color: var(--ink-1000); font-size: 15px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.walk-exit:hover { background: var(--accent-hover); }
+.walk-stick { position: absolute; z-index: 8; left: 28px; bottom: 28px; width: 132px; height: 132px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.22); border-radius: 50%; background: radial-gradient(circle, rgba(14,15,17,.25), rgba(14,15,17,.55)); backdrop-filter: blur(6px); touch-action: none; cursor: grab; }
+.walk-stick-knob { width: 52px; height: 52px; border-radius: 50%; background: rgba(244,245,246,.92); box-shadow: 0 6px 18px rgba(0,0,0,.35); pointer-events: none; transition: transform 80ms ease-out; }
+.walk-note { position: absolute; z-index: 8; left: 50%; top: 76px; transform: translateX(-50%); max-width: min(440px, calc(100% - 32px)); padding: 10px 14px; border-radius: 14px; background: rgba(14,15,17,.82); color: #F4F5F6; font-size: 14px; line-height: 1.45; text-align: center; }
+.walk-hint { position: absolute; z-index: 8; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; gap: 4px; width: min(360px, calc(100% - 32px)); padding: 16px 20px; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; background: rgba(14,15,17,.86); backdrop-filter: blur(12px); color: #F4F5F6; font-size: 14px; line-height: 1.5; text-align: center; pointer-events: none; animation: camera-menu-in 200ms ease-out; }
+.walk-hint strong { font-family: var(--font-display); font-size: 17px; font-weight: 600; }
+.walk-hint span { color: #C7CBD0; }
+@media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .walk-badge { display: none; }
+  .walk-exit { right: 12px; top: 12px; }
+  .walk-stick { left: 20px; bottom: 150px; width: 120px; height: 120px; }
+}
+@media (prefers-reduced-motion: reduce) { .walk-hint { animation: none; } .walk-stick-knob { transition: none; } }

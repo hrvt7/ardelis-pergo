@@ -1,5 +1,15 @@
 # Változások
 
+## 4.25 – Bejárás: első személyű séta a pergola körül és alatt
+
+- **Bejárás gomb** a jelenet eszközsorában (lábnyom ikon): a kamera 0,7 mp alatt a pergola elé, kívülre repül, 175 cm-es szemmagasságba, a pergola felé nézve. Kilépés a jobb felső gombbal (asztalon Esc-kel is); utána vissza az áttekintő nézet, a konfiguráció változatlan.
+- **Irányítás:** húzással körbenézés (egér és ujj); érintőképernyőn bal alsó joystick, asztalon W A S D / nyilak (a bal–jobb nyíl fordul). Enyhe gyorsulás és lassulás, kb. 1,3 m/s. Első használatkor rövid súgó (7 mp után vagy az első mozdulatra eltűnik).
+- **Ütközés (fizikai motor nélkül):** oszlopok, zárt oldalelemek (üveg, lamella, lécfal, ajtós fal zárt ajtóval, leengedett ZIP), házfal és házszárnyak, a ház tömbje, telekhatár és utca, ültetőládák, kerti lámpák, dézsák, bútorok (közelítő alaprajzzal) és carportnál az autók. Ütközéskor a fal mentén csúszik. Nyitott oldalon és felhúzott ZIP-en át be lehet sétálni; ha a belmagasság kisebb a szemmagasságnál, a tető alá nem (ezt a felület jelzi).
+- **Egy modell, egy konfiguráció:** a bejárás ugyanazt a jelenetet nézi; bejárás közben is lehet konfigurálni, a változás azonnal látszik, és ha egy új elem a néző helyére kerül, a kamera a legközelebbi szabad pontra lép.
+- A ház- és kertelrendezés (ház, házszárnyak, sövény, ültetőládák, lámpák, dézsák) a jelenetből közös modulba került (`src/lib/sceneLayout.ts`), hogy a jelenet és az ütközés ugyanabból számoljon; a ház méretei a `houseDims.ts`-ben.
+- Nem ellenőrzött: valódi tableten és telefonon a sebesség és a kezelés (a próba gépi böngészőben, szoftveres grafikával készült). A bútorok ütközője közelítő (a zóna belső 60%-a), a nyitott ajtókon nem lehet átmenni (az első verzióban a zárt ajtó fal).
+- Tesztek: `walkArea.test.ts` (kezdőpont, oszlop, üveg- és lamellafal, félbe osztott oldal, ZIP, alacsony tető, házfal, telekhatár, bútor, csúszás a fal mentén, konfigurációváltás), `walkInput.test.ts` (billentyűk és joystick).
+
 ## 4.24 – A kameranézetek egy „Nézet” menübe kerültek
 
 - **Több hely a képnek:** az alsó, középső nézetsáv (Kívülről, Alulról, Felülről, Részlet, Kanapé) megszűnt; a nézetek a jobb felső eszközsor első gombjából nyílnak le (asztalon a gomb a jelenlegi nézet nevét mutatja, mobilon ikon). Esc vagy kattintás máshová bezárja.

@@ -33,8 +33,9 @@ import { kelvinToHex } from '@/lib/color'
 import { glassPanels } from '@/lib/glass'
 import { WOOD_HEXES } from '@/lib/colors'
 import { getHouseAsset, HOUSE_RAW } from '@/lib/houseAsset'
+import { gardenLayout, getHouseLayout, wingFootprints, WING_DEPTH } from '@/lib/sceneLayout'
 import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
-import { isOriginalCedar, STYLED_HOUSE, styledHouseScale, wallColorHex } from '@/lib/house'
+import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
 import { doorLeafWidth, sideSegments } from '@/lib/sides'
 import { carportBays, hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
@@ -47,6 +48,7 @@ import { effectiveGlazing, isGlazedRoof, isMovableRoof, roofRise } from '@/lib/r
 import { deckBounds } from '@/lib/deck'
 import { SolarPanels } from '@/components/SceneExtras'
 import LouvreRoof from '@/components/LouvreRoof'
+import WalkController from '@/components/WalkController'
 import { SB400, sb400Post } from '@/lib/sb400'
 import { SB400_SOURCE, sb400Details, type Sb400DetailId } from '@/lib/sb400Details'
 import Car from '@/components/models/Car'
@@ -1512,25 +1514,6 @@ const STYLED_HOUSE_URL: Record<Exclude<HouseStyle, 'classic'>, string> = { moder
 const GARDEN_KIT = { hedge: assetUrl('/assets/models/garden/hedge.glb'), planter: assetUrl('/assets/models/garden/planter.glb'), bollard: assetUrl('/assets/models/garden/bollard.glb'), fence: assetUrl('/assets/models/garden/fence.glb') }
 
 
-/**
- * frontZ a ház homlokzatának síkja. Falhoz rögzítve a pergola 18 cm-es fali
- * profilja közvetlenül a homlokzaton ül. A ház úgy méreteződik, hogy az eresz
- * mindig a pergola fölé essen (magas pergolánál arányosan nagyobb a ház).
- */
-function getHouseLayout(config: PergolaConfig, style: HouseStyle = 'classic') {
-  const attached = hasBackWall(config.mount)
-  if (style !== 'classic') {
-    // Modellezett ház: a pergola a főtömeg közepe elé kerül; jobbra a melléképület nyúlik túl (a kert ehhez igazodik).
-    const scale = styledHouseScale(config.width)
-    const frontZ = attached ? -config.depth / 2 - 0.185 : -config.depth / 2 - 4.6
-    return { frontZ, attached, width: (STYLED_HOUSE.main + 2 * STYLED_HOUSE.annex) * scale, scale, depth: STYLED_HOUSE.depth * scale }
-  }
-  // A ház léptéke a pergola szélességétől és az oszlopmagasságtól függ, a tető dőlésétől NEM:
-  // a dőlés csak a hátsó (fali) élt emeli, a ház mérete nem változhat vele (arányos marad).
-  const scale = Math.max(Math.max(17, config.width + 6) / HOUSE_RAW.width, (config.height + 0.32) / HOUSE_RAW.eave)
-  const frontZ = attached ? -config.depth / 2 - 0.185 : -config.depth / 2 - 4.6 - HOUSE_RAW.facadeInset * scale
-  return { frontZ, attached, width: HOUSE_RAW.width * scale, scale, depth: HOUSE_RAW.depth * scale }
-}
 
 // A ház modelljének részei a homlokzat- és nyílászáró-színezéshez.
 // Deszkák: valódi (profilos) geometria — vakolt vagy tégla háznál elrejtjük, mögöttük a sima falsíkok kapják az anyagot.
@@ -1797,21 +1780,14 @@ function KitInstances({ url, places, night = false, shadows = true }: { url: str
 // A sarok- és fülkerögzítésnél nem szabadon álló fal, hanem a ház földszinti
 // szárnya áll a pergola mellett: ugyanazzal a cédrusburkolattal, kőlábazattal,
 // cinkfedéssel, ablakkeretekkel és üveggel, mint a főépület.
-const WING_DEPTH = 4.4 // a szárny szélessége (x irányban), méter
 const RAW_STOREY = 2.9 // a ház földszintje a modell saját egységében
 
 type WingSpec = { side: 'left' | 'right'; sx: number; inner: number; outer: number; zBack: number; zFront: number; height: number; scale: number }
 
 function getWingSpecs(config: PergolaConfig, style: HouseStyle = 'classic'): WingSpec[] {
   const layout = getHouseLayout(config, style)
-  const zBack = layout.frontZ - 0.9
-  const zFront = layout.frontZ + Math.max(config.depth + 1.5, 5.2)
   const height = Math.max(RAW_STOREY * layout.scale + 0.42, config.height + roofRise(config) * 0.5 + 0.5)
-  return sideWalls(config.mount).map((side) => {
-    const sx = side === 'left' ? -1 : 1
-    const inner = sx * (config.width / 2 + 0.125)
-    return { side, sx, inner, outer: inner + sx * WING_DEPTH, zBack, zFront, height, scale: layout.scale }
-  })
+  return wingFootprints(config, style).map((wing) => ({ ...wing, height, scale: layout.scale }))
 }
 
 /** Homlokzati sík méterarányos UV-val, hogy a burkolat sűrűsége bármekkora szárnyon azonos legyen. */
@@ -2198,23 +2174,10 @@ function Tree({ position, scale = 1, wind, bare = false }: { position: [number, 
   return <group ref={group}><RealisticAsset url={TREE_MODEL} position={position} height={4.8 * scale} rotation={position[0] * 0.43} shadows={false} bare={bare} /></group>
 }
 
-/** Van-e nyíló (szárnyas) ajtó az adott oldalon – egész vagy fél oldalon. */
-function hasSwingDoor(config: PergolaConfig, side: SideKey) {
-  return config.sides[side] === 'door' || config.split?.[side] === 'door'
-}
 
 function Garden({ config, scene, quality }: { config: PergolaConfig; scene: SceneSettings; quality: QualitySettings }) {
-  const house = getHouseLayout(config, scene.houseStyle ?? 'classic')
+  const { house, hedges, planters, bollards, pots } = gardenLayout(config, scene.houseStyle ?? 'classic')
   const night = scene.time === 'night'
-  // Nyírt sövény a két telekhatáron (a kerítésen belül), a ház vonalától az utcáig.
-  const boundary = house.width / 2 + 1.05
-  const hedgeFrom = house.frontZ + 0.9
-  const hedgeCount = Math.max(0, Math.floor((8.3 - hedgeFrom) / 2))
-  const hedges = [-1, 1].flatMap((side) => Array.from({ length: hedgeCount }, (_, index): [number, number, number, number] => [side * (boundary - 0.55), hedgeFrom + 1 + index * 2, Math.PI / 2, 1]))
-  // Ültetőládák a homlokzat előtt, a pergola két oldalán (falas oldalon és önálló pergolánál nincs).
-  const planters = house.attached ? (['left', 'right'] as const).filter((side) => !isWallSide(config.mount, side)).map((side): [number, number, number, number] => [(side === 'left' ? -1 : 1) * (config.width / 2 + 2.15), house.frontZ + 0.42, 0, 1]) : []
-  // Kerti lámpák a lépőkövek mentén, a pergola előtt.
-  const bollards = [4.1, 5.75, 7.4].filter((z) => z > config.depth / 2 + 0.7).flatMap((z): [number, number, number, number][] => [[-0.95, z, 0, 1], [0.95, z, 0, 1]])
   const sideX = house.width / 2 + 2.1
   const rearZ = house.frontZ - house.depth - 0.85
   return <group>
@@ -2226,8 +2189,7 @@ function Garden({ config, scene, quality }: { config: PergolaConfig; scene: Scen
     {quality.enableExtraPlants && <Tree position={[sideX + 1.4, -0.05, 4.6]} scale={0.86} wind={scene.wind} />}
     {[-0.32, 0, 0.32].map((fraction, index) => <RealisticAsset key={fraction} url={assetUrl('/assets/models/shrub_04/model.gltf')} position={[house.width * fraction, -0.04, rearZ]} height={0.95 + index * 0.08} rotation={index * 0.8} shadows={false} />)}
     {/* Oldalfal esetén a dézsák a fal végéhez, a terasz elejére kerülnek. Nyíló ajtós oldal mellől a dézsa kijjebb kerül, hogy a kinyíló szárny ne ütközzön bele. */}
-    <PlantPot position={isWallSide(config.mount, 'left') ? [-config.width / 2 + 0.38, 0.01, config.depth / 2 + (hasSwingDoor(config, 'front') ? 1.75 : 0.62)] : [-config.width / 2 - (hasSwingDoor(config, 'left') ? 1.9 : 0.75), 0.01, config.depth / 2]} scale={1.25} />
-    <PlantPot position={isWallSide(config.mount, 'right') ? [config.width / 2 - 0.38, 0.01, config.depth / 2 + (hasSwingDoor(config, 'front') ? 1.75 : 0.62)] : [config.width / 2 + (hasSwingDoor(config, 'right') ? 1.9 : 0.8), 0.01, hasBackWall(config.mount) ? -config.depth / 2 + 0.5 : -config.depth / 2]} scale={1.05} />
+    {pots.map(([x, z, , scale], index) => <PlantPot key={index} position={[x, 0.01, z]} scale={scale} />)}
   </group>
 }
 
@@ -2473,7 +2435,7 @@ function seatPosition(config: Pick<PergolaConfig, 'width' | 'depth'>, furniture:
   return fit.alongWidth ? local : [local[1], -local[0]]
 }
 
-function CameraController({ view, focus, viewShift, revealed, config, autoRotate, furniture, mechanism = false, autoCamera = true, houseFrontZ = null }: { view: CameraView; focus: CameraFocus | null; viewShift: number; revealed: boolean; config: PergolaConfig; autoRotate: boolean; furniture: FurnitureSet; mechanism?: boolean; autoCamera?: boolean; houseFrontZ?: number | null }) {
+function CameraController({ view, focus, viewShift, revealed, config, autoRotate, furniture, mechanism = false, autoCamera = true, houseFrontZ = null, walk = false }: { walk?: boolean; view: CameraView; focus: CameraFocus | null; viewShift: number; revealed: boolean; config: PergolaConfig; autoRotate: boolean; furniture: FurnitureSet; mechanism?: boolean; autoCamera?: boolean; houseFrontZ?: number | null }) {
   const { camera, gl, invalidate } = useThree()
   const controls = useRef<OrbitControlsType>(null)
   const destination = useRef(new THREE.Vector3(12, 7, 14))
@@ -2569,6 +2531,8 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
   useEffect(() => {
     const previous = lastApplied.current
     lastApplied.current = { view, mechanism }
+    // Bejárás közben a kamerát a bejárás vezérli; a konfiguráció változása nem rántja el.
+    if (walk) return
     if (previous && previous.view === view && previous.mechanism === mechanism && !autoCamera) return
     applyView()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- az autoCamera kapcsolása önmagában ne mozdítsa a kamerát
@@ -2720,7 +2684,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
   const showcase = useRef(0)
   const focusId = focus?.id
   useEffect(() => {
-    if (!focus || view === 'sofa') return
+    if (!focus || view === 'sofa' || walk) return
     const { width: w, depth: d, height: h } = config
     if (focus.kind === 'overview' || focus.kind === 'showcase') {
       // Előbb vissza az áttekintő állásba (egy korábbi oldalfókusz után is), bemutatónál utána lassú körbeforgás.
@@ -2814,7 +2778,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
   }, [view, camera, gl, invalidate])
 
   useFrame((_, delta) => {
-    if (!controls.current || view === 'sofa' || isOrbitRecording()) return
+    if (!controls.current || view === 'sofa' || walk || isOrbitRecording()) return
     // Lefelé addig forgatható, amíg a kamera a talaj fölött marad (közelről a tető alá is benézhet).
     // Az automatikus repülés közben nincs korlát (az útvonal maga a talaj fölött tartja a kamerát, és pontosan a célállásba kell érnie).
     controls.current.maxPolarAngle = transitioning.current ? Math.PI : groundPolarLimit(controls.current.target.y, camera.position.distanceTo(controls.current.target))
@@ -2871,7 +2835,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
       controls.current.update(); invalidate()
     } else if (autoRotate && idle.current > 2 && autoFrame.current >= 1 / 30) { autoFrame.current = 0; invalidate() }
   })
-  return <OrbitControls ref={controls} makeDefault enabled={view !== 'sofa'} enableRotate enablePan enableZoom screenSpacePanning enableDamping dampingFactor={0.08} rotateSpeed={0.9} minDistance={0.8} maxDistance={maxOrbitDistance(config)} minPolarAngle={0.02} zoomToCursor={finePointer} autoRotate={autoRotate && view !== 'sofa'} autoRotateSpeed={0.4} onStart={() => { transitioning.current = false; firstFlight.current = false; showcase.current = 0; idle.current = 0 }} />
+  return <OrbitControls ref={controls} makeDefault enabled={view !== 'sofa' && !walk} enableRotate enablePan enableZoom screenSpacePanning enableDamping dampingFactor={0.08} rotateSpeed={0.9} minDistance={0.8} maxDistance={maxOrbitDistance(config)} minPolarAngle={0.02} zoomToCursor={finePointer} autoRotate={autoRotate && view !== 'sofa'} autoRotateSpeed={0.4} onStart={() => { transitioning.current = false; firstFlight.current = false; showcase.current = 0; idle.current = 0 }} />
 }
 
 /** Az égbolt-képeken (HDR) a nap iránya: equirect u koordináta → szög az xz síkban. */
@@ -3099,7 +3063,7 @@ function SceneRegistration() {
   return null
 }
 
-function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
+function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade, walk = false }: { walk?: boolean; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const target = getLighting(scene)
   // Az égbolt-kép és a be/ki jellegű dolgok (csillagok, éjszakai fények, LED) a napszak-átmenet közepén váltanak (LightingMood).
   const targetKey = `${target.hdr}|${target.night}`
@@ -3150,7 +3114,7 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} /></Suspense></SceneAssetBoundary>}
     {scene.photoMode
       ? <PhotoRig config={config} placement={placement} onCommit={(next) => onSceneChange(next)} />
-      : <><TurntableDriver fullTurn={studio && !hasBackWall(config.mount)} /><CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} mechanism={config.roof === 'louvered' && (!!scene.mechanism || rainShow > 0)} autoCamera={scene.autoCamera} houseFrontZ={studio || hasBackWall(config.mount) ? null : getHouseLayout(config, scene.houseStyle ?? 'classic').frontZ} /></>}
+      : <><TurntableDriver fullTurn={studio && !hasBackWall(config.mount)} /><CameraController walk={walk} view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} mechanism={config.roof === 'louvered' && (!!scene.mechanism || rainShow > 0)} autoCamera={scene.autoCamera} houseFrontZ={studio || hasBackWall(config.mount) ? null : getHouseLayout(config, scene.houseStyle ?? 'classic').frontZ} />{walk && <WalkController config={config} scene={scene} />}</>}
   </>
 }
 
@@ -3274,7 +3238,7 @@ function FirstFrameReady({ onReady }: { onReady: () => void }) {
   return null
 }
 
-export default memo(function PergolaScene({ config, scene, view, focus = null, viewShift = 0, onSideSelect, onSceneChange, onShade }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
+export default memo(function PergolaScene({ config, scene, view, focus = null, viewShift = 0, onSideSelect, onSceneChange, onShade, walk = false }: { /** Bejárás: első személyű kamera és séta. */ walk?: boolean; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const [ready, setReady] = useState(false)
   const [decorativeReady, setDecorativeReady] = useState(false)
   // A nézet csak akkor tárul fel, ha a ház és a környezet is betöltött: addig 0–100% töltőképernyő fedi a jelenetet.
@@ -3398,6 +3362,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
             onSideSelect={onSideSelect}
             onSceneChange={onSceneChange}
             onShade={onShade}
+            walk={walk}
           />
         </Suspense></QualityContext.Provider>
         <FrameGovernor enabled={loaded && scene.quality === 'auto'} onSlow={onSlow} />

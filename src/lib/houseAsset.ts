@@ -6,8 +6,7 @@ import { assetUrl } from '@/lib/assetUrl'
 export type ArchitecturalAsset = THREE.Group & { dispose: () => Promise<void> }
 type ArchitecturalModule = { createAsset: (namespace: typeof THREE, options: { states: 'lazy' }) => Promise<ArchitecturalAsset> }
 
-/** A ház modell saját méretei (modellegységben, a talajszinttől). */
-export const HOUSE_RAW = { width: 18.22, depth: 6.79, eave: 2.947, facadeInset: 0.573 }
+export { HOUSE_RAW } from './houseDims'
 
 const houseAssetPath = assetUrl('/assets/models/cedar_zinc_house/asset.mjs')
 // Natív böngészős import: az asset és a relatív erőforrásai szándékosan a public/ alatt maradnak.
