@@ -1,5 +1,15 @@
 # Változások
 
+## 4.22 – Új konfigurátor-felület: nagy 3D, egy panel, élő ár a panel alján
+
+- **Elrendezés („A”):** asztali nézetben a 3D a bal oldalon a szélesség kb. 70%-át kapja (1440 px-en ~1015 px a korábbi ~650 helyett), a beállítások egyetlen jobb oldali panelben vannak (420 / 380 / 344 px a képernyő szélessége szerint).
+- **Ár:** a panel alján egy fő szám (bruttó irányár) és egy „Részletek” gomb; a nettó/ÁFA, havi bontás, üzemeltetés, költségmegoszlás, tételes kalkuláció, PDF és Megosztás kérésre, a panel mellett nyílik (Esc zárja). Zárva nem takarja a 3D-t.
+- **Mobil és álló tablet:** a lépésjelző a csukott lapon is látszik; az alsó sáv gombja mindig a következő lépésre visz („Tovább: Méret”…), az utolsó lépésen a felmérés-kérő űrlapra. Korábban az „Összegzés” gomb átugrotta a lépéseket. A lapban nincs második „Következő” gomb, a forgatási tipp nem takarja a nézetgombokat.
+- **Megjelenés:** grafit-lime színek (szöveg/háttér kontraszt 14–17:1, másodlagos szöveg 6,8–8:1, mezőszegély 3,35:1 – számolt értékek), Inter (szöveg, igazított számok) és Manrope (címek), legalább 13 px-es szövegek, 16 px-es beviteli mezők, 44 px-es mezők. A „Mit építesz” kártyák közül csak a kiválasztott mutat teljes leírást. Kijelölésnél akcentus-keret is jelez, nem csak a szín.
+- Csak a pergola/carport stúdióra hat (`.layout-a`); a kerítés, garázskapu, katalógus, admin és a nyitóoldal változatlan. Logika, árazás, export, lead változatlan.
+- Új függőségek: `@fontsource-variable/inter`, `@fontsource-variable/manrope` (saját tárhelyű, latin-ext alkészlettel: ő, ű).
+- Tesztek: `configSteps.test.ts` (a mobil gomb a következő lépésre visz, az utolsón a felmérésre).
+
 ## 4.21 – Havi riport e-mailben a gyártónak
 
 - Minden hónap 1-jén 6:00-kor (UTC) a gyártó lead-címzettjei összesítőt kapnak az előző naptári hónapról: felmérési kérelmek száma és bruttó irányár-összege (átlaggal), összevetés az előző hónappal, becsült konverzió (kérelem / megnyitás), tölcsér (megnyitás → tervmódosítás → űrlap → kitöltés → kérelem), PDF / AR / megosztás, a hónap érdeklődőinek mostani állapota, a legtöbbet kért tetők, és figyelmeztetés a még „Új” (senki által nem keresett) érdeklődőkről.

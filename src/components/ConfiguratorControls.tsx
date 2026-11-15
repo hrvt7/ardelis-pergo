@@ -1,3 +1,4 @@
+import { STEPS } from '@/lib/configSteps'
 import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Box, Check, ChevronDown, ChevronRight, CloudRain, Cog, Columns3, Gauge, House, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
 import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, wallLabel } from '@/lib/mount'
@@ -24,14 +25,6 @@ import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel,
 
 // A lépések sorrendje a döntések természetes rendje: mit → mekkora és hogyan áll → tető és zárás → szín → komfort → felmérés.
 // Az azonosítók történeti okból maradtak ('size' = Típus, 'mount' = Méret és szerkezet, 'sides' = Tető és oldalak).
-const STEPS: { id: ConfigStep; label: string; short: string }[] = [
-  { id: 'size', label: 'Típus', short: 'Mit építesz' },
-  { id: 'mount', label: 'Méret', short: 'Méret és szerkezet' },
-  { id: 'sides', label: 'Tető', short: 'Tető és oldalak' },
-  { id: 'color', label: 'Szín', short: 'Felület' },
-  { id: 'extras', label: 'Extrák', short: 'Komfort' },
-  { id: 'summary', label: 'Összegzés', short: 'Felmérés' },
-]
 
 interface Props {
   config: PergolaConfig
@@ -53,6 +46,8 @@ interface Props {
   /** Üzemeltetési költség: becsült éves összeg és a részletek megnyitása. */
   energyCost?: number | null
   onEnergy?: () => void
+  /** A panel alján, a lépésgombok fölött (asztali nézetben az élő ár és a Részletek gomb). */
+  footer?: ReactNode
 }
 
 
@@ -321,7 +316,7 @@ export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneCha
   )
 }
 
-export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, sheet, onSheetChange, onAdvisor, energyCost, onEnergy }: Props) {
+export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, sheet, onSheetChange, onAdvisor, energyCost, onEnergy, footer }: Props) {
   const { tenant, product } = useTenant()
   const { limits } = tenant
   // A carport külön termék (saját kalkulátor ugyanezen a motoron): nincs típusválasztó, és a pergola-komfort opciók sem jelennek meg.
@@ -496,9 +491,9 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
         </div>
 
       </div>
-      <div className="step-navigation"><button type="button" disabled={stepIndex === 0} onClick={() => go(stepIndex - 1)}><ArrowLeft size={16} />Vissza</button>{stepIndex === STEPS.length - 1
+      <div className="panel-dock">{footer}<div className="step-navigation"><button type="button" disabled={stepIndex === 0} onClick={() => go(stepIndex - 1)}><ArrowLeft size={16} />Vissza</button>{stepIndex === STEPS.length - 1
         ? <button type="button" className="next-step" onClick={() => scrollRef.current?.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Felmérést kérek<ArrowRight size={16} /></button>
-        : <button type="button" className="next-step" onClick={() => go(stepIndex + 1)}>{stepIndex === STEPS.length - 2 ? 'Összegzés' : 'Következő'}<ArrowRight size={16} /></button>}</div>
+        : <button type="button" className="next-step" onClick={() => go(stepIndex + 1)}>{stepIndex === STEPS.length - 2 ? 'Összegzés' : 'Következő'}<ArrowRight size={16} /></button>}</div></div>
     </aside>
   )
 }

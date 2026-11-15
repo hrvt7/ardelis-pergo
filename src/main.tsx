@@ -17,6 +17,9 @@ import '@fontsource/cormorant-garamond/400.css'
 import '@fontsource/cormorant-garamond/500.css'
 import '@fontsource/cormorant-garamond/400-italic.css'
 import '@fontsource/cormorant-garamond/500-italic.css'
+// A konfigurátor felülete: Inter (szöveg, igazított számok) + Manrope (címek), változtatható súlyú, latin-ext alkészlettel (ő, ű).
+import '@fontsource-variable/inter/index.css'
+import '@fontsource-variable/manrope/index.css'
 import './index.css'
 import App from './App.tsx'
 // Vercel Web Analytics: csak ha a projektben be van kapcsolva és VITE_VERCEL_ANALYTICS=1 (különben a szkript 404-et adna).
