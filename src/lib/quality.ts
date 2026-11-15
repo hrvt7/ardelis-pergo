@@ -49,6 +49,8 @@ const STRONG_GPU = /RTX|GTX 1[0-9]|RX [5-9]\d{2}|Radeon (Pro|VII)|Apple M[1-9]|A
  * Belépő és középkategóriás mobil GPU (Mali-4xx/T/G5x/G6x, PowerVR, Adreno 6xx és régebbi). Ezeken a tableteken
  * (pl. Redmi Pad 2: Mali-G57 MC2) már a közepes szint is akad nagy felbontású kijelzőn, ezért automatikusan alacsony.
  */
+/** Csúcskategóriás mobil GPU (Adreno 750+ / 8xx – pl. Snapdragon 8 Elite Gen 5: Adreno 840 –, Immortalis-G9xx, Xclipse 9xx). */
+const FLAGSHIP_MOBILE_GPU = /Adreno(\s*\(TM\))?\s*(8\d{2}|7[5-9]\d)\b|Immortalis-G9\d{2}|Xclipse\s*9\d{2}/i
 const ENTRY_MOBILE_GPU = /Mali-(4|T|G[56]\d\b)|PowerVR|Adreno(\s*\(TM\))?\s*[1-6]\d{2}\b/i
 
 /**
@@ -65,6 +67,8 @@ export function classifyDevice(input: { gpu: string; cores: number; memory: numb
   const { gpu, cores, memory, touch, phone, android } = input
   if (SOFTWARE_GPU.test(gpu)) return 'low'
   if (touch && ENTRY_MOBILE_GPU.test(gpu)) return 'low'
+  // Csúcskategóriás mobil GPU tableten: magas szint automatikusan (az ultra kézzel választható, figyelmeztetés nélkül).
+  if (touch && !phone && FLAGSHIP_MOBILE_GPU.test(gpu)) return memory >= 6 && cores >= 8 ? 'high' : 'medium'
   // Telefon és Android-eszköz: a régi szabály (kevés mag vagy memória → low, különben medium).
   if (phone || android || (touch && /Mali|Adreno|Xclipse|Immortalis/i.test(gpu))) return memory <= 3 || cores <= 4 ? 'low' : 'medium'
   // iPad és más érintős eszköz ismert, erősebb GPU-val: az asztali besorolás marad (a futásidejű védőháló lejjebb lép, ha kell).
@@ -171,5 +175,8 @@ export const TIER_LABEL: Record<QualityTier, string> = { low: 'Alacsony', medium
 
 /** Kézzel választott szint az eszköznek ajánlott fölött: a felület figyelmeztet, de nem írja felül a választást. */
 export function qualityAboveDevice(level: QualityLevel, detected: QualityTier) {
-  return isTier(level) && tierRank(level) > tierRank(detected)
+  if (!isTier(level)) return false
+  const gap = tierRank(level) - tierRank(detected)
+  // Egy szinttel feljebb csak gyenge eszközön (alacsony besorolás) figyelmeztetünk; MacBook vagy csúcstablet „magas” → ultra rendben.
+  return gap >= 2 || (gap === 1 && detected === 'low')
 }

@@ -31,8 +31,17 @@ describe('automatikus 3D-szint eszközönként', () => {
     expect(isTouchDevice({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', maxTouchPoints: 5 }, true)).toBe(true)
     expect(isTouchDevice({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', maxTouchPoints: 0 }, false)).toBe(false)
   })
+  it('csúcskategóriás Android-tablet (Snapdragon 8 Elite Gen 5, Adreno 840) magas szintet kap; telefonon közepes marad', () => {
+    expect(classifyDevice({ ...base, gpu: 'Adreno (TM) 840', touch: true, android: true })).toBe('high')
+    expect(classifyDevice({ ...base, gpu: 'Immortalis-G925', touch: true, android: true })).toBe('high')
+    expect(classifyDevice({ ...base, gpu: 'Adreno (TM) 840', touch: true, android: true, phone: true })).toBe('medium')
+    expect(classifyDevice({ ...base, gpu: 'Adreno (TM) 740', touch: true, android: true })).toBe('medium')
+  })
   it('kézzel választott, az eszköznél magasabb szintnél figyelmeztetés jár; automatikusnál nem', () => {
     expect(qualityAboveDevice('ultra', 'low')).toBe(true)
+    expect(qualityAboveDevice('ultra', 'medium')).toBe(true)
+    expect(qualityAboveDevice('medium', 'low')).toBe(true)
+    expect(qualityAboveDevice('ultra', 'high')).toBe(false)
     expect(qualityAboveDevice('low', 'low')).toBe(false)
     expect(qualityAboveDevice('auto', 'low')).toBe(false)
   })

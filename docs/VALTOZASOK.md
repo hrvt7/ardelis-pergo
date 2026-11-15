@@ -1,5 +1,12 @@
 # Változások
 
+## 4.40 – Csúcskategóriás Android-tablet: automatikusan magas 3D-szint
+
+- **Snapdragon 8 Elite Gen 5 (Adreno 840) és hasonló csúcs-GPU-s tablet** (Adreno 750+ / 8xx, Immortalis-G9xx, Xclipse 9xx) automatikusan „Magas” szintet kap (eddig „Közepes”); telefonon a közepes marad. Az „Ultra” kézzel választható.
+- **Figyelmeztetés a minőségválasztóban** csak akkor, ha a választott szint legalább kettővel az eszközé fölött van, vagy gyenge (alacsony besorolású) eszközön bármivel feljebb. MacBook M-chipen vagy csúcstableten „Ultra” választásakor nincs figyelmeztetés.
+- Tesztek: `deviceTier.test.ts` (csúcs-GPU-s tablet és telefon, figyelmeztetési szabály).
+- Nem ellenőrzött: valódi Snapdragon 8 Elite Gen 5-ös tableten a képkockasebesség ultra szinten.
+
 ## 4.39 – Mérés lépésenként és betöltési időre, admin javítások
 
 - **Lépésenkénti mérés:** a konfigurátor most névtelenül számolja, hány munkamenet jut el az egyes lépésekig (Méret → Összegzés), a 3D kép betöltési idejét három sávban (4 mp alatt / 4–10 mp / 10 mp felett, pontos érték nélkül), és a sikertelen beküldési kísérleteket. Az admin Áttekintésben új kártya: „Meddig jutnak a lépésekben?” (közelítő értékek, az első adatok néhány látogatás után jelennek meg).
