@@ -2829,10 +2829,10 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 
 /* Telefon és álló tablet: a lépésjelző a csukott lapon is látszik, az alsó sáv a következő lépésre visz. */
 @media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
-  .layout-a .controls-panel.sheet-peek { height: 116px; }
+  .layout-a .controls-panel.sheet-peek { height: 122px; }
   .layout-a .controls-panel:not(.is-mobile-open) .config-head { display: none; }
-  .layout-a .controls-panel:not(.is-mobile-open) .control-tabs { display: grid; padding: 2px 8px 8px; }
-  .layout-a .controls-panel:not(.is-mobile-open) .control-tabs button { min-height: 44px; gap: 3px; }
+  .layout-a .controls-panel:not(.is-mobile-open) .control-tabs { display: flex; }
+  .layout-a .controls-panel:not(.is-mobile-open) .control-tabs button { min-height: 40px; }
   .layout-a .controls-panel:not(.is-mobile-open) .control-tabs button:not(.active) > span:last-child { display: none; }
   .layout-a .step-heading h2 { font-size: 22px; }
   /* Előre az alsó sáv visz (egy elsődleges gomb), vissza a lépésjelzővel: a lapban több hely jut a tartalomnak. */
@@ -2857,3 +2857,99 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 /* A díszítő „valós idejű” címke a 3D közepén zajt adott; a fejléc és a jelenet önmagáért beszél. */
 .layout-a .viewer-live { display: none; }
 @media (min-width: 821px) and (max-width: 1180px) { .layout-a .control-tabs button:not(.active) > span:last-child { visibility: hidden; } }
+
+/* ==========================================================================
+   4.23 – „Soft dark” stílus (Ádám referenciája): mélyfekete alap, nagy sugarú
+   lebegő kártyák térközzel, pill-alakú gombok és fülek, neon-lime fő akció,
+   fehér pill a másodlagos kijelöléshez, vékony nagy számok. Elrendezés és betű marad.
+   ========================================================================== */
+.layout-a {
+  --ink-1000: #0E0F11; --surface-app: #0E0F11; --surface-panel: #18191C; --surface-card: #202226; --surface-raised: #26292E;
+  --surface-border: rgba(255,255,255,.07); --field-border: #6B7178;
+  --text-primary: #F4F5F6; --text-secondary: #9EA3A9; --text-soft: #C7CBD0;
+  --accent-primary: #C4F03C; --accent-hover: #B3E02B; --accent-subtle: rgba(196,240,60,.1); --accent-selected: #22261A;
+  --pill-light: #F4F5F6;
+  --radius-xs: 10px; --radius-sm: 12px; --radius-md: 16px; --radius-lg: 24px; --radius-xl: 28px;
+  --gutter: 12px;
+}
+.layout-a .app-header { border-bottom: 0; }
+.layout-a .header-actions button { border-radius: 999px; }
+.layout-a .header-actions .header-text-button { border: 1px solid rgba(255,255,255,.1); margin-left: 4px; }
+.layout-a .history-actions { border-right-color: rgba(255,255,255,.08); }
+.layout-a .history-actions button, .layout-a .header-actions > button:not(.header-text-button) { border: 1px solid rgba(255,255,255,.1); margin-left: 4px; }
+
+/* Lebegő kártyák térközzel. */
+@media (min-width: 821px) and (not ((orientation: landscape) and (max-height: 520px) and (pointer: coarse))) {
+  .layout-a .studio-shell { background: var(--surface-app); }
+  .layout-a .viewer-panel { inset: 0 calc(var(--panel-w) + var(--gutter) * 2) var(--gutter) var(--gutter); border-radius: var(--radius-lg); }
+  .layout-a .controls-panel { top: 0; right: var(--gutter); bottom: var(--gutter); border: 1px solid var(--surface-border); border-radius: var(--radius-lg); background: linear-gradient(180deg, #1C1D21 0%, #161719 100%); overflow: hidden; }
+  .layout-a .panel-dock { margin: 0 10px 10px; border: 1px solid var(--surface-border); border-radius: 20px; background: var(--surface-card); }
+  .layout-a .panel-dock .step-navigation { padding: 2px 14px 14px; }
+  .layout-a .panel-price { padding: 14px 14px 12px 18px; }
+  .layout-a .price-panel:not(.is-collapsed) { top: 0; bottom: var(--gutter); right: calc(var(--panel-w) + var(--gutter) * 3); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,.1); background: linear-gradient(180deg, #1C1D21 0%, #161719 100%); }
+  .layout-a .studio-home-link { left: calc(var(--gutter) + 24px); bottom: calc(var(--gutter) + 24px); }
+}
+
+/* Lépésfülek: pill-sáv, az aktív lépés lime pill a nevével, a többi számozott kör. */
+.layout-a .control-tabs { display: flex; justify-content: space-between; align-items: center; gap: 2px; margin: 0 14px 14px; padding: 4px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; background: var(--surface-app); }
+.layout-a .control-tabs button { flex: 0 0 auto; flex-direction: row; min-height: 40px; gap: 6px; padding: 0 6px; border-radius: 999px; }
+.layout-a .control-tabs button > span:last-child { display: none; visibility: visible; }
+.layout-a .control-tabs button.active { padding: 0 14px 0 6px; background: var(--accent-primary); color: var(--ink-1000); }
+.layout-a .control-tabs button.active > span:last-child { display: inline; font-size: 14px; font-weight: 600; }
+.layout-a .control-tabs button.active .step-dot { background: var(--ink-1000); color: var(--accent-primary); border-color: transparent; box-shadow: none; }
+.layout-a .step-dot { width: 28px; height: 28px; border-color: rgba(255,255,255,.14); }
+.layout-a .control-tabs button.complete .step-dot { border-color: rgba(196,240,60,.45); }
+.layout-a .config-head { padding: 18px 20px 14px; }
+.layout-a .config-head > div > span { font-size: 13px; letter-spacing: .08em; color: var(--text-secondary); }
+
+/* Kártyák: tömör, lekerekített felületek; kijelölés lime kerettel. */
+.layout-a .roof-options > button, .layout-a .roof-card, .layout-a .building-card, .layout-a .extra-card, .layout-a .preset-list button, .layout-a .mech-cta { border-color: transparent; background: var(--surface-card); border-radius: var(--radius-md); }
+.layout-a .roof-options > button:hover, .layout-a .roof-card:hover, .layout-a .building-card:hover, .layout-a .extra-card:hover, .layout-a .preset-list button:hover { background: var(--surface-raised); border-color: rgba(255,255,255,.08); }
+.layout-a .roof-options > button.selected, .layout-a .roof-card.selected, .layout-a .building-card.selected, .layout-a .extra-card.is-on { background: var(--accent-selected); border-color: var(--accent-primary); box-shadow: none; }
+.layout-a .building-card-traits > span { border-radius: 999px; }
+
+/* Szegmentált választók: pill-sáv, a kijelölt elem fehér pill sötét szöveggel. */
+.layout-a .segmented { padding: 4px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; background: var(--surface-app); }
+.layout-a .segmented button { border-radius: 999px; }
+.layout-a .segmented button.selected { background: var(--pill-light); color: var(--ink-1000); box-shadow: none; font-weight: 600; }
+
+/* Mezők és csúszka. */
+.layout-a .number-with-unit { border-radius: 999px; background: var(--surface-app); padding-left: 4px; }
+.layout-a .range-input::-webkit-slider-runnable-track { height: 4px; background: linear-gradient(90deg, var(--accent-primary), #2C2F34); }
+.layout-a .range-input::-webkit-slider-thumb { width: 20px; height: 20px; margin-top: -8px; border: 5px solid var(--pill-light); background: var(--ink-1000); box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+.layout-a .range-input::-moz-range-thumb { width: 12px; height: 12px; border: 4px solid var(--pill-light); background: var(--ink-1000); }
+
+/* Gombok: pill. Fő akció lime, másodlagos körvonalas, „Részletek” is pill. */
+.layout-a .step-navigation .next-step, .layout-a .panel-price-details, .layout-a .mobile-price-bar button, .layout-a .price-actions button, .layout-a .welcome-back button { border-radius: 999px; }
+.layout-a .step-navigation button:not(.next-step) { border-radius: 999px; padding: 0 16px; }
+.layout-a .step-navigation button:not(.next-step):not(:disabled) { border: 1px solid rgba(255,255,255,.12); color: var(--text-primary); }
+.layout-a .price-actions .secondary-action { background: var(--pill-light); color: var(--ink-1000); border-color: transparent; }
+
+/* Nagy, vékony árszám. */
+.layout-a .panel-price-value > strong, .layout-a .total-price > strong { font-weight: 300; letter-spacing: -.02em; }
+.layout-a .panel-price-value > strong { font-size: 30px; }
+
+/* Lebegő eszközök a 3D-n: kör alakú ikongombok és pill-sáv. */
+.layout-a .weather-toolbar button { min-height: 42px; border-radius: 999px; border-color: rgba(255,255,255,.14); background: rgba(14,15,17,.72); backdrop-filter: blur(10px); }
+.layout-a .weather-toolbar button:hover { background: rgba(38,41,46,.9); color: var(--text-primary); border-color: rgba(255,255,255,.24); }
+.layout-a .weather-toolbar button.selected { background: var(--accent-primary); color: var(--ink-1000); border-color: var(--accent-primary); }
+.layout-a .camera-toolbar { padding: 4px; border-radius: 999px; border-color: rgba(255,255,255,.12); background: rgba(14,15,17,.78); }
+.layout-a .camera-toolbar button { border-radius: 999px; padding: 0 14px; }
+.layout-a .camera-toolbar button.selected { background: var(--accent-primary); color: var(--ink-1000); }
+.layout-a .pov-note, .layout-a .change-pill, .layout-a .welcome-back { border-radius: var(--radius-md); }
+.layout-a .view-popover, .layout-a .modal-dialog { border-radius: var(--radius-lg); background: #18191C; border-color: rgba(255,255,255,.1); }
+
+/* Részletek panel: belső kártyák. */
+.layout-a .price-mode { border-radius: 999px; padding: 4px; background: var(--surface-app); }
+.layout-a .price-mode button { border-radius: 999px; }
+.layout-a .price-mode button.selected { background: var(--pill-light); color: var(--ink-1000); }
+.layout-a .monthly-example, .layout-a .budget-trigger, .layout-a .energy-trigger.is-panel { border: 0; border-radius: var(--radius-md); background: var(--surface-card); }
+
+/* Mobil: lebegő lap és alsó sáv a referencia szerint. */
+@media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .layout-a .controls-panel { border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,.08); background: linear-gradient(180deg, #1C1D21 0%, #161719 100%); }
+  .layout-a .controls-panel .control-tabs { margin: 0 12px 10px; }
+  .layout-a .mobile-price-bar { background: #18191C; border-top: 1px solid rgba(255,255,255,.06); }
+  .layout-a .mobile-price-bar strong { font-weight: 300; font-size: 22px; }
+  .layout-a .weather-toolbar button { width: 44px; padding: 0; justify-content: center; }
+}

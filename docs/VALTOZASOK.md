@@ -1,5 +1,13 @@
 # Változások
 
+## 4.23 – „Soft dark” stílus a konfigurátoron (elrendezés és betű változatlan)
+
+- **Kártyák térközzel:** a 3D nézet és a beállítópanel 12 px-es térközzel, 24 px-es lekerekítéssel lebeg a mélyfekete (#0E0F11) alapon; a panel alján az ár és a lépésgombok külön belső kártyában.
+- **Pill-elemek:** a lépésfülek pill-sávban (az aktív lépés lime pill a nevével, a többi számozott kör), a szegmentált választókon a kijelölt elem fehér pill sötét szöveggel, minden gomb, fejléc-gomb és jelenet-eszköz pill vagy kör alakú; a fő akció neon-lime (#C4F03C).
+- **Ár:** nagy, vékony (300-as) számjegyek a panelen, a részletekben és a mobil sávon.
+- **Kontraszt (számolt):** fő szöveg 16,1:1, másodlagos 6,3–6,9:1, mezőszegély 3,2–3,9:1, lime gomb sötét szöveggel 14,5:1.
+- Csak a pergola/carport stúdióra hat (`.layout-a`); logika változatlan.
+
 ## 4.22 – Új konfigurátor-felület: nagy 3D, egy panel, élő ár a panel alján
 
 - **Elrendezés („A”):** asztali nézetben a 3D a bal oldalon a szélesség kb. 70%-át kapja (1440 px-en ~1015 px a korábbi ~650 helyett), a beállítások egyetlen jobb oldali panelben vannak (420 / 380 / 344 px a képernyő szélessége szerint).
