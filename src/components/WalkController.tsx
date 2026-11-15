@@ -7,6 +7,7 @@ import * as THREE from 'three'
 import { buildWalkArea, entryPoint, resolvePosition, stepPosition } from '@/lib/walkArea'
 import { resetWalkInput, walkInput, walkIntent } from '@/lib/walkInput'
 import type { PergolaConfig, SceneSettings } from '@/types/pergola'
+import { sofaFov } from '@/lib/viewport'
 
 const REDUCED = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 /** Séta sebessége (m/s) és fordulás (rad/s). */
@@ -26,7 +27,7 @@ export default function WalkController({ config, scene }: { config: PergolaConfi
     const start = entryPoint(config, areaRef.current)
     Object.assign(state.current, { x: start.x, z: start.z, yaw: start.yaw, pitch: -0.04, vx: 0, vz: 0 })
     const perspective = camera as THREE.PerspectiveCamera
-    perspective.fov = window.innerWidth < 820 ? 70 : 64
+    perspective.fov = sofaFov(window.innerWidth / Math.max(1, window.innerHeight))
     perspective.clearViewOffset()
     perspective.updateProjectionMatrix()
     enter.current.fromPos.copy(camera.position)

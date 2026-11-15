@@ -1,5 +1,16 @@
 # Változások
 
+## 4.37 – Gyengébb tabletek és oldalarányok: automatikus 3D-szint, képpont-keret, álló tablet alsó lappal
+
+- **Gyenge mobil GPU-s tablet automatikusan alacsony szinten** (pl. Redmi Pad 2, Mali-G57 MC2): a belépő Mali (4xx/T/G5x/G6x), PowerVR és Adreno 6xx-es vagy régebbi GPU-k „Alacsony” szintet kapnak. Az Android-tabletek Chrome-ja alapból asztali oldalt kér, ezért eddig asztali gépnek látszottak és „Közepes” szintet kaptak; most az érintés + Linux jelzi az Androidot. Asztali gépek (MacBook M-chip: magas, erős videókártya: ultra) és az iPad besorolása változatlan.
+- **Képpont-keret alacsony és közepes szinten:** a vászon legfeljebb ~1,2 MP-t, illetve ~2,0 MP-t rajzol (a felbontás-szorzó ehhez igazodik, legalább 0,75×). Álló, nagy felbontású tableten ez a teljes képernyős vászonnál számít. Magas és ultra szinten nincs keret, az asztali kép változatlan.
+- **3D minőség választó:** az „Automatikus” mellett látszik, melyik szint jut az eszközre; ha kézzel ennél magasabbat választanak, a választó alatt figyelmeztetés jelenik meg (a választást nem írja felül).
+- **Álló tablet (3:4, 10:16, 7:10) alsó lappal:** eddig a 768–820 px széles álló tablet telefonos kamerát kapott (kicsi pergola), a 834–1100 px széles (iPad Air/Pro álló) pedig keskeny oldalpaneles nézetet (~450 px széles 3D). Most minden álló tablet az alsó lapos elrendezést kapja teljes szélességű 3D-vel, nagyobb félig nyitott lappal; a kamera a vászon oldalarányából keretez (álló képen 48°, fekvőn 38°), a telefonos ×1,45 hátrébb állás csak telefonon marad.
+- **Alacsony fekvő kijelző (1024 × 768, 1133 × 744, 1366 × 768):** tömörebb panelfej, lépéssáv és ársáv; 821–1180 px széles oldalpaneles nézetben a jelenet címe az eszköztár alá került (1024 px-en eddig ütköztek).
+- **Hiba: 834 px széles álló tableten** a lap fogantyújára koppintás kétszer váltott (nyit–zár), így a lap nem nyílt ki; a viselkedés most az elrendezéshez kötött, nem a 820 px-es szélességhez.
+- Új: `src/lib/viewport.ts` (képernyőosztályok, közös lekérdezés a CSS-sel). Tesztek: `deviceTier.test.ts` (GPU-besorolás, érintés-felismerés, képpont-keret, oldalarány-besorolás, kamera, a CSS töréspontjainak szinkronja).
+- Nem ellenőrzött: valódi Redmi Pad 2-n és iPaden a képkockasebesség (a próba gépi böngészőben, szoftveres grafikával készült, 9 képernyőméreten).
+
 ## 4.36 – Konfigurátor: mobil lépéssáv, kevesebb ikon, olvashatóbb feliratok, megerősített újrakezdés
 
 - **Hiba: mobilon a 7 lépés nem fért ki,** az aktív lépés neve le volt vágva. A lépéssáv most vízszintesen görgethető, és az aktív lépés mindig a látható részre ugrik; a félig felhúzott panel címe az aktív lépés („7/7 · Összegzés”) a „Húzd fel a teljes nézethez” utasítás helyett.

@@ -52,6 +52,7 @@ const timeForClock = (hour: number): SceneSettings['time'] => (hour >= 20 || hou
 const ArDialog = lazy(() => import('@/components/ArDialog'))
 const SunStudyPanel = lazy(() => import('@/components/SunStudyPanel'))
 import MechanismPanel from '@/components/MechanismPanel'
+import { LANDSCAPE_PHONE_QUERY, SHEET_LAYOUT_QUERY } from '@/lib/viewport'
 const BudgetDialog = lazy(() => import('@/components/BudgetDialog'))
 const MoodPanel = lazy(() => import('@/components/MoodPanel'))
 const AdvisorDialog = lazy(() => import('@/components/AdvisorDialog'))
@@ -150,12 +151,11 @@ export default function PergoStudio() {
   const lastBuzz = useRef(0)
   const eveningShown = useRef(false)
   const sceneRef = useRef<SceneSettings>(DEFAULT_SCENE)
-  const LANDSCAPE_PHONE = '(orientation: landscape) and (max-height: 520px) and (pointer: coarse)'
-  const [isNarrow, setIsNarrow] = useState(() => window.matchMedia(`(max-width: 820px), ${LANDSCAPE_PHONE}`).matches)
-  useEffect(() => { const query = window.matchMedia(`(max-width: 820px), ${LANDSCAPE_PHONE}`); const update = () => setIsNarrow(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update) }, [])
+  const [isNarrow, setIsNarrow] = useState(() => window.matchMedia(SHEET_LAYOUT_QUERY).matches)
+  useEffect(() => { const query = window.matchMedia(SHEET_LAYOUT_QUERY); const update = () => setIsNarrow(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update) }, [])
   // Telefon fekvő nézetben a vezérlők állandóan nyitott oldalsávban vannak (nincs alsó lap).
-  const [landscapePhone, setLandscapePhone] = useState(() => window.matchMedia(LANDSCAPE_PHONE).matches)
-  useEffect(() => { const query = window.matchMedia(LANDSCAPE_PHONE); const update = () => setLandscapePhone(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update) }, [])
+  const [landscapePhone, setLandscapePhone] = useState(() => window.matchMedia(LANDSCAPE_PHONE_QUERY).matches)
+  useEffect(() => { const query = window.matchMedia(LANDSCAPE_PHONE_QUERY); const update = () => setLandscapePhone(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update) }, [])
   const sheetView: SheetState = landscapePhone ? 'half' : sheet
   const [saved, setSaved] = useState<SavedConfiguration[]>(() => loadSaved(tenant))
   const history = useRef<{ past: PergolaConfig[]; future: PergolaConfig[] }>({ past: [], future: [] })

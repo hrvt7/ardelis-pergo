@@ -21,6 +21,8 @@ import ColorPicker from '@/components/ColorPicker'
 import { BuildingIssues, BuildingPicker, ClimateSection, WallGlazingPicker, type ModularChoice } from '@/components/BuildingControls'
 import { BUILDING_ROOFS, isClosedBuilding } from '@/lib/buildings'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
+import { isSheetLayout } from '@/lib/viewport'
+import { TIER_LABEL, detectQualityTier, qualityAboveDevice, type QualityTier } from '@/lib/quality'
 
 // A lépések sorrendje a döntések természetes rendje: mit → mekkora és hogyan áll → tető és zárás → szín → komfort → felmérés.
 // Az azonosítók történeti okból maradtak ('size' = Típus, 'mount' = Elhelyezés és méret, 'roof' = Tető, 'sides' = Oldalak, 'extras' = Komfort).
@@ -250,7 +252,7 @@ function useSheetGesture(panel: React.RefObject<HTMLElement | null>, sheet: Shee
   }
   return {
     onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => {
-      if (event.pointerType === 'mouse' && window.innerWidth > 820) return
+      if (event.pointerType === 'mouse' && !isSheetLayout()) return
       drag.current = { y: event.clientY, height: panel.current?.getBoundingClientRect().height ?? 0, moved: false }
       event.currentTarget.setPointerCapture(event.pointerId)
     },
@@ -275,13 +277,14 @@ function useSheetGesture(panel: React.RefObject<HTMLElement | null>, sheet: Shee
     onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
       // Billentyűzetes aktiválás (Enter/Space) — a mutatós eseményeket a fenti kezelők intézik.
       if (event.detail === 0) onChange(sheet === 'peek' ? 'half' : 'peek')
-      else if (window.innerWidth > 820) onChange(sheet === 'peek' ? 'half' : 'peek')
+      else if (!isSheetLayout()) onChange(sheet === 'peek' ? 'half' : 'peek')
     },
   }
 }
 
 /** Jelenet és vizualizáció: lebegő „Nézet” panel (nem lépés — a beállítások a 3D-nézeten azonnal látszanak). */
 export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneChange, onPhotoUpload }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onPhotoUpload: (file: File) => void }) {
+  const [detectedTier] = useState(() => detectQualityTier())
   const setDayTime = (dayTime: number) => onSceneChange({ dayTime, time: dayTime >= 20 || dayTime < 7 ? 'night' : dayTime >= 17 ? 'sunset' : 'day' })
   const carport = config.building === 'carport'
   const thing = carport ? 'a carport' : 'a pergola'
@@ -307,7 +310,8 @@ export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneCha
               <Toggle label="Automata forgatás" description="Koppintásra megáll" checked={scene.autoRotate} onChange={(autoRotate) => onSceneChange({ autoRotate })} />
               <Toggle label="Követő kamera" description={carport ? 'A választáshoz fordul (szín, tető)' : 'A választáshoz fordul (oldal, szín, ventilátor)'} checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
             </div>
-            <label className="select-field"><span>3D minőség</span><select value={scene.quality} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="medium">Közepes</option><option value="low">Alacsony</option></select></label>
+            <label className="select-field"><span>3D minőség</span><select value={scene.quality} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus ({TIER_LABEL[detectedTier].toLowerCase()} ezen az eszközön)</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="medium">Közepes</option><option value="low">Alacsony</option></select></label>
+            {qualityAboveDevice(scene.quality, detectedTier) && <p className="field-hint quality-hint" role="note">Ezen az eszközön a(z) {TIER_LABEL[scene.quality as QualityTier].toLowerCase()} szint akadozhat. Az Automatikus a gép teljesítményéhez igazítja a képet.</p>}
             <div className="photo-mode">
               <div><Image size={18} /><span><strong>Előnézet saját fotóval</strong><small>A kép csak ebben a böngészőben jelenik meg.</small></span></div>
               <label className="upload-button"><Upload size={15} />Fotó feltöltése<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoUpload(file); event.target.value = '' }} /></label>

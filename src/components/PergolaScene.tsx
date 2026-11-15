@@ -10,7 +10,7 @@ import type { CameraFocus, CameraView, HouseStyle, PergolaConfig, RoofGlazing, S
 import PhotoRig, { ShadowCatcher } from '@/components/PhotoRig'
 import { PHOTO_GROUP } from '@/lib/photoScene'
 import { cameraMotion } from '@/lib/cameraMotion'
-import { QualityContext, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
+import { QualityContext, budgetDpr, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls, wallSides } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
 import { isOrbitRecording, setActiveScene, setHiResRenderer, setOrbitDriver, setOrbitRecording } from '@/lib/sceneRegistry'
@@ -54,6 +54,7 @@ import WalkController from '@/components/WalkController'
 import { SB400, sb400Post } from '@/lib/sb400'
 import { SB400_SOURCE, sb400Details, type Sb400DetailId } from '@/lib/sb400Details'
 import Car from '@/components/models/Car'
+import { currentViewportKind, overviewFov, sheetDistanceScale, sofaFov, usesSheetLayout } from '@/lib/viewport'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
 const ShadeProbe = lazy(() => import('@/components/ShadeProbe'))
@@ -2491,7 +2492,8 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     else target.current.set(0, view === 'top' ? 0 : config.height * 0.42, 0)
 
     const perspectiveCamera = camera as THREE.PerspectiveCamera
-    baseFov.current = view === 'sofa' ? (window.innerWidth < 820 ? 70 : 64) : (window.innerWidth < 820 ? 48 : 38)
+    const aspect = gl.domElement.clientWidth / Math.max(1, gl.domElement.clientHeight)
+    baseFov.current = view === 'sofa' ? sofaFov(aspect) : overviewFov(aspect)
     Object.assign(perspectiveCamera, { fov: baseFov.current })
     perspectiveCamera.updateProjectionMatrix()
     // Áttekintő nézetek: ha a szerkezet nem férne a képbe (széles, modulos pergola, keskeny vászon),
@@ -2512,7 +2514,8 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
       controls.current?.target.copy(target.current)
       transitioning.current = false
     } else {
-      if (window.innerWidth < 820 && view !== 'interior') destination.current.sub(target.current).multiplyScalar(1.45).add(target.current)
+      const sheetScale = sheetDistanceScale(currentViewportKind())
+      if (sheetScale !== 1 && view !== 'interior') destination.current.sub(target.current).multiplyScalar(sheetScale).add(target.current)
       beginMove()
     }
     invalidate()
@@ -2709,7 +2712,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     if (isWallSide(config.mount, 'left') && tangent.x < 0) tangent.negate()
     if (isWallSide(config.mount, 'right') && tangent.x > 0) tangent.negate()
     const center = new THREE.Vector3(normal.x * (w / 2), h * 0.48, normal.z * (d / 2))
-    const distance = Math.max(6.4, length * 1.25 + 3.4) * (window.innerWidth < 820 ? 1.3 : 1)
+    const distance = Math.max(6.4, length * 1.25 + 3.4) * (usesSheetLayout(currentViewportKind()) ? 1.3 : 1)
     // A célpont a kiválasztott oldal és a pergola közepe között: az oldal kerül előtérbe, de a teljes szerkezet a képben marad.
     target.current.copy(center).multiplyScalar(0.62).setY(h * 0.45)
     destination.current.copy(center).addScaledVector(normal, distance).addScaledVector(tangent, distance * 0.38)
@@ -3283,6 +3286,21 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
   // Csak automatikus minőségnél: a kézzel választott szintet nem írjuk felül.
   const activeTier = scene.quality === 'auto' && degradedTier && tierRank(degradedTier) < tierRank(baseTier) ? degradedTier : baseTier
   const quality = useMemo(() => qualitySettings(activeTier), [activeTier])
+  // A vászon CSS-mérete: alacsony és közepes szinten ebből számoljuk a képpont-keretet (budgetDpr).
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [wrapSize, setWrapSize] = useState(() => ({ w: typeof window === 'undefined' ? 0 : window.innerWidth, h: typeof window === 'undefined' ? 0 : window.innerHeight }))
+  useEffect(() => {
+    const element = wrapRef.current
+    if (!element || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect
+      // Kerekítve, hogy egy pixeles rezgés ne építse újra a vászon felbontását.
+      setWrapSize((prev) => (Math.abs(prev.w - width) < 24 && Math.abs(prev.h - height) < 24 ? prev : { w: Math.round(width), h: Math.round(height) }))
+    })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+  const dpr = useMemo(() => budgetDpr(quality, wrapSize.w, wrapSize.h), [quality, wrapSize.w, wrapSize.h])
   const onSlow = useCallback(() => {
     if (scene.quality !== 'auto') return
     const next = lowerTier(activeTier)
@@ -3351,7 +3369,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
   const loaderMessage = shownProgress < 40 ? 'Modell betöltése' : shownProgress < 75 ? 'Anyagok és környezet' : 'Jelenet felépítése'
   const coreScene = coreOnly || !decorativeReady
   if (!webglSupported()) return <div className="scene-canvas-wrap" data-scene-ready="false"><ScenePoster message="Ez az eszköz nem támogatja a 3D nézetet. A konfigurálás, az ár és az ajánlatkérés így is teljes értékű." config={config} /></div>
-  return <div className="scene-canvas-wrap" data-scene-ready={loaded}>
+  return <div ref={wrapRef} className="scene-canvas-wrap" data-scene-ready={loaded}>
     {!posterGone && !contextLost && <ScenePoster percent={loaded ? 100 : shownProgress} message={loaded ? 'Kész' : loaderMessage} leaving={loaded} />}
     {contextLost && <ScenePoster message="A grafikai kapcsolat megszakadt. A konfigurációd megmaradt." onRetry={retry} config={config} />}
     <SceneErrorBoundary key={`boundary-${attempt}`} onRetry={retry} onFatal={onFatal} config={config}>
@@ -3359,8 +3377,8 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
         key={`canvas-${attempt}`}
         frameloop="demand"
         shadows={{ type: THREE.PCFShadowMap }}
-        dpr={quality.dpr}
-        camera={{ position: REDUCED ? [12, 7, 14] : [30, 21, 34], fov: window.innerWidth < 820 ? 48 : 38, near: 0.1, far: 90 }}
+        dpr={dpr}
+        camera={{ position: REDUCED ? [12, 7, 14] : [30, 21, 34], fov: overviewFov(window.innerWidth / Math.max(1, window.innerHeight)), near: 0.1, far: 90 }}
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' }}
         performance={{ min: 0.55 }}
         onCreated={({ gl }) => {

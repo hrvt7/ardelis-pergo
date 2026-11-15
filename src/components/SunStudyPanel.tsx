@@ -6,6 +6,7 @@ import type { ShadeResult } from '@/components/ShadeProbe'
 import { COMPASS_POINTS, compassLabel, formatClock, sunDay } from '@/lib/sun'
 import { DEFAULT_SITE, isoDate, lookupPostalCode, studyDate, studySun } from '@/lib/sunSite'
 import type { SceneSettings, TimeOfDay } from '@/types/pergola'
+import { isSheetLayout } from '@/lib/viewport'
 
 /** Mágneses elhajlás Magyarországon (2026, kb. +5,5°): a telefon iránytűje mágneses északot mutat. */
 const DECLINATION = 5.5
@@ -85,7 +86,7 @@ export default function SunStudyPanel({ scene, shade, onChange, onClose }: { sce
   const [compassState, setCompassState] = useState<'idle' | 'reading' | 'failed'>('idle')
   const [playing, setPlaying] = useState(false)
   // Mobilon a beállítások összecsukva indulnak, hogy a 3D-ben látszódjon az árnyék.
-  const [showSettings, setShowSettings] = useState(() => typeof window === 'undefined' || window.innerWidth > 820)
+  const [showSettings, setShowSettings] = useState(() => typeof window === 'undefined' || !isSheetLayout())
   const monthNames = ['jan.', 'febr.', 'márc.', 'ápr.', 'máj.', 'jún.', 'júl.', 'aug.', 'szept.', 'okt.', 'nov.', 'dec.']
   const hourRef = useRef(scene.sunHour)
   useEffect(() => { hourRef.current = scene.sunHour }, [scene.sunHour])

@@ -45,6 +45,36 @@ const SOFTWARE_GPU = /swiftshader|llvmpipe|software|basic render/i
 /** Integrált / mobil GPU: az utófeldolgozás (AO + bloom) itt akadozást okoz, ezért közepes szint (natív MSAA, éles él). */
 const WEAK_GPU = /Intel.*(UHD|Iris|HD Graphics|Graphics)|Radeon(\(TM\))? (Graphics|Vega|[0-9]{3}M)|Vega \d|Adreno|Mali|PowerVR|Microsoft Basic/i
 const STRONG_GPU = /RTX|GTX 1[0-9]|RX [5-9]\d{2}|Radeon (Pro|VII)|Apple M[1-9]|Arc A[5-9]/i
+/**
+ * Belépő és középkategóriás mobil GPU (Mali-4xx/T/G5x/G6x, PowerVR, Adreno 6xx és régebbi). Ezeken a tableteken
+ * (pl. Redmi Pad 2: Mali-G57 MC2) már a közepes szint is akad nagy felbontású kijelzőn, ezért automatikusan alacsony.
+ */
+const ENTRY_MOBILE_GPU = /Mali-(4|T|G[56]\d\b)|PowerVR|Adreno(\s*\(TM\))?\s*[1-6]\d{2}\b/i
+
+/**
+ * Érintőképernyős tablet vagy telefon. Az Android-tabletek Chrome-ja alapból asztali oldalt kér (a felhasználói
+ * ügynökben nincs „Android”), ezért a durva mutatót és az érintési pontokat is nézzük; az iPad „Macintosh”-nak mutatja magát.
+ */
+export function isTouchDevice(nav: { maxTouchPoints?: number; userAgent?: string } = navigator, coarse = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) {
+  if (/Android|iPhone|iPad/i.test(nav.userAgent ?? '')) return true
+  return coarse && (nav.maxTouchPoints ?? 0) > 1
+}
+
+/** Tiszta besorolás (tesztelhető): bemenet a GPU neve és a gép jellemzői. */
+export function classifyDevice(input: { gpu: string; cores: number; memory: number; touch: boolean; phone: boolean; android: boolean }): QualityTier {
+  const { gpu, cores, memory, touch, phone, android } = input
+  if (SOFTWARE_GPU.test(gpu)) return 'low'
+  if (touch && ENTRY_MOBILE_GPU.test(gpu)) return 'low'
+  // Telefon és Android-eszköz: a régi szabály (kevés mag vagy memória → low, különben medium).
+  if (phone || android || (touch && /Mali|Adreno|Xclipse|Immortalis/i.test(gpu))) return memory <= 3 || cores <= 4 ? 'low' : 'medium'
+  // iPad és más érintős eszköz ismert, erősebb GPU-val: az asztali besorolás marad (a futásidejű védőháló lejjebb lép, ha kell).
+  // Ultra csak különálló (asztali) videókártyán; az Apple-chip és az integrált GPU legfeljebb magas szintet kap automatikusan.
+  if (cores >= 8 && memory >= 8 && STRONG_GPU.test(gpu) && !/Apple/i.test(gpu)) return 'ultra'
+  if (WEAK_GPU.test(gpu) && !STRONG_GPU.test(gpu)) return 'medium'
+  // Ismeretlen GPU-név (elrejtett böngészői adat): csak erős processzor mellett merjük a nehéz szintet.
+  if (!gpu && cores < 8) return 'medium'
+  return cores <= 2 ? 'medium' : 'high'
+}
 
 type NavigatorHints = Navigator & { deviceMemory?: number }
 
@@ -65,24 +95,19 @@ function readGpuName() {
 
 export const isTier = (value: string | null | undefined): value is QualityTier => !!value && (ORDER as string[]).includes(value)
 
-/** Automatikus besorolás: mobil + gyenge hardver → low/medium, laptop → high, erős asztali gép → ultra. */
+/** Automatikus besorolás: gyenge mobil GPU → low, telefon/tablet → low/medium, laptop → high, erős asztali gép → ultra. */
 export function detectQualityTier(): QualityTier {
   if (typeof window === 'undefined') return 'high'
   const override = new URLSearchParams(window.location.search).get('quality')
   if (isTier(override)) return override
   const nav = navigator as NavigatorHints
-  const cores = nav.hardwareConcurrency ?? 4
-  const memory = nav.deviceMemory ?? 8
-  const mobile = window.innerWidth < 760 || /Android|iPhone|iPad/i.test(navigator.userAgent)
-  if (mobile) return memory <= 3 || cores <= 4 ? 'low' : 'medium'
   const gpu = readGpuName()
-  if (SOFTWARE_GPU.test(gpu)) return 'low'
-  // Ultra csak különálló (asztali) videókártyán; az Apple-chip és az integrált GPU legfeljebb magas szintet kap automatikusan.
-  if (cores >= 8 && memory >= 8 && STRONG_GPU.test(gpu) && !/Apple/i.test(gpu)) return 'ultra'
-  if (WEAK_GPU.test(gpu) && !STRONG_GPU.test(gpu)) return 'medium'
-  // Ismeretlen GPU-név (elrejtett böngészői adat): csak erős processzor mellett merjük a nehéz szintet.
-  if (!gpu && cores < 8) return 'medium'
-  return cores <= 2 ? 'medium' : 'high'
+  const touch = isTouchDevice(nav)
+  const agent = navigator.userAgent
+  // Az asztali módú Android-tablet „Linux x86_64”-et mutat, de az érintés és a „Linux” együtt is Android.
+  const android = /Android/i.test(agent) || (touch && /Linux/i.test(agent) && !/CrOS/i.test(agent))
+  const phone = /iPhone|Android.*Mobile/i.test(agent) || (touch && window.innerWidth < 760)
+  return classifyDevice({ gpu, cores: nav.hardwareConcurrency ?? 4, memory: nav.deviceMemory ?? 8, touch, phone, android })
 }
 
 /** A felhasználó választása → tényleges szint. A régi „mobile” érték a low szintnek felel meg. */
@@ -123,4 +148,28 @@ export function readTierCap(now = Date.now()): QualityTier | null {
 }
 export function writeTierCap(tier: QualityTier, now = Date.now()) {
   try { window.localStorage.setItem(TIER_CAP_KEY, `${tier}@${now}`) } catch { /* privát mód: csak erre a munkamenetre érvényes */ }
+}
+
+/**
+ * Képpont-keret: alacsony és közepes szinten a vászon legfeljebb ennyi tényleges képpontot rajzol. Nagy felbontású
+ * tableten (2560 × 1600) a teljes képernyős álló vászon különben 1,25–1,75× felbontással többszörösen túllépné
+ * a belépő mobil GPU-k teljesítményét. Magas és ultra szinten nincs keret (asztali gépeken változatlan kép).
+ */
+export const PIXEL_BUDGET: Partial<Record<QualityTier, number>> = { low: 1_200_000, medium: 2_000_000 }
+
+/** A szint dpr-tartománya a vászon CSS-méretéhez igazítva (R3F `dpr` prop). */
+export function budgetDpr(settings: Pick<QualitySettings, 'tier' | 'dpr'>, cssWidth: number, cssHeight: number): [number, number] {
+  const [min, max] = settings.dpr
+  const budget = PIXEL_BUDGET[settings.tier]
+  const area = cssWidth * cssHeight
+  if (!budget || area <= 0) return [min, max]
+  const cap = Math.max(0.75, Math.min(max, Math.sqrt(budget / area)))
+  return [Math.min(min, cap), cap]
+}
+
+export const TIER_LABEL: Record<QualityTier, string> = { low: 'Alacsony', medium: 'Közepes', high: 'Magas', ultra: 'Ultra' }
+
+/** Kézzel választott szint az eszköznek ajánlott fölött: a felület figyelmeztet, de nem írja felül a választást. */
+export function qualityAboveDevice(level: QualityLevel, detected: QualityTier) {
+  return isTier(level) && tierRank(level) > tierRank(detected)
 }

@@ -8,6 +8,7 @@ import * as THREE from 'three'
 import { clampPlacement, dragPlacement, metersPerPixel, photoCameraPose, pinchPlacement, type PhotoPlacement } from '@/lib/photoPlacement'
 import { applyPlacement, markShadowsDirty, PHOTO_GROUP, setCanvasCursor } from '@/lib/photoScene'
 import type { PergolaConfig } from '@/types/pergola'
+import { isSheetLayout } from '@/lib/viewport'
 
 /** Árnyékfogó: csak az árnyékot rajzolja (átlátszó), így a pergola „ráül” a fotó talajára. */
 export function ShadowCatcher({ size, opacity }: { size: number; opacity: number }) {
@@ -33,7 +34,7 @@ export default function PhotoRig({ config, placement, onCommit }: { config: Pick
     // A háttérfotó a teljes nézetet kitölti: a mobil alsó lap miatti nézet-eltolás itt nem kell.
     // Mobilon az alsó vezérlősáv takarná a pergolát: a 3D képet feljebb toljuk (a fotó a helyén marad, a húzás így is pontos).
     const perspective = camera as THREE.PerspectiveCamera
-    if (size.width < 820) perspective.setViewOffset(size.width, size.height, 0, Math.round(size.height * 0.2), size.width, size.height)
+    if (isSheetLayout()) perspective.setViewOffset(size.width, size.height, 0, Math.round(size.height * 0.2), size.width, size.height)
     else if (perspective.view?.enabled) perspective.clearViewOffset()
     Object.assign(perspective, { fov: pose.fov })
     perspective.updateProjectionMatrix()
