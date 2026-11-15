@@ -1,5 +1,14 @@
 # Változások
 
+## 4.13 – B2B nyitóoldal: új szöveg az értékesítési pitch alapján
+
+- A `/` és `/en` oldal szövege a „digitális értékesítési eszköz” pitchre épül: új hero („A bemutatótól az ajánlatig egy rendszerben”), kijelentés (az ügyfél nem katalógusból képzeli el, hanem maga tervezi meg és hazaviszi), átírt bemutató, funkciók és záró blokk („Nem még egy kalkulátor”). Mindenhol Lamelix név.
+- Új funkciószövegek a kód alapján: árnyékszimuláció helyszín, tájolás és dátum szerint; becsült energiaköltség, napelemes termelés és megtérülés („becslés”); PDF-ajánlat tartalma (látványterv, méretek, tételes árkalkuláció, műszaki rajz, QR-kód), WhatsApp-megosztás; admin: státusz, belső megjegyzés, jelzés egy hét válasz nélkül.
+- Időmegtakarítás az Árak bevezetőjében, szemléltető példaként (napi 1 óra × 20 munkanap = havi 20 óra).
+- Két új GYIK: bemutatótermi használat (a terv ajánlatkéréssel kerül az adminba), az árnyék- és energiaszámítás pontossága.
+- Túlígérés javítva: a gyártó e-mailje nem tartalmaz PDF-et, hanem a 3D-terv linkjét (Funkciókártya, előtte–utána lista, Start csomag). SEO-leírás (`contracts/seo.ts`, `index.html`) igazítva.
+- Megtartva: élő 3D hero, előtte–utána, élő SB 400 demó, árak és megtérülés-kalkulátor, demóűrlap. Kód- és funkcióváltozás nincs.
+
 ## 4.12 – Szabad 3D navigáció asztalon és mobilon, követő kamera javítások
 
 - **Forgatás (bal gomb / egy ujj):** körbe minden irányból; felülnézet és alulnézet is elérhető. Lefelé addig fordítható, amíg a kamera a talaj fölött marad (közelről a tető alá is benézhet, távolról nem süllyed a föld alá). Eddig a vízszintesnél (90°) lejjebb nem lehetett forgatni.

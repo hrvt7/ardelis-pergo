@@ -42,7 +42,7 @@ export const PLANS: Plan[] = [
     features: [
       'Teljes 3D konfigurátor egy termékcsaládra',
       'Árazás m²-ár vagy ármátrix alapján',
-      'Felmérési kérelmek e-mailben, PDF-összefoglalóval',
+      'Felmérési kérelmek e-mailben, a 3D-terv linkjével',
       'Gyártói admin: érdeklődők, státuszok, megjegyzések',
       'Beépítés egy weboldalba',
     ],
