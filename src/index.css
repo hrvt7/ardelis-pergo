@@ -447,6 +447,8 @@ a { color: inherit; } svg { flex-shrink: 0; }
 .real-lead-form .lead-form-intro > span { display: flex; align-items: center; gap: 6px; color: var(--accent-primary); font-size: var(--text-sm); font-weight: 700; }
 .real-lead-form .lead-form-intro p, .real-lead-success p, .real-lead-success small { color: var(--text-secondary); font-size: var(--text-xs); line-height: 1.6; }
 .real-lead-success { align-items: flex-start; }
+.real-lead-success .booking-cta { display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 10px; padding: 11px 16px; border-radius: var(--radius-lg); background: var(--accent-primary); color: #10140f; font-weight: 700; font-size: var(--text-sm); text-decoration: none; }
+.real-lead-success .booking-cta:hover { transform: translateY(-1px); }
 .real-lead-success > div > span { font-size: var(--text-2xs); letter-spacing: .12em; }
 .real-lead-success h4 { margin-top: 5px; }
 .real-lead-success strong { color: var(--text-primary); }

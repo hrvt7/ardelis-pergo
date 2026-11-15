@@ -58,6 +58,8 @@ export interface Tenant {
     address?: string
     /** Adatkezelési tájékoztató URL — éles gyártónál kötelező megadni. */
     privacyUrl?: string
+    /** Időpontfoglaló link (csak https, pl. Calendly): a vevő a felmérési kérelem után ezen foglalhat időpontot. */
+    bookingUrl?: string
   }
   /**
    * Diszkrét „Lamelix” jelzés a konfigurátorban, a PDF láblécén és a gyártói e-mailben (alapértelmezés: igen).

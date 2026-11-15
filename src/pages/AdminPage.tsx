@@ -25,7 +25,7 @@ import { pointsToRows, validateMatrixRows } from '@/lib/priceMatrixEdit'
 
 const RATE_FIELDS = [['customColorRate', 'Egyedi RAL felár'], ['woodColorRate', 'Fa hatású bevonat felára'], ['installationRate', 'Telepítési arány'], ['vatRate', 'ÁFA kulcs']] as const
 const EXTRA_FIELDS = [['led', 'LED-világítás'], ['speakers', 'Hangrendszer'], ['sensors', 'Szenzorcsomag'], ['solar', 'Napelemes tető'], ['rgb', 'RGB LED'], ['fans', 'Mennyezeti ventilátor'], ['smartHome', 'Okosotthon'], ['roofShade', 'Tetőárnyékoló']] as const
-const BRAND_FIELDS = [['name', 'Megjelenített név', 'text'], ['legalName', 'Cégnév (jogi)', 'text'], ['logoUrl', 'Logó URL', 'url'], ['website', 'Weboldal', 'url'], ['email', 'Kapcsolattartó e-mail', 'email'], ['phone', 'Telefon', 'tel'], ['address', 'Cím', 'text'], ['privacyUrl', 'Adatkezelési tájékoztató URL', 'url']] as const
+const BRAND_FIELDS = [['name', 'Megjelenített név', 'text'], ['legalName', 'Cégnév (jogi)', 'text'], ['logoUrl', 'Logó URL', 'url'], ['website', 'Weboldal', 'url'], ['email', 'Kapcsolattartó e-mail', 'email'], ['phone', 'Telefon', 'tel'], ['address', 'Cím', 'text'], ['privacyUrl', 'Adatkezelési tájékoztató URL', 'url'], ['bookingUrl', 'Időpontfoglaló link (https)', 'url']] as const
 type Brand = Record<(typeof BRAND_FIELDS)[number][0], string>
 
 function Section({ title, children }: { title: string; children: ReactNode }) {

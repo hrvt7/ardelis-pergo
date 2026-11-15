@@ -15,6 +15,7 @@ import { formatHuf } from '../src/lib/pricing'
 import { scoreLead, TIER_LABELS, type LeadEngagement } from '../src/lib/leadScore'
 import type { Tenant } from '../src/tenants/types'
 import { escapeHtml, oneLine, sendEmail, siteOrigin, type LeadEnv } from './lead'
+import { bookingLink } from '../src/lib/booking'
 import { json, resolveTenant, storeConfigured, storeHeaders } from './tenantAdmin'
 
 const DAY = 86_400_000
@@ -80,6 +81,7 @@ export function customerFollowUpHtml(tenant: Tenant, lead: FollowUpLead, env: Le
   const to = contactEmail(tenant, env)
   const subject = encodeURIComponent(`Időpontkérés – ${lead.ref}`)
   const body = encodeURIComponent(`Kedves ${tenant.brand.name}!\n\nSzeretnék helyszíni felmérési időpontot egyeztetni a(z) ${lead.ref} számú pergolatervemhez.\nNekem megfelelő időpontok: \n\nÜdvözlettel,\n${lead.customer_name}`)
+  const booking = bookingLink(tenant)
   const button = (href: string, label: string) => `<a href="${escapeHtml(href)}" style="display:inline-block;background:#007fae;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px">${escapeHtml(label)}</a>`
   return `<!doctype html><html lang="hu"><body style="margin:0;background:#f1f4f4;font-family:Arial,Helvetica,sans-serif;color:#233039">
 <div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:8px;padding:20px 24px">
@@ -89,7 +91,7 @@ export function customerFollowUpHtml(tenant: Tenant, lead: FollowUpLead, env: Le
 <p>Néhány napja felmérést kértél a(z) ${escapeHtml(tenant.brand.name)} csapatától egy ${escapeHtml(formatHuf(lead.estimate_gross))} bruttó irányárú pergolára (${escapeHtml(lead.city)}). A 3D-terved bármikor megnyitható és továbbformálható:</p>
 <p><a href="${escapeHtml(lead.config_url)}" style="color:#007fae">A konfigurációm megnyitása →</a></p>
 <p>Ha szeretnéd, egyeztessünk egy helyszíni felmérési időpontot – ez kötelezettség nélküli, és ekkor készül a pontos árajánlat.</p>
-<p style="margin:20px 0">${to ? button(`mailto:${to}?subject=${subject}&body=${body}`, 'Időpontot kérek') : ''}${tenant.brand.phone ? ` <a href="tel:${escapeHtml(tel(tenant.brand.phone))}" style="display:inline-block;color:#007fae;font-weight:600;padding:12px 8px">Inkább hívlak: ${escapeHtml(tenant.brand.phone)}</a>` : ''}</p>
+<p style="margin:20px 0">${booking ? button(booking, 'Időpontot foglalok') : to ? button(`mailto:${to}?subject=${subject}&body=${body}`, 'Időpontot kérek') : ''}${tenant.brand.phone ? ` <a href="tel:${escapeHtml(tel(tenant.brand.phone))}" style="display:inline-block;color:#007fae;font-weight:600;padding:12px 8px">Inkább hívlak: ${escapeHtml(tenant.brand.phone)}</a>` : ''}</p>
 <p style="font-size:12px;color:#62727a">Ez az egyetlen emlékeztető, amit küldünk. Ha a terv már nem aktuális, nincs teendőd.</p>
 ${[tenant.brand.phone, to, tenant.brand.website].filter(Boolean).length ? `<p style="font-size:12px;color:#62727a">${[tenant.brand.phone, to, tenant.brand.website].filter(Boolean).map((item) => escapeHtml(item!)).join(' · ')}</p>` : ''}
 </div></div></body></html>`

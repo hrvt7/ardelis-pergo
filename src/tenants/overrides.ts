@@ -7,6 +7,7 @@ import { MOUNT_TYPES } from '../lib/mount'
 import { ROOF_INFO, ROOF_TYPES } from '../lib/roofs'
 import { SIDE_TYPES } from '../lib/sides'
 import { MONEY_FIELDS } from './priceFields'
+import { isBookingUrl } from '../lib/booking'
 import { normalizeConfig, priceSettingsSchema } from './rules'
 import type { Tenant, TenantRoof } from './types'
 import type { PriceSettings, RoofType, SideType } from '../types/pergola'
@@ -30,6 +31,7 @@ export const tenantOverridesSchema = z.object({
     email,
     address: text(200),
     privacyUrl: url,
+    bookingUrl: text(300).refine(isBookingUrl, 'Csak https:// kezdetű cím adható meg.'),
   }).partial().optional(),
   /** Csak az ismert, szám típusú árkulcsok; a teljes sémát a mentés előtt a priceSettingsSchema is ellenőrzi. */
   prices: z.record(z.string(), z.unknown()).optional(),

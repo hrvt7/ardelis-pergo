@@ -23,6 +23,7 @@ import { roofLabels } from '../src/tenants/rules'
 import type { Tenant } from '../src/tenants/types'
 import { hasPrivacyUrl } from '../src/tenants/privacy'
 import { scoreLead, TIER_LABELS } from '../src/lib/leadScore'
+import { bookingLink } from '../src/lib/booking'
 import type { PergolaConfig, PriceBreakdown, SideKey } from '../src/types/pergola'
 
 export type LeadEnv = Record<string, string | undefined>
@@ -185,9 +186,10 @@ function platformFooter(configUrl: string) {
   return `<p style="margin:18px 0 0;font-size:11px;color:#8a979d"><a href="${escapeHtml(origin)}/" style="text-decoration:none;color:#8a979d"><img src="${escapeHtml(origin)}/brand/lamelix-email-light.png" width="72" height="21" alt="Lamelix" style="vertical-align:middle;border:0;margin-right:6px">3D konfigurátor és lead rendszer</a></p>`
 }
 
-function customerEmailHtml(record: LeadRecord) {
+export function customerEmailHtml(record: LeadRecord) {
   const { tenant, input, price } = record
   const contact = [tenant.brand.phone, tenant.brand.email, tenant.brand.website].filter(Boolean).map((item) => escapeHtml(item!)).join(' · ')
+  const booking = bookingLink(tenant)
   return `<!doctype html><html lang="hu"><body style="margin:0;background:#f1f4f4;font-family:Arial,Helvetica,sans-serif;color:#233039">
 <div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:8px;padding:20px 24px">
 <p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">${escapeHtml(tenant.brand.name.toUpperCase())} · ${escapeHtml(record.ref)}</p>
@@ -197,6 +199,7 @@ function customerEmailHtml(record: LeadRecord) {
 <p style="margin:16px 0 4px"><strong>${escapeHtml(record.headline)}</strong></p>
 <p style="margin:0 0 16px">Bruttó irányár: <strong>${escapeHtml(formatHuf(price.totalGross))}</strong> (telepítéssel)</p>
 <p><a href="${escapeHtml(record.configUrl)}" style="color:#007fae">A konfigurációd megnyitása →</a></p>
+${booking ? `<p style="margin:20px 0"><a href="${escapeHtml(booking)}" style="display:inline-block;background:#007fae;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px">Felmérési időpont foglalása →</a></p>` : ''}
 <p style="font-size:12px;color:#62727a">Az irányár tájékoztató jellegű, nem minősül árajánlatnak. A végleges ár helyszíni felmérés után készül.</p>
 ${contact ? `<p style="font-size:12px;color:#62727a">${contact}</p>` : ''}
 </div></div></body></html>`

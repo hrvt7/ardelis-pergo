@@ -1,5 +1,12 @@
 # Változások
 
+## 4.17 – Időpontfoglaló link a felmérési kérelem után
+
+- Új beállítás az adminban (Beállítások → Cég és kapcsolat): „Időpontfoglaló link (https)”, pl. Calendly vagy Google Naptár foglalóoldal. Csak https:// kezdetű cím menthető (szerveroldalon is ellenőrizve); üresen hagyva nincs link.
+- Ha be van állítva, a vevő három helyen kapja meg: a kérelem elküldése utáni köszönőképernyőn („Foglalj most felmérési időpontot”, új lapon nyílik, beágyazva is), a visszaigazoló e-mailben gombként, és a 3 napos emlékeztetőben (ott a levélküldő „Időpontot kérek” gomb helyett).
+- Link nélkül minden a régi módon működik.
+- Új: `src/lib/booking.ts`; teszt: `tests/booking.test.ts` (https-szabály, admin-felülírás, e-mailek).
+
 ## 4.16 – Videó a tervről (körbejárás, WhatsAppon küldhető)
 
 - Az Összegzés lépésben új „Videó a tervről” gomb: kb. 10 mp-es videó, a kamera a terv körül mozog, alul márkázott sáv (gyártó neve, tető és méret, bruttó irányár). Telefonon a megosztó menübe kerül (WhatsApp, Messenger), asztalon letöltődik.
