@@ -41,4 +41,11 @@ describe('minőségi korlát (védőháló) lejárata', () => {
     location.search = '?quality=ultra'
     expect(readTierCap(5001)).toBeNull()
   })
+
+  it('nagy felbontású (2×) kijelzőn az erős szintek teljes felbontáson rajzolnak, a közepes legalább 1,75×-ön', () => {
+    expect(QUALITY_PROFILES.high.dpr[1]).toBe(2)
+    expect(QUALITY_PROFILES.ultra.dpr[1]).toBe(2)
+    expect(QUALITY_PROFILES.medium.dpr[1]).toBeGreaterThanOrEqual(1.75)
+    expect(QUALITY_PROFILES.low.dpr[0]).toBe(1)
+  })
 })

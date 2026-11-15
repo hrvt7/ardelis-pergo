@@ -17,6 +17,8 @@
   --text-2xs: 10.5px; --text-xs: 11.5px; --text-sm: 12.5px; --text-md: 13.5px; --text-base: 14.5px; --text-lg: 15.5px; --component-transition: 190ms ease-out; --header-height: 64px;
   --font-ui: 'Plus Jakarta Sans', sans-serif; --font-display: var(--font-ui);
   font-family: var(--font-ui); color: var(--text-primary); background: var(--surface-app); font-synthesis: none; text-rendering: optimizeLegibility;
+  /* Éles betűk: sötét háttéren a világos szöveg ne „vastagodjon” el (macOS), és ne legyen elmosódott. */
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
 }
 * { box-sizing: border-box; }
 html { min-width: 320px; background: var(--surface-app); scroll-behavior: smooth; overflow-x: hidden; }
@@ -73,7 +75,7 @@ a { color: inherit; } svg { flex-shrink: 0; }
 .control-tabs button.active { color: var(--accent-primary); }
 .control-tabs button.active .step-dot { color: var(--ink-1000); background: var(--accent-primary); border-color: var(--accent-primary); box-shadow: 0 0 0 4px var(--accent-subtle); }
 .control-tabs button.complete .step-dot { color: var(--accent-primary); border-color: rgba(216,255,114,.4); }
-.controls-scroll { overflow-y: auto; overscroll-behavior: contain; contain: content; transform: translateZ(0); flex: 1; border-top: 1px solid var(--surface-border); }
+.controls-scroll { overflow-y: auto; overscroll-behavior: contain; contain: content; flex: 1; border-top: 1px solid var(--surface-border); }
 .panel-content { padding: 19px 18px 24px; animation: panel-enter 230ms ease-out; }
 .step-heading { margin-bottom: 20px; }
 .step-heading > span { font-size: var(--text-xs); font-weight: 700; color: var(--accent-primary); letter-spacing: .12em; text-transform: uppercase; }

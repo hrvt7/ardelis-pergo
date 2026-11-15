@@ -1,5 +1,11 @@
 # Változások
 
+## 4.28 – Élesebb 3D kép és betűk nagy felbontású kijelzőn
+
+- **Hiba: a 3D kép nem volt éles Retina / 2× kijelzőn.** A vászon felbontása szintenként legfeljebb 1,1–1,65× volt, így 2×-es kijelzőn a gép kisebb képet rajzolt és felnagyította (puha, „pixeles” hatás). Most: alacsony 1,25×, közepes 1,75×, magas és ultra a kijelző teljes, legfeljebb 2× felbontása. Ha a gép ettől 30 fps alá lassul, a meglévő védőháló pár másodperc után automatikusan alacsonyabb szintre lép.
+- **Hiba: a panel szövege kissé elmosódott lehetett.** A görgethető panelrész egy külön grafikus rétegen (`translateZ(0)`) futott, ami a betűk élsimítását rontja; ez megszűnt. Sötét háttéren a világos betűk élsimítása macOS-en vékonyabb, élesebb (`font-smoothing`).
+- Tesztek: `quality.test.ts` (2×-es kijelzőn a magas és ultra szint teljes felbontású, a közepes legalább 1,75×).
+
 ## 4.27 – Gyártói admin: világos „dashboard” stílus
 
 - **Új megjelenés:** sötét oldalsáv lime pill aktív menüponttal, világos munkaterület lekerekített keretben, fehér kártyák finom árnyékkal, pill gombok és keresőmező, lime grafikonvonal és sávok, sötét buborék a grafikonon, zöld/piros változás-jelzők, fehér részletek-panel. Betű: Poppins.
