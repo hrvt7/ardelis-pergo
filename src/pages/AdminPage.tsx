@@ -32,6 +32,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return <section className="admin-section"><h2>{title}</h2><div className="admin-grid">{children}</div></section>
 }
 
+/** Üzemeltetői kapcsolat a gyártói adminban (jelszó, tárhely-hiba). */
+const SUPPORT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'hrvtadam.7@icloud.com'
+
 export default function AdminPage() {
   const { tenantId } = useParams()
   const base = getTenant(tenantId)
@@ -86,6 +89,7 @@ function AdminForTenant({ base }: { base: Tenant }) {
       <label><span>Jelszó</span><input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required autoFocus /></label>
       {loginError && <p className="admin-message is-error" role="alert">{loginError}</p>}
       <button className="admin-save" type="submit">Belépés</button>
+      <p className="admin-forgot">Elfelejtette a jelszót? Írjon a <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Admin jelszó – ${base.brand.name}`)}`}>{SUPPORT_EMAIL}</a> címre, és új jelszót küldünk.</p>
       <a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><span>Működteti:</span><LamelixLogo height={18} title={null} /></a>
     </form></main>
   }
@@ -222,7 +226,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
       <section className="admin-main">
         {demo && <div className="demo-ribbon" role="status"><span><b>Demó adatok</b> · kitalált érdeklődők, a módosítások nem mentődnek.</span><button type="button" onClick={() => setDemoPref(false)}>Kikapcsolás</button></div>}
         {!demo && base.demo === true && realEmpty && <div className="demo-ribbon is-soft"><span>Még nincs valódi érdeklődő.</span><button type="button" onClick={() => setDemoPref(true)}>Demó adatok megtekintése</button></div>}
-        <header className="admin-top"><div><h1>{title}</h1><p>{TAB_INFO[tab].subtitle}</p></div><div className="admin-top-actions"><button type="button" className="palette-btn" onClick={() => setPaletteOpen(true)} aria-label="Gyorskereső megnyitása"><Search size={14} /><span>Keresés</span><kbd>Ctrl K</kbd></button><Link className="btn" to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor</Link></div></header>
+        <header className="admin-top"><div><h1>{title}</h1><p>{TAB_INFO[tab].subtitle}</p></div><div className="admin-top-actions"><button type="button" className="palette-btn" onClick={() => setPaletteOpen(true)} aria-label="Keresés – gyorskereső megnyitása (Ctrl K)"><Search size={14} /><span>Keresés</span><kbd>Ctrl K</kbd></button><Link className="btn" to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor</Link></div></header>
         {(tab === 'overview' || tab === 'leads') && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
         {tab === 'overview' && leads && <div key="overview" className="tab-fade">{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} onOpenLead={openLead} checklist={demo ? undefined : checklist} /></div>}
         {tab === 'leads' && leads && <div key="leads" className="tab-fade"><AdminLeads tenant={effective} leads={leads} error={error} onReload={() => void real.reload()} onUpdate={update} quotes={quotes} openRef={openRef} onOpenRef={setOpenRef} /></div>}
@@ -296,7 +300,7 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
   }
 
   return <form className="admin-form" onSubmit={submit}>
-      {!storage && <p className="admin-message is-error" role="alert">Az adattár (Supabase) nincs beállítva a szerveren, ezért a mentés nem működik.</p>}
+      {!storage && <p className="admin-message is-error" role="alert">A beállítások mentése most nem érhető el (a szerver tárhelye nincs bekapcsolva). A módosítások nem vesznek el, ha nyitva hagyja az oldalt; kérjük, jelezze a <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> címen.</p>}
 
       <Section title="Cég és kapcsolat">
         {BRAND_FIELDS.map(([key, label, type]) => <label key={key}><span>{label}</span><input type={type} value={brand[key]} onChange={(event) => setBrand({ ...brand, [key]: event.target.value })} required={key === 'name' || key === 'legalName'} maxLength={300} /></label>)}

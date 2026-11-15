@@ -1,8 +1,9 @@
 // Névtelen konverziómérés a konfigurátorban: süti és azonosító nélkül, munkamenetenként egy-egy jelzés eseményenként.
 // A "Do Not Track" beállítást tiszteletben tartja; hiba esetén csendben nem csinál semmit.
 import type { InterestEvent } from '@/products'
+import type { FunnelEvent } from '@/lib/funnelEvents'
 
-export type TrackName = 'open' | 'configure' | 'lead_view' | 'lead_start' | 'pdf' | 'ar' | 'share' | InterestEvent
+export type TrackName = 'open' | 'configure' | 'lead_view' | 'lead_start' | 'pdf' | 'ar' | 'share' | InterestEvent | FunnelEvent
 
 const sent = new Set<string>()
 

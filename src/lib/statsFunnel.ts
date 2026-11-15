@@ -16,3 +16,13 @@ export function computeFunnel(events: EventRow[], leads: number): Funnel {
   return { steps, leads, conversion: counts[0] > 0 ? Math.min(1, leads / counts[0]) : null }
 }
 
+
+/** Lépésenkénti elérés (hány munkamenet jutott el az adott lépésig) és a 3D betöltési idő sávjai, az eseményszámokból. */
+export const STEP_REACH: [string, string][] = [['open', 'Típus'], ['step_mount', 'Méret'], ['step_roof', 'Tető'], ['step_sides', 'Oldalak'], ['step_color', 'Szín'], ['step_extras', 'Komfort'], ['step_summary', 'Összegzés']]
+export const SCENE_SPEED: [string, string][] = [['scene_fast', '4 mp alatt'], ['scene_mid', '4–10 mp'], ['scene_slow', '10 mp felett']]
+
+export function eventTotals(events: EventRow[], keys: [string, string][]): { key: string; label: string; count: number }[] {
+  const totals = new Map<string, number>()
+  for (const event of events) totals.set(event.name, (totals.get(event.name) ?? 0) + event.count)
+  return keys.map(([key, label]) => ({ key, label, count: totals.get(key) ?? 0 }))
+}

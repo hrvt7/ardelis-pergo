@@ -61,6 +61,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
     const first = firstInvalid(errors)
     setFieldErrors(errors)
     if (first) {
+      track(tenant.id, 'lead_error')
       setError('')
       const target = event.currentTarget.querySelector<HTMLElement>(first === 'consent' ? 'input[name=consent]' : `[name=${first}]`)
       target?.focus()
@@ -105,6 +106,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
       const data = await response.json().catch(() => null) as LeadResponse | null
       if (!response.ok || !data || !data.ok) {
         const fieldName = data && !data.ok && data.field ? FIELD_NAMES[data.field] : undefined
+        track(tenant.id, 'lead_error')
         setError(fieldName ? `Kérlek, ellenőrizd ${fieldName}.` : data && !data.ok ? data.error : 'A kérelem elküldése nem sikerült. Ellenőrizd a kapcsolatot, és próbáld újra.')
         return
       }

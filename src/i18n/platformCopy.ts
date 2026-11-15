@@ -13,7 +13,7 @@ const hu = {
     ogAlt: 'Lamelix – 3D konfigurátor és ajánlatkérő rendszer pergola-, veranda- és télikertgyártóknak',
   },
   nav: {
-    brandAria: 'Lamelix – az oldal teteje', brandSmall: 'gyártóknak', mainAria: 'Fő navigáció', footerAria: 'Lábléc',
+    brandAria: 'Lamelix gyártóknak – az oldal teteje', brandSmall: 'gyártóknak', mainAria: 'Fő navigáció', footerAria: 'Lábléc',
     benefits: 'Előnyök', showcase: 'Bemutató', features: 'Funkciók', live: 'Működés élőben', how: 'Működés', pricing: 'Árak', faq: 'GYIK',
     liveDemo: 'Élő demó', requestDemo: 'Kérek demót', login: 'Gyártói belépés', langAria: 'Nyelv', langName: { hu: 'Magyar', en: 'English' },
   },
@@ -149,7 +149,7 @@ const en: PlatformCopy = {
     ogAlt: 'Lamelix – 3D configurator and quote-request system for pergola, veranda and conservatory manufacturers',
   },
   nav: {
-    brandAria: 'Lamelix – top of the page', brandSmall: 'for manufacturers', mainAria: 'Main navigation', footerAria: 'Footer',
+    brandAria: 'Lamelix for manufacturers – top of the page', brandSmall: 'for manufacturers', mainAria: 'Main navigation', footerAria: 'Footer',
     benefits: 'Benefits', showcase: 'Showcase', features: 'Features', live: 'Live mechanics', how: 'How it works', pricing: 'Pricing', faq: 'FAQ',
     liveDemo: 'Live demo', requestDemo: 'Request a demo', login: 'Manufacturer login', langAria: 'Language', langName: { hu: 'Magyar', en: 'English' },
   },

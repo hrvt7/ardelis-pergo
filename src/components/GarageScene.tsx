@@ -301,7 +301,7 @@ export default memo(function GarageScene({ config, scene, view }: { config: Gara
   const onReady = useMemo(() => () => setReady(true), [])
   return <div className="scene-canvas-wrap" data-scene-ready={ready}>
     {!ready && <ScenePoster />}
-    <Boundary><Canvas frameloop={scene.autoRotate ? 'always' : 'demand'} shadows dpr={[1, 1.25]} camera={{ position: [6, 3, 8], fov: 40, near: 0.1, far: 220 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} onCreated={({ gl }) => {
+    <Boundary><Canvas frameloop={scene.autoRotate ? 'always' : 'demand'} shadows="percentage" dpr={[1, 1.25]} camera={{ position: [6, 3, 8], fov: 40, near: 0.1, far: 220 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} onCreated={({ gl }) => {
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.toneMappingExposure = studioLighting(scene.time).exposure
       gl.shadowMap.autoUpdate = false

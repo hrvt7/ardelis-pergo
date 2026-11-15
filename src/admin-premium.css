@@ -191,7 +191,7 @@ kbd{font:600 10.5px/1 ui-monospace,monospace;padding:3px 6px;border-radius:5px;b
 .admin-light .kpi-head em.up{color:#15803D;background:#DCFCE7}.admin-light .kpi-head em.down{color:#B91C1C;background:#FEE2E2}
 .admin-light .kpi-spark-line,.admin-light .kpi-ring-fill{stroke:#7CB518}
 .admin-light .kpi-ring-track{stroke:#EEF0F3}
-.admin-light .card h3,.admin-light .admin-section h2{font-weight:600}
+.admin-light .card h3,.card header h2,.admin-light .admin-section h2{font-weight:600}
 .admin-light .board-col{background:#EDEFF2;border-color:transparent}
 .admin-light .board-card:hover{box-shadow:0 12px 24px -14px rgba(16,24,40,.25)}
 
@@ -267,3 +267,14 @@ kbd{font:600 10.5px/1 ui-monospace,monospace;padding:3px 6px;border-radius:5px;b
 .admin-light .kpi:has(.kpi-ring) small{padding-right:54px}
 @media (max-width:860px){.admin-light .admin-top{margin:0 -16px 18px;padding:16px 16px 12px;border-radius:0}}
 .admin-light .admin-login .admin-powered svg{filter:brightness(0);opacity:.75}
+/* Admin mobil (H17): a rejtett fejlécsor ne hagyjon üres sávot; a gombfeliratok ne törjenek; tömörebb demó-sáv; a szűrősáv görgethetőségét halvány szél jelzi. */
+@media (max-width:760px){
+  .table .tr-wrap:has(> .tr.th){display:none}
+  .admin-light .btn{white-space:nowrap}
+  .demo-ribbon,.admin-light .demo-ribbon{padding:7px 10px;margin-bottom:12px;font-size:12px;line-height:1.35}
+  .admin-light .tabs{mask-image:linear-gradient(90deg,#000 85%,transparent);-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent)}
+}
+.admin-forgot{margin:2px 0 0;color:var(--a-muted,#6b7280);font-size:12.5px;line-height:1.5;text-align:center}
+.admin-forgot a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.admin-light .admin-page:has(.admin-login), .admin-page.admin-light:has(> .admin-login){min-height:100svh;display:grid;place-items:center}
+.admin-page.admin-light > .admin-login{margin-top:0}

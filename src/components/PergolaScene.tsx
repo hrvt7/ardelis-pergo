@@ -3,6 +3,7 @@ import { Component, Suspense, lazy, memo, use, useCallback, useEffect, useLayout
 import { assetUrl } from '@/lib/assetUrl'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { ContactShadows, Environment, Html, Line, OrbitControls, RoundedBox, useEnvironment, useGLTF, useProgress, useTexture } from '@react-three/drei'
+import { SCENE_READY_EVENT } from '@/lib/funnelEvents'
 import * as THREE from 'three'
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
@@ -3356,6 +3357,13 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
     const timer = window.setTimeout(() => setLoaded(true), 8000)
     return () => window.clearTimeout(timer)
   }, [ready, loaded])
+  // Mérés: az első használható 3D kép ideje (csak egyszer, sávosítva küldi a PergoStudio).
+  const readyReported = useRef(false)
+  useEffect(() => {
+    if (!loaded || readyReported.current) return
+    readyReported.current = true
+    window.dispatchEvent(new CustomEvent(SCENE_READY_EVENT, { detail: Math.round(performance.now()) }))
+  }, [loaded])
   useEffect(() => {
     if (!loaded) return
     const timer = window.setTimeout(() => setPosterGone(true), 800)

@@ -4,6 +4,7 @@ import { formatHuf } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
 import { computeLeadStats, computePipeline, initials, STATUS_COLORS, timeAgo, LEAD_STATUSES, type LeadRow } from '@/lib/adminLeads'
 import { computeFunnel, type EventRow } from '@/lib/adminStats'
+import { eventTotals, SCENE_SPEED, STEP_REACH } from '@/lib/statsFunnel'
 import type { RoofType } from '@/types/pergola'
 import { Checklist, type ChecklistItem } from '@/components/admin/adminKit'
 
@@ -122,6 +123,19 @@ function FunnelCard({ events, recent }: { events: EventRow[] | null; recent: num
   </div>
 }
 
+/** Lépésenkénti elérés és a 3D betöltési idő sávjai (névtelen eseményszámokból, közelítő értékek). */
+function StepReach({ events }: { events: EventRow[] | null }) {
+  if (events === null) return <p className="admin-hint">Betöltés…</p>
+  const steps = eventTotals(events, STEP_REACH)
+  const speed = eventTotals(events, SCENE_SPEED)
+  if (steps.slice(1).every((step) => step.count === 0)) return <p className="admin-hint">A lépésenkénti mérés most indult; az első adatok néhány látogatás után jelennek meg itt.</p>
+  const loads = speed.reduce((sum, item) => sum + item.count, 0)
+  return <>
+    <HBars items={steps.map((step) => ({ key: step.label, count: step.count }))} empty="Nincs adat." />
+    {loads > 0 && <p className="admin-hint">A 3D kép betöltése: {speed.map((item) => `${item.label}: ${Math.round((item.count / loads) * 100)}%`).join(' · ')} ({loads} megnyitás, becsült sávok).</p>}
+  </>
+}
+
 function HBars({ items, empty }: { items: { key: string; count: number }[]; empty: string }) {
   if (items.length === 0) return <p className="admin-hint">{empty}</p>
   const max = Math.max(...items.map((item) => item.count))
@@ -141,7 +155,7 @@ function TodayCard({ leads, now, onOpen, onAll }: { leads: LeadRow[]; now: numbe
   }).sort((a, b) => b.weight - a.weight)
   const shown = tasks.slice(0, 5)
   return <section className="card today">
-    <header><h3>Ma teendő</h3>{tasks.length > 0 && <span className="check-count" title={`${tasks.length} érdeklődő vár a következő lépésre`}>{tasks.length}</span>}{tasks.length > shown.length && <button type="button" className="ghost-link today-all" onClick={onAll}>Összes ({tasks.length})</button>}</header>
+    <header><h2>Ma teendő</h2>{tasks.length > 0 && <span className="check-count" title={`${tasks.length} érdeklődő vár a következő lépésre`}>{tasks.length}</span>}{tasks.length > shown.length && <button type="button" className="ghost-link today-all" onClick={onAll}>Összes ({tasks.length})</button>}</header>
     {tasks.length === 0 ? <p className="admin-hint">Nincs teendő. Minden érdeklődő kezelve van.</p> : <ul className="recent">{shown.map(({ lead, why }) => <li key={lead.ref}>
       <button type="button" className="today-row" onClick={() => onOpen(lead.ref)}><span className="avatar">{initials(lead.customer_name)}</span><div><strong>{lead.customer_name}</strong><small>{why}</small></div></button>
       <a className="icon-btn call" href={`tel:${lead.phone.replace(/[^+0-9]/g, '')}`} aria-label={`${lead.customer_name} hívása`} title="Hívás"><PhoneCall size={15} /></a>
@@ -153,7 +167,7 @@ function PipelineCard({ leads }: { leads: LeadRow[] }) {
   const pipeline = computePipeline(leads)
   const max = Math.max(1, ...pipeline.stages.map((stage) => stage.value))
   return <section className="card pipeline">
-    <header><h3>Értékesítési csatorna</h3></header>
+    <header><h2>Értékesítési csatorna</h2></header>
     <div className="pipe-forecast"><span>Súlyozott várható bevétel</span><strong><CountValue value={compactHuf(pipeline.forecast)} /></strong><small>megnyert eddig: {compactHuf(pipeline.wonValue)}</small></div>
     <ul className="pipe-stages">{pipeline.stages.map((stage) => <li key={stage.key}>
       <div><span><i style={{ background: STATUS_COLORS[stage.key] }} />{stage.label}</span><b>{stage.count} db · {compactHuf(stage.value)}</b></div>
@@ -188,19 +202,20 @@ export default function AdminOverview({ leads, events, onOpenLeads, onOpenLead, 
       <TodayCard leads={leads} now={now} onOpen={onOpenLead} onAll={onOpenLeads} />
       <PipelineCard leads={leads} />
       <section className="card span-2">
-        <header><h3>Érkező érdeklődők</h3><button type="button" className="ghost-link report-btn" onClick={() => window.print()}><FileText size={13} />Jelentés (PDF)</button><div className="seg" role="group" aria-label="Időszak">{RANGES.map((value) => <button type="button" key={value} className={range === value ? 'is-on' : ''} onClick={() => setRange(value)}>{value} nap</button>)}</div></header>
+        <header><h2>Érkező érdeklődők</h2><button type="button" className="ghost-link report-btn" onClick={() => window.print()}><FileText size={13} />Jelentés (PDF)</button><div className="seg" role="group" aria-label="Időszak">{RANGES.map((value) => <button type="button" key={value} className={range === value ? 'is-on' : ''} onClick={() => setRange(value)}>{value} nap</button>)}</div></header>
         {leads.length === 0 ? <p className="admin-hint empty-hint">Még nem érkezett érdeklődő. Amint valaki felmérést kér, itt jelenik meg a grafikon.</p> : <AreaChart daily={stats.daily} />}
       </section>
-      <section className="card span-2"><header><h3>Eseményszámok és becsült konverzió</h3></header><FunnelCard events={events} recent={stats.last30} /></section>
+      <section className="card span-2"><header><h2>Eseményszámok és becsült konverzió</h2></header><FunnelCard events={events} recent={stats.last30} /></section>
+      <section className="card"><header><h2>Meddig jutnak a lépésekben?</h2></header><StepReach events={events} /></section>
       <section className="card">
-        <header><h3>Státuszok</h3></header>
+        <header><h2>Státuszok</h2></header>
         <div className="stackbar" role="img" aria-label="Érdeklődők megoszlása státusz szerint">{stats.total === 0 ? <i style={{ width: '100%' }} /> : stats.byStatus.filter((item) => item.count > 0).map((item) => <i key={item.key} style={{ width: `${(item.count / stats.total) * 100}%`, background: STATUS_COLORS[item.key] }} title={`${item.label}: ${item.count}`} />)}</div>
         <ul className="legend">{stats.byStatus.map((item) => <li key={item.key}><i style={{ background: STATUS_COLORS[item.key] }} />{item.label}<strong>{item.count}</strong></li>)}</ul>
       </section>
-      <section className="card"><header><h3>Népszerű tetőtípusok</h3></header><HBars items={stats.byRoof.map((item) => ({ key: ROOF_INFO[item.key as RoofType]?.name ?? item.key, count: item.count }))} empty="Nincs adat." /></section>
-      <section className="card"><header><h3>Települések</h3></header><HBars items={stats.byPlace} empty="Nincs adat." /></section>
+      <section className="card"><header><h2>Népszerű tetőtípusok</h2></header><HBars items={stats.byRoof.map((item) => ({ key: ROOF_INFO[item.key as RoofType]?.name ?? item.key, count: item.count }))} empty="Nincs adat." /></section>
+      <section className="card"><header><h2>Települések</h2></header><HBars items={stats.byPlace} empty="Nincs adat." /></section>
       <section className="card">
-        <header><h3>Legfrissebb</h3><button type="button" className="ghost-link" onClick={onOpenLeads}>Összes</button></header>
+        <header><h2>Legfrissebb</h2><button type="button" className="ghost-link" onClick={onOpenLeads}>Összes</button></header>
         {leads.length === 0 ? <p className="admin-hint">Nincs még érdeklődő.</p> : <ul className="recent">{leads.slice(0, 5).map((lead) => <li key={lead.ref}>
           <span className="avatar">{initials(lead.customer_name)}</span>
           <div><strong>{lead.customer_name}</strong><small>{lead.city} · {timeAgo(lead.created_at, now)}</small></div>

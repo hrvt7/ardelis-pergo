@@ -155,7 +155,7 @@ export async function handleAdminSettings(request: Request, env: AdminEnv): Prom
 
   if (request.method === 'GET') return json(200, { ok: true, storage: storeConfigured(env), overrides: await loadOverrides(env, tenant.id) })
 
-  if (!storeConfigured(env)) return json(503, { ok: false, error: 'Az adattár (Supabase) nincs beállítva, a mentés nem lehetséges.' })
+  if (!storeConfigured(env)) return json(503, { ok: false, error: 'A szerver tárhelye nincs bekapcsolva, a mentés most nem lehetséges. Kérjük, jelezze az üzemeltetőnek.' })
   // Az alapértelmezett (nyilvános) demó-jelszóval a demó beállításai nem írhatók: különben bárki átírhatná a nyilvános demót.
   if (tenant.id === 'demo' && !env[passwordEnvKey('demo')]) return json(403, { ok: false, error: 'A demó beállításai nem menthetők (csak kipróbálható). Saját gyártói fiókkal minden menthető.' })
   const raw = await request.text()
@@ -188,7 +188,7 @@ export async function handleAdminLeads(request: Request, env: AdminEnv): Promise
   if (request.method !== 'GET' && request.method !== 'PATCH') return json(405, { ok: false, error: 'Nem engedélyezett metódus.' })
   const auth = await authorize(request, env)
   if (auth instanceof Response) return auth
-  if (!storeConfigured(env)) return json(503, { ok: false, error: 'Az adattár (Supabase) nincs beállítva, az érdeklődők nem érhetők el.' })
+  if (!storeConfigured(env)) return json(503, { ok: false, error: 'A szerver tárhelye nincs bekapcsolva, az érdeklődők most nem érhetők el. Kérjük, jelezze az üzemeltetőnek.' })
   const base = `${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/leads`
   const tenantId = encodeURIComponent(auth.tenant.id)
 

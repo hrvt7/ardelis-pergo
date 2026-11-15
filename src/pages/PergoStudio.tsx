@@ -1,3 +1,4 @@
+import { SCENE_READY_EVENT, sceneEvent, stepEvent } from '@/lib/funnelEvents'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Armchair, Cog, Box, Footprints, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Layers, Maximize2, Rotate3d, Scan, ShieldCheck, SunMedium, View, Wallet, WandSparkles, X } from 'lucide-react'
 import { Link } from 'react-router'
@@ -190,6 +191,14 @@ export default function PergoStudio() {
   // A lead-pontozáshoz: melyik lépéseket járta be (csak a böngészőben gyűlik, a kérelemmel megy ki).
   useEffect(() => { noteStep(tenant.id, step) }, [tenant.id, step])
   useEffect(() => { if (!admin && config !== firstConfig.current) track(tenant.id, 'configure') }, [tenant.id, admin, config])
+  // Lépésenkénti lemorzsolódás és betöltési idő mérése (névtelen, munkamenetenként egyszer; audit: mérőszámok).
+  useEffect(() => { const name = stepEvent(step); if (!admin && name) track(tenant.id, name) }, [tenant.id, admin, step])
+  useEffect(() => {
+    if (admin) return
+    const onReady = (event: Event) => track(tenant.id, sceneEvent(Number((event as CustomEvent<number>).detail) || 0))
+    window.addEventListener(SCENE_READY_EVENT, onReady)
+    return () => window.removeEventListener(SCENE_READY_EVENT, onReady)
+  }, [tenant.id, admin])
   // Ha az oldal megosztott linkkel nyílt, a címsor linkje kövesse a módosításokat — különben
   // frissítéskor a régi link felülírná a vásárló közben végzett változtatásait.
   useEffect(() => {

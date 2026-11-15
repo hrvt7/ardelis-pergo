@@ -145,7 +145,7 @@ export default function HeroLouvre({ drive, compact, onReady }: { drive: RefObje
     onCreated={({ gl, scene, camera }) => {
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.toneMappingExposure = 1.05
-      gl.shadowMap.type = THREE.PCFSoftShadowMap
+      gl.shadowMap.type = THREE.PCFShadowMap // three r18x: a PCFSoft megszűnt, eddig is erre esett vissza
       // A rajzolás csak a shaderek lefordítása után indul (a projekt WebGL-szabálya).
       void (gl as THREE.WebGLRenderer).compileAsync(scene, camera).finally(() => onReady?.())
     }}

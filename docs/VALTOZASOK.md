@@ -1,5 +1,15 @@
 # Változások
 
+## 4.39 – Mérés lépésenként és betöltési időre, admin javítások
+
+- **Lépésenkénti mérés:** a konfigurátor most névtelenül számolja, hány munkamenet jut el az egyes lépésekig (Méret → Összegzés), a 3D kép betöltési idejét három sávban (4 mp alatt / 4–10 mp / 10 mp felett, pontos érték nélkül), és a sikertelen beküldési kísérleteket. Az admin Áttekintésben új kártya: „Meddig jutnak a lépésekben?” (közelítő értékek, az első adatok néhány látogatás után jelennek meg).
+- **Admin belépés:** a kártya függőlegesen középen van; „Elfelejtette a jelszót?” segítség az üzemeltetői e-mail-címmel.
+- **Érthető hibaüzenet:** ha a szerver tárhelye nincs bekapcsolva, a gyártó nem fejlesztői szöveget lát („Az adattár (Supabase)…”), hanem teendőt és kapcsolatot.
+- **Hiba: admin mobilon üres sáv volt az érdeklődőlista felett** (rejtett fejlécsor); megszűnt. Az „E-mail” gomb felirata nem törik két sorba, a demó-sáv tömörebb, a státuszszűrők görgethetőségét halvány szél jelzi.
+- **Akadálymentesség:** az admin kártyacímei h2-k (nincs h1 → h3 ugrás); a gyorskereső és a landing logó-linkjének akadálymentes neve tartalmazza a látható szöveget.
+- **Konzol:** a three.js-ből megszűnt PCFSoft árnyéktípus helyett a ténylegesen használt PCF típus van beállítva (a megjelenés nem változik; eddig is erre esett vissza). A THREE.Clock figyelmeztetés az R3F könyvtárból jön, frissítésig marad.
+- Tesztek: `funnelEvents.test.ts` (lépés- és betöltési események, szerveroldali elfogadás, admin összesítés, űrlaphiba mérése, admin szövegek, címsorrend, mobil CSS).
+
 ## 4.38 – Landing: friss termékképek, nem takaró demósáv, rövidebb oldal, mobil hero
 
 - **Friss termékképek a landingen:** a bemutató szakasz képei (konfigurátor, admin áttekintés, érdeklődők, mobil lead-adatlap) a mostani felületről készültek; a régiek még a 6 lépéses, bal paneles konfigurátort és a sötét admint mutatták.

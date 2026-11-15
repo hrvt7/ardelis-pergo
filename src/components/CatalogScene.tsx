@@ -577,7 +577,7 @@ export default memo(function CatalogScene({ config, scene, view }: { config: Out
   const onReady = useMemo(() => () => setReady(true), [])
   return <div className="scene-canvas-wrap" data-scene-ready={ready}>
     {!ready && <ScenePoster />}
-    <Boundary><Canvas frameloop={scene.autoRotate ? 'always' : 'demand'} shadows dpr={[1, 1.25]} camera={{ position: [10, 7, 12], fov: 40, near: 0.1, far: 260 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} onCreated={({ gl }) => {
+    <Boundary><Canvas frameloop={scene.autoRotate ? 'always' : 'demand'} shadows="percentage" dpr={[1, 1.25]} camera={{ position: [10, 7, 12], fov: 40, near: 0.1, far: 260 }} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} onCreated={({ gl }) => {
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.toneMappingExposure = studioLighting(scene.time).exposure
       gl.shadowMap.autoUpdate = false
