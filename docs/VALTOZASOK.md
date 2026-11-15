@@ -1,5 +1,15 @@
 # Változások
 
+## 4.36 – Konfigurátor: mobil lépéssáv, kevesebb ikon, olvashatóbb feliratok, megerősített újrakezdés
+
+- **Hiba: mobilon a 7 lépés nem fért ki,** az aktív lépés neve le volt vágva. A lépéssáv most vízszintesen görgethető, és az aktív lépés mindig a látható részre ugrik; a félig felhúzott panel címe az aktív lépés („7/7 · Összegzés”) a „Húzd fel a teljes nézethez” utasítás helyett.
+- **Telefonon kevesebb felirat nélküli ikon:** a jelenet szélén csak a nézet, a napszak és az Eszközök marad; a gyors kapcsolók (bejárás, eső, AR stb.) feliratos, magyarázatos menüpontként az Eszközök menü elejére kerültek. Asztali nézet változatlan.
+- **Olvashatóbb jelenetfeliratok:** a modell alcíme és a léptékjelzés sötét, áttetsző alátétet kapott, így világos égen is olvasható.
+- **Érthetőbb fejléc:** „Bemutató” helyett „Bemutató nézet” (magyarázó tippel); „Alaphelyzet” helyett „Újrakezdés”, amely megerősítést kér („Biztosan? Kattints újra”), így egy véletlen kattintás nem törli a tervet.
+- **Az összegzés képe telefonon** álló formátumú; a kivágás a kép felső harmadára (a modellre) igazodik.
+- Akadálymentesség: a „Kezdőlap” link navigációs landmarkba került (axe „region” hiba).
+- Tesztek: `configuratorUi.test.ts` (görgethető lépéssáv és aktív lépés, panelcím, újrakezdés megerősítése, mobil eszközmenü, landmark).
+
 ## 4.35 – Összegzés: felül a felmérés, a többi összecsukva
 
 - **Összegzés újrarendezve (rövidebb út a felmérés kéréséig):** felül a terv képe, neve, fő adatai és az irányár, közvetlenül alatta a felmérési kérelem. A másodlagos eszközök két összecsukható blokkba kerültek: „Megosztás és mentés” (PDF, kép, videó, szöveg másolása, WhatsApp, két változat mentése és összehasonlítása) és „Költségek és specifikáció” (árbontás, keretösszeg, üzemeltetés, anyaglista). Az összegzés panel magassága asztali nézetben kb. 2600 px-ről kb. 1400 px-re csökkent.

@@ -22,11 +22,22 @@ export function StudioHeader({ onHome, canUndo, canRedo, onUndo, onRedo, present
     <div className="header-actions">
       <FullscreenControl />
       <div className="history-actions"><button type="button" aria-label="Visszavonás" title="Visszavonás · Ctrl+Z" onClick={onUndo} disabled={!canUndo}><Undo2 size={17} /></button><button type="button" aria-label="Ismétlés" title="Ismétlés · Ctrl+Shift+Z" onClick={onRedo} disabled={!canRedo}><Redo2 size={17} /></button></div>
-      <button type="button" className="header-text-button presentation-toggle" aria-label={presentation ? 'Szerkesztés' : 'Bemutató'} onClick={onPresentation}><Presentation size={16} /><span>{presentation ? 'Szerkesztés' : 'Bemutató'}</span></button>
+      <button type="button" className="header-text-button presentation-toggle" aria-label={presentation ? 'Vissza a szerkesztéshez' : 'Bemutató nézet: a panelek elrejtése, csak a terv látszik'} title={presentation ? 'Vissza a szerkesztéshez' : 'A panelek elrejtése, csak a terv látszik'} onClick={onPresentation}><Presentation size={16} /><span>{presentation ? 'Szerkesztés' : 'Bemutató nézet'}</span></button>
       {onInfo && <button type="button" className="header-text-button" aria-label={infoLabel} onClick={onInfo}><Info size={16} /><span>{infoLabel}</span></button>}
-      <button type="button" className="header-text-button" aria-label="Alaphelyzet" onClick={onReset}><RotateCcw size={16} /><span>Alaphelyzet</span></button>
+      <ResetButton onReset={onReset} />
     </div>
   </header>
+}
+
+/** Újrakezdés kétlépcsős megerősítéssel (böngészős felugró ablak nélkül): az első kattintás csak rákérdez. */
+function ResetButton({ onReset }: { onReset: () => void }) {
+  const [armed, setArmed] = useState(false)
+  useEffect(() => {
+    if (!armed) return
+    const timer = window.setTimeout(() => setArmed(false), 3500)
+    return () => window.clearTimeout(timer)
+  }, [armed])
+  return <button type="button" className={`header-text-button reset-button${armed ? ' is-armed' : ''}`} aria-label={armed ? 'Biztosan újrakezded? A mostani terv elvész. Kattints újra a megerősítéshez.' : 'Újrakezdés: minden beállítás visszaáll'} title="Minden beállítás visszaáll az alapra" onClick={() => { if (armed) { setArmed(false); onReset() } else setArmed(true) }}><RotateCcw size={16} /><span aria-live="polite">{armed ? 'Biztosan? Kattints újra' : 'Újrakezdés'}</span></button>
 }
 
 export type ToolItem = { id: string; icon: LucideIcon; name: string; note: string; active?: boolean; run: () => void }
@@ -72,7 +83,11 @@ export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools 
   const nextTime: Record<StudioTime, StudioTime> = { day: 'sunset', sunset: 'night', night: 'day' }
   const TimeIcon = TIME_ICONS[time]
   const timeLabel = STUDIO_TIMES.find((item) => item.id === time)?.label
-  const items: ToolItem[] = [
+  // Telefonon a gyors kapcsolók (bejárás, időjárás stb.) feliratos menüpontként az Eszközök között vannak,
+  // a jelenet szélén csak a nézet, a napszak és az Eszközök ikon marad (H13).
+  const quickItems: (ToolItem & { mobileOnly: true })[] = quick.map(({ id, icon, label, title, active, run }) => ({ id: `quick-${id}`, icon, name: label, note: title, active, run, mobileOnly: true }))
+  const items: (ToolItem & { mobileOnly?: boolean })[] = [
+    ...quickItems,
     { id: 'view', icon: SlidersHorizontal, name: 'Nézet és vizualizáció', note: 'Napszak, környezet, méretarány, feliratok, forgatás', run: () => setViewOpen(true) },
     ...tools,
     { id: 'presentation', icon: Presentation, name: presentation ? 'Kilépés a bemutatóból' : 'Bemutató mód', note: 'Csak a 3D jelenet, panelek nélkül — ügyfélnek mutatáshoz', active: presentation, run: onPresentation },
@@ -83,11 +98,11 @@ export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools 
     <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások">
       {leading}
       <button type="button" title={`Napszak: ${timeLabel} — váltás`} aria-label={`Napszak: ${timeLabel}`} onClick={() => onTimeChange(nextTime[time])} className={`icon-time icon-${time}${time !== 'day' ? ' selected' : ''}`}><TimeIcon size={17} /><span>{timeLabel}</span></button>
-      {quick.map(({ id, icon: Icon, label, title, active, className, run }) => <button type="button" key={id} className={[className, active ? 'selected' : ''].filter(Boolean).join(' ')} aria-pressed={active === undefined ? undefined : active} title={title} onClick={run}><Icon size={17} /><span>{label}</span></button>)}
+      {quick.map(({ id, icon: Icon, label, title, active, className, run }) => <button type="button" key={id} className={[className, 'quick-toggle', active ? 'selected' : ''].filter(Boolean).join(' ')} aria-pressed={active === undefined ? undefined : active} title={title} onClick={run}><Icon size={17} /><span>{label}</span></button>)}
       <button type="button" className={`view-toggle tools-toggle icon-grid ${toolsOpen || viewOpen || toolsBusy ? 'selected' : ''}`} aria-pressed={toolsOpen} aria-expanded={toolsOpen} title="Eszközök: nézet, napszak, környezet, bemutató, PDF, megosztás" onClick={() => { setToolsOpen((open) => !open); setViewOpen(false) }}><LayoutGrid size={17} /><span>Eszközök</span></button>
     </div>
     {toolsOpen && <div className="view-popover tools-menu glass-panel" role="dialog" aria-label="Eszközök"><div className="view-popover-head"><strong>Eszközök</strong><button type="button" aria-label="Bezárás" onClick={() => setToolsOpen(false)}><X size={16} /></button></div>
-      <div className="tools-list">{items.map(({ id, icon: Icon, name, note, active, run }) => <button type="button" key={id} className={`tools-item${active ? ' is-active' : ''}`} aria-pressed={Boolean(active)} onClick={() => { setToolsOpen(false); run() }}><Icon size={18} /><span><strong>{name}</strong><small>{note}</small></span>{active && <em>Bekapcsolva</em>}</button>)}</div>
+      <div className="tools-list">{items.map(({ id, icon: Icon, name, note, active, run, mobileOnly }) => <button type="button" key={id} className={`tools-item${active ? ' is-active' : ''}${mobileOnly ? ' is-mobile-only' : ''}`} aria-pressed={Boolean(active)} onClick={() => { setToolsOpen(false); run() }}><Icon size={18} /><span><strong>{name}</strong><small>{note}</small></span>{active && <em>Bekapcsolva</em>}</button>)}</div>
     </div>}
     {viewOpen && <div className="view-popover glass-panel" role="dialog" aria-label="Nézet és vizualizáció"><div className="view-popover-head"><strong>Nézet és vizualizáció</strong><button type="button" aria-label="Bezárás" onClick={() => setViewOpen(false)}><X size={16} /></button></div>{viewPanel}</div>}
   </>

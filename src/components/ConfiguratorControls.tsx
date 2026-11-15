@@ -331,6 +331,15 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
   // Szín lépés fülei: a pergola színe és a ház (homlokzat, nyílászárók).
   const [colorTab, setColorTab] = useState<'pergola' | 'house'>('pergola')
   useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }) }, [step, colorTab])
+  // Keskeny kijelzőn a lépéssáv vízszintesen görgethető: az aktív lépés mindig látszódjon (ne legyen levágva).
+  const tabsRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const strip = tabsRef.current
+    const active = strip?.querySelector<HTMLElement>('button.active')
+    if (!strip || !active || strip.scrollWidth <= strip.clientWidth) return
+    const left = active.offsetLeft - (strip.clientWidth - active.offsetWidth) / 2
+    strip.scrollTo({ left: Math.max(0, left), behavior: 'auto' })
+  }, [step, sheet])
   const frameInfo = describeColor(tenant, config.frameColor, config.customRal)
   const frameHex = frameInfo.hex
   const frameName = config.roofColor ? `${frameInfo.name} + ${describeColor(tenant, config.roofColor, config.roofRal).name.toLowerCase()}` : `${frameInfo.name}${frameInfo.code && frameInfo.code !== frameInfo.name ? ` · ${frameInfo.code}` : ''}`
@@ -366,12 +375,12 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
 
   return (
     <aside ref={panelRef} className={`controls-panel glass-panel sheet-${sheet} ${mobileOpen ? 'is-mobile-open' : ''}`} aria-label="Pergola beállításai" onTouchStart={(event) => { touchStart.current = event.touches[0].clientX }} onTouchEnd={touchEnd}>
-      <button type="button" className="sheet-toggle" aria-expanded={mobileOpen} aria-label={sheet === 'peek' ? 'Pergola beállításainak megnyitása' : 'Beállítások összecsukása a 3D nézethez'} {...sheetGesture}><span className="sheet-handle" aria-hidden="true" /><span><SlidersHorizontal size={16} />{sheet === 'peek' ? 'Beállítások' : sheet === 'half' ? 'Húzd fel a teljes nézethez' : 'Vissza a 3D nézethez'}</span><ChevronDown size={16} /></button>
+      <button type="button" className="sheet-toggle" aria-expanded={mobileOpen} aria-label={sheet === 'peek' ? 'Pergola beállításainak megnyitása' : 'Beállítások összecsukása a 3D nézethez'} {...sheetGesture}><span className="sheet-handle" aria-hidden="true" /><span><SlidersHorizontal size={16} />{sheet === 'peek' ? 'Beállítások' : sheet === 'half' ? `${stepIndex + 1}/${STEPS.length} · ${stepLabel(step)}` : 'Vissza a 3D nézethez'}</span><ChevronDown size={16} /></button>
       <div className="config-head">
         <div><span>Konfiguráció</span><strong>{String(stepIndex + 1).padStart(2, '0')} / {String(STEPS.length).padStart(2, '0')}</strong></div>
         <span className="mini-summary">{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {MOUNT_SHORT[config.mount]}</span>
       </div>
-      <div className="control-tabs" role="tablist" aria-label="Konfigurációs lépések">
+      <div className="control-tabs" ref={tabsRef} role="tablist" aria-label="Konfigurációs lépések">
         {STEPS.map((item, index) => (
           <button key={item.id} type="button" role="tab" aria-selected={step === item.id} className={`${step === item.id ? 'active' : ''} ${index < stepIndex ? 'complete' : ''}`} onClick={() => onStepChange(item.id)} title={stepLabel(item.id)}>
             <span className="step-dot">{index < stepIndex ? <Check size={11} /> : index + 1}</span><span>{stepLabel(item.id)}</span>
