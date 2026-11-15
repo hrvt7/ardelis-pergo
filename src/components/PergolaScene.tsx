@@ -3085,7 +3085,7 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
   const lighting = { ...target, night: shownNight, hdr: shownKey.slice(0, shownKey.lastIndexOf('|')) }
   const studio = scene.ground === 'studio'
   // Az árnyékkamera a pergolára és a közvetlen környezetére illeszkedik: ugyanazon a felbontáson élesebb árnyék.
-  const shadowExtent = modular ? Math.max(11, lighting.shadowExtent) : scene.sunStudy || scene.photoMode ? lighting.shadowExtent : Math.min(lighting.shadowExtent, Math.max(7, Math.max(config.width, config.depth) / 2 + 4.5))
+  const shadowExtent = modular ? Math.max(8.5, lighting.shadowExtent) : scene.sunStudy || scene.photoMode ? lighting.shadowExtent : Math.min(lighting.shadowExtent, Math.max(7, Math.max(config.width, config.depth) / 2 + 4.5))
   const houseLook = useMemo<HouseLook>(() => ({ houseStyle: scene.houseStyle ?? 'classic', wallFinish: scene.wallFinish, wallColor: scene.wallColor, windowColor: scene.windowColor }), [scene.houseStyle, scene.wallFinish, scene.wallColor, scene.windowColor])
   // Eső bekapcsolásakor (nyitott forgólamellás tető esőérzékelővel): a kamera a hajtásoldalra közelít, a burkolat
   // felemelkedik, a lamellák lassan zárnak, majd a kamera visszatér és a hajtás eltűnik. 0 = nincs, 1 = közelítés, 2 = zárás.

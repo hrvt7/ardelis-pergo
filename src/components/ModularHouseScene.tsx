@@ -5,10 +5,12 @@
 // oldal) a z = 0 síkon van, a ház a −z felé áll; itt a középpontjára toljuk.
 import { useEffect, useMemo, useRef } from 'react'
 import { useThree } from '@react-three/fiber'
-import { Html, Line, OrbitControls, useGLTF } from '@react-three/drei'
+import { Html, Line, OrbitControls, useGLTF, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import { assetUrl } from '@/lib/assetUrl'
+import { useQuality } from '@/lib/quality'
+import { assignFacadeUv, HOUSE_SURFACES, type HouseSurface } from '@/lib/houseSurfaces'
 import { MODULAR_COLOR_HEX, MODULAR_MODELS, type ModularHouseConfig } from '@/products/modularHouse'
 
 export type ModularView = 'perspective' | 'front' | 'side' | 'top'
@@ -18,7 +20,7 @@ type Vec3 = [number, number, number]
 const DOOR_X = -0.445
 const ROLES = ['wall', 'frame', 'roof', 'glass', 'interior'] as const
 
-type HouseMats = { wall: THREE.MeshStandardMaterial; frame: THREE.MeshStandardMaterial; roof: THREE.MeshStandardMaterial; glass: THREE.MeshPhysicalMaterial; interior: THREE.MeshStandardMaterial; trim: THREE.MeshStandardMaterial }
+type HouseMats = { wall: THREE.MeshStandardMaterial; frame: THREE.MeshStandardMaterial; roof: THREE.MeshStandardMaterial; plinth: THREE.MeshStandardMaterial; glass: THREE.MeshPhysicalMaterial; interior: THREE.MeshStandardMaterial; trim: THREE.MeshStandardMaterial }
 
 /** A választott színek és az éjszakai fények (a horgokon kívül, hogy a hook-értékek ne módosuljanak közvetlenül). */
 function applyLook(mats: HouseMats, config: ModularHouseConfig, night: boolean) {
@@ -32,17 +34,60 @@ function applyLook(mats: HouseMats, config: ModularHouseConfig, night: boolean) 
 }
 function refreshShadow(renderer: THREE.WebGLRenderer) { renderer.shadowMap.needsUpdate = true }
 
+type SurfaceMaps = Record<HouseSurface, { map: THREE.Texture; normalMap: THREE.Texture; roughnessMap: THREE.Texture }>
+
+const SURFACE_URLS = Object.fromEntries((Object.keys(HOUSE_SURFACES) as HouseSurface[]).flatMap((surface) => {
+  const files = HOUSE_SURFACES[surface].files
+  return [[`${surface}-map`, assetUrl(files.map)], [`${surface}-normal`, assetUrl(files.normal)], [`${surface}-rough`, assetUrl(files.rough)]]
+})) as Record<string, string>
+
+/** A homlokzat, a lábazat és a tető PBR-térképei (vakolatszemcse, beton, betoncserép-sorok). A szín továbbra is a konfigurációból jön: a színtérkép világos, színezhető. */
+function useSurfaceMaps(): SurfaceMaps {
+  const { maxAnisotropy } = useQuality()
+  const loaded = useTexture(SURFACE_URLS)
+  return useMemo(() => {
+    const result = {} as SurfaceMaps
+    for (const surface of Object.keys(HOUSE_SURFACES) as HouseSurface[]) {
+      const prepare = (texture: THREE.Texture, color: boolean) => {
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+        texture.anisotropy = maxAnisotropy
+        texture.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace
+        texture.needsUpdate = true
+        return texture
+      }
+      result[surface] = { map: prepare(loaded[`${surface}-map`], true), normalMap: prepare(loaded[`${surface}-normal`], false), roughnessMap: prepare(loaded[`${surface}-rough`], false) }
+    }
+    return result
+  }, [loaded, maxAnisotropy])
+}
+
+/** Alacsony minőségi szinten (gyenge telefon) a ház textúra nélkül, egyszínű anyagokkal fut, mint korábban. */
 export function ModularHouseModel({ config, night }: { config: ModularHouseConfig; night: boolean }) {
+  const { tier } = useQuality()
+  return tier === 'low' ? <ModularHouseBody config={config} night={night} maps={null} /> : <TexturedHouse config={config} night={night} />
+}
+
+function TexturedHouse({ config, night }: { config: ModularHouseConfig; night: boolean }) {
+  const maps = useSurfaceMaps()
+  return <ModularHouseBody config={config} night={night} maps={maps} />
+}
+
+function ModularHouseBody({ config, night, maps }: { config: ModularHouseConfig; night: boolean; maps: SurfaceMaps | null }) {
   const model = MODULAR_MODELS[config.model]
   const { scene: source } = useGLTF(assetUrl(model.glb))
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
   const prepared = useMemo(() => {
     const object = source.clone(true)
+    object.updateMatrixWorld(true)
+    const surface = (key: HouseSurface) => (maps ? { ...maps[key], normalScale: new THREE.Vector2(HOUSE_SURFACES[key].normalScale, HOUSE_SURFACES[key].normalScale) } : {})
     const mats: HouseMats = {
-      wall: new THREE.MeshStandardMaterial({ name: 'modular-wall', roughness: 0.92, envMapIntensity: 0.6 }),
+      // Nemesvakolat: finom szemcse a normál- és érdességtérképből; a szín a választott homlokzatszín.
+      wall: new THREE.MeshStandardMaterial({ name: 'modular-wall', roughness: 1, envMapIntensity: 0.75, ...surface('plaster') }),
       frame: new THREE.MeshStandardMaterial({ name: 'modular-frame', roughness: 0.42, metalness: 0.25, envMapIntensity: 0.8 }),
-      roof: new THREE.MeshStandardMaterial({ name: 'modular-roof', roughness: 0.72, envMapIntensity: 0.55 }),
+      // Betoncserép: a sorok és hornyok a normáltérképből; a szín a választott tetőszín.
+      roof: new THREE.MeshStandardMaterial({ name: 'modular-roof', roughness: 1, envMapIntensity: 0.7, ...surface('roof') }),
+      plinth: new THREE.MeshStandardMaterial({ name: 'modular-plinth', color: '#8d8f8d', roughness: 1, envMapIntensity: 0.6, ...surface('plinth') }),
       // Fényvisszaverő, kevésbé átlátszó üveg: a belső tér üres (nincsenek válaszfalak), ezért ne lehessen átlátni a házon.
       glass: new THREE.MeshPhysicalMaterial({ name: 'modular-glass', color: '#a9bcbd', roughness: 0.04, metalness: 0.1, transparent: true, opacity: 0.72, depthWrite: false, envMapIntensity: 1.6 }),
       interior: new THREE.MeshStandardMaterial({ name: 'modular-interior', color: '#4a4e50', roughness: 0.9 }),
@@ -55,6 +100,10 @@ export function ModularHouseModel({ config, night }: { config: ModularHouseConfi
       child.receiveShadow = true
       // A GLTF-betöltő a nevekből kiveszi a pontot (wall.001 → wall001), ezért előtag szerint döntünk.
       const role = ROLES.find((item) => child.name.startsWith(item))
+      // A textúrázott felületek UV-ja a homlokzat síkjához igazítva, méterben (a GLB-ben nincs UV).
+      const textured = maps ? (role === 'wall' ? 'plaster' : role === 'roof' ? 'roof' : child.name.startsWith('plinth') || child.name.startsWith('step') ? 'plinth' : null) : null
+      if (textured) { child.geometry = child.geometry.clone(); assignFacadeUv(child.geometry, child.matrixWorld, HOUSE_SURFACES[textured].size) }
+      if (child.name.startsWith('plinth') || child.name.startsWith('step')) child.material = mats.plinth
       if (role) child.material = mats[role]
       else if (child.name.startsWith('trim')) child.material = mats.trim
       else if (child.material instanceof THREE.MeshStandardMaterial) child.material.envMapIntensity = 0.6
@@ -62,8 +111,12 @@ export function ModularHouseModel({ config, night }: { config: ModularHouseConfi
       if (role === 'interior') child.castShadow = false
     })
     return { object, mats }
-  }, [source])
-  useEffect(() => () => Object.values(prepared.mats).forEach((material) => material.dispose()), [prepared])
+  }, [source, maps])
+  useEffect(() => () => {
+    Object.values(prepared.mats).forEach((material) => material.dispose())
+    // A textúrázáshoz klónozott (saját UV-s) geometriák felszabadítása; a GLB eredetijeit a betöltő gyorsítótára kezeli.
+    prepared.object.traverse((child) => { if (child instanceof THREE.Mesh && child.geometry.getAttribute('uv')?.name === 'facadeUv') child.geometry.dispose() })
+  }, [prepared])
   useEffect(() => {
     applyLook(prepared.mats, config, night)
     refreshShadow(gl)
@@ -132,7 +185,8 @@ export function ModularCameraRig({ config, view, autoRotate }: { config: Modular
     const along = (direction: Vec3, distance: number): Vec3 => { const length = Math.hypot(...direction); return direction.map((value) => (value / length) * distance) as Vec3 }
     const target: Vec3 = [0, estimated.ridge * 0.38, 0]
     const positions: Record<ModularView, Vec3> = {
-      perspective: along([0.75, 0.45, 1], fit(footprint.width + 6.5)),
+      // Nyitó nézet: a ház kitölti a szabad sávot (kevesebb üres pázsit, több képpont a homlokzatra és a tetőre).
+      perspective: along([0.75, 0.45, 1], fit(footprint.width + 4.2)),
       front: [0, 1.7, fit(footprint.width + 4.5)],
       side: [fit(footprint.depth + 7), 1.7, 0],
       top: [0.01, fit(footprint.width + 3) * 1.15, 0.01],

@@ -1,5 +1,14 @@
 # Változások
 
+## 4.47 – Modulház: valódi anyagok (vakolat, betoncserép, betonlábazat), közelebbi nézet, élesebb árnyék
+
+- **Anyagok:** az A45 modulház homlokzata nemesvakolat-szemcsét, a teteje betoncserép-sorokat (normál- és érdességtérképpel), a lábazata és a lépcsője betonfelületet kapott. A színt továbbra is a választott homlokzat-, tető- és nyílászáró-szín adja (a színtérképek világos, színezhető változatok). A GLB-ben nincs UV, ezért betöltéskor a lapok síkjához igazított, méterben mért UV készül (`src/lib/houseSurfaces.ts`): a cserépsorok a gerinccel párhuzamosak, a lejtés mentén nincs nyújtás.
+- **Alacsony minőségi szinten** (gyenge telefon) a ház a korábbi, textúra nélküli anyagokkal fut, nincs többletletöltés. Magasabb szinten kb. 1,8 MB új textúra (Poly Haven, CC0 – `CREDITS.md`).
+- **Nyitó nézet:** a ház nagyobb a képen (kevesebb üres pázsit körülötte).
+- **Árnyék:** a modulháznál az árnyéktérkép a ház köré szűkül (nappal ±9 m a korábbi ±11 m helyett, kb. 1,5× sűrűbb árnyék-felbontás); aranyórában a hosszú árnyék miatt marad a ±13 m.
+- Nem változott: a geometria (ablakkáva, párkány, ereszvastagság) – ehhez a gyártó metszetrajza kell.
+- Tesztek: `houseSurfaces.test.ts` (fal-, tető- és vízszintes UV, folytonosság a csatlakozó lapokon, a textúrafájlok megléte).
+
 ## 4.46 – Német nyelvű vevői konfigurátor (osztrák gyártókhoz)
 
 - **Nyelv gyártónként:** új `Tenant.locale` (`'hu' | 'de'`). A nyelv betöltéskor, a gyártó URL-jéből dől el (`/k/:id`, `/embed/:id`), még az alkalmazás moduljai előtt (`src/i18n/bootLocale.ts`), így a szövegtárak is a jó nyelven jönnek létre. A szövegek a helyükön fordítódnak: `tr('magyar', 'deutsch')`; magyar gyártónál minden változatlan.

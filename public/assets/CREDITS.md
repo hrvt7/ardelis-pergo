@@ -10,6 +10,7 @@ https://polyhaven.com/license
 - kloofendal_48d_partly_cloudy_puresky: https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky (CC0)
 - concrete_floor_02: https://polyhaven.com/a/concrete_floor_02 (CC0)
 - plastered_wall_04: https://polyhaven.com/a/plastered_wall_04 (CC0)
+- grey_roof_01: https://polyhaven.com/a/grey_roof_01 (CC0) – a modulház betoncserép-tetője (public/assets/textures/modular/roof_*; a színtérkép szürkeárnyalatos, színezhető változat)
 - fabric_pattern_05: https://polyhaven.com/a/fabric_pattern_05 (CC0)
 - oak_wood_planks: https://polyhaven.com/a/oak_wood_planks (CC0)
 - grass_ground: https://polyhaven.com/a/grass_ground (CC0)
