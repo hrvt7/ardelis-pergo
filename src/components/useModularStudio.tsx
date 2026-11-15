@@ -10,7 +10,7 @@ import LeadForm from '@/components/LeadForm'
 import { useSceneThumbnail } from '@/components/studio/studioState'
 import { createModularShareUrl, loadModularConfig, persistModularConfig } from '@/lib/modularHouse'
 import { exportSpecPdf } from '@/lib/exportSpecPdf'
-import { formatHuf, formatNumber } from '@/lib/pricing'
+import { formatPrice, formatNumber } from '@/lib/pricing'
 import { calculateModularPrice, MODULAR_DEFAULTS, MODULAR_LABELS, MODULAR_META, MODULAR_MODELS, MODULAR_NOT_INCLUDED, MODULAR_PRICE_DEFAULTS, modularSpecCode, modularSpecRows, type ModularHouseConfig } from '@/products/modularHouse'
 
 export const MODULAR_VIEWS: { id: ModularView; label: string }[] = [{ id: 'perspective', label: 'Tér' }, { id: 'front', label: 'Homlokzat' }, { id: 'side', label: 'Oldal' }, { id: 'top', label: 'Felülről' }]
@@ -67,7 +67,7 @@ export function useModularStudio({ active, notify }: { active: boolean; notify: 
   const thumbnail = useSceneThumbnail(active && step === 'summary', config)
   const specs = modularSpecRows(config, price).filter(([label]) => label !== 'Termék' && label !== 'Konfigurációs kód')
   const summary = <div className="summary-panel catalog-summary">
-    <div className="summary-hero"><div className="summary-thumbnail">{thumbnail ? <img src={thumbnail} alt="A konfigurált modulház képe" /> : <div className="thumbnail-placeholder"><Box size={24} /><span>{model.title}</span></div>}</div><div><span>ÉLŐ KONFIGURÁCIÓ</span><h3>{model.title}</h3><p>{MODULAR_LABELS.finish[config.finish]}</p><strong>{formatHuf(price.totalGross)}</strong><small>bruttó irányár, {MODULAR_LABELS.use[config.use].toLowerCase()}</small></div></div>
+    <div className="summary-hero"><div className="summary-thumbnail">{thumbnail ? <img src={thumbnail} alt="A konfigurált modulház képe" /> : <div className="thumbnail-placeholder"><Box size={24} /><span>{model.title}</span></div>}</div><div><span>ÉLŐ KONFIGURÁCIÓ</span><h3>{model.title}</h3><p>{MODULAR_LABELS.finish[config.finish]}</p><strong>{formatPrice(price.totalGross)}</strong><small>bruttó irányár, {MODULAR_LABELS.use[config.use].toLowerCase()}</small></div></div>
     <div className="summary-actions"><button type="button" onClick={exportPdf} disabled={exporting}><Download size={14} />{exporting ? 'Készül…' : 'PDF'}</button><button type="button" onClick={share}><Link2 size={14} />Megosztás</button></div>
     <section className="summary-section"><div className="summary-section-title"><Ruler size={15} /><h3>Műszaki összefoglaló</h3></div><div className="spec-code"><span>SPEC-KÓD</span><strong>{modularSpecCode(config)}</strong></div><dl className="bom-list">{specs.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>
     <section className="summary-section"><div className="summary-section-title"><Info size={15} /><h3>Nincs benne az irányárban</h3></div><ul className="summary-notes">{MODULAR_NOT_INCLUDED.map((item) => <li key={item}>{item}</li>)}</ul></section>
@@ -78,7 +78,7 @@ export function useModularStudio({ active, notify }: { active: boolean; notify: 
   const controls = ({ typePicker, footer, mobileOpen, onMobileToggle }: { typePicker: ReactNode; footer: ReactNode; mobileOpen: boolean; onMobileToggle: () => void }) =>
     <ModularHouseControls config={config} step={step} summary={summary} typePicker={typePicker} footer={footer} mobileOpen={mobileOpen} onMobileToggle={onMobileToggle} onStep={setStep} onChange={update} />
   const pricePanel = ({ detailsOpen, onToggle }: { detailsOpen: boolean; onToggle: () => void }) =>
-    <CatalogPricePanel collapsed={!detailsOpen} onToggleCollapse={onToggle} heading={{ eyebrow: MODULAR_LABELS.finish[config.finish], title: model.title, measure: `${formatNumber(price.area)} m² × ${formatHuf(MODULAR_PRICE_DEFAULTS.perM2Net[config.model])} / m² nettó` }} price={price} exporting={exporting} delta={delta} onExport={exportPdf} onShare={share}
+    <CatalogPricePanel collapsed={!detailsOpen} onToggleCollapse={onToggle} heading={{ eyebrow: MODULAR_LABELS.finish[config.finish], title: model.title, measure: `${formatNumber(price.area)} m² × ${formatPrice(MODULAR_PRICE_DEFAULTS.perM2Net[config.model])} / m² nettó` }} price={price} exporting={exporting} delta={delta} onExport={exportPdf} onShare={share}
       installation={null} totalNote="A gyártó m²-árából · nem ajánlattétel" disclaimer={`Tájékoztató irányár. Nincs benne: ${MODULAR_NOT_INCLUDED.slice(0, 4).join(', ').toLowerCase()}.`} />
 
   return { config, model, price, step, setStep, view, setView, change, clearChange: () => setChange(null), undo, redo, canUndo: history.current.past.length > 0, canRedo: history.current.future.length > 0, reset, share, exportPdf, controls, pricePanel }

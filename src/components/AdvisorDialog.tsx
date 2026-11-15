@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Blinds, Check, CloudRain, House, LayoutPanelLeft
 import { Modal } from '@/components/Dialogs'
 import { ADVISOR_ORDER, ADVISOR_QUESTIONS, adviseConfig, type AdvisorAnswers } from '@/lib/advisor'
 import { MOUNT_SHORT } from '@/lib/mount'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import { AnimatedPrice } from '@/components/PricePanel'
 import { useTenant } from '@/tenants/TenantContext'
 import type { FurnitureSet, PergolaConfig, PriceSettings, SideType } from '@/types/pergola'
@@ -80,7 +80,7 @@ export default function AdvisorDialog({ prices, onApply, onClose }: { prices: Pr
       <ul className="advisor-reasons">{result.reasons.map((reason) => <li key={reason}><Check size={14} /><span>{reason}</span></li>)}</ul>
       {result.alternative && <button type="button" className="advisor-alt" onClick={() => onApply(result.alternative!.config, result.furniture)}>
         <span><small>Kedvezőbb alternatíva</small><strong>{result.alternative.title}</strong><em>{result.alternative.text}</em></span>
-        <span className="advisor-alt-price"><strong>{formatHuf(result.alternative.totalGross)}</strong><small>−{formatHuf(result.totalGross - result.alternative.totalGross)}</small></span>
+        <span className="advisor-alt-price"><strong>{formatPrice(result.alternative.totalGross)}</strong><small>−{formatPrice(result.totalGross - result.alternative.totalGross)}</small></span>
         <ArrowRight size={16} />
       </button>}
       <div className="advisor-actions">

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight, Download, Gauge, Info, Link2, LoaderCircle, Settings2, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { MOUNT_SHORT } from '@/lib/mount'
 import PriceMix from '@/components/PriceMix'
-import { formatHuf, formatNumber } from '@/lib/pricing'
+import { formatPrice, formatNumber } from '@/lib/pricing'
 import { useTenant } from '@/tenants/TenantContext'
 import type { PergolaConfig, PriceBreakdown } from '@/types/pergola'
 
@@ -46,7 +46,7 @@ export function AnimatedPrice({ value, startAt, duration = 420 }: { value: numbe
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
   }, [value, reduced, duration])
-  return <>{formatHuf(reduced ? value : display)}</>
+  return <>{formatPrice(reduced ? value : display)}</>
 }
 
 /** Ármódosításkor 1,8 mp-re felbukkanó „+120 000 Ft” / „−40 000 Ft” jelzés az összeg mellett. */
@@ -62,7 +62,7 @@ export function PriceDeltaPop({ value }: { value: number }) {
     return () => window.clearTimeout(timer)
   }, [value])
   if (!pop) return null
-  return <span key={pop.id} className={`delta-pop ${pop.amount < 0 ? 'negative' : ''}`} aria-hidden="true">{pop.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(pop.amount))}</span>
+  return <span key={pop.id} className={`delta-pop ${pop.amount < 0 ? 'negative' : ''}`} aria-hidden="true">{pop.amount > 0 ? '+' : '−'}{formatPrice(Math.abs(pop.amount))}</span>
 }
 
 /** Új vagy megváltozott ártételek rövid kiemelése: látszik, mi tette drágábbá/olcsóbbá a tervet. */
@@ -107,15 +107,15 @@ export default function PricePanel({ config, price, exporting, delta, compact = 
   return (
     <aside id="price-details-panel" className={`price-panel glass-panel ${compact ? 'compact' : ''}`} aria-label="Árkalkuláció">
       <div className="price-topline"><span>Azonnali kalkuláció</span><span className="live-indicator"><i />ÉLŐ</span>{onToggleCollapse && <button type="button" className="price-collapse" onClick={onToggleCollapse} aria-expanded="true" aria-label="Árkalkuláció összecsukása" title="Összecsukás — szabad kilátás a 3D-re"><ChevronRight size={15} /></button>}</div>
-      <div className="price-product"><span>{ROOF_LABELS[config.roof].split(' · ')[0]} / {MOUNT_SHORT[config.mount]}</span><strong>{config.width.toFixed(2).replace('.', ',')} × {config.depth.toFixed(2).replace('.', ',')} m</strong><small>{formatNumber(price.area)} m² · {formatHuf(price.totalGross / price.area)} / m²</small></div>
+      <div className="price-product"><span>{ROOF_LABELS[config.roof].split(' · ')[0]} / {MOUNT_SHORT[config.mount]}</span><strong>{config.width.toFixed(2).replace('.', ',')} × {config.depth.toFixed(2).replace('.', ',')} m</strong><small>{formatNumber(price.area)} m² · {formatPrice(price.totalGross / price.area)} / m²</small></div>
       <div className="price-mode" aria-label="Ár megjelenítése">{(['net', 'vat', 'gross'] as const).map((id) => <button type="button" key={id} className={mode === id ? 'selected' : ''} onClick={() => setMode(id)}>{id === 'net' ? 'Nettó' : id === 'vat' ? 'ÁFA' : 'Bruttó'}</button>)}</div>
       <div className="total-price"><span>{label}</span><strong data-value={amount}><AnimatedPrice value={amount} /></strong><PriceDeltaPop value={amount} /><small>Telepítéssel · {price.totalNet > 0 ? Math.round(price.vatNet / price.totalNet * 100) : 0}% ÁFA</small></div>
-      {delta && delta.amount !== 0 && <div className={`price-delta ${delta.amount < 0 ? 'negative' : ''}`} role="status">{delta.amount > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}<span>Mi változott?</span><strong>{delta.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(delta.amount))}</strong><small>{delta.label}</small></div>}
-      {tenant.installmentMonths > 0 && <div className="monthly-example"><span>{tenant.installmentMonths} havi részre bontva</span><strong>{formatHuf(price.totalGross / tenant.installmentMonths)} / hó</strong><small>A bruttó irányár {tenant.installmentMonths} egyenlő részre osztva; nem hitel- vagy finanszírozási ajánlat.</small></div>}
+      {delta && delta.amount !== 0 && <div className={`price-delta ${delta.amount < 0 ? 'negative' : ''}`} role="status">{delta.amount > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}<span>Mi változott?</span><strong>{delta.amount > 0 ? '+' : '−'}{formatPrice(Math.abs(delta.amount))}</strong><small>{delta.label}</small></div>}
+      {tenant.installmentMonths > 0 && <div className="monthly-example"><span>{tenant.installmentMonths} havi részre bontva</span><strong>{formatPrice(price.totalGross / tenant.installmentMonths)} / hó</strong><small>A bruttó irányár {tenant.installmentMonths} egyenlő részre osztva; nem hitel- vagy finanszírozási ajánlat.</small></div>}
       {onBudget && <button type="button" className="budget-trigger" onClick={onBudget}><Wallet size={15} /><span><strong>Van keretösszeged?</strong><small>Megmutatjuk, mi fér bele</small></span></button>}
-      {onEnergy && energyCost ? <button type="button" className="energy-trigger is-panel" onClick={onEnergy}><Gauge size={15} /><span><strong>Üzemeltetés ≈ {formatHuf(energyCost)} / év</strong><small>Áramköltség valós tarifával · részletek</small></span><ChevronRight size={14} /></button> : null}
+      {onEnergy && energyCost ? <button type="button" className="energy-trigger is-panel" onClick={onEnergy}><Gauge size={15} /><span><strong>Üzemeltetés ≈ {formatPrice(energyCost)} / év</strong><small>Áramköltség valós tarifával · részletek</small></span><ChevronRight size={14} /></button> : null}
       <PriceMix price={price} compact />
-      <details className="price-details"><summary className={flash.added > 0 ? 'has-new' : undefined}><span>Tételes kalkuláció <small>{price.lines.length + 1} tétel</small>{flash.added > 0 && <em key={flash.key} className="lines-added">+{flash.added} új tétel</em>}</span><ChevronDown size={16} /></summary><div className="price-lines">{price.lines.map((line) => <div key={line.id} className={`price-line${flash.ids[line.id] ? ` is-${flash.ids[line.id]}` : ''}`}><div><strong>{line.label}</strong><small>{line.detail}</small></div><span>{formatHuf(line.amountNet)}</span></div>)}<div className="price-line installation"><div><strong>Telepítés és üzembe helyezés</strong><small>{tenant.demo ? 'Mintaarány a teljes nettó összegre' : `${price.subtotalNet ? Math.round(price.installationNet / price.subtotalNet * 100) : 0}% a teljes nettó összegre`}</small></div><span>{formatHuf(price.installationNet)}</span></div><div className="price-line installation"><div><strong>Nettó + ÁFA</strong><small>{formatHuf(price.totalNet)} + {formatHuf(price.vatNet)}</small></div><span>{formatHuf(price.totalGross)}</span></div></div></details>
+      <details className="price-details"><summary className={flash.added > 0 ? 'has-new' : undefined}><span>Tételes kalkuláció <small>{price.lines.length + 1} tétel</small>{flash.added > 0 && <em key={flash.key} className="lines-added">+{flash.added} új tétel</em>}</span><ChevronDown size={16} /></summary><div className="price-lines">{price.lines.map((line) => <div key={line.id} className={`price-line${flash.ids[line.id] ? ` is-${flash.ids[line.id]}` : ''}`}><div><strong>{line.label}</strong><small>{line.detail}</small></div><span>{formatPrice(line.amountNet)}</span></div>)}<div className="price-line installation"><div><strong>Telepítés és üzembe helyezés</strong><small>{tenant.demo ? 'Mintaarány a teljes nettó összegre' : `${price.subtotalNet ? Math.round(price.installationNet / price.subtotalNet * 100) : 0}% a teljes nettó összegre`}</small></div><span>{formatPrice(price.installationNet)}</span></div><div className="price-line installation"><div><strong>Nettó + ÁFA</strong><small>{formatPrice(price.totalNet)} + {formatPrice(price.vatNet)}</small></div><span>{formatPrice(price.totalGross)}</span></div></div></details>
       <div className="price-actions"><button type="button" className="primary-action" onClick={onExport} disabled={exporting}>{exporting ? <LoaderCircle size={17} className="spin" /> : <Download size={17} />}{exporting ? 'PDF készül…' : 'PDF összefoglaló'}</button><button type="button" className="secondary-action" onClick={onShare}><Link2 size={17} />Megosztás</button></div>
       {onEditPrices && <button type="button" className="tariff-button" onClick={onEditPrices}><Settings2 size={15} />{tenant.demo ? 'Mintaárak szerkesztése' : 'Árak szerkesztése (admin)'}</button>}
       <div className="price-disclaimer"><Info size={15} /><p>Tájékoztató irányár, nem ajánlattétel. A végleges ár helyszíni felmérést és műszaki jóváhagyást igényel.</p></div>

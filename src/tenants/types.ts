@@ -3,6 +3,7 @@
 // relatív importot és tiszta TypeScriptet használhat — React és DOM nélkül.
 import type { FrameColor, MountType, PergolaConfig, PriceSettings, RoofType, SideType } from '../types/pergola'
 import type { ProductFamily } from '../products'
+import type { Currency } from '../lib/money'
 
 export interface TenantRoof {
   /** Rövid terméknév, pl. „Aero” — a 3D-felirat és az árpanel ezt mutatja. */
@@ -66,7 +67,8 @@ export interface Tenant {
    * A Partnerhálózat csomagban kikapcsolható (teljes white-label).
    */
   platformCredit?: boolean
-  currency: 'HUF'
+  /** Pénznem: az egységárak, az ajánlat és minden e-mail ebben szerepel. EUR csak teraszfedéssel (a többi termék árazója HUF-os). */
+  currency: Currency
   /** Nettó egységárak; a szerver is ebből számol. */
   prices: PriceSettings
   limits: {

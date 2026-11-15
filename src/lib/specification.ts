@@ -4,7 +4,7 @@ import { PANEL, panelLayout } from './solar'
 import { ROOF_INFO, isGlazedRoof, GLAZING_INFO, effectiveGlazing, roofRise } from './roofs'
 import { isWallSide, MOUNT_CODES, MOUNT_LABELS, postPositions, sideWalls, wallLabel } from './mount'
 import { bayWidth, middlePostCount, moduleCount } from './modules'
-import { formatHuf, formatNumber, ROOF_LABELS, SIDE_NAMES } from './pricing'
+import { formatPrice, formatNumber, ROOF_LABELS, SIDE_NAMES } from './pricing'
 import { colorSummary } from './colors'
 import type { Tenant } from '../tenants/types'
 import { CLIMATE_INFO, doorCount } from './buildings'
@@ -134,7 +134,7 @@ export function createTextSummary(config: PergolaConfig, price: PriceBreakdown, 
     `Kialakítás: ${MOUNT_LABELS[config.mount].toLowerCase()} · ${sides}`,
     `Szín: ${colorSummary(colors, config)}`,
     `Kiegészítők: ${extras.length ? extras.join(', ') : 'nincs kiegészítő'}`,
-    `Bruttó irányár: ${formatHuf(price.totalGross)} (telepítéssel, nem ajánlattétel)`,
+    `Bruttó irányár: ${formatPrice(price.totalGross)} (telepítéssel, nem ajánlattétel)`,
     `Konfigurációs kód: ${getSpecCode(config)}`,
   ].join('\n')
 }

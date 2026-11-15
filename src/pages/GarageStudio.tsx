@@ -13,7 +13,7 @@ import { DEFAULT_STUDIO_TIME } from '@/lib/studioLighting'
 import { useTenant } from '@/tenants/TenantContext'
 import { createGarageShareUrl, hasGarageDraft, loadGarageConfig, loadGaragePrices, persistGarageConfig } from '@/lib/garage'
 import { exportSpecPdf } from '@/lib/exportSpecPdf'
-import { formatHuf, formatNumber } from '@/lib/pricing'
+import { formatPrice, formatNumber } from '@/lib/pricing'
 import { calculateGaragePrice, GARAGE_DEFAULTS, GARAGE_LABELS, GARAGE_META, garageSpecCode, garageSpecRows, type GarageConfig } from '@/products/garage'
 
 const views: { id: GarageView; label: string; icon: typeof View }[] = [
@@ -79,7 +79,7 @@ export default function GarageStudio() {
   const specs = garageSpecRows(config, price).filter(([label]) => label !== 'Termék' && label !== 'Konfigurációs kód')
   const thumbnail = useSceneThumbnail(step === 'summary', config)
   const summary = <div className="summary-panel catalog-summary">
-    <div className="summary-hero"><div className="summary-thumbnail">{thumbnail ? <img src={thumbnail} alt="A konfigurált garázskapu képe" /> : <div className="thumbnail-placeholder"><Box size={24} /><span>{GARAGE_META.title}</span></div>}</div><div><span>ÉLŐ KONFIGURÁCIÓ</span><h3>{GARAGE_LABELS.type[config.type]}</h3><p>{GARAGE_META.description}</p><strong>{formatHuf(price.totalGross)}</strong><small>bruttó irányár, telepítési mintatétellel</small></div></div>
+    <div className="summary-hero"><div className="summary-thumbnail">{thumbnail ? <img src={thumbnail} alt="A konfigurált garázskapu képe" /> : <div className="thumbnail-placeholder"><Box size={24} /><span>{GARAGE_META.title}</span></div>}</div><div><span>ÉLŐ KONFIGURÁCIÓ</span><h3>{GARAGE_LABELS.type[config.type]}</h3><p>{GARAGE_META.description}</p><strong>{formatPrice(price.totalGross)}</strong><small>bruttó irányár, telepítési mintatétellel</small></div></div>
     <div className="summary-actions"><button type="button" onClick={exportPdf} disabled={exporting}><Download size={14} />{exporting ? 'Készül…' : 'PDF'}</button><button type="button" onClick={share}><Link2 size={14} />Megosztás</button></div>
     <section className="summary-section"><div className="summary-section-title"><Ruler size={15} /><h3>Műszaki összefoglaló</h3></div><div className="spec-code"><span>SPEC-KÓD</span><strong>{garageSpecCode(config)}</strong></div><dl className="bom-list">{specs.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>
     <section className="summary-section lead-section"><div className="summary-section-title"><MoveUpRight size={15} /><h3>Felmérési kérelem</h3></div><LeadForm productFamily="garage-door" config={config} estimateNet={price.totalNet} estimateGross={price.totalGross} /></section>
@@ -95,7 +95,7 @@ export default function GarageStudio() {
           quick={[{ id: 'open', className: 'icon-door', icon: scene.open ? DoorClosed : DoorOpen, label: scene.open ? 'Zárás' : 'Nyitás', title: 'A kapu nyitása és zárása', active: scene.open, run: () => setScene((current) => ({ ...current, open: !current.open })) }]} />
         <div className="camera-toolbar" aria-label="Kamera nézetek">{views.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} onClick={() => setView(id)}><Icon size={16} /><span>{label}</span></button>)}</div>
         <div className="viewer-footer"><span>1 egység = 1 méter</span><span>{formatNumber(price.area)} m² kapulap</span></div>
-        {welcomeBack && !presentation && <WelcomeBack summary={`${GARAGE_LABELS.type[config.type]} · ${formatNumber(config.width, 2)} × ${formatNumber(config.height, 2)} m · ${formatHuf(price.totalGross)}`} onContinue={() => setWelcomeBack(false)} onFresh={() => { history.current.past.push(config); history.current.future = []; setConfig({ ...GARAGE_DEFAULTS }); setDelta(null); setStep('size'); setWelcomeBack(false) }} />}
+        {welcomeBack && !presentation && <WelcomeBack summary={`${GARAGE_LABELS.type[config.type]} · ${formatNumber(config.width, 2)} × ${formatNumber(config.height, 2)} m · ${formatPrice(price.totalGross)}`} onContinue={() => setWelcomeBack(false)} onFresh={() => { history.current.past.push(config); history.current.future = []; setConfig({ ...GARAGE_DEFAULTS }); setDelta(null); setStep('size'); setWelcomeBack(false) }} />}
         {!presentation && <ChangePill change={change} onUndo={() => { undo(); clearChange() }} />}
         {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{GARAGE_LABELS.type[config.type]} · {formatNumber(config.width, 2)} × {formatNumber(config.height, 2)} m</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
       </section>

@@ -3,10 +3,10 @@
 // kiadásakor a régi „felülírt” lesz. Az árat a szerver számolja és az ajánlatba rögzíti (pillanatkép),
 // a tartalomról SHA-256 ujjlenyomat készül, amit az elfogadáskor ellenőrzünk és az aláírás mellé mentünk.
 // Platformfüggetlen (Request → Response), tárolás: Supabase REST (supabase/quotes.sql).
+import { formatMoney } from '../src/lib/money'
 import { z } from 'zod'
 import { parseConfig, tenantPrice } from '../src/tenants/rules'
 import { shareHash } from '../src/lib/shareCode'
-import { formatHuf } from '../src/lib/pricing'
 import type { Tenant } from '../src/tenants/types'
 import type { PergolaConfig, PriceBreakdown } from '../src/types/pergola'
 import { permitNotes } from '../src/lib/buildings'
@@ -284,7 +284,7 @@ export async function handleAdminQuotes(request: Request, env: AdminEnv): Promis
         subject: oneLine(`Árajánlat ${quoteLabel(created)} – ${tenant.brand.name}`),
         replyTo: tenant.brand.email,
         html: mailShell(tenant, `Elkészült az árajánlatod (${quoteLabel(created)})`, `<p>Kedves ${escapeHtml(lead.customer_name)}!</p>
-<p>Elkészítettük a személyre szabott árajánlatodat. Bruttó végösszeg: <strong>${escapeHtml(formatHuf(totalGross))}</strong>, érvényes <strong>${escapeHtml(validUntil.toLocaleDateString('hu-HU'))}</strong>-ig.</p>
+<p>Elkészítettük a személyre szabott árajánlatodat. Bruttó végösszeg: <strong>${escapeHtml(formatMoney(totalGross, tenant.currency))}</strong>, érvényes <strong>${escapeHtml(validUntil.toLocaleDateString('hu-HU'))}</strong>-ig.</p>
 <p style="margin:18px 0"><a href="${escapeHtml(url)}" style="background:#007fae;color:#fff;text-decoration:none;padding:11px 18px;border-radius:6px;display:inline-block">Ajánlat megnyitása</a></p>
 <p style="font-size:12px;color:#62727a">Az oldalon áttekintheted a részleteket, és online el is fogadhatod az ajánlatot.</p>${contact ? `<p style="font-size:12px;color:#62727a">${contact}</p>` : ''}`),
       })
@@ -371,12 +371,12 @@ export async function handleQuote(request: Request, env: AdminEnv): Promise<Resp
       const pay = row.payment_info ? `<p style="white-space:pre-line">${escapeHtml(row.payment_info)}</p>` : ''
       await Promise.all([
         notify(env, tenant, {
-          to: recipients, replyTo: row.customer_email, subject: oneLine(`ELFOGADVA: ${label} – ${row.customer_name} – ${formatHuf(row.total_gross)}`),
-          html: mailShell(tenant, `${row.customer_name} elfogadta az ajánlatot`, `<p><strong>${escapeHtml(label)}</strong> · ${escapeHtml(formatHuf(row.total_gross))} (bruttó)</p><p>Aláírta: <strong>${escapeHtml(input.name)}</strong>, ${escapeHtml(new Date(now).toLocaleString('hu-HU'))}</p><p>Foglaló (${row.deposit_percent}%): <strong>${escapeHtml(formatHuf(row.deposit_gross))}</strong></p><p style="font-size:12px;color:#62727a">Telefon: ${escapeHtml(row.customer_phone ?? '')} · E-mail: ${escapeHtml(row.customer_email)}<br>Ujjlenyomat: ${escapeHtml(row.doc_hash)}</p>`),
+          to: recipients, replyTo: row.customer_email, subject: oneLine(`ELFOGADVA: ${label} – ${row.customer_name} – ${formatMoney(row.total_gross, tenant.currency)}`),
+          html: mailShell(tenant, `${row.customer_name} elfogadta az ajánlatot`, `<p><strong>${escapeHtml(label)}</strong> · ${escapeHtml(formatMoney(row.total_gross, tenant.currency))} (bruttó)</p><p>Aláírta: <strong>${escapeHtml(input.name)}</strong>, ${escapeHtml(new Date(now).toLocaleString('hu-HU'))}</p><p>Foglaló (${row.deposit_percent}%): <strong>${escapeHtml(formatMoney(row.deposit_gross, tenant.currency))}</strong></p><p style="font-size:12px;color:#62727a">Telefon: ${escapeHtml(row.customer_phone ?? '')} · E-mail: ${escapeHtml(row.customer_email)}<br>Ujjlenyomat: ${escapeHtml(row.doc_hash)}</p>`),
         }),
         notify(env, tenant, {
           to: [row.customer_email], replyTo: tenant.brand.email, subject: oneLine(`Visszaigazolás: ${label} – ${tenant.brand.name}`),
-          html: mailShell(tenant, 'Köszönjük, elfogadtad az ajánlatot!', `<p>Kedves ${escapeHtml(row.customer_name)}!</p><p>Az <strong>${escapeHtml(label)}</strong> számú ajánlatot elfogadtad (${escapeHtml(formatHuf(row.total_gross))}, bruttó). A foglaló összege <strong>${escapeHtml(formatHuf(row.deposit_gross))}</strong> (${row.deposit_percent}%).</p>${pay}<p>Hamarosan jelentkezünk a kivitelezés részleteivel.</p>${contact ? `<p style="font-size:12px;color:#62727a">${contact}</p>` : ''}`),
+          html: mailShell(tenant, 'Köszönjük, elfogadtad az ajánlatot!', `<p>Kedves ${escapeHtml(row.customer_name)}!</p><p>Az <strong>${escapeHtml(label)}</strong> számú ajánlatot elfogadtad (${escapeHtml(formatMoney(row.total_gross, tenant.currency))}, bruttó). A foglaló összege <strong>${escapeHtml(formatMoney(row.deposit_gross, tenant.currency))}</strong> (${row.deposit_percent}%).</p>${pay}<p>Hamarosan jelentkezünk a kivitelezés részleteivel.</p>${contact ? `<p style="font-size:12px;color:#62727a">${contact}</p>` : ''}`),
         }),
       ])
       return json(200, { ok: true, status: 'accepted', acceptedAt: nowIso })
@@ -386,7 +386,7 @@ export async function handleQuote(request: Request, env: AdminEnv): Promise<Resp
     if (updated.length === 0) return json(409, { ok: false, error: 'Az ajánlat állapota közben megváltozott. Töltsd újra az oldalt.' })
     await notify(env, tenant, {
       to: recipients, replyTo: row.customer_email, subject: oneLine(`Elutasítva: ${label} – ${row.customer_name}`),
-      html: mailShell(tenant, `${row.customer_name} elutasította az ajánlatot`, `<p><strong>${escapeHtml(label)}</strong> · ${escapeHtml(formatHuf(row.total_gross))}</p>${input.reason ? `<p>Indok: ${escapeHtml(input.reason)}</p>` : ''}<p style="font-size:12px;color:#62727a">Telefon: ${escapeHtml(row.customer_phone ?? '')} · E-mail: ${escapeHtml(row.customer_email)}</p>`),
+      html: mailShell(tenant, `${row.customer_name} elutasította az ajánlatot`, `<p><strong>${escapeHtml(label)}</strong> · ${escapeHtml(formatMoney(row.total_gross, tenant.currency))}</p>${input.reason ? `<p>Indok: ${escapeHtml(input.reason)}</p>` : ''}<p style="font-size:12px;color:#62727a">Telefon: ${escapeHtml(row.customer_phone ?? '')} · E-mail: ${escapeHtml(row.customer_email)}</p>`),
     })
     return json(200, { ok: true, status: 'declined' })
   } catch (error) {

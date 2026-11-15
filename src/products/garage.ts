@@ -3,7 +3,7 @@
 // garázskapu-motoron keresztül (src/products/engines.ts).
 import { z } from 'zod'
 import type { PriceBreakdown, PriceLine } from '../types/pergola'
-import { formatHuf, formatNumber } from '../lib/pricing'
+import { formatPrice, formatNumber } from '../lib/pricing'
 
 export type GarageType = 'sectional' | 'tilt' | 'roller' | 'sideSliding'
 export type GaragePanel = 'microRib' | 'largeRib' | 'cassette' | 'flat' | 'woodgrain'
@@ -110,7 +110,7 @@ export function calculateGaragePrice(config: GarageConfig, prices: GaragePriceSe
   const insulationFactor = features.insulation ? prices.insulationFactor[config.insulation] : 1
   const panelFactor = features.panel ? prices.panelFactor[config.panel] : 1
   const door = area * rate * insulationFactor * panelFactor
-  lines.push({ id: 'door', label: GARAGE_LABELS.type[config.type], detail: `${formatNumber(config.width, 2)} × ${formatNumber(config.height, 2)} m · ${formatNumber(area)} m² × ${formatHuf(rate)} / m²${features.insulation ? ` · ${GARAGE_LABELS.insulation[config.insulation]}` : ''}`, amountNet: round(door) })
+  lines.push({ id: 'door', label: GARAGE_LABELS.type[config.type], detail: `${formatNumber(config.width, 2)} × ${formatNumber(config.height, 2)} m · ${formatNumber(area)} m² × ${formatPrice(rate)} / m²${features.insulation ? ` · ${GARAGE_LABELS.insulation[config.insulation]}` : ''}`, amountNet: round(door) })
   lines.push({ id: 'frame', label: 'Vezetősín, tok és vasalat', detail: config.type === 'sectional' ? 'Sínrendszer, torziós rugó, görgők' : config.type === 'roller' ? 'Oldalsó vezetők és tengelydoboz' : config.type === 'tilt' ? 'Billenő karok és rugók' : 'Alsó-felső vezetősín, görgők', amountNet: round(perimeter * 9500) })
   if (features.windows && config.windows !== 'none') lines.push({ id: 'windows', label: GARAGE_LABELS.windows[config.windows], detail: 'Hőszigetelt, kétrétegű betét', amountNet: prices.windows[config.windows] })
   if (features.wicket && config.wicket) lines.push({ id: 'wicket', label: 'Személybejáró a kapulapban', detail: 'Küszöb nélküli, zárral és kilinccsel', amountNet: prices.wicket })

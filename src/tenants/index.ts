@@ -1,11 +1,12 @@
 // Gyártói nyilvántartás. Új gyártó: készíts egy új fájlt a demo.ts mintájára,
 // importáld ide és tedd bele a TENANTS listába. Lásd docs/UJ-GYARTO.md.
 import { demoTenant } from './demo'
+import { demoAtTenant } from './demo-at'
 import type { Tenant } from './types'
 
 export type { Tenant } from './types'
 
-const TENANTS: Tenant[] = [demoTenant]
+const TENANTS: Tenant[] = [demoTenant, demoAtTenant]
 
 const BY_ID = new Map(TENANTS.map((tenant) => [tenant.id, tenant]))
 

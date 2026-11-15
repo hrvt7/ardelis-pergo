@@ -1,7 +1,8 @@
 // Oldalzárás-választó (8 típus, félbe osztás) és a komfort-opciók (RGB LED, ventilátor,
 // okosotthon) felülete. Az árkülönbség mindig a teljes bruttó irányár változása.
 import { DoorOpen, Fan, House, Layers3, Minus, Move, Palette, Plus, Power, SplitSquareHorizontal, Square } from 'lucide-react'
-import { formatHuf, formatNumber } from '@/lib/pricing'
+import { formatPrice, formatNumber } from '@/lib/pricing'
+import { signedPrice } from '@/lib/money'
 import { DEFAULT_SHADE_FABRIC, ROOF_SHADE_INFO, ROOF_SHADES, roofShadeArea, SHADE_FABRICS, supportsRoofShade } from '@/lib/roofShade'
 import { HALF_NAMES, SIDE_INFO, sideSegments } from '@/lib/sides'
 import { RGB_SWATCHES, smartHomeTargets } from '@/lib/comfort'
@@ -12,7 +13,7 @@ import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import type { PergolaConfig, PriceSettings, RoofShade, SceneSettings, SideKey, SideType } from '@/types/pergola'
 
-const signed = (value: number) => (Math.abs(value) < 500 ? '±0 Ft' : `${value > 0 ? '+' : '−'}${formatHuf(Math.abs(value))}`)
+const signed = (value: number) => signedPrice(value)
 
 export function SideIcon({ type }: { type: SideType }) {
   const common = { width: 30, height: 22, viewBox: '0 0 30 22', 'aria-hidden': true, className: `side-icon side-icon-${type}` } as const
@@ -83,7 +84,7 @@ export function SideSettings({ side, sideName, config, scene, prices, half, onHa
           <span><small>{HALF_NAMES[side][index]}</small><strong>{SIDE_INFO[typeOf(index)].label}</strong></span>
         </button>)}
       </div>
-      <p className="split-note">{midPost ? 'A két fél a középoszlopnál találkozik, külön osztóprofil nem kell.' : `A két fél között függőleges osztóprofil fut (${formatHuf(prices.splitProfileNet)} + telepítés).`}</p>
+      <p className="split-note">{midPost ? 'A két fél a középoszlopnál találkozik, külön osztóprofil nem kell.' : `A két fél között függőleges osztóprofil fut (${formatPrice(prices.splitProfileNet)} + telepítés).`}</p>
     </>}
     <div className="side-type-grid" role="radiogroup" aria-label={split ? `${HALF_NAMES[side][activeHalf]} típusa` : `${sideName} típusa`}>
       {types.map((type) => {
@@ -122,7 +123,7 @@ export function RgbOption({ config, scene, prices, onChange, onSceneChange }: Co
       <button type="button" className="sub-option-head" role="switch" aria-checked={Boolean(config.ledRgb)} onClick={() => onChange({ ledRgb: config.ledRgb ? undefined : true })}>
         <Palette size={17} strokeWidth={1.6} />
         <span><strong>Színváltós RGB+W LED</strong><small>Fehér és bármilyen szín, jelenetek appból</small></span>
-        <em>+{formatHuf(prices.ledRgbPerMeterNet)} / fm</em>
+        <em>+{formatPrice(prices.ledRgbPerMeterNet)} / fm</em>
         <span className={`switch-track ${config.ledRgb ? 'is-on' : ''}`} aria-hidden="true"><span /></span>
       </button>
       {config.ledRgb && <div className="rgb-preview">
@@ -142,7 +143,7 @@ export function FanOption({ config, scene, prices, onChange, onSceneChange }: Co
   const fans = config.fans ?? 0
   return <>
     {tenant.extras.fans && <div className="stepper-row fan-row">
-      <span><strong><Fan size={15} strokeWidth={1.6} />Mennyezeti ventilátor</strong><small>Kültéri DC motor, Ø132 cm · {formatHuf(prices.fanUnitNet)} / db</small></span>
+      <span><strong><Fan size={15} strokeWidth={1.6} />Mennyezeti ventilátor</strong><small>Kültéri DC motor, Ø132 cm · {formatPrice(prices.fanUnitNet)} / db</small></span>
       <div className="stepper"><button type="button" aria-label="Ventilátor csökkentése" disabled={fans === 0} onClick={() => onChange({ fans: fans > 1 ? fans - 1 : undefined })}><Minus size={15} /></button><span>{fans} db</span><button type="button" aria-label="Ventilátor növelése" disabled={fans >= 2} onClick={() => onChange({ fans: fans + 1 })}><Plus size={15} /></button></div>
     </div>}
     {fans > 0 && <>
@@ -159,7 +160,7 @@ export function SmartHomeOption({ config, prices, onChange }: Omit<ComfortProps,
   return <>
     {tenant.extras.smartHome && <button type="button" className={`extra-card smart-home-card ${config.smartHome ? 'is-on' : ''}`} role="switch" aria-checked={Boolean(config.smartHome)} onClick={() => onChange({ smartHome: config.smartHome ? undefined : true })}>
       <House size={20} strokeWidth={1.5} />
-      <span><strong>Okosotthon-vezérlés</strong><small>{targets.length ? `Egy appból: ${targets.join(' · ')}` : 'A később hozzáadott elektromos opciókat is kezeli'} — időzítés, jelenetek, Google / Alexa / Siri</small><em>{formatHuf(prices.smartHomeNet)}</em></span>
+      <span><strong>Okosotthon-vezérlés</strong><small>{targets.length ? `Egy appból: ${targets.join(' · ')}` : 'A később hozzáadott elektromos opciókat is kezeli'} — időzítés, jelenetek, Google / Alexa / Siri</small><em>{formatPrice(prices.smartHomeNet)}</em></span>
       <span className={`switch-track ${config.smartHome ? 'is-on' : ''}`} aria-hidden="true"><span /></span>
     </button>}
   </>
@@ -209,7 +210,7 @@ export function RoofShadeOption({ config, scene, prices, onChange, onSceneChange
         {SHADE_FABRICS.map((fabric) => <button type="button" role="radio" aria-checked={config.shadeFabric === fabric.id} key={fabric.id} className={config.shadeFabric === fabric.id ? 'selected' : ''} title={fabric.name} onClick={() => onChange({ shadeFabric: fabric.id })}><i style={{ background: fabric.hex }} /><small>{fabric.name}</small></button>)}
       </div>
       <button type="button" className="side-motion-control" aria-pressed={scene.shadeOut > 50} onClick={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })}><Move size={17} /><span>{scene.shadeOut > 50 ? 'Árnyékoló behúzása' : 'Árnyékoló kihúzása'}</span></button>
-      <p className="split-note">{formatHuf(prices[ROOF_SHADE_INFO[config.roofShade].priceKey])} / m² nettó · {formatNumber(roofShadeArea(config), 2)} m² · távirányítóval{config.smartHome ? ', az okosotthon-appból is' : ''}{config.sensors ? '; a szélérzékelő erős szélben automatikusan behúzza' : ''}.</p>
+      <p className="split-note">{formatPrice(prices[ROOF_SHADE_INFO[config.roofShade].priceKey])} / m² nettó · {formatNumber(roofShadeArea(config), 2)} m² · távirányítóval{config.smartHome ? ', az okosotthon-appból is' : ''}{config.sensors ? '; a szélérzékelő erős szélben automatikusan behúzza' : ''}.</p>
     </>}
   </div>
 }

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type PointerEvent } from 'react'
+import { getDisplayCurrency } from '@/lib/money'
 import { ArrowDownRight, ArrowUpRight, FileText, PhoneCall } from 'lucide-react'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
 import { computeLeadStats, computePipeline, initials, STATUS_COLORS, timeAgo, LEAD_STATUSES, type LeadRow } from '@/lib/adminLeads'
 import { computeFunnel, type EventRow } from '@/lib/adminStats'
@@ -8,7 +9,7 @@ import { eventTotals, SCENE_SPEED, STEP_REACH } from '@/lib/statsFunnel'
 import type { RoofType } from '@/types/pergola'
 import { Checklist, type ChecklistItem } from '@/components/admin/adminKit'
 
-const compactHuf = (value: number) => (value >= 1_000_000 ? `${(value / 1_000_000).toLocaleString('hu-HU', { maximumFractionDigits: 1 })} M Ft` : formatHuf(value))
+const compactHuf = (value: number) => (getDisplayCurrency() === 'HUF' && value >= 1_000_000 ? `${(value / 1_000_000).toLocaleString('hu-HU', { maximumFractionDigits: 1 })} M Ft` : formatPrice(value))
 const shortDate = (day: string) => new Date(`${day}T12:00:00`).toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' })
 const STATUS_LABEL = Object.fromEntries(LEAD_STATUSES) as Record<string, string>
 

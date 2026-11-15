@@ -1,8 +1,9 @@
 // Az érdeklődő részletező paneljének „Ajánlat” blokkja: kiadott ajánlatok állapota + új ajánlat / új változat.
 import { useState, type FormEvent } from 'react'
+import { priceInputStep, priceSymbol } from '@/lib/money'
 import { Check, Copy, Eye, FilePlus2, Send } from 'lucide-react'
 import { EmptyArt } from '@/pages/AdminLeads'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import { QUOTE_STATE_COLOR, QUOTE_STATE_LABEL, type AdminQuote, type QuoteDraft } from '@/lib/quotes'
 
 const dateFormat = new Intl.DateTimeFormat('hu-HU', { dateStyle: 'medium' })
@@ -54,12 +55,12 @@ export default function QuoteSection({ leadRef, api }: { leadRef: string; api: Q
       <div className="quote-row-main">
         <b>{quote.label}</b>
         <span className="pill" style={{ ['--pill' as string]: QUOTE_STATE_COLOR[quote.status] }}>{QUOTE_STATE_LABEL[quote.status]}</span>
-        <strong>{formatHuf(quote.totalGross)}</strong>
+        <strong>{formatPrice(quote.totalGross)}</strong>
       </div>
       <small>
         Kiadva: {dateFormat.format(new Date(quote.createdAt))} · érvényes: {dateFormat.format(new Date(quote.validUntil))}
         {quote.viewCount > 0 ? <> · <Eye size={11} /> {quote.viewCount}× megnyitva (utoljára {dateTime.format(new Date(quote.lastViewedAt ?? quote.firstViewedAt ?? quote.createdAt))})</> : ' · még nem nyitotta meg'}
-        {quote.status === 'accepted' && quote.acceptedAt ? ` · aláírta: ${quote.signerName}, ${dateTime.format(new Date(quote.acceptedAt))} · foglaló: ${formatHuf(quote.depositGross)}` : ''}
+        {quote.status === 'accepted' && quote.acceptedAt ? ` · aláírta: ${quote.signerName}, ${dateTime.format(new Date(quote.acceptedAt))} · foglaló: ${formatPrice(quote.depositGross)}` : ''}
         {quote.status === 'declined' && quote.declineReason ? ` · indok: ${quote.declineReason}` : ''}
       </small>
       <div className="quote-row-actions">
@@ -75,7 +76,7 @@ export default function QuoteSection({ leadRef, api }: { leadRef: string; api: Q
       <div className="quote-admin-fields">
         <label>Érvényesség (nap)<input type="number" min={1} max={180} value={validDays} onChange={(event) => setValidDays(Math.max(1, Math.min(180, Number(event.target.value) || 1)))} /></label>
         <label>Foglaló (%)<input type="number" min={0} max={100} value={depositPercent} onChange={(event) => setDepositPercent(Math.max(0, Math.min(100, Number(event.target.value) || 0)))} /></label>
-        <label>Nettó engedmény (Ft)<input type="number" min={0} step={1000} value={discountNet} onChange={(event) => setDiscountNet(Math.max(0, Math.round(Number(event.target.value) || 0)))} /></label>
+        <label>Nettó engedmény ({priceSymbol()})<input type="number" min={0} step={priceInputStep()} value={discountNet} onChange={(event) => setDiscountNet(Math.max(0, Math.round(Number(event.target.value) || 0)))} /></label>
       </div>
       <label>Üzenet a vevőnek <small>(az ajánlaton látszik)</small><textarea rows={2} maxLength={2000} value={note} onChange={(event) => setNote(event.target.value)} placeholder="pl. A kivitelezés a foglaló beérkezése után 6–8 héten belül." /></label>
       <label>Fizetési tudnivalók <small>(számlaszám, kedvezményezett — megjegyzi a böngésző)</small><textarea rows={2} maxLength={600} value={paymentInfo} onChange={(event) => setPaymentInfo(event.target.value)} placeholder="Kedvezményezett: …, Számlaszám: …, Közlemény: az ajánlat száma" /></label>

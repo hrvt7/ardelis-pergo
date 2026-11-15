@@ -12,6 +12,9 @@ import { omittedPosts, sideWalls } from './mount'
 import { bayWidth, moduleCount } from './modules'
 import { doorCount, effectiveWallGlazing, glassWallArea, hasSplitUnit, hasUnderfloor, WALL_GLAZING_INFO } from './buildings'
 import type { PergolaConfig, PriceBreakdown, PriceLine, PriceSettings, RoofType, SideKey } from '../types/pergola'
+import { formatMoney, roundMoney, type Currency } from './money'
+
+export { formatPrice } from './money'
 
 export const DEFAULT_PRICES: PriceSettings = {
   louveredPerM2Net: 165000,
@@ -76,10 +79,7 @@ export const SIDE_NAMES: Record<SideKey, string> = {
 
 // Az Intl.NumberFormat létrehozása drága (~50 µs): egyszer készül, utána újrahasznosítjuk.
 // (A költségkeret-tervező egy futása több tízezer árat számol.)
-const HUF_FORMAT = new Intl.NumberFormat('hu-HU', { style: 'currency', currency: 'HUF', maximumFractionDigits: 0 })
 const NUMBER_FORMATS = new Map<number, Intl.NumberFormat>()
-
-export const formatHuf = (value: number) => HUF_FORMAT.format(Math.round(value))
 
 export function formatNumber(value: number, digits = 1) {
   let format = NUMBER_FORMATS.get(digits)
@@ -87,9 +87,13 @@ export function formatNumber(value: number, digits = 1) {
   return format.format(value)
 }
 
-const round = (value: number) => Math.round(value / 1000) * 1000
-
-export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roofLabels: Record<RoofType, string> = ROOF_LABELS): PriceBreakdown {
+/**
+ * Ár a gyártó egységáraiból. A `currency` a gyártó pénzneme: a kerekítési lépcső (HUF: 1000 Ft, EUR: 1 €)
+ * és a tételleírások formázása ebből jön. Az egységárakat a gyártó ugyanebben a pénznemben adja meg.
+ */
+export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roofLabels: Record<RoofType, string> = ROOF_LABELS, currency: Currency = 'HUF'): PriceBreakdown {
+  const round = (value: number) => roundMoney(value, currency)
+  const money = (value: number) => formatMoney(value, currency)
   const area = config.width * config.depth
   const perimeter = 2 * (config.width + config.depth)
   const lines: PriceLine[] = []
@@ -107,7 +111,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     label: roofLabels[config.roof],
     detail: matrixPrice
       ? `${modules > 1 ? `${modules} × ` : ''}${formatNumber(bay, 2)} × ${formatNumber(config.depth, 2)} m · ${matrixPrice.exact ? 'gyártói ármátrix' : 'ármátrix, interpolált'}`
-      : `${formatNumber(area)} m² × ${formatHuf(roofRate)} / m²`,
+      : `${formatNumber(area)} m² × ${money(roofRate)} / m²`,
     amountNet: round(structure),
   })
 
@@ -118,7 +122,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     lines.push({
       id: 'modules',
       label: `Modulcsatlakozás · ${modules} mező`,
-      detail: `${posts} db közös oszlop × ${formatHuf(prices.postNet)} · a közös gerenda a szerkezeti árban`,
+      detail: `${posts} db közös oszlop × ${money(prices.postNet)} · a közös gerenda a szerkezeti árban`,
       amountNet: round(posts * prices.postNet),
     })
   }
@@ -136,7 +140,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     lines.push({
       id: `wall-${side}`,
       label: `Oldalfali rögzítés · ${side === 'left' ? 'bal' : 'jobb'} oldal`,
-      detail: `${formatNumber(config.depth, 2)} fm × ${formatHuf(prices.sideWallAttachPerMeterNet)} / fm`,
+      detail: `${formatNumber(config.depth, 2)} fm × ${money(prices.sideWallAttachPerMeterNet)} / fm`,
       amountNet: round(config.depth * prices.sideWallAttachPerMeterNet),
     })
   })
@@ -146,7 +150,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     lines.push({
       id: 'posts-saved',
       label: `Elmaradó oszlop · ${savedPosts} db`,
-      detail: `A falak kiváltják · ${savedPosts} × ${formatHuf(prices.postNet)}`,
+      detail: `A falak kiváltják · ${savedPosts} × ${money(prices.postNet)}`,
       amountNet: -round(savedPosts * prices.postNet),
     })
   }
@@ -184,7 +188,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
       lines.push({
         id: segment.half === null ? `side-${side}` : `side-${side}-${segment.half}`,
         label: `${SIDE_TITLES[side]}${segment.half === null ? '' : `, ${HALF_NAMES[side][segment.half]}`} · ${SIDE_LABELS[segment.type]}`,
-        detail: `${formatNumber(sideArea)} m² × ${formatHuf(rate)} / m²`,
+        detail: `${formatNumber(sideArea)} m² × ${money(rate)} / m²`,
         amountNet: round(sideArea * rate),
       })
     })
@@ -194,7 +198,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     lines.push({
       id: 'split-profiles',
       label: `Osztóprofil · ${profiles} db`,
-      detail: `Félbe osztott oldal középső merevítője · ${profiles} × ${formatHuf(prices.splitProfileNet)}`,
+      detail: `Félbe osztott oldal középső merevítője · ${profiles} × ${money(prices.splitProfileNet)}`,
       amountNet: round(profiles * prices.splitProfileNet),
     })
   }
@@ -202,10 +206,10 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
   // Ajtók: az üvegfal m²-ára felül a szárny/keret egységára.
   const doors = doorCount(config)
   if (doors.hinged > 0 && prices.doorHingedNet > 0) {
-    lines.push({ id: 'door-hinged', label: `Nyíló ajtószárny · ${doors.hinged} db`, detail: `Zsanéros ajtó zárral és kilinccsel · ${doors.hinged} × ${formatHuf(prices.doorHingedNet)}`, amountNet: round(doors.hinged * prices.doorHingedNet) })
+    lines.push({ id: 'door-hinged', label: `Nyíló ajtószárny · ${doors.hinged} db`, detail: `Zsanéros ajtó zárral és kilinccsel · ${doors.hinged} × ${money(prices.doorHingedNet)}`, amountNet: round(doors.hinged * prices.doorHingedNet) })
   }
   if (doors.sliding > 0 && prices.doorSlidingNet > 0) {
-    lines.push({ id: 'door-sliding', label: `Toló ajtószerkezet · ${doors.sliding} db`, detail: `Síneken futó ajtószárny · ${doors.sliding} × ${formatHuf(prices.doorSlidingNet)}`, amountNet: round(doors.sliding * prices.doorSlidingNet) })
+    lines.push({ id: 'door-sliding', label: `Toló ajtószerkezet · ${doors.sliding} db`, detail: `Síneken futó ajtószárny · ${doors.sliding} × ${money(prices.doorSlidingNet)}`, amountNet: round(doors.sliding * prices.doorSlidingNet) })
   }
 
   // Zárt építmény (veranda / télikert) felárai.
@@ -214,19 +218,19 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     const wallKey = wallGlazing ? WALL_GLAZING_INFO[wallGlazing].priceKey : null
     const wallArea = Math.round(glassWallArea(config) * 100) / 100
     if (wallGlazing && wallKey && prices[wallKey] > 0 && wallArea > 0) {
-      lines.push({ id: 'wall-glazing', label: `Oldalüvegezés · ${WALL_GLAZING_INFO[wallGlazing].label.toLowerCase()}`, detail: `${formatNumber(wallArea, 2)} m² × ${formatHuf(prices[wallKey])} / m² felár · ${WALL_GLAZING_INFO[wallGlazing].ug}`, amountNet: round(wallArea * prices[wallKey]) })
+      lines.push({ id: 'wall-glazing', label: `Oldalüvegezés · ${WALL_GLAZING_INFO[wallGlazing].label.toLowerCase()}`, detail: `${formatNumber(wallArea, 2)} m² × ${money(prices[wallKey])} / m² felár · ${WALL_GLAZING_INFO[wallGlazing].ug}`, amountNet: round(wallArea * prices[wallKey]) })
     }
     if (config.building === 'conservatory' && prices.thermalProfileRate > 0) {
       lines.push({ id: 'thermal-profile', label: 'Hőhídmentes profilrendszer', detail: `Szerkezeti ár × ${Math.round(prices.thermalProfileRate * 100)}% · szigetelt profil, csapadék- és légzárás`, amountNet: round(structure * prices.thermalProfileRate) })
     }
     if (config.foundation && prices.foundationPerM2Net > 0) {
-      lines.push({ id: 'foundation', label: 'Alap és szigetelt padló', detail: `${formatNumber(area)} m² × ${formatHuf(prices.foundationPerM2Net)} / m² · alapozás, vízszigetelés, padlószerkezet`, amountNet: round(area * prices.foundationPerM2Net) })
+      lines.push({ id: 'foundation', label: 'Alap és szigetelt padló', detail: `${formatNumber(area)} m² × ${money(prices.foundationPerM2Net)} / m² · alapozás, vízszigetelés, padlószerkezet`, amountNet: round(area * prices.foundationPerM2Net) })
     }
     if (hasSplitUnit(config.climate) && prices.climateSplitNet > 0) {
       lines.push({ id: 'climate-split', label: 'Split klíma', detail: 'Inverteres fűtő-hűtő egység, kültéri + beltéri egység', amountNet: round(prices.climateSplitNet) })
     }
     if (hasUnderfloor(config.climate) && prices.underfloorPerM2Net > 0) {
-      lines.push({ id: 'climate-underfloor', label: 'Padlófűtés', detail: `${formatNumber(area)} m² × ${formatHuf(prices.underfloorPerM2Net)} / m²`, amountNet: round(area * prices.underfloorPerM2Net) })
+      lines.push({ id: 'climate-underfloor', label: 'Padlófűtés', detail: `${formatNumber(area)} m² × ${money(prices.underfloorPerM2Net)} / m²`, amountNet: round(area * prices.underfloorPerM2Net) })
     }
   }
 
@@ -242,7 +246,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     lines.push({
       id: 'led-rgb',
       label: 'Színváltós RGB+W LED',
-      detail: `${formatNumber(perimeter)} fm × ${formatHuf(prices.ledRgbPerMeterNet)} felár · színek és jelenetek`,
+      detail: `${formatNumber(perimeter)} fm × ${money(prices.ledRgbPerMeterNet)} felár · színek és jelenetek`,
       amountNet: round(perimeter * prices.ledRgbPerMeterNet),
     })
   }
@@ -292,7 +296,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     lines.push({
       id: 'pitch',
       label: `Dőlt tető · ${config.pitch}°`,
-      detail: `Magasított hátsó oszlopok és oldalkitöltés · ${config.pitch}° × ${formatNumber(config.width, 2)} fm × ${formatHuf(prices.pitchPerDegreePerMeterNet)}`,
+      detail: `Magasított hátsó oszlopok és oldalkitöltés · ${config.pitch}° × ${formatNumber(config.width, 2)} fm × ${money(prices.pitchPerDegreePerMeterNet)}`,
       amountNet: round(config.pitch * config.width * prices.pitchPerDegreePerMeterNet),
     })
   }
@@ -304,7 +308,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     lines.push({
       id: 'glazing',
       label: `${config.roof === 'glass' ? 'Üvegtető' : 'Polikarbonát tető'} · ${GLAZING_INFO[glazing].label.toLowerCase()} burkolat`,
-      detail: `${formatNumber(glazingArea, 2)} m² × ${formatHuf(prices[glazingKey])} / m² felár`,
+      detail: `${formatNumber(glazingArea, 2)} m² × ${money(prices[glazingKey])} / m² felár`,
       amountNet: round(glazingArea * prices[glazingKey]),
     })
   }
@@ -315,7 +319,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     lines.push({
       id: 'roof-shade',
       label: `${info.label} · motoros`,
-      detail: `${findShadeFabric(config.shadeFabric).name} ponyva · ${formatNumber(shadeArea, 2)} m² · ${formatHuf(prices[info.priceKey])} / m², távirányítóval`,
+      detail: `${findShadeFabric(config.shadeFabric).name} ponyva · ${formatNumber(shadeArea, 2)} m² · ${money(prices[info.priceKey])} / m², távirányítóval`,
       amountNet: round(shadeArea * prices[info.priceKey]),
     })
   }
@@ -325,7 +329,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     if (layout.count > 0) lines.push({
       id: 'solar',
       label: 'Napelemes tető',
-      detail: `${layout.count} × ${PANEL.wp} Wp = ${formatNumber(layout.kwp, 2)} kWp · ${formatHuf(prices.solarPerKwpNet)} / kWp`,
+      detail: `${layout.count} × ${PANEL.wp} Wp = ${formatNumber(layout.kwp, 2)} kWp · ${money(prices.solarPerKwpNet)} / kWp`,
       amountNet: round(layout.kwp * prices.solarPerKwpNet),
     })
   }

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { Check, ImagePlus, Pipette, Search, X } from 'lucide-react'
 import { Modal } from '@/components/Dialogs'
 import { COLOR_CATALOG, COLOR_GROUPS, colorLabel, describeColor, findColor, matchLabel, nearestColors, normalizeColorCode, pickCatalogColor, rgbToHex, roofPartName, searchColors, supportsTwoTone, type CatalogColor, type ColorGroup, type ColorInfo } from '@/lib/colors'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import { tenantPrice } from '@/tenants/rules'
 import { brightenPhotoColor } from '@/lib/house'
 import { useTenant } from '@/tenants/TenantContext'
@@ -115,7 +115,7 @@ function SelectedCard({ info, label, surcharge }: { info: ColorInfo; label: stri
     <span>
       <small className="finish-part">{label}</small>
       <strong>{colorLabel(info)}</strong>
-      <small>{info.standard ? 'Gyártói alapszín · felár nélkül' : `${info.kind === 'wood' ? 'Fa hatású bevonat' : 'Egyedi szín'} · ${surcharge > 0 ? `+${formatHuf(surcharge)}` : 'felár nélkül'} · +1–3 hét gyártás`}</small>
+      <small>{info.standard ? 'Gyártói alapszín · felár nélkül' : `${info.kind === 'wood' ? 'Fa hatású bevonat' : 'Egyedi szín'} · ${surcharge > 0 ? `+${formatPrice(surcharge)}` : 'felár nélkül'} · +1–3 hét gyártás`}</small>
       <small>{info.kind === 'wood' ? 'Fa erezetű szublimációs bevonat porszórt alumíniumon' : info.kind === 'db' ? 'Vascsillámos, finoman csillogó strukturált felület' : 'Matt, UV-álló porszórt felület'} · a képernyő színe tájékoztató</small>
     </span>
   </div>

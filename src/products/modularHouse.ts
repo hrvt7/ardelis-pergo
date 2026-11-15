@@ -6,7 +6,7 @@
 // Ami ott nem szerepel (magasságok, tetőhajlás), az a 3D modellben becsült, és a felületen is becsültként jelenik meg.
 import { z } from 'zod'
 import type { PriceBreakdown, PriceLine } from '../types/pergola'
-import { formatHuf, formatNumber } from '../lib/pricing'
+import { formatPrice, formatNumber } from '../lib/pricing'
 
 export type ModularModel = 'a45'
 /** shell: külső kulcsrakész + belső emelt szerkezetkész (a gyártó alapára); turnkey: teljes kulcsrakész (egyedi ajánlat). */
@@ -110,7 +110,7 @@ export function calculateModularPrice(config: ModularHouseConfig, prices: Modula
   const lines: PriceLine[] = [{
     id: 'house',
     label: `${model.title} · ${MODULAR_LABELS.finish.shell.toLowerCase()}`,
-    detail: `${formatNumber(area)} m² (${prices.areaBasis === 'gross' ? 'bruttó' : 'nettó'} alapterület) × ${formatHuf(rate)} / m² · pontalapozással, beépítve`,
+    detail: `${formatNumber(area)} m² (${prices.areaBasis === 'gross' ? 'bruttó' : 'nettó'} alapterület) × ${formatPrice(rate)} / m² · pontalapozással, beépítve`,
     amountNet: round(area * rate),
   }]
   if (config.finish === 'turnkey') lines.push({ id: 'turnkey', label: 'Teljes kulcsrakész belső befejezés', detail: 'Egyedi ajánlat alapján – nincs benne az irányárban', amountNet: 0 })

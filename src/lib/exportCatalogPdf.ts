@@ -1,7 +1,7 @@
 import type { TDocumentDefinitions, TableCell } from 'pdfmake/interfaces'
 import { FAMILY_META, LABELS, outdoorSpecCode } from '@/lib/catalog'
 import { lamelixSvg } from '@/lib/lamelixBrand'
-import { formatHuf, formatNumber } from '@/lib/pricing'
+import { formatPrice, formatNumber } from '@/lib/pricing'
 import type { OutdoorConfig } from '@/types/catalog'
 import type { PriceBreakdown } from '@/types/pergola'
 
@@ -22,7 +22,7 @@ export async function exportCatalogPdf(config: OutdoorConfig, price: PriceBreakd
     ['Gépkocsikapu', LABELS.gate[config.gateType]], ['Kapuszélesség', config.gateType === 'none' ? '—' : `${formatNumber(config.gateWidth, 2)} m`],
     ['Automatika', config.gateAutomation ? 'Igen' : 'Nem'], ['Biztonsági csomag', config.safetyKit ? 'Igen' : 'Nem'],
   ]
-  const body: TableCell[][] = [[{ text: 'Tétel', style: 'tableHeader' }, { text: 'Nettó', style: 'tableHeader', alignment: 'right' }], ...price.lines.map((line) => [{ text: line.label, style: 'tableCell' }, { text: formatHuf(line.amountNet), alignment: 'right' as const, style: 'tableCell' }]), [{ text: 'Telepítési mintatétel' }, { text: formatHuf(price.installationNet), alignment: 'right' }]]
+  const body: TableCell[][] = [[{ text: 'Tétel', style: 'tableHeader' }, { text: 'Nettó', style: 'tableHeader', alignment: 'right' }], ...price.lines.map((line) => [{ text: line.label, style: 'tableCell' }, { text: formatPrice(line.amountNet), alignment: 'right' as const, style: 'tableCell' }]), [{ text: 'Telepítési mintatétel' }, { text: formatPrice(price.installationNet), alignment: 'right' }]]
   const content: TDocumentDefinitions['content'] = [
     { columns: [{ svg: lamelixSvg('horizontal', 'onLight'), width: 104 }, { text: FAMILY_META[config.family].name.toUpperCase(), style: 'brandFamily', alignment: 'right' }], columnGap: 12 },
     { text: `${FAMILY_META[config.family].title} · műszaki és árösszefoglaló`, style: 'title' },
@@ -34,7 +34,7 @@ export async function exportCatalogPdf(config: OutdoorConfig, price: PriceBreakd
     { table: { widths: [150, '*'], body: [...rows, ['Spec-kód', outdoorSpecCode(config)]].map(([a, b]) => [{ text: a, color: '#64706c' }, { text: b, bold: true }]) }, layout: 'noBorders' },
     { text: 'Tájékoztató árkalkuláció', style: 'sectionTitle', pageBreak: image ? 'before' : undefined },
     { table: { headerRows: 1, widths: ['*', 110], body }, layout: { fillColor: (i: number) => i === 0 ? '#17211e' : i % 2 === 0 ? '#eef0eb' : null, hLineWidth: () => 0, vLineWidth: () => 0 } },
-    { text: `Nettó: ${formatHuf(price.totalNet)}  ·  ÁFA: ${formatHuf(price.vatNet)}  ·  Bruttó irányár: ${formatHuf(price.totalGross)}`, style: 'total' },
+    { text: `Nettó: ${formatPrice(price.totalNet)}  ·  ÁFA: ${formatPrice(price.vatNet)}  ·  Bruttó irányár: ${formatPrice(price.totalGross)}`, style: 'total' },
     { text: 'Tudnivalók', style: 'sectionTitle' },
     { ul: ['Tájékoztató kalkuláció, nem ajánlattétel és nem kiviteli terv.', 'A végleges ár felmérés, statika, alapozás, gyártói rendszer és műszaki tartalom alapján változhat.', 'Engedélyezési és bejelentési kötelezettség helyi és műszaki ellenőrzést igényel.', 'Az EV- és napelem-előkészítés nem tartalmaz töltőt, napelemrendszert vagy villamos tervezést.'], style: 'disclaimer' },
   )

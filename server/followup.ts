@@ -11,7 +11,7 @@
 // csak a sikeres foglalás után küldünk. Így két egyidejű futás sem küld kétszer.
 // A bevezetéskor régi leadeket nem keresünk meg: csak a megadott ablakon belülieket.
 // Platformfüggetlen (Request → Response): Vercel cron (api/followup.ts) és helyi dev-szerver is futtatja.
-import { formatHuf } from '../src/lib/pricing'
+import { formatMoney } from '../src/lib/money'
 import { scoreLead, TIER_LABELS, type LeadEngagement } from '../src/lib/leadScore'
 import type { Tenant } from '../src/tenants/types'
 import { escapeHtml, oneLine, sendEmail, siteOrigin, type LeadEnv } from './lead'
@@ -88,7 +88,7 @@ export function customerFollowUpHtml(tenant: Tenant, lead: FollowUpLead, env: Le
 <p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">${escapeHtml(tenant.brand.name.toUpperCase())} · ${escapeHtml(lead.ref)}</p>
 <h1 style="font-size:20px;margin:0 0 12px">A pergolaterved még vár rád</h1>
 <p>Kedves ${escapeHtml(lead.customer_name)}!</p>
-<p>Néhány napja felmérést kértél a(z) ${escapeHtml(tenant.brand.name)} csapatától egy ${escapeHtml(formatHuf(lead.estimate_gross))} bruttó irányárú pergolára (${escapeHtml(lead.city)}). A 3D-terved bármikor megnyitható és továbbformálható:</p>
+<p>Néhány napja felmérést kértél a(z) ${escapeHtml(tenant.brand.name)} csapatától egy ${escapeHtml(formatMoney(lead.estimate_gross, tenant.currency))} bruttó irányárú pergolára (${escapeHtml(lead.city)}). A 3D-terved bármikor megnyitható és továbbformálható:</p>
 <p><a href="${escapeHtml(lead.config_url)}" style="color:#007fae">A konfigurációm megnyitása →</a></p>
 <p>Ha szeretnéd, egyeztessünk egy helyszíni felmérési időpontot – ez kötelezettség nélküli, és ekkor készül a pontos árajánlat.</p>
 <p style="margin:20px 0">${booking ? button(booking, 'Időpontot foglalok') : to ? button(`mailto:${to}?subject=${subject}&body=${body}`, 'Időpontot kérek') : ''}${tenant.brand.phone ? ` <a href="tel:${escapeHtml(tel(tenant.brand.phone))}" style="display:inline-block;color:#007fae;font-weight:600;padding:12px 8px">Inkább hívlak: ${escapeHtml(tenant.brand.phone)}</a>` : ''}</p>
@@ -103,7 +103,7 @@ export function ownerReminderHtml(tenant: Tenant, leads: FollowUpLead[], now: Da
     const days = Math.floor((now.getTime() - new Date(lead.created_at).getTime()) / DAY)
     return `<tr>
 <td style="padding:8px 12px 8px 0;vertical-align:top"><strong>${escapeHtml(lead.customer_name)}</strong><br><span style="color:#62727a;font-size:12px">${escapeHtml(lead.city)} · ${escapeHtml(lead.ref)}</span></td>
-<td style="padding:8px 12px 8px 0;vertical-align:top;white-space:nowrap">${escapeHtml(formatHuf(lead.estimate_gross))}</td>
+<td style="padding:8px 12px 8px 0;vertical-align:top;white-space:nowrap">${escapeHtml(formatMoney(lead.estimate_gross, tenant.currency))}</td>
 <td style="padding:8px 12px 8px 0;vertical-align:top;white-space:nowrap">${escapeHtml(TIER_LABELS[score.tier])} · ${score.score}</td>
 <td style="padding:8px 12px 8px 0;vertical-align:top;white-space:nowrap">${days} napja vár</td>
 <td style="padding:8px 0;vertical-align:top;white-space:nowrap"><a href="tel:${escapeHtml(tel(lead.phone))}" style="color:#007fae">${escapeHtml(lead.phone)}</a></td>

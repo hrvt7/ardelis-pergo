@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowRight, Check, ChevronDown } from 'lucide-react'
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Choices, Section } from '@/components/CatalogControls'
-import { formatHuf, formatNumber } from '@/lib/pricing'
+import { formatPrice, formatNumber } from '@/lib/pricing'
 import { MODULAR_COLOR_HEX, MODULAR_LABELS, MODULAR_META, MODULAR_MODEL_IDS, MODULAR_MODELS, MODULAR_PRICE_DEFAULTS, type ModularHouseConfig } from '@/products/modularHouse'
 
 export type ModularStep = 'model' | 'finish' | 'look' | 'summary'
@@ -44,7 +44,7 @@ export default function ModularHouseControls({ config, step, summary, typePicker
       {step === 'model' && <>
         {typePicker && <Section title="Mit építesz?" description="Pergola, veranda, télikert, carport vagy modulház – a választás bármikor módosítható.">{typePicker}</Section>}
         <Section title="Modulház típusa" description="Valós méretű típusterv; a 3D modell a gyártó alaprajza alapján készült.">
-          <Choices value={config.model} columns={1} options={MODULAR_MODEL_IDS.map((id) => ({ value: id, label: MODULAR_MODELS[id].title, note: `Bruttó ${formatNumber(MODULAR_MODELS[id].grossArea)} m² · nettó ${formatNumber(MODULAR_MODELS[id].netArea)} m² · ${formatHuf(MODULAR_PRICE_DEFAULTS.perM2Net[id])} / m² nettó` }))} onChange={(value) => onChange({ model: value })} />
+          <Choices value={config.model} columns={1} options={MODULAR_MODEL_IDS.map((id) => ({ value: id, label: MODULAR_MODELS[id].title, note: `Bruttó ${formatNumber(MODULAR_MODELS[id].grossArea)} m² · nettó ${formatNumber(MODULAR_MODELS[id].netArea)} m² · ${formatPrice(MODULAR_PRICE_DEFAULTS.perM2Net[id])} / m² nettó` }))} onChange={(value) => onChange({ model: value })} />
         </Section>
         <Section title="Műszaki adatok">
           <dl className="bom-list">

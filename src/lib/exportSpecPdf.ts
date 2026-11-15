@@ -2,7 +2,7 @@
 // A jelenet képét a `canvas[data-catalog-canvas]`-ról veszi, ha olvasható.
 import type { TDocumentDefinitions, TableCell } from 'pdfmake/interfaces'
 import { lamelixSvg } from '@/lib/lamelixBrand'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import type { PriceBreakdown } from '@/types/pergola'
 
 export async function exportSpecPdf({ family, title, code, rows, price, notes, installationLabel = 'Telepítési mintatétel' }: { family: string; title: string; code: string; rows: [string, string][]; price: PriceBreakdown; notes: string[]; /** null: nincs külön telepítési sor (a gyártó ára beépítve értendő). */ installationLabel?: string | null }) {
@@ -10,7 +10,7 @@ export async function exportSpecPdf({ family, title, code, rows, price, notes, i
   pdfMake.addVirtualFileSystem(pdfFonts as unknown as Record<string, string>)
   let image: string | undefined
   try { image = document.querySelector<HTMLCanvasElement>('canvas[data-catalog-canvas="true"]')?.toDataURL('image/jpeg', 0.86) } catch { /* GPU readback optional */ }
-  const body: TableCell[][] = [[{ text: 'Tétel', style: 'tableHeader' }, { text: 'Nettó', style: 'tableHeader', alignment: 'right' }], ...price.lines.map((line) => [{ text: line.label, style: 'tableCell' }, { text: formatHuf(line.amountNet), alignment: 'right' as const, style: 'tableCell' }]), ...(installationLabel ? [[{ text: installationLabel }, { text: formatHuf(price.installationNet), alignment: 'right' as const }]] : [])]
+  const body: TableCell[][] = [[{ text: 'Tétel', style: 'tableHeader' }, { text: 'Nettó', style: 'tableHeader', alignment: 'right' }], ...price.lines.map((line) => [{ text: line.label, style: 'tableCell' }, { text: formatPrice(line.amountNet), alignment: 'right' as const, style: 'tableCell' }]), ...(installationLabel ? [[{ text: installationLabel }, { text: formatPrice(price.installationNet), alignment: 'right' as const }]] : [])]
   const content: TDocumentDefinitions['content'] = [
     { columns: [{ svg: lamelixSvg('horizontal', 'onLight'), width: 104 }, { text: family.toUpperCase(), style: 'brandFamily', alignment: 'right' }], columnGap: 12 },
     { text: `${title} · műszaki és árösszefoglaló`, style: 'title' },
@@ -22,7 +22,7 @@ export async function exportSpecPdf({ family, title, code, rows, price, notes, i
     { table: { widths: [150, '*'], body: rows.map(([a, b]) => [{ text: a, color: '#64706c' }, { text: b, bold: true }]) }, layout: 'noBorders' },
     { text: 'Tájékoztató árkalkuláció', style: 'sectionTitle', pageBreak: image ? 'before' : undefined },
     { table: { headerRows: 1, widths: ['*', 110], body }, layout: { fillColor: (i: number) => i === 0 ? '#17211e' : i % 2 === 0 ? '#eef0eb' : null, hLineWidth: () => 0, vLineWidth: () => 0 } },
-    { text: `Nettó: ${formatHuf(price.totalNet)}  ·  ÁFA: ${formatHuf(price.vatNet)}  ·  Bruttó irányár: ${formatHuf(price.totalGross)}`, style: 'total' },
+    { text: `Nettó: ${formatPrice(price.totalNet)}  ·  ÁFA: ${formatPrice(price.vatNet)}  ·  Bruttó irányár: ${formatPrice(price.totalGross)}`, style: 'total' },
     { text: 'Tudnivalók', style: 'sectionTitle' },
     { ul: notes, style: 'disclaimer' },
   )

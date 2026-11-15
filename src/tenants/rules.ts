@@ -224,5 +224,5 @@ export function presetConfig(tenant: Tenant, patch: Partial<PergolaConfig>): Per
 }
 
 export function tenantPrice(tenant: Tenant, config: PergolaConfig, prices: PriceSettings = tenant.prices): PriceBreakdown {
-  return calculatePrice(config, prices, roofLabels(tenant))
+  return calculatePrice(config, prices, roofLabels(tenant), tenant.currency)
 }

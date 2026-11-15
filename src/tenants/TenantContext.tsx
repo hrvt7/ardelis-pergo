@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { roofLabels } from './rules'
+import { setDisplayCurrency } from '../lib/money'
 import type { Tenant } from './types'
 import type { RoofType } from '../types/pergola'
 import type { ProductFamily } from '../products'
@@ -23,6 +24,9 @@ export interface TenantContextValue {
 const TenantContext = createContext<TenantContextValue | null>(null)
 
 export function TenantProvider({ tenant, admin, embed, homeHref, product = 'pergola', mode = 'demo', children }: Omit<TenantContextValue, 'labels' | 'product' | 'mode'> & { product?: ProductFamily; mode?: TenantContextValue['mode']; children: ReactNode }) {
+  // Egy oldal egy gyártót mutat: a felületi árformázás (formatPrice) az ő pénznemében fut.
+  // Renderelés közben, a gyerekek előtt állítjuk, hogy már az első kép is jó pénznemmel készüljön.
+  setDisplayCurrency(tenant.currency)
   const value = useMemo(() => ({ tenant, product, mode, labels: roofLabels(tenant), admin, embed, homeHref }), [tenant, product, mode, admin, embed, homeHref])
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>
 }

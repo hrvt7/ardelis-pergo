@@ -13,7 +13,7 @@ import { useChangePill, usePriceCollapse, usePresentation, useSceneThumbnail } f
 import { useTenant } from '@/tenants/TenantContext'
 import { calculateOutdoorPrice, createOutdoorShareUrl, FAMILY_META, hasOutdoorDraft, LABELS, loadOutdoorConfig, loadOutdoorPrices, OUTDOOR_DEFAULTS, outdoorSpecCode, persistOutdoorConfig, persistOutdoorPrices } from '@/lib/catalog'
 import { exportCatalogPdf } from '@/lib/exportCatalogPdf'
-import { formatHuf, formatNumber } from '@/lib/pricing'
+import { formatPrice, formatNumber } from '@/lib/pricing'
 import type { OutdoorConfig, OutdoorFamily } from '@/types/catalog'
 
 const views: { id: CatalogView; label: string; icon: typeof View }[] = [
@@ -89,7 +89,7 @@ export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
   ]
   const thumbnail = useSceneThumbnail(step === 'summary', config)
   const summary = <div className="summary-panel catalog-summary">
-    <div className="summary-hero"><div className="summary-thumbnail">{thumbnail ? <img src={thumbnail} alt={`A konfigurált ${meta.title.toLowerCase()} képe`} /> : <div className="thumbnail-placeholder"><Box size={24} /><span>{meta.title}</span></div>}</div><div><span>ÉLŐ KONFIGURÁCIÓ</span><h3>{meta.title}</h3><p>{meta.description}</p><strong>{formatHuf(price.totalGross)}</strong><small>bruttó irányár, telepítési mintatétellel</small></div></div>
+    <div className="summary-hero"><div className="summary-thumbnail">{thumbnail ? <img src={thumbnail} alt={`A konfigurált ${meta.title.toLowerCase()} képe`} /> : <div className="thumbnail-placeholder"><Box size={24} /><span>{meta.title}</span></div>}</div><div><span>ÉLŐ KONFIGURÁCIÓ</span><h3>{meta.title}</h3><p>{meta.description}</p><strong>{formatPrice(price.totalGross)}</strong><small>bruttó irányár, telepítési mintatétellel</small></div></div>
     <div className="summary-actions"><button type="button" onClick={exportPdf} disabled={exporting}><Download size={14} />{exporting ? 'Készül…' : 'PDF'}</button><button type="button" onClick={share}><Link2 size={14} />Megosztás</button><button type="button" onClick={() => setPriceOpen(true)}><Settings2 size={14} />Tarifák</button></div>
     <section className="summary-section"><div className="summary-section-title"><Ruler size={15} /><h3>Műszaki összefoglaló</h3></div><div className="spec-code"><span>SPEC-KÓD</span><strong>{outdoorSpecCode(config)}</strong></div><dl className="bom-list">{specs.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>
     <section className="summary-section lead-section"><div className="summary-section-title"><MoveUpRight size={15} /><h3>Felmérési kérelem</h3></div><LeadForm productFamily={family} config={config} estimateNet={price.totalNet} estimateGross={price.totalGross} /></section>
@@ -107,7 +107,7 @@ export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
           tools={[{ id: 'prices', icon: Settings2, name: 'Mintaárak szerkesztése', note: 'Folyóméter-, kapu- és tételárak a kalkulációhoz', run: () => setPriceOpen(true) }]} />
         <div className="camera-toolbar" aria-label="Kamera nézetek">{views.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} onClick={() => setView(id)}><Icon size={16} /><span>{label}</span></button>)}</div>
         <div className="viewer-footer"><span>1 egység = 1 méter</span><span>{roof ? `${price.area.toFixed(1)} m²` : `${config.length} fm`}</span></div>
-        {welcomeBack && !presentation && <WelcomeBack summary={`${roof ? `${formatNumber(config.width)} × ${formatNumber(config.depth)} m` : `${formatNumber(config.length)} fm · ${formatNumber(config.height)} m`} · ${formatHuf(price.totalGross)}`} onContinue={() => setWelcomeBack(false)} onFresh={() => { replace({ ...OUTDOOR_DEFAULTS[family] }); setStep('size'); setWelcomeBack(false) }} />}
+        {welcomeBack && !presentation && <WelcomeBack summary={`${roof ? `${formatNumber(config.width)} × ${formatNumber(config.depth)} m` : `${formatNumber(config.length)} fm · ${formatNumber(config.height)} m`} · ${formatPrice(price.totalGross)}`} onContinue={() => setWelcomeBack(false)} onFresh={() => { replace({ ...OUTDOOR_DEFAULTS[family] }); setStep('size'); setWelcomeBack(false) }} />}
         {!presentation && <ChangePill change={change} onUndo={() => { undo(); clearChange() }} />}
         {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{meta.title} · {roof ? `${formatNumber(config.width * (family === 'carport' ? config.bays : 1))} × ${formatNumber(config.depth)} m` : `${formatNumber(config.length)} fm · ${formatNumber(config.height)} m`}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
       </section>

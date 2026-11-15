@@ -1,6 +1,7 @@
 // Gyártói ármátrix: tetőtípusonként egy egyszerű táblázat (Szélesség | Mélység | Nettó ár).
 // A szerkesztés szöveges mezőkkel megy (a „4,” gépelése nem akad), az ellenőrzés mentéskor fut.
 import { useMemo, useState, type ClipboardEvent } from 'react'
+import { unitLabel } from '@/lib/money'
 import { ClipboardPaste, Plus, Trash2 } from 'lucide-react'
 import { ROOF_INFO } from '@/lib/roofs'
 import { emptyRow, parsePastedRows, pricePerSquareMeter, type MatrixField, type MatrixRow, type MatrixRowError } from '@/lib/priceMatrixEdit'
@@ -64,7 +65,7 @@ export default function PriceMatrixEditor({ roofs, value, errors, active, onActi
 
     <div className="matrix-scroll" role="tabpanel" aria-label={`${ROOF_INFO[roof].name} ármátrix`}>
       <table className="matrix-table">
-        <thead><tr><th className="matrix-num">#</th>{COLUMNS.map((column) => <th key={column.field}>{column.label} <small>{column.unit}</small></th>)}<th className="matrix-psm">Ft/m²</th><th><span className="sr-only">Törlés</span></th></tr></thead>
+        <thead><tr><th className="matrix-num">#</th>{COLUMNS.map((column) => <th key={column.field}>{column.label} <small>{unitLabel(column.unit)}</small></th>)}<th className="matrix-psm">{unitLabel('Ft/m²')}</th><th><span className="sr-only">Törlés</span></th></tr></thead>
         <tbody>
           {rows.map((row, index) => {
             const perSquare = pricePerSquareMeter(row)
@@ -76,7 +77,7 @@ export default function PriceMatrixEditor({ roofs, value, errors, active, onActi
                   autoComplete="off"
                   value={row[column.field]}
                   placeholder={column.placeholder}
-                  aria-label={`${index + 1}. sor ${column.label.toLowerCase()} (${column.unit})`}
+                  aria-label={`${index + 1}. sor ${column.label.toLowerCase()} (${unitLabel(column.unit)})`}
                   aria-invalid={hasError(index, column.field) || undefined}
                   onChange={(event) => edit(row.id, column.field, event.target.value)}
                   onPaste={onCellPaste}

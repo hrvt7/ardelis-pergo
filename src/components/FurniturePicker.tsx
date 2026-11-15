@@ -3,7 +3,7 @@
 import { AlertTriangle, Armchair, Bath, CheckCircle2, ChefHat, Coffee, Eye, EyeOff, LayoutGrid, Maximize, Martini, PartyPopper, Sofa, SquareDashed, Sparkles, Sun, UtensilsCrossed, Waves, Wine, XCircle } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { FURNITURE_GROUPS, FURNITURE_SETS, furnitureFit, furnitureLayout } from '@/lib/furniture'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import type { FurnitureSet, PergolaConfig, PriceSettings, SceneSettings } from '@/types/pergola'
@@ -60,7 +60,7 @@ export default function FurniturePicker({ config, scene, prices, onChange, onSce
         </div>}
         {layout && !layout.pack && layout.count > 1 && <span className="furniture-capacity">Ezen a méreten {layout.count} csomag fér el egymás mellett, összesen kb. {layout.seats} fő (becsült létszám).</span>}
         {suggestion && <button type="button" className="furniture-suggest" onClick={() => onChange(suggestion)}>
-          <Maximize size={14} />Méret igazítása: {m(suggestion.width)} × {m(suggestion.depth)} m <em>{delta >= 0 ? '+' : '−'}{formatHuf(Math.abs(delta))}</em>
+          <Maximize size={14} />Méret igazítása: {m(suggestion.width)} × {m(suggestion.depth)} m <em>{delta >= 0 ? '+' : '−'}{formatPrice(Math.abs(delta))}</em>
         </button>}
         {fit.level !== 'comfortable' && !suggestion && <span>A gyártó legnagyobb méretében sem fér el; válassz kisebb csomagot.</span>}
       </div>

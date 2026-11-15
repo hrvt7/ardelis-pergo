@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Check, LoaderCircle, Wallet } from 'lucide-react'
 import { Modal } from '@/components/Dialogs'
 import { planBudget, type BudgetResult } from '@/lib/budget'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import { useTenant } from '@/tenants/TenantContext'
+import { priceSymbol } from '@/lib/money'
 import type { FurnitureSet, PergolaConfig, PriceSettings } from '@/types/pergola'
 
 const parseAmount = (text: string) => Number(text.replace(/\D/g, '')) || 0
@@ -30,23 +31,23 @@ export default function BudgetDialog({ config, prices, furniture, currentGross, 
   const value = result?.amount === amount ? result.value : null
 
   return <Modal title="Mennyit szánsz rá?" eyebrow="KÖLTSÉGKERET" onClose={onClose} className="budget-dialog">
-    <p className="modal-intro">Írd be a keretösszeget (bruttó, telepítéssel). Megmutatjuk, mi fér bele úgy, hogy a terved minél kevésbé változzon. A mostani terved: <strong>{formatHuf(currentGross)}</strong>.</p>
+    <p className="modal-intro">Írd be a keretösszeget (bruttó, telepítéssel). Megmutatjuk, mi fér bele úgy, hogy a terved minél kevésbé változzon. A mostani terved: <strong>{formatPrice(currentGross)}</strong>.</p>
     <div className="budget-input">
       <label htmlFor="budget-amount"><Wallet size={16} /><span>Keretösszeg</span></label>
-      <div><input id="budget-amount" inputMode="numeric" autoComplete="off" value={text} onChange={(event) => setText(group(parseAmount(event.target.value)))} /><span>Ft</span></div>
+      <div><input id="budget-amount" inputMode="numeric" autoComplete="off" value={text} onChange={(event) => setText(group(parseAmount(event.target.value)))} /><span>{priceSymbol()}</span></div>
     </div>
     <div className="budget-chips">{chips.map((chip) => <button type="button" key={chip} className={chip === amount ? 'selected' : ''} onClick={() => setText(group(chip))}>{(chip / 1000000).toLocaleString('hu-HU', { maximumFractionDigits: 1 })} M Ft</button>)}</div>
 
     <div className="budget-results" aria-live="polite">
       {amount <= 0 && <p className="budget-note">Adj meg egy összeget.</p>}
       {busy && <p className="budget-note"><LoaderCircle size={15} className="spin" />Számolás a gyártó árlistájával…</p>}
-      {value?.status === 'fits' && <div className="budget-fits"><Check size={18} /><div><strong>Belefér a terved.</strong><span>Marad {formatHuf(value.remaining)} — ebből kényelmesen futja pl. LED-re vagy oldalzárásra.</span></div></div>}
-      {value?.status === 'impossible' && <div className="budget-fits is-warning"><Wallet size={18} /><div><strong>Ebbe a keretbe nem fér bele ez a fajta {config.building === 'carport' ? 'carport' : 'pergola'}.</strong><span>A legolcsóbb elérhető változat (legkisebb méret{furniture !== 'none' ? ' a választott bútorhoz' : ''}, egyszerűbb tető, kiegészítők nélkül) ára {formatHuf(value.minimumGross)}.</span></div></div>}
+      {value?.status === 'fits' && <div className="budget-fits"><Check size={18} /><div><strong>Belefér a terved.</strong><span>Marad {formatPrice(value.remaining)} — ebből kényelmesen futja pl. LED-re vagy oldalzárásra.</span></div></div>}
+      {value?.status === 'impossible' && <div className="budget-fits is-warning"><Wallet size={18} /><div><strong>Ebbe a keretbe nem fér bele ez a fajta {config.building === 'carport' ? 'carport' : 'pergola'}.</strong><span>A legolcsóbb elérhető változat (legkisebb méret{furniture !== 'none' ? ' a választott bútorhoz' : ''}, egyszerűbb tető, kiegészítők nélkül) ára {formatPrice(value.minimumGross)}.</span></div></div>}
       {value?.status === 'plans' && <div className="budget-plans">
         {value.plans.map((plan) => <article key={plan.id} className={`budget-plan${plan.id === 'balanced' ? ' is-best' : ''}`}>
           <header><span>{plan.title}</span>{plan.id === 'balanced' && <em>Ajánlott</em>}</header>
-          <strong>{formatHuf(plan.totalGross)}</strong>
-          <small>{amount - plan.totalGross > 0 ? `${formatHuf(amount - plan.totalGross)}-tal a keret alatt` : 'Pontosan a keretösszeg'} · {formatHuf(value.totalGross - plan.totalGross)} megtakarítás</small>
+          <strong>{formatPrice(plan.totalGross)}</strong>
+          <small>{amount - plan.totalGross > 0 ? `${formatPrice(amount - plan.totalGross)}-tal a keret alatt` : 'Pontosan a keretösszeg'} · {formatPrice(value.totalGross - plan.totalGross)} megtakarítás</small>
           <ul>{plan.changes.map((change) => <li key={change}>{change}</li>)}</ul>
           <button type="button" className={plan.id === 'balanced' ? 'primary-action' : 'secondary-action'} onClick={() => onApply(plan.config)}>Ezt választom</button>
         </article>)}

@@ -3,7 +3,7 @@
 import { Fan, Flame, Lightbulb, Moon, Palette, Plus, X } from 'lucide-react'
 import { RGB_SWATCHES } from '@/lib/comfort'
 import { kelvinToHex } from '@/lib/color'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import type { PergolaConfig, PriceSettings, SceneSettings } from '@/types/pergola'
@@ -49,12 +49,12 @@ export default function MoodPanel({ config, scene, prices, onChange, onSceneChan
         <div className="rgb-swatches mood-rgb" role="radiogroup" aria-label="LED színe">
           {RGB_SWATCHES.map((swatch) => <button type="button" role="radio" aria-checked={scene.ledColor === swatch.hex} key={swatch.hex} className={scene.ledColor === swatch.hex ? 'selected' : ''} style={{ '--swatch': swatch.hex } as React.CSSProperties} title={swatch.name} aria-label={swatch.name} onClick={() => onSceneChange({ ledColor: swatch.hex })} />)}
         </div>
-      </> : canRgb && <button type="button" className="mood-add" onClick={() => onChange({ ledRgb: true })}><Plus size={14} /><span><strong>Színes fények is kellenek?</strong><small>Színváltós RGB+W LED · +{formatHuf(rgbPrice)}</small></span></button>}
-    </> : <button type="button" className="mood-add" onClick={() => onChange({ led: true })}><Plus size={14} /><span><strong>Próbáld ki LED-világítással</strong><small>Rejtett periméter LED · +{formatHuf(ledPrice)}</small></span></button>)}
+      </> : canRgb && <button type="button" className="mood-add" onClick={() => onChange({ ledRgb: true })}><Plus size={14} /><span><strong>Színes fények is kellenek?</strong><small>Színváltós RGB+W LED · +{formatPrice(rgbPrice)}</small></span></button>}
+    </> : <button type="button" className="mood-add" onClick={() => onChange({ led: true })}><Plus size={14} /><span><strong>Próbáld ki LED-világítással</strong><small>Rejtett periméter LED · +{formatPrice(ledPrice)}</small></span></button>)}
 
     {canHeat && (config.heaters > 0
       ? <button type="button" className={`mood-heat${scene.heatersOn ? ' is-on' : ''}`} aria-pressed={scene.heatersOn} onClick={() => onSceneChange({ heatersOn: !scene.heatersOn })}><Flame size={15} /><span><strong>Teraszfűtés {scene.heatersOn ? 'bekapcsolva' : 'kikapcsolva'}</strong><small>{config.heaters} db infrapanel</small></span></button>
-      : <button type="button" className="mood-add" onClick={() => onChange({ heaters: 1 })}><Plus size={14} /><span><strong>Hűvös estékre: teraszfűtés</strong><small>1 db infrapanel · +{formatHuf(heaterPrice)}</small></span></button>)}
+      : <button type="button" className="mood-add" onClick={() => onChange({ heaters: 1 })}><Plus size={14} /><span><strong>Hűvös estékre: teraszfűtés</strong><small>1 db infrapanel · +{formatPrice(heaterPrice)}</small></span></button>)}
 
     {(config.fans ?? 0) > 0 && <button type="button" className={`mood-heat mood-fan${scene.fanOn ? ' is-on' : ''}`} aria-pressed={scene.fanOn} onClick={() => onSceneChange({ fanOn: !scene.fanOn })}><Fan size={15} /><span><strong>Ventilátor {scene.fanOn ? 'bekapcsolva' : 'kikapcsolva'}</strong><small>{config.fans} db mennyezeti ventilátor</small></span></button>}
   </section>

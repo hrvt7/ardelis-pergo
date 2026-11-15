@@ -4,7 +4,7 @@
 import { z } from 'zod'
 import type { OutdoorColor, OutdoorConfig, OutdoorFamily, OutdoorPriceSettings } from '../types/catalog'
 import type { PriceBreakdown, PriceLine } from '../types/pergola'
-import { formatHuf, formatNumber } from '../lib/pricing'
+import { formatPrice, formatNumber } from '../lib/pricing'
 
 export const OUTDOOR_DEFAULTS: Record<OutdoorFamily, OutdoorConfig> = {
   canopy: {
@@ -109,7 +109,7 @@ export function calculateOutdoorPrice(config: OutdoorConfig, prices: OutdoorPric
     const materialFactor = config.frameMaterial === 'glulam' ? 1.18 : config.frameMaterial === 'steel' ? 0.94 : 1
     const shapeFactor = config.shape === 'curved' ? 1.16 : config.shape === 'gable' ? 1.12 : 1
     structure = area * rate * materialFactor * shapeFactor
-    lines.push({ id: 'structure', label: `${FAMILY_META[config.family].name} szerkezet és fedés`, detail: `${formatNumber(area)} m² × ${formatHuf(rate)} / m² · forma- és anyagkorrekció`, amountNet: round(structure) })
+    lines.push({ id: 'structure', label: `${FAMILY_META[config.family].name} szerkezet és fedés`, detail: `${formatNumber(area)} m² × ${formatPrice(rate)} / m² · forma- és anyagkorrekció`, amountNet: round(structure) })
     if (config.mount === 'posts' || config.mount === 'freestanding') {
       const count = config.family === 'carport' ? (config.bays + 1) * 2 : 2
       lines.push({ id: 'posts', label: 'Oszlopos kivitel és lábszerelés', detail: `${count} oszlop · pontos kialakítás felmérést igényel`, amountNet: round(count * 48000) })
@@ -134,7 +134,7 @@ export function calculateOutdoorPrice(config: OutdoorConfig, prices: OutdoorPric
     if (config.pedestrianGate) lines.push({ id: 'pedestrian', label: 'Illeszkedő kiskapu', detail: 'Zár és kilincs mintacsomaggal', amountNet: prices.pedestrianGate })
     if (config.gateType !== 'none') {
       const mechanism = config.gateType === 'swing' ? prices.swingMechanism : config.gateType === 'sliding' ? prices.slidingMechanism : prices.cantileverMechanism
-      lines.push({ id: 'gate', label: LABELS.gate[config.gateType], detail: `${formatNumber(config.gateWidth)} × ${formatNumber(config.height)} m · ${formatHuf(prices.gatePerM2)} / m²`, amountNet: round(config.gateWidth * config.height * prices.gatePerM2 + mechanism) })
+      lines.push({ id: 'gate', label: LABELS.gate[config.gateType], detail: `${formatNumber(config.gateWidth)} × ${formatNumber(config.height)} m · ${formatPrice(prices.gatePerM2)} / m²`, amountNet: round(config.gateWidth * config.height * prices.gatePerM2 + mechanism) })
       if (config.gateAutomation) lines.push({ id: 'motor', label: 'Kapuautomatika', detail: 'Motor, vezérlés és két távirányító mintacsomag', amountNet: prices.gateMotor })
       if (config.safetyKit) lines.push({ id: 'safety', label: 'Biztonsági csomag', detail: 'Fényfüggöny és biztonsági érzékelés', amountNet: prices.safetyKit })
       if (config.intercom) lines.push({ id: 'intercom', label: 'Kaputelefon-előkészítés', detail: 'Audio-video interkom mintacsomag', amountNet: prices.intercom })

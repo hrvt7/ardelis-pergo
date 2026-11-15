@@ -1,5 +1,15 @@
 # Változások
 
+## 4.45 – Pénznem gyártónként (HUF/EUR), osztrák bemutató gyártó
+
+- **EUR-os gyártó:** a gyártó pénzneme (`currency: 'HUF' | 'EUR'`) mostantól a konfigurátorban, az ár-részletezésben, a PDF-ben, az adminban, az ajánlatban, a vevői és gyártói e-mailekben és az anyaglista CSV-ben is érvényes. Az ÁFA-kulcs eddig is gyártónként állítható volt (`prices.vatRate`).
+- **Kerekítés pénznemenként:** HUF 1000 Ft, EUR 1 €. (A régi, bedrótozott 1000-es kerekítés EUR-nál 1000 €-s lépcsőket adott volna.)
+- **Hiba (EUR-nál jött volna elő):** a felárak „±0” küszöbe fixen 500 egység volt; EUR-nál minden 500 € alatti felár nullának látszott volna. Mostantól a pénznem kerekítési lépcsőjének fele.
+- **Osztrák bemutató gyártó:** `/k/demo-at` — EUR, 20% osztrák ÁFA, a 9 osztrák tartomány a felmérési űrlapon, német termék-, szín- és csomagnevek. A mintaárak a magyar demó árai átváltva (~395 Ft/€), nem osztrák piackutatás. A felület szövegei még magyarok (a német nyelv a következő lépés).
+- **Áramköltség-becslés:** magyar lakossági tarifával számol, ezért nem forintos gyártónál a felület és a PDF elhagyja.
+- **Korlát:** EUR-os gyártó egyelőre csak teraszfedést kínálhat (a garázskapu, a kerítés és a modulház árazója forintos); ezt teszt kényszeríti ki.
+- Tesztek: `money.test.ts` (formázás, kerekítés, előjeles különbözet, EUR-os árszámítás és ÁFA, osztrák lead végponttól végpontig, vevői e-mail euróban, CSV, a szerver nem használhatja a böngészős pénznemet).
+
 ## 4.44 – Javítás: a service worker élesben nem települt
 
 - **Hiba: élesben a SW telepítése elbukott**, mert az előtöltési lista egy olyan fájlt is tartalmazott (`legal-….js`), amelyet a Vite a build végén eltávolít (csak CSS-t tartalmazó csomag üres JS-darabja); a Vercel erre 404-et ad, a SW pedig csak teljes alkalmazáshéjjal települ. Helyben a `vite preview` SPA-fallbackje (404 helyett index.html) elfedte. Javítás: a listába csak a ténylegesen kiírt fájlok kerülnek.

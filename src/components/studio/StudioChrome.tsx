@@ -4,7 +4,7 @@
 // A termék csak a saját eszközeit és a saját nézet-beállításait adja hozzá; a közös rész mindenhol azonos.
 import { useEffect, useState, type ReactNode } from 'react'
 import { Box, Download, House, Info, LayoutGrid, Link2, Moon, Presentation, Redo2, RotateCcw, SlidersHorizontal, Sun, Sunset, Undo2, X, type LucideIcon } from 'lucide-react'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import type { PriceChange } from '@/components/studio/studioState'
 import FullscreenControl from '@/components/FullscreenControl'
 import { ProductSwitch } from '@/components/ProductChooser'
@@ -112,7 +112,7 @@ export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools 
 export function ChangePill({ change, onUndo }: { change: PriceChange | null; onUndo: () => void }) {
   if (!change || change.amount === 0) return null
   return <div key={change.id} className={`change-pill ${change.amount < 0 ? 'is-down' : 'is-up'}`} role="status" aria-live="polite">
-    <strong>{change.amount > 0 ? '+' : '−'}{formatHuf(Math.abs(change.amount))}</strong><span>{change.label}</span>
+    <strong>{change.amount > 0 ? '+' : '−'}{formatPrice(Math.abs(change.amount))}</strong><span>{change.label}</span>
     <button type="button" onClick={onUndo}><Undo2 size={14} />Visszavonás</button>
   </div>
 }

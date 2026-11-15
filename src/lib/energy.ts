@@ -24,6 +24,12 @@ export const TARIFF = {
   feedIn: 5,
 } as const
 
+/**
+ * Az áramköltség-becslés magyar lakossági tarifával (Ft/kWh) számol, ezért csak forintos gyártónál
+ * jelenik meg. Más pénznemben a felület és a PDF is elhagyja (nem mutatunk hamis tarifát).
+ */
+export const energyCostSupported = (currency: string) => currency === 'HUF'
+
 /** A szabadtéri szezon napjai (április–október). */
 export const SEASON_DAYS = 214
 

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
 import { Check, Clock, Printer, X } from 'lucide-react'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import { usePageSeo } from '@/lib/usePageSeo'
 import { QUOTE_STATE_LABEL, type PublicQuote } from '@/lib/quotes'
 
@@ -121,19 +121,19 @@ export default function QuotePage() {
       <table className="quote-table">
         <thead><tr><th>Tétel</th><th className="num">Nettó</th></tr></thead>
         <tbody>
-          {quote.lines.map((line, index) => <tr key={`${line.label}-${index}`} className="q-in" style={{ ['--i' as string]: index }}><td><b>{line.label}</b>{line.detail && <small>{line.detail}</small>}</td><td className="num">{formatHuf(line.amountNet)}</td></tr>)}
-          <tr className="q-in" style={{ ['--i' as string]: quote.lines.length }}><td>Telepítés</td><td className="num">{formatHuf(quote.installationNet)}</td></tr>
-          {quote.discountNet > 0 && <tr className="is-discount q-in" style={{ ['--i' as string]: quote.lines.length + 1 }}><td>Engedmény</td><td className="num">−{formatHuf(quote.discountNet)}</td></tr>}
+          {quote.lines.map((line, index) => <tr key={`${line.label}-${index}`} className="q-in" style={{ ['--i' as string]: index }}><td><b>{line.label}</b>{line.detail && <small>{line.detail}</small>}</td><td className="num">{formatPrice(line.amountNet)}</td></tr>)}
+          <tr className="q-in" style={{ ['--i' as string]: quote.lines.length }}><td>Telepítés</td><td className="num">{formatPrice(quote.installationNet)}</td></tr>
+          {quote.discountNet > 0 && <tr className="is-discount q-in" style={{ ['--i' as string]: quote.lines.length + 1 }}><td>Engedmény</td><td className="num">−{formatPrice(quote.discountNet)}</td></tr>}
         </tbody>
         <tfoot>
-          <tr><td>Nettó végösszeg</td><td className="num">{formatHuf(quote.totalNet)}</td></tr>
-          <tr><td>ÁFA ({Math.round(quote.vatRate * 100)}%)</td><td className="num">{formatHuf(vat)}</td></tr>
-          <tr className="is-total"><td>Bruttó végösszeg</td><td className="num" aria-label={formatHuf(quote.totalGross)}>{formatHuf(gross)}</td></tr>
+          <tr><td>Nettó végösszeg</td><td className="num">{formatPrice(quote.totalNet)}</td></tr>
+          <tr><td>ÁFA ({Math.round(quote.vatRate * 100)}%)</td><td className="num">{formatPrice(vat)}</td></tr>
+          <tr className="is-total"><td>Bruttó végösszeg</td><td className="num" aria-label={formatPrice(quote.totalGross)}>{formatPrice(gross)}</td></tr>
         </tfoot>
       </table>
 
       <section className="quote-deposit">
-        <div><span className="quote-label">Foglaló ({quote.depositPercent}%)</span><strong aria-label={formatHuf(quote.depositGross)}>{formatHuf(deposit)}</strong><small>Fennmaradó összeg: {formatHuf(quote.totalGross - quote.depositGross)}</small></div>
+        <div><span className="quote-label">Foglaló ({quote.depositPercent}%)</span><strong aria-label={formatPrice(quote.depositGross)}>{formatPrice(deposit)}</strong><small>Fennmaradó összeg: {formatPrice(quote.totalGross - quote.depositGross)}</small></div>
         {quote.paymentInfo && <p>{quote.paymentInfo}</p>}
       </section>
 
@@ -149,7 +149,7 @@ export default function QuotePage() {
       {open && <form className="quote-sign" onSubmit={(event) => void submit('accept', event)} noValidate>
         <h2>Elfogadás</h2>
         <label>Teljes neved (ez az aláírásod)<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={120} placeholder="pl. Minta Katalin" /></label>
-        <label className="quote-check"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Elfogadom a(z) {quote.label} számú ajánlatot ({formatHuf(quote.totalGross)} bruttó), és tudomásul veszem, hogy a foglaló {formatHuf(quote.depositGross)}.</span></label>
+        <label className="quote-check"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Elfogadom a(z) {quote.label} számú ajánlatot ({formatPrice(quote.totalGross)} bruttó), és tudomásul veszem, hogy a foglaló {formatPrice(quote.depositGross)}.</span></label>
         {formError && <p className="quote-error" role="alert">{formError}</p>}
         <div className="quote-actions">
           <button type="submit" className="quote-btn primary" disabled={busy}><Check size={16} />{busy ? 'Mentés…' : 'Elfogadom az ajánlatot'}</button>

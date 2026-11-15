@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { priceInputStep, setDisplayCurrency, unitLabel } from '@/lib/money'
 import { Code2, ExternalLink, LayoutDashboard, LogOut, Search, SlidersHorizontal, Users } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import AdminLeads from '@/pages/AdminLeads'
@@ -38,6 +39,8 @@ const SUPPORT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'hrvtadam.7@icloud.c
 export default function AdminPage() {
   const { tenantId } = useParams()
   const base = getTenant(tenantId)
+  // Az admin felület árai és egységei a gyártó pénznemében (HUF vagy EUR).
+  if (base) setDisplayCurrency(base.currency)
   if (!base) return <NotFound />
   return <AdminForTenant key={base.id} base={base} />
 }
@@ -326,7 +329,7 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
       </Section>
 
       <Section title="Egyéb nettó árak">
-        {MONEY_FIELDS.map((field) => <label key={field.key}><span>{field.label} <small>{field.unit}</small></span><input type="number" min="0" step="1000" value={prices[field.key]} onChange={(event) => setPrices({ ...prices, [field.key]: Math.max(0, Number(event.target.value) || 0) })} /></label>)}
+        {MONEY_FIELDS.map((field) => <label key={field.key}><span>{field.label} <small>{unitLabel(field.unit)}</small></span><input type="number" min="0" step={priceInputStep()} value={prices[field.key]} onChange={(event) => setPrices({ ...prices, [field.key]: Math.max(0, Number(event.target.value) || 0) })} /></label>)}
         {RATE_FIELDS.map(([key, label]) => <label key={key}><span>{label} <small>%</small></span><input type="number" min="0" max="100" step="1" value={Math.round(prices[key] * 100)} onChange={(event) => setPrices({ ...prices, [key]: Math.min(100, Math.max(0, Number(event.target.value) || 0)) / 100 })} /></label>)}
       </Section>
 

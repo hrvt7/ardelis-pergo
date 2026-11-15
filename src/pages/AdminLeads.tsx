@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Check, Copy, Download, DraftingCompass, FileSpreadsheet, ExternalLink, FileText, Flame, GripVertical, KanbanSquare, List, Mail, Phone, PhoneCall, Search, X } from 'lucide-react'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
 import { initials, LEAD_STATUSES, leadsToCsv, STATUS_COLORS, timeAgo, type LeadRow } from '@/lib/adminLeads'
 import { byScore, scoreLead, TIER_COLORS, TIER_LABELS } from '@/lib/leadScore'
@@ -93,7 +93,7 @@ function Drawer({ lead, now, quotes, tenant, onClose, onUpdate }: { lead: LeadRo
       <div className="drawer-body">
         <div className="drawer-hero">
           {lead.config?.width && lead.config?.depth && <PlanSketch width={Number(lead.config.width)} depth={Number(lead.config.depth)} roof={lead.config.roof} />}
-          <div className="drawer-price"><span>Bruttó irányár</span><strong>{formatHuf(lead.estimate_gross)}</strong><small>{roofName(lead)}{size ? ` · ${size}` : ''}</small></div>
+          <div className="drawer-price"><span>Bruttó irányár</span><strong>{formatPrice(lead.estimate_gross)}</strong><small>{roofName(lead)}{size ? ` · ${size}` : ''}</small></div>
         </div>
 
         <div className="field-label">Státusz</div>
@@ -143,7 +143,7 @@ function Drawer({ lead, now, quotes, tenant, onClose, onUpdate }: { lead: LeadRo
       {/* Gyorsműveletek: mobilon a hüvelykujj alatt, mindig látszanak. */}
       <footer className="drawer-actions">
         <a className="btn primary" href={`tel:${phone}`}><Phone size={16} />Hívás</a>
-        <a className="btn" href={`mailto:${lead.email}?subject=${encodeURIComponent('Ajánlat a pergola tervéhez')}&body=${encodeURIComponent(`Kedves ${lead.customer_name.split(' ').slice(-1)[0]}!\n\nKöszönjük a felmérési kérést (${lead.ref}). A megtervezett pergola irányára ${formatHuf(lead.estimate_gross)}. Szívesen egyeztetnénk egy rövid helyszíni felmérésről: mikor alkalmas Önnek?\n\nÜdvözlettel`)}`}><Mail size={16} />E-mail</a>
+        <a className="btn" href={`mailto:${lead.email}?subject=${encodeURIComponent('Ajánlat a pergola tervéhez')}&body=${encodeURIComponent(`Kedves ${lead.customer_name.split(' ').slice(-1)[0]}!\n\nKöszönjük a felmérési kérést (${lead.ref}). A megtervezett pergola irányára ${formatPrice(lead.estimate_gross)}. Szívesen egyeztetnénk egy rövid helyszíni felmérésről: mikor alkalmas Önnek?\n\nÜdvözlettel`)}`}><Mail size={16} />E-mail</a>
         <a className="btn" href={lead.config_url} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} />Terv</a>
       </footer>
     </aside>
@@ -193,7 +193,7 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, o
         return <section key={key} className={`board-col${overCol === key ? ' is-over' : ''}`} style={{ ['--pill' as string]: STATUS_COLORS[key] }}
           onDragOver={(event) => { event.preventDefault(); if (overCol !== key) setOverCol(key) }} onDragLeave={() => setOverCol((current) => (current === key ? null : current))}
           onDrop={(event) => { event.preventDefault(); const ref = dragRef ?? event.dataTransfer.getData('text/plain'); setOverCol(null); setDragRef(null); const moved = leads.find((lead) => lead.ref === ref); if (moved && moved.status !== key) onUpdate(ref, { status: key }) }}>
-          <header><i /><h3>{label}</h3><b>{col.length}</b><small>{sum ? formatHuf(sum) : ''}</small></header>
+          <header><i /><h3>{label}</h3><b>{col.length}</b><small>{sum ? formatPrice(sum) : ''}</small></header>
           <div className="board-list">
             {col.length === 0 && <p className="board-empty">Húzz ide egy kártyát</p>}
             {col.map((lead) => <article key={lead.ref} className={`board-card${dragRef === lead.ref ? ' is-drag' : ''}`} draggable tabIndex={0}
@@ -201,7 +201,7 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, o
               onClick={() => setOpenRef(lead.ref)} onKeyDown={(event) => { if (event.key === 'Enter') setOpenRef(lead.ref) }}>
               <div className="bc-top"><span className="avatar sm">{initials(lead.customer_name)}</span><b>{lead.customer_name}</b><GripVertical size={14} className="bc-grip" aria-hidden="true" /></div>
               <div className="bc-meta">{lead.city} · {roofName(lead)} <TierBadge lead={lead} /></div>
-              <div className="bc-foot"><strong>{formatHuf(lead.estimate_gross)}</strong><small>{timeAgo(lead.created_at, now)}</small></div>
+              <div className="bc-foot"><strong>{formatPrice(lead.estimate_gross)}</strong><small>{timeAgo(lead.created_at, now)}</small></div>
               <div className="bc-moves">{LEAD_STATUSES.filter(([other]) => other !== key).slice(0, 4).map(([other, otherLabel]) => <button type="button" key={other} title={`Áthelyezés: ${otherLabel}`} aria-label={`Áthelyezés: ${otherLabel}`} style={{ background: STATUS_COLORS[other] }} onClick={(event) => { event.stopPropagation(); onUpdate(lead.ref, { status: other }) }} />)}</div>
             </article>)}
           </div>
@@ -215,7 +215,7 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, o
           <span className="who"><span className="avatar">{initials(lead.customer_name)}{lead.status === 'new' && now - new Date(lead.created_at).getTime() < 86_400_000 && <i className="new-dot" title="Új érdeklődő" />}</span><span><b>{lead.customer_name}</b><small className="only-wide">{lead.ref} <TierBadge lead={lead} /></small><small className="only-narrow">{[lead.city, roofName(lead), timeAgo(lead.created_at, now)].filter((part) => part && part !== '—').join(' · ')} <TierBadge lead={lead} /></small></span></span>
           <span className="muted">{lead.city}</span>
           <span className="muted">{roofName(lead)}</span>
-          <span className="num strong">{formatHuf(lead.estimate_gross)}</span>
+          <span className="num strong">{formatPrice(lead.estimate_gross)}</span>
           <span><span className="pill" style={{ ['--pill' as string]: STATUS_COLORS[lead.status] }}>{STATUS_LABEL[lead.status] ?? lead.status}</span></span>
           <span className="num muted">{timeAgo(lead.created_at, now)}</span>
         </button><a className="icon-btn call tr-call" href={`tel:${lead.phone.replace(/[^+0-9]/g, '')}`} aria-label={`${lead.customer_name} hívása`} title="Hívás"><PhoneCall size={16} /></a></div>)}

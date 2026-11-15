@@ -27,7 +27,7 @@ export function bomCsv(tenant: Tenant, lead: { ref: string; customer_name: strin
     ['ANYAGLISTA (tájékoztató)', 'Mennyiség / méret'],
     ...getBom(config).filter((line) => !/^0 db\b/.test(line.value)).map((line) => [line.label, line.value]),
     [],
-    ['ÁRKALKULÁCIÓ (nettó, Ft)', 'Részlet', 'Nettó Ft'],
+    [`ÁRKALKULÁCIÓ (nettó, ${tenant.currency})`, 'Részlet', `Nettó ${tenant.currency}`],
     ...price.lines.map((line) => [line.label, line.detail, Math.round(line.amountNet)]),
     ['Telepítés és üzembe helyezés', '', Math.round(price.installationNet)],
     ['Nettó összesen', '', Math.round(price.totalNet)],

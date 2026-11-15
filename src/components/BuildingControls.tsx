@@ -3,14 +3,15 @@
 import { Building2, Info, Landmark, TriangleAlert, Wand2 } from 'lucide-react'
 import { resolveFix } from '@/lib/issueFixes'
 import { availableBuildings, BUILDING_INFO, BUILDING_TYPES, buildingIssues, buildingPatch, CLIMATE_INFO, defaultWallGlazing, effectiveWallGlazing, isClosedBuilding, permitNotes, WALL_GLAZING_INFO, wallGlazingOptions } from '@/lib/buildings'
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
+import { signedPrice } from '@/lib/money'
 import { enabledRoofs, normalizeConfig, tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import type { BuildingType, ClimateType, PergolaConfig, PriceSettings, SceneSettings } from '@/types/pergola'
 
 type Change = (patch: Partial<PergolaConfig>) => void
 
-const signed = (value: number) => (Math.abs(value) < 500 ? '±0 Ft' : `${value > 0 ? '+' : '−'}${formatHuf(Math.abs(value))}`)
+const signed = (value: number) => signedPrice(value)
 
 /** Animált jel a kártyán: a falak és az üveg kiválasztáskor „kirajzolódnak". */
 function BuildingIcon({ type }: { type: BuildingType }) {
@@ -100,7 +101,7 @@ export function WallGlazingPicker({ config, prices, onChange }: { config: Pergol
       const info = WALL_GLAZING_INFO[id]
       const price = info.priceKey ? prices[info.priceKey] : 0
       return <button type="button" key={id} role="radio" aria-checked={current === id} className={`glazing-chip wall-glazing-${id}${current === id ? ' selected' : ''}`} onClick={() => onChange({ wallGlazing: id === defaultWallGlazing(config.building) ? undefined : id })}>
-        <span className="glazing-swatch" aria-hidden="true" /><strong>{info.label}</strong><small>{info.short}</small><small className="ug">{info.ug}</small><em>{price > 0 ? `+${formatHuf(price)} / m²` : 'Alapkivitel'}</em>
+        <span className="glazing-swatch" aria-hidden="true" /><strong>{info.label}</strong><small>{info.short}</small><small className="ug">{info.ug}</small><em>{price > 0 ? `+${formatPrice(price)} / m²` : 'Alapkivitel'}</em>
       </button>
     })}</div>
     <p className="split-note">Az Ug-értékek tájékoztató jellegűek; a pontos adat a gyártói adatlapon szerepel.</p>
@@ -134,7 +135,7 @@ export function ClimateSection({ config, prices, onChange, scene, onSceneChange 
     </div>}
     <button type="button" className={`extra-card${config.foundation ? ' is-on' : ''}`} role="switch" aria-checked={Boolean(config.foundation)} onClick={() => onChange({ foundation: config.foundation ? undefined : true })}>
       <Building2 size={20} strokeWidth={1.5} />
-      <span><strong>Alap és szigetelt padló</strong><small>Alapozás, vízszigetelés, padlószerkezet</small><em>{formatHuf(prices.foundationPerM2Net)} / m²</em></span>
+      <span><strong>Alap és szigetelt padló</strong><small>Alapozás, vízszigetelés, padlószerkezet</small><em>{formatPrice(prices.foundationPerM2Net)} / m²</em></span>
       <span className={`switch-track${config.foundation ? ' is-on' : ''}`} aria-hidden="true"><span /></span>
     </button>
     <p className="split-note">A fűtés-hűtés teljesítményét és a padló felépítését a felmérés után tervezi a gyártó; az ár irányár.</p>

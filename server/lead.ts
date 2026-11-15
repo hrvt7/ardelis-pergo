@@ -8,10 +8,11 @@
 //    újraszámolja — a böngészőből érkező összeget nem fogadja el;
 // 3. elmenti Supabase-be (ha be van állítva), e-mailt küld a gyártónak és
 //    visszaigazolást az ügyfélnek (Resenddel, ha be van állítva).
+import { formatMoney } from '../src/lib/money'
 import { roofShadeSummary } from '../src/lib/roofShade'
 import { z } from 'zod'
 import { isWallSide, MOUNT_LABELS, wallLabel } from '../src/lib/mount'
-import { formatHuf, formatNumber, SIDE_NAMES } from '../src/lib/pricing'
+import { formatNumber, SIDE_NAMES } from '../src/lib/pricing'
 import { sideSummary } from '../src/lib/sides'
 import { colorSummary } from '../src/lib/colors'
 import { getBom, getSpecCode } from '../src/lib/specification'
@@ -160,18 +161,18 @@ function managerEmailHtml(record: LeadRecord) {
     ...(input.customer.notes ? [['Megjegyzés', input.customer.notes] as [string, string]] : []),
     ...(input.house ? [['A háza (3D alapján)', input.house] as [string, string]] : []),
   ]
-  const lines: [string, string][] = [...price.lines.map((line) => [line.label, formatHuf(line.amountNet)] as [string, string]), ['Telepítés', formatHuf(price.installationNet)]]
+  const lines: [string, string][] = [...price.lines.map((line) => [line.label, formatMoney(line.amountNet, tenant.currency)] as [string, string]), ['Telepítés', formatMoney(price.installationNet, tenant.currency)]]
   return `<!doctype html><html lang="hu"><body style="margin:0;background:#f1f4f4;font-family:Arial,Helvetica,sans-serif;color:#233039">
 <div style="max-width:640px;margin:0 auto;padding:24px">
 <p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">ÚJ FELMÉRÉSI KÉRELEM · ${escapeHtml(record.ref)}</p>
-<h1 style="font-size:22px;margin:0 0 4px">${escapeHtml(input.customer.name)} – ${escapeHtml(formatHuf(price.totalGross))} bruttó irányár</h1>
+<h1 style="font-size:22px;margin:0 0 4px">${escapeHtml(input.customer.name)} – ${escapeHtml(formatMoney(price.totalGross, tenant.currency))} bruttó irányár</h1>
 <p style="margin:0 0 20px;color:#62727a">${escapeHtml(input.customer.city)} · ${escapeHtml(record.headline)}</p>
 <div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">Ügyfél</h2><table style="border-collapse:collapse;font-size:14px">${rows(customer)}</table>
 <p style="margin:12px 0 0"><a href="tel:${escapeHtml(input.customer.phone.replace(/[^+0-9]/g, ''))}" style="color:#007fae">Hívás</a> · <a href="mailto:${escapeHtml(input.customer.email)}" style="color:#007fae">Válasz e-mailben</a></p></div>
 <div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">Konfiguráció</h2><table style="border-collapse:collapse;font-size:14px">${rows(record.spec)}</table>
 <p style="margin:12px 0 0"><a href="${escapeHtml(record.configUrl)}" style="color:#007fae">Megnyitás a 3D konfigurátorban →</a></p></div>
 <div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">Irányár (nettó tételek)</h2><table style="border-collapse:collapse;font-size:14px">${rows(lines)}</table>
-<p style="margin:12px 0 0;font-size:15px"><strong>Nettó: ${escapeHtml(formatHuf(price.totalNet))} · Bruttó: ${escapeHtml(formatHuf(price.totalGross))}</strong></p>
+<p style="margin:12px 0 0;font-size:15px"><strong>Nettó: ${escapeHtml(formatMoney(price.totalNet, tenant.currency))} · Bruttó: ${escapeHtml(formatMoney(price.totalGross, tenant.currency))}</strong></p>
 <p style="margin:6px 0 0;font-size:12px;color:#62727a">A szerver a(z) ${escapeHtml(tenant.brand.name)} árlistájával számolta újra.</p></div>
 ${record.bom.length ? `<div style="background:#fff;border-radius:8px;padding:16px 20px"><h2 style="font-size:15px;margin:0 0 8px">Tájékoztató anyaglista</h2><table style="border-collapse:collapse;font-size:13px">${rows(record.bom)}</table></div>` : ''}
 <p style="font-size:11px;color:#8a979d;margin-top:16px">Forrás: ${escapeHtml(input.source)}${input.pageUrl ? ` · ${escapeHtml(input.pageUrl)}` : ''} · ${escapeHtml(record.createdAt.toISOString())}</p>
@@ -197,7 +198,7 @@ export function customerEmailHtml(record: LeadRecord) {
 <p>Kedves ${escapeHtml(input.customer.name)}!</p>
 <p>A(z) ${escapeHtml(tenant.brand.name)} munkatársa hamarosan felveszi veled a kapcsolatot a helyszíni felmérés egyeztetéséhez.</p>
 <p style="margin:16px 0 4px"><strong>${escapeHtml(record.headline)}</strong></p>
-<p style="margin:0 0 16px">Bruttó irányár: <strong>${escapeHtml(formatHuf(price.totalGross))}</strong> (telepítéssel)</p>
+<p style="margin:0 0 16px">Bruttó irányár: <strong>${escapeHtml(formatMoney(price.totalGross, tenant.currency))}</strong> (telepítéssel)</p>
 <p><a href="${escapeHtml(record.configUrl)}" style="color:#007fae">A konfigurációd megnyitása →</a></p>
 ${booking ? `<p style="margin:20px 0"><a href="${escapeHtml(booking)}" style="display:inline-block;background:#007fae;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px">Felmérési időpont foglalása →</a></p>` : ''}
 <p style="font-size:12px;color:#62727a">Az irányár tájékoztató jellegű, nem minősül árajánlatnak. A végleges ár helyszíni felmérés után készül.</p>
@@ -332,7 +333,7 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
     canStore ? storeLead(env, record) : Promise.resolve('skipped'),
     canEmail ? sendEmail(env, {
       to: recipients,
-      subject: oneLine(`${tenant.lead.subjectPrefix} ${input.customer.name} – ${input.customer.city} – ${formatHuf(price.totalGross)}`),
+      subject: oneLine(`${tenant.lead.subjectPrefix} ${input.customer.name} – ${input.customer.city} – ${formatMoney(price.totalGross, tenant.currency)}`),
       html: managerEmailHtml(record),
       replyTo: input.customer.email,
     }) : Promise.resolve('skipped'),

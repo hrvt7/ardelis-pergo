@@ -2,7 +2,7 @@ import { issuesForStep, STEPS } from '@/lib/configSteps'
 import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Box, Check, ChevronDown, ChevronRight, CloudRain, Cog, Columns3, Gauge, House, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
 import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, wallLabel } from '@/lib/mount'
-import { formatHuf, formatNumber } from '@/lib/pricing'
+import { formatPrice, formatNumber } from '@/lib/pricing'
 import { bayWidth, moduleCount, modulesLabel } from '@/lib/modules'
 import { FanOption, RgbOption, RoofShadeOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
 import { enabledRoofs, presetConfig, tenantPrice } from '@/tenants/rules'
@@ -111,12 +111,12 @@ function SolarToggle({ config, prices, onChange }: { config: PergolaConfig; pric
     const switched = tenantPrice(tenant, { ...config, roof: 'fixed', solar: true }, prices).totalGross
     return <button type="button" className="extra-card solar-switch" onClick={() => onChange({ roof: 'fixed', solar: true })}>
       <SolarPanel size={20} strokeWidth={1.5} />
-      <span><strong>Napelemes tető</strong><small>A {fixedName} fix tetőre kérhető · {solar.layout.count} panel, ≈ {formatNumber(Math.round(solar.production / 100) * 100, 0)} kWh/év</small><em>Váltás {fixedName} + napelem: {switched >= current ? '+' : '−'}{formatHuf(Math.abs(switched - current))}</em></span>
+      <span><strong>Napelemes tető</strong><small>A {fixedName} fix tetőre kérhető · {solar.layout.count} panel, ≈ {formatNumber(Math.round(solar.production / 100) * 100, 0)} kWh/év</small><em>Váltás {fixedName} + napelem: {switched >= current ? '+' : '−'}{formatPrice(Math.abs(switched - current))}</em></span>
       <ArrowRight size={16} />
     </button>
   }
   const delta = config.solar ? current - tenantPrice(tenant, { ...config, solar: undefined }, prices).totalGross : tenantPrice(tenant, { ...config, solar: true }, prices).totalGross - current
-  return <Toggle label="Napelemes tető" description={`${solar.layout.count} × 430 Wp = ${formatNumber(solar.layout.kwp, 2)} kWp · ≈ ${formatNumber(Math.round(solar.production / 100) * 100, 0)} kWh/év`} icon={SolarPanel} price={`${config.solar ? '' : '+'}${formatHuf(delta)}`} checked={Boolean(config.solar)} onChange={(solar) => onChange({ solar })} />
+  return <Toggle label="Napelemes tető" description={`${solar.layout.count} × 430 Wp = ${formatNumber(solar.layout.kwp, 2)} kWp · ≈ ${formatNumber(Math.round(solar.production / 100) * 100, 0)} kWh/év`} icon={SolarPanel} price={`${config.solar ? '' : '+'}${formatPrice(delta)}`} checked={Boolean(config.solar)} onChange={(solar) => onChange({ solar })} />
 }
 
 function Toggle({ label, description, checked, icon: Icon, price, onChange }: { label: string; description: string; checked: boolean; icon?: typeof Sun; price?: string; onChange: (checked: boolean) => void }) {
@@ -202,7 +202,7 @@ function GlazingPicker({ config, prices, onChange }: { config: PergolaConfig; pr
       const priceKey = glazingPriceKey(config.roof, id)
       const price = priceKey ? prices[priceKey] : 0
       return <button type="button" key={id} role="radio" aria-checked={current === id} className={`glazing-chip glazing-${id}${current === id ? ' selected' : ''}`} onClick={() => onChange({ glazing: id === defaultGlazing(config.roof) ? undefined : id })}>
-        <span className="glazing-swatch" aria-hidden="true" /><strong>{info.label}</strong><small>{info.short}</small><small className="lt">Fény {info.light} · hő {info.solar}</small><em>{price > 0 ? `+${formatHuf(price)} / m²` : 'Alapkivitel'}</em>
+        <span className="glazing-swatch" aria-hidden="true" /><strong>{info.label}</strong><small>{info.short}</small><small className="lt">Fény {info.light} · hő {info.solar}</small><em>{price > 0 ? `+${formatPrice(price)} / m²` : 'Alapkivitel'}</em>
       </button>
     })}</div>
   </div>
@@ -218,7 +218,7 @@ function RoofPicker({ config, prices, onChange }: { config: PergolaConfig; price
       const brand = tenant.roofs[roof]!
       const delta = roof === config.roof ? 0 : tenantPrice(tenant, { ...config, roof }, prices).totalGross - current
       return <button type="button" key={roof} className={`roof-card roof-${roof}${config.roof === roof ? ' selected' : ''}`} aria-pressed={config.roof === roof} onClick={() => { onChange({ roof }); if (glazingOptions(roof).length && roof !== config.roof) window.setTimeout(() => document.querySelector('.glazing-picker:not(.wall-glazing)')?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }), 120) }}>
-        <span className="roof-card-head"><RoofIcon roof={roof} /><span><strong>{brand.name}</strong><small>{brand.short}</small></span><em>{roof === config.roof ? 'Kiválasztva' : `${delta > 0 ? '+' : '−'}${formatHuf(Math.abs(delta))}`}</em></span>
+        <span className="roof-card-head"><RoofIcon roof={roof} /><span><strong>{brand.name}</strong><small>{brand.short}</small></span><em>{roof === config.roof ? 'Kiválasztva' : `${delta > 0 ? '+' : '−'}${formatPrice(Math.abs(delta))}`}</em></span>
         <span className="roof-card-text">{brand.description}</span>
         <span className="roof-card-props"><span><b>Árnyék</b>{info.shade}</span><span><b>Eső</b>{info.rain}</span><span><b>Mozgás</b>{info.motion === 'tilt' ? 'Forgatható lamellák' : info.motion === 'slide' ? 'Behúzható / nyitható' : 'Fix'}</span></span>
       </button>
@@ -486,26 +486,26 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               {/* Carportnál csak az ide illő extrák: világítás és napelemes tető. */}
               <SectionTitle title="Világítás" hint="Minden opció azonnal megjelenik a modellen és a tételes árban. A napelemes tető a Tető lépésben választható." />
               <div className="extra-grid">
-                {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett világítás a beállóban" icon={LampCeiling} price={`${formatHuf(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ledRgb: undefined })} />}
+                {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett világítás a beállóban" icon={LampCeiling} price={`${formatPrice(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ledRgb: undefined })} />}
               </div>
             </>}
             {!carport && <>
             <SectionTitle title="Világítás és hangulat" hint="Minden opció azonnal megjelenik a modellen és a tételes árban." />
             <div className="extra-grid">
-              {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett, beépített világítás" icon={LampCeiling} price={`${formatHuf(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ...(led ? {} : { ledRgb: undefined }) })} />}
+              {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett, beépített világítás" icon={LampCeiling} price={`${formatPrice(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ...(led ? {} : { ledRgb: undefined }) })} />}
               <RgbOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
-              {tenant.extras.speakers && <Toggle label="Bluetooth hangrendszer" description="Egy pár beépített hangszóró" icon={Zap} price={formatHuf(prices.speakerPairNet)} checked={config.speakers} onChange={(speakers) => onChange({ speakers })} />}
+              {tenant.extras.speakers && <Toggle label="Bluetooth hangrendszer" description="Egy pár beépített hangszóró" icon={Zap} price={formatPrice(prices.speakerPairNet)} checked={config.speakers} onChange={(speakers) => onChange({ speakers })} />}
             </div>
             <SectionTitle title="Hő és légmozgás" hint="Fűtés a hűvös estékre, ventilátor a nyári hőségre." />
-            {limits.maxHeaters > 0 && <div className="stepper-row"><span><strong>Infravörös teraszfűtés</strong><small>{formatHuf(prices.heaterUnitNet)} / db</small></span><div className="stepper"><button type="button" aria-label="Fűtőpanel csökkentése" disabled={config.heaters === 0} onClick={() => onChange({ heaters: Math.max(0, config.heaters - 1) })}><Minus size={15} /></button><span>{config.heaters} db</span><button type="button" aria-label="Fűtőpanel növelése" disabled={config.heaters >= limits.maxHeaters} onClick={() => onChange({ heaters: Math.min(limits.maxHeaters, config.heaters + 1) })}><Plus size={15} /></button></div></div>}
+            {limits.maxHeaters > 0 && <div className="stepper-row"><span><strong>Infravörös teraszfűtés</strong><small>{formatPrice(prices.heaterUnitNet)} / db</small></span><div className="stepper"><button type="button" aria-label="Fűtőpanel csökkentése" disabled={config.heaters === 0} onClick={() => onChange({ heaters: Math.max(0, config.heaters - 1) })}><Minus size={15} /></button><span>{config.heaters} db</span><button type="button" aria-label="Fűtőpanel növelése" disabled={config.heaters >= limits.maxHeaters} onClick={() => onChange({ heaters: Math.min(limits.maxHeaters, config.heaters + 1) })}><Plus size={15} /></button></div></div>}
             <FanOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
             <SectionTitle title="Vezérlés" hint={sensorsApplicable(config) ? 'Automatika és egy appból irányítható rendszer.' : 'Egy appból irányítható rendszer. Eső- és szélszenzor mozgó tetőhöz vagy ZIP-screenhez választható.'} />
             <div className="extra-grid">
-              {tenant.extras.sensors && sensorsApplicable(config) && <Toggle label="Eső- és szélszenzor" description="Automata tetőzárás esőben" icon={CloudRain} price={formatHuf(prices.sensorsNet)} checked={config.sensors} onChange={(sensors) => onChange({ sensors })} />}
+              {tenant.extras.sensors && sensorsApplicable(config) && <Toggle label="Eső- és szélszenzor" description="Automata tetőzárás esőben" icon={CloudRain} price={formatPrice(prices.sensorsNet)} checked={config.sensors} onChange={(sensors) => onChange({ sensors })} />}
               <SmartHomeOption config={config} prices={prices} onChange={onChange} />
             </div>
             </>}
-            {onEnergy &&<button type="button" className="energy-trigger" onClick={onEnergy}><Gauge size={16} /><span><strong>{energyCost ? `Üzemeltetés ≈ ${formatHuf(energyCost)} / év` : 'Üzemeltetési költség'}</strong><small>{energyCost ? 'Áramköltség a valós lakossági tarifával · részletek' : 'Nincs áramfogyasztó a tervben'}</small></span><ChevronRight size={15} /></button>}
+            {onEnergy &&<button type="button" className="energy-trigger" onClick={onEnergy}><Gauge size={16} /><span><strong>{energyCost ? `Üzemeltetés ≈ ${formatPrice(energyCost)} / év` : 'Üzemeltetési költség'}</strong><small>{energyCost ? 'Áramköltség a valós lakossági tarifával · részletek' : 'Nincs áramfogyasztó a tervben'}</small></span><ChevronRight size={15} /></button>}
           </>}
 
           {step === 'summary' && summary}

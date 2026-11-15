@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { priceInputStep, unitLabel } from '@/lib/money'
 import { ExternalLink, RotateCcw, X } from 'lucide-react'
 import { useTenant } from '@/tenants/TenantContext'
 import { MONEY_FIELDS, type PriceKey } from '@/tenants/priceFields'
@@ -47,7 +48,7 @@ export function PriceSettingsDialog({ prices, onChange, onReset, onClose }: { pr
       <p className="modal-intro">Minden érték nettó forintban értendő, kivéve a százalékos mezőket. A módosítások azonnal újraszámolják a konfigurációt, és csak ebben a böngészőben mentődnek — a beküldött érdeklődőnél a szerver a gyártói árlistával számol.</p>
       <div className="tariff-grid">
         {[...roofFields, ...MONEY_FIELDS].map((field) => (
-          <label key={field.key}><span>{field.label}<small>{field.unit}</small></span><input type="number" min="0" step="1000" value={prices[field.key]} onChange={(event) => onChange({ ...prices, [field.key]: Math.max(0, Number(event.target.value) || 0) })} /></label>
+          <label key={field.key}><span>{field.label}<small>{unitLabel(field.unit)}</small></span><input type="number" min="0" step={priceInputStep()} value={prices[field.key]} onChange={(event) => onChange({ ...prices, [field.key]: Math.max(0, Number(event.target.value) || 0) })} /></label>
         ))}
       </div>
       <div className="rate-grid">

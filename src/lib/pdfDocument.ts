@@ -4,11 +4,11 @@ import { findShadeFabric, ROOF_SHADE_INFO } from './roofShade'
 import type { Content, ContentTable, TDocumentDefinitions, TableCell } from 'pdfmake/interfaces'
 import { drawingLevels, POST, technicalDrawing, type DrawingResult } from './drawing'
 import { isWallSide, MOUNT_LABELS, postPositions, wallLabel } from './mount'
-import { formatHuf, formatNumber } from './pricing'
+import { formatPrice, formatNumber } from './pricing'
 import { ROOF_INFO, GLAZING_INFO, effectiveGlazing, roofRise } from './roofs'
 import { getBom, getDeliveryEstimate, getSpecCode } from './specification'
 import { buildingSpecRows, permitNotes } from './buildings'
-import { DEFAULT_USAGE, estimateEnergy, roundCost, TARIFF, type EnergyUsage } from './energy'
+import { DEFAULT_USAGE, energyCostSupported, estimateEnergy, roundCost, TARIFF, type EnergyUsage } from './energy'
 import { estimateSolar, PANEL } from './solar'
 import { SIDE_INFO, sideSegments, HALF_NAMES } from './sides'
 import { colorLabel, colorSummary, frameColorInfo, roofColorInfo, roofPartName, type ColorInfo } from './colors'
@@ -159,9 +159,9 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
           {
             stack: [
               eyebrow('Bruttó irányár, telepítéssel', '#b9c9bf'),
-              { text: formatHuf(price.totalGross), font: 'ManropeHeavy', fontSize: 30, color: '#ffffff', margin: [0, 6, 0, 4] },
-              { text: `Nettó ${formatHuf(price.totalNet)} + ${Math.round(tenant.prices.vatRate * 100)}% ÁFA`, fontSize: 8.5, color: '#cfdcd4', fontFeatures: ['tnum'] },
-              ...(tenant.installmentMonths > 0 ? [{ text: [{ text: formatHuf(price.totalGross / tenant.installmentMonths), font: 'ManropeSemi', color: LIME }, { text: ` / hó · ${tenant.installmentMonths} egyenlő részre osztva (példa, nem hitelajánlat)`, color: '#cfdcd4' }], fontSize: 8.5, margin: [0, 3, 0, 0] } as Content] : []),
+              { text: formatPrice(price.totalGross), font: 'ManropeHeavy', fontSize: 30, color: '#ffffff', margin: [0, 6, 0, 4] },
+              { text: `Nettó ${formatPrice(price.totalNet)} + ${Math.round(tenant.prices.vatRate * 100)}% ÁFA`, fontSize: 8.5, color: '#cfdcd4', fontFeatures: ['tnum'] },
+              ...(tenant.installmentMonths > 0 ? [{ text: [{ text: formatPrice(price.totalGross / tenant.installmentMonths), font: 'ManropeSemi', color: LIME }, { text: ` / hó · ${tenant.installmentMonths} egyenlő részre osztva (példa, nem hitelajánlat)`, color: '#cfdcd4' }], fontSize: 8.5, margin: [0, 3, 0, 0] } as Content] : []),
             ],
             fillColor: ACCENT, margin: [16, 16, 8, 16], border: [false, false, false, false],
           },
@@ -232,9 +232,9 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
       densePrice
         ? { text: [{ text: line.label, font: 'ManropeSemi', fontSize: 8.5, color: INK }, ...(line.detail ? [{ text: `   ${line.detail}`, fontSize: 7, color: MUTED }] : [])] }
         : { stack: [{ text: line.label, font: 'ManropeSemi', fontSize: 9, color: INK }, ...(line.detail ? [{ text: line.detail, fontSize: 7.5, color: MUTED, margin: [0, 1.5, 0, 0] } as Content] : [])] },
-      { text: formatHuf(line.amountNet), alignment: 'right', fontSize: 9, color: INK, fontFeatures: ['tnum'] },
+      { text: formatPrice(line.amountNet), alignment: 'right', fontSize: 9, color: INK, fontFeatures: ['tnum'] },
     ]),
-    [{ stack: [{ text: 'Telepítés és üzembe helyezés', font: 'ManropeSemi', fontSize: 9, color: INK }, { text: 'helyszíni szerelés, beállítás, átadás', fontSize: 7.5, color: MUTED, margin: [0, 1.5, 0, 0] }] }, { text: formatHuf(price.installationNet), alignment: 'right', fontSize: 9, color: INK, fontFeatures: ['tnum'] }],
+    [{ stack: [{ text: 'Telepítés és üzembe helyezés', font: 'ManropeSemi', fontSize: 9, color: INK }, { text: 'helyszíni szerelés, beállítás, átadás', fontSize: 7.5, color: MUTED, margin: [0, 1.5, 0, 0] }] }, { text: formatPrice(price.installationNet), alignment: 'right', fontSize: 9, color: INK, fontFeatures: ['tnum'] }],
   ]
   const totals: Content = {
     columns: [
@@ -244,9 +244,9 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
         table: {
           widths: ['*', 'auto'],
           body: [
-            [{ text: 'Nettó összesen', color: MUTED, fontSize: 9 }, { text: formatHuf(price.totalNet), alignment: 'right', fontSize: 9, fontFeatures: ['tnum'] }],
-            [{ text: `ÁFA (${Math.round(tenant.prices.vatRate * 100)}%)`, color: MUTED, fontSize: 9 }, { text: formatHuf(price.vatNet), alignment: 'right', fontSize: 9, fontFeatures: ['tnum'] }],
-            [{ text: 'Bruttó irányár', font: 'ManropeHeavy', fontSize: 12, color: ACCENT, margin: [0, 4, 0, 0] }, { text: formatHuf(price.totalGross), font: 'ManropeHeavy', fontSize: 14, color: ACCENT, alignment: 'right', fontFeatures: ['tnum'], margin: [0, 2, 0, 0] }],
+            [{ text: 'Nettó összesen', color: MUTED, fontSize: 9 }, { text: formatPrice(price.totalNet), alignment: 'right', fontSize: 9, fontFeatures: ['tnum'] }],
+            [{ text: `ÁFA (${Math.round(tenant.prices.vatRate * 100)}%)`, color: MUTED, fontSize: 9 }, { text: formatPrice(price.vatNet), alignment: 'right', fontSize: 9, fontFeatures: ['tnum'] }],
+            [{ text: 'Bruttó irányár', font: 'ManropeHeavy', fontSize: 12, color: ACCENT, margin: [0, 4, 0, 0] }, { text: formatPrice(price.totalGross), font: 'ManropeHeavy', fontSize: 14, color: ACCENT, alignment: 'right', fontFeatures: ['tnum'], margin: [0, 2, 0, 0] }],
           ],
         },
         layout: { hLineWidth: (index: number) => (index === 2 ? 1 : 0), hLineColor: () => INK, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 4, paddingBottom: () => 4 },
@@ -296,13 +296,13 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     sectionHead(denseDetails ? '03' : '04', 'Árkalkuláció', 'nettó egységárak, gyártói árlista'),
     hairTable(priceRows, ['*', 110], densePrice ? 3 : 3.8),
     totals,
-    ...(energy.hasElectrics || solarEstimate ? [{
+    ...(energyCostSupported(tenant.currency) && (energy.hasElectrics || solarEstimate) ? [{
       margin: [0, 14, 0, 0],
       table: {
         widths: ['*', solarEstimate ? '*' : 0],
         body: [[
-          { stack: [eyebrow('Becsült éves üzemeltetés', ACCENT), { text: energy.hasElectrics ? `≈ ${formatHuf(roundCost(energy.cost))} / év` : 'nincs áramfogyasztó', font: 'ManropeHeavy', fontSize: 13, color: INK, margin: [0, 4, 0, 2] }, { text: energy.hasElectrics ? `${formatNumber(Math.round(energy.kwh), 0)} kWh áram évente · ${energy.lines.map((line) => line.label.toLowerCase()).join(', ')}` : '', fontSize: 7.5, color: MUTED }], fillColor: PAPER, margin: [12, 10, 12, 10], border: [false, false, false, false] },
-          solarEstimate ? { stack: [eyebrow('Napelemes tető', ACCENT), { text: `≈ ${formatNumber(Math.round(solarEstimate.production / 10) * 10, 0)} kWh / év`, font: 'ManropeHeavy', fontSize: 13, color: INK, margin: [0, 4, 0, 2] }, { text: `≈ ${formatHuf(roundCost(solarEstimate.value))} éves érték (30% saját felhasználás, bruttó elszámolás)`, fontSize: 7.5, color: MUTED }], fillColor: PAPER, margin: [12, 10, 12, 10], border: [false, false, false, false] } : { text: '', border: [false, false, false, false] },
+          { stack: [eyebrow('Becsült éves üzemeltetés', ACCENT), { text: energy.hasElectrics ? `≈ ${formatPrice(roundCost(energy.cost))} / év` : 'nincs áramfogyasztó', font: 'ManropeHeavy', fontSize: 13, color: INK, margin: [0, 4, 0, 2] }, { text: energy.hasElectrics ? `${formatNumber(Math.round(energy.kwh), 0)} kWh áram évente · ${energy.lines.map((line) => line.label.toLowerCase()).join(', ')}` : '', fontSize: 7.5, color: MUTED }], fillColor: PAPER, margin: [12, 10, 12, 10], border: [false, false, false, false] },
+          solarEstimate ? { stack: [eyebrow('Napelemes tető', ACCENT), { text: `≈ ${formatNumber(Math.round(solarEstimate.production / 10) * 10, 0)} kWh / év`, font: 'ManropeHeavy', fontSize: 13, color: INK, margin: [0, 4, 0, 2] }, { text: `≈ ${formatPrice(roundCost(solarEstimate.value))} éves érték (30% saját felhasználás, bruttó elszámolás)`, fontSize: 7.5, color: MUTED }], fillColor: PAPER, margin: [12, 10, 12, 10], border: [false, false, false, false] } : { text: '', border: [false, false, false, false] },
         ]],
       },
       layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: (index: number) => (index === 1 ? 6 : 0), paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },

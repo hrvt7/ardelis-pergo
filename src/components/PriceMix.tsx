@@ -1,5 +1,5 @@
 // Ár-összetétel: egy színes sáv mutatja, mi mennyit tesz ki a bruttó irányárból.
-import { formatHuf } from '@/lib/pricing'
+import { formatPrice } from '@/lib/pricing'
 import type { PriceBreakdown } from '@/types/pergola'
 
 const GROUPS = [
@@ -18,7 +18,7 @@ export default function PriceMix({ price, compact = false }: { price: PriceBreak
   const visible = parts.filter((part) => part.amount > 0)
   const total = visible.reduce((sum, part) => sum + part.amount, 0) || 1
   return <div className={`price-mix${compact ? ' is-compact' : ''}`} aria-label="Az ár összetétele">
-    <div className="price-mix-bar">{visible.map((part) => <i key={part.id} className={`mix-${part.id}`} style={{ flexGrow: part.amount / total }} title={`${part.label}: ${formatHuf(part.amount)}`} />)}</div>
-    <ul>{visible.map((part) => <li key={part.id}><i className={`mix-${part.id}`} /><span>{part.label}</span><strong>{Math.round((part.amount / total) * 100)}%</strong>{!compact && <small>{formatHuf(Math.round(part.amount / 1000) * 1000)}</small>}</li>)}</ul>
+    <div className="price-mix-bar">{visible.map((part) => <i key={part.id} className={`mix-${part.id}`} style={{ flexGrow: part.amount / total }} title={`${part.label}: ${formatPrice(part.amount)}`} />)}</div>
+    <ul>{visible.map((part) => <li key={part.id}><i className={`mix-${part.id}`} /><span>{part.label}</span><strong>{Math.round((part.amount / total) * 100)}%</strong>{!compact && <small>{formatPrice(Math.round(part.amount / 1000) * 1000)}</small>}</li>)}</ul>
   </div>
 }

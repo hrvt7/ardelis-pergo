@@ -7,7 +7,7 @@
 //
 // `?dry=1`: felmér és visszaadja a számokat, nem küld. `?month=2026-10`: adott hónap (újraküldéshez, teszthez).
 // Platformfüggetlen (Request → Response): Vercel cron (api/monthly-report.ts) és helyi dev-szerver is futtatja.
-import { formatHuf } from '../src/lib/pricing'
+import { formatMoney } from '../src/lib/money'
 import { computeFunnel, type EventRow } from '../src/lib/statsFunnel'
 import { ROOF_INFO } from '../src/lib/roofs'
 import { listTenantIds } from '../src/tenants'
@@ -83,7 +83,7 @@ export function reportHtml(tenant: Tenant, report: MonthlyReport, adminUrl: stri
 <p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">${escapeHtml(tenant.brand.name.toUpperCase())} · HAVI RIPORT</p>
 <h1 style="font-size:21px;margin:0 0 6px">${escapeHtml(report.month.label)}</h1>
 ${quiet ? '<p>Ebben a hónapban nem volt mérhető forgalom a konfigurátorban. Érdemes ellenőrizni, hogy a beágyazás vagy a „Tervezze meg” gomb kint van-e a weboldalon.</p>' : `
-<p style="font-size:15px;margin:14px 0"><strong>${report.leads.count} felmérési kérelem</strong>${delta(report.leads.count, report.previous.leads)}, összesen <strong>${escapeHtml(formatHuf(report.leads.value))}</strong> bruttó irányárral${report.leads.count ? ` (átlag ${escapeHtml(formatHuf(report.leads.average))})` : ''}.</p>
+<p style="font-size:15px;margin:14px 0"><strong>${report.leads.count} felmérési kérelem</strong>${delta(report.leads.count, report.previous.leads)}, összesen <strong>${escapeHtml(formatMoney(report.leads.value, tenant.currency))}</strong> bruttó irányárral${report.leads.count ? ` (átlag ${escapeHtml(formatMoney(report.leads.average, tenant.currency))})` : ''}.</p>
 <p style="margin:0 0 4px;font-size:13px;color:#62727a">Becsült konverzió (kérelem / megnyitás): <strong style="color:#233039">${pct(report.funnel.conversion)}</strong> · megnyitások: ${opens}${delta(opens, report.previous.opens)}</p>
 ${unanswered ? `<p style="margin:14px 0;padding:10px 12px;background:#fff6e5;border-radius:6px">⚠ ${unanswered} érdeklődő még „Új” állapotú, vagyis senki nem kereste. Érdemes ma felhívni őket.</p>` : ''}
 <h2 style="font-size:15px;margin:20px 0 6px">Tölcsér</h2><table style="width:100%;border-collapse:collapse;font-size:14px">${funnelRows}</table>
