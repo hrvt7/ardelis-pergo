@@ -55,7 +55,7 @@ export const PLANS: Plan[] = [
     featured: true,
     features: [
       'Minden, ami a Start csomagban',
-      'Látogatói tölcsér és konverziós statisztika',
+      'Látogatói tölcsér esemény-számokkal és becsült konverzióval',
       'CSV-export és több értesítési címzett',
       'Beépítés korlátlan számú weboldalba és kampányoldalba',
       'Elsőbbségi támogatás, válasz 1 munkanapon belül',

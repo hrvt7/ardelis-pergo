@@ -52,7 +52,7 @@ export function CountingStats({ items }: { items: StatItem[] }) {
     return () => { window.removeEventListener('scroll', check); window.removeEventListener('resize', check) }
   }, [live])
   return <div className="lx-stats" ref={ref}>
-    {items.map((item) => <div key={item.label}><strong>{live ? <StatCounter target={item.value} durationMs={1400} /> : <span className="pui-stat">{item.value}</span>}{item.suffix && <small>{item.suffix}</small>}</strong><span>{item.label}</span></div>)}
+    {items.map((item) => <div key={item.label}><strong>{live ? <StatCounter target={item.value} from={Math.floor(item.value * 0.5)} durationMs={1400} /> : <span className="pui-stat">{item.value}</span>}{item.suffix && <small>{item.suffix}</small>}</strong><span>{item.label}</span></div>)}
   </div>
 }
 
@@ -60,7 +60,7 @@ export function CountingStats({ items }: { items: StatItem[] }) {
  * Ragadós CTA-sáv: akkor látszik, amikor a `after` elem már kigörgött felülre, és eltűnik, amint az `until` elem
  * a képernyőre ér (a záró szekció saját gombjával nem versenyez).
  */
-export function StickyCta({ after, until, text, cta, to, theme = 'pui-lamelix' }: { after: string; until: string; text: ReactNode; cta: ReactNode; to: string; /** a témaosztály, mert a portál kívül esik az oldal gyökerén */ theme?: 'pui-lamelix' | 'pui-film' }) {
+export function StickyCta({ after, until, avoid, text, cta, to, theme = 'pui-lamelix' }: { after: string; until: string; /** Ezek a szakaszok alatt a sáv elrejtőzik, mert saját gombjuk van, és a sáv rájuk csúszna (pl. árak, élő bemutató). */ avoid?: string; text: ReactNode; cta: ReactNode; to: string; /** a témaosztály, mert a portál kívül esik az oldal gyökerén */ theme?: 'pui-lamelix' | 'pui-film' }) {
   const [visible, setVisible] = useState(false)
   useEffect(() => {
     // Két elem helyzete görgetésenként: olcsó, és a React csak akkor renderel, ha a láthatóság tényleg vált.
@@ -69,13 +69,15 @@ export function StickyCta({ after, until, text, cta, to, theme = 'pui-lamelix' }
       const end = document.querySelector(until)?.getBoundingClientRect()
       const passed = start ? start.bottom < 0 : window.scrollY > window.innerHeight
       const ended = end ? end.top < window.innerHeight : false
-      setVisible(passed && !ended)
+      const zoneTop = window.innerHeight - 150
+      const covering = avoid ? [...document.querySelectorAll(avoid)].some((element) => { const rect = element.getBoundingClientRect(); return rect.top < window.innerHeight && rect.bottom > zoneTop }) : false
+      setVisible(passed && !ended && !covering)
     }
     update()
     window.addEventListener('scroll', update, { passive: true })
     window.addEventListener('resize', update)
     return () => { window.removeEventListener('scroll', update); window.removeEventListener('resize', update) }
-  }, [after, until])
+  }, [after, until, avoid])
   // A body-ba kerül (portál): a nyitóoldal animált szülői transzformot kapnak, ami alatt a fixed pozíció nem működne.
   return createPortal(<div className={`lx-sticky ${theme}${visible ? ' is-visible' : ''}`} aria-hidden={!visible}>
     <StickyBanner trailing={<Link to={to} tabIndex={visible ? 0 : -1}>{cta} <ArrowRight size={14} /></Link>}><span className="lx-sticky-text">{text}</span></StickyBanner>

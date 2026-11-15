@@ -251,7 +251,7 @@ function PlatformPage() {
 
     const scrollContext = gsap.context(() => {
       // Kijelentés: a szavak a görgetéssel „kigyulladnak”.
-      gsap.fromTo('.pf-statement .pf-word', { opacity: 0.14 }, { opacity: 1, stagger: 0.08, ease: 'none', scrollTrigger: { trigger: '.pf-statement', start: 'top 78%', end: 'bottom 45%', scrub: true } })
+      gsap.fromTo('.pf-statement .pf-word', { opacity: 0.34 }, { opacity: 1, stagger: 0.08, ease: 'none', scrollTrigger: { trigger: '.pf-statement', start: 'top 78%', end: 'bottom 45%', scrub: true } })
 
       // Belépő elemek.
       gsap.utils.toArray<HTMLElement>('[data-pf-reveal]', element).forEach((section) => {
@@ -279,7 +279,7 @@ function PlatformPage() {
         scrollTrigger: {
           trigger: section,
           start: 'top top',
-          end: () => `+=${window.innerHeight * 3}`,
+          end: () => `+=${window.innerHeight * 2.2}`,
           pin: '.pf-show-pin',
           scrub: 0.8,
           anticipatePin: 1,
@@ -374,7 +374,7 @@ function PlatformPage() {
       <Suspense fallback={<div className="pf-marquee" aria-hidden="true"><div className="pf-marquee-track">{[0, 1].map((copy) => <span key={copy}>{c.marquee.map((item) => <b key={item}>{item}<i>✦</i></b>)}</span>)}</div></div>}>
         <FeatureSlips rows={marqueeRows} highlight={[c.marquee[0], c.marquee[7], c.marquee[12]]} />
         <CountingStats items={statItems} />
-        <StickyCta after=".pf-hero" until="#demo" text={lang === 'en' ? 'See the live configurator' : 'Nézze meg élőben a konfigurátort'} cta={n.liveDemo} to={DEMO_PATH} />
+        <StickyCta after=".pf-hero" until="#demo" avoid="#elotte-utana .lx-compare, .pf-show-cta, #mukodes-elo, #arak" text={lang === 'en' ? 'See the live configurator' : 'Nézze meg élőben a konfigurátort'} cta={n.liveDemo} to={DEMO_PATH} />
       </Suspense>
 
       <section className="pf-statement" aria-label={c.statement.aria}>

@@ -1,5 +1,15 @@
 # Változások
 
+## 4.38 – Landing: friss termékképek, nem takaró demósáv, rövidebb oldal, mobil hero
+
+- **Friss termékképek a landingen:** a bemutató szakasz képei (konfigurátor, admin áttekintés, érdeklődők, mobil lead-adatlap) a mostani felületről készültek; a régiek még a 6 lépéses, bal paneles konfigurátort és a sötét admint mutatták.
+- **Hiba: a lebegő „Élő demó” sáv rácsúszott a gombokra** (árkártyák „Demót kérek” gombja, élő bemutató, előtte-utána csúszka). A sáv most elrejtőzik, amíg ezek a szakaszok az alsó sávban vannak.
+- **Rövidebb, olvashatóbb oldal:** a bemutató szakasz görgetése 3 helyett 2,2 képernyőnyi, a szakaszok közti térköz kisebb; asztali gépen az oldal kb. 22 800 px-ről kb. 16 500 px-re rövidült (headless mérés). A görgetésre kivilágosodó nagy mondat kezdetben is olvasható (34% átlátszatlanság 14% helyett).
+- **Mobil hero:** előbb a cím és a „Kérek demót” gomb, utána a kép; az ár-kártya nem lóg ki balra.
+- **Számlálók:** a felfutó számok az érték feléről indulnak, így lassú gépen sem látszik „0”.
+- **Pontosabb csomagleírás:** a Pro csomagnál „Látogatói tölcsér esemény-számokkal és becsült konverzióval” (korábban „konverziós statisztika”), mert a rendszer esemény-számokat és becsült konverziót ad.
+- Tesztek: `landingUi.test.ts` (ragadós sáv elrejtése, számlálók, mobil sorrend, rövidebb bemutató, képek).
+
 ## 4.37 – Gyengébb tabletek és oldalarányok: automatikus 3D-szint, képpont-keret, álló tablet alsó lappal
 
 - **Gyenge mobil GPU-s tablet automatikusan alacsony szinten** (pl. Redmi Pad 2, Mali-G57 MC2): a belépő Mali (4xx/T/G5x/G6x), PowerVR és Adreno 6xx-es vagy régebbi GPU-k „Alacsony” szintet kapnak. Az Android-tabletek Chrome-ja alapból asztali oldalt kér, ezért eddig asztali gépnek látszottak és „Közepes” szintet kaptak; most az érintés + Linux jelzi az Androidot. Asztali gépek (MacBook M-chip: magas, erős videókártya: ultra) és az iPad besorolása változatlan.
