@@ -1,5 +1,12 @@
 # Változások
 
+## 4.19 – Tájékoztató anyaglista CSV-ben a gyártói adminban
+
+- Az érdeklődő adatlapján a PDF és a DXF mellett új „Anyaglista (CSV)” gomb: a terv adatai (azonosító, vevő, konfigurációs kód, méret, tető, szín), az anyaglista és a tételes nettó árkalkuláció egy Excelben megnyitható táblában (pontosvessző, UTF-8).
+- Ugyanaz a tartalom, mint a PDF anyaglistája és árkalkulációja (a 0 db-os tételek nélkül); az összegek számként, hogy táblázatban számolni lehessen velük.
+- Az első sor kimondja: tájékoztató anyaglista, nem gyártási anyagszükséglet, a felmérés és a gyártói típusstatika után véglegesítendő.
+- Új: `src/lib/bomCsv.ts`; teszt: `tests/bomCsv.test.ts`. A demó adminban letöltve ellenőrizve.
+
 ## 4.18 – DXF-export a műszaki rajzból (gyártói admin)
 
 - Az érdeklődő adatlapján a PDF mellett új „DXF (CAD)” gomb: a terv műszaki rajza (homlokzat, alaprajz, metszet, szövegmező) AutoCAD R12 DXF-ként, amit minden CAD-program megnyit (AutoCAD, LibreCAD, BricsCAD, DWG TrueView).

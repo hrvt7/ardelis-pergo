@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Copy, Download, DraftingCompass, ExternalLink, FileText, Flame, GripVertical, KanbanSquare, List, Mail, Phone, PhoneCall, Search, X } from 'lucide-react'
+import { Check, Copy, Download, DraftingCompass, FileSpreadsheet, ExternalLink, FileText, Flame, GripVertical, KanbanSquare, List, Mail, Phone, PhoneCall, Search, X } from 'lucide-react'
 import { formatHuf } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
 import { initials, LEAD_STATUSES, leadsToCsv, STATUS_COLORS, timeAgo, type LeadRow } from '@/lib/adminLeads'
@@ -8,7 +8,7 @@ import type { RoofType } from '@/types/pergola'
 import QuoteSection, { type QuoteApi } from '@/components/admin/QuoteSection'
 import { PlanSketch } from '@/components/admin/adminKit'
 import { leadPdfInput } from '@/lib/leadPdf'
-import { downloadLeadDxf, downloadLeadPdf } from '@/components/admin/leadPdfDownload'
+import { downloadLeadBom, downloadLeadDxf, downloadLeadPdf } from '@/components/admin/leadPdfDownload'
 import type { Tenant } from '@/tenants/types'
 
 const STATUS_LABEL = Object.fromEntries(LEAD_STATUSES) as Record<string, string>
@@ -23,14 +23,15 @@ function LeadPdfButton({ tenant, lead: row }: { tenant: Tenant; lead: LeadRow })
   const input = useMemo(() => leadPdfInput(tenant, lead), [tenant, lead])
   const [state, setState] = useState<'idle' | 'busy' | 'error'>('idle')
   if (!input) return null
-  const run = async (kind: 'pdf' | 'dxf') => {
+  const run = async (kind: 'pdf' | 'dxf' | 'csv') => {
     setState('busy')
-    try { await (kind === 'pdf' ? downloadLeadPdf : downloadLeadDxf)(tenant, lead, input); setState('idle') } catch { setState('error') }
+    try { await ({ pdf: downloadLeadPdf, dxf: downloadLeadDxf, csv: downloadLeadBom })[kind](tenant, lead, input); setState('idle') } catch { setState('error') }
   }
   return <div className="lead-pdf">
     <div className="lead-pdf-buttons"><button type="button" className="btn" onClick={() => void run('pdf')} disabled={state === 'busy'}><FileText size={15} />{state === 'busy' ? 'Készül…' : 'PDF letöltése'}</button>
-    <button type="button" className="btn" onClick={() => void run('dxf')} disabled={state === 'busy'} title="Műszaki rajz CAD-programhoz (AutoCAD, LibreCAD…), valós mm-ben"><DraftingCompass size={15} />DXF (CAD)</button></div>
-    <p>PDF: méretek, tételes árkalkuláció, műszaki rajz és QR-kód, 3D-kép nélkül. DXF: a műszaki rajz CAD-programba, valós mm-ben, rétegekkel.{input.priceChanged && !demo && ' Az árlista azóta változott: a PDF a mai árakkal számol.'}</p>
+    <button type="button" className="btn" onClick={() => void run('dxf')} disabled={state === 'busy'} title="Műszaki rajz CAD-programhoz (AutoCAD, LibreCAD…), valós mm-ben"><DraftingCompass size={15} />DXF (CAD)</button>
+    <button type="button" className="btn" onClick={() => void run('csv')} disabled={state === 'busy'} title="Tájékoztató anyaglista és árkalkuláció Excelbe – nem gyártási anyagszükséglet"><FileSpreadsheet size={15} />Anyaglista (CSV)</button></div>
+    <p>PDF: méretek, tételes árkalkuláció, műszaki rajz és QR-kód, 3D-kép nélkül. DXF: a műszaki rajz CAD-programba, valós mm-ben. CSV: tájékoztató anyaglista és árak Excelbe, nem gyártási anyagszükséglet.{input.priceChanged && !demo && ' Az árlista azóta változott: a PDF a mai árakkal számol.'}</p>
     {state === 'error' && <p role="alert">A fájl nem készült el. Próbáld újra, vagy nyisd meg a tervet.</p>}
   </div>
 }

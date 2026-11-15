@@ -38,3 +38,16 @@ export async function downloadLeadDxf(tenant: Tenant, lead: LeadRow, input: Lead
   link.remove()
   window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
+
+/** Tájékoztató anyaglista és árkalkuláció CSV-ben (Excel-barát), a PDF-fel azonos tartalommal. */
+export async function downloadLeadBom(tenant: Tenant, lead: LeadRow, input: LeadPdfInput) {
+  const { bomCsv } = await import('@/lib/bomCsv')
+  const url = URL.createObjectURL(new Blob([bomCsv(tenant, lead, input.config, input.price)], { type: 'text/csv;charset=utf-8' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = leadPdfFileName(tenant, lead, input.config).replace(/\.pdf$/, '-anyaglista.csv')
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
