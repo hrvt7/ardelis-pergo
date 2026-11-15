@@ -111,7 +111,8 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     { text: `${roofShort} pergola`, fontSize: 19, color: MUTED, margin: [0, 2, 0, 18] },
     image
       ? { image, cover: { width: 515, height: imageHeight, valign: 'center', align: 'center' }, width: 515, height: imageHeight, margin: [0, 0, 0, 18] }
-      : { canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: 120, color: PAPER }], margin: [0, 0, 0, 18] },
+      // Kép nélkül (adminból letöltve, vagy ha a GPU nem engedte a kiolvasást) üres keret helyett útmutatás a 3D-tervhez.
+      : { table: { widths: ['*'], body: [[{ text: shareUrl ? 'A 3D-látványterv az alábbi QR-kódról vagy a terv linkjéről nyitható meg.' : 'A 3D-látványterv a konfigurátorban tekinthető meg.', fontSize: 9, color: MUTED, fillColor: PAPER, margin: [16, 22, 16, 22], border: [false, false, false, false] }]] }, layout: 'noBorders', margin: [0, 0, 0, 18] },
     {
       columns: [
         fact('Méret', `${m2(config.width)} × ${m2(config.depth)} m`, `${formatNumber(price.area)} m² lefedett terület`),

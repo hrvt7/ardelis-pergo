@@ -225,7 +225,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
         <header className="admin-top"><div><h1>{title}</h1><p>{TAB_INFO[tab].subtitle}</p></div><div className="admin-top-actions"><button type="button" className="palette-btn" onClick={() => setPaletteOpen(true)} aria-label="Gyorskereső megnyitása"><Search size={14} /><span>Keresés</span><kbd>Ctrl K</kbd></button><Link className="btn" to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor</Link></div></header>
         {(tab === 'overview' || tab === 'leads') && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
         {tab === 'overview' && leads && <div key="overview" className="tab-fade">{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} onOpenLead={openLead} checklist={demo ? undefined : checklist} /></div>}
-        {tab === 'leads' && leads && <div key="leads" className="tab-fade"><AdminLeads leads={leads} error={error} onReload={() => void real.reload()} onUpdate={update} quotes={quotes} openRef={openRef} onOpenRef={setOpenRef} /></div>}
+        {tab === 'leads' && leads && <div key="leads" className="tab-fade"><AdminLeads tenant={effective} leads={leads} error={error} onReload={() => void real.reload()} onUpdate={update} quotes={quotes} openRef={openRef} onOpenRef={setOpenRef} /></div>}
         {tab === 'embed' && <div key="embed" className="tab-fade"><EmbedPanel tenantId={base.id} onCopied={markEmbed} /></div>}
         <div hidden={tab !== 'settings'}>{children}</div>
       </section>

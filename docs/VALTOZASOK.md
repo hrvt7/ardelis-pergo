@@ -1,5 +1,13 @@
 # Változások
 
+## 4.15 – PDF-letöltés leadenként a gyártói adminban
+
+- Az érdeklődő adatlapján új „PDF letöltése” gomb: ugyanaz a 4 oldalas dokumentum, amit a vevő kap (konfiguráció, anyaglista, tételes árkalkuláció, műszaki rajz, QR-kód a vevő tervére), a vevő nevével a borítón.
+- A terv ugyanazzal az érvényesítéssel és árazással készül, mint a lead-végponton (`pergolaEngine`). Ha az árlista azóta változott, a gomb alatt jelzés: a PDF a mai árakkal számol.
+- A 3D-kép az adminból nem készíthető (nincs megnyitott 3D-nézet): a borítón üres keret helyett útmutatás a QR-kódhoz. Ez a vevői PDF-et is érinti, ha a böngésző nem engedi a kép kiolvasását.
+- Csak pergolánál jelenik meg; más termékcsaládnál és sérült tervnél a gomb nem látszik. A demó-adatokon is működik (a kitalált érdeklődők tervét a gyártó alapkonfigurációja egészíti ki).
+- Új: `src/lib/leadPdf.ts` (tesztelhető bemenet), `src/components/admin/leadPdfDownload.ts` (letöltés); teszt: `tests/leadPdf.test.ts`. Böngészőben ellenőrizve: a demó adminban a PDF 4 oldallal elkészül.
+
 ## 4.14 – Kisebb 3D-modellek, változatlan minőség
 
 - A 17 Blender-modell (bútorok, jacuzzi, modern és nyeregtetős ház, kerti elemek) veszteségmentes meshopt-tömörítést kapott: 889 KB → 457 KB (−49%). A pontok, normálok, anyagok és node-nevek bitre azonosak (az eredetivel összevetve ellenőrizve); kvantálás és szűrő nincs. A böngészőben a drei `useGLTF` bontja ki, kódváltozás nem kellett.

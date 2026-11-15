@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Check, Copy, Download, ExternalLink, Flame, GripVertical, KanbanSquare, List, Mail, Phone, PhoneCall, Search, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Check, Copy, Download, ExternalLink, FileText, Flame, GripVertical, KanbanSquare, List, Mail, Phone, PhoneCall, Search, X } from 'lucide-react'
 import { formatHuf } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
 import { initials, LEAD_STATUSES, leadsToCsv, STATUS_COLORS, timeAgo, type LeadRow } from '@/lib/adminLeads'
@@ -7,10 +7,32 @@ import { byScore, scoreLead, TIER_COLORS, TIER_LABELS } from '@/lib/leadScore'
 import type { RoofType } from '@/types/pergola'
 import QuoteSection, { type QuoteApi } from '@/components/admin/QuoteSection'
 import { PlanSketch } from '@/components/admin/adminKit'
+import { leadPdfInput } from '@/lib/leadPdf'
+import { downloadLeadPdf } from '@/components/admin/leadPdfDownload'
+import type { Tenant } from '@/tenants/types'
 
 const STATUS_LABEL = Object.fromEntries(LEAD_STATUSES) as Record<string, string>
 const dateFormat = new Intl.DateTimeFormat('hu-HU', { dateStyle: 'medium', timeStyle: 'short' })
 const roofName = (lead: LeadRow) => (lead.config?.roof ? ROOF_INFO[lead.config.roof as RoofType]?.name ?? lead.config.roof : '—')
+
+/** A vevő tervének PDF-összefoglalója közvetlenül az adminból (ugyanaz a dokumentum, 3D-kép nélkül). */
+function LeadPdfButton({ tenant, lead: row }: { tenant: Tenant; lead: LeadRow }) {
+  // A demó-érdeklődőknél csak tető és méret van kitalálva: a többit a gyártó alapkonfigurációja adja, az ár mindig a mai.
+  const demo = row.ref.startsWith('DEMO-')
+  const lead = useMemo(() => (demo ? { ...row, config: { ...tenant.defaultConfig, ...row.config }, config_url: new URL(row.config_url, window.location.origin).href } : row), [demo, row, tenant])
+  const input = useMemo(() => leadPdfInput(tenant, lead), [tenant, lead])
+  const [state, setState] = useState<'idle' | 'busy' | 'error'>('idle')
+  if (!input) return null
+  const run = async () => {
+    setState('busy')
+    try { await downloadLeadPdf(tenant, lead, input); setState('idle') } catch { setState('error') }
+  }
+  return <div className="lead-pdf">
+    <button type="button" className="btn" onClick={() => void run()} disabled={state === 'busy'}><FileText size={15} />{state === 'busy' ? 'PDF készül…' : 'PDF letöltése'}</button>
+    <p>Méretek, kiegészítők, tételes árkalkuláció, műszaki rajz és QR-kód – 3D-kép nélkül; a képes változat a tervből készíthető.{input.priceChanged && !demo && ' Az árlista azóta változott: a PDF a mai árakkal számol.'}</p>
+    {state === 'error' && <p role="alert">A PDF nem készült el. Próbáld újra, vagy nyisd meg a tervet.</p>}
+  </div>
+}
 
 /** Üres állapot: a pergola körvonala kirajzolódik, majd a lamellák „bekapcsolnak”. */
 export function EmptyArt() {
@@ -45,7 +67,7 @@ function Qr({ url }: { url: string }) {
   return src ? <img className="drawer-qr" src={src} width={120} height={120} alt="A konfigurációt megnyitó QR-kód" /> : null
 }
 
-function Drawer({ lead, now, quotes, onClose, onUpdate }: { lead: LeadRow; now: number; quotes?: QuoteApi; onClose: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void }) {
+function Drawer({ lead, now, quotes, tenant, onClose, onUpdate }: { lead: LeadRow; now: number; quotes?: QuoteApi; tenant?: Tenant; onClose: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void }) {
   const [note, setNote] = useState(lead.owner_note ?? '')
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
@@ -114,6 +136,7 @@ function Drawer({ lead, now, quotes, onClose, onUpdate }: { lead: LeadRow; now: 
           <Qr url={lead.config_url} />
           <div><a className="btn" href={lead.config_url} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} />Megnyitás</a><p>Olvasd be telefonnal, vagy nyisd meg a vevő pontos tervét.</p></div>
         </div>
+        {tenant && <LeadPdfButton tenant={tenant} lead={lead} />}
       </div>
       {/* Gyorsműveletek: mobilon a hüvelykujj alatt, mindig látszanak. */}
       <footer className="drawer-actions">
@@ -125,7 +148,7 @@ function Drawer({ lead, now, quotes, onClose, onUpdate }: { lead: LeadRow; now: 
   </>
 }
 
-export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, openRef, onOpenRef }: { leads: LeadRow[]; error: string; onReload: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void; openRef: string | null; onOpenRef: (ref: string | null) => void; quotes?: Omit<QuoteApi, 'quotes'> & { all: QuoteApi['quotes'] } }) {
+export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, openRef, onOpenRef, tenant }: { tenant?: Tenant; leads: LeadRow[]; error: string; onReload: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void; openRef: string | null; onOpenRef: (ref: string | null) => void; quotes?: Omit<QuoteApi, 'quotes'> & { all: QuoteApi['quotes'] } }) {
   const [filter, setFilter] = useState('all')
   const [query, setQuery] = useState('')
   const [view, setView] = useState<'table' | 'board'>(() => { try { return localStorage.getItem('admin-leads-view') === 'board' ? 'board' : 'table' } catch { return 'table' } })
@@ -195,6 +218,6 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, o
           <span className="num muted">{timeAgo(lead.created_at, now)}</span>
         </button><a className="icon-btn call tr-call" href={`tel:${lead.phone.replace(/[^+0-9]/g, '')}`} aria-label={`${lead.customer_name} hívása`} title="Hívás"><PhoneCall size={16} /></a></div>)}
       </div>}
-    {open && <Drawer key={open.ref} lead={open} now={now} quotes={quotes && { quotes: quotes.all.filter((quote) => quote.leadRef === open.ref), create: quotes.create, withdraw: quotes.withdraw }} onClose={() => setOpenRef(null)} onUpdate={onUpdate} />}
+    {open && <Drawer key={open.ref} lead={open} now={now} quotes={quotes && { quotes: quotes.all.filter((quote) => quote.leadRef === open.ref), create: quotes.create, withdraw: quotes.withdraw }} tenant={tenant} onClose={() => setOpenRef(null)} onUpdate={onUpdate} />}
   </div>
 }
