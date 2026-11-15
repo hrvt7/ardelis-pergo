@@ -60,7 +60,7 @@ export function StudioViewSettings({ view, productName, onChange }: { view: Stud
  * Jelenet-eszköztár (jobb felső sarok): napszak-váltó, a termék gyorsgombjai, „Eszközök” menü.
  * Az Eszközök menüben elöl a „Nézet és vizualizáció” és a termék saját eszközei, utána a közös Bemutató, PDF, Megosztás.
  */
-export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools = [], toolsBusy = false, presentation, onPresentation, onExport, onShare }: { time: StudioTime; onTimeChange: (time: StudioTime) => void; viewPanel: ReactNode; quick?: QuickToggle[]; tools?: ToolItem[]; toolsBusy?: boolean; presentation: boolean; onPresentation: () => void; onExport: () => void; onShare: () => void }) {
+export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools = [], toolsBusy = false, presentation, onPresentation, onExport, onShare, leading }: { time: StudioTime; onTimeChange: (time: StudioTime) => void; viewPanel: ReactNode; /** Az eszközsor elejére kerülő elem (pl. kameranézet-menü). */ leading?: ReactNode; quick?: QuickToggle[]; tools?: ToolItem[]; toolsBusy?: boolean; presentation: boolean; onPresentation: () => void; onExport: () => void; onShare: () => void }) {
   const [toolsOpen, setToolsOpen] = useState(false)
   const [viewOpen, setViewOpen] = useState(false)
   useEffect(() => {
@@ -81,6 +81,7 @@ export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools 
   ]
   return <>
     <div className="weather-toolbar" aria-label="Gyors jelenetbeállítások">
+      {leading}
       <button type="button" title={`Napszak: ${timeLabel} — váltás`} aria-label={`Napszak: ${timeLabel}`} onClick={() => onTimeChange(nextTime[time])} className={`icon-time icon-${time}${time !== 'day' ? ' selected' : ''}`}><TimeIcon size={17} /><span>{timeLabel}</span></button>
       {quick.map(({ id, icon: Icon, label, title, active, className, run }) => <button type="button" key={id} className={[className, active ? 'selected' : ''].filter(Boolean).join(' ')} aria-pressed={active === undefined ? undefined : active} title={title} onClick={run}><Icon size={17} /><span>{label}</span></button>)}
       <button type="button" className={`view-toggle tools-toggle icon-grid ${toolsOpen || viewOpen || toolsBusy ? 'selected' : ''}`} aria-pressed={toolsOpen} aria-expanded={toolsOpen} title="Eszközök: nézet, napszak, környezet, bemutató, PDF, megosztás" onClick={() => { setToolsOpen((open) => !open); setViewOpen(false) }}><LayoutGrid size={17} /><span>Eszközök</span></button>

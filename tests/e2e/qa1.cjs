@@ -115,7 +115,7 @@ const bad = (what) => { issues.push(what); log('  ✗', what) };
   await p.locator('.presentation-toggle').click(); await p.waitForTimeout(500);
 
   // Kamera nézetek
-  for (const v of ['Kívülről', 'Alulról', 'Felülről', 'Részlet', 'Kanapé', 'Kívülről']) { await p.locator('.camera-toolbar button', { hasText: v }).click(); await p.waitForTimeout(1200) }
+  for (const v of ['Kívülről', 'Alulról', 'Felülről', 'Részlet', 'Kanapé', 'Kívülről']) { await p.locator('.camera-menu-toggle').click(); await p.locator('.camera-menu-list button', { hasText: v }).click(); await p.waitForTimeout(1200) }
 
   log('\nHIBÁK (konzol/hálózat):'); [...new Set(errors)].forEach(e => bad(e));
   log('\nÖSSZES PROBLÉMA:', issues.length); issues.forEach(i => log(' -', i));

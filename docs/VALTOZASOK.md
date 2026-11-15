@@ -1,5 +1,11 @@
 # Változások
 
+## 4.24 – A kameranézetek egy „Nézet” menübe kerültek
+
+- **Több hely a képnek:** az alsó, középső nézetsáv (Kívülről, Alulról, Felülről, Részlet, Kanapé) megszűnt; a nézetek a jobb felső eszközsor első gombjából nyílnak le (asztalon a gomb a jelenlegi nézet nevét mutatja, mobilon ikon). Esc vagy kattintás máshová bezárja.
+- Csak a pergola/carport stúdióban; a carportnál továbbra sincs kanapé-panoráma.
+- Tesztek: `cameraViews.test.ts` (a menü nézetei sorrendben, carportnál kanapé nélkül). A kézi e2e szkriptek (`qa1.cjs`, `sweep.cjs`) az új menüt használják.
+
 ## 4.23 – „Soft dark” stílus a konfigurátoron (elrendezés és betű változatlan)
 
 - **Kártyák térközzel:** a 3D nézet és a beállítópanel 12 px-es térközzel, 24 px-es lekerekítéssel lebeg a mélyfekete (#0E0F11) alapon; a panel alján az ár és a lépésgombok külön belső kártyában.

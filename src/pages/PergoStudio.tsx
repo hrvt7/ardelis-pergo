@@ -32,6 +32,8 @@ import { isClosedBuilding } from '@/lib/buildings'
 import { ChangePill, SceneToolbar, StudioHeader, WelcomeBack, type ToolItem } from '@/components/studio/StudioChrome'
 import { usePresentation } from '@/components/studio/studioState'
 import PanelPrice from '@/components/studio/PanelPrice'
+import CameraViewMenu from '@/components/studio/CameraViewMenu'
+import { cameraViewsFor } from '@/lib/cameraViews'
 import { mobileBarAction } from '@/lib/configSteps'
 import { DEFAULT_USAGE, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
 import type { FurnitureSet } from '@/types/pergola'
@@ -54,13 +56,7 @@ function buildArUrl(config: PergolaConfig) {
   return url.toString()
 }
 
-const CAMERA_VIEWS: { id: CameraView; label: string; icon: typeof View }[] = [
-  { id: 'perspective', label: 'Kívülről', icon: View },
-  { id: 'interior', label: 'Alulról', icon: Maximize2 },
-  { id: 'top', label: 'Felülről', icon: Box },
-  { id: 'detail', label: 'Részlet', icon: Scan },
-  { id: 'sofa', label: 'Kanapé', icon: Armchair },
-]
+const CAMERA_ICONS: Partial<Record<CameraView, typeof View>> = { perspective: View, interior: Maximize2, top: Box, detail: Scan, sofa: Armchair }
 
 /** Folyamatosan húzható mezők: gyors egymásutánjuk egy visszavonási lépés. */
 const CONTINUOUS_KEYS = new Set(['width', 'depth', 'height', 'pitch'])
@@ -454,7 +450,7 @@ export default function PergoStudio() {
           <PergolaScene config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={handleSideSelect} onSceneChange={updateScene} onShade={setShade} />
           <div className="viewer-heading"><span>{scene.photoMode ? 'SAJÁT TERASZ / ELŐNÉZET' : 'ÉLŐ ÉPÍTÉSZETI JELENET'}</span><h1><span className="kinetic" key={ROOF_LABELS[config.roof]}>{ROOF_LABELS[config.roof].split(' · ')[0]}</span> <i>/</i> <span className="kinetic" key={`w${config.width}`}>{config.width.toFixed(1).replace('.', ',')}</span><small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m mély</p></div>
           <div className="viewer-live"><i />VALÓS IDEJŰ 3D</div>
-          <SceneToolbar time={scene.time} onTimeChange={(time) => updateScene({ time, dayTime: time === 'day' ? 13 : time === 'sunset' ? 18 : 22 })}
+          <SceneToolbar leading={<CameraViewMenu views={cameraViewsFor(product).map((item) => ({ ...item, icon: CAMERA_ICONS[item.id] ?? View }))} value={view} onChange={(id) => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} />} time={scene.time} onTimeChange={(time) => updateScene({ time, dayTime: time === 'day' ? 13 : time === 'sunset' ? 18 : 22 })}
             viewPanel={<SceneSettingsPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onPhotoUpload={handlePhoto} />}
             quick={[
               { id: 'rain', icon: CloudRain, label: 'Eső', className: 'icon-rain', title: 'Eső be- és kikapcsolása', active: scene.rain, run: () => updateScene({ rain: !scene.rain }) },
@@ -479,7 +475,7 @@ export default function PergoStudio() {
           {rotateHint && view !== 'sofa' && !scene.photoMode && !welcomeBack && <div className="pov-note rotate-hint" role="status"><Rotate3d size={16} /><span><strong>Húzd a forgatáshoz</strong>{coarsePointer ? 'Két ujjal nagyíthatsz' : 'Jobb gombbal vagy két ujjas görgetéssel mozgatod · görgővel, csípéssel nagyítasz'}</span></div>}
           {presentation && <div className="presentation-note"><span>ÜGYFÉL-BEMUTATÓ</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez</small></div>}
           {scene.photoMode ? <PhotoBar placement={{ photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt, photoLens: scene.photoLens }} coarse={isNarrow || window.matchMedia('(pointer: coarse)').matches} onChange={(next) => updateScene(next)} onReset={() => updateScene({ ...DEFAULT_PLACEMENT })} onReplace={openPhotoPicker} onDelete={deleteUserPhoto} onDone={() => updateScene({ photoMode: false })} />
-            : <div className="camera-toolbar" aria-label="Kamera nézetek">{CAMERA_VIEWS.filter(({ id }) => !(product === 'carport' && id === 'sofa')).map(({ id, label, icon: Icon }) => <button type="button" key={id} className={view === id ? 'selected' : ''} aria-pressed={view === id} onClick={() => { setView(id); if (id === 'sofa' && scene.autoRotate) updateScene({ autoRotate: false }) }} title={`${label} nézet`}><Icon size={16} /><span>{label}</span></button>)}</div>}
+            : null}
           {welcomeBack && <WelcomeBack summary={`${config.width.toFixed(1).replace('.', ',')} × ${config.depth.toFixed(1).replace('.', ',')} m · ${formatHuf(price.totalGross)}`} onContinue={() => setWelcomeBack(false)} onFresh={() => { replaceConfig(productDefaultConfig(tenant, product)); setProjectName(''); setWelcomeBack(false); goStep('size') }} />}
           {!presentation && <ChangePill change={change} onUndo={() => { undo(); setChange(null) }} />}
           <div className="viewer-footer"><span>{scene.photoMode ? 'HELYI FOTÓS ELŐNÉZET' : '1 egység = 1 méter'}</span><span>{price.area.toFixed(1).replace('.', ',')} m²</span>{tenant.platformCredit !== false && <a className="platform-credit" href="/" target="_blank" rel="noopener" title="3D konfigurátor: Lamelix"><LamelixLogo variant="symbol" tone="onDark" height={11} title={null} />Lamelix</a>}</div>

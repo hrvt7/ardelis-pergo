@@ -14,7 +14,7 @@ const port = process.argv[2] || '3000';
       if (time === 'Éjszaka') { await p.locator('.weather-toolbar button', { hasText: 'Éjszaka' }).click(); await p.waitForTimeout(5000) }
       else { await p.locator('.weather-toolbar button', { hasText: 'Nappal' }).click(); await p.waitForTimeout(5000) }
       for (const view of ['Kívülről', 'Alulról', 'Felülről', 'Részlet', 'Kanapé']) {
-        await p.locator('.camera-toolbar button', { hasText: view }).click(); await p.waitForTimeout(3500);
+        await p.locator('.camera-menu-toggle').click(); await p.locator('.camera-menu-list button', { hasText: view }).click(); await p.waitForTimeout(3500);
         const mean = await p.evaluate(() => { const c = document.querySelector('canvas[data-pergola-canvas]'); const t = document.createElement('canvas'); t.width = 48; t.height = 30; const x = t.getContext('2d'); x.drawImage(c, 0, 0, 48, 30); const d = x.getImageData(0,0,48,30).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += d[i] + d[i+1] + d[i+2]; return Math.round(s / (d.length / 4) / 3) });
         row.push(`${time[0]}/${view}:${mean}`); if (process.argv[4] && view === process.argv[4]) await p.screenshot({ path: `shots/sweep-${mount}-${time}-${view}.png`, timeout: 120000 });
         if (mean < (time === 'Éjszaka' ? 8 : 30)) bad.push(`${mount} ${time} ${view} = ${mean}`);
