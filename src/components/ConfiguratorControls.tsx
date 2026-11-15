@@ -1,4 +1,4 @@
-import { STEPS } from '@/lib/configSteps'
+import { issuesForStep, STEPS } from '@/lib/configSteps'
 import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Box, Check, ChevronDown, ChevronRight, CloudRain, Cog, Columns3, Gauge, House, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
 import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, wallLabel } from '@/lib/mount'
@@ -6,7 +6,7 @@ import { formatHuf, formatNumber } from '@/lib/pricing'
 import { bayWidth, moduleCount, modulesLabel } from '@/lib/modules'
 import { FanOption, RgbOption, RoofShadeOption, SideSettings, SideStrip, SmartHomeOption } from '@/components/SideAndExtras'
 import { enabledRoofs, presetConfig, tenantPrice } from '@/tenants/rules'
-import { defaultGlazing, effectiveGlazing, GLAZING_INFO, glazingOptions, glazingPriceKey, PITCH_RANGE, ROOF_INFO, roofRise } from '@/lib/roofs'
+import { defaultGlazing, effectiveGlazing, GLAZING_INFO, glazingOptions, glazingPriceKey, PITCH_RANGE, ROOF_INFO, roofRise, sensorsApplicable } from '@/lib/roofs'
 import { SMART_LOUVER_TEXT, smartLouver } from '@/lib/smartLouver'
 import { sceneSunVector } from '@/lib/sceneSun'
 import { useTenant } from '@/tenants/TenantContext'
@@ -17,14 +17,13 @@ import FurniturePicker from '@/components/FurniturePicker'
 import HouseLook, { WindowMatch } from '@/components/HouseLook'
 import { findWindowColor, finishPreview, houseSummary, wallColorHex, wallColorName } from '@/lib/house'
 import { describeColor } from '@/lib/colors'
-import { supportsRoofShade } from '@/lib/roofShade'
 import ColorPicker from '@/components/ColorPicker'
 import { BuildingIssues, BuildingPicker, ClimateSection, WallGlazingPicker } from '@/components/BuildingControls'
 import { BUILDING_ROOFS, isClosedBuilding } from '@/lib/buildings'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
 
 // A lépések sorrendje a döntések természetes rendje: mit → mekkora és hogyan áll → tető és zárás → szín → komfort → felmérés.
-// Az azonosítók történeti okból maradtak ('size' = Típus, 'mount' = Méret és szerkezet, 'sides' = Tető és oldalak).
+// Az azonosítók történeti okból maradtak ('size' = Típus, 'mount' = Elhelyezés és méret, 'roof' = Tető, 'sides' = Oldalak, 'extras' = Komfort).
 
 interface Props {
   config: PergolaConfig
@@ -366,7 +365,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
     <aside ref={panelRef} className={`controls-panel glass-panel sheet-${sheet} ${mobileOpen ? 'is-mobile-open' : ''}`} aria-label="Pergola beállításai" onTouchStart={(event) => { touchStart.current = event.touches[0].clientX }} onTouchEnd={touchEnd}>
       <button type="button" className="sheet-toggle" aria-expanded={mobileOpen} aria-label={sheet === 'peek' ? 'Pergola beállításainak megnyitása' : 'Beállítások összecsukása a 3D nézethez'} {...sheetGesture}><span className="sheet-handle" aria-hidden="true" /><span><SlidersHorizontal size={16} />{sheet === 'peek' ? 'Beállítások' : sheet === 'half' ? 'Húzd fel a teljes nézethez' : 'Vissza a 3D nézethez'}</span><ChevronDown size={16} /></button>
       <div className="config-head">
-        <div><span>Konfiguráció</span><strong>{String(stepIndex + 1).padStart(2, '0')} / 06</strong></div>
+        <div><span>Konfiguráció</span><strong>{String(stepIndex + 1).padStart(2, '0')} / {String(STEPS.length).padStart(2, '0')}</strong></div>
         <span className="mini-summary">{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {MOUNT_SHORT[config.mount]}</span>
       </div>
       <div className="control-tabs" role="tablist" aria-label="Konfigurációs lépések">
@@ -392,6 +391,8 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
           </>}
 
           {step === 'mount' && <>
+            <SectionTitle title="Elhelyezés" hint="Falhoz rögzítve, sarokban vagy szabadon: ez dönti el, hová kerülnek az oszlopok és a falak. A méret ehhez igazodik." />
+            <div className="roof-options mount-options">{MOUNT_TYPES.filter((mount) => tenant.mounts.includes(mount)).map((mount) => <button type="button" key={mount} className={config.mount === mount ? 'selected' : ''} aria-pressed={config.mount === mount} onClick={() => onChange({ mount })}><MountIcon mount={mount} /><span><strong>{MOUNT_LABELS[mount]}</strong><small>{MOUNT_DESCRIPTIONS[mount]}</small></span><span className="selection-dot">{config.mount === mount && <Check size={12} />}</span></button>)}</div>
             <SectionTitle title="Külső szerkezeti méretek" hint="Írd be az értékeket centiméterben, vagy használd a csúszkákat." />
             {(limits.maxModules ?? 1) > 1 && <>
               <SectionTitle title="Modulok" hint="Összekapcsolt mezők közös oszlopokkal – hosszú teraszra, vendéglátó terekre. Az ár és az összterület modulonként számolódik." />
@@ -403,12 +404,9 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             {moduleCount(config) > 1 && <p className="split-note">{modulesLabel(config, (value) => formatNumber(value, 2))} mező · összesen {formatNumber(config.width, 2)} m széles, {moduleCount(config) - 1} közös oszlopsorral.</p>}
             <SliderField label="Mélység" value={config.depth} min={limits.depth[0]} max={limits.depth[1]} step={0.05} unit="m" metric onChange={(depth) => onChange({ depth })} />
             <SliderField label="Oszlopmagasság" value={config.height} min={limits.height[0]} max={limits.height[1]} step={0.05} unit="m" metric onChange={(height) => onChange({ height })} />
-            <SliderField label="Tetődőlés" value={config.pitch ?? 0} min={PITCH_RANGE[0]} max={PITCH_RANGE[1]} step={1} unit="°" onChange={(pitch) => onChange({ pitch: pitch || undefined })} />
-            {(config.pitch ?? 0) > 0 && <p className="split-note">A tető hátsó (fali) éle {roofRise(config).toFixed(2).replace('.', ',')} m-rel magasabb az elülső oszlopmagasságnál, így a csapadék előre folyik le.</p>}
             {bayWidth(config) > 6 && <div className="smart-warning"><Columns3 size={18} /><p><strong>Középoszlop javasolt</strong>600 cm feletti mezőnél a műszaki ellenőrzés és egy középoszlop szükséges lehet.</p></div>}
             <div className="smart-helper"><Sparkles size={18} /><p><strong>{getSizeRecommendation(config).split(' · ')[0]}</strong>{getSizeRecommendation(config).split(' · ')[1]}</p></div>
-            <SectionTitle title="Hogyan kapcsolódik a házhoz?" hint="A falak, az oszlopok és az ár a modellen is azonnal frissülnek." />
-            <div className="roof-options mount-options">{MOUNT_TYPES.filter((mount) => tenant.mounts.includes(mount)).map((mount) => <button type="button" key={mount} className={config.mount === mount ? 'selected' : ''} aria-pressed={config.mount === mount} onClick={() => onChange({ mount })}><MountIcon mount={mount} /><span><strong>{MOUNT_LABELS[mount]}</strong><small>{MOUNT_DESCRIPTIONS[mount]}</small></span><span className="selection-dot">{config.mount === mount && <Check size={12} />}</span></button>)}</div>
+            <BuildingIssues config={config} onFix={onChange} only={issuesForStep('mount')} />
           </>}
 
           {step === 'color' && <>
@@ -437,18 +435,25 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             </div>}
           </>}
 
-          {step === 'sides' && <>
+          {step === 'roof' && <>
             <SectionTitle title="Tetőrendszer" hint={isClosedBuilding(config.building) ? (config.building === 'conservatory' ? 'Télikerthez üveg- vagy fix (szigetelt) tető való: a mozgó tető nem zárható megfelelően.' : 'Verandához üveg-, polikarbonát vagy fix tető való.') : 'A tető típusa határozza meg az árnyékolást, az esővédelmet és az árat.'} />
             <RoofPicker config={config} prices={prices} onChange={onChange} />
             <GlazingPicker config={config} prices={prices} onChange={onChange} />
             <RoofControl config={config} scene={scene} onChange={onChange} onSceneChange={onSceneChange} />
             {ROOF_INFO[config.roof].motion === 'none' && <p className="split-note">Fix tető: nincs mozgatható része.</p>}
-            {(supportsRoofShade(config.roof) && tenant.extras.roofShade) || (config.roof === 'fixed' && tenant.extras.solar) ? <p className="split-note">{config.roof === 'fixed' ? 'Napelemes tető' : 'Motoros árnyékoló'} az Extrák lépésben választható.</p> : null}
+            <SliderField label="Tetődőlés" value={config.pitch ?? 0} min={PITCH_RANGE[0]} max={PITCH_RANGE[1]} step={1} unit="°" onChange={(pitch) => onChange({ pitch: pitch || undefined })} />
+            {(config.pitch ?? 0) > 0 && <p className="split-note">A tető hátsó (fali) éle {roofRise(config).toFixed(2).replace('.', ',')} m-rel magasabb az elülső oszlopmagasságnál, így a csapadék előre folyik le.</p>}
+            <RoofShadeOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
+            <SolarToggle config={config} prices={prices} onChange={onChange} />
+            <BuildingIssues config={config} onFix={onChange} only={issuesForStep('roof')} />
+          </>}
+
+          {step === 'sides' && <>
             <SectionTitle title="Melyik oldalt zárod?" hint="Koppints egy oldalra a felülnézeten vagy a 3D modellen. A középső mező a tető." />
             <SideDiagram config={config} selected={selectedSide} roofName={tenant.roofs[config.roof]?.name ?? ''} onSelect={onSideSelect} />
-            {selectedSide === 'roof' ? <div className="selected-side-head"><strong>Tető kijelölve</strong><span>{roofLabelsFor(config.roof)} · a beállításai fent. Koppints egy oldalra a záráshoz.</span></div> : sideSettings(selectedSide)}
+            {selectedSide === 'roof' ? <div className="selected-side-head"><strong>Tető kijelölve</strong><span>{roofLabelsFor(config.roof)} · a beállításai a <button type="button" className="inline-link" onClick={() => onStepChange('roof')}>Tető lépésben</button> vannak. Koppints egy oldalra a záráshoz.</span></div> : sideSettings(selectedSide)}
             {isClosedBuilding(config.building) && <WallGlazingPicker config={config} prices={prices} onChange={onChange} />}
-            <BuildingIssues config={config} onFix={onChange} />
+            <BuildingIssues config={config} onFix={onChange} only={issuesForStep('sides')} />
             <div className="interaction-hint"><Move size={17} /><p>A tolóüveg és az oldallamella a 3D-ben kattintásra, illetve a fenti gombbal is mozgatható. Egy oldal két részre is osztható, például fele tolóüveg, fele lécfal.</p></div>
           </>}
 
@@ -456,14 +461,13 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
             {isClosedBuilding(config.building) && <>
               <SectionTitle title={config.building === 'conservatory' ? 'Egész éves használat' : 'Zárt tér'} hint={config.building === 'conservatory' ? 'Fűtés, hűtés és az alapozott padló teszi lakótérré a télikertet.' : undefined} />
               <ClimateSection config={config} prices={prices} onChange={onChange} scene={scene} onSceneChange={onSceneChange} />
-              <BuildingIssues config={config} onFix={onChange} />
+              <BuildingIssues config={config} onFix={onChange} only={issuesForStep('extras')} />
             </>}
             {carport && <>
               {/* Carportnál csak az ide illő extrák: világítás és napelemes tető. */}
-              <SectionTitle title="Világítás és energia" hint="Minden opció azonnal megjelenik a modellen és a tételes árban." />
+              <SectionTitle title="Világítás" hint="Minden opció azonnal megjelenik a modellen és a tételes árban. A napelemes tető a Tető lépésben választható." />
               <div className="extra-grid">
                 {tenant.extras.led && <Toggle label="Periméter LED" description="Rejtett világítás a beállóban" icon={LampCeiling} price={`${formatHuf(prices.ledPerMeterNet)} / fm`} checked={config.led} onChange={(led) => onChange({ led, ledRgb: undefined })} />}
-                <SolarToggle config={config} prices={prices} onChange={onChange} />
               </div>
             </>}
             {!carport && <>
@@ -473,15 +477,13 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
               <RgbOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
               {tenant.extras.speakers && <Toggle label="Bluetooth hangrendszer" description="Egy pár beépített hangszóró" icon={Zap} price={formatHuf(prices.speakerPairNet)} checked={config.speakers} onChange={(speakers) => onChange({ speakers })} />}
             </div>
-            <SectionTitle title="Hő és légmozgás" hint={supportsRoofShade(config.roof) && tenant.extras.roofShade ? 'Árnyékoló a nyári napra, ventilátor a hőségre, fűtés a hűvös estékre.' : 'Fűtés a hűvös estékre, ventilátor a nyári hőségre.'} />
-            <RoofShadeOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
+            <SectionTitle title="Hő és légmozgás" hint="Fűtés a hűvös estékre, ventilátor a nyári hőségre." />
             {limits.maxHeaters > 0 && <div className="stepper-row"><span><strong>Infravörös teraszfűtés</strong><small>{formatHuf(prices.heaterUnitNet)} / db</small></span><div className="stepper"><button type="button" aria-label="Fűtőpanel csökkentése" disabled={config.heaters === 0} onClick={() => onChange({ heaters: Math.max(0, config.heaters - 1) })}><Minus size={15} /></button><span>{config.heaters} db</span><button type="button" aria-label="Fűtőpanel növelése" disabled={config.heaters >= limits.maxHeaters} onClick={() => onChange({ heaters: Math.min(limits.maxHeaters, config.heaters + 1) })}><Plus size={15} /></button></div></div>}
             <FanOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
-            <SectionTitle title="Vezérlés és energia" hint="Automatika, egy appból irányítható rendszer és napelem." />
+            <SectionTitle title="Vezérlés" hint={sensorsApplicable(config) ? 'Automatika és egy appból irányítható rendszer.' : 'Egy appból irányítható rendszer. Eső- és szélszenzor mozgó tetőhöz vagy ZIP-screenhez választható.'} />
             <div className="extra-grid">
-              {tenant.extras.sensors && <Toggle label="Eső- és szélszenzor" description="Automata tetőzárás esőben" icon={CloudRain} price={formatHuf(prices.sensorsNet)} checked={config.sensors} onChange={(sensors) => onChange({ sensors })} />}
+              {tenant.extras.sensors && sensorsApplicable(config) && <Toggle label="Eső- és szélszenzor" description="Automata tetőzárás esőben" icon={CloudRain} price={formatHuf(prices.sensorsNet)} checked={config.sensors} onChange={(sensors) => onChange({ sensors })} />}
               <SmartHomeOption config={config} prices={prices} onChange={onChange} />
-              <SolarToggle config={config} prices={prices} onChange={onChange} />
             </div>
             </>}
             {onEnergy &&<button type="button" className="energy-trigger" onClick={onEnergy}><Gauge size={16} /><span><strong>{energyCost ? `Üzemeltetés ≈ ${formatHuf(energyCost)} / év` : 'Üzemeltetési költség'}</strong><small>{energyCost ? 'Áramköltség a valós lakossági tarifával · részletek' : 'Nincs áramfogyasztó a tervben'}</small></span><ChevronRight size={15} /></button>}

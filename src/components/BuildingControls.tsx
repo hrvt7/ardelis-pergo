@@ -127,8 +127,9 @@ export function IssueFixButton({ config, issueId, onFix }: { config: PergolaConf
   return <button type="button" className="issue-fix" onClick={() => onFix(fix.patch)}><Wand2 size={14} />Javítás: {fix.label}</button>
 }
 
-export function BuildingIssues({ config, onFix }: { config: PergolaConfig; onFix?: Change }) {
-  const issues = buildingIssues(config)
+/** Jelzések; `only` megadásakor csak azok, amelyek az adott lépésben javíthatók (így mindegyik egyszer, a helyén jelenik meg). */
+export function BuildingIssues({ config, onFix, only }: { config: PergolaConfig; onFix?: Change; only?: readonly string[] }) {
+  const issues = buildingIssues(config).filter((issue) => !only || only.includes(issue.id))
   if (!issues.length) return null
   return <ul className="building-issues" aria-live="polite">{issues.map((issue, index) => <li key={issue.id} className={`issue-${issue.level}`} style={{ ['--i' as string]: index }}>{issue.level === 'warn' ? <TriangleAlert size={17} /> : <Info size={17} />}<span>{issue.text}<IssueFixButton config={config} issueId={issue.id} onFix={onFix} /></span></li>)}</ul>
 }

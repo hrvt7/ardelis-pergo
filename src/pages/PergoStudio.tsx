@@ -307,7 +307,7 @@ export default function PergoStudio() {
     setStep(next)
     const current = sceneRef.current
     if (!current.autoCamera || current.photoMode || current.sunStudy) return
-    if (next === 'color' || next === 'size' || next === 'mount' || next === 'extras') overview()
+    if (next === 'color' || next === 'size' || next === 'mount' || next === 'roof' || next === 'extras') overview()
     else if (next === 'sides') { setView('perspective'); if (selectedSideRef.current !== 'roof') focusSide(selectedSideRef.current) }
     else if (next === 'summary') { setView('perspective'); setFocus({ id: ++focusSeq.current, kind: 'showcase' }) }
   }, [focusSide, overview])
@@ -358,7 +358,8 @@ export default function PergoStudio() {
   }), [])
   const handleSideSelect = useCallback((side: SideKey | 'roof') => {
     setSelectedSide(side)
-    setStep('sides')
+    // A tetőre koppintva a Tető lépés, egy oldalra koppintva az Oldalak lépés nyílik.
+    setStep(side === 'roof' ? 'roof' : 'sides')
     setMobileControlsOpen(true)
     if (side !== 'roof' && sceneRef.current.autoCamera) focusSide(side)
   }, [focusSide, setMobileControlsOpen])

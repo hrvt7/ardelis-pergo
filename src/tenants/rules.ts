@@ -4,7 +4,7 @@
 import { DEFAULT_SHADE_FABRIC, SHADE_FABRICS, supportsRoofShade } from '../lib/roofShade'
 import { z } from 'zod'
 import { calculatePrice } from '../lib/pricing'
-import { defaultGlazing, glazingOptions, PITCH_RANGE, ROOF_TYPES } from '../lib/roofs'
+import { defaultGlazing, glazingOptions, PITCH_RANGE, ROOF_TYPES, sensorsApplicable } from '../lib/roofs'
 import { normalizeColorCode, pickCatalogColor, supportsTwoTone } from '../lib/colors'
 import type { PergolaConfig, PriceBreakdown, PriceSettings, RoofType, SideKey } from '../types/pergola'
 import { availableBuildings, BUILDING_ROOFS, CONSERVATORY_SIDE_TYPES, defaultWallGlazing, wallGlazingOptions } from '../lib/buildings'
@@ -197,7 +197,8 @@ export function normalizeConfig(tenant: Tenant, config: PergolaConfig): PergolaC
     screenOpen: clamp(config.screenOpen, [0, 100]),
     led,
     speakers: tenant.extras.speakers && config.speakers,
-    sensors: tenant.extras.sensors && config.sensors,
+    // Eső- és szélszenzor csak ott, ahol van mit vezérelnie (mozgó tető vagy ZIP-screen); fix tetőnél nem kerül az ajánlatba.
+    sensors: tenant.extras.sensors && config.sensors && sensorsApplicable({ roof, sides, split: config.split }),
     heaters: Math.round(clamp(config.heaters, [0, tenant.limits.maxHeaters])),
     // Napelem csak fix tetőn és csak ott, ahol a gyártó kínálja; különben a mező el is marad.
     split: splitEntries.length ? Object.fromEntries(splitEntries) as PergolaConfig['split'] : undefined,

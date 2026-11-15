@@ -26,6 +26,12 @@ export interface RoofInfo {
 
 export const ROOF_TYPES: RoofType[] = ['louvered', 'retractable', 'fabric', 'glass', 'polycarbonate', 'fixed']
 
+/** Az eső- és szélszenzornak csak mozgó tetőnél (lamella, nyitható) vagy ZIP-screennél van mit vezérelnie. */
+export function sensorsApplicable(config: Pick<PergolaConfig, 'roof' | 'sides' | 'split'>) {
+  if (ROOF_INFO[config.roof].motion !== 'none') return true
+  return [...Object.values(config.sides), ...Object.values(config.split ?? {})].includes('zip')
+}
+
 export const ROOF_INFO: Record<RoofType, RoofInfo> = {
   louvered: { share: 'l', spec: 'AE', priceKey: 'louveredPerM2Net', motion: 'tilt', control: 'Lamellaszög', shade: 'Állítható, 0–100%', rain: 'Zárva vízzáró', light: 'Szabályozható', name: 'Aero', short: 'motoros lamellás', description: 'Motoros, 0–90°-ban forgatható alumínium lamellák', value: 7 },
   retractable: { share: 'r', spec: 'GL', priceKey: 'retractablePerM2Net', motion: 'slide', control: 'Tetőnyitás', shade: 'Állítható, akár teljesen nyitott ég', rain: 'Zárva vízzáró', light: 'Szabályozható', name: 'Glide', short: 'eltolható lamellás', description: 'Forgatható és egy oldalra összetolható lamellacsomag', value: 9 },

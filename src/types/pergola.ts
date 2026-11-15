@@ -264,7 +264,7 @@ export type CameraView = 'perspective' | 'front' | 'top' | 'interior' | 'detail'
 
 /** Egyszeri kamerafókusz (pl. a kiválasztott oldalra fordulás vagy a bemutató körbeforgás); az `id` új értéke indítja. */
 export type CameraFocus = { id: number; kind: 'side'; side: SideKey } | { id: number; kind: 'showcase' } | { id: number; kind: 'overview' }
-export type ConfigStep = 'size' | 'mount' | 'color' | 'sides' | 'extras' | 'summary'
+export type ConfigStep = 'size' | 'mount' | 'roof' | 'sides' | 'color' | 'extras' | 'summary'
 
 export interface SavedConfiguration {
   id: string

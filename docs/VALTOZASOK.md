@@ -1,5 +1,15 @@
 # Változások
 
+## 4.29 – Lépések átrendezése: 7 logikus lépés, duplikáció nélkül
+
+- **Új sorrend:** Típus → Elhelyezés és méret → Tető → Oldalak → Szín → Komfort → Összegzés. Az Elhelyezés (házhoz kapcsolódás) a méretek elé került, mert az határozza meg, melyik oldal szabad.
+- **Külön Tető lépés:** a tetőrendszer, az üvegezés, a tetőmozgatás, a tetődőlés, a tetőárnyékoló és a napelem egy helyen van. Korábban a dőlés a Méret, az árnyékoló és a napelem az Extrák lépésben volt.
+- **Oldalak:** csak az oldalzárás és a falüvegezés; ha a felülnézeten a tetőre koppintasz, a konfigurátor a Tető lépésre vált.
+- **Komfort és vezérlés** (korábban Extrák): fűtés, világítás, hő és légmozgás, vezérlés. Az eső- és szélszenzor csak akkor választható, ha van mit vezérelnie (mozgó tető vagy ZIP-screen); fix tetőre váltva a szenzor kikerül a konfigurációból és az árból is.
+- **Figyelmeztetések:** minden épületszabály-jelzés pontosan egy lépésben jelenik meg, ott, ahol javítani lehet; a szövegekből kikerültek a lépésnevekre mutató utalások.
+- **Hiba: a lépésszámláló fixen „/ 06”-ot írt;** most a lépések számából számol.
+- Tesztek: `configSteps.test.ts` (7 lépés, sorrend, mobil gombfeliratok, minden jelzés pontosan egy lépéshez tartozik), `sensorsApplicable.test.ts` (szenzor csak mozgó tetőnél vagy ZIP-nél, normalizálás fix tetőnél).
+
 ## 4.28 – Élesebb 3D kép és betűk nagy felbontású kijelzőn
 
 - **Hiba: a 3D kép nem volt éles Retina / 2× kijelzőn.** A vászon felbontása szintenként legfeljebb 1,1–1,65× volt, így 2×-es kijelzőn a gép kisebb képet rajzolt és felnagyította (puha, „pixeles” hatás). Most: alacsony 1,25×, közepes 1,75×, magas és ultra a kijelző teljes, legfeljebb 2× felbontása. Ha a gép ettől 30 fps alá lassul, a meglévő védőháló pár másodperc után automatikusan alacsonyabb szintre lép.

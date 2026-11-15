@@ -3046,3 +3046,4 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .layout-a.style-glass .controls-panel, .layout-a.style-glass .price-panel:not(.is-collapsed), .layout-a.style-glass .mobile-price-bar { background: #1A1C1F; }
 }
+.inline-link { padding: 0; border: 0; background: none; color: var(--accent-primary); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }

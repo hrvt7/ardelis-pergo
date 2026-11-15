@@ -120,7 +120,7 @@ export function buildingIssues(config: PergolaConfig): BuildingIssue[] {
     else if (config.width >= 4.6 && bays === 1) issues.push({ id: 'carport-double', level: 'info', text: `Két autóhoz legalább ${CARPORT_DOUBLE_MIN.toFixed(1).replace('.', ',')} m szélesség javasolt; ekkora méretnél egy autó és egy tároló-sáv fér el.` })
     if (config.depth < 5) issues.push({ id: 'carport-depth', level: 'info', text: 'Egy személyautóhoz legalább 5 m mélység ajánlott (kombinak, SUV-nak 5,5 m), hogy az ajtók és a csomagtartó a tető alatt legyenek.' })
     if (config.height < 2.1) issues.push({ id: 'carport-height', level: 'warn', text: 'A 2,1 m alatti belmagasság magasabb autónál (SUV, tetőbox) kevés; 2,3 m javasolt.' })
-    if (!config.pitch && (config.roof === 'glass' || config.roof === 'polycarbonate')) issues.push({ id: 'carport-pitch', level: 'info', text: 'Üveg- és polikarbonát tetőnél pár fokos dőlés javasolt a vízelfolyáshoz (Típus lépés).' })
+    if (!config.pitch && (config.roof === 'glass' || config.roof === 'polycarbonate')) issues.push({ id: 'carport-pitch', level: 'info', text: 'Üveg- és polikarbonát tetőnél pár fokos dőlés javasolt a vízelfolyáshoz.' })
     return issues
   }
   if (!isClosedBuilding(config.building)) return []
@@ -148,8 +148,8 @@ export function buildingIssues(config: PergolaConfig): BuildingIssue[] {
     if (!config.foundation) issues.push({ id: 'cons-foundation', level: 'warn', text: 'Alapozás nélkül a télikert nem használható egész évben: kapcsold be az alapozott padlót (Extrák).' })
     if (open > 0) issues.push({ id: 'cons-open', level: 'warn', text: `${open === 1 ? 'Egy oldal' : `${open} oldal`} nyitott. A télikert zárt, fűtött tér: zárd le üveggel vagy ajtóval.` })
     if (!hasDoor) issues.push({ id: 'cons-door', level: 'warn', text: 'Nincs ajtó. A télikertbe legalább egy bejárati ajtó kell (nyíló vagy toló).' })
-    if (!config.climate) issues.push({ id: 'cons-climate', level: 'info', text: 'Egész éves használathoz válassz fűtést/hűtést az Extrák lépésben.' })
-    if (!config.pitch) issues.push({ id: 'cons-pitch', level: 'info', text: 'Üvegtetőnél pár fokos dőlés javasolt a vízelfolyáshoz és a tisztán tartáshoz (Típus lépés).' })
+    if (!config.climate) issues.push({ id: 'cons-climate', level: 'info', text: 'Egész éves használathoz válassz fűtést vagy hűtést.' })
+    if (!config.pitch) issues.push({ id: 'cons-pitch', level: 'info', text: 'Üvegtetőnél pár fokos dőlés javasolt a vízelfolyáshoz és a tisztán tartáshoz.' })
   } else {
     if (open >= 2) issues.push({ id: 'veranda-open', level: 'info', text: `${open} oldal nyitott. A veranda általában legalább három oldalról zárt.` })
     if (!hasDoor && !hasSlidingGlass) issues.push({ id: 'veranda-access', level: 'info', text: 'Nincs sem ajtó, sem tolóüveg: nehezen lesz bejárható a zárt tér.' })
