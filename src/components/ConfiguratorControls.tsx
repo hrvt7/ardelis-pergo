@@ -22,6 +22,8 @@ import { BuildingIssues, BuildingPicker, ClimateSection, WallGlazingPicker, type
 import { BUILDING_ROOFS, isClosedBuilding } from '@/lib/buildings'
 import type { ConfigStep, MountType, PergolaConfig, PriceSettings, QualityLevel, RoofType, SceneSettings, SideKey } from '@/types/pergola'
 import { isSheetLayout } from '@/lib/viewport'
+import DemoDevicePanel from '@/components/DemoDevicePanel'
+import { useDemoDevice } from '@/lib/demoDevice'
 import { TIER_LABEL, detectQualityTier, qualityAboveDevice, type QualityTier } from '@/lib/quality'
 
 // A lépések sorrendje a döntések természetes rendje: mit → mekkora és hogyan áll → tető és zárás → szín → komfort → felmérés.
@@ -285,6 +287,7 @@ function useSheetGesture(panel: React.RefObject<HTMLElement | null>, sheet: Shee
 /** Jelenet és vizualizáció: lebegő „Nézet” panel (nem lépés — a beállítások a 3D-nézeten azonnal látszanak). */
 export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneChange, onPhotoUpload }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onPhotoUpload: (file: File) => void }) {
   const [detectedTier] = useState(() => detectQualityTier())
+  const demoDevice = useDemoDevice()
   const setDayTime = (dayTime: number) => onSceneChange({ dayTime, time: dayTime >= 20 || dayTime < 7 ? 'night' : dayTime >= 17 ? 'sunset' : 'day' })
   const carport = config.building === 'carport'
   const thing = carport ? 'a carport' : 'a pergola'
@@ -310,8 +313,10 @@ export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneCha
               <Toggle label="Automata forgatás" description="Koppintásra megáll" checked={scene.autoRotate} onChange={(autoRotate) => onSceneChange({ autoRotate })} />
               <Toggle label="Követő kamera" description={carport ? 'A választáshoz fordul (szín, tető)' : 'A választáshoz fordul (oldal, szín, ventilátor)'} checked={scene.autoCamera} onChange={(autoCamera) => onSceneChange({ autoCamera })} />
             </div>
-            <label className="select-field"><span>3D minőség</span><select value={scene.quality} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus ({TIER_LABEL[detectedTier].toLowerCase()} ezen az eszközön)</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="medium">Közepes</option><option value="low">Alacsony</option></select></label>
-            {qualityAboveDevice(scene.quality, detectedTier) && <p className="field-hint quality-hint" role="note">Ezen az eszközön a(z) {TIER_LABEL[scene.quality as QualityTier].toLowerCase()} szint akadozhat. Az Automatikus a gép teljesítményéhez igazítja a képet.</p>}
+            <label className="select-field"><span>3D minőség</span><select value={demoDevice ? 'ultra' : scene.quality} disabled={demoDevice} aria-describedby={demoDevice ? 'quality-locked' : undefined} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">Automatikus ({TIER_LABEL[detectedTier].toLowerCase()} ezen az eszközön)</option><option value="ultra">Ultra</option><option value="high">Magas</option><option value="medium">Közepes</option><option value="low">Alacsony</option></select></label>
+            {demoDevice && <p id="quality-locked" className="field-hint" role="note">A bemutató eszköz mód rögzíti: Ultra (automatikus visszaléptetés nélkül).</p>}
+            {!demoDevice && qualityAboveDevice(scene.quality, detectedTier) && <p className="field-hint quality-hint" role="note">Ezen az eszközön a(z) {TIER_LABEL[scene.quality as QualityTier].toLowerCase()} szint akadozhat. Az Automatikus a gép teljesítményéhez igazítja a képet.</p>}
+            <DemoDevicePanel />
             <div className="photo-mode">
               <div><Image size={18} /><span><strong>Előnézet saját fotóval</strong><small>A kép csak ebben a böngészőben jelenik meg.</small></span></div>
               <label className="upload-button"><Upload size={15} />Fotó feltöltése<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) onPhotoUpload(file); event.target.value = '' }} /></label>

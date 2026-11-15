@@ -3,6 +3,9 @@ import path from "path"
 import react from "@vitejs/plugin-react"
 import { defineConfig, loadEnv, type Plugin } from "vite"
 import fs from "node:fs"
+import { createHash } from "node:crypto"
+import { build as esbuild } from "esbuild"
+import { buildOfflineManifest, type ManifestInputFile } from "./src/lib/offlineManifest"
 import { buildStructuredData, getSeoPage, SEO_SITEMAP_PATHS } from "./contracts/seo"
 import { PLATFORM_COPY } from "./src/i18n/platformCopy"
 
@@ -91,6 +94,67 @@ function staticSeo(siteUrl: string | undefined): Plugin {
   }
 }
 
+const sha = (data: string | Uint8Array) => createHash("sha256").update(data).digest("hex").slice(0, 16)
+
+/** A public/ alatti fájlok bejárása (kiszolgálási útvonal, méret, tartalom-hash). */
+function walkPublic(publicDir: string, sub: string): ManifestInputFile[] {
+  const root = path.join(publicDir, sub)
+  if (!fs.existsSync(root)) return []
+  return (fs.readdirSync(root, { recursive: true, withFileTypes: true }) as fs.Dirent[])
+    .filter((entry) => entry.isFile())
+    .map((entry) => {
+      const file = path.join(entry.parentPath, entry.name)
+      const data = fs.readFileSync(file)
+      return { url: `/${path.relative(publicDir, file).split(path.sep).join("/")}`, size: data.byteLength, hash: sha(data) }
+    })
+}
+
+/**
+ * Service worker és offline előtöltési lista a buildbe: a src/sw/sw.ts-t esbuild-del dist/sw.js-be csomagolja, és beleírja
+ * a manifestet (a Vite-kimenet hash-elt fájljai + a public/assets és public/vendor jelenet-eszközei). Új build = új sw.js,
+ * ezt a böngésző frissítésként ismeri fel. Az előnézeti (artifact) buildbe nem kerül SW.
+ */
+function offlineSw(mode: string): Plugin {
+  let outDir = ""
+  let publicDir = ""
+  const buildFiles: ManifestInputFile[] = []
+  return {
+    name: "offline-sw",
+    apply: "build",
+    configResolved(config) { outDir = config.build.outDir; publicDir = config.publicDir },
+    generateBundle(_options, bundle) {
+      buildFiles.length = 0
+      for (const item of Object.values(bundle)) {
+        const data = item.type === "chunk" ? item.code : item.source
+        buildFiles.push({ url: `/${item.fileName}`, size: typeof data === "string" ? Buffer.byteLength(data) : data.byteLength, hash: sha(data) })
+      }
+    },
+    closeBundle: {
+      sequential: true,
+      order: "post",
+      async handler() {
+        if (mode === "artifact") return
+        const indexFile = path.join(outDir, "index.html")
+        if (!fs.existsSync(indexFile)) return
+        const index = fs.readFileSync(indexFile)
+        const manifest = buildOfflineManifest({ buildFiles, publicFiles: [...walkPublic(publicDir, "assets"), ...walkPublic(publicDir, "vendor")], indexHash: sha(index), indexSize: index.byteLength })
+        fs.writeFileSync(path.join(outDir, "offline-manifest.json"), JSON.stringify(manifest))
+        await esbuild({
+          entryPoints: [path.resolve(__dirname, "src/sw/sw.ts")],
+          outfile: path.join(outDir, "sw.js"),
+          bundle: true,
+          format: "iife",
+          target: "es2020",
+          minify: true,
+          legalComments: "none",
+          define: { __OFFLINE_MANIFEST__: JSON.stringify(manifest) },
+          logLevel: "warning",
+        })
+      },
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, "")
   return {
@@ -99,6 +163,7 @@ export default defineConfig(({ mode }) => {
       devServer({ entry: "server/dev.ts", exclude: [/^\/(?!api\/).*$/] }),
       react(),
       staticSeo(siteOrigin(env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL)),
+      offlineSw(mode),
     ],
     server: { port: 3000 },
     // Előre optimalizált függőségek: különben fejlesztés közben az első AR-megnyitás teljes oldal-újratöltést okozna.

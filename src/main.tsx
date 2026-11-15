@@ -28,8 +28,15 @@ import '@fontsource/poppins/500.css'
 import '@fontsource/poppins/600.css'
 import './index.css'
 import App from './App.tsx'
+import SwUpdateBanner from '@/components/SwUpdateBanner'
+import { registerServiceWorker } from '@/lib/swClient'
+import { captureInstallPrompt } from '@/lib/installPrompt'
 // Vercel Web Analytics: csak ha a projektben be van kapcsolva és VITE_VERCEL_ANALYTICS=1 (különben a szkript 404-et adna).
 import { Analytics } from '@vercel/analytics/react'
+
+// Telepíthető webapp: a SW csak éles buildben, https-en (helyi próbához localhoston) és nem az előnézeti buildben.
+captureInstallPrompt()
+registerServiceWorker({ prod: import.meta.env.PROD, mode: import.meta.env.MODE, router: import.meta.env.VITE_ROUTER })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -37,6 +44,6 @@ createRoot(document.getElementById('root')!).render(
       // Előnézeti (artifact) build: az oldal nem a domain gyökerén fut, ezért belső útválasztás.
       // A kezdő nézet a ?route= paraméterrel választható (alapból a konfigurátor).
       ? <MemoryRouter initialEntries={[`${new URLSearchParams(window.location.search).get('route') ?? '/konfigurator'}${window.location.search}`]}><App /></MemoryRouter>
-      : <BrowserRouter><App />{import.meta.env.VITE_VERCEL_ANALYTICS === '1' && <Analytics />}</BrowserRouter>}
+      : <BrowserRouter><App /><SwUpdateBanner />{import.meta.env.VITE_VERCEL_ANALYTICS === '1' && <Analytics />}</BrowserRouter>}
   </StrictMode>,
 )

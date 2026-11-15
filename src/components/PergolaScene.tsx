@@ -11,6 +11,7 @@ import type { CameraFocus, CameraView, HouseStyle, PergolaConfig, RoofGlazing, S
 import PhotoRig, { ShadowCatcher } from '@/components/PhotoRig'
 import { PHOTO_GROUP } from '@/lib/photoScene'
 import { cameraMotion } from '@/lib/cameraMotion'
+import { effectiveQualityLevel, governorEnabled, useDemoDevice } from '@/lib/demoDevice'
 import { QualityContext, budgetDpr, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls, wallSides } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
@@ -3283,9 +3284,12 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
   const [coreOnly, setCoreOnly] = useState(false)
   const detectedTier = useMemo(() => detectQualityTier(), [])
   const [degradedTier, setDegradedTier] = useState<QualityTier | null>(() => readTierCap())
-  const baseTier = resolveQualityTier(scene.quality, detectedTier)
+  // Bemutató eszköz módban a szint fixen ultra (a választó és a védőháló ilyenkor nem változtat rajta).
+  const demoDevice = useDemoDevice()
+  const level = effectiveQualityLevel(scene.quality, demoDevice)
+  const baseTier = resolveQualityTier(level, detectedTier)
   // Csak automatikus minőségnél: a kézzel választott szintet nem írjuk felül.
-  const activeTier = scene.quality === 'auto' && degradedTier && tierRank(degradedTier) < tierRank(baseTier) ? degradedTier : baseTier
+  const activeTier = level === 'auto' && degradedTier && tierRank(degradedTier) < tierRank(baseTier) ? degradedTier : baseTier
   const quality = useMemo(() => qualitySettings(activeTier), [activeTier])
   // A vászon CSS-mérete: alacsony és közepes szinten ebből számoljuk a képpont-keretet (budgetDpr).
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -3303,13 +3307,13 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
   }, [])
   const dpr = useMemo(() => budgetDpr(quality, wrapSize.w, wrapSize.h), [quality, wrapSize.w, wrapSize.h])
   const onSlow = useCallback(() => {
-    if (scene.quality !== 'auto') return
+    if (level !== 'auto') return
     const next = lowerTier(activeTier)
     if (next === activeTier) return
     log.warn('Pergola scene too slow, lowering quality', { from: activeTier, to: next })
     writeTierCap(next)
     setDegradedTier(next)
-  }, [scene.quality, activeTier])
+  }, [level, activeTier])
   useEffect(() => { prefetchSceneAssets(scene) }, [scene])
   const onReady = useMemo(() => () => setReady(true), [])
   const onContextLost = useMemo(() => () => { setReady(false); setLoaded(false); setPosterGone(false); setContextLost(true) }, [])
@@ -3420,7 +3424,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
             modular={modular}
           />
         </Suspense></QualityContext.Provider>
-        <FrameGovernor enabled={loaded && scene.quality === 'auto'} onSlow={onSlow} />
+        <FrameGovernor enabled={governorEnabled(scene.quality, demoDevice, loaded)} onSlow={onSlow} />
         <FirstFrameReady onReady={onReady} />
       </Canvas>
     </SceneErrorBoundary>

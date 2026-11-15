@@ -10,6 +10,7 @@ Minden feladat: önállóan elvégezhető, teszttel bizonyítható. Becsült kö
 | 4 | **Havi riport a gyártónak** (megnyitás → lépések → PDF → lead), e-mailben | a meglévő „becsült konverzió” címkézés megmarad; riport generálása tesztelt; csak hozzájárult adat szerepel | ~10 $ |
 | 5 | **Lamellaárnyék a teraszon** (napszak + lamellaszög) | árnyék mozog a szöggel; mobilon kikapcsolható/egyszerűsített; teljesítményteszt nem romlik | ~8 $ |
 | 6 | **Időpontfoglalási link** a lead után (gyártó adja meg) | csak https link fogadható el; megjelenik az összegző e-mailben és az adminban | ~4 $ |
+| 7 | **Gyártónkénti (white-label) telepíthető app**: saját manifest (név, ikon, színek, start_url = /k/<id>) a bemutató eszközhöz | a /k/<id> oldal a gyártó manifestjét linkeli (szerveroldali vagy dinamikus manifest), saját ikon a kezdőképernyőn; a SW változatlan; teszt a manifest tartalmára | ~6 $ |
 | – | Tartalék / javítási körök | | ~20 $ |
 
 Ami emberi döntést kér: 3D-árnyék/textúra minőség (7. szabály), arculat (arany vs. lime), német jogi szövegek.
