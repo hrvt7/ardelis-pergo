@@ -1,9 +1,10 @@
 import '@/legal.css'
 import { useEffect, useState } from 'react'
 import { getAdvice } from '@/lib/advice'
-import { MessageCircle, ArrowRight, Camera, Check, ChevronRight, Clipboard, Clock3, Code2, FileDown, Gauge, GitCompareArrows, LoaderCircle, PackageCheck, PencilLine, Save, Share2, Wallet } from 'lucide-react'
+import { MessageCircle, ArrowRight, Camera, Clapperboard, Check, ChevronRight, Clipboard, Clock3, Code2, FileDown, Gauge, GitCompareArrows, LoaderCircle, PackageCheck, PencilLine, Save, Share2, Wallet } from 'lucide-react'
 import PriceMix from '@/components/PriceMix'
 import { captureScene, renderShareCard, shareOrDownload } from '@/lib/showcase'
+import { recordTurntable, videoRecordingSupported } from '@/lib/turntableVideo'
 import { colorSummary } from '@/lib/colors'
 import LeadForm from '@/components/LeadForm'
 import { copyShareUrl } from '@/lib/exportPdf'
@@ -44,6 +45,8 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
   const [thumbnail, setThumbnail] = useState('')
   const bom = getBom(config)
   const [sharing, setSharing] = useState(false)
+  const [canRecord] = useState(() => videoRecordingSupported())
+  const [recording, setRecording] = useState<number | null>(null)
   const capture = () => {
     const image = captureScene(1400)
     if (image) setThumbnail(image)
@@ -79,6 +82,20 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
     } catch { onNotify('A megosztható kép most nem készült el.') }
     finally { setSharing(false) }
   }
+  // Körbejáró videó (kb. 10 mp) márkázott sávval: telefonon a megosztó menübe (WhatsApp), asztalon letöltésként.
+  const video = async () => {
+    if (recording !== null) return
+    setRecording(0)
+    try {
+      const title = `${ROOF_LABELS[config.roof]} · ${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} m`
+      const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim() || '#d8ff72'
+      const { blob, extension } = await recordTurntable({ brand: tenant.brand.name, title, price: formatHuf(price.totalGross), accent }, (progress) => setRecording(progress))
+      const result = await shareOrDownload(blob, `${(projectName.trim() || 'pergola').replace(/[^\p{L}\p{N}]+/gu, '-').toLowerCase()}-video.${extension}`, projectName.trim() || title)
+      if (result === 'downloaded') onNotify(extension === 'mp4' ? 'A videó letöltve — küldd el a családnak.' : 'A videó letöltve (WebM). Ha a telefon nem játssza le, küldd a terv linkjét.')
+      noteEngagement(tenant.id, 'share')
+    } catch { onNotify('A videó most nem készült el. Fotó módban és néhány böngészőben nem érhető el.') }
+    finally { setRecording(null) }
+  }
   const copy = async () => {
     try { await copyShareUrl(createTextSummary(config, price, ROOF_LABELS, tenant.brand.name, tenant)); onNotify('Az összefoglaló a vágólapra másolva.'); noteEngagement(tenant.id, 'share') }
     catch { onNotify('A másolás nem sikerült ebben a böngészőben.') }
@@ -102,6 +119,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
         </div>
         {onExport && <button type="button" className="showroom-share is-pdf" onClick={onExport} disabled={exporting}>{exporting ? <LoaderCircle size={17} className="spin" /> : <FileDown size={17} />}<span><strong>{exporting ? 'PDF készül…' : 'PDF összefoglaló letöltése'}</strong><small>Méretek, anyaglista, irányár és a 3D-link egy dokumentumban</small></span></button>}
         <button type="button" className="showroom-share" onClick={share} disabled={sharing}>{sharing ? <LoaderCircle size={17} className="spin" /> : <Share2 size={17} />}<span><strong>Kép küldése a családnak</strong><small>Márkázott kép a tervvel és az árral · WhatsApp, Messenger, e-mail</small></span></button>
+        {canRecord && <button type="button" className="showroom-share is-video" onClick={() => void video()} disabled={recording !== null}>{recording !== null ? <LoaderCircle size={17} className="spin" /> : <Clapperboard size={17} />}<span><strong>{recording !== null ? `Videó készül… ${Math.round(recording * 100)}%` : 'Videó a tervről'}</strong><small>{recording !== null ? 'Ne zárd be az oldalt, a kamera körbejárja a tervet' : 'Kb. 10 mp-es körbejárás, WhatsAppon is küldhető'}</small></span></button>}
         <PriceMix price={price} />
       </section>
       {onBudget && <button type="button" className="budget-trigger is-summary" onClick={onBudget}><Wallet size={15} /><span><strong>Van keretösszeged?</strong><small>Megmutatjuk, mi fér bele</small></span></button>}

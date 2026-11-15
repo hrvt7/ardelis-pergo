@@ -1,5 +1,13 @@
 # Változások
 
+## 4.16 – Videó a tervről (körbejárás, WhatsAppon küldhető)
+
+- Az Összegzés lépésben új „Videó a tervről” gomb: kb. 10 mp-es videó, a kamera a terv körül mozog, alul márkázott sáv (gyártó neve, tető és méret, bruttó irányár). Telefonon a megosztó menübe kerül (WhatsApp, Messenger), asztalon letöltődik.
+- Formátum: MP4 (H.264), ahol a böngésző tudja (WhatsApp és iPhone ezt játssza le biztosan); különben WebM, erről a vevő üzenetet kap. Ahol a böngésző nem tud videót rögzíteni, a gomb nem jelenik meg.
+- Teljes kör csak akkor, ha nincs ház és hátsó fal a képen; egyébként lengés ±55°-ban a kiinduló nézet körül, így a kamera nem kerül a ház mögé vagy a falba. A felvétel alatt a kameravezérlés szünetel, utána a nézet visszaáll.
+- A meglévő nagy felbontású, márkázott kép („Kép küldése a családnak”) változatlan.
+- Új: `src/lib/turntableVideo.ts`, `TurntableDriver` a jelenetben; teszt: `tests/turntableVideo.test.ts`. Böngészőben ellenőrizve: MP4 (H.264, 1280×768) készül, a nézet visszaáll. Valódi telefonon (iPhone, Android) még nincs kipróbálva.
+
 ## 4.15 – PDF-letöltés leadenként a gyártói adminban
 
 - Az érdeklődő adatlapján új „PDF letöltése” gomb: ugyanaz a 4 oldalas dokumentum, amit a vevő kap (konfiguráció, anyaglista, tételes árkalkuláció, műszaki rajz, QR-kód a vevő tervére), a vevő nevével a borítón.

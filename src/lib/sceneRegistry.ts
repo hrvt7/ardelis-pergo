@@ -17,6 +17,16 @@ export async function renderHiRes(pixelRatio = 2): Promise<boolean> {
   try { await hiRes(pixelRatio); return true } catch { return false }
 }
 
+/** Körbejáró videó: a PergolaScene kameravezérlője. `step(t)` a felvétel 0–1 közti pillanatába állítja a kamerát. */
+export interface OrbitDriver { begin: () => void; step: (t: number) => void; end: () => void }
+let orbitDriver: OrbitDriver | null = null
+export function setOrbitDriver(driver: OrbitDriver | null) { orbitDriver = driver }
+export function getOrbitDriver() { return orbitDriver }
+/** Felvétel közben a kameravezérlő (követés, repülés) szünetel, hogy ne mozgassa a kamerát a videó alatt. */
+let orbitRecording = false
+export function setOrbitRecording(value: boolean) { orbitRecording = value }
+export const isOrbitRecording = () => orbitRecording
+
 export function getActiveScene() {
   return activeScene
 }

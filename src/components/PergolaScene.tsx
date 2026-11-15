@@ -13,7 +13,8 @@ import { cameraMotion } from '@/lib/cameraMotion'
 import { QualityContext, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls, wallSides } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
-import { setActiveScene, setHiResRenderer } from '@/lib/sceneRegistry'
+import { isOrbitRecording, setActiveScene, setHiResRenderer, setOrbitDriver, setOrbitRecording } from '@/lib/sceneRegistry'
+import { orbitAzimuth } from '@/lib/turntableVideo'
 import { useTenant } from '@/tenants/TenantContext'
 import { EMBEDDED_GRASS_RGBA, EMBEDDED_GRASS_SIZE } from '@/lib/grassTexture'
 import { log } from '@/lib/logger'
@@ -2813,7 +2814,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
   }, [view, camera, gl, invalidate])
 
   useFrame((_, delta) => {
-    if (!controls.current || view === 'sofa') return
+    if (!controls.current || view === 'sofa' || isOrbitRecording()) return
     // Lefelé addig forgatható, amíg a kamera a talaj fölött marad (közelről a tető alá is benézhet).
     // Az automatikus repülés közben nincs korlát (az útvonal maga a talaj fölött tartja a kamerát, és pontosan a célállásba kell érnie).
     controls.current.maxPolarAngle = transitioning.current ? Math.PI : groundPolarLimit(controls.current.target.y, camera.position.distanceTo(controls.current.target))
@@ -3032,6 +3033,52 @@ function PerfProbe({ quality }: { quality: QualitySettings }) {
   return null
 }
 
+/** Körbejáró videó kamerája (turntableVideo): a felvétel idejére a vezérlés szünetel, utána a kamera visszaáll. */
+function TurntableDriver({ fullTurn }: { fullTurn: boolean }) {
+  const get = useThree((state) => state.get)
+  useEffect(() => {
+    let saved: { position: THREE.Vector3; target: THREE.Vector3; autoRotate: boolean; enabled: boolean } | null = null
+    let radius = 0
+    let height = 0
+    let start = 0
+    setOrbitDriver({
+      begin: () => {
+        const { camera, controls } = get()
+        const orbit = controls as unknown as OrbitControlsType | null
+        const target = orbit?.target.clone() ?? new THREE.Vector3()
+        saved = { position: camera.position.clone(), target, autoRotate: orbit?.autoRotate ?? false, enabled: orbit?.enabled ?? true }
+        if (orbit) { orbit.autoRotate = false; orbit.enabled = false }
+        setOrbitRecording(true)
+        const offset = camera.position.clone().sub(target)
+        radius = Math.hypot(offset.x, offset.z)
+        height = offset.y
+        start = Math.atan2(offset.x, offset.z)
+      },
+      step: (t) => {
+        if (!saved) return
+        const { camera, invalidate } = get()
+        const azimuth = orbitAzimuth(t, start, fullTurn)
+        camera.position.set(saved.target.x + Math.sin(azimuth) * radius, saved.target.y + height, saved.target.z + Math.cos(azimuth) * radius)
+        camera.lookAt(saved.target)
+        invalidate()
+      },
+      end: () => {
+        if (!saved) return
+        const { camera, controls, invalidate } = get()
+        const orbit = controls as unknown as OrbitControlsType | null
+        camera.position.copy(saved.position)
+        camera.lookAt(saved.target)
+        if (orbit) { orbit.autoRotate = saved.autoRotate; orbit.enabled = saved.enabled; orbit.update() }
+        saved = null
+        setOrbitRecording(false)
+        invalidate()
+      },
+    })
+    return () => { setOrbitDriver(null); setOrbitRecording(false) }
+  }, [get, fullTurn])
+  return null
+}
+
 function SceneRegistration() {
   const scene = useThree((state) => state.scene)
   const store = useThree((state) => state.get)
@@ -3103,7 +3150,7 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} /></Suspense></SceneAssetBoundary>}
     {scene.photoMode
       ? <PhotoRig config={config} placement={placement} onCommit={(next) => onSceneChange(next)} />
-      : <CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} mechanism={config.roof === 'louvered' && (!!scene.mechanism || rainShow > 0)} autoCamera={scene.autoCamera} houseFrontZ={studio || hasBackWall(config.mount) ? null : getHouseLayout(config, scene.houseStyle ?? 'classic').frontZ} />}
+      : <><TurntableDriver fullTurn={studio && !hasBackWall(config.mount)} /><CameraController view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} mechanism={config.roof === 'louvered' && (!!scene.mechanism || rainShow > 0)} autoCamera={scene.autoCamera} houseFrontZ={studio || hasBackWall(config.mount) ? null : getHouseLayout(config, scene.houseStyle ?? 'classic').frontZ} /></>}
   </>
 }
 
