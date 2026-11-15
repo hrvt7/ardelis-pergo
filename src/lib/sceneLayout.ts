@@ -1,7 +1,7 @@
 // A 3D jelenet környezetének elrendezése (ház, házszárnyak, kert), tiszta TypeScript.
 // Egyetlen igazságforrás: a jelenet ebből rajzol, a bejárás ütközésvizsgálata ebből számol.
 import { HOUSE_RAW } from './houseDims'
-import { A45_HOUSE, STYLED_HOUSE, styledHouseScale } from './house'
+import { STYLED_HOUSE, styledHouseScale } from './house'
 import { hasBackWall, isWallSide, sideWalls } from './mount'
 import type { HouseStyle, PergolaConfig, SideKey } from '../types/pergola'
 
@@ -14,11 +14,6 @@ type Layout = Pick<PergolaConfig, 'width' | 'depth' | 'height' | 'mount'>
  */
 export function getHouseLayout(config: Layout, style: HouseStyle = 'classic') {
   const attached = hasBackWall(config.mount)
-  if (style === 'a45') {
-    // Valós méretű típusház: léptéke 1, a pergola a bejárati homlokzat közepe elé kerül.
-    const frontZ = attached ? -config.depth / 2 - 0.185 : -config.depth / 2 - 4.6
-    return { frontZ, attached, width: A45_HOUSE.width, scale: 1, depth: A45_HOUSE.depth }
-  }
   if (style !== 'classic') {
     // Modellezett ház: a pergola a főtömeg közepe elé kerül; jobbra a melléképület nyúlik túl (a kert ehhez igazodik).
     const scale = styledHouseScale(config.width)

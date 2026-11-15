@@ -1,5 +1,16 @@
 # Változások
 
+## 4.31 – Modulház: új, különálló termék (A45)
+
+- **Új termékcsalád: Modulház** (`/konfigurator/modulhaz`, `/k/<gyártó>/modulhaz`). Saját kalkulátor, nem kapcsolódik a pergolához. A termékválasztóban (`/konfigurator/termekek`) a „Teraszfedés: pergola, veranda, télikert” mellett jelenik meg, a fejlécben a „Másik termék” link vezet ide. A demó gyártó kínálja.
+- **Első típus: A45 modulház** (Álomterasz típusterv): bruttó 45 m², nettó 39 m², 9,23 × 5,28 m. A 3D modell valós méretű, a magasságok és a tetőhajlás becsültek (a felületen is így jelenik meg).
+- **Árazás:** a gyártó nyilvános ára, 445 000 Ft nettó / m², bruttó 45 m²-re számolva (az m²-alap a gyártóval egyeztetendő, nettóra egy beállítással váltható). Kivitel: „külső kulcsrakész, belül emelt szerkezetkész” (alapár) vagy „teljes kulcsrakész” (egyedi ajánlat, az irányárat nem emeli). ÁFA: családi házként 5% (a gyártó tájékoztatása szerint), egyéb célra 27%. Nincs külön telepítési mintatétel. A szállítás, a darus emelés, a tervezés-engedélyezés, a közműbekötés és a tereprendezés nincs benne – ezt az összegzés, az árpanel és a PDF is kiírja.
+- **Megjelenés:** homlokzat-, nyílászáró- és tetőszín (csak látvány, az árat nem módosítja). Nézetek: tér, homlokzat, oldal, felülről; méretcímkék, 180 cm-es figura, napszakok.
+- **Kimenetek:** spec-kód (`MODUL-…`), PDF, megosztó link (`#h=`), ajánlatkérés a közös lead-végponton (modulház-motor).
+- **Visszavonva:** a 4.30-ban a pergola „Ház típusa” választójába került A45 opció kikerült; a ház most önálló termék.
+- Közös elemek: a `CatalogPricePanel` és a PDF telepítési sora, valamint az árpanel megjegyzései termékenként állíthatók (alapértelmezés változatlan).
+- Tesztek: `modularHouse.test.ts` (m²-ár, ÁFA, kulcsrakész egyedi ajánlat, színek nem áraznak, séma, GLB szerepnevek és valós méret), `products.test.ts` (élő családok, útvonal, modulház-motor, egyedi megosztó kulcsok).
+
 ## 4.30 – A45 típusház valós méretben (demó)
 
 - **Új háztípus a „Ház típusa” választóban:** „A45 modulház” (Álomterasz A45 típusú modulháza). A ház nem skálázódik a pergolával: 9,23 × 5,28 m külső méret, 27 cm-es külső fal, a nyílászárók a gyártói alaprajz szerinti helyen és méretben. A pergola a bejárati (hosszabbik) homlokzat közepe elé kerül.

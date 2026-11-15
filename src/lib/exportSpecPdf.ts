@@ -5,12 +5,12 @@ import { lamelixSvg } from '@/lib/lamelixBrand'
 import { formatHuf } from '@/lib/pricing'
 import type { PriceBreakdown } from '@/types/pergola'
 
-export async function exportSpecPdf({ family, title, code, rows, price, notes }: { family: string; title: string; code: string; rows: [string, string][]; price: PriceBreakdown; notes: string[] }) {
+export async function exportSpecPdf({ family, title, code, rows, price, notes, installationLabel = 'Telepítési mintatétel' }: { family: string; title: string; code: string; rows: [string, string][]; price: PriceBreakdown; notes: string[]; /** null: nincs külön telepítési sor (a gyártó ára beépítve értendő). */ installationLabel?: string | null }) {
   const [{ default: pdfMake }, { default: pdfFonts }] = await Promise.all([import('pdfmake/build/pdfmake'), import('pdfmake/build/vfs_fonts')])
   pdfMake.addVirtualFileSystem(pdfFonts as unknown as Record<string, string>)
   let image: string | undefined
   try { image = document.querySelector<HTMLCanvasElement>('canvas[data-catalog-canvas="true"]')?.toDataURL('image/jpeg', 0.86) } catch { /* GPU readback optional */ }
-  const body: TableCell[][] = [[{ text: 'Tétel', style: 'tableHeader' }, { text: 'Nettó', style: 'tableHeader', alignment: 'right' }], ...price.lines.map((line) => [{ text: line.label, style: 'tableCell' }, { text: formatHuf(line.amountNet), alignment: 'right' as const, style: 'tableCell' }]), [{ text: 'Telepítési mintatétel' }, { text: formatHuf(price.installationNet), alignment: 'right' }]]
+  const body: TableCell[][] = [[{ text: 'Tétel', style: 'tableHeader' }, { text: 'Nettó', style: 'tableHeader', alignment: 'right' }], ...price.lines.map((line) => [{ text: line.label, style: 'tableCell' }, { text: formatHuf(line.amountNet), alignment: 'right' as const, style: 'tableCell' }]), ...(installationLabel ? [[{ text: installationLabel }, { text: formatHuf(price.installationNet), alignment: 'right' as const }]] : [])]
   const content: TDocumentDefinitions['content'] = [
     { columns: [{ svg: lamelixSvg('horizontal', 'onLight'), width: 104 }, { text: family.toUpperCase(), style: 'brandFamily', alignment: 'right' }], columnGap: 12 },
     { text: `${title} · műszaki és árösszefoglaló`, style: 'title' },

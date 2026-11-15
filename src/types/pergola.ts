@@ -1,7 +1,7 @@
 export type MountType = 'freestanding' | 'wall' | 'corner-left' | 'corner-right' | 'niche'
 export type WallFinish = 'plaster' | 'brick' | 'cedar'
 /** A 3D jelenet háza: az eredeti fa–cink ház, vagy a Blenderben modellezett modern lapostetős / nyeregtetős ház. */
-export type HouseStyle = 'classic' | 'modern' | 'gable' | 'a45'
+export type HouseStyle = 'classic' | 'modern' | 'gable'
 export type RoofShade = 'above' | 'below'
 /** Üveg-/polikarbonát tető burkolata: tiszta, matt (szatinált), opál (tejüveg), hővisszaverő (napvédő), füstös (színezett). */
 export type RoofGlazing = 'clear' | 'satin' | 'opal' | 'heat' | 'tinted'

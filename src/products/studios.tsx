@@ -12,6 +12,8 @@ const LOADERS: Partial<Record<ProductFamily, () => Promise<{ default: ComponentT
   fence: () => import('@/pages/FenceStudio'),
   // Garázskapu: saját mag és 3D.
   'garage-door': () => import('@/pages/GarageStudio'),
+  // Modulház: saját mag és 3D (valós méretű típusházak).
+  'modular-house': () => import('@/pages/ModularHouseStudio'),
 }
 
 const STUDIOS: Partial<Record<ProductFamily, LazyExoticComponent<ComponentType>>> = Object.fromEntries(

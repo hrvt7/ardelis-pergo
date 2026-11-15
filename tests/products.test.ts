@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { productDefaultConfig } from '../src/lib/config'
 import { DEFAULT_PRODUCT, HUB_SLUG, hubPath, INTEREST_EVENTS, interestEvent, isHiddenProduct, productBySlug, productInfo, productPath, PRODUCTS, tenantProducts } from '../src/products'
 import { TRACK_EVENTS } from '../server/analytics'
-import { fenceEngine, garageEngine, getEngine, pergolaEngine } from '../src/products/engines'
+import { fenceEngine, garageEngine, getEngine, modularHouseEngine, pergolaEngine } from '../src/products/engines'
+import { calculateModularPrice, decodeModularHash, MODULAR_DEFAULTS, MODULAR_PRICE_DEFAULTS } from '../src/products/modularHouse'
 import { calculateGaragePrice, decodeGarageHash, GARAGE_DEFAULTS, GARAGE_PRICE_DEFAULTS } from '../src/products/garage'
 import { calculateOutdoorPrice, decodeOutdoorHash, OUTDOOR_DEFAULTS, OUTDOOR_PRICE_DEFAULTS } from '../src/products/outdoor'
 import { shareHash } from '../src/lib/shareCode'
@@ -44,14 +45,16 @@ describe('termékcsaládok', () => {
   it('a gyártó kínálata: megadás nélkül csak pergola; MVP-ben a félretett családok senkinél nem jelennek meg', () => {
     expect(tenantProducts({})).toEqual(['pergola'])
     expect(tenantProducts({ products: ['pergola', 'fence'] })).toEqual(['pergola'])
-    // A demó beállításában szerepelnek, de az MVP csak a teraszfedést (pergola, veranda, télikert) kínálja.
-    expect(tenantProducts(demoTenant)).toEqual(['pergola'])
+    // A demó a teraszfedést (pergola, veranda, télikert) és a modulházat kínálja; a félretett családok kimaradnak.
+    expect(tenantProducts(demoTenant)).toEqual(['pergola', 'modular-house'])
     // Ha egy gyártó csak félretett családot adott meg, a pergola marad.
     expect(tenantProducts({ products: ['garage-door'] })).toEqual(['pergola'])
   })
 
-  it('MVP: csak a teraszfedés él; a carport, a kerítés, a garázskapu és a kerti ház félretéve', () => {
-    expect(PRODUCTS.filter((product) => !isHiddenProduct(product.id)).map((product) => product.id)).toEqual(['pergola'])
+  it('MVP: a teraszfedés és a modulház él; a carport, a kerítés, a garázskapu és a kerti ház félretéve', () => {
+    expect(PRODUCTS.filter((product) => !isHiddenProduct(product.id)).map((product) => product.id)).toEqual(['pergola', 'modular-house'])
+    expect(productBySlug('modulhaz')?.id).toBe('modular-house')
+    expect(productPath('demo', 'demo', 'modular-house')).toBe('/konfigurator/modulhaz')
     for (const id of ['carport', 'fence', 'garage-door', 'garden-building'] as const) expect(isHiddenProduct(id)).toBe(true)
     expect(isHiddenProduct('pergola')).toBe(false)
     // A választóban nincs „hamarosan” kártya sem.
@@ -108,6 +111,23 @@ describe('termékcsaládok', () => {
     const rollerPrice = calculateGaragePrice(roller, GARAGE_PRICE_DEFAULTS)
     expect(rollerPrice.lines.some((line) => line.id === 'windows' || line.id === 'wicket')).toBe(false)
     expect(garageEngine.describe!(demoTenant, roller, rollerPrice).map(([label]) => label)).not.toContain('Panelminta')
+  })
+
+  it('modulház-motor: csak modulház-konfigurációt fogad, a gyártó m²-árával áraz, `h=` megosztó kódot ad', () => {
+    const house = MODULAR_DEFAULTS
+    expect(getEngine('modular-house')).toBe(modularHouseEngine)
+    expect(modularHouseEngine.parse(demoTenant, house)).toEqual(house)
+    expect(modularHouseEngine.parse(demoTenant, { ...house, model: 'x99' })).toBeNull()
+    expect(modularHouseEngine.parse(demoTenant, GARAGE_DEFAULTS)).toBeNull()
+    expect(modularHouseEngine.price(demoTenant, house).totalGross).toBe(calculateModularPrice(house, MODULAR_PRICE_DEFAULTS).totalGross)
+    const hash = modularHouseEngine.shareHash(house)
+    expect(hash.startsWith('h=')).toBe(true)
+    expect(decodeModularHash(`#${hash}`)).toEqual(house)
+    expect(modularHouseEngine.headline!(demoTenant, house)).toContain('A45')
+    const rows = modularHouseEngine.describe!(demoTenant, house, modularHouseEngine.price(demoTenant, house))
+    expect(rows.map(([label]) => label)).toEqual(expect.arrayContaining(['Típus', 'Alapterület', 'Külső méret', 'Kivitel', 'Felhasználás', 'Konfigurációs kód']))
+    // a megosztó kulcsok családonként egyediek
+    expect(new Set([pergolaEngine, fenceEngine, garageEngine, modularHouseEngine].map((engine) => engine.shareKey)).size).toBe(4)
   })
 
   it('az érdeklődés-eseményeket a szerver mérése elfogadja', () => {

@@ -21,23 +21,12 @@ export interface WindowSwatch extends HouseSwatch {
 
 export type HouseLookSettings = Pick<SceneSettings, 'houseStyle' | 'wallFinish' | 'wallColor' | 'windowColor'>
 
-export const HOUSE_STYLES: HouseStyle[] = ['classic', 'modern', 'gable', 'a45']
+export const HOUSE_STYLES: HouseStyle[] = ['classic', 'modern', 'gable']
 export const HOUSE_STYLE_INFO: Record<HouseStyle, { label: string; description: string }> = {
   classic: { label: 'Fa–cink', description: 'Földszintes, fa burkolattal' },
   modern: { label: 'Lapostetős', description: 'Modern, kétszintes kubus' },
   gable: { label: 'Nyeregtetős', description: 'Oromfalas családi ház' },
-  a45: { label: 'A45 modulház', description: 'Típusház valós méretben' },
 }
-
-/**
- * Az A45 típusú modulház (Álomterasz) valós méretei méterben, a gyártói alaprajz alapján: külső fal 27 cm,
- * a homlokzat a bejárati (hosszabbik) oldal. A modell léptéke mindig 1 — a ház nem nő a pergolával.
- * Becsült (a metszetrajz megérkezéséig): padlószint +0,35 m, belmagasság 2,70 m, 30°-os nyeregtető, 50 cm eresz.
- */
-export const A45_HOUSE = { width: 9.23, depth: 5.28, floor: 0.35, eaveUnderside: 2.86, ridge: 5.0 } as const
-
-/** Valós méretű (nem skálázott) típusház-e. */
-export const isRealScaleHouse = (style: HouseStyle) => style === 'a45'
 
 /**
  * A modellezett (modern, nyeregtetős) házak saját méretei méterben: a pergola a főtömeg közepe (x = 0) elé kerül,

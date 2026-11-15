@@ -4,7 +4,7 @@
 // A „hidden” családok kódja megmarad (későbbi fejlesztés), de az MVP-ben sehol nem jelennek meg: nincs kártya, nincs útvonal
 // (a régi linkek a pergolára irányítanak), és egyetlen gyártó kínálatában sem szerepelnek.
 
-export type ProductFamily = 'pergola' | 'carport' | 'fence' | 'garage-door' | 'garden-building'
+export type ProductFamily = 'pergola' | 'modular-house' | 'carport' | 'fence' | 'garage-door' | 'garden-building'
 
 export interface ProductInfo {
   id: ProductFamily
@@ -19,6 +19,8 @@ export interface ProductInfo {
 export const PRODUCTS: readonly ProductInfo[] = [
   // MVP: csak a teraszfedés (pergola, veranda, télikert) él; a többi család félretéve (status: 'hidden').
   { id: 'pergola', slug: 'teraszfedes', label: 'Teraszfedés', short: 'Pergola, veranda, télikert', description: 'Lamellás, üveg- vagy textiltető, oldalzárás, szín és komfort — valós 3D-ben, azonnali irányárral.', status: 'live' },
+  // Modulház: saját mag (products/modularHouse.ts), valós méretű típusházak; egyelőre az A45.
+  { id: 'modular-house', slug: 'modulhaz', label: 'Modulház', short: 'Típusházak valós méretben', description: 'Előregyártott modulház: típus, kivitel, homlokzat és nyílászárók — valós méretű 3D-ben, a gyártó m²-árával.', status: 'live' },
   // A carport a keretes-tető motoron fut (a pergola konfigurátor negyedik építménytípusa), ezért él.
   { id: 'carport', slug: 'carport', label: 'Carport és előtető', short: 'Egy- és kétállásos, bejárati előtető', description: 'Alumínium váz fix lemez-, polikarbonát- vagy üvegtetővel; méret, oszlopok, szín, burkolt beálló — valós 3D-ben, azonnali irányárral.', status: 'hidden' },
   // A kerítés a kültéri (lineáris) magon fut: saját konfiguráció, árazó és 3D (CatalogStudio).
