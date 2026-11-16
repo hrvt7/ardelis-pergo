@@ -1,5 +1,14 @@
 # Változások
 
+## 4.83 – Telepítések 4/6: hibabejelentés és Szerviz nézet
+
+- **Hibabejelentés a tulajdonosi oldalon:** komponens a telepítés zárt listájából, leírás, legfeljebb 4 fotó (eredetileg egyenként max. 8 MB), kötelező hozzájárulás. A böngésző a fotót vásznon keresztül JPEG-be kódolja újra (max. 2560 px, ≤ 4 MB): ez eldobja az EXIF-et (GPS, eszköz, időpont); a szerver ellenőrzi, hogy JPEG-e, és második védvonalként eltávolít minden metaadat-szegmenst (`server/jpeg.ts`). A fotók a privát `service-photos` tárhelyre kerülnek, a tárolási utat a szerver képzi (gyártó / telepítés / véletlen azonosító).
+- **Hozzájárulás naplózása:** a bejelentés a hozzájárulás időpontját és a tájékoztató verzióját tárolja; a verzió `2026-11.2` lett, az adatkezelési tájékoztató új résszel bővült (tulajdonosi oldal, hibabejelentés; a gyártó az adatkezelő, a Lamelix adatfeldolgozó — jogi átnézés javasolt).
+- **Értesítés:** a gyártó e-mailt kap (Resend) a komponenssel, a leírással és a Szerviz nézet linkjével; a fotók csak belépés után nyithatók meg.
+- **Új admin fül: Szerviz.** Bejelentések állapotszűrővel (új, folyamatban, lezárva), a fotók 10 percig érvényes aláírt linkkel, az ügyfél elérhetősége a hozzá tartozó érdeklődőből; az állapotváltás naplózódik. A nézet kimondja: a rendszer nem azonosít alkatrészt és nem rendel; az anyaglista tájékoztató.
+- **Visszaélés-fék:** IP-nként óránként 5 bejelentés és 10 percenként 16 fotó; telepítésenként naponta legfeljebb 10 bejelentés. A telepítés törlése a félbehagyott feltöltéseket is törli.
+- Tesztek: `serviceRequests.test.ts` (EXIF/GPS eltávolítás valódi fotón, nem JPEG/csonka/túl nagy, zárt komponenslista, hozzájárulás és verzió, idegen fotóazonosító, visszaélés-fék, tenant-elkülönítés a Szerviz nézetben, árva fotók törlése). Böngészőben (headless Chrome) ellenőrizve: a feltöltött bájtokban már nincs EXIF.
+
 ## 4.82 – Árazási szabályok (regionális felár, viszonteladói árrés, %-os engedmény) és CRM-webhook
 
 - **Viszonteladói árrés:** a gyártó viszonteladónként saját linket ad (`…/k/:gyártó?h=:viszonteladó`, beágyazókóddal). Az árrés a gyártó egységáraira és ármátrixára kerül (nem a végösszegre), így a vevő tételes kalkulációja egységes, az árrés külön nem látszik. Egy viszonteladói link csak a saját árrését tölti le (`/api/tenant?h=`), a többiekét és az e-mail-címeket nem. A lead a viszonteladóval érkezik (e-mail tárgy, CRM), a viszonteladó másolatot kap, ha van e-mail-címe.

@@ -54,9 +54,19 @@ export function createFakeStore(seed: Record<string, Row[]> = {}): FakeStore {
 
     if (url.hostname === 'api.resend.com') { store.emails.push(JSON.parse(String(body))); return reply({ id: 'e' }) }
 
+    const list = url.pathname.match(/^\/storage\/v1\/object\/list\/([^/]+)$/)
+    if (list) {
+      const prefix = String(JSON.parse(String(body)).prefix ?? '')
+      const names = [...store.storage.keys()].filter((key) => key.startsWith(`${list[1]}/${prefix}`)).map((key) => key.slice(list[1].length + 1 + prefix.length)).filter((name) => !name.includes('/'))
+      return reply(names.map((name) => ({ name, id: name })))
+    }
     const storage = url.pathname.match(/^\/storage\/v1\/object\/(sign\/)?([^/]+)\/?(.*)$/)
     if (storage) {
       const [, sign, bucket, path] = storage
+      if (sign && !path) {
+        const paths = JSON.parse(String(body)).paths as string[]
+        return reply(paths.map((item) => (store.storage.has(`${bucket}/${item}`) ? { path: item, signedURL: `/object/sign/${bucket}/${item}?token=t`, error: null } : { path: item, signedURL: null, error: 'not found' })))
+      }
       if (sign) {
         const key = `${bucket}/${decodeURIComponent(path)}`
         return store.storage.has(key) ? reply({ signedURL: `/object/sign/${key}?token=t` }) : reply({ error: 'not found' }, 404)

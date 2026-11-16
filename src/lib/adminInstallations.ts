@@ -64,3 +64,37 @@ export function useInstallations(token: string, onExpired: () => void, enabled =
 
   return { installations, error, reload: load, create, remove }
 }
+
+export interface AdminServiceRequest { id: number; installationId: number; component: string; description: string; status: 'new' | 'in_progress' | 'closed'; createdAt: string; consentVersion: string; photos: string[] }
+export const SERVICE_STATUS_LABEL: Record<AdminServiceRequest['status'], string> = { new: 'Új', in_progress: 'Folyamatban', closed: 'Lezárva' }
+
+/** Szerviz-bejelentések; a fotólinkek 10 percig élnek, ezért a nézet újratöltéskor újakat kér. */
+export function useServiceRequests(token: string, onExpired: () => void, enabled = true) {
+  const [requests, setRequests] = useState<AdminServiceRequest[] | null>(null)
+  const [error, setError] = useState('')
+  const [loadedAt, setLoadedAt] = useState(0)
+  const load = useCallback(async () => {
+    if (!enabled) { setRequests([]); return }
+    try {
+      const response = await fetch('/api/admin-service', { headers: { Authorization: `Bearer ${token}` } })
+      if (response.status === 401) { onExpired(); return }
+      const data = await response.json() as { ok: boolean; requests?: AdminServiceRequest[]; error?: string }
+      if (!response.ok || !data.ok) { setRequests([]); if (response.status !== 503) setError(data.error ?? 'A bejelentések betöltése nem sikerült.'); return }
+      setError('')
+      setRequests(data.requests ?? [])
+      setLoadedAt(Date.now())
+    } catch { setRequests([]) }
+  }, [token, onExpired, enabled])
+  useEffect(() => { void load() }, [load])
+
+  const setStatus = useCallback(async (id: number, status: AdminServiceRequest['status']) => {
+    setRequests((current) => current?.map((item) => (item.id === id ? { ...item, status } : item)) ?? null)
+    try {
+      const response = await fetch('/api/admin-service', { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status }) })
+      if (!response.ok) throw new Error('patch')
+      return true
+    } catch { setError('Az állapot mentése nem sikerült.'); void load(); return false }
+  }, [token, load])
+
+  return { requests, error, loadedAt, reload: load, setStatus }
+}

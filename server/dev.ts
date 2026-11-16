@@ -7,6 +7,7 @@ import { handleAdminQuotes, handleQuote } from './quotes'
 import { handleAdminStats, handleTrack } from './analytics'
 import { handleFollowUp } from './followup'
 import { handleAdminInstallations, handleInstallation } from './installations'
+import { handleAdminService, handleServicePhoto, handleServiceRequest } from './serviceRequests'
 import { handleMonthlyReport } from './monthlyReport'
 import { handleAdminLeads, handleAdminLogin, handleAdminSettings, handleTenantRequest } from './tenantAdmin'
 
@@ -19,6 +20,9 @@ app.on(['GET', 'PUT'], '/api/admin-settings', (c) => handleAdminSettings(c.req.r
 app.on(['GET', 'PATCH'], '/api/admin-leads', (c) => handleAdminLeads(c.req.raw, process.env))
 app.on(['GET', 'POST'], '/api/quote', (c) => handleQuote(c.req.raw, process.env))
 app.on(['GET', 'POST', 'PATCH'], '/api/admin-quotes', (c) => handleAdminQuotes(c.req.raw, process.env))
+app.post('/api/service-photo', (c) => handleServicePhoto(c.req.raw, process.env))
+app.post('/api/service-request', (c) => handleServiceRequest(c.req.raw, process.env))
+app.on(['GET', 'PATCH'], '/api/admin-service', (c) => handleAdminService(c.req.raw, process.env))
 app.get('/api/installation', (c) => handleInstallation(c.req.raw, process.env))
 app.on(['GET', 'POST', 'DELETE'], '/api/admin-installations', (c) => handleAdminInstallations(c.req.raw, process.env))
 app.post('/api/track', (c) => handleTrack(c.req.raw, process.env))

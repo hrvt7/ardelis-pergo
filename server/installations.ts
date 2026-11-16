@@ -61,13 +61,22 @@ export async function removePhotos(env: AdminEnv, paths: string[]) {
   if (!response.ok) throw new Error(`Storage törlés ${response.status}: ${(await response.text()).slice(0, 200)}`)
 }
 
+/** A mappa fájljai (Supabase Storage list). */
+export async function listPhotos(env: AdminEnv, prefix: string): Promise<string[]> {
+  const response = await fetch(storage(env, `object/list/${PHOTO_BUCKET}`), { method: 'POST', headers: storeHeaders(env), body: JSON.stringify({ prefix, limit: 1000, offset: 0 }), signal: timeout() })
+  if (!response.ok) throw new Error(`Storage lista ${response.status}`)
+  return ((await response.json()) as { name: string; id?: string | null }[]).filter((item) => item.id !== null).map((item) => `${prefix}${item.name}`)
+}
+
 /** Teljes törlés: fotók → telepítés (a bejelentések és a napló kaszkádolva törlődnek). */
 export async function deleteInstallation(env: AdminEnv, tenantId: string, id: number): Promise<boolean> {
   const tenant = encodeURIComponent(tenantId)
   const rows = await select<{ id: number }>(env, 'installations', `id=eq.${id}&tenant_id=eq.${tenant}&select=id`)
   if (rows.length === 0) return false
   const requests = await select<{ photo_paths: string[] }>(env, 'service_requests', `installation_id=eq.${id}&tenant_id=eq.${tenant}&select=photo_paths`)
-  await removePhotos(env, requests.flatMap((request) => request.photo_paths ?? []))
+  // A bejelentéshez nem csatolt (félbehagyott) feltöltések is a telepítés mappájában vannak: azok is törlődnek.
+  const orphans = await listPhotos(env, `${tenantId}/${id}/`).catch((error) => { console.error('[installations] Fotólista sikertelen', id, error); return [] as string[] })
+  await removePhotos(env, [...new Set([...requests.flatMap((request) => request.photo_paths ?? []), ...orphans])])
   const response = await fetch(`${rest(env, 'installations')}?id=eq.${id}&tenant_id=eq.${tenant}`, { method: 'DELETE', headers: { ...storeHeaders(env), Prefer: 'return=minimal' }, signal: timeout() })
   if (!response.ok) throw new Error(`Supabase törlés ${response.status}`)
   return true

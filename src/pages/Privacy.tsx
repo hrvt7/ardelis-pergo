@@ -13,13 +13,14 @@ export default function Privacy() {
   return <main className="legal-page">
     <header><Link to="/" aria-label="Lamelix kezdőlap"><LamelixLogo height={26} title={null} tone="onLight" /></Link></header>
     <article>
-      <p className="legal-eyebrow">Hatályos: 2026. november · verzió {PRIVACY_VERSION}</p>
+      <p className="legal-eyebrow">Hatályos: 2026. november 16. · verzió {PRIVACY_VERSION}</p>
       <h1>Adatkezelési tájékoztató</h1>
-      <p>Ez a tájékoztató a Lamelix platform (lamelix.vercel.app) két adatkezeléséről szól: a gyártóknak szóló demókérésről, és a konfigurátorból küldött felmérési kérelmekről.</p>
+      <p>Ez a tájékoztató a Lamelix platform (lamelix.vercel.app) adatkezeléseiről szól: a gyártóknak szóló demókérésről, a konfigurátorból küldött felmérési kérelmekről, valamint a felszerelt termékek tulajdonosi oldaláról és az onnan küldött hibabejelentésekről.</p>
 
       <h2>1. Az adatkezelő</h2>
       <p><b>Demókérés esetén</b> az adatkezelő a Lamelix platform üzemeltetője, elérhetőség: <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.</p>
       <p><b>Felmérési kérelem esetén</b> (egy gyártó konfigurátorában) az adatkezelő az a gyártó, akinek a kérelmet küldöd; az ő adatai és saját adatkezelési tájékoztatója a konfigurátorban, az űrlap mellett érhető el. A Lamelix ilyenkor adatfeldolgozóként továbbítja és tárolja az adatokat a gyártó megbízásából.</p>
+      <p><b>Tulajdonosi oldal és hibabejelentés esetén</b> (a terméken lévő QR-kódról vagy a gyártótól kapott linkről) az adatkezelő a termék gyártója; a Lamelix adatfeldolgozóként tárolja a bejelentést és a fotókat, és értesíti a gyártót.</p>
 
       <h2>2. Milyen adatokat kezelünk, és mire?</h2>
       <h3>Demókérés</h3>
@@ -34,6 +35,19 @@ export default function Privacy() {
         <li><b>Adatok:</b> név, e-mail, telefon, cím vagy település és régió, megjegyzés, a megtervezett konfiguráció és az irányár, a hozzájárulás időpontja.</li>
         <li><b>Cél:</b> a helyszíni felmérés és az ajánlat egyeztetése a gyártóval.</li>
         <li><b>Jogalap:</b> a hozzájárulásod, amit a gyártó kezel. A kérelem nem minősül megrendelésnek.</li>
+      </ul>
+      <h3>Tulajdonosi oldal (digitális termékkönyv)</h3>
+      <ul>
+        <li><b>Adatok:</b> a felszerelt termék befagyasztott terve, komponensei, a telepítés napja és a garancia lejárata. Az oldal személyes adatot (nevet, címet, telefonszámot, e-mail-címet) nem mutat. A link egy titkos, véletlen azonosító: aki ismeri, megnyithatja, ezért ne tedd közzé.</li>
+        <li><b>Cél:</b> a termék adatainak és a garancia állapotának elérése, hibabejelentés, bővítési kérés.</li>
+        <li><b>Meddig:</b> a gyártó által beállított megőrzési ideig (alapértelmezés: a telepítéstől számított 120 hónap), utána automatikusan törlődik; a gyártó korábban is törölheti.</li>
+      </ul>
+      <h3>Hibabejelentés</h3>
+      <ul>
+        <li><b>Adatok:</b> az érintett komponens, a hiba leírása, legfeljebb 4 fotó, a hozzájárulás időpontja és a tájékoztató verziója. A fotókból a feltöltés előtt eltávolítjuk a helyadatokat (GPS) és a többi beágyazott metaadatot; a képeket nem nyilvános tárhelyen tároljuk, és csak a gyártó nyithatja meg, rövid ideig érvényes linkkel.</li>
+        <li><b>Cél:</b> a hiba kivizsgálása és a javítás egyeztetése a gyártóval.</li>
+        <li><b>Jogalap:</b> a hozzájárulásod, amit a gyártó kezel; bármikor visszavonhatod.</li>
+        <li><b>Meddig:</b> a telepítés törléséig (a gyártó megőrzési ideje vagy kézi törlés); a telepítés törlésekor a bejelentések és a fotók is törlődnek.</li>
       </ul>
       <h3>Névtelen használati mérés</h3>
       <p>A konfigurátor süti nélkül, névtelenül számolja a megnyitásokat és a lépéseket (pl. hány látogató jutott el az űrlapig), hogy a gyártó lássa a konverziót. Egyénre visszavezethető adatot ez nem tartalmaz.</p>

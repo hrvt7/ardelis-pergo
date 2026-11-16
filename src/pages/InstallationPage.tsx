@@ -12,6 +12,7 @@ import { TenantProvider } from '@/tenants/TenantContext'
 import { applyOverrides } from '@/tenants/overrides'
 import { warrantyGroupLabel, type WarrantyGroup } from '@/lib/installations'
 import type { PergolaConfig, SceneSettings } from '@/types/pergola'
+import ServiceReport from '@/components/owner/ServiceReport'
 import '@/owner.css'
 
 const PergolaScene = lazy(() => import('@/components/PergolaScene'))
@@ -106,6 +107,8 @@ export default function InstallationPage() {
           </div>
           <p className="owner-hint">{tr('A 3D-modell a felszereléskor rögzített terv. Forgatható, nagyítható; nem módosítható.', 'Das 3D-Modell zeigt den bei der Montage festgehaltenen Entwurf. Drehbar und zoombar, nicht änderbar.')}</p>
         </section>
+
+        <ServiceReport token={token} components={data.components} brandName={data.brand.name} privacyUrl={data.brand.privacyUrl} />
 
         <section>
           <h2>{tr('Garancia', 'Garantie')}</h2>

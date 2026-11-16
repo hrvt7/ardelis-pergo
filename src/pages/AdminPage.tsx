@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { priceInputStep, setDisplayCurrency, unitLabel } from '@/lib/money'
-import { Code2, ExternalLink, LayoutDashboard, LogOut, Search, SlidersHorizontal, Users, Wrench } from 'lucide-react'
+import { Code2, ExternalLink, LayoutDashboard, LifeBuoy, LogOut, Search, SlidersHorizontal, Users, Wrench } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import AdminLeads from '@/pages/AdminLeads'
 import LamelixLogo from '@/components/LamelixLogo'
 import AdminOverview from '@/pages/AdminOverview'
 import AdminInstallations from '@/pages/AdminInstallations'
-import { useInstallations, type AdminInstallation } from '@/lib/adminInstallations'
+import { useInstallations, useServiceRequests, type AdminInstallation } from '@/lib/adminInstallations'
+import AdminService from '@/pages/AdminService'
 import type { InstallationApi } from '@/components/admin/InstallationSection'
 import { LEAD_STATUSES, useLeads, type LeadRow } from '@/lib/adminLeads'
 import { demoEvents, demoLeads, demoIncoming } from '@/lib/adminDemo'
@@ -124,13 +125,14 @@ function AdminForTenant({ base }: { base: Tenant }) {
 
 const LEAD_STATUS_LABEL = Object.fromEntries(LEAD_STATUSES) as Record<string, string>
 
-type AdminTab = 'overview' | 'leads' | 'installations' | 'embed' | 'settings'
-const TABS: [AdminTab, string, string][] = [['overview', 'Áttekintés', '#attekintes'], ['leads', 'Érdeklődők', '#erdeklodok'], ['installations', 'Telepítések', '#telepitesek'], ['embed', 'Beágyazás', '#beagyazas'], ['settings', 'Beállítások', '#beallitasok']]
+type AdminTab = 'overview' | 'leads' | 'installations' | 'service' | 'embed' | 'settings'
+const TABS: [AdminTab, string, string][] = [['overview', 'Áttekintés', '#attekintes'], ['leads', 'Érdeklődők', '#erdeklodok'], ['installations', 'Telepítések', '#telepitesek'], ['service', 'Szerviz', '#szerviz'], ['embed', 'Beágyazás', '#beagyazas'], ['settings', 'Beállítások', '#beallitasok']]
 
 const TAB_INFO: Record<AdminTab, { icon: ReactNode; subtitle: string }> = {
   overview: { icon: <LayoutDashboard size={18} />, subtitle: 'Érdeklődők, látogatottság és értékesítési csatorna egy helyen.' },
   leads: { icon: <Users size={18} />, subtitle: 'Kezeld a beérkező felmérési kérelmeket: státusz, megjegyzés, hívás.' },
   installations: { icon: <Wrench size={18} />, subtitle: 'Felszerelt termékek digitális ikerpéldánya: garancia, tulajdonosi link, hibabejelentések.' },
+  service: { icon: <LifeBuoy size={18} />, subtitle: 'A tulajdonosok hibabejelentései fotókkal; állapot: új, folyamatban, lezárva.' },
   embed: { icon: <Code2 size={18} />, subtitle: 'Másolható beágyazókód, link és QR-kód: a konfigurátor a saját weboldaladon.' },
   settings: { icon: <SlidersHorizontal size={18} />, subtitle: 'Árak, ármátrix, elérhető opciók és az értesítések címzettjei.' },
 }
@@ -154,6 +156,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
   const [demoClock] = useState(() => Date.now())
   const demoStats = useMemo(() => demoEvents(demoClock), [demoClock])
   const installApi = useInstallations(token, onExpired, !demo)
+  const serviceApi = useServiceRequests(token, onExpired, !demo)
   const leads = demo ? demoRows : real.leads
   const error = demo ? '' : real.error
   const events = demo ? demoStats : realEvents
@@ -239,6 +242,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
     return null
   }
   const fresh = leads?.filter((lead) => lead.status === 'new').length ?? 0
+  const openService = demo ? 0 : serviceApi.requests?.filter((item) => item.status === 'new').length ?? 0
   const title = TABS.find(([key]) => key === tab)![1]
   const quotes = demo
     ? { all: [], create: async () => ({ ok: false as const, error: 'Demó módban az ajánlat nem küldhető ki.' }), withdraw: async () => false }
@@ -248,7 +252,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
       <aside className="admin-side">
         <div className="admin-brand"><span className="brand-mark">{base.brand.name.slice(0, 1)}</span><div><strong>{base.brand.name}{base.brand.suffix && <small> {base.brand.suffix}</small>}</strong><span>Gyártói admin</span></div></div>
         <nav className="admin-nav" aria-label="Admin részek">
-          {TABS.map(([key, label]) => <button type="button" key={key} className={tab === key ? 'is-on' : ''} onClick={() => choose(key)} aria-current={tab === key ? 'page' : undefined}>{TAB_INFO[key].icon}<span>{label}</span>{key === 'leads' && fresh > 0 && <em>{fresh}</em>}</button>)}
+          {TABS.map(([key, label]) => <button type="button" key={key} className={tab === key ? 'is-on' : ''} onClick={() => choose(key)} aria-current={tab === key ? 'page' : undefined}>{TAB_INFO[key].icon}<span>{label}</span>{key === 'leads' && fresh > 0 && <em>{fresh}</em>}{key === 'service' && openService > 0 && <em>{openService}</em>}</button>)}
         </nav>
         <div className="admin-side-foot"><Link to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor megnyitása</Link><button type="button" onClick={onLogout}><LogOut size={15} />Kilépés</button><a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><LamelixLogo height={16} title={null} tone="onDark" /></a></div>
       </aside>
@@ -259,6 +263,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
         {(tab === 'overview' || tab === 'leads') && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
         {tab === 'overview' && leads && <div key="overview" className="tab-fade">{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} onOpenLead={openLead} onUpdate={update} checklist={demo ? undefined : checklist} /></div>}
         {tab === 'leads' && leads && <div key="leads" className="tab-fade"><AdminLeads tenant={effective} leads={leads} error={error} onReload={() => void real.reload()} onUpdate={update} quotes={quotes} installations={installations} openRef={openRef} onOpenRef={setOpenRef} /></div>}
+        {tab === 'service' && <div key="service" className="tab-fade">{serviceApi.requests === null && !demo ? <p className="admin-hint" role="status">Betöltés…</p> : <AdminService requests={demo ? [] : serviceApi.requests ?? []} installations={installations.all} leads={leads ?? []} error={demo ? '' : serviceApi.error} loadedAt={serviceApi.loadedAt} onReload={() => { void serviceApi.reload(); void installApi.reload() }} onStatus={(id, status) => { void serviceApi.setStatus(id, status).then((ok) => ok && push('Állapot mentve')) }} onOpenInstallation={openInstallation} />}</div>}
         {tab === 'installations' && <div key="installations" className="tab-fade">{installApi.installations === null && !demo ? <p className="admin-hint" role="status">Betöltés…</p> : <AdminInstallations installations={installations.all} leads={leads ?? []} error={demo ? '' : installApi.error} selected={installId} onSelect={setInstallId} onDelete={deleteInstallation} demo={demo} />}</div>}
         {tab === 'embed' && <div key="embed" className="tab-fade"><EmbedPanel tenantId={base.id} onCopied={markEmbed} /></div>}
         <div hidden={tab !== 'settings'}>{children}</div>
