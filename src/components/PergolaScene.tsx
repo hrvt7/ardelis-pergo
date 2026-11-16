@@ -2291,12 +2291,33 @@ function Ground({ scene }: { scene: SceneSettings }) {
  * egy egyszerű vakolt falszakasz, hogy a rögzítés látszódjon. Vendéglátós, ipari vagy katalógus-jellegű
  * bemutatáshoz, és tiszta termékfotóhoz a PDF-be.
  */
-function StudioEnvironment({ config, night }: { config: PergolaConfig; night: boolean }) {
+/**
+ * Stúdió stílus háttere: hatalmas belső gömb függőleges színátmenettel. A horizonton a köd színe (a padló
+ * ebbe olvad bele, varratmentes „végtelen fotósháttér”), felfelé enyhén sötétedik — mint egy fotóstúdió körfala.
+ */
+function Cyclorama({ night }: { night: boolean }) {
+  const material = useMemo(() => new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    fog: false,
+    toneMapped: true,
+    uniforms: { horizon: { value: new THREE.Color(night ? '#1b1f22' : '#e8e5de') }, top: { value: new THREE.Color(night ? '#0d1012' : '#cfd0cd') } },
+    vertexShader: 'varying vec3 vPos; void main() { vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform vec3 horizon; uniform vec3 top; varying vec3 vPos; void main() { float h = clamp(normalize(vPos).y, 0.0, 1.0); gl_FragColor = vec4(mix(horizon, top, smoothstep(0.1, 0.85, h)), 1.0);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}',
+  }), [night])
+  useEffect(() => () => material.dispose(), [material])
+  // A gömb a kamerával együtt mozog (égbolt-technika), így a 90 m-es távoli vágósík alatt marad minden irányban.
+  const dome = useRef<THREE.Mesh>(null)
+  useFrame(({ camera }) => { dome.current?.position.copy(camera.position) })
+  return <mesh ref={dome} name="studio-cyclorama" material={material} renderOrder={-1} frustumCulled={false}><sphereGeometry args={[60, 32, 16]} /></mesh>
+}
+
+function StudioEnvironment({ config, night, neutral = false }: { config: PergolaConfig; night: boolean; /** Stúdió stílus: semlegesebb, kissé sötétebb szürke, hogy nappali fényben se égjen ki krémszínűre. */ neutral?: boolean }) {
   const { width, depth } = config
   const walls = wallSides(config.mount)
   const wallHeight = config.height + 1.1
-  const wallColor = night ? '#6d6c66' : '#d9d6cf'
-  const floorColor = night ? '#555851' : '#dad7cf'
+  const wallColor = night ? '#6d6c66' : neutral ? '#c9c9c6' : '#d9d6cf'
+  const floorColor = night ? '#555851' : neutral ? '#8e8e8a' : '#dad7cf'
   return <group name="studio-environment">
     <mesh name="essential-studio-floor" rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.075, 0]} receiveShadow>
       <planeGeometry args={[600, 600]} />
@@ -3076,7 +3097,7 @@ function SceneRegistration() {
 /** A modulház nézet bemenete: a ház konfigurációja, a kameranézet és a méretcímkék. */
 export type ModularSceneInput = { config: ModularHouseConfig; view: ModularView; dimensions: boolean }
 
-function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade, walk = false, viewShiftX = 0, modular = null }: { modular?: ModularSceneInput | null; walk?: boolean; viewShiftX?: number; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
+function SceneContent({ cyclorama = false, config, scene, view, focus, viewShift = 0, revealed = true, quality, coreOnly, onSideSelect, onSceneChange, onShade, walk = false, viewShiftX = 0, modular = null }: { cyclorama?: boolean; modular?: ModularSceneInput | null; walk?: boolean; viewShiftX?: number; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; revealed?: boolean; quality: QualitySettings; coreOnly: boolean; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const target = getLighting(scene)
   // Az égbolt-kép és a be/ki jellegű dolgok (csillagok, éjszakai fények, LED) a napszak-átmenet közepén váltanak (LightingMood).
   const targetKey = `${target.hdr}|${target.night}`
@@ -3134,8 +3155,9 @@ function SceneContent({ config, scene, view, focus, viewShift = 0, revealed = tr
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
     {/* Stúdióban az égbolt csak a fényt adja; a háttér egyszínű, hogy a pergola álljon a középpontban. */}
     {studio && !scene.photoMode && <color attach="background" args={[lighting.night ? '#1b1f22' : '#e8e5de']} />}
+    {studio && cyclorama && !scene.photoMode && <Cyclorama night={lighting.night} />}
     {!coreOnly && <OptionalSceneAsset name={`${scene.time} HDR environment`}><Environment files={wantsSmallHdr(quality.tier) ? smallHdr(lighting.hdr) : lighting.hdr} background={!scene.photoMode && !studio} backgroundBlurriness={0} backgroundIntensity={lighting.night ? 0.55 : 0.95} environmentIntensity={lighting.environment * quality.environmentIntensity} environmentRotation={[0, lighting.envRotation, 0]} backgroundRotation={[0, lighting.envRotation, 0]} /></OptionalSceneAsset>}
-    {studio && !scene.photoMode && <StudioEnvironment config={config} night={lighting.night} />}
+    {studio && !scene.photoMode && <StudioEnvironment config={config} night={lighting.night} neutral={cyclorama} />}
     {!studio && !scene.photoMode && <Ground scene={scene} />}
     {!studio && !scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} look={houseLook} night={lighting.night} />}
     {!studio && !scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house">{houseLook.houseStyle === 'classic' ? <House config={config} look={houseLook} night={lighting.night} /> : <StyledHouse key={houseLook.houseStyle} config={config} look={houseLook} night={lighting.night} style={houseLook.houseStyle} />}</OptionalSceneAsset>{lighting.night && <Stars />}</>}
@@ -3271,7 +3293,7 @@ function FirstFrameReady({ onReady }: { onReady: () => void }) {
   return null
 }
 
-export default memo(function PergolaScene({ config, scene, view, focus = null, viewShift = 0, onSideSelect, onSceneChange, onShade, walk = false, viewShiftX = 0, modular = null }: { /** Modulház nézet: a pergola helyén a típusház (ugyanabban a vásznon). */ modular?: ModularSceneInput | null; /** Bejárás: első személyű kamera és séta. */ walk?: boolean; /** Vízszintes nézeteltolás a vászonszélesség arányában (üveges felület). */ viewShiftX?: number; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
+export default memo(function PergolaScene({ cyclorama = false, config, scene, view, focus = null, viewShift = 0, onSideSelect, onSceneChange, onShade, walk = false, viewShiftX = 0, modular = null }: { /** Stúdió stílus: semleges, hajlított, színátmenetes stúdióháttér a sima szín helyett. */ cyclorama?: boolean; /** Modulház nézet: a pergola helyén a típusház (ugyanabban a vásznon). */ modular?: ModularSceneInput | null; /** Bejárás: első személyű kamera és séta. */ walk?: boolean; /** Vízszintes nézeteltolás a vászonszélesség arányában (üveges felület). */ viewShiftX?: number; config: PergolaConfig; scene: SceneSettings; view: CameraView; focus?: CameraFocus | null; viewShift?: number; onSideSelect?: (side: SideKey) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onShade?: (result: ShadeResult) => void }) {
   const [ready, setReady] = useState(false)
   const [decorativeReady, setDecorativeReady] = useState(false)
   // A nézet csak akkor tárul fel, ha a ház és a környezet is betöltött: addig 0–100% töltőképernyő fedi a jelenetet.
@@ -3408,7 +3430,7 @@ export default memo(function PergolaScene({ config, scene, view, focus = null, v
         <SceneRegistration />
         {PERF_DEBUG && <PerfProbe quality={quality} />}
         <QualityContext.Provider value={quality}><Suspense fallback={null}>
-          <SceneContent
+          <SceneContent cyclorama={cyclorama}
             config={config}
             scene={coreScene ? { ...scene, showPerson: false } : scene}
             view={view}

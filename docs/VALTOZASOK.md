@@ -1,5 +1,15 @@
 # Változások
 
+## 4.54 – Kipróbálható stúdió stílus (?style=studio)
+
+- **Új, kipróbálható stílus: `?style=studio`** (letisztult, modernebb változat; az alapértelmezett nézet nem változik, a választást a böngésző megjegyzi, visszaállítás: `?style=soft`).
+  - **Stúdió-jelenet:** a 3D háttér színátmenetes, hajlított stúdióháttér (mint egy fotóstúdió körfala), a padló semleges szürke, és varrat nélkül olvad a háttérbe; a jelenet semleges nappali fényben indul (a naplemente rózsaszínes tónust adott a világos háttérnek). A háttér a kamerával mozgó gömb, tónusleképezve, így nincs látható horizontvonal.
+  - **Kevesebb címke:** eltűntek a nagybetűs kicker-feliratok („ÉLŐ ÉPÍTÉSZETI JELENET”, „KONFIGURÁCIÓ 01/07”, „01 · MIT ÉPÍTESZ”, „ÉPÍTÉSZETI KONFIGURÁTOR”) és a léptékjelzés; egyetlen hierarchia: lépés címe → lehetőségek.
+  - **Visszafogott lime:** a kiválasztott kártyák semleges fehér gyűrűt kapnak lime keret és háttér helyett; a lime a fő gombon és az aktív lépésen marad.
+  - **Egy áttetsző eszközsor** a jeleneten a különálló kerek gombok helyett; az aktív gomb fehér.
+  - **Egy betűcsalád** (Inter), nagy, táblázatos számjegyű ár.
+- Tesztek: `studioStyle.test.ts` (stílusválasztás, kezdő fény, stúdióháttér, CSS-szabályok).
+
 ## 4.53 – Javítás: a nyitó animáció iPaden csak felvillant, aztán a konfigurátor jött
 
 - **Hiba:** a nyitókép két esetben azonnal bezárt: (1) ha a rendszer tiltotta az automatikus lejátszást (iOS energiatakarékos mód és hasonlók) – ilyenkor csak az első képkocka villant fel; (2) ha a videó 2,5 mp alatt nem indult el (első indítás lassabb wifin, a 2,8 MB még nincs tárban).

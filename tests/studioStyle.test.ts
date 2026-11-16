@@ -1,0 +1,28 @@
+import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolveUiStyle, studioInitialTime } from '../src/lib/uiStyle'
+
+describe('stúdió stílus (?style=studio, kipróbálásra)', () => {
+  it('a paraméter és a megjegyzett érték is választhatja; az alap továbbra is a jelenlegi', () => {
+    expect(resolveUiStyle('?style=studio', null)).toBe('studio')
+    expect(resolveUiStyle('', 'studio')).toBe('studio')
+    expect(resolveUiStyle('', null)).toBe('soft')
+  })
+  it('stúdióban semleges nappali fénnyel indul, más stílusban nem nyúl a jelenethez', () => {
+    expect(studioInitialTime('studio')).toEqual({ time: 'day', dayTime: 13 })
+    expect(studioInitialTime('soft')).toBeNull()
+  })
+  it('a jelenetben színátmenetes stúdióháttér és semleges padló, tónusleképezéssel (nincs látható horizontvonal)', () => {
+    const scene = readFileSync('src/components/PergolaScene.tsx', 'utf8')
+    expect(scene).toMatch(/function Cyclorama/)
+    expect(scene).toMatch(/#include <tonemapping_fragment>/)
+    expect(scene).toMatch(/neutral=\{cyclorama\}/)
+  })
+  it('a felület kicker-címkék nélkül, a lime csak a fő gombon; egy áttetsző eszközsor', () => {
+    const css = readFileSync('src/index.css', 'utf8')
+    const block = css.slice(css.indexOf('/* ============ Stúdió stílus'))
+    expect(block).toMatch(/\.layout-a\.style-studio \.step-heading > span \{ display: none; \}/)
+    expect(block).toMatch(/\.layout-a\.style-studio \.roof-card\.selected, \.layout-a\.style-studio \.building-card\.selected \{ border-color: transparent;/)
+    expect(block).toMatch(/\.layout-a\.style-studio \.weather-toolbar \{ gap: 2px;/)
+  })
+})

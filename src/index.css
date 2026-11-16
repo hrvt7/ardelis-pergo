@@ -3230,3 +3230,38 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 }
 /* Színminta neve: két sorban kiírva (nem „Antracitszü…”), hogy a vevő név szerint is megtalálja. */
 .color-chip small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.25; min-height: 2.5em; font-size: 11.5px; hyphens: auto; overflow-wrap: anywhere; }
+
+/* ============ Stúdió stílus (?style=studio, kipróbálásra) — letisztult, modernebb felület ============
+   Kevesebb címke és keret, a lime csak a fő gombon és az aktív lépésen; egy áttetsző eszközsor a jeleneten;
+   a 3D-ben semleges, hajlított stúdióháttér (PergolaScene: Cyclorama). */
+.layout-a.style-studio { --studio-ring: rgba(255,255,255,.72); --studio-line: rgba(255,255,255,.08); }
+/* 1) Kicker-feliratok és technikai címkék nélkül: egyetlen hierarchia (lépés címe → lehetőségek). */
+.layout-a.style-studio .project-identity > span,
+.layout-a.style-studio .viewer-heading > span,
+.layout-a.style-studio .viewer-footer,
+.layout-a.style-studio .config-head,
+.layout-a.style-studio .step-heading > span { display: none; }
+.layout-a.style-studio .viewer-heading h1 { letter-spacing: -.035em; font-weight: 600; }
+.layout-a.style-studio .viewer-heading h1 i { color: rgba(14,15,17,.28); }
+.layout-a.style-studio .viewer-heading p { background: rgba(255,255,255,.62); color: #2b2d30; box-shadow: none; }
+.layout-a.style-studio .viewer-heading h1 { color: #1b1d20; text-shadow: none; }
+.layout-a.style-studio .step-heading { margin-top: 4px; }
+.layout-a.style-studio .step-heading h2 { font-size: 30px; font-weight: 600; letter-spacing: -.03em; }
+/* 2) A lime visszafogva: kiválasztott kártyák semleges gyűrűvel, nem lime kerettel és háttérrel. */
+.layout-a.style-studio .roof-card, .layout-a.style-studio .building-card, .layout-a.style-studio .advisor-card { border-color: var(--studio-line); background: rgba(255,255,255,.03); }
+.layout-a.style-studio .roof-card.selected, .layout-a.style-studio .building-card.selected { border-color: transparent; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1.5px var(--studio-ring); }
+.layout-a.style-studio .roof-card.selected::after { display: none; }
+.layout-a.style-studio .roof-card.selected .roof-card-head em, .layout-a.style-studio .building-card.selected .building-card-head em { color: var(--text-secondary); }
+.layout-a.style-studio .building-card.selected .building-icon, .layout-a.style-studio .building-card.selected .building-icon .bi-car { stroke: #fff; }
+.layout-a.style-studio .building-card-traits > *, .layout-a.style-studio .building-season { border-color: var(--studio-line); color: var(--text-secondary); background: transparent; }
+.layout-a.style-studio .control-tabs { background: transparent; border-color: var(--studio-line); }
+.layout-a.style-studio .control-tabs button:not(.active) { color: var(--text-secondary); }
+/* 3) Egy áttetsző eszközsor a jeleneten a sok kerek gomb helyett; az aktív gomb fehér, nem lime. */
+.layout-a.style-studio .weather-toolbar { gap: 2px; padding: 4px; border-radius: 999px; background: rgba(18,19,21,.55); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); border: 1px solid rgba(255,255,255,.08); }
+.layout-a.style-studio .weather-toolbar button, .layout-a.style-studio .weather-toolbar .camera-menu-toggle { border: 0; background: transparent; box-shadow: none; color: rgba(255,255,255,.82); }
+.layout-a.style-studio .weather-toolbar button:hover { background: rgba(255,255,255,.1); color: #fff; border: 0; }
+.layout-a.style-studio .weather-toolbar button.selected { background: #fff; color: #111316; border: 0; }
+.layout-a.style-studio .studio-home-link { opacity: .55; }
+/* 4) Tipográfia: egy betűcsalád, nagy, táblázatos ár. */
+.layout-a.style-studio { --font-display: 'Inter Variable', Inter, system-ui, sans-serif; }
+.layout-a.style-studio .panel-price-value > strong, .layout-a.style-studio .mobile-price-bar strong { font-variant-numeric: tabular-nums; letter-spacing: -.02em; font-weight: 600; }
