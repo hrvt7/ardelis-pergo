@@ -1,5 +1,13 @@
 # Változások
 
+## 4.60 – Javítás: a nyitó animáció szaggatott, és a konfigurátor a logó előtt bejött
+
+- **Hiba:** az animáció közben épült fel a felület és a 3D jelenet; ez a fő szálat és a grafikus processzort lefoglalta, ezért az animált kép (amit az iPad a tiltott videó helyett játszik le) szaggatott, és lemaradt az időzítőhöz képest, így a konfigurátor már az animáció közepén bejött.
+- **Javítás:** amíg az animáció fut, sem a felület, sem a 3D nem épül (a fájlok a service worker tárából jönnek, a letöltés nem akad). Az animáció végigfut a logóig, a logós zárókép áll, és mögötte épül fel a konfigurátor; a nyitókép akkor tűnik el, amikor a 3D kész (legfeljebb 10 mp). Ha az animáció 4 mp alatt sem indul el (lassú hálózat), a konfigurátor a nyitókép mögött épülhet.
+- Mérés (Safari motorja, iPad-nézet, tiltott videó, ebben a gyenge, grafikus gyorsítás nélküli környezetben): a leghosszabb akadás 1515 ms → 246 ms, a 100 ms feletti akadások 14 → 4, és az animáció a teljes 9 mp-ig fut (eddig ~5 mp után megszakadt).
+- Tesztek: `introSplash.test.ts` (a felület és a három 3D-stúdió a jelzőre vár, a nyitókép csak a vég után zárul), `tests/e2e/intro.cjs` (az animáció alatt nincs 3D vászon, végigfut, utána a logó áll): mind zöld; `tests/e2e/offline.cjs` is zöld.
+- Nem ellenőrzött: valódi iPaden. A leggördülékenyebb továbbra is a videó: ha az iPaden be van kapcsolva a „Videók automatikus lejátszása” és nincs energiatakarékos mód, animált kép helyett videó fut.
+
 ## 4.59 – Olvashatóság a világos felületen, egységes admin
 
 - **Olvashatóság a világos felületen:** az Eszközök menü, a Nézet és vizualizáció panel, a kameramenü, az ár részletei, a Tudnivalók, a tanácsadó, a költségkeret, az energia- és az újrakezdés-ablak, az értesítések és a jelenet fölötti jelzések (esőautomata, bejárás) eddig sötét háttéren sötét szöveggel jelentek meg. Most fehér kártyák sötét szöveggel; a body-ba portált ablakok (fotós színmintavétel) a `body.ui-light` osztályon át ugyanezt kapják.

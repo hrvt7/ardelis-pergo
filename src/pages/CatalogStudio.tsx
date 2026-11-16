@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import IntroSceneGate from '@/components/IntroSceneGate'
 import { Box, Check, ChevronRight, Download, Eye, EyeOff, Info, Link2, Maximize2, MoveUpRight, Ruler, Scan, Settings2, View, X } from 'lucide-react'
 import { Link } from 'react-router'
 import CatalogControls, { type CatalogStep } from '@/components/CatalogControls'
@@ -100,7 +101,7 @@ export default function CatalogStudio({ family }: { family: OutdoorFamily }) {
   return <div className={`app-shell catalog-studio ${presentation ? 'presentation-mode' : ''} ${priceCollapsed ? 'price-collapsed' : ''}`}>
     <StudioHeader onHome={() => setView('perspective')} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setPriceOpen(true)} infoLabel="Árazás" onReset={reset} />
     <main className="studio-shell">
-      <section className="viewer-panel" aria-label={`${meta.title} 3D előnézet`}><CatalogScene config={config} scene={scene} view={view} />
+      <section className="viewer-panel" aria-label={`${meta.title} 3D előnézet`}><IntroSceneGate><CatalogScene config={config} scene={scene} view={view} /></IntroSceneGate>
         <div className="viewer-heading"><span>ÉLŐ ÉPÍTÉSZETI JELENET</span><h1>{meta.title} <i>/</i> <span className="kinetic" key={`n${roof ? config.width * (family === 'carport' ? config.bays : 1) : config.length}`}>{roof ? config.width * (family === 'carport' ? config.bays : 1) : config.length}</span><small> m</small></h1><p>{roof ? `${LABELS.roof[config.roofMaterial]} · ${formatNumber(config.depth)} m mély` : `${LABELS.frame[config.frameMaterial]} · ${LABELS.style[config.style].toLowerCase()} · ${formatNumber(config.height)} m magas`}</p></div>
         <SceneToolbar time={scene.time} onTimeChange={(time) => setScene((current) => ({ ...current, time }))} viewPanel={<StudioViewSettings view={scene} productName={family === 'fence' ? 'a kerítés' : `a ${meta.title.toLowerCase()}`} onChange={(patch) => setScene((current) => ({ ...current, ...patch }))} />} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onExport={exportPdf} onShare={share}
           quick={roofless && config.gateType !== 'none' ? [{ id: 'gate', className: 'icon-door', icon: scene.gateOpen ? EyeOff : Eye, label: scene.gateOpen ? 'Csukás' : 'Nyitás', title: 'A kapu nyitása és zárása', active: scene.gateOpen, run: () => setScene((current) => ({ ...current, gateOpen: !current.gateOpen })) }] : []}

@@ -86,3 +86,30 @@ describe('nyitó animáció: fájl és offline', () => {
     expect(code.length).toBeLessThan(6000)
   })
 })
+
+describe('nyitó animáció: a 3D és a felület csak utána épül (nem szaggat, nem jön be előbb)', () => {
+  it('a jelző szerint: „playing” alatt zárva, „done” után és nyitó animáció nélkül nyitva', async () => {
+    const { introPlaying } = await import('../src/lib/introGate')
+    const { INTRO_FLAG } = await import('../src/lib/introSplash')
+    const dataset: Record<string, string> = {}
+    const g = globalThis as unknown as { document?: unknown }
+    const before = g.document
+    g.document = { documentElement: { dataset } }
+    try {
+      expect(introPlaying()).toBe(false)
+      dataset[INTRO_FLAG] = 'playing'
+      expect(introPlaying()).toBe(true)
+      dataset[INTRO_FLAG] = 'done'
+      expect(introPlaying()).toBe(false)
+    } finally { g.document = before }
+  })
+  it('a felület (main.tsx) és a három 3D-stúdió a jelzőre vár', () => {
+    const read = (f: string) => fs.readFileSync(path.resolve(import.meta.dirname, '..', f), 'utf8')
+    expect(read('src/main.tsx')).toMatch(/if \(introPlaying\(\)\) window\.addEventListener\(INTRO_DONE_EVENT, mount/)
+    for (const f of ['src/pages/PergoStudio.tsx', 'src/pages/CatalogStudio.tsx', 'src/pages/GarageStudio.tsx']) expect(read(f), f).toContain('<IntroSceneGate>')
+  })
+  it('a nyitókép csak az animáció vége után zárul, a 3D elkészültéig a logón áll (legfeljebb 10 mp)', () => {
+    expect(INTRO_MAX_HOLD_MS).toBe(10000)
+    expect(introCanClose({ started: true, ended: false, blocked: false, sceneReady: true, msSinceOpen: 5000, msSinceEnd: 0 })).toBe(false)
+  })
+})

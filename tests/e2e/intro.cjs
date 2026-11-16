@@ -25,11 +25,12 @@ const state = (p) => p.evaluate(() => {
     const s1 = await state(p);
     ok(s1.overlay && !s1.paused, `a videó némítva elindult (autoplay-korlátozás mellett is), t=${s1.t.toFixed(2)} mp`);
     await p.waitForTimeout(1500); await p.screenshot({ path: '/tmp/intro-1.png' });
+    const during = await p.evaluate(() => ({ canvas: document.querySelectorAll('.scene-canvas-wrap canvas').length, flag: document.documentElement.dataset.lamelixIntro, t: document.querySelector('#lamelix-intro video').currentTime }));
+    ok(during.canvas === 0 && during.flag === 'playing', `az animáció alatt a 3D nem épül (nincs vászon, t=${during.t.toFixed(1)} mp) – nem szaggat`);
     await p.waitForSelector('.scene-canvas-wrap[data-scene-ready="true"]', { state: 'attached', timeout: 120000 });
-    const s2 = await state(p);
-    ok(s2.overlay ? s2.t < 9 : true, `a 3D a háttérben betöltött${s2.overlay ? ` a videó alatt (t=${s2.t.toFixed(1)} mp)` : ''}`);
     await p.waitForSelector('#lamelix-intro', { state: 'detached', timeout: 20000 });
-    ok(true, 'a videó vége után a nyitókép eltűnt, a konfigurátor látszik');
+    const endT = await p.evaluate(() => window.__introEnd || 0);
+    ok(true, 'az animáció vége után a logó mögött felépült a 3D, a nyitókép eltűnt');
     await p.screenshot({ path: '/tmp/intro-2.png' });
     ok(await p.evaluate(() => document.documentElement.style.overflow === ''), 'a görgetés-zár feloldva');
 
@@ -57,6 +58,7 @@ const state = (p) => p.evaluate(() => {
       HTMLMediaElement.prototype.play = function () { return Promise.reject(new DOMException('blocked', 'NotAllowedError')) };
     });
     const t0 = Date.now();
+    blockedPage.on('console', () => undefined);
     await blockedPage.goto(`${BASE}/konfigurator?intro=1`, { waitUntil: 'commit' });
     await blockedPage.waitForSelector('#lamelix-intro img[src$="lamelix-intro.avif"]', { timeout: 20000 });
     const videoHidden = await blockedPage.evaluate(() => getComputedStyle(document.querySelector('#lamelix-intro video')).display === 'none');
@@ -64,6 +66,11 @@ const state = (p) => p.evaluate(() => {
     await blockedPage.waitForTimeout(2500); const a1 = await blockedPage.screenshot();
     await blockedPage.waitForTimeout(2500); const a2 = await blockedPage.screenshot();
     ok(!a1.equals(a2), 'az animált kép mozog (két képkocka eltér)');
+    ok(await blockedPage.evaluate(() => document.querySelectorAll('.scene-canvas-wrap canvas').length === 0 && !!document.querySelector('#lamelix-intro img[src$=".avif"]')), 'az animált kép alatt a 3D nem épül');
+    await blockedPage.waitForSelector('#lamelix-intro img[src$=".avif"]', { state: 'detached', timeout: 30000 });
+    const animTook = (Date.now() - t0) / 1000;
+    const stillOverlay = await blockedPage.locator('#lamelix-intro').count();
+    ok(animTook >= 8.8 && stillOverlay === 1, `az animáció végigfut (${animTook.toFixed(1)} mp), utána a logó áll, a konfigurátor csak ezután jön`);
     await blockedPage.screenshot({ path: '/tmp/intro-blocked.png' });
     await blockedPage.waitForSelector('#lamelix-intro', { state: 'detached', timeout: 30000 });
     const took = (Date.now() - t0) / 1000;

@@ -4,7 +4,7 @@
 // 3D kész (vagy a vég után legfeljebb 6 mp-cel). Ha a rendszer tiltja az automatikus lejátszást (pl. iOS
 // energiatakarékos mód, „Videók automatikus lejátszása” ki), ugyanez az animáció animált AVIF képként fut le – a
 // képekre a tiltás nem vonatkozik, és az iOS saját play-jele sem jelenik meg.
-import { INTRO_ANIM_SRC, INTRO_DURATION_MS, INTRO_LOGO_SRC, INTRO_SESSION_KEY, INTRO_SRC, introCanClose, shouldPlayIntro } from '../lib/introSplash'
+import { INTRO_ANIM_SRC, INTRO_DONE_EVENT, INTRO_DURATION_MS, INTRO_FLAG, INTRO_LOGO_SRC, INTRO_RELEASE_IF_NOT_STARTED_MS, INTRO_SESSION_KEY, INTRO_SRC, introCanClose, shouldPlayIntro } from '../lib/introSplash'
 
 const media = (query: string) => typeof matchMedia === 'function' && matchMedia(query).matches
 
@@ -49,6 +49,15 @@ function boot() {
   for (const type of ['click', 'touchstart', 'touchmove', 'pointerdown', 'wheel']) root.addEventListener(type, (event) => { event.preventDefault(); event.stopPropagation() }, { passive: false })
   document.body.prepend(root)
   document.documentElement.style.overflow = 'hidden'
+  // Amíg az animáció fut, a 3D jelenet nem épül fel (különben szaggatna); a végén szabad az út (src/lib/introGate.ts).
+  document.documentElement.dataset[INTRO_FLAG] = 'playing'
+  let released = false
+  const releaseScene = () => {
+    if (released) return
+    released = true
+    document.documentElement.dataset[INTRO_FLAG] = 'done'
+    window.dispatchEvent(new Event(INTRO_DONE_EVENT))
+  }
 
   const openedAt = Date.now()
   const state = { started: false, ended: false, blocked: false, endedAt: 0, closed: false }
@@ -56,6 +65,7 @@ function boot() {
   const close = () => {
     if (state.closed) return
     state.closed = true
+    releaseScene()
     window.clearInterval(timer)
     root.style.opacity = '0'
     root.style.pointerEvents = 'none'
@@ -66,6 +76,8 @@ function boot() {
   const check = () => {
     if (state.closed) return
     const now = Date.now()
+    // Ha az animáció néhány mp alatt sem indult el (lassú hálózat), a 3D ne várjon rá: épüljön a nyitókép mögött.
+    if (!state.started && now - openedAt >= INTRO_RELEASE_IF_NOT_STARTED_MS) releaseScene()
     if (introCanClose({ ...state, sceneReady: sceneReady(), msSinceOpen: now - openedAt, msSinceEnd: state.ended ? now - state.endedAt : 0 })) close()
   }
   const markStarted = () => { if (!state.started && !video.paused) { state.started = true; state.blocked = false } }
@@ -86,12 +98,15 @@ function boot() {
       state.started = true
       root.append(anim)
       // A vége: a logós állókép marad (a WebKit az animált képet újraindítaná), és a szokásos zárás jön.
-      window.setTimeout(() => { anim.remove(); state.ended = true; state.endedAt = Date.now(); check() }, INTRO_DURATION_MS - 150)
+      const finish = () => { anim.remove(); state.ended = true; state.endedAt = Date.now(); releaseScene(); check() }
+      window.setTimeout(finish, INTRO_DURATION_MS - 100)
     }, { once: true })
+    // Ha az animált kép sem tölthető be, a 3D a logós kép mögött épül fel.
+    anim.addEventListener('error', releaseScene, { once: true })
   }
   video.addEventListener('playing', markStarted)
   video.addEventListener('timeupdate', () => { if (video.currentTime > 0 && !state.blocked) markStarted() })
-  video.addEventListener('ended', () => { state.ended = true; state.endedAt = Date.now(); check() })
+  video.addEventListener('ended', () => { state.ended = true; state.endedAt = Date.now(); releaseScene(); check() })
   // Valódi betöltési hiba (pl. a fájl nem érhető el): nincs mit mutatni, a konfigurátor jön.
   video.addEventListener('error', () => { if (!state.blocked) close() })
   timer = window.setInterval(check, 150)

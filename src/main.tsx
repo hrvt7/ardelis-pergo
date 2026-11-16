@@ -34,6 +34,8 @@ import App from './App.tsx'
 import SwUpdateBanner from '@/components/SwUpdateBanner'
 import { registerServiceWorker } from '@/lib/swClient'
 import { captureInstallPrompt } from '@/lib/installPrompt'
+import { introPlaying } from '@/lib/introGate'
+import { INTRO_DONE_EVENT } from '@/lib/introSplash'
 // Vercel Web Analytics: csak ha a projektben be van kapcsolva és VITE_VERCEL_ANALYTICS=1 (különben a szkript 404-et adna).
 import { Analytics } from '@vercel/analytics/react'
 
@@ -41,7 +43,9 @@ import { Analytics } from '@vercel/analytics/react'
 captureInstallPrompt()
 registerServiceWorker({ prod: import.meta.env.PROD, mode: import.meta.env.MODE, router: import.meta.env.VITE_ROUTER })
 
-createRoot(document.getElementById('root')!).render(
+// Nyitó animáció (telepített webapp, mobil/tablet): amíg fut, a felület sem épül fel, hogy az animáció ne szaggasson;
+// a végén (a logós zárókép mögött) indul. Nyitó animáció nélkül azonnal.
+const mount = () => createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {import.meta.env.VITE_ROUTER === 'memory'
       // Előnézeti (artifact) build: az oldal nem a domain gyökerén fut, ezért belső útválasztás.
@@ -50,3 +54,5 @@ createRoot(document.getElementById('root')!).render(
       : <BrowserRouter><App /><SwUpdateBanner />{import.meta.env.VITE_VERCEL_ANALYTICS === '1' && <Analytics />}</BrowserRouter>}
   </StrictMode>,
 )
+if (introPlaying()) window.addEventListener(INTRO_DONE_EVENT, mount, { once: true })
+else mount()

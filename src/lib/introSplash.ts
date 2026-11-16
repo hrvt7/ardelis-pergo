@@ -16,8 +16,18 @@ export const INTRO_LOGO_SRC = '/assets/intro/lamelix-intro-logo.webp'
 export const INTRO_DURATION_MS = 9000
 /** A munkameneten belül csak egyszer (pl. a „Frissítés” utáni újratöltésnél már nem). */
 export const INTRO_SESSION_KEY = 'lamelix-intro-played'
-/** A videó vége után legfeljebb ennyit várunk a 3D jelenetre (az utolsó, logós képkockán állva), utána mindenképp eltűnik. */
-export const INTRO_MAX_HOLD_MS = 6000
+/**
+ * Amíg az animáció fut, a 3D jelenet NEM épül fel (az a grafikus processzort és a fő szálat lefoglalja, az animáció
+ * szaggatna): a <html data-lamelix-intro="playing"> jelzi, az animáció vége után "done" és INTRO_DONE_EVENT jön.
+ * Utána a logós zárókép áll, és mögötte épül fel a 3D; a nyitókép akkor tűnik el, amikor a 3D kész.
+ */
+export const INTRO_FLAG = 'lamelixIntro'
+export const INTRO_DONE_EVENT = 'lamelix-intro-done'
+/** Ha az animáció ennyi idő alatt sem indul el (lassú hálózat), a 3D már a nyitókép mögött épülhet. */
+export const INTRO_RELEASE_IF_NOT_STARTED_MS = 4000
+
+/** A videó vége után legfeljebb ennyit várunk a 3D jelenetre (az utolsó, logós képkockán állva, mögötte épül a 3D), utána mindenképp eltűnik. */
+export const INTRO_MAX_HOLD_MS = 10000
 /**
  * Ha a videó ennyi idő alatt sem indul el (és nem is a lejátszásra várunk koppintással), a nyitókép eltűnik.
  * Lassú wifin az első indításkor a 2,8 MB-os videó lassan érkezik: ennyit adunk neki, de a 3D-t nem tartjuk vissza vele.
@@ -51,8 +61,8 @@ export function shouldPlayIntro(env: IntroEnvironment): boolean {
   return env.standalone && env.touch
 }
 
-/** Végső biztosíték: ha a lejátszás elakad (megszakadt hálózat), ennyi után mindenképp eltűnik (9 mp-es videó + tartalék). */
-export const INTRO_HARD_CAP_MS = 22000
+/** Végső biztosíték: ha a lejátszás elakad (megszakadt hálózat), ennyi után mindenképp eltűnik (9 mp-es animáció + a 3D felépítése + tartalék). */
+export const INTRO_HARD_CAP_MS = 30000
 
 export interface IntroState {
   /** A videó ténylegesen fut (playing vagy előrehaladó lejátszási idő). */
