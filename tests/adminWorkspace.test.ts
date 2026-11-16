@@ -78,4 +78,14 @@ describe('munkaterület – valódi adatokból', () => {
     expect(page).not.toMatch(/szerver tárhelye/)
     expect(page).toMatch(/A mentés most nem működik/)
   })
+
+  it('4.78: az érdeklődők oldal ugyanazt a jelzést használja – kanbankártya monogrammal, öt pöttyel, hívással, sarokkivágással', () => {
+    const leads = readFileSync('src/pages/AdminLeads.tsx', 'utf8')
+    const css = readFileSync('src/admin-workspace.css', 'utf8')
+    expect(leads).toMatch(/import \{ Dots, LeadInterest \} from '@\/components\/admin\/Workspace'/)
+    expect(leads).toMatch(/className=\{`board-card ws-card/)
+    expect((leads.match(/<LeadInterest lead=\{lead\} \/>/g) ?? []).length).toBeGreaterThanOrEqual(2)
+    expect(leads).not.toMatch(/bc-moves/)
+    expect(css).toMatch(/grid-auto-columns: minmax\(272px, 1fr\)/)
+  })
 })

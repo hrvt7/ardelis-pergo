@@ -317,6 +317,7 @@
   .admin-ws .tr small.only-narrow { font-size: 13px; line-height: 1.45; }
 }
 
+<<<<<<< Updated upstream
 /* ── Telepítések (digitális ikerpéldány) ──────────────────────────────────── */
 .admin-ws .install-box { margin-top: 18px; display: grid; gap: 10px; }
 .admin-ws .install-box p { margin: 0; display: flex; gap: 8px; align-items: center; color: var(--ws-text); }
@@ -346,3 +347,85 @@
   .admin-ws .tr.install-tr > span:nth-child(2), .admin-ws .tr.install-tr > span:nth-child(3) { display: none; }
   .admin-ws .install-form fieldset { grid-template-columns: minmax(0, 1fr); }
 }
+=======
+/* ── 4.78: minden aloldal ugyanazzal a nyelvvel – nagy kártyák, monogramos kör, öt pötty, sarokkivágás ── */
+.ws-interest { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.ws-interest small { display: inline-flex; align-items: center; gap: 4px; color: var(--ws-muted); font-size: 13px; white-space: nowrap; }
+.ws-interest small svg { color: var(--ws-accent); }
+
+/* Érdeklődők – eszközsor és státuszszűrők a munkaterület pill-stílusában */
+.admin-ws .toolbar .btn, .admin-ws .view-seg button { min-height: 44px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: transparent; color: var(--ws-text); font-size: 14px; font-weight: 500; }
+.admin-ws .view-seg { gap: 6px; padding: 0; border: 0; background: none; }
+.admin-ws .view-seg button.is-on, .admin-ws .toolbar .btn.is-on { background: #fff; color: var(--ws-ink); border-color: #fff; }
+.admin-ws .search { min-height: 48px; border-radius: 999px; background: var(--ws-card); }
+.admin-ws .tabs { gap: 8px; }
+.admin-ws .tabs button { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: transparent; color: var(--ws-text); font-size: 14px; font-weight: 500; }
+.admin-ws .tabs button.is-on { background: #fff; border-color: #fff; color: var(--ws-ink); }
+.admin-ws .tabs button b { min-width: 20px; padding: 3px 6px; border-radius: 999px; background: var(--ws-card-2); color: var(--ws-text); font-size: 12.5px; text-align: center; }
+.admin-ws .tabs button.is-on b { background: var(--ws-ink); color: #fff; }
+
+/* Tábla: kártyán ülő sorok, monogram, érdeklődés-pöttyök a sor végén */
+.admin-ws .card.table { padding: 8px; border-radius: 28px; background: var(--ws-card); }
+.admin-ws .tr { grid-template-columns: minmax(200px, 2.2fr) minmax(90px, 1fr) minmax(70px, .8fr) minmax(110px, 1fr) minmax(130px, 1.1fr) minmax(70px, .7fr) minmax(110px, .9fr); padding: 12px 14px; border-radius: 20px; }
+.admin-ws .tr.th { color: var(--ws-muted); font-size: 13px; letter-spacing: .04em; }
+.admin-ws button.tr:hover, .admin-ws .tr.is-open { background: var(--ws-card-2); }
+.admin-ws .tr .ws-avatar.sm { position: relative; width: 44px; height: 44px; }
+.admin-ws .tr .new-dot { position: absolute; top: 0; right: 0; width: 11px; height: 11px; border-radius: 50%; background: var(--ws-accent); box-shadow: 0 0 0 2px var(--ws-card); }
+.admin-ws .tr .interest-cell { justify-self: end; }
+.admin-ws .tr-wrap { grid-template-columns: minmax(0, 1fr) 52px; }
+.admin-ws .tr-call { width: 44px; height: 44px; border-radius: 50%; }
+@media (max-width: 1000px) { .admin-ws .tr { grid-template-columns: minmax(170px, 2fr) minmax(90px, 1fr) minmax(110px, 1fr) minmax(120px, 1fr); } .admin-ws .tr > .interest-cell { display: none; } }
+
+/* Kanban: oszlopfej mint a munkaterület szakaszfeje, kártyák mint az „Új érdeklődők” */
+.admin-ws .board { gap: 16px; align-items: start; }
+.admin-ws .board-col { --ws-surface: var(--ws-panel); padding: 0; border: 0; border-radius: 0; background: transparent; }
+.admin-ws .board-col.is-over .board-list { outline: 2px dashed rgba(239,240,163,.5); outline-offset: 4px; border-radius: 28px; }
+.admin-ws .board-col header { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px 10px; margin-bottom: 14px; padding: 0 4px; }
+.admin-ws .board-col header i { width: 10px; height: 10px; border-radius: 50%; background: var(--pill); }
+.admin-ws .board-col header h3 { margin: 0; font-size: 18px; font-weight: 500; letter-spacing: -.01em; line-height: 1.2; white-space: normal; overflow: visible; }
+.admin-ws .board-col header .ws-count { grid-column: 1 / 2; justify-self: start; font-size: 15px; }
+.admin-ws .board-col header small { color: var(--ws-muted); font-size: 13px; }
+.admin-ws .board-list { display: grid; gap: 14px; }
+.admin-ws .board-card { display: grid; gap: 14px; padding: 16px 16px 14px; border: 0; border-radius: 26px; background: var(--ws-card); cursor: pointer; }
+.admin-ws .board-card:hover { background: #222327; }
+.admin-ws .board-card:focus-visible { outline: 2px solid var(--ws-accent); outline-offset: 2px; }
+.admin-ws .board-card.is-drag { opacity: .45; }
+.admin-ws .board-card .bc-top { display: flex; align-items: center; gap: 12px; min-width: 0; padding-right: 46px; }
+.admin-ws .board-card .bc-top > div { display: grid; min-width: 0; }
+.admin-ws .board-card .bc-top b { font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-ws .board-card .bc-top small { color: var(--ws-muted); font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-ws .board-card .bc-meta { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; flex-wrap: wrap; color: inherit; }
+.admin-ws .board-card .ws-tags i { font-size: 12.5px; padding: 4px 8px; }
+.admin-ws .board-card .bc-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid var(--ws-line); color: var(--ws-muted); font-size: 14px; }
+.admin-ws .board-card .bc-foot b { color: var(--ws-text); font-weight: 600; }
+.admin-ws .board-card .bc-moves { display: flex; gap: 6px; }
+.admin-ws .board-card .bc-moves button { width: 16px; height: 16px; min-height: 0; padding: 0; border-radius: 50%; border: 2px solid var(--ws-card); box-shadow: 0 0 0 1px rgba(255,255,255,.2); cursor: pointer; }
+.admin-ws .board-card .ws-notch { --ws-r: 20px; }
+.admin-ws .board-card .ws-notch .ws-round { width: 40px; height: 40px; }
+.admin-ws .board-empty { padding: 28px 16px; border-radius: 26px; border: 1px dashed rgba(255,255,255,.14); color: var(--ws-muted); font-size: 14px; text-align: center; }
+
+/* Részletes panel: nagy monogram, a pontszám pöttyökkel, állapotgombok egyforma rácsban */
+.admin-ws .drawer .avatar.big { width: 52px; height: 52px; font-size: 17px; border: 0; }
+.admin-ws .score-head { display: flex; align-items: center; gap: 12px; }
+.admin-ws .score-head span:last-child { margin-left: auto; color: var(--ws-muted); }
+.admin-ws .status-chips { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.admin-ws .status-chips button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px; }
+.admin-ws .facts { border: 0; border-radius: 24px; background: var(--ws-card); }
+
+/* Beágyazás és beállítások: ugyanaz a kártya és szakaszcím, mint az áttekintőn */
+.admin-ws .card { border: 0; border-radius: 28px; background: var(--ws-card); }
+.admin-ws .card > header h2, .admin-ws .admin-form fieldset > legend, .admin-ws .admin-form h2 { font-size: 22px; font-weight: 500; letter-spacing: -.02em; }
+.admin-ws .embed-frame { min-height: 420px; background: linear-gradient(180deg, #2A2B30, #1C1C1F); }
+.admin-ws .qr-box img, .admin-ws .qr img { border-radius: 18px; }
+/* Kanban: olvasható szélességű oszlopok vízszintes sínen (a nevek nem vágódnak), az érdeklődés egy sorban */
+.admin-ws .board { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: minmax(272px, 1fr); overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 12px; scrollbar-width: thin; scrollbar-color: #3A3B40 transparent; }
+@media (min-width: 1180px) { .admin-ws .board { grid-template-columns: none; overflow-x: auto; } }
+.admin-ws .board-col { scroll-snap-align: start; }
+.admin-ws .board-card .bc-meta { flex-direction: column; align-items: stretch; gap: 12px; }
+.admin-ws .board-card .ws-interest { flex-direction: row; align-items: center; justify-content: space-between; }
+/* Kártyacímek mindenhol a munkaterület szakaszcímének léptékén (beágyazás, áttekintő kártyái) */
+.admin-ws .card > header h2, .admin-ws .card > header h3 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -.02em; color: var(--ws-text); }
+.admin-ws .card > header { margin-bottom: 14px; }
+.admin-ws .admin-section > h2 { font-size: 22px; font-weight: 500; letter-spacing: -.02em; }
+.admin-ws .who .only-narrow .ws-interest { flex-direction: row; align-items: center; gap: 10px; margin-top: 6px; }
+>>>>>>> Stashed changes

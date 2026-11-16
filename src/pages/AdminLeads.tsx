@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Copy, Download, DraftingCompass, FileSpreadsheet, ExternalLink, FileText, Flame, GripVertical, KanbanSquare, List, Mail, Phone, PhoneCall, Search, X } from 'lucide-react'
+import { ArrowUpRight, Check, Copy, Download, DraftingCompass, FileSpreadsheet, ExternalLink, FileText, Flame, KanbanSquare, List, Mail, Phone, PhoneCall, Search, X } from 'lucide-react'
 import { formatPrice } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
 import { initials, LEAD_STATUSES, leadsToCsv, STATUS_COLORS, timeAgo, type LeadRow } from '@/lib/adminLeads'
@@ -8,6 +8,8 @@ import type { RoofType } from '@/types/pergola'
 import QuoteSection, { type QuoteApi } from '@/components/admin/QuoteSection'
 import InstallationSection, { type InstallationApi } from '@/components/admin/InstallationSection'
 import { PlanSketch } from '@/components/admin/adminKit'
+import { Dots, LeadInterest } from '@/components/admin/Workspace'
+import { compactMoney, engagementChips } from '@/lib/workspace'
 import { leadPdfInput } from '@/lib/leadPdf'
 import { downloadLeadBom, downloadLeadDxf, downloadLeadPdf } from '@/components/admin/leadPdfDownload'
 import type { Tenant } from '@/tenants/types'
@@ -47,11 +49,6 @@ export function EmptyArt() {
 }
 
 /** Forró / meleg / hideg jelzés a pontszámmal; viselkedési adat nélküli, nulla pontos leadnél nem jelenik meg. */
-function TierBadge({ lead }: { lead: LeadRow }) {
-  const score = scoreLead(lead)
-  if (score.blind && score.score === 0) return null
-  return <span className="tier" style={{ ['--pill' as string]: TIER_COLORS[score.tier] }} title={score.reasons.join(' · ') || 'Nincs viselkedési adat'}>{score.tier === 'hot' && <Flame size={11} />}{TIER_LABELS[score.tier]} · {score.score}</span>
-}
 
 function CopyButton({ value, label }: { value: string; label: string }) {
   const [done, setDone] = useState(false)
@@ -87,7 +84,7 @@ function Drawer({ lead, now, quotes, installations, tenant, onClose, onUpdate, o
     <div className="drawer-scrim" onClick={onClose} />
     <aside className="drawer" role="dialog" aria-modal="true" aria-label={`${lead.customer_name} részletei`} style={{ ['--pill' as string]: STATUS_COLORS[lead.status] }}>
       <header>
-        <span className="avatar big">{initials(lead.customer_name)}</span>
+        <span className="avatar big ws-avatar">{initials(lead.customer_name)}</span>
         <div><h2>{lead.customer_name}</h2><small>{lead.ref} · {timeAgo(lead.created_at, now)}</small></div>
         <button type="button" className="icon-btn" aria-label="Bezárás" onClick={onClose}><X size={17} /></button>
       </header>
@@ -112,7 +109,7 @@ function Drawer({ lead, now, quotes, installations, tenant, onClose, onUpdate, o
 
         <div className="field-label">Mennyire komoly az érdeklődés?</div>
         <div className="score-box" style={{ ['--pill' as string]: TIER_COLORS[score.tier] }}>
-          <div className="score-head"><strong>{score.tier === 'hot' && <Flame size={14} />}{TIER_LABELS[score.tier]}</strong><span>{score.score} / 100</span></div>
+          <div className="score-head"><strong>{score.tier === 'hot' && <Flame size={14} />}{TIER_LABELS[score.tier]}</strong><Dots score={score.score} reasons={score.reasons} /><span>{score.score} / 100</span></div>
           <div className="score-bar" role="progressbar" aria-valuenow={score.score} aria-valuemin={0} aria-valuemax={100} aria-label="Lead-pontszám"><i style={{ width: `${score.score}%` }} /></div>
           {score.reasons.length > 0 && <ul>{score.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>}
           <small>{score.blind ? 'Ehhez az érdeklődőhöz nincs viselkedési adat (a pontozás bevezetése előtt vagy külső forrásból érkezett).' : 'A pontszám a konfigurátorban mutatott viselkedésből (PDF, AR, megosztás, visszatérés, bejárt lépések) és az űrlap részletességéből adódik. Becslés, nem garancia.'}</small>
@@ -195,31 +192,32 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, i
         return <section key={key} className={`board-col${overCol === key ? ' is-over' : ''}`} style={{ ['--pill' as string]: STATUS_COLORS[key] }}
           onDragOver={(event) => { event.preventDefault(); if (overCol !== key) setOverCol(key) }} onDragLeave={() => setOverCol((current) => (current === key ? null : current))}
           onDrop={(event) => { event.preventDefault(); const ref = dragRef ?? event.dataTransfer.getData('text/plain'); setOverCol(null); setDragRef(null); const moved = leads.find((lead) => lead.ref === ref); if (moved && moved.status !== key) onUpdate(ref, { status: key }) }}>
-          <header><i /><h3>{label}</h3><b>{col.length}</b><small>{sum ? formatPrice(sum) : ''}</small></header>
+          <header><i /><h3>{label}</h3><span className="ws-count">{col.length}</span><small>{sum ? compactMoney(sum) : '—'}</small></header>
           <div className="board-list">
             {col.length === 0 && <p className="board-empty">Húzz ide egy kártyát</p>}
-            {col.map((lead) => <article key={lead.ref} className={`board-card${dragRef === lead.ref ? ' is-drag' : ''}`} draggable tabIndex={0}
+            {col.map((lead) => <article key={lead.ref} className={`board-card ws-card${dragRef === lead.ref ? ' is-drag' : ''}`} draggable tabIndex={0}
               onDragStart={(event) => { setDragRef(lead.ref); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', lead.ref) }} onDragEnd={() => { setDragRef(null); setOverCol(null) }}
               onClick={() => setOpenRef(lead.ref)} onKeyDown={(event) => { if (event.key === 'Enter') setOpenRef(lead.ref) }}>
-              <div className="bc-top"><span className="avatar sm">{initials(lead.customer_name)}</span><b>{lead.customer_name}</b><GripVertical size={14} className="bc-grip" aria-hidden="true" /></div>
-              <div className="bc-meta">{lead.city} · {roofName(lead)} <TierBadge lead={lead} /></div>
-              <div className="bc-foot"><strong>{formatPrice(lead.estimate_gross)}</strong><small>{timeAgo(lead.created_at, now)}</small></div>
-              <div className="bc-moves">{LEAD_STATUSES.filter(([other]) => other !== key).slice(0, 4).map(([other, otherLabel]) => <button type="button" key={other} title={`Áthelyezés: ${otherLabel}`} aria-label={`Áthelyezés: ${otherLabel}`} style={{ background: STATUS_COLORS[other] }} onClick={(event) => { event.stopPropagation(); onUpdate(lead.ref, { status: other }) }} />)}</div>
+              <div className="ws-notch"><button type="button" className="ws-round" aria-label={`${lead.customer_name} részletei`} title="Részletek" onClick={(event) => { event.stopPropagation(); setOpenRef(lead.ref) }}><ArrowUpRight size={17} /></button></div>
+              <header className="bc-top"><span className="ws-avatar sm">{initials(lead.customer_name)}</span><div><b>{lead.customer_name}</b><small>{[lead.city, roofName(lead)].filter((part) => part && part !== '—').join(' · ')}</small></div></header>
+              <div className="bc-meta"><span className="ws-tags">{engagementChips(lead).slice(0, 2).map((chip) => <i key={chip}>{chip}</i>)}</span><LeadInterest lead={lead} /></div>
+              <footer className="bc-foot"><span><b>{compactMoney(lead.estimate_gross)}</b> · {timeAgo(lead.created_at, now)}</span><a className="ws-round solid sm" href={`tel:${lead.phone.replace(/[^+0-9]/g, '')}`} aria-label={`${lead.customer_name} hívása`} title="Hívás" onClick={(event) => event.stopPropagation()}><PhoneCall size={16} /></a></footer>
             </article>)}
           </div>
         </section>
       })}
     </div> : shown.length === 0 ? <div className="card empty"><EmptyArt /><strong>{leads.length === 0 ? 'Még nem érkezett érdeklődő.' : 'Nincs a szűrésnek megfelelő érdeklődő.'}</strong><p>{leads.length === 0 ? 'Amint valaki felmérést kér a konfigurátorban, itt jelenik meg.' : 'Próbálj másik státuszt vagy keresőszót.'}</p></div> :
       <div className="card table" role="table">
-        <div className="tr-wrap" role="row"><div className="tr th"><span>Ügyfél</span><span>Település</span><span>Tető</span><span className="num">Irányár</span><span>Státusz</span><span className="num">Érkezett</span></div><span className="tr-call-head" aria-hidden="true" /></div>
+        <div className="tr-wrap" role="row"><div className="tr th"><span>Ügyfél</span><span>Település</span><span>Tető</span><span className="num">Irányár</span><span>Státusz</span><span className="num">Érkezett</span><span>Érdeklődés</span></div><span className="tr-call-head" aria-hidden="true" /></div>
         {/* Soronként egy koppintásos hívás a sor mellett (a sor maga a részleteket nyitja) */}
         {shown.map((lead) => <div role="row" key={lead.ref} className="tr-wrap"><button type="button" className={`tr${openRef === lead.ref ? ' is-open' : ''}`} onClick={() => setOpenRef(lead.ref)}>
-          <span className="who"><span className="avatar">{initials(lead.customer_name)}{lead.status === 'new' && now - new Date(lead.created_at).getTime() < 86_400_000 && <i className="new-dot" title="Új érdeklődő" />}</span><span><b>{lead.customer_name}</b><small className="only-wide">{lead.ref} <TierBadge lead={lead} /></small><small className="only-narrow">{[lead.city, roofName(lead), timeAgo(lead.created_at, now)].filter((part) => part && part !== '—').join(' · ')} <TierBadge lead={lead} /></small></span></span>
+          <span className="who"><span className="avatar ws-avatar sm">{initials(lead.customer_name)}{lead.status === 'new' && now - new Date(lead.created_at).getTime() < 86_400_000 && <i className="new-dot" title="Új érdeklődő" />}</span><span><b>{lead.customer_name}</b><small className="only-wide">{lead.ref}</small><small className="only-narrow">{[lead.city, roofName(lead), timeAgo(lead.created_at, now)].filter((part) => part && part !== '—').join(' · ')}</small><span className="only-narrow"><LeadInterest lead={lead} /></span></span></span>
           <span className="muted">{lead.city}</span>
           <span className="muted">{roofName(lead)}</span>
           <span className="num strong">{formatPrice(lead.estimate_gross)}</span>
           <span><span className="pill" style={{ ['--pill' as string]: STATUS_COLORS[lead.status] }}>{STATUS_LABEL[lead.status] ?? lead.status}</span></span>
           <span className="num muted">{timeAgo(lead.created_at, now)}</span>
+          <span className="interest-cell"><LeadInterest lead={lead} /></span>
         </button><a className="icon-btn call tr-call" href={`tel:${lead.phone.replace(/[^+0-9]/g, '')}`} aria-label={`${lead.customer_name} hívása`} title="Hívás"><PhoneCall size={16} /></a></div>)}
       </div>}
     {open && <Drawer key={open.ref} lead={open} now={now} quotes={quotes && { quotes: quotes.all.filter((quote) => quote.leadRef === open.ref), create: quotes.create, withdraw: quotes.withdraw }} installations={installations} tenant={tenant} onClose={() => setOpenRef(null)} onUpdate={onUpdate} onReload={onReload} />}

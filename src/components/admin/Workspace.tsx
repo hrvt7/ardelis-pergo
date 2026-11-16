@@ -11,9 +11,15 @@ import { compactMoney, DAY, engagementChips, interestDots, leadSize, OPEN_STATUS
 
 const tel = (lead: LeadRow) => `tel:${lead.phone.replace(/[^+0-9]/g, '')}`
 
-function Dots({ score, reasons }: { score: number; reasons: string[] }) {
+export function Dots({ score, reasons }: { score: number; reasons: string[] }) {
   const on = interestDots(score)
   return <span className="ws-dots" role="img" aria-label={`Érdeklődés: ${on} / 5`} title={reasons.length ? `Lead-pontszám ${score}/100: ${reasons.join(' · ')}` : `Lead-pontszám ${score}/100 (nincs viselkedési adat)`}>{[0, 1, 2, 3, 4].map((index) => <i key={index} className={index < on ? `is-on d${index}` : ''} />)}</span>
+}
+
+/** Az áttekintő és az érdeklődők oldal közös érdeklődés-jelzője: szint és pontszám + öt pötty (4.78). */
+export function LeadInterest({ lead }: { lead: LeadRow }) {
+  const score = scoreLead(lead)
+  return <span className="ws-interest"><small>{score.tier === 'hot' && <Flame size={12} />}{TIER_LABELS[score.tier]} · {score.score}</small><Dots score={score.score} reasons={score.reasons} /></span>
 }
 
 function Pills<T extends string>({ value, options, onChange, label }: { value: T; options: [T, string, number?][]; onChange: (next: T) => void; label: string }) {
@@ -44,14 +50,13 @@ function TaskCard({ task, hero, onOpen, onUpdate }: { task: Task; hero: boolean;
 }
 
 function LeadCard({ lead, now, onOpen }: { lead: LeadRow; now: number; onOpen: (ref: string) => void }) {
-  const score = scoreLead(lead)
   const sub = [lead.city, roofName(lead), leadSize(lead)].filter(Boolean).join(' · ')
   return <article className="ws-card ws-lead">
     <div className="ws-notch"><button type="button" className="ws-round" onClick={() => onOpen(lead.ref)} title="Részletek" aria-label={`${lead.customer_name} részletei`}><ArrowUpRight size={18} /></button></div>
     <header><span className="ws-avatar">{initials(lead.customer_name)}</span><div><h3>{lead.customer_name}</h3><p className="ws-sub">{sub || '—'}</p></div></header>
     <div className="ws-meta">
       <div><small>Forrás</small><span className="ws-tags">{engagementChips(lead).slice(0, 3).map((chip) => <i key={chip}>{chip}</i>)}</span></div>
-      <div className="ws-meta-end"><small>{score.tier === 'hot' && <Flame size={12} />}{TIER_LABELS[score.tier]} · {score.score}</small><Dots score={score.score} reasons={score.reasons} /></div>
+      <div className="ws-meta-end"><LeadInterest lead={lead} /></div>
     </div>
     <footer><span><b>{compactMoney(lead.estimate_gross)}</b> · {timeAgo(lead.created_at, now)}</span><a className="ws-round solid sm" href={tel(lead)} title="Hívás" aria-label={`${lead.customer_name} hívása`}><PhoneCall size={16} /></a></footer>
   </article>
