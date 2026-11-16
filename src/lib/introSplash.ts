@@ -8,8 +8,11 @@ export const INTRO_SRC = '/assets/intro/lamelix-intro.mp4'
 export const INTRO_SESSION_KEY = 'lamelix-intro-played'
 /** A videó vége után legfeljebb ennyit várunk a 3D jelenetre (az utolsó, logós képkockán állva), utána mindenképp eltűnik. */
 export const INTRO_MAX_HOLD_MS = 6000
-/** Ha a videó ennyi idő alatt sem indul el (pl. iOS energiatakarékos mód tiltja), a nyitókép azonnal eltűnik. */
-export const INTRO_START_TIMEOUT_MS = 2500
+/**
+ * Ha a videó ennyi idő alatt sem indul el (és nem is a lejátszásra várunk koppintással), a nyitókép eltűnik.
+ * Lassú wifin az első indításkor a 2,8 MB-os videó lassan érkezik: ennyit adunk neki, de a 3D-t nem tartjuk vissza vele.
+ */
+export const INTRO_START_TIMEOUT_MS = 12000
 
 export interface IntroEnvironment {
   pathname: string
@@ -38,9 +41,32 @@ export function shouldPlayIntro(env: IntroEnvironment): boolean {
   return env.standalone && env.touch
 }
 
-/** Mikor tűnhet el: a videó véget ért (vagy kihagyták) ÉS a 3D kész, vagy a vég óta letelt a várakozási idő. */
-export function introCanClose(state: { ended: boolean; skipped: boolean; sceneReady: boolean; msSinceEnd: number }) {
-  if (state.skipped) return true
-  if (!state.ended) return false
-  return state.sceneReady || state.msSinceEnd >= INTRO_MAX_HOLD_MS
+/** Végső biztosíték: ha a lejátszás elakad (megszakadt hálózat), ennyi után mindenképp eltűnik (9 mp-es videó + tartalék). */
+export const INTRO_HARD_CAP_MS = 22000
+
+export interface IntroState {
+  /** A videó ténylegesen fut (playing vagy előrehaladó lejátszási idő). */
+  started: boolean
+  ended: boolean
+  skipped: boolean
+  /** Az automatikus lejátszást a rendszer tiltja (pl. iOS energiatakarékos mód): koppintásra indítható. */
+  blocked: boolean
+  sceneReady: boolean
+  msSinceOpen: number
+  msSinceEnd: number
+}
+
+/**
+ * Mikor tűnhet el a nyitókép:
+ * - kihagyásra azonnal;
+ * - lejátszás közben nem (végigfut, akkor is, ha a 3D már kész), csak ha elakad: INTRO_HARD_CAP_MS után;
+ * - a vége után, ha a 3D kész, különben legfeljebb INTRO_MAX_HOLD_MS-ig áll a logós zárókockán;
+ * - ha még nem indult el (lassú betöltés vagy tiltott automatikus lejátszás): amint a 3D kész, mert a konfigurátort
+ *   nem tartjuk vissza egy álló képpel; különben legkésőbb INTRO_START_TIMEOUT_MS után.
+ */
+export function introCanClose(state: IntroState) {
+  if (state.skipped || state.msSinceOpen >= INTRO_HARD_CAP_MS) return true
+  if (state.ended) return state.sceneReady || state.msSinceEnd >= INTRO_MAX_HOLD_MS
+  if (state.started) return false
+  return state.sceneReady || state.msSinceOpen >= INTRO_START_TIMEOUT_MS
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import { build } from 'esbuild'
-import { INTRO_MAX_HOLD_MS, INTRO_SRC, introCanClose, introParam, shouldPlayIntro, type IntroEnvironment } from '../src/lib/introSplash'
+import { INTRO_HARD_CAP_MS, INTRO_MAX_HOLD_MS, INTRO_SRC, INTRO_START_TIMEOUT_MS, introCanClose, introParam, shouldPlayIntro, type IntroEnvironment } from '../src/lib/introSplash'
 import { isOfflineAsset, swStrategy } from '../src/lib/swRoutes'
 
 const app: IntroEnvironment = { pathname: '/konfigurator', search: '', standalone: true, touch: true, reducedMotion: false, playedThisSession: false }
@@ -29,16 +29,32 @@ describe('nyitó animáció: mikor fut', () => {
 })
 
 describe('nyitó animáció: mikor tűnik el', () => {
-  it('a videó végéig marad, akkor is, ha a 3D már kész', () => {
-    expect(introCanClose({ ended: false, skipped: false, sceneReady: true, msSinceEnd: 0 })).toBe(false)
+  const base = { started: true, ended: false, skipped: false, blocked: false, sceneReady: false, msSinceOpen: 3000, msSinceEnd: 0 }
+  it('lejátszás közben marad, akkor is, ha a 3D már kész', () => {
+    expect(introCanClose({ ...base, sceneReady: true })).toBe(false)
   })
   it('a vége után, ha a 3D kész; ha nem, legfeljebb a várakozási ideig áll a logón', () => {
-    expect(introCanClose({ ended: true, skipped: false, sceneReady: true, msSinceEnd: 0 })).toBe(true)
-    expect(introCanClose({ ended: true, skipped: false, sceneReady: false, msSinceEnd: 1000 })).toBe(false)
-    expect(introCanClose({ ended: true, skipped: false, sceneReady: false, msSinceEnd: INTRO_MAX_HOLD_MS })).toBe(true)
+    expect(introCanClose({ ...base, ended: true, sceneReady: true })).toBe(true)
+    expect(introCanClose({ ...base, ended: true, msSinceEnd: 1000 })).toBe(false)
+    expect(introCanClose({ ...base, ended: true, msSinceEnd: INTRO_MAX_HOLD_MS })).toBe(true)
   })
   it('kihagyásra azonnal', () => {
-    expect(introCanClose({ ended: false, skipped: true, sceneReady: false, msSinceEnd: 0 })).toBe(true)
+    expect(introCanClose({ ...base, skipped: true })).toBe(true)
+  })
+  it('HIBA (iPad): lassú betöltésnél nem adja fel 2,5 mp után – a 3D elkészültéig vagy a türelmi időig vár', () => {
+    const loading = { ...base, started: false }
+    expect(introCanClose({ ...loading, msSinceOpen: 2600 })).toBe(false)
+    expect(introCanClose({ ...loading, msSinceOpen: 8000 })).toBe(false)
+    expect(introCanClose({ ...loading, msSinceOpen: INTRO_START_TIMEOUT_MS })).toBe(true)
+    expect(introCanClose({ ...loading, msSinceOpen: 2600, sceneReady: true })).toBe(true)
+  })
+  it('HIBA (iPad): tiltott automatikus lejátszásnál nem tűnik el azonnal – koppintásra indítható, a 3D elkészültéig marad', () => {
+    const blocked = { ...base, started: false, blocked: true, msSinceOpen: 400 }
+    expect(introCanClose(blocked)).toBe(false)
+    expect(introCanClose({ ...blocked, sceneReady: true })).toBe(true)
+  })
+  it('elakadt lejátszásnál a végső biztosíték után eltűnik', () => {
+    expect(introCanClose({ ...base, msSinceOpen: INTRO_HARD_CAP_MS })).toBe(true)
   })
 })
 

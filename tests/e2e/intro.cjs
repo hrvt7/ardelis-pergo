@@ -39,12 +39,40 @@ const state = (p) => p.evaluate(() => {
 
     log('3) kihagyás');
     await p.goto(`${BASE}/konfigurator?intro=1`, { waitUntil: 'commit' });
-    await p.waitForSelector('#lamelix-intro button');
+    await p.waitForSelector('#lamelix-intro button[aria-label="Nyitó animáció kihagyása"]');
     await p.waitForTimeout(600);
-    await p.locator('#lamelix-intro button').click();
+    await p.locator('#lamelix-intro button[aria-label="Nyitó animáció kihagyása"]').click();
     const fading = await p.evaluate(() => { const r = document.getElementById('lamelix-intro'); return !r || r.style.opacity === '0' });
     await p.waitForSelector('#lamelix-intro', { state: 'detached', timeout: 15000 });
     ok(fading, 'a „Kihagyás” gomb azonnal bezárja (elhalványul, majd eltűnik)');
+
+    log('3b) tiltott automatikus lejátszás (iOS energiatakarékos mód): nem tűnik el, koppintásra indul');
+    const blockedPage = await ctx.newPage(); blockedPage.setDefaultTimeout(60000);
+    await blockedPage.addInitScript(() => {
+      // Mint iOS energiatakarékos módban: sem az autoplay attribútum, sem az első (nem koppintásból jövő) play() nem indít.
+      Object.defineProperty(HTMLMediaElement.prototype, 'autoplay', { set() {}, get() { return false }, configurable: true });
+      const setAttr = Element.prototype.setAttribute;
+      Element.prototype.setAttribute = function (name, value) { if (this instanceof HTMLMediaElement && name === 'autoplay') return; return setAttr.call(this, name, value) };
+      const original = HTMLMediaElement.prototype.play; let first = true;
+      HTMLMediaElement.prototype.play = function () { if (first) { first = false; return Promise.reject(new DOMException('blocked', 'NotAllowedError')) } return original.call(this) };
+    });
+    await blockedPage.goto(`${BASE}/konfigurator?intro=1`, { waitUntil: 'commit' });
+    await blockedPage.waitForSelector('#lamelix-intro button[aria-label="Nyitó animáció lejátszása"]', { state: 'visible', timeout: 15000 });
+    ok(await blockedPage.locator('#lamelix-intro').count() === 1, 'tiltott lejátszásnál a nyitókép marad (első képkocka), „Lejátszás” gomb látszik');
+    await blockedPage.locator('#lamelix-intro button[aria-label="Nyitó animáció lejátszása"]').click();
+    const tapped = await blockedPage.waitForFunction(() => { const v = document.querySelector('#lamelix-intro video'); return v && v.currentTime > 0.5 }, null, { timeout: 15000 }).then(() => true).catch(() => false);
+    ok(tapped, 'koppintásra elindul a videó');
+    await blockedPage.close();
+
+    log('3c) lassú hálózat: a videó 4 mp késéssel érkezik – nem adja fel, utána lejátszik');
+    const slowPage = await ctx.newPage(); slowPage.setDefaultTimeout(60000);
+    await slowPage.route('**/assets/intro/lamelix-intro.mp4', async (route) => { await new Promise((r) => setTimeout(r, 4000)); await route.continue() });
+    await slowPage.goto(`${BASE}/konfigurator?intro=1`, { waitUntil: 'commit' });
+    await slowPage.waitForTimeout(3500);
+    ok(await slowPage.locator('#lamelix-intro').count() === 1, '3,5 mp-nél a nyitókép még vár a videóra (régen 2,5 mp-nél feladta)');
+    const slowPlayed = await slowPage.waitForFunction(() => { const v = document.querySelector('#lamelix-intro video'); return v && v.currentTime > 0.5 }, null, { timeout: 15000 }).then(() => true).catch(() => false);
+    ok(slowPlayed, 'a késve érkező videó lejátszik');
+    await slowPage.close();
 
     log('4) nyitóoldalon nem');
     await p.goto(`${BASE}/?intro=1`); await p.waitForTimeout(1200);

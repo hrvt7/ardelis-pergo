@@ -1,5 +1,12 @@
 # Változások
 
+## 4.53 – Javítás: a nyitó animáció iPaden csak felvillant, aztán a konfigurátor jött
+
+- **Hiba:** a nyitókép két esetben azonnal bezárt: (1) ha a rendszer tiltotta az automatikus lejátszást (iOS energiatakarékos mód és hasonlók) – ilyenkor csak az első képkocka villant fel; (2) ha a videó 2,5 mp alatt nem indult el (első indítás lassabb wifin, a 2,8 MB még nincs tárban).
+- **Javítás:** tiltott automatikus lejátszásnál a nyitókép marad az első képkockán egy „Lejátszás” gombbal, koppintásra (vagy a videóra koppintva) elindul; ha senki nem koppint, a 3D elkészültekor eltűnik. Lassú betöltésnél a videót legfeljebb 12 mp-ig várja (de a kész 3D-t nem tartja vissza egy álló képpel). Lejátszás közben a véletlen érintés már nem zárja be, csak a „Kihagyás” gomb; elakadt lejátszásnál 22 mp után mindenképp eltűnik.
+- Tesztek: `introSplash.test.ts` (a két hibát bemutató esetek: lassú betöltés, tiltott lejátszás; végső biztosíték). Böngészős próba (`tests/e2e/intro.cjs`) új lépései: tiltott automatikus lejátszás → „Lejátszás” gomb → koppintásra indul; 4 mp-cel késleltetett videó → kivárja és lejátssza. Élesben WebKit-motorral (Safari motorja, iPad-nézet) első és második (SW-tárból) indításkor is végigfutott. Mind zöld.
+- Nem ellenőrzött: valódi iPaden; hogy nálad melyik eset (energiatakarékos mód vagy lassú betöltés) okozta, nem tudtam megállapítani.
+
 ## 4.52 – A háztípus (fa–cink, lapostetős, nyeregtetős) újra könnyen megtalálható
 
 - **Hiba:** a háztípus-választó csak a Szín lépés „A házad” fülén volt, és mióta az alapkörnyezet a semleges stúdió („Csak a pergola”), a választásnak nem volt látható hatása – úgy tűnt, mintha eltűnt volna.
