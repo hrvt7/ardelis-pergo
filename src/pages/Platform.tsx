@@ -49,7 +49,7 @@ const terrace = (name: string) => ({ src: assetUrl(`/assets/home/${name}.webp`),
 const STATS = { colors: COLOR_CATALOG.length, roofs: ROOF_TYPES.length, sides: SIDE_TYPES.filter((type) => type !== 'none').length, mounts: MOUNT_TYPES.length }
 
 /** Kapcsolati cím a nyitóoldalon és a GYIK-ben; élesben a VITE_CONTACT_EMAIL környezeti változóból (céges domain). */
-const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'hrvtadam.7@icloud.com'
+const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'hrvthadam.7@icloud.com'
 const DEMO_PATH = '/konfigurator'
 function Browser({ children, url }: { children: ReactNode; url?: string }) {
   return <div className="pf-browser">

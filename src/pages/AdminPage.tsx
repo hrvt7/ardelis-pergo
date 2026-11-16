@@ -34,7 +34,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 /** Üzemeltetői kapcsolat a gyártói adminban (jelszó, tárhely-hiba). */
-const SUPPORT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'hrvtadam.7@icloud.com'
+const SUPPORT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'hrvthadam.7@icloud.com'
 
 export default function AdminPage() {
   const { tenantId } = useParams()

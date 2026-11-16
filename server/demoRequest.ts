@@ -7,7 +7,7 @@ import { PRIVACY_VERSION } from '../src/lib/privacyVersion'
 export type DemoEnv = Record<string, string | undefined>
 
 /** Alapértelmezett címzett; élesben a DEMO_REQUEST_EMAIL környezeti változó felülírja. */
-export const DEMO_REQUEST_EMAIL = 'hrvtadam.7@icloud.com'
+export const DEMO_REQUEST_EMAIL = 'hrvthadam.7@icloud.com'
 const MAX_BODY_BYTES = 12_000
 const MIN_FILL_MS = 2_000
 

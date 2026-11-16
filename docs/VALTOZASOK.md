@@ -1,5 +1,10 @@
 # Változások
 
+## 4.64 – Helyes kapcsolati e-mail
+
+- **Javítás: kapcsolati e-mail.** A cím mindenhol a helyes `hrvthadam.7@icloud.com` (nyitóoldal, GYIK, adatkezelési tájékoztató, admin „elfelejtett jelszó”, demókérés-hiba visszaesés, strukturált adatok); az elírt régi cím megszűnt.
+- Tesztek: `contactEmail.test.ts`.
+
 ## 4.63 – Új nyitóoldal: az asztalon a termék
 
 - **Új nyitóoldal („az asztalon a termék”):** Ádám referenciái (TrainerFlow, Kiwi) alapján, a világos pasztell rendszerben. A héróban a valódi 3D lamellás tető pasztell shader-égen, körülötte a konfigurátor kódból újrarajzolt darabjai lebegnek (lépéssáv, ár-dokk valódi árakkal, lamellaszög- és színválasztó, beérkező kérelem „Példa” jelöléssel), kurzorra mélység szerint dőlnek. Új cím: „Pergolák 3D-ben, saját arculattal, a weboldalán.”
