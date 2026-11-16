@@ -8,7 +8,7 @@ import { COLOR_CATALOG } from '@/lib/colors'
 import { ROOF_TYPES } from '@/lib/roofs'
 import { SIDE_TYPES } from '@/lib/sides'
 import { MOUNT_TYPES } from '@/lib/mount'
-import { ArrowUpRight, Box, Check, Copy, LogIn, Mail, Send, Smartphone, Table2 } from 'lucide-react'
+import { ArrowRight, Box, Check, Copy, LogIn, Mail, Send, Smartphone, Table2 } from 'lucide-react'
 import { Link } from 'react-router'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -204,14 +204,14 @@ function PlatformPage() {
     { heading: lang === 'en' ? 'Legal' : 'Jogi', links: [{ label: c.form.privacyLink, href: '/adatkezeles' }] },
   ]
   const compare = lang === 'en'
-    ? { eyebrow: 'Before and after', title: <>The same terrace. <em>With a pergola.</em></>, text: 'Drag the line: the empty terrace on the left, the same shot with the pergola designed in the 3D studio on the right. Your customers get this view of their own terrace from a photo.', beforeAlt: 'Empty wooden terrace in front of a family house', afterAlt: 'The same terrace with an anthracite bioclimatic pergola and garden furniture', beforeLabel: 'Before', afterLabel: 'After', brand: 'with Lamelix', listBefore: ['Price list by e-mail, days later', 'Customer imagines the terrace from a catalogue', 'Requests arrive as “about 5 by 4 metres”', 'Every quote is drawn up by hand'], listAfter: ['Guide price while they design, at eleven at night', 'Their own terrace in 3D, from their own photo', 'Requests arrive with the full configuration and design link', 'The quote is generated, you only confirm'] }
-    : { eyebrow: 'Előtte, utána', title: <>Ugyanaz a terasz. <em>Pergolával.</em></>, text: 'Húzza a vonalat: bal oldalt az üres terasz, jobb oldalt ugyanaz a kép a 3D stúdióban megtervezett pergolával. A vevői a saját teraszukról kapnak ilyen képet, egy fotóból.', beforeAlt: 'Üres faburkolatú terasz egy családi ház előtt', afterAlt: 'Ugyanaz a terasz antracit bioklimatikus pergolával és kerti bútorral', beforeLabel: 'Előtte', afterLabel: 'Utána', brand: 'Lamelix-szel', listBefore: ['Árlista e-mailben, napokkal később', 'A vevő katalógusból képzeli el a teraszt', 'A kérés úgy jön, hogy „kb. 5×4 méter”', 'Minden ajánlat kézzel készül'], listAfter: ['Irányár tervezés közben, este tizenegykor is', 'A saját terasza 3D-ben, a saját fotójáról', 'A kérés a teljes konfigurációval és a terv linkjével érkezik', 'Az ajánlat generálódik, Ön csak jóváhagyja'] }
+    ? { eyebrow: 'Before and after', title: <>The same terrace. <em>With a pergola.</em></>, text: 'The empty terrace on the left, the same scene with the pergola designed in the 3D studio on the right. This is a demo scene; your buyers can also place the design onto a photo of their own terrace.', beforeAlt: 'Empty wooden terrace in front of a family house', afterAlt: 'The same terrace with an anthracite bioclimatic pergola and garden furniture', beforeLabel: 'Before', afterLabel: 'After', brand: 'with Lamelix', listBefore: ['Price list by e-mail, days later', 'Customer imagines the terrace from a catalogue', 'Requests arrive as “about 5 by 4 metres”', 'Every quote is drawn up by hand'], listAfter: ['Guide price while they design, at eleven at night', 'The design can be viewed on a photo of their own terrace', 'Requests arrive with the full configuration and design link', 'The guide price and the design are already in the request, you only refine'] }
+    : { eyebrow: 'Előtte, utána', title: <>Ugyanaz a terasz. <em>Pergolával.</em></>, text: 'Bal oldalt az üres terasz, jobb oldalt ugyanaz a jelenet a 3D stúdióban megtervezett pergolával. A kép bemutató jelenet; a vevő a saját teraszáról készült fotóra is ráhelyezheti a tervet.', beforeAlt: 'Üres faburkolatú terasz egy családi ház előtt', afterAlt: 'Ugyanaz a terasz antracit bioklimatikus pergolával és kerti bútorral', beforeLabel: 'Előtte', afterLabel: 'Utána', brand: 'Lamelix-szel', listBefore: ['Árlista e-mailben, napokkal később', 'A vevő katalógusból képzeli el a teraszt', 'A kérés úgy jön, hogy „kb. 5×4 méter”', 'Minden ajánlat kézzel készül'], listAfter: ['Irányár tervezés közben, este tizenegykor is', 'A terv a saját teraszáról készült fotón is megnézhető', 'A kérés a teljes konfigurációval és a terv linkjével érkezik', 'Az irányár és a terv már a kérésben van, Ön csak pontosít'] }
   return <div className="pf-page pui-lamelix lx-page" ref={root}>
     <InkDefs />
     <header className={`pf-header${scrolled ? ' is-scrolled' : ''}`}>
       <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={30} title={null} tone="onLight" /><small>{n.brandSmall}</small></a>
       <nav aria-label={n.mainAria}><a href="#elonyok">{n.benefits}</a><a href="#bemutato">{n.showcase}</a><a href="#funkciok">{n.features}</a><a href="#mukodes">{n.how}</a><a href="#arak">{n.pricing}</a><a href="#gyik">{n.faq}</a></nav>
-      <div className="pf-header-actions"><LangSwitch /><Link className="pf-link-quiet" to="/belepes">{n.login}</Link><Link className="pf-login-icon" to="/belepes" aria-label={n.login} title={n.login}><LogIn size={18} /></Link><Link className="pf-link-quiet" to={DEMO_PATH}>{n.liveDemo}</Link><a className="pf-btn pf-btn-primary pf-btn-sm" href="#demo">{n.requestDemo}</a></div>
+      <div className="pf-header-actions"><LangSwitch /><Link className="pf-link-quiet" to="/belepes">{n.login}</Link><Link className="pf-login-icon" to="/belepes" aria-label={n.login} title={n.login}><LogIn size={18} /></Link><a className="pf-btn pf-btn-primary pf-btn-sm" href="#demo">{n.requestDemo}</a></div>
     </header>
 
     <main id="top">
@@ -220,6 +220,7 @@ function PlatformPage() {
       <BuildSequence />
 
       <Suspense fallback={null}>
+        <p className="lx-stats-lead">{c.v2.statsLead}</p>
         <CountingStats items={statItems} />
       </Suspense>
 
@@ -235,6 +236,7 @@ function PlatformPage() {
           <ImageCompare before={terrace('terrace-before')} after={terrace('terrace-after')} beforeAlt={compare.beforeAlt} afterAlt={compare.afterAlt} beforeLabel={compare.beforeLabel} afterLabel={compare.afterLabel} />
           <BeforeAfterList before={compare.listBefore} after={compare.listAfter} brand={compare.brand} beforeLabel={compare.beforeLabel} afterLabel={compare.afterLabel} />
         </Suspense>
+        <a className="lx-btn lx-btn-ink lx-section-cta" href="#demo" data-track="ajanlatkeres">{n.requestDemo} <ArrowRight size={18} /></a>
       </section>
 
       <section className="pf-section lx-feature-section" id="funkciok" aria-labelledby="funkciok-title" data-pf-reveal>
@@ -256,12 +258,13 @@ function PlatformPage() {
           <Browser url="lamelix.vercel.app/demo/sb400-live"><SimFrame src="/demo/sb400-live.html" labels={{ title: c.live.iframeTitle, activate: c.live.activate, release: c.live.release, fallback: c.live.fallback, fullscreen: c.live.fullscreen }} /></Browser>
         </div>
         <ul className="pf-live-chips" data-pf-item>{c.live.chips.map((chip) => <li key={chip}><Check size={15} />{chip}</li>)}</ul>
-        <div className="pf-live-note" data-pf-item><div><h3>{c.live.noteTitle}</h3><p>{c.live.note}</p></div><a className="pf-btn pf-btn-ghost" href="#demo">{c.live.cta} <ArrowUpRight size={17} /></a></div>
+        <div className="pf-live-note" data-pf-item><div><h3>{c.live.noteTitle}</h3><p>{c.live.note}</p></div><a className="pf-btn pf-btn-ghost" href="#demo">{c.live.cta} <ArrowRight size={17} /></a></div>
       </section>
 
       <section className="pf-section" id="mukodes" aria-labelledby="mukodes-title" data-pf-reveal>
         <div className="pf-head" data-pf-item><p className="lx-eyebrow">{c.how.eyebrow}</p><h2 id="mukodes-title"><Em parts={c.how.title} /></h2></div>
         <ProcessTimeline />
+        <a className="lx-btn lx-btn-ink lx-section-cta" href="#demo" data-track="ajanlatkeres" data-pf-item>{n.requestDemo} <ArrowRight size={18} /></a>
       </section>
 
       <section className="pf-section" id="arak" aria-labelledby="arak-title" data-pf-reveal>
@@ -278,22 +281,6 @@ function PlatformPage() {
         <RoiCalculator annual={annual} />
         <p className="pf-fineprint" data-pf-item>{pr.fineprint}</p>
         <p className="pf-demo-beta pf-pricing-beta" data-pf-item><b>β</b>{c.demo.beta}</p>
-      </section>
-
-      <section className="pf-section pf-demo" id="demo" aria-labelledby="demo-title" data-pf-reveal>
-        <div className="pf-demo-copy" data-pf-item>
-          <p className="lx-eyebrow">{c.demo.eyebrow}</p>
-          <h2 id="demo-title"><Em parts={c.demo.title} /></h2>
-          <p className="pf-sub">{c.demo.sub}</p>
-          <ul className="pf-demo-points"><li><Smartphone size={18} />{c.demo.points[0]}</li><li><Table2 size={18} />{c.demo.points[1]}</li><li><Mail size={18} />{c.demo.writeUs}<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li></ul>
-          {c.demo.liveNote && <p className="pf-demo-note">{c.demo.liveNote}</p>}
-          <p className="pf-demo-beta"><b>β</b>{c.demo.beta}</p>
-        </div>
-        <div className="pf-demo-form" data-pf-item><DemoForm plan={plan} onPlan={setPlan} /></div>
-      </section>
-
-      <section className="pf-section pf-faq" id="gyik" aria-labelledby="gyik-title" data-pf-reveal>
-        <FaqChat email={CONTACT_EMAIL} demoPath={DEMO_PATH} />
       </section>
 
       <section className="pf-section pf-demo" id="demo" aria-labelledby="demo-title" data-pf-reveal>

@@ -1,5 +1,18 @@
 # Változások
 
+## 4.71 – Nyitóoldal: a független kritikus-audit hibáinak javítása
+
+- **Hiba: a demókérő űrlap és a GYIK kétszer szerepelt** az oldalon (kétszeres `id="demo"`); most egyszer.
+- **Héró:** az első képernyőn mindhárom érv látszik (magyarul, forintban, havidíj 59 000 Ft-tól + áfa; a vevő hazaviszi a tervet: PDF, QR-kód, AR; indulás 5–10 munkanap, hűségidő nélkül), telefonon is. Alacsony asztali képernyőn a laptop kisebb, hogy ne takarja.
+- **Árak egy képernyőn:** minden csomag havidíja a fülön, a kártyán „+ egyszeri 490 000 Ft bevezetés · minden ár nettó, +27% áfa”. Két új GYIK-kérdés: teljes költség és a bevezetési díj tartalma (a valódi árakkal).
+- **Megtérülés-kalkulátor:** az eredmény „Becsült”, a Start csomaggal és 3 plusz megrendeléssel indul (eddig Pro és 6).
+- **Nincs túlígérés:** az előtte–utána kép bemutató jelenetként szerepel (eddig „egy fotóból”), „az ajánlat generálódik” helyett „az irányár és a terv már a kérésben van”. Új záró szöveg („Kérdés helyett kész terv érkezik.”); magázó gombfelirat az élő demónál; a redőny mondata nem ismétli a következő címet, és már záródás közben megjelenik.
+- **Vizuális rendszer:** közös bal él és szélesség minden szakaszban, egységes szakaszcím-méret; a Vanilla csak kiemelés (a gombfény, pötty és ikonháttér semleges); semmi 13 px alatt, sötétebb placeholder; palettán kívüli színek ki („Négy lépés”); a „Miért éri meg?” rajzai a termékből (lamellás tető árcímkével, PDF-terv QR-kóddal, beépített konfigurátor); a statisztika-sáv állítással és nagy számokkal; a felhőképek széle elhalványul; a laptop kijelzője betöltés előtt sem üres; a záró CTA csak vonalrajz-csempékkel, tömör Vanilla sávval; a probléma-kollázs lapjai nem csúsznak a címre.
+- **Navigáció:** az „Élő demó” link kikerült a fejlécből (a hérón és a láblécben megvan), a linkek kattintási területe legalább 44 px, átlátszatlanabb sáv.
+- **Útvonal a célhoz:** „Kérek demót” gomb az előtte–utána és a „Négy lépés” szakasz végén; mobilon az előtte–utána lista elmarad (a kollázs már elmondja).
+- Ellenőrzés: átfedés-vizsgálat 15 képernyőméreten tiszta; szövegméret-vizsgálat: nincs 13 px alatti olvasható szöveg.
+- Tesztek: `landingAudit.test.ts` (10 őr).
+
 ## 4.70 – Héró: nem csúsznak egymásra a szövegek és a laptop
 
 - **Hiba: telefonon a laptop és az ár-lap a gombokra és a leírásra csúszott** (valódi iPhone, böngészősávokkal kisebb látható magasság). Telefonon és álló tableten a laptop mostantól normál elrendezésben, a gombok alatt áll, így semmilyen képernyőmagasságnál nem takarhat szöveget; az ár-lap a laptop képernyőjére került.

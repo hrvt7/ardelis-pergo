@@ -95,9 +95,9 @@
 .lx-problem { --p: 0; position: relative; height: 240vh; }
 .lx-problem-sticky { position: sticky; top: 0; display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: center; gap: 40px; height: 100svh; max-width: 1240px; margin: 0 auto; padding: 110px max(20px, 4vw) 40px; overflow: hidden; }
 .lx-problem-head h2 { margin: 0; font-size: clamp(34px, 4.4vw, 62px); }
-.lx-problem-field { position: relative; height: min(64vh, 560px); }
+.lx-problem-field { position: relative; height: min(64vh, 560px); container-type: size; }
 .lx-scraps { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; }
-.lx-scrap { --k: clamp(0, calc(var(--p) * 1.6 - var(--i) * .06), 1); position: absolute; left: 50%; top: 50%; display: grid; gap: 8px; width: 190px; padding: 12px; border-radius: 18px; background: #fff; box-shadow: var(--lx-shadow); transform: translate(-50%, -50%) translate(calc(var(--x) * .62vw * (1 - var(--k))), calc(var(--y) * .62vh * (1 - var(--k)))) rotate(calc(var(--r) * 1deg * (1 - var(--k)))) scale(calc(1 - var(--k) * .55)); opacity: calc(1 - var(--k) * 1.1); will-change: transform, opacity; }
+.lx-scrap { --k: clamp(0, calc(var(--p) * 1.6 - var(--i) * .06), 1); position: absolute; left: 50%; top: 50%; display: grid; gap: 8px; width: 190px; padding: 12px; border-radius: 18px; background: #fff; box-shadow: var(--lx-shadow); transform: translate(-50%, -50%) translate(calc(var(--x) * .9cqw * (1 - var(--k))), calc(var(--y) * 1cqh * (1 - var(--k)))) rotate(calc(var(--r) * 1deg * (1 - var(--k)))) scale(calc(1 - var(--k) * .55)); opacity: calc(1 - var(--k) * 1.1); will-change: transform, opacity; }
 .lx-scrap svg { display: block; width: 100%; height: auto; border-radius: 10px; background: var(--lx-ghost); }
 .lx-scrap span { color: var(--lx-ink); font-size: 13px; font-weight: 600; line-height: 1.3; }
 .lx-plan { --q: clamp(0, calc(var(--p) * 2.2 - 1), 1); position: absolute; left: 50%; top: 50%; width: min(420px, 92%); padding: 22px; border-radius: 28px; background: #fff; box-shadow: var(--lx-shadow), inset 0 0 0 1.5px var(--lx-ink); transform: translate(-50%, -50%) scale(calc(.82 + var(--q) * .18)); opacity: var(--q); }
@@ -266,7 +266,7 @@
   .lx-problem-sticky { padding: 84px 18px 20px; }
   .lx-problem-head .lx-sub { font-size: 15px; }
   .lx-problem-field { height: 46vh; }
-  .lx-scrap { width: 120px; padding: 8px; transform: translate(-50%, -50%) translate(calc(var(--x) * .5vw * (1 - var(--k))), calc(var(--y) * .28vh * (1 - var(--k)))) rotate(calc(var(--r) * 1deg * (1 - var(--k)))) scale(calc(1 - var(--k) * .55)); }
+  .lx-scrap { width: 120px; padding: 8px; transform: translate(-50%, -50%) translate(calc(var(--x) * .9cqw * (1 - var(--k))), calc(var(--y) * 1cqh * (1 - var(--k)))) rotate(calc(var(--r) * 1deg * (1 - var(--k)))) scale(calc(1 - var(--k) * .55)); }
   .lx-scrap span { font-size: 11.5px; }
   .lx-plan { padding: 16px; }
   .lx-plan dl div { grid-template-columns: 78px 1fr; font-size: 13px; padding: 5px 0; }
@@ -513,8 +513,10 @@
   .lx-device { position: relative; left: auto; right: auto; bottom: auto; width: min(100%, 720px); margin: 36px auto 0; }
   .lx-chip-price { right: -3%; top: 10%; }
 }
-@media (max-height: 820px) and (min-width: 761px) {
-  .lx-sky-side .lx-proof { display: none; }
+/* alacsony asztali képernyőn a 3 érv látszik, a laptop kisebb és lejjebb ül */
+@media (max-height: 820px) and (min-width: 1081px) {
+  .lx-sky { --dw: min(720px, 44vw, 64svh); }
+  .lx-sky-side .lx-proof { margin-top: 14px; }
 }
 @media (max-width: 760px) {
   .lx-sky { --dw: 94vw; height: 190vh; }
@@ -524,7 +526,7 @@
   .lx-sky-panel { padding: 86px 18px 0; border-radius: 28px; align-content: start; }
   .lx-kinetic { font-size: clamp(40px, 11.6vw, 54px); }
   .lx-sky-side p { font-size: 15.5px; }
-  .lx-sky-side .lx-proof { display: none; }
+  .lx-sky-side .lx-proof { display: grid; gap: 6px; margin-top: 16px; font-size: 14px; }
   .lx-sky-side .lx-actions .lx-btn { flex: 1 1 0; padding: 0 12px; font-size: 14.5px; }
   /* telefonon a laptop a gombok alatt, normál elrendezésben: nincs átfedés a szövegekkel */
   .lx-device { position: relative; left: auto; right: auto; bottom: auto; width: 100%; margin: 30px 0 0; }
@@ -555,3 +557,75 @@
 @media (max-width: 760px) {
   .lx-roof-text strong { font-size: clamp(30px, 8.6vw, 40px); }
 }
+
+/* ============ Audit-javítások (4.71) ============ */
+/* árak: minden csomag ára a fülön, a bevezetés és az áfa a kártyán */
+.lx-plan-tabs button { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; }
+.lx-plan-tabs button small { font-size: 12.5px; font-weight: 600; letter-spacing: 0; opacity: .78; font-variant-numeric: tabular-nums; }
+.lx-plan-note { margin-bottom: 6px; }
+.lx-plan-extra { margin: 0 0 22px; color: var(--lx-ink); font-size: 14px; font-weight: 600; }
+
+/* közös rács: minden szakasz tartalma ugyanarra a bal élre és szélességre áll, mint a .pf-section */
+@media (min-width: 761px) {
+  .lx-page .lx-build-sticky, .lx-page .lx-problem-sticky, .lx-page .lx-compare-section, .lx-page .lx-stats, .lx-page .lx-stats-lead { max-width: var(--pf-max); padding-left: var(--pf-gutter); padding-right: var(--pf-gutter); }
+}
+@media (min-width: 1081px) {
+  .lx-why, .lx-admin { max-width: calc(var(--pf-max) - 2 * var(--pf-gutter)); }
+}
+/* egységes szakaszcím-méret (a záró CTA nagyobb marad) */
+.lx-page main > section:not(.lx-final) h2, .lx-page main > div h2, .lx-page .lx-why h2 { font-size: clamp(34px, 4.3vw, 62px); line-height: 1.02; letter-spacing: -.045em; font-weight: 400; }
+
+/* Vanilla legfeljebb ~3 helyen képernyőnként: a dísz-fények és pöttyök semlegesek */
+.lx-page .pf-btn-primary { box-shadow: 0 12px 26px -16px rgba(33,33,33,.55), inset 0 1px 0 rgba(33,33,33,.45); }
+.lx-page .pf-btn-primary:hover { box-shadow: 0 16px 30px -16px rgba(33,33,33,.6), inset 0 1px 0 rgba(33,33,33,.45); }
+.lx-dot { box-shadow: 0 0 0 4px var(--lx-green); }
+.lx-avatar { background: var(--lx-green); }
+
+/* olvashatóság: semmi 13 px alatt */
+.lx-eyebrow, .lx-page .roi-kicker { font-size: 13px; }
+.lx-build-steps li span, .lx-page .sx-when, .lx-page .pui-ba__tag, .lx-compare-label, .lx-ba-brand, .lx-page .pui-bigback__heading { font-size: 13px; }
+.lx-page .pf-billing em, .lx-plan-tabs button small { font-size: 13px; }
+.lx-build-price > span, .lx-admin dt, .lx-demo-note, .lx-page .roi-note, .lx-page .pf-form-note, .lx-page .pf-fineprint { font-size: 14px; }
+.lx-page ::placeholder { color: #6B6D73; opacity: 1; }
+.lx-page .pf-every li { font-size: 13.5px; }
+.lx-page .pf-every li svg { color: var(--lx-ink); }
+
+/* palettán kívüli színek ki: a „Négy lépés” arculat-minta és a beágyazó kód a saját színeinkkel */
+.lx-page .sv-brand-swatches i:nth-child(2) { background: var(--lx-green); }
+.lx-page .sv-brand-swatches i:nth-child(3) { background: var(--lx-blue); }
+@keyframes sv-brand { 0% { background: #EFF0A3; } 33.3% { background: #CFDECA; } 66.6% { background: #D8DFE9; } }
+.lx-page .sv-code .t { color: var(--lx-ink); } .lx-page .sv-code .a { color: var(--lx-muted); } .lx-page .sv-code .s { color: #4A6B3C; }
+.lx-page .sv-code-caret { background: var(--lx-ink); }
+
+/* statisztika: állítás + olvasható számok */
+.lx-stats-lead { margin: clamp(40px, 6vw, 72px) auto 0; color: var(--lx-ink); font-size: clamp(20px, 2vw, 26px); line-height: 1.3; letter-spacing: -.02em; }
+.lx-page .lx-stats { padding-top: 22px; }
+.lx-page .lx-stats strong { font-size: clamp(44px, 5vw, 72px); font-weight: 400; color: var(--lx-ink); }
+.lx-page .lx-stats > div > span { font-size: 15px; color: #3A3C41; }
+.lx-page .lx-stats strong span { font-size: inherit; color: inherit; }
+
+/* héró: a felhőképek széle nem látszik (mindkét irányban elhalványul) */
+.lx-cloud { -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 20%, #000 72%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 20%, #000 72%, transparent); mask-composite: intersect; }
+/* a laptop kijelzője betöltés előtt sem üres: apró elmosott előkép */
+.lx-screen { background: #ECECEF url("data:image/webp;base64,UklGRrwAAABXRUJQVlA4ILAAAADwBACdASogABQAPtFSokuoJKMhsAgBABoJZQDH5CHwo6kzjRA/TD5HJr6YU1LymGAA/rIOzyuvsCCcos2WzbBFvtULO2iUuyw0EhdrJxlySXu4r5HPucwXxsLE9PyUFTqezZhdM9FYQ3wrTjByOpAAVQDcoIicoL+TgZkMkqXKLkiIzReLJKNyIPdk8Zo9oL9glvUzF4EcwD6e+gjmeqRayZsw/4ISBpe42y5vCK5gAA==") center / cover no-repeat; }
+
+/* navigáció: legalább 44 px kattintási terület, átlátszatlanabb sáv */
+.lx-page .pf-header nav a { display: inline-flex; align-items: center; min-height: 44px; }
+.lx-page .pf-header { background: rgba(255,255,255,.93); }
+@media (max-width: 760px) { .lx-page .pf-lang a { min-width: 44px; min-height: 44px; } }
+
+/* záró CTA: csak fehér vonalrajz-csempék, enyhén elmosva; tömör Vanilla sáv */
+.lx-tiles { filter: blur(1.2px); opacity: .75; }
+.lx-final-band { background: rgba(239,240,163,.95); }
+.lx-final-band .lx-btn, .lx-section-cta { white-space: nowrap; }
+.lx-section-cta { justify-self: start; width: fit-content; margin-top: 28px; }
+.lx-compare-section > .lx-section-cta { display: inline-flex; }
+/* mobilon a probléma-kollázs már elmondja ugyanezt: az előtte–utána lista elmarad (rövidebb oldal) */
+@media (max-width: 760px) { .lx-compare-section .lx-ba { display: none; } }
+
+.lx-page .lx-compare-section .lx-compare-label, .lx-page .lx-ba-brand, .lx-page .pui-bigback span { font-size: 13px; }
+
+.lx-page .lx-ba .lx-ba-brand { font-size: 13px; }
+@media (max-width: 760px) { .lx-page .lx-scrap span { font-size: 13px; } }
+
+.lx-page .sx-card { overflow: visible; padding-bottom: 4px; }

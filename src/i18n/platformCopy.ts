@@ -22,7 +22,7 @@ const hu = {
     line1: 'Pergolák 3D-ben,', line2: 'saját arculattal,', line3: 'a weboldalán.',
     lead: 'A Lamelix nem egy újabb szoftver a vállalkozásában, hanem digitális értékesítési eszköz. Az ügyfél a weboldalukon vagy a bemutatóteremben 3D-ben megtervezi a pergolát, verandát vagy télikertet, azonnal látja az irányárat, és hazaviszi a kész tervet. Önökhöz beárazva, minden adattal érkezik az érdeklődés – saját arculattal, saját árakkal.',
     ctaDemo: 'Kérek demót', ctaLive: 'Kipróbálom élőben',
-    proof: ['A vevőnek semmit sem kell telepítenie', 'Indulás 5–10 munkanapon belül', 'Nincs hűségidő'],
+    proof: ['Magyarul, forintban: havidíj 59 000 Ft-tól + áfa', 'A vevő hazaviszi a tervet: PDF, QR-kód, AR', 'Indulás 5–10 munkanap, hűségidő nélkül'],
     imgAlt: 'A konfigurátor: 3D teraszfedés, méretek és azonnali bruttó irányár',
     chipA: { label: 'Bruttó irányár', value: '5 648 000 Ft', sub: 'telepítéssel, 27% áfával' },
     chipB: { label: 'Új érdeklődő · most', name: 'Kovács Péter · Sárvár', detail: 'Aero 5,0 × 4,0 m · falhoz' },
@@ -60,9 +60,9 @@ const hu = {
   live: {
     eyebrow: '04 – Működés élőben', title: ['A termék nemcsak jól néz ki – ', 'látszik', ', hogyan működik.'] as Em,
     sub: 'Interaktív működésbemutató egy minta lamellás pergolán: a lineáris motor, a hajtórúd és a lamellák mozgása valós geometriából. A vevő érti, mit vesz, és kevesebb a „de hogyan működik?” kérdés.',
-    chips: ['Lamellaszög, nyitottság és árnyék élőben', 'Hajtásmechanika részletesen', 'Oldal-, felül- és hero nézet'],
-    iframeTitle: 'Interaktív működésbemutató: SB 400 lamellás pergola', activate: 'Kattints a kipróbáláshoz', release: 'Görgetés visszakapcsolása', fallback: 'Megnyitás külön oldalon', fullscreen: 'Teljes képernyő',
-    noteTitle: 'Ilyet az Ön termékéből is készítünk.', note: 'Ez egy minta (SB 400 lamellás pergola). Az Ön termékéhez egyedi működésbemutató modul készíthető a konfigurátor mellé, amit a weboldalára is kitehet. Külön ajánlat alapján, a termék műszaki adataiból.', cta: 'Kérjen ajánlatot a bemutatóra',
+    chips: ['Lamellaszög, nyitottság és árnyék élőben', 'Hajtásmechanika részletesen', 'Oldal-, felül- és kiemelt nézet'],
+    iframeTitle: 'Interaktív működésbemutató: SB 400 lamellás pergola', activate: 'Kattintson a kipróbáláshoz', release: 'Görgetés visszakapcsolása', fallback: 'Megnyitás külön oldalon', fullscreen: 'Teljes képernyő',
+    noteTitle: 'Ilyet az Ön termékéből is készítünk.', note: 'Ez egy minta (SB 400 lamellás pergola). Az Ön termékéhez egyedi működésbemutató modul készíthető a konfigurátor mellé, amit a weboldalára is kitehet. Külön ajánlat alapján, a termék műszaki adataiból.', cta: 'Kérdezzen rá a demón',
   },
   how: {
     eyebrow: '05 – Működés', title: ['Négy lépés, és ', 'él', ' a konfigurátor.'] as Em,
@@ -82,7 +82,7 @@ const hu = {
     custom: 'Egyedi ajánlat', perMonth: '/ hó', customNote: 'A márkák és a viszonteladók számától függően',
     annualNote: (total: string) => `éves fizetéssel: ${total} / év`, monthlyNote: 'havi fizetéssel, a hónap végére felmondható',
     ctaQuote: 'Ajánlatot kérek', ctaDemo: 'Demót kérek',
-    setupTitle: (fee: string) => `Egyszeri bevezetés: ${fee}`, setupLead: 'Minden csomagnál egyszer fizetendő. Tartalma:',
+    setupTitle: (fee: string) => `Egyszeri bevezetés: ${fee} + áfa`, extraNote: (fee: string) => `+ egyszeri ${fee} bevezetés · minden ár nettó, +27% áfa`, setupLead: 'Minden csomagnál egyszer fizetendő. Tartalma:',
     fineprint: 'Az árak nettó árak, a 27% áfa ezeken felül fizetendő. Egyedi 3D profil vagy új termékcsalád modellezése külön ajánlat alapján készül.',
     plans: Object.fromEntries(PLANS.map((item) => [item.id, { name: item.name, tagline: item.tagline, features: item.features }])) as Record<PlanId, { name: string; tagline: string; features: string[] }>,
     setupIncludes: [...SETUP_INCLUDES] as string[],
@@ -93,8 +93,8 @@ const hu = {
     value: 'Átlagos projektérték (bruttó)', margin: 'Fedezet a nettó árbevételen', orders: 'Plusz megrendelés évente a konfigurátorból', unit: (n: number) => `${n} db`,
     breakLabel: 'Ennyi plusz megrendelés fedezi az első évet:', breakUnit: 'db',
     breakNote: (perOrder: string, cost: string) => `Egy megrendelés fedezete kb. ${perOrder}, az első év költsége bevezetéssel együtt ${cost} (nettó).`,
-    barCost: 'Első évi költség', barGain: (n: number) => `Plusz fedezet (${n} megrendelés)`,
-    netPos: 'Az első év eredménye:', netNeg: (missing: string) => `Ennyi megrendelésnél még ${missing} hiányzik a megtérüléshez.`,
+    barCost: 'Első évi költség', barGain: (n: number) => `Becsült plusz fedezet (${n} megrendelés)`,
+    netPos: 'Becsült első évi eredmény, az Ön számaival:', netNeg: (missing: string) => `Ennyi megrendelésnél még ${missing} hiányzik a megtérüléshez.`,
     note: (fee: string, annual: boolean) => `Becslés nettó árakkal: a bevezetési díj (${fee}) és 12 hónap előfizetési díja, ${annual ? 'éves' : 'havi'} fizetéssel. A második évtől csak az előfizetési díj marad.`,
   },
   demo: {
@@ -117,6 +117,8 @@ const hu = {
     eyebrow: '08 – Kérdések', title: ['Rövid ', 'válaszok', '.'] as Em, sub: 'Nem találja, amit keres? Írjon nekünk, egy munkanapon belül válaszolunk.',
     contactTitle: 'Kérdése van?', openDemo: 'Nyissa meg az élő demót',
     items: [
+      { q: 'Mennyibe kerül összesen?', a: 'Start: 59 000 Ft / hó, Pro: 119 000 Ft / hó, Partnerhálózat: egyedi ajánlat. Mindegyikhez egyszeri 490 000 Ft bevezetés tartozik. Minden ár nettó, a 27% áfa ezeken felül fizetendő; éves fizetésnél 2 hónap ingyenes.' },
+      { q: 'Mit tartalmaz az egyszeri bevezetési díj?', a: 'A saját arculat beállítását (logó, színek, cégadatok), a termékek, méretkorlátok, opciók és árak feltöltését ármátrixszal együtt, a beépítést a weboldalába, és az adminfelület betanítását.' },
       { q: 'Mennyi idő a bevezetés?', a: 'Jellemzően 5–10 munkanap attól számítva, hogy megkaptuk a termékadatokat és az árakat. A demót már az első egyeztetésen az Ön logójával mutatjuk meg.' },
       { q: 'Beépíthető a meglévő weboldalunkba?', a: 'Igen. Kap egy saját linket (például a „Tervezze meg” gombhoz) és egy beágyazási kódot, amely bármilyen weboldalon működik. A konfigurátor az Ön arculatát viseli.' },
       { q: 'Kell a vevőnek bármit telepítenie?', a: 'Nem. A konfigurátor böngészőben fut számítógépen, tableten és telefonon is. Az AR-nézethez sem kell alkalmazás: iPhone-on és a legtöbb Android telefonon közvetlenül indul.' },
@@ -129,7 +131,7 @@ const hu = {
       { q: 'Van hűségidő?', a: 'Nincs. A havi előfizetés a hónap végére felmondható; éves fizetésnél két hónap díját elengedjük.' },
     ],
   },
-  final: { title: ['Nem még egy ', 'kalkulátor', '.'] as Em, text: 'A kérdés nem az, hogy szüksége van-e még egy kalkulátorra. Hanem az, hogy mennyit ér a vállalkozásának, ha az értékesítői több időt tölthetnek valódi értékesítéssel, az ügyfelei pedig sokkal jobb vásárlási élményt kapnak.' },
+  final: { title: ['Kérdés helyett ', 'kész terv', ' érkezik.'] as Em, text: 'A vevő 3D-ben megtervezi a pergolát, látja az irányárat, és a teljes tervvel kér felmérést. Ön ott folytatja, ahol ő abbahagyta: méretekkel, opciókkal, elérhetőséggel.' },
   footer: { text: 'Digitális értékesítési eszköz pergola-, veranda-, télikert- és árnyékolástechnikai gyártóknak: saját márkás 3D konfigurátor, PDF-ajánlat és gyártói admin.', sample: 'Mintaoldal' },
   cards: {
     price: { title: 'Azonnali irányár', text: 'A vevő méretet, tetőt, oldalzárást és extrákat választ, az ár pedig azonnal frissül – az Ön árazásával, nettóban és bruttóban, telepítéssel együtt.', width: 'Szélesség', sizes: ['4,0 m', '5,0 m', '6,5 m'], chips: ['Aero lamellás', 'ZIP screen', 'LED', 'Telepítéssel'], label: 'Bruttó irányár', prices: ['4 380 000', '5 648 000', '7 215 000'], currency: 'Ft', live: 'élő számítás' },
@@ -146,7 +148,8 @@ const hu = {
     example: 'Példa',
     planPick: 'Csomag',
     faqPick: 'Kérdések',
-    hero: { sub: 'A vevő a weboldalán 3D-ben megtervezi a pergolát, azonnal látja az irányárat – Ön kész ajánlatkérést kap, a teljes tervvel.', laptopLabel: 'Laptop a Lamelix konfigurátorral a tető lépésnél, 5 648 000 Ft bruttó irányárral', stepLabel: 'Konfigurátor', stepNow: '3 / 7 · Tető', leadPing: 'Új felmérési kérelem', colorLabel: 'Szerkezet színe', angleLabel: 'Lamellaszög', scrollHint: 'Görgessen: kinyílnak a lamellák', louverLabel: 'Lamellás tető · a vevő oldalán', louver: ['Hét lépés a vevőnek, ', 'kész ajánlatkérés', ' Önnek.'] as Em },
+    hero: { sub: 'A vevő a weboldalán 3D-ben megtervezi a pergolát, azonnal látja az irányárat – Ön kész ajánlatkérést kap, a teljes tervvel.', laptopLabel: 'Laptop a Lamelix konfigurátorral a tető lépésnél, 5 648 000 Ft bruttó irányárral', stepLabel: 'Konfigurátor', stepNow: '3 / 7 · Tető', leadPing: 'Új felmérési kérelem', colorLabel: 'Szerkezet színe', angleLabel: 'Lamellaszög', scrollHint: 'Görgessen: kinyílnak a lamellák', louverLabel: 'Lamellás tető · a vevő oldalán', louver: ['Ön méretet, irányárat és ', 'kész tervet', ' kap.'] as Em },
+    statsLead: 'Ennyit kezel egyetlen konfigurátor a demóban, és a vevő mindegyikre azonnal irányárat lát:',
     steps: ['Típus', 'Méret', 'Tető', 'Oldalak', 'Szín', 'Komfort', 'Összegzés'],
     build: {
       eyebrow: 'A vevő szemével', title: ['Hét lépés, és ', 'összeáll', ' a pergola.'] as Em,
@@ -188,7 +191,7 @@ const en: PlatformCopy = {
     line1: 'Pergolas in 3D,', line2: 'in your branding,', line3: 'on your website.',
     lead: 'Lamelix is not just another piece of software in your business – it is a digital sales tool. On your website or in your showroom, the customer designs the pergola, veranda or conservatory in 3D, sees the guide price instantly and takes the finished design home. You receive the enquiry priced, with every detail – under your own brand and with your own prices.',
     ctaDemo: 'Request a demo', ctaLive: 'Try it live',
-    proof: ['Nothing for the customer to install', 'Live within 5–10 business days', 'No lock-in period'],
+    proof: ['In Hungarian and forints: from HUF 59,000 / month + VAT', 'The buyer takes the design home: PDF, QR code, AR', 'Live in 5–10 business days, no lock-in'],
     imgAlt: 'The configurator: 3D terrace cover, dimensions and instant guide price including VAT',
     chipA: { label: 'Guide price incl. VAT', value: 'HUF 5,648,000', sub: 'installed, incl. 27% VAT' },
     chipB: { label: 'New lead · just now', name: 'Péter Kovács · Sárvár', detail: 'Aero 5.0 × 4.0 m · wall-mounted' },
@@ -226,9 +229,9 @@ const en: PlatformCopy = {
   live: {
     eyebrow: '04 – Live mechanics', title: ['A product that doesn’t just look good – it ', 'shows', ' how it works.'],
     sub: 'An interactive mechanics demo on a sample louvered pergola: the linear motor, drive rod and louvres move from real geometry. Customers understand what they are buying, and “but how does it work?” questions drop.',
-    chips: ['Louvre angle, opening and shade, live', 'Drive mechanism in detail', 'Side, top and hero views'],
+    chips: ['Louvre angle, opening and shade, live', 'Drive mechanism in detail', 'Side, top and feature views'],
     iframeTitle: 'Interactive mechanics demo: SB 400 louvered pergola', activate: 'Click to try it', release: 'Back to page scrolling', fallback: 'Open on its own page', fullscreen: 'Full screen',
-    noteTitle: 'We can build one for your product, too.', note: 'This is a sample (SB 400 louvered pergola). A custom mechanics module can be made for your product alongside the configurator, and placed on your own website. Quoted separately, built from the product’s technical data.', cta: 'Ask for a quote',
+    noteTitle: 'We can build one for your product, too.', note: 'This is a sample (SB 400 louvered pergola). A custom mechanics module can be made for your product alongside the configurator, and placed on your own website. Quoted separately, built from the product’s technical data.', cta: 'Ask about it in the demo',
   },
   how: {
     eyebrow: '05 – How it works', title: ['Four steps, and the configurator is ', 'live', '.'],
@@ -248,7 +251,7 @@ const en: PlatformCopy = {
     custom: 'Custom quote', perMonth: '/ month', customNote: 'Depending on the number of brands and resellers',
     annualNote: (total: string) => `billed annually: ${total} / year`, monthlyNote: 'billed monthly, cancel by the end of any month',
     ctaQuote: 'Request a quote', ctaDemo: 'Request a demo',
-    setupTitle: (fee: string) => `One-off setup: ${fee}`, setupLead: 'Paid once, with every plan. It includes:',
+    setupTitle: (fee: string) => `One-off setup: ${fee} + VAT`, extraNote: (fee: string) => `+ one-off ${fee} setup · all prices net, +27% VAT`, setupLead: 'Paid once, with every plan. It includes:',
     fineprint: 'Prices are net; 27% Hungarian VAT is added on top. Prices are in Hungarian forint (HUF). Modelling a custom 3D profile or a new product family is quoted separately.',
     plans: {
       start: { name: 'Start', tagline: 'One product family, quick start', features: ['Full 3D configurator for one product family', 'Pricing by m² rate or price matrix', 'Site-survey requests by e-mail, with a link to the 3D design', 'Manufacturer admin: leads, statuses, notes', 'Embed on one website'] },
@@ -263,8 +266,8 @@ const en: PlatformCopy = {
     value: 'Average project value (incl. VAT)', margin: 'Margin on net revenue', orders: 'Extra orders per year from the configurator', unit: (n: number) => (n === 1 ? '1 order' : `${n} orders`),
     breakLabel: 'Extra orders needed to cover the first year:', breakUnit: 'orders',
     breakNote: (perOrder: string, cost: string) => `One order brings a margin of about ${perOrder}; the first-year cost including setup is ${cost} (net).`,
-    barCost: 'First-year cost', barGain: (n: number) => `Extra margin (${n} ${n === 1 ? 'order' : 'orders'})`,
-    netPos: 'First-year result:', netNeg: (missing: string) => `At this number of orders, ${missing} is still missing to break even.`,
+    barCost: 'First-year cost', barGain: (n: number) => `Estimated extra margin (${n} ${n === 1 ? 'order' : 'orders'})`,
+    netPos: 'Estimated first-year result, with your numbers:', netNeg: (missing: string) => `At this number of orders, ${missing} is still missing to break even.`,
     note: (fee: string, annual: boolean) => `Estimate at net prices: the setup fee (${fee}) plus 12 months of subscription, with ${annual ? 'annual' : 'monthly'} billing. From the second year only the subscription remains.`,
   },
   demo: {
@@ -287,6 +290,8 @@ const en: PlatformCopy = {
     eyebrow: '08 – Questions', title: ['Short ', 'answers', '.'], sub: 'Can’t find what you’re looking for? Write to us – we reply within one business day.',
     contactTitle: 'Got a question?', openDemo: 'Open the live demo',
     items: [
+      { q: 'What does it cost in total?', a: 'Start: HUF 59,000 / month, Pro: HUF 119,000 / month, Partner network: custom quote. Each comes with a one-off HUF 490,000 setup. All prices are net, 27% VAT is added; with annual billing two months are free.' },
+      { q: 'What does the one-off setup include?', a: 'Setting up your branding (logo, colours, company details), uploading your products, size limits, options and prices including a price matrix, embedding on your website, and training on the admin.' },
       { q: 'How long does setup take?', a: 'Typically 5–10 business days from receiving your product data and prices. We show the demo with your logo already at the first meeting.' },
       { q: 'Can it be embedded in our existing website?', a: 'Yes. You get your own link (for a “Design yours” button, for example) and an embed code that works on any website. The configurator carries your branding.' },
       { q: 'Does the customer need to install anything?', a: 'No. The configurator runs in the browser on computers, tablets and phones. The AR view needs no app either: it starts directly on iPhone and on most Android phones.' },
@@ -299,7 +304,7 @@ const en: PlatformCopy = {
       { q: 'Is there a lock-in period?', a: 'No. The monthly subscription can be cancelled by the end of the month; with annual billing, two months are free.' },
     ],
   },
-  final: { title: ['Not just another ', 'calculator', '.'], text: 'The question is not whether you need another calculator. It is how much it is worth to your business when your salespeople can spend more time actually selling, and your customers get a far better buying experience.' },
+  final: { title: ['Instead of a question, ', 'a finished design', ' arrives.'], text: 'Your buyer designs the pergola in 3D, sees the guide price and requests a survey with the full design. You pick up where they left off: dimensions, options and contact details.' },
   footer: { text: 'A digital sales tool for pergola, veranda, conservatory and shading manufacturers: white-label 3D configurator, PDF quote and manufacturer admin.', sample: '' },
   cards: {
     price: { title: 'Instant guide price', text: 'The customer picks size, roof, side enclosures and extras, and the price updates instantly – with your pricing, net and gross, installation included.', width: 'Width', sizes: ['4.0 m', '5.0 m', '6.5 m'], chips: ['Aero louvred', 'ZIP screen', 'LED', 'Installed'], label: 'Guide price incl. VAT', prices: ['4,380,000', '5,648,000', '7,215,000'], currency: 'HUF', live: 'live calculation' },
@@ -316,7 +321,8 @@ const en: PlatformCopy = {
     example: 'Example',
     planPick: 'Plan',
     faqPick: 'Questions',
-    hero: { sub: 'Your buyer designs the pergola in 3D on your website and sees the guide price instantly – you receive a ready quote request with the full design.', laptopLabel: 'A laptop showing the Lamelix configurator at the roof step, with a gross guide price of HUF 5,648,000', stepLabel: 'Configurator', stepNow: '3 / 7 · Roof', leadPing: 'New survey request', colorLabel: 'Frame colour', angleLabel: 'Louvre angle', scrollHint: 'Scroll: the louvres open', louverLabel: 'Louvred roof · on the buyer’s side', louver: ['Seven steps for the buyer, ', 'a ready quote request', ' for you.'] as Em },
+    hero: { sub: 'Your buyer designs the pergola in 3D on your website and sees the guide price instantly – you receive a ready quote request with the full design.', laptopLabel: 'A laptop showing the Lamelix configurator at the roof step, with a gross guide price of HUF 5,648,000', stepLabel: 'Configurator', stepNow: '3 / 7 · Roof', leadPing: 'New survey request', colorLabel: 'Frame colour', angleLabel: 'Louvre angle', scrollHint: 'Scroll: the louvres open', louverLabel: 'Louvred roof · on the buyer’s side', louver: ['You get dimensions, a guide price and ', 'a finished design', '.'] as Em },
+    statsLead: 'This much a single configurator handles in the demo, and the buyer sees a guide price for every option instantly:',
     steps: ['Type', 'Size', 'Roof', 'Sides', 'Colour', 'Comfort', 'Summary'],
     build: {
       eyebrow: 'Through the buyer’s eyes', title: ['Seven steps, and the pergola ', 'comes together', '.'] as Em,

@@ -5,10 +5,12 @@ import { useCopy } from '@/i18n/useCopy'
 import { Em } from '@/i18n/Em'
 
 const S = { fill: 'none', stroke: '#212121', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+// A termék saját geometriájából rajzolt jelenetek (nem általános ikonok): lamellás tető árcímkével, PDF-terv
+// QR-kóddal, és a weboldalba épített konfigurátor pipával.
 const ICONS: ReactNode[] = [
-  <svg key="huf" viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="14" width="48" height="36" rx="8" {...S} style={{ fill: '#EFF0A3' }} /><text x="32" y="38" textAnchor="middle" fontSize="15" fontWeight="700" fill="#212121">Ft</text></svg>,
-  <svg key="home" viewBox="0 0 64 64" aria-hidden="true"><path d="M12 30L32 12l20 18v22H12z" {...S} style={{ fill: '#CFDECA' }} /><rect x="24" y="34" width="16" height="12" rx="2" {...S} style={{ fill: '#fff' }} /><path d="M28 40h8" {...S} /></svg>,
-  <svg key="days" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="14" width="44" height="40" rx="8" {...S} style={{ fill: '#D8DFE9' }} /><path d="M10 26h44M22 10v8M42 10v8" {...S} /><path d="M24 40l6 6 12-12" {...S} /></svg>,
+  <svg key="huf" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="14" width="40" height="8" rx="2" {...S} style={{ fill: '#D8DFE9' }} /><path d="M12 14v8M18 14v8M24 14v8M30 14v8M36 14v8M42 14v8M10 22v26M42 22v26M4 48h44" {...S} /><rect x="34" y="30" width="26" height="15" rx="5" {...S} style={{ fill: '#fff' }} /><text x="47" y="41" textAnchor="middle" fontSize="9.5" fontWeight="700" fill="#212121">Ft</text></svg>,
+  <svg key="plan" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 6h24l12 12v40H14z" {...S} style={{ fill: '#fff' }} /><path d="M38 6v12h12" {...S} /><path d="M20 26h24M22 26v12M42 26v12M20 24l4-3h16l4 3" {...S} style={{ fill: '#CFDECA' }} /><path d="M20 46h6v6h-6zM30 46h6v6h-6zM20 52h0M40 46h4M40 52h4" {...S} style={{ fill: '#212121' }} /></svg>,
+  <svg key="live" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="10" width="50" height="40" rx="6" {...S} style={{ fill: '#fff' }} /><path d="M6 19h50" {...S} /><path d="M18 30h26M20 30v13M42 30v13M18 28l3-3h20l3 3" {...S} /><circle cx="50" cy="48" r="9" {...S} style={{ fill: '#CFDECA' }} /><path d="M46 48l3 3 5-6" {...S} /></svg>,
 ]
 
 export default function WhyStrip() {

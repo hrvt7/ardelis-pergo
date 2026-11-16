@@ -136,10 +136,10 @@ export function RoiCalculator({ annual }: { annual: boolean }) {
   const { lang, c: copy } = useCopy()
   const c = copy.roi
   const compactFt = (value: number) => compactMoney(value, lang)
-  const [planId, setPlanId] = useState<Exclude<PlanId, 'partner'>>('pro')
+  const [planId, setPlanId] = useState<Exclude<PlanId, 'partner'>>('start')
   const [projectValue, setProjectValue] = useState(4_500_000)
   const [marginPct, setMarginPct] = useState(25)
-  const [extraOrders, setExtraOrders] = useState(6)
+  const [extraOrders, setExtraOrders] = useState(3)
   const plan = PLANS.find((item) => item.id === planId)!
   const roi = useMemo(() => estimateRoi({ projectValue, marginPct, extraOrders }, plan, annual), [projectValue, marginPct, extraOrders, plan, annual])
   const scale = Math.max(roi.firstYearCost, roi.gain, 1)

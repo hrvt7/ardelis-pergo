@@ -136,7 +136,7 @@ export default function Hero({ demoPath }: { demoPath: string }) {
           slat.style.transform = `rotateX(${(o > 0 ? -90 * o : 90 * (1 - c)).toFixed(2)}deg)`
         })
         if (roofText) {
-          const t = clamp((close - 0.82) / 0.18) * (1 - clamp(open / 0.25))
+          const t = clamp((close - 0.5) / 0.3) * (1 - clamp(open / 0.25))
           roofText.style.opacity = t.toFixed(3)
           roofText.style.transform = `translate3d(0, ${((1 - t) * 18).toFixed(1)}px, 0)`
         }
