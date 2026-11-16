@@ -27,6 +27,7 @@ function mockFetch(options: { customerDue?: FollowUpLead[]; ownerDue?: FollowUpL
     if (url.includes('/rest/v1/leads') && method === 'GET') return new Response(JSON.stringify(lists.shift() ?? []), { status: 200 })
     if (url.includes('/rest/v1/leads') && method === 'PATCH') return new Response(JSON.stringify(options.claimRows ?? [{ ref: 'x' }]), { status: 200 })
     if (url.includes('api.resend.com')) return new Response('{}', { status: 200 })
+    if (url.includes('/rest/v1/installations') && method === 'GET') return new Response('[]', { status: 200 })
     return new Response('nem várt hívás', { status: 500 })
   }))
   return calls
@@ -44,8 +45,11 @@ describe('automatikus utánkövetés', () => {
     expect((await handleFollowUp(request(''), env, NOW)).status).toBe(401)
     expect((await handleFollowUp(request(), { ...env, CRON_SECRET: undefined }, NOW)).status).toBe(503)
     expect((await handleFollowUp(request(), { ...env, SUPABASE_URL: undefined }, NOW)).status).toBe(503)
-    expect((await handleFollowUp(request(), { ...env, RESEND_API_KEY: undefined }, NOW)).status).toBe(503)
     expect(calls).toHaveLength(0)
+    // E-mail-kulcs nélkül nem küld, de a telepítések megőrzési törlése (adatvédelem) akkor is lefut: csak az olvas.
+    expect((await handleFollowUp(request(), { ...env, RESEND_API_KEY: undefined }, NOW)).status).toBe(503)
+    expect(calls.length).toBeGreaterThan(0)
+    expect(calls.every((call) => call.url.includes('/rest/v1/installations') && call.method === 'GET')).toBe(true)
   })
 
   it('3 nap után a vevő egyetlen emlékeztetőt kap a 3D-linkjével és időpontkérés gombbal — előbb foglalás, aztán küldés', async () => {

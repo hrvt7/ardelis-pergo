@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { priceInputStep, setDisplayCurrency, unitLabel } from '@/lib/money'
-import { Code2, ExternalLink, LayoutDashboard, LogOut, Search, SlidersHorizontal, Users } from 'lucide-react'
+import { Code2, ExternalLink, LayoutDashboard, LogOut, Search, SlidersHorizontal, Users, Wrench } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import AdminLeads from '@/pages/AdminLeads'
 import LamelixLogo from '@/components/LamelixLogo'
 import AdminOverview from '@/pages/AdminOverview'
+import AdminInstallations from '@/pages/AdminInstallations'
+import { useInstallations, type AdminInstallation } from '@/lib/adminInstallations'
+import type { InstallationApi } from '@/components/admin/InstallationSection'
 import { LEAD_STATUSES, useLeads, type LeadRow } from '@/lib/adminLeads'
 import { demoEvents, demoLeads, demoIncoming } from '@/lib/adminDemo'
 import { CommandPalette, EmbedPanel, PALETTE_ICONS, Toasts, useToasts, type ChecklistItem, type PaletteCommand } from '@/components/admin/adminKit'
@@ -24,6 +27,7 @@ import type { Tenant } from '@/tenants/types'
 import type { RoofType } from '@/types/pergola'
 import PriceMatrixEditor, { type MatrixDraft, type MatrixErrors } from '@/components/admin/PriceMatrixEditor'
 import { pointsToRows, validateMatrixRows } from '@/lib/priceMatrixEdit'
+import { DEFAULT_WARRANTY_MONTHS, WARRANTY_GROUPS, warrantyGroupLabel, type WarrantyMonths } from '@/lib/installations'
 
 const RATE_FIELDS = [['customColorRate', 'Egyedi RAL felár'], ['woodColorRate', 'Fa hatású bevonat felára'], ['installationRate', 'Telepítési arány'], ['vatRate', 'ÁFA kulcs']] as const
 const EXTRA_FIELDS = [['led', 'LED-világítás'], ['speakers', 'Hangrendszer'], ['sensors', 'Szenzorcsomag'], ['solar', 'Napelemes tető'], ['rgb', 'RGB LED'], ['fans', 'Mennyezeti ventilátor'], ['smartHome', 'Okosotthon'], ['roofShade', 'Tetőárnyékoló']] as const
@@ -118,12 +122,13 @@ function AdminForTenant({ base }: { base: Tenant }) {
 
 const LEAD_STATUS_LABEL = Object.fromEntries(LEAD_STATUSES) as Record<string, string>
 
-type AdminTab = 'overview' | 'leads' | 'embed' | 'settings'
-const TABS: [AdminTab, string, string][] = [['overview', 'Áttekintés', '#attekintes'], ['leads', 'Érdeklődők', '#erdeklodok'], ['embed', 'Beágyazás', '#beagyazas'], ['settings', 'Beállítások', '#beallitasok']]
+type AdminTab = 'overview' | 'leads' | 'installations' | 'embed' | 'settings'
+const TABS: [AdminTab, string, string][] = [['overview', 'Áttekintés', '#attekintes'], ['leads', 'Érdeklődők', '#erdeklodok'], ['installations', 'Telepítések', '#telepitesek'], ['embed', 'Beágyazás', '#beagyazas'], ['settings', 'Beállítások', '#beallitasok']]
 
 const TAB_INFO: Record<AdminTab, { icon: ReactNode; subtitle: string }> = {
   overview: { icon: <LayoutDashboard size={18} />, subtitle: 'Érdeklődők, látogatottság és értékesítési csatorna egy helyen.' },
   leads: { icon: <Users size={18} />, subtitle: 'Kezeld a beérkező felmérési kérelmeket: státusz, megjegyzés, hívás.' },
+  installations: { icon: <Wrench size={18} />, subtitle: 'Felszerelt termékek digitális ikerpéldánya: garancia, tulajdonosi link, hibabejelentések.' },
   embed: { icon: <Code2 size={18} />, subtitle: 'Másolható beágyazókód, link és QR-kód: a konfigurátor a saját weboldaladon.' },
   settings: { icon: <SlidersHorizontal size={18} />, subtitle: 'Árak, ármátrix, elérhető opciók és az értesítések címzettjei.' },
 }
@@ -137,6 +142,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
   const { toasts, push, dismiss } = useToasts()
   const [openRef, setOpenRef] = useState<string | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [installId, setInstallId] = useState<number | null>(null)
 
   // Demó mód: a demó gyártónál (vagy kérésre bárkinél) kitalált, de valósághű adatokkal tölti fel a felületet, amíg nincs valódi érdeklődő.
   const [demoPref, setDemoPref] = useState<boolean | null>(null)
@@ -145,6 +151,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
   const [demoRows, setDemoRows] = useState<LeadRow[]>(() => demoLeads(Date.now()))
   const [demoClock] = useState(() => Date.now())
   const demoStats = useMemo(() => demoEvents(demoClock), [demoClock])
+  const installApi = useInstallations(token, onExpired, !demo)
   const leads = demo ? demoRows : real.leads
   const error = demo ? '' : real.error
   const events = demo ? demoStats : realEvents
@@ -206,6 +213,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
   const commands: PaletteCommand[] = [
     { id: 'go-overview', label: 'Ugrás: Áttekintés', icon: PALETTE_ICONS.overview, run: () => choose('overview') },
     { id: 'go-leads', label: 'Ugrás: Érdeklődők', icon: PALETTE_ICONS.leads, run: () => choose('leads') },
+    { id: 'go-installations', label: 'Ugrás: Telepítések', icon: <Wrench size={16} />, run: () => choose('installations') },
     { id: 'go-embed', label: 'Ugrás: Beágyazás', icon: PALETTE_ICONS.embed, run: () => choose('embed') },
     { id: 'go-settings', label: 'Ugrás: Beállítások', icon: PALETTE_ICONS.settings, run: () => choose('settings') },
     { id: 'report', label: 'Jelentés nyomtatása / PDF', icon: PALETTE_ICONS.report, run: () => { choose('overview'); window.setTimeout(() => window.print(), 250) } },
@@ -213,6 +221,21 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
     { id: 'demo', label: demo ? 'Demó adatok kikapcsolása' : 'Demó adatok bekapcsolása', icon: PALETTE_ICONS.csv, run: () => setDemoPref(!demo) },
   ]
 
+  const openInstallation = (id: number) => { setOpenRef(null); choose('installations'); setInstallId(id) }
+  const installations: InstallationApi = {
+    all: demo ? [] : installApi.installations ?? [],
+    create: installApi.create,
+    defaults: { structure: 60, electronics: 24, led: 24, other: 24, ...effective.installations?.warranty },
+    open: openInstallation,
+    ...(demo ? { disabled: 'Demó módban a telepítés nem rögzíthető.' } : {}),
+  }
+  const deleteInstallation = async (item: AdminInstallation) => {
+    const result = await installApi.remove(item.id)
+    if (!result.ok) return result.error ?? 'A törlés nem sikerült.'
+    setInstallId(null)
+    push('Telepítés törölve')
+    return null
+  }
   const fresh = leads?.filter((lead) => lead.status === 'new').length ?? 0
   const title = TABS.find(([key]) => key === tab)![1]
   const quotes = demo
@@ -233,7 +256,8 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
         <header className="admin-top"><div><h1>{title}</h1><p>{TAB_INFO[tab].subtitle}</p></div><div className="admin-top-actions"><button type="button" className="palette-btn" onClick={() => setPaletteOpen(true)} aria-label="Keresés – gyorskereső megnyitása (Ctrl K)"><Search size={14} /><span>Keresés</span><kbd>Ctrl K</kbd></button><Link className="btn" to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor</Link></div></header>
         {(tab === 'overview' || tab === 'leads') && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
         {tab === 'overview' && leads && <div key="overview" className="tab-fade">{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} onOpenLead={openLead} onUpdate={update} checklist={demo ? undefined : checklist} /></div>}
-        {tab === 'leads' && leads && <div key="leads" className="tab-fade"><AdminLeads tenant={effective} leads={leads} error={error} onReload={() => void real.reload()} onUpdate={update} quotes={quotes} openRef={openRef} onOpenRef={setOpenRef} /></div>}
+        {tab === 'leads' && leads && <div key="leads" className="tab-fade"><AdminLeads tenant={effective} leads={leads} error={error} onReload={() => void real.reload()} onUpdate={update} quotes={quotes} installations={installations} openRef={openRef} onOpenRef={setOpenRef} /></div>}
+        {tab === 'installations' && <div key="installations" className="tab-fade">{installApi.installations === null && !demo ? <p className="admin-hint" role="status">Betöltés…</p> : <AdminInstallations installations={installations.all} leads={leads ?? []} error={demo ? '' : installApi.error} selected={installId} onSelect={setInstallId} onDelete={deleteInstallation} demo={demo} />}</div>}
         {tab === 'embed' && <div key="embed" className="tab-fade"><EmbedPanel tenantId={base.id} onCopied={markEmbed} /></div>}
         <div hidden={tab !== 'settings'}>{children}</div>
       </section>
@@ -263,6 +287,8 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
   const setLimit = (key: keyof typeof limits, value: string) => setLimits((current) => ({ ...current, [key]: Number(value) }))
   const [matrixRoof, setMatrixRoof] = useState<RoofType | null>(null)
   const [formError, setFormError] = useState('')
+  const [warranty, setWarranty] = useState<WarrantyMonths>(() => ({ ...DEFAULT_WARRANTY_MONTHS, ...effective.installations?.warranty }))
+  const [retentionMonths, setRetentionMonths] = useState(effective.installations?.retentionMonths ?? 120)
 
   const toggle = <T,>(list: T[], item: T, on: boolean) => (on ? [...list.filter((entry) => entry !== item), item] : list.filter((entry) => entry !== item))
 
@@ -297,6 +323,7 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
       lead: { recipients: recipients.split(/[\n,;]+/).map((item) => item.trim()).filter(Boolean), subjectPrefix, followUp, monthlyReport },
       roofNames: Object.fromEntries(ROOF_TYPES.map((roof) => [roof, { name: roofNames[roof].name.trim(), short: roofNames[roof].short.trim() }])) as TenantOverrides['roofNames'],
       limits: { width: [limits.widthMin, limits.widthMax], depth: [limits.depthMin, limits.depthMax], height: [limits.heightMin, limits.heightMax], maxHeaters: limits.maxHeaters },
+      installations: { warranty, retentionMonths },
     }
     const checked = parseOverrides(next)
     if (!checked.ok) { setFormError(checked.error); return }
@@ -317,6 +344,13 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
         <p className="admin-hint admin-wide">Bekapcsolva: 3 nappal a kérelem után a vevő egyetlen emlékeztető e-mailt kap a 3D-terve linkjével és „Időpontot kérek” gombbal, ha a lead még „Új” vagy „Kapcsolatba léptünk”. 7 nap után, ha a lead még mindig „Új”, nektek megy összesítő a válasz nélkül maradt érdeklődőkről. Naponta egyszer fut.</p>
         <label className="admin-check admin-wide"><input type="checkbox" checked={monthlyReport} onChange={(event) => setMonthlyReport(event.target.checked)} />Havi riport e-mailben</label>
         <p className="admin-hint admin-wide">Minden hónap 1-jén összesítő az előző hónapról: megnyitások, tervmódosítások, PDF, AR, megosztás, felmérési kérelmek, becsült konverzió és az érdeklődők állapota. Csak névtelen számlálók és összesítések, személyes adat nélkül.</p>
+      </Section>
+
+      <Section title="Telepítések: garancia és megőrzés">
+        <p className="admin-hint admin-wide">A garancia hónapban, komponenscsoportonként. Ezzel az értékkel indul a „Telepítés rögzítése” űrlap; telepítésenként módosítható. A garancia feltételeit a ti szerződésetek határozza meg, a rendszer csak a lejárati dátumot számolja.</p>
+        {WARRANTY_GROUPS.map((group) => <label key={group}><span>{warrantyGroupLabel(group)} <small>hónap</small></span><input type="number" min="0" max="240" step="1" value={warranty[group]} onChange={(event) => setWarranty({ ...warranty, [group]: Math.min(240, Math.max(0, Math.round(Number(event.target.value) || 0))) })} /></label>)}
+        <label><span>Megőrzési idő <small>hónap</small></span><input type="number" min="12" max="360" step="1" value={retentionMonths} onChange={(event) => setRetentionMonths(Math.min(360, Math.max(12, Math.round(Number(event.target.value) || 12))))} /></label>
+        <p className="admin-hint admin-wide">A megőrzési idő a telepítés napjától számít; lejártakor a telepítés a hibabejelentésekkel és fotókkal együtt automatikusan törlődik (naponta egyszer fut).</p>
       </Section>
 
       <Section title="Tetőrendszerek (nettó Ft/m² alapár)">

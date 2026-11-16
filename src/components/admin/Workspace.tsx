@@ -5,7 +5,7 @@
 // Fotó nincs (a vevőkről nem tárolunk képet): monogramos kör áll a helyén.
 import { useMemo, useState } from 'react'
 import { ArrowRight, ArrowUpRight, Bell, ChevronDown, FileText, Flame, Mail, PhoneCall } from 'lucide-react'
-import { initials, LEAD_STATUSES, STATUS_COLORS, timeAgo, type LeadRow } from '@/lib/adminLeads'
+import { initials, isWonStatus, LEAD_STATUSES, STATUS_COLORS, timeAgo, type LeadRow } from '@/lib/adminLeads'
 import { scoreLead, TIER_LABELS } from '@/lib/leadScore'
 import { compactMoney, DAY, engagementChips, interestDots, leadSize, OPEN_STATUSES, roofName, todayTasks, type Task } from '@/lib/workspace'
 
@@ -65,7 +65,7 @@ export default function Workspace({ leads, onOpenLead, onOpenLeads, onUpdate }: 
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all')
   const [leadFilter, setLeadFilter] = useState<LeadFilter>('all')
   const open = leads.filter((lead) => OPEN_STATUSES.has(lead.status))
-  const won = leads.filter((lead) => lead.status === 'won').length
+  const won = leads.filter((lead) => isWonStatus(lead.status)).length
   const lost = leads.filter((lead) => lead.status === 'lost').length
   const week = leads.filter((lead) => now - new Date(lead.created_at).getTime() < 7 * DAY).length
   const openValue = open.reduce((sum, lead) => sum + lead.estimate_gross, 0)

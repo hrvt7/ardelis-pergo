@@ -15,9 +15,12 @@ export interface LeadRow {
   product?: string | null
 }
 
-export const LEAD_STATUSES: [string, string][] = [['new', 'Új'], ['contacted', 'Kapcsolatba léptünk'], ['offered', 'Ajánlat kiment'], ['won', 'Megnyert'], ['lost', 'Elveszett']]
+export const LEAD_STATUSES: [string, string][] = [['new', 'Új'], ['contacted', 'Kapcsolatba léptünk'], ['offered', 'Ajánlat kiment'], ['won', 'Megnyert'], ['installed', 'Felszerelve'], ['lost', 'Elveszett']]
 // Egy hangcsalád (2026-11-16 UX-kör): Vanilla az új, pasztell kék/homok/zöld a folyamat, szürke az elveszett – nincs szivárvány.
-export const STATUS_COLORS: Record<string, string> = { new: '#EFF0A3', contacted: '#D8DFE9', offered: '#E9D9A6', won: '#CFDECA', lost: '#7C7E85' }
+export const STATUS_COLORS: Record<string, string> = { new: '#EFF0A3', contacted: '#D8DFE9', offered: '#E9D9A6', won: '#CFDECA', installed: '#B9D3C9', lost: '#7C7E85' }
+
+/** Megnyertnek számít a „Megnyert” és a „Felszerelve” (telepített) állapot is. */
+export const isWonStatus = (status: string) => status === 'won' || status === 'installed'
 
 export interface LeadStats {
   total: number
@@ -63,7 +66,7 @@ export function computeLeadStats(leads: LeadRow[], now = Date.now(), days = 30):
     if (roof) roofs.set(roof, (roofs.get(roof) ?? 0) + 1)
     places.set(lead.city, (places.get(lead.city) ?? 0) + 1)
   }
-  const won = leads.filter((lead) => lead.status === 'won').length
+  const won = leads.filter((lead) => isWonStatus(lead.status)).length
   const lost = leads.filter((lead) => lead.status === 'lost').length
   return {
     total: leads.length,
@@ -96,7 +99,7 @@ export function computePipeline(leads: LeadRow[]): Pipeline {
     stages,
     openValue: stages.reduce((sum, stage) => sum + stage.value, 0),
     forecast: Math.round(stages.reduce((sum, stage) => sum + stage.value * stage.odds, 0)),
-    wonValue: leads.filter((lead) => lead.status === 'won').reduce((sum, lead) => sum + lead.estimate_gross, 0),
+    wonValue: leads.filter((lead) => isWonStatus(lead.status)).reduce((sum, lead) => sum + lead.estimate_gross, 0),
   }
 }
 

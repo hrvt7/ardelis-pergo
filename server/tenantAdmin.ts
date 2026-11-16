@@ -178,7 +178,7 @@ export async function handleAdminSettings(request: Request, env: AdminEnv): Prom
   return json(200, { ok: true })
 }
 
-const LEAD_STATUSES = ['new', 'contacted', 'offered', 'won', 'lost'] as const
+const LEAD_STATUSES = ['new', 'contacted', 'offered', 'won', 'installed', 'lost'] as const
 const LEAD_COLUMNS = 'ref,customer_name,email,phone,postal_code,city,region,address,notes,estimate_gross,config_url,status,source,created_at,config,owner_note'
 const statusSchema = z.object({ ref: z.string().trim().min(3).max(60), status: z.enum(LEAD_STATUSES).optional(), ownerNote: z.string().max(2000).optional() })
   .refine((value) => value.status !== undefined || value.ownerNote !== undefined, { message: 'Nincs módosítandó adat.' })

@@ -1,5 +1,13 @@
 # Változások
 
+## 4.79 – Telepítések 2/6: rögzítés az adminban
+
+- **Új állapot: „Felszerelve”** a „Megnyert” után (táblázat, kanban, szűrők, havi riport). A mutatókban megnyertnek számít.
+- **Telepítés rögzítése:** „Megnyert” vagy „Felszerelve” érdeklődő paneljén. Mezők: telepítés napja (nem lehet jövőbeli), garancia hónapban négy csoportra (szerkezet, motor és elektronika, LED, egyéb), belső megjegyzés. A szerver befagyasztja a konfigurációt, a megosztási kódot, a zárt komponenslistát és az árat (elfogadott ajánlat, ha van; különben a rögzítéskori árlista), 256 bites tulajdonosi tokent ad, naplót ír, és a leadet „Felszerelve” állapotba teszi. Egy leadhez egy telepítés.
+- **Új admin fül: Telepítések.** Lista, részletek (garancia csoportonként lejárati dátummal, komponensek, tulajdonosi link), végleges törlés (fotókkal, bejelentésekkel, naplóval).
+- **Beállítások:** gyártói garancia-alapértékek és megőrzési idő (12–360 hónap, alapból 120). A napi cron (`/api/followup`) a lejártakat fotókkal együtt törli; ez e-mail-kulcs nélkül is lefut, próbafutásnál nem.
+- Tesztek: `installationsAdmin.test.ts` (rögzítés és befagyasztás, ajánlati ár, állapot- és dátumszabályok, tenant-elkülönítés memóriabeli adatbázissal, törlés, megőrzés), `adminLeads.test.ts` (Felszerelve = megnyert), `followup.test.ts` (megőrzési törlés Resend nélkül is).
+
 ## 4.78 – Telepítések (digitális ikerpéldány) 1/6: adatmodell és migráció
 
 - **Új táblák (Supabase, `supabase/installations.sql`):** `installations` (befagyasztott pillanatkép: konfiguráció, megosztási kód, zárt komponenslista, az akkori ár, sémaverzió, ujjlenyomat; telepítés napja, garancia komponenscsoportonként), `service_requests` (hibabejelentés: komponens, leírás, legfeljebb 4 fotóút, állapot, hozzájárulás ideje és verziója, üres `ai_suggestion` a B-lépéshez), `installation_events` (csak hozzáfűzhető napló; módosítást trigger tilt) és `component_part_numbers` (B-lépés, opcionális). A `leads` tábla új `installation_id` oszlopot kapott (bővítési kérés). Privát `service-photos` tárhely (csak JPEG, ≤ 4 MB).

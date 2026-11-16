@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeLeadStats, type LeadRow } from '../src/lib/adminLeads'
+import { computeLeadStats, computePipeline, LEAD_STATUSES, type LeadRow } from '../src/lib/adminLeads'
 
 const now = Date.parse('2026-11-04T12:00:00Z')
 const lead = (over: Partial<LeadRow>): LeadRow => ({ ref: 'R', customer_name: 'T', email: 'a@b.hu', phone: '123456', postal_code: null, city: 'Sárvár', region: 'Vas', address: null, notes: null, estimate_gross: 1000000, config_url: 'x', status: 'new', source: 's', created_at: '2026-11-04T08:00:00Z', config: { roof: 'louvered' }, ...over })
@@ -26,5 +26,15 @@ describe('computeLeadStats', () => {
     expect(s.daily.at(-1)?.count).toBe(2)
     expect(s.byRoof[0]).toEqual({ key: 'louvered', count: 2 })
     expect(s.byPlace[0]).toEqual({ key: 'Sárvár', count: 2 })
+  })
+})
+
+describe('Felszerelve állapot', () => {
+  it('a „Felszerelve” a „Megnyert” után jön, és megnyertnek számít a mutatókban', () => {
+    const keys = LEAD_STATUSES.map(([key]) => key)
+    expect(keys.indexOf('installed')).toBe(keys.indexOf('won') + 1)
+    const rows = [lead({ ref: 'A', status: 'installed' }), lead({ ref: 'B', status: 'won' }), lead({ ref: 'C', status: 'lost' })]
+    expect(computeLeadStats(rows, now).winRate).toBeCloseTo(2 / 3)
+    expect(computePipeline(rows).wonValue).toBe(2_000_000)
   })
 })

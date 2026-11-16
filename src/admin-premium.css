@@ -69,7 +69,7 @@ kbd{font:600 10.5px/1 ui-monospace,monospace;padding:3px 6px;border-radius:5px;b
 
 /* Kanban */
 .view-seg button{display:inline-flex;align-items:center;gap:6px}
-.board{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:12px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x proximity}
+.board{display:grid;grid-template-columns:repeat(6,minmax(220px,1fr));gap:12px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x proximity}
 .board-col{display:flex;flex-direction:column;min-height:320px;padding:10px;border-radius:16px;border:1px solid var(--a-edge);background:rgba(255,255,255,.02);scroll-snap-align:start;transition:background .15s,border-color .15s}
 .board-col.is-over{border-color:var(--pill);background:color-mix(in srgb,var(--pill) 7%,transparent)}
 .board-col>header{display:flex;align-items:center;gap:8px;padding:4px 4px 10px}.board-col>header i{width:9px;height:9px;border-radius:50%;background:var(--pill)}
@@ -111,7 +111,7 @@ kbd{font:600 10.5px/1 ui-monospace,monospace;padding:3px 6px;border-radius:5px;b
 
 @media (max-width:900px){
   .embed{grid-template-columns:minmax(0,1fr)}
-  .board{grid-template-columns:repeat(5,82vw)}
+  .board{grid-template-columns:repeat(6,82vw)}
   .drawer-hero{grid-template-columns:minmax(0,1fr)}
   .palette-btn span,.palette-btn kbd{display:none}.palette-btn{padding:0 12px}
   .checklist .check-body{flex-direction:column}

@@ -17,6 +17,7 @@ import type { Tenant } from '../src/tenants/types'
 import { escapeHtml, oneLine, sendEmail, siteOrigin, type LeadEnv } from './lead'
 import { bookingLink } from '../src/lib/booking'
 import { json, resolveTenant, storeConfigured, storeHeaders } from './tenantAdmin'
+import { purgeExpiredInstallations } from './installations'
 import { tr, withLocale } from '../src/i18n/locale'
 
 const DAY = 86_400_000
@@ -140,6 +141,8 @@ const followUpEnabled = (tenant: Tenant) => tenant.lead.followUp !== false
 export interface FollowUpReport {
   ok: true
   dryRun: boolean
+  /** Megőrzési idő miatt törölt telepítések (próbafutásnál null). */
+  purged?: { deleted: number; failed: number } | null
   customers: { sent: string[]; skipped: string[]; failed: string[] }
   owners: { sent: string[]; skipped: string[]; failed: string[] }
 }
@@ -150,10 +153,12 @@ export async function handleFollowUp(request: Request, env: LeadEnv, now = new D
   if (!env.CRON_SECRET) return json(503, { ok: false, error: 'A CRON_SECRET nincs beállítva, az utánkövetés nem fut.' })
   if (request.headers.get('authorization') !== `Bearer ${env.CRON_SECRET}`) return json(401, { ok: false, error: 'Nincs jogosultság.' })
   if (!storeConfigured(env)) return json(503, { ok: false, error: 'Az adattár (Supabase) nincs beállítva.' })
+  // Telepítések megőrzési ideje: a lejártak törlése (fotókkal együtt). E-mail nélkül is fut; próbafutásnál nem töröl.
+  const purge = new URL(request.url).searchParams.get('dry') === '1' ? null : await purgeExpiredInstallations(env, now).catch((error) => { console.error('[followup] Megőrzési törlés megszakadt', error); return null })
   if (!env.RESEND_API_KEY) return json(503, { ok: false, error: 'A RESEND_API_KEY nincs beállítva, e-mail nem küldhető.' })
   const dryRun = new URL(request.url).searchParams.get('dry') === '1'
   const origin = siteOrigin(request, env)
-  const report: FollowUpReport = { ok: true, dryRun, customers: { sent: [], skipped: [], failed: [] }, owners: { sent: [], skipped: [], failed: [] } }
+  const report: FollowUpReport = { ok: true, dryRun, purged: purge, customers: { sent: [], skipped: [], failed: [] }, owners: { sent: [], skipped: [], failed: [] } }
 
   try {
     // 1. Vevői emlékeztetők

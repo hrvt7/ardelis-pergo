@@ -129,4 +129,11 @@ export interface Tenant {
     /** Havi riport e-mailben (tölcsér, érdeklődők, becsült konverzió) minden hónap elején. Alapértelmezés: bekapcsolva. */
     monthlyReport?: boolean
   }
+  /** Telepítések (digitális ikerpéldány): garancia-alapértékek és az adatok megőrzési ideje. */
+  installations?: {
+    /** Garancia komponenscsoportonként (hónap); a rögzítő űrlap ezzel indul. */
+    warranty?: { structure: number; electronics: number; led: number; other: number }
+    /** Ennyi hónap után a telepítés (fotókkal, bejelentésekkel) automatikusan törlődik. Nincs megadva = 120 hónap. */
+    retentionMonths?: number
+  }
 }

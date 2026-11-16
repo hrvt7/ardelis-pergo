@@ -17,6 +17,8 @@ const optionalText = (max: number) => text(max).optional()
 const url = text(300).refine((value) => value === '' || /^https?:\/\/\S+$/i.test(value), 'Érvényes http(s) cím kell.')
 const email = text(320).refine((value) => value === '' || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value), 'Érvénytelen e-mail cím.')
 
+const months = z.number().int().min(0).max(240)
+
 const RATE_KEYS = ['customColorRate', 'woodColorRate', 'installationRate', 'vatRate', 'thermalProfileRate'] as const
 const ROOF_PRICE_KEYS = ROOF_TYPES.map((roof) => ROOF_INFO[roof].priceKey)
 export const EDITABLE_PRICE_KEYS: string[] = [...ROOF_PRICE_KEYS, ...MONEY_FIELDS.map((field) => field.key), ...RATE_KEYS]
@@ -48,6 +50,10 @@ export const tenantOverridesSchema = z.object({
     subjectPrefix: optionalText(80),
     followUp: z.boolean(),
     monthlyReport: z.boolean(),
+  }).partial().optional(),
+  installations: z.object({
+    warranty: z.object({ structure: months, electronics: months, led: months, other: months }),
+    retentionMonths: z.number().int().min(12).max(360),
   }).partial().optional(),
   /** Gyártói terméknevek a tetőrendszerekhez (fehér címke: a platform nevei helyett a gyártó sajátjai). */
   roofNames: z.partialRecord(z.enum(ROOF_TYPES as [RoofType, ...RoofType[]]), z.object({ name: text(40), short: text(60), description: text(400) }).partial()).optional(),
@@ -82,8 +88,9 @@ export function parseOverrides(input: unknown): { ok: true; data: TenantOverride
 
 /** Az ügyfél számára is látható rész: a lead-fogadók e-mail címei nem kerülnek a böngészőbe. */
 export function publicOverrides(overrides: TenantOverrides): TenantOverrides {
-  const { lead, ...rest } = overrides
+  const { lead, installations, ...rest } = overrides
   void lead
+  void installations
   return rest
 }
 
@@ -129,6 +136,7 @@ export function applyOverrides(base: Tenant, overrides: unknown): Tenant {
       followUp: o.lead?.followUp ?? base.lead.followUp ?? true,
       monthlyReport: o.lead?.monthlyReport ?? base.lead.monthlyReport ?? true,
     },
+    installations: { ...base.installations, ...o.installations },
   }
   // Az alapértelmezett konfiguráció is feleljen meg a (szűkített) kínálatnak.
   return { ...tenant, defaultConfig: normalizeConfig(tenant, base.defaultConfig) }

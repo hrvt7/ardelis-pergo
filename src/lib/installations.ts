@@ -44,7 +44,7 @@ export interface InstallationSnapshot {
   /** Zárt komponenslista: a hibabejelentés csak ezek közül választhat. */
   components: InstallationComponent[]
   /** Az akkori ár (a későbbi árlista-változás nem írja felül). */
-  price: { totalNet: number; totalGross: number; currency: string }
+  price: { totalNet: number; totalGross: number; currency: string; source: 'quote' | 'pricelist' }
   /** Egy soros megnevezés, pl. „Lamellás tető · 5,00 × 4,00 m”. */
   headline: string
   /** Olvasható konfigurációs sorok a rögzítés pillanatában. */
@@ -86,7 +86,7 @@ export function installationComponents(config: PergolaConfig, roofName = ROOF_IN
 }
 
 /** A befagyasztott pillanatkép. Csak a rögzítéskor fut; utána a tárolt példány az irányadó. */
-export function buildSnapshot(input: { config: PergolaConfig; price: PriceBreakdown; currency: string; roofName: string; headline: string; spec: [string, string][] }): InstallationSnapshot | null {
+export function buildSnapshot(input: { config: PergolaConfig; price: Pick<PriceBreakdown, 'totalNet' | 'totalGross'>; priceSource?: 'quote' | 'pricelist'; currency: string; roofName: string; headline: string; spec: [string, string][] }): InstallationSnapshot | null {
   const product = installationProduct(input.config)
   if (!product) return null
   return {
@@ -95,7 +95,7 @@ export function buildSnapshot(input: { config: PergolaConfig; price: PriceBreakd
     config: input.config,
     shareCode: configToCompact(input.config),
     components: installationComponents(input.config, input.roofName),
-    price: { totalNet: input.price.totalNet, totalGross: input.price.totalGross, currency: input.currency },
+    price: { totalNet: input.price.totalNet, totalGross: input.price.totalGross, currency: input.currency, source: input.priceSource ?? 'pricelist' },
     headline: input.headline,
     spec: input.spec,
   }

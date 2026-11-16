@@ -45,7 +45,7 @@ export interface MonthlyReport {
   previous: { opens: number; leads: number }
 }
 
-const STATUS_LABELS: [string, string][] = [['new', 'Új (még nem kerestétek)'], ['contacted', 'Kapcsolatba léptetek'], ['offered', 'Ajánlat kiment'], ['won', 'Megnyert'], ['lost', 'Elveszett']]
+const STATUS_LABELS: [string, string][] = [['new', 'Új (még nem kerestétek)'], ['contacted', 'Kapcsolatba léptetek'], ['offered', 'Ajánlat kiment'], ['won', 'Megnyert'], ['installed', 'Felszerelve'], ['lost', 'Elveszett']]
 const sum = (events: EventRow[], name: string) => events.filter((event) => event.name === name).reduce((total, event) => total + event.count, 0)
 
 /** A riport számai (tiszta függvény: tesztelhető, adatbázis nélkül). */

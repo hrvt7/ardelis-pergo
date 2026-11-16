@@ -6,6 +6,7 @@ import { initials, LEAD_STATUSES, leadsToCsv, STATUS_COLORS, timeAgo, type LeadR
 import { byScore, scoreLead, TIER_COLORS, TIER_LABELS } from '@/lib/leadScore'
 import type { RoofType } from '@/types/pergola'
 import QuoteSection, { type QuoteApi } from '@/components/admin/QuoteSection'
+import InstallationSection, { type InstallationApi } from '@/components/admin/InstallationSection'
 import { PlanSketch } from '@/components/admin/adminKit'
 import { leadPdfInput } from '@/lib/leadPdf'
 import { downloadLeadBom, downloadLeadDxf, downloadLeadPdf } from '@/components/admin/leadPdfDownload'
@@ -69,7 +70,7 @@ function Qr({ url }: { url: string }) {
   return src ? <img className="drawer-qr" src={src} width={120} height={120} alt="A konfigurációt megnyitó QR-kód" /> : null
 }
 
-function Drawer({ lead, now, quotes, tenant, onClose, onUpdate }: { lead: LeadRow; now: number; quotes?: QuoteApi; tenant?: Tenant; onClose: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void }) {
+function Drawer({ lead, now, quotes, installations, tenant, onClose, onUpdate, onReload }: { lead: LeadRow; now: number; quotes?: QuoteApi; installations?: InstallationApi; tenant?: Tenant; onClose: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void; onReload?: () => void }) {
   const [note, setNote] = useState(lead.owner_note ?? '')
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
@@ -132,6 +133,7 @@ function Drawer({ lead, now, quotes, tenant, onClose, onUpdate }: { lead: LeadRo
         </ol>
 
         {quotes && <QuoteSection leadRef={lead.ref} api={quotes} />}
+        {installations && <InstallationSection leadRef={lead.ref} status={lead.status} api={installations} onRecorded={onReload} />}
 
         <div className="field-label">Konfiguráció</div>
         <div className="config-box">
@@ -150,7 +152,7 @@ function Drawer({ lead, now, quotes, tenant, onClose, onUpdate }: { lead: LeadRo
   </>
 }
 
-export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, openRef, onOpenRef, tenant }: { tenant?: Tenant; leads: LeadRow[]; error: string; onReload: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void; openRef: string | null; onOpenRef: (ref: string | null) => void; quotes?: Omit<QuoteApi, 'quotes'> & { all: QuoteApi['quotes'] } }) {
+export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, installations, openRef, onOpenRef, tenant }: { tenant?: Tenant; installations?: InstallationApi; leads: LeadRow[]; error: string; onReload: () => void; onUpdate: (ref: string, patch: { status?: string; ownerNote?: string }) => void; openRef: string | null; onOpenRef: (ref: string | null) => void; quotes?: Omit<QuoteApi, 'quotes'> & { all: QuoteApi['quotes'] } }) {
   const [filter, setFilter] = useState('all')
   const [query, setQuery] = useState('')
   const [view, setView] = useState<'table' | 'board'>(() => { try { return localStorage.getItem('admin-leads-view') === 'board' ? 'board' : 'table' } catch { return 'table' } })
@@ -220,6 +222,6 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, o
           <span className="num muted">{timeAgo(lead.created_at, now)}</span>
         </button><a className="icon-btn call tr-call" href={`tel:${lead.phone.replace(/[^+0-9]/g, '')}`} aria-label={`${lead.customer_name} hívása`} title="Hívás"><PhoneCall size={16} /></a></div>)}
       </div>}
-    {open && <Drawer key={open.ref} lead={open} now={now} quotes={quotes && { quotes: quotes.all.filter((quote) => quote.leadRef === open.ref), create: quotes.create, withdraw: quotes.withdraw }} tenant={tenant} onClose={() => setOpenRef(null)} onUpdate={onUpdate} />}
+    {open && <Drawer key={open.ref} lead={open} now={now} quotes={quotes && { quotes: quotes.all.filter((quote) => quote.leadRef === open.ref), create: quotes.create, withdraw: quotes.withdraw }} installations={installations} tenant={tenant} onClose={() => setOpenRef(null)} onUpdate={onUpdate} onReload={onReload} />}
   </div>
 }

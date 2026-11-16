@@ -230,7 +230,7 @@
 .admin-ws .search input { background: transparent !important; border-radius: 0; padding: 0; outline: none !important; }
 .admin-ws .search:focus-within { outline: 2px solid var(--ws-accent); outline-offset: 1px; }
 /* Kanban: öt oszlop elfér; a pontszám-címke saját sorban */
-@media (min-width: 1180px) { .admin-ws .board { grid-template-columns: repeat(5, minmax(0, 1fr)); overflow-x: visible; } }
+@media (min-width: 1180px) { .admin-ws .board { grid-template-columns: repeat(6, minmax(0, 1fr)); overflow-x: visible; } }
 .admin-ws .board-col { padding: 12px; }
 .admin-ws .board-col header i { background: var(--pill); }
 .admin-ws .board-col h3 { font-size: 15px; font-weight: 600; }
@@ -315,4 +315,34 @@
   .ws-stats { order: 2; }
   .ws-stat em { font-size: 12.5px; }
   .admin-ws .tr small.only-narrow { font-size: 13px; line-height: 1.45; }
+}
+
+/* ── Telepítések (digitális ikerpéldány) ──────────────────────────────────── */
+.admin-ws .install-box { margin-top: 18px; display: grid; gap: 10px; }
+.admin-ws .install-box p { margin: 0; display: flex; gap: 8px; align-items: center; color: var(--ws-text); }
+.admin-ws .install-box p.admin-hint { display: block; color: var(--ws-muted); }
+.admin-ws .install-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-ws .install-form { display: grid; gap: 12px; }
+.admin-ws .install-form label, .admin-ws .install-form fieldset label { display: grid; gap: 6px; font-size: 14px; color: var(--ws-muted); }
+.admin-ws .install-form fieldset { border: 1px solid var(--ws-line); border-radius: 14px; padding: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.admin-ws .install-form legend { padding: 0 6px; font-size: 13px; color: var(--ws-muted); }
+.admin-ws .install-form input, .admin-ws .install-form textarea { background: var(--ws-card-2); border: 1px solid var(--a-edge-hi); border-radius: 10px; color: var(--ws-text); padding: 9px 11px; font: inherit; min-height: 44px; }
+.admin-ws .tr.install-tr { grid-template-columns: minmax(180px, 1.6fr) minmax(160px, 1.6fr) minmax(120px, 1fr) minmax(100px, .7fr); }
+.admin-ws .pill.is-muted { --pill: #7C7E85; }
+.admin-ws .install-detail { margin-top: 16px; padding: 20px; display: grid; gap: 12px; }
+.admin-ws .install-detail header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.admin-ws .install-detail h2 { margin: 0; font-size: 20px; }
+.admin-ws .install-detail header small { color: var(--ws-muted); }
+.admin-ws .warranty-list, .admin-ws .component-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.admin-ws .warranty-list li { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--ws-card-2); }
+.admin-ws .warranty-list li span { color: var(--ws-muted); font-size: 14px; }
+.admin-ws .warranty-list li.is-active svg { color: #9FD8A4; }
+.admin-ws .warranty-list li.is-expired svg { color: var(--ws-muted); }
+.admin-ws .component-list li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--ws-line); }
+.admin-ws .component-list li small { color: var(--ws-muted); }
+.admin-ws .btn.danger { background: #E5484D; border-color: #E5484D; color: #fff; }
+@media (max-width: 760px) {
+  .admin-ws .tr.install-tr { grid-template-columns: minmax(0, 1fr) auto; }
+  .admin-ws .tr.install-tr > span:nth-child(2), .admin-ws .tr.install-tr > span:nth-child(3) { display: none; }
+  .admin-ws .install-form fieldset { grid-template-columns: minmax(0, 1fr); }
 }
