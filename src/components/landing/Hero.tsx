@@ -36,68 +36,133 @@ export default function Hero({ demoPath }: { demoPath: string }) {
     return () => window.clearInterval(id)
   }, [])
 
-  // Görgetés: --p (0–1 a héró rögzített szakaszán) és --z (a ráközelítés 0–1), a nagyítás mértéke --zoom.
+  // Mozgás (4.66): görgetés (p, z) és kurzor (px, py) egyetlen rAF-ben. NEM CSS-változókat írunk a szakasz gyökerére
+  // (az az egész részfa – benne a kéz több száz SVG-csomópontja – stílusának újraszámolását kérné minden képkockán),
+  // hanem közvetlenül a néhány mozgó elem transform/opacity értékét. A görgetés csak olvas, utána egyszerre ír.
   useEffect(() => {
     const element = root.current
     const phone = device.current
-    if (!element || !phone) return
+    const heading = title.current
+    if (!element || !phone || !heading) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const fine = window.matchMedia('(pointer: fine)').matches && !reduced
+    const q = <T extends Element>(selector: string) => element.querySelector<T>(selector)
+    const back = q<HTMLElement>('.lx-cloud-back')
+    const mid = q<HTMLElement>('.lx-cloud-mid')
+    const front = q<HTMLElement>('.lx-cloud-front')
+    const copy = q<HTMLElement>('.lx-sky-copy')
+    const side = q<HTMLElement>('.lx-sky-side')
+    const fade = q<HTMLElement>('.lx-sky-fade')
+    const chips = [...phone.querySelectorAll<HTMLElement>('.lx-chip')].map((chip) => ({ chip, d: Number.parseFloat(chip.dataset.depth ?? '1') }))
+    const inks = [...phone.querySelectorAll<SVGGElement>('.lx-hand-ink')]
+    const letters = [...heading.querySelectorAll<HTMLElement>('.lx-ch')]
+    const weights = letters.map(() => '1')
+    let centers: { x: number; y: number }[] = []
+    let near = { top: 0, bottom: 0 }
+    let geo = { zoom: 2, dx: 0, dy: 0 }
+    let p = 0
+    let z = 0
+    let zoomed = false
+    let target = { x: 0, y: 0 }
+    const pointer = { x: 0, y: 0, cx: 0, cy: 0 }
     let raf = 0
+    let idle = 0
+
     const measure = () => {
-      // Elrendezési (transzformáció nélküli) méretek: a képernyő (192 × 412 egység a 620 × 760-as rajzban)
-      // magassága töltse ki az ablak ~88%-át, a közepe pedig érkezzen az ablak közepére.
+      // elrendezési (transzformáció nélküli) méretek: a képernyő (192 × 412 egység a 620 × 760-as rajzban)
+      // magassága töltse ki az ablak ~84%-át, a közepe pedig érkezzen az ablak közepére
       const w = phone.offsetWidth
       const hgt = phone.offsetHeight
-      const scale = Math.min((window.innerHeight * 0.84) / (hgt * (412 / 760)), (window.innerWidth * 0.94) / (w * (192 / 620)))
-      element.style.setProperty('--zoom', scale.toFixed(3))
+      const zoom = Math.min((window.innerHeight * 0.84) / (hgt * (412 / 760)), (window.innerWidth * 0.94) / (w * (192 / 620)))
       const cx = phone.offsetLeft + w * (SCREEN_ORIGIN.x / 100)
       const cy = phone.offsetTop + hgt * (SCREEN_ORIGIN.y / 100)
-      element.style.setProperty('--dx', `${(window.innerWidth / 2 - cx).toFixed(1)}px`)
-      element.style.setProperty('--dy', `${(window.innerHeight / 2 + 26 - cy).toFixed(1)}px`)
+      geo = { zoom, dx: window.innerWidth / 2 - cx, dy: window.innerHeight / 2 + 26 - cy }
+      centers = []
     }
-    const update = () => {
-      raf = 0
+    const read = () => {
       const box = element.getBoundingClientRect()
       const span = Math.max(1, box.height - window.innerHeight)
-      const p = reduced ? 0 : Math.min(1, Math.max(0, -box.top / span))
-      const z = Math.min(1, Math.max(0, (p - 0.18) / 0.82))
-      element.style.setProperty('--p', p.toFixed(4))
-      element.style.setProperty('--z', (z * z * (3 - 2 * z)).toFixed(4))
+      p = reduced ? 0 : Math.min(1, Math.max(0, -box.top / span))
+      const t = Math.min(1, Math.max(0, (p - 0.18) / 0.82))
+      z = t * t * (3 - 2 * t)
     }
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update) }
-    const onResize = () => { element.style.setProperty('--z', '0'); measure(); update() }
+    const lens = () => {
+      if (!fine) return
+      if (!centers.length) {
+        centers = letters.map((letter) => { const r = letter.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 + window.scrollY } })
+        const box = heading.getBoundingClientRect()
+        near = { top: box.top + window.scrollY - 160, bottom: box.bottom + window.scrollY + 160 }
+      }
+      const py = pointer.cy + window.scrollY
+      const inside = z < 0.01 && py > near.top && py < near.bottom
+      centers.forEach((center, index) => {
+        const k = inside ? Math.max(0, 1 - Math.hypot(center.x - pointer.cx, center.y - py) / 160) : 0
+        const next = k > 0.02 ? (1 - k * 0.7).toFixed(2) : '1'
+        if (weights[index] !== next) { weights[index] = next; letters[index].style.setProperty('--k', next) }
+      })
+    }
+    const write = () => {
+      const { x: px, y: py } = pointer
+      const vh = window.innerHeight / 100
+      const free = 1 - z
+      if (back) back.style.transform = `translateX(-50%) translate3d(${(px * -12).toFixed(1)}px, ${(p * -60).toFixed(1)}px, 0)`
+      if (mid) mid.style.transform = `translateX(-46%) translate3d(${(px * -26).toFixed(1)}px, ${(p * 30).toFixed(1)}px, 0)`
+      if (front) { front.style.transform = `translateX(-54%) translate3d(${(px * -48).toFixed(1)}px, ${(z * 42 * vh).toFixed(1)}px, 0) scale(${(1 + z * 0.3).toFixed(4)})`; front.style.opacity = String(Math.max(0, 1 - z * 1.4)) }
+      for (const block of [copy, side]) if (block) { block.style.opacity = String(Math.max(0, 1 - z * 2.4)); block.style.transform = `translate3d(0, ${(z * -70).toFixed(1)}px, 0)` }
+      if (fade) fade.style.opacity = String(Math.min(1, Math.max(0, z * 1.15 - 0.15)))
+      phone.style.transform = `translate3d(${(geo.dx * z + px * 10 * free).toFixed(1)}px, ${(geo.dy * z + py * 6 * free - p * 2 * vh * free).toFixed(1)}px, 0) rotate(${(-PHONE_TILT * z).toFixed(3)}deg) scale(${(1 + (geo.zoom - 1) * z).toFixed(4)})`
+      const inkOpacity = String(Math.max(0, 1 - z * 1.6))
+      for (const ink of inks) ink.style.opacity = inkOpacity
+      for (const { chip, d } of chips) { chip.style.transform = `translate3d(${(px * d * 14).toFixed(1)}px, ${(py * d * 10).toFixed(1)}px, 0)`; chip.style.opacity = String(Math.max(0, 1 - z * 3)) }
+      // nagyítás közben a tinta-szűrő ki (a kéz elhalványul); a telefon csak mozgás közben ül saját rétegen,
+      // megállva feloldjuk, hogy nagyítva is élesen rajzolódjon újra
+      const nowZoomed = z > 0.001
+      if (nowZoomed !== zoomed) { zoomed = nowZoomed; phone.classList.toggle('is-zoomed', zoomed) }
+    }
+    const tick = () => {
+      raf = 0
+      read()
+      // kurzor-parallax simítása (a CSS-átmenet helyett, ami minden képkockán újraindult volna)
+      pointer.x += (target.x - pointer.x) * 0.12
+      pointer.y += (target.y - pointer.y) * 0.12
+      write()
+      lens()
+      if (Math.abs(target.x - pointer.x) > 0.002 || Math.abs(target.y - pointer.y) > 0.002) raf = requestAnimationFrame(tick)
+    }
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(tick) }
+    const onScroll = () => {
+      schedule()
+      phone.classList.add('is-moving')
+      window.clearTimeout(idle)
+      idle = window.setTimeout(() => phone.classList.remove('is-moving'), 180)
+    }
+    const onResize = () => { phone.style.transform = 'none'; measure(); schedule() }
+    const move = (event: PointerEvent) => {
+      pointer.cx = event.clientX
+      pointer.cy = event.clientY
+      target = { x: (event.clientX / window.innerWidth - 0.5) * 2, y: (event.clientY / window.innerHeight - 0.5) * 2 }
+      schedule()
+    }
+    const leave = () => { target = { x: 0, y: 0 }; pointer.cy = -9999; schedule() }
+    const resetLens = () => { centers = [] }
     measure()
-    update()
+    read()
+    write()
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onResize)
-    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onResize); cancelAnimationFrame(raf) }
-  }, [])
-
-  // Kurzor: mélységi parallax (--px/--py) és „súly-lencse” a cím betűin.
-  useEffect(() => {
-    const element = root.current
-    const heading = title.current
-    if (!element || !heading || !window.matchMedia('(pointer: fine)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const letters = [...heading.querySelectorAll<HTMLElement>('.lx-ch')]
-    let raf = 0
-    let last = { x: 0, y: 0 }
-    const frame = () => {
-      raf = 0
-      element.style.setProperty('--px', ((last.x / window.innerWidth - 0.5) * 2).toFixed(3))
-      element.style.setProperty('--py', ((last.y / window.innerHeight - 0.5) * 2).toFixed(3))
-      for (const letter of letters) {
-        const r = letter.getBoundingClientRect()
-        const d = Math.hypot(r.left + r.width / 2 - last.x, r.top + r.height / 2 - last.y)
-        const k = Math.max(0, 1 - d / 160)
-        const next = k > 0.02 ? (1 - k * 0.7).toFixed(2) : '1'
-        if (letter.style.getPropertyValue('--k') !== next) letter.style.setProperty('--k', next)
-      }
+    if (fine) {
+      element.addEventListener('pointermove', move)
+      element.addEventListener('pointerleave', leave)
+      void document.fonts?.ready.then(resetLens)
     }
-    const move = (event: PointerEvent) => { last = { x: event.clientX, y: event.clientY }; if (!raf) raf = requestAnimationFrame(frame) }
-    const leave = () => letters.forEach((letter) => letter.style.setProperty('--k', '1'))
-    element.addEventListener('pointermove', move)
-    element.addEventListener('pointerleave', leave)
-    return () => { element.removeEventListener('pointermove', move); element.removeEventListener('pointerleave', leave); cancelAnimationFrame(raf) }
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onResize)
+      element.removeEventListener('pointermove', move)
+      element.removeEventListener('pointerleave', leave)
+      cancelAnimationFrame(raf)
+      window.clearTimeout(idle)
+    }
   }, [])
 
   const shown = Math.min(step, 6)
@@ -105,7 +170,7 @@ export default function Hero({ demoPath }: { demoPath: string }) {
   const lines = [h.line1, h.line2, h.line3]
   const starts = lines.map((_, index) => lines.slice(0, index).reduce((sum, line) => sum + line.length, 0))
 
-  return <section className="lx-sky" ref={root} aria-labelledby="pf-title" style={{ '--tilt': `${-PHONE_TILT}deg`, '--ox': `${SCREEN_ORIGIN.x}%`, '--oy': `${SCREEN_ORIGIN.y}%` } as CSSProperties}>
+  return <section className="lx-sky" ref={root} aria-labelledby="pf-title" style={{ '--ox': `${SCREEN_ORIGIN.x}%`, '--oy': `${SCREEN_ORIGIN.y}%` } as CSSProperties}>
     <div className="lx-sky-sticky">
       <div className="lx-sky-panel">
         <img className="lx-cloud lx-cloud-back" src={assetUrl('/assets/landing/clouds-back.webp')} alt="" aria-hidden="true" width={2000} height={700} decoding="async" />
@@ -128,21 +193,22 @@ export default function Hero({ demoPath }: { demoPath: string }) {
 
         <div className="lx-device" ref={device}>
           <HandPhone label={v.handLabel} />
-          <div className="lx-chip lx-chip-price" style={{ '--d': 1.6 } as CSSProperties}>
+          <div className="lx-chip lx-chip-price" data-depth="1.6">
             <span className="lx-float-label">{h.chipA.label}</span>
             <strong><Odometer text={formatMoney(price, lang)} label={h.chipA.label} /></strong>
             <small>{h.chipA.sub}</small>
           </div>
-          <div className="lx-chip lx-chip-steps" style={{ '--d': 1 } as CSSProperties} aria-hidden="true">
+          <div className="lx-chip lx-chip-steps" data-depth="1" aria-hidden="true">
             <span className="lx-float-label">{v.stepLabel} · {shown + 1} / 7</span>
             <ol>{c.v2.steps.map((name, index) => <li key={name} className={index === shown ? 'is-on' : index < shown ? 'is-done' : ''}><b>{index < shown ? <Check size={11} strokeWidth={3} /> : index + 1}</b>{index === shown && <span>{name}</span>}</li>)}</ol>
           </div>
-          <div className={`lx-chip lx-chip-lead ${step >= 6 ? 'is-in' : ''}`} style={{ '--d': 2.2 } as CSSProperties} aria-hidden="true">
+          <div className={`lx-chip lx-chip-lead ${step >= 6 ? 'is-in' : ''}`} data-depth="2.2" aria-hidden="true">
             <span className="lx-avatar"><Mail size={17} /></span>
             <div><span className="lx-float-label"><i className="lx-ping" />{v.leadPing}<em className="lx-example">{c.v2.example}</em></span><strong>{h.chipB.detail}</strong><small>{formatMoney(BUILD_PRICES[6]!, lang)} · PDF · QR</small></div>
           </div>
         </div>
 
+        <div className="lx-sky-fade" aria-hidden="true" />
         <img className="lx-cloud lx-cloud-front" src={assetUrl('/assets/landing/clouds-front.webp')} alt="" aria-hidden="true" width={2000} height={600} decoding="async" />
       </div>
     </div>

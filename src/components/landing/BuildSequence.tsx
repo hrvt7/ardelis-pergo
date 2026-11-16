@@ -21,7 +21,7 @@ export default function BuildSequence() {
   const current = useRef(-1)
   const wanted = useRef(0)
   const [step, setStep] = useState(0)
-  const [progress, setProgress] = useState(0)
+  const bar = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const element = section.current
@@ -57,8 +57,12 @@ export default function BuildSequence() {
     const io = new IntersectionObserver((entries) => { if (entries.some((entry) => entry.isIntersecting)) { load(); io.disconnect() } }, { rootMargin: '150% 0px' })
     io.observe(element)
     let raf = 0
+    let visible = true
+    const seen = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) onScroll() })
+    seen.observe(element)
     const update = () => {
       raf = 0
+      if (!visible) return
       const box = element.getBoundingClientRect()
       const span = Math.max(1, box.height - window.innerHeight)
       const p = reduced ? 1 : Math.min(1, Math.max(0, -box.top / span))
@@ -66,13 +70,14 @@ export default function BuildSequence() {
       wanted.current = frame
       if (frame !== current.current) draw(frame)
       setStep(stepAt(p))
-      setProgress(p)
+      // a sáv közvetlenül, React-renderelés nélkül (4.66: korábban minden görgetési képkocka újrarenderelte a szakaszt)
+      if (bar.current) bar.current.style.transform = `scaleX(${p.toFixed(4)})`
     }
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update) }
     update()
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll)
-    return () => { io.disconnect(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); cancelAnimationFrame(raf) }
+    return () => { io.disconnect(); seen.disconnect(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); cancelAnimationFrame(raf) }
   }, [])
 
   const price = BUILD_PRICES[step]
@@ -86,7 +91,7 @@ export default function BuildSequence() {
       </div>
       <div className="lx-build-stage">
         <canvas ref={canvas} className="lx-build-canvas" width={920} height={664} role="img" aria-label={b.picks.join(' · ')} />
-        <div className="lx-build-progress" aria-hidden="true"><i style={{ transform: `scaleX(${progress})` }} /></div>
+        <div className="lx-build-progress" aria-hidden="true"><i ref={bar} style={{ transform: 'scaleX(0)' }} /></div>
       </div>
       <ol className="lx-build-steps" aria-label={c.v2.hero.stepLabel}>
         {c.v2.steps.map((name, index) => <li key={name} className={index === step ? 'is-on' : index < step ? 'is-done' : ''} aria-current={index === step ? 'step' : undefined}>

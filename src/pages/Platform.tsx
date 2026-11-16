@@ -158,12 +158,15 @@ function PlatformPage() {
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     element.classList.add('is-in')
-    if (reduced) { element.classList.add('pf-reduced'); return () => window.removeEventListener('scroll', onScroll) }
+    // A képernyőn kívüli szakaszok végtelen CSS-animációi szünetelnek (kevesebb festés görgetés közben).
+    const pauser = new IntersectionObserver((entries) => entries.forEach((entry) => entry.target.classList.toggle('lx-offscreen', !entry.isIntersecting)), { rootMargin: '200px 0px' })
+    element.querySelectorAll('main > section, main > div').forEach((section) => pauser.observe(section))
+    if (reduced) { element.classList.add('pf-reduced'); return () => { window.removeEventListener('scroll', onScroll); pauser.disconnect() } }
 
     let lenis: Lenis | undefined
     let ticker: ((time: number) => void) | undefined
     const context = gsap.context(() => {
-      lenis = new Lenis({ lerp: 0.1, smoothWheel: true, anchors: { offset: -72 } })
+      lenis = new Lenis({ lerp: 0.14, smoothWheel: true, anchors: { offset: -72 } })
       lenis.on('scroll', ScrollTrigger.update)
       ticker = (time: number) => lenis?.raf(time * 1000)
       gsap.ticker.add(ticker)
@@ -183,6 +186,7 @@ function PlatformPage() {
 
     return () => {
       window.removeEventListener('scroll', onScroll)
+      pauser.disconnect()
       if (ticker) gsap.ticker.remove(ticker)
       lenis?.destroy()
       context.revert()

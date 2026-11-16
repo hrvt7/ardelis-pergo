@@ -1,5 +1,16 @@
 # Változások
 
+## 4.67 – Gyorsabb, akadásmentes animációk a nyitóoldalon
+
+- **Héró: nincs több teljes újraszámolás képkockánként.** A görgetés és a kurzor eddig CSS-változókat írt a héró gyökerére, ami minden képkockán a teljes részfa (benne a kéz több száz SVG-eleme) stílusát újraszámoltatta. Most egyetlen rAF-ben, közvetlenül a néhány mozgó elem transform/opacity értéke változik; a kurzor-parallax simítása is itt történik (a minden képkockán újrainduló CSS-átmenetek megszűntek). A telefon mozgás közben saját GPU-rétegen csúszik, nagyításkor a tinta-szűrő kikapcsol.
+- **Cím:** a betűnkénti belépés rövidebb és elmosás-szűrő nélküli; a súly-lencse nem olvas elrendezést mozgás közben (eddig betűnként olvas-ír-olvas volt).
+- **„Hét lépés”:** a folyamatsáv React-renderelés nélkül frissül, képernyőn kívül a szakasz nem számol.
+- **Funkciók és záró sáv:** a folyamatosan animált rajzokról lekerült a tinta-szűrő (minden képkockán újraszámolódott); az álló rajzokon (kollázs, „miért” ikonok, a héró keze nyugalomban) megmaradt. A képernyőn kívüli szakaszok végtelen animációi szünetelnek.
+- **Élő SB 400 demó:** görgetés közben nem töltődik be magától (ez okozott akadást), helyette a demóról készült álló kép látszik; kattintásra indul, rögtön interaktívan.
+- A héró belépő animációi gyorsabbak, a sima görgetés kicsit fürgébb (Lenis lerp 0,14).
+- Mérés (fej nélküli Chromium, szoftveres renderelés, ezért csak arányaiban mérvadó): funkciók szakasz 350 → 17 ms/képkocka, élő demó környéke 1 200–1 800 → 17–20 ms, héró JS-ideje képkockánként kb. 10 → 2,5 ms.
+- Tesztek: `heroSky.test.ts` (teljesítmény-szabályok).
+
 ## 4.66 – Új nyitó animáció: „Lamellafal” (10 mp)
 
 - **A nyitó animáció lecserélve** a „Lamelix logó – Lamellafal” videóra (9:16, 10 mp: lamellafal → szétnyíló lamellák → logó és felirat). Minden úton ez fut: videó, hardveres dekóder (tiltott automatikus lejátszásnál), animált kép, és a zárókocka állóképe.
