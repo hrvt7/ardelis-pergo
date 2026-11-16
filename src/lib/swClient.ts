@@ -1,11 +1,12 @@
+import { isAppPath } from './swRoutes'
+
+export { isAppPath }
 // A service worker regisztrációja és a vele való üzenetváltás (frissítés, offline letöltés, állapot).
 // A regisztráció csak éles buildben, biztonságos kapcsolaton (https; helyi próbához localhost) és nem az előnézeti
 // (artifact) buildben történik.
 
 export interface SwEnvironment { prod: boolean; mode: string; router?: string; protocol: string; hostname: string; supported: boolean; pathname?: string }
 
-/** A konfigurátor oldalai: csak innen regisztrálunk (a gyártói nyitóoldal látogatóinak nem kell az ~6 MB-os alkalmazáshéj). */
-export const isAppPath = (pathname: string) => /^\/(konfigurator|embed)(\/|$)/.test(pathname) || (/^\/k\/[^/]+/.test(pathname) && !/^\/k\/[^/]+\/admin(\/|$)/.test(pathname))
 
 /** Tiszta döntés (tesztelhető): kell-e SW-t regisztrálni ebben a környezetben. */
 export function shouldRegisterSw(env: SwEnvironment) {

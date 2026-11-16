@@ -1,5 +1,13 @@
 # Változások
 
+## 4.51 – Nyitó animáció a telepített webapp indításakor (mobil, tablet)
+
+- **Lamelix logó-animáció (9:16, 9 mp):** a kezdőképernyőről indított webapp konfigurátor-oldalain (/konfigurator, /k/<id>, /embed/<id>) érintőképernyős eszközön lejátszódik, miközben a háttérben betölt a 3D konfigurátor. Inline szkriptként indul az alkalmazás JavaScriptje előtt, így nincs üres képernyő. A végén eltűnik, ha a 3D kész; ha még nem, legfeljebb 6 mp-ig a logós zárókockán áll. „Kihagyás” gombbal (vagy koppintással) azonnal bezárható.
+- Munkamenetenként egyszer fut (a „Frissítés” utáni újratöltésnél már nem); böngészőfülön, asztali gépen, a nyitóoldalon, az adminban és csökkentett mozgás beállításnál nem. `?intro=1` böngészőben is elindítja (bemutatóhoz), `?intro=0` tiltja. Ha a videó 2,5 mp alatt sem indul el (pl. iOS energiatakarékos mód tiltja az automatikus lejátszást), azonnal eltűnik és a szokásos betöltés látszik.
+- Videó: `public/assets/intro/lamelix-intro.mp4`, az eredeti 23 MB-os, 1080p, hangos fájlból 720×1280, H.264, hang nélkül (némított automatikus lejátszás), 2,8 MB. Benne van az offline letöltésben; a service worker mostantól a videó tartomány-kéréseit (Safari) is a tárolt fájlból szolgálja ki, így offline is lejátszik.
+- Tesztek: `introSplash.test.ts` (mikor fut, mikor tűnik el, a fájl mérete és offline útvonala, az indító szkript kicsi és lefordul), `swRoutes.test.ts` (tartomány-kérés értelmezése). Böngészős próba: `tests/e2e/intro.cjs` (Chrome, telefonnézet) – indulás, háttérbetöltés, eltűnés, kihagyás, munkamenetenként egyszer, nyitóoldalon nem, offline lejátszás: mind zöld.
+- Nem ellenőrzött: valódi iPaden/iPhone-on és Android-tableten telepített appként (a standalone mód böngészőben nem emulálható, a próba `?intro=1`-gyel futott).
+
 ## 4.50 – Az ársáv a panelbe került, német fordítási hibák, színnevek
 
 - **Az irányár-sáv nem foglal külön helyet:** telefonon (álló és fekvő) az ár és a „Tovább” gomb a beállítópanel saját alsó sora lett, nem egy külön, mindig látható sáv a képernyő alján. A 3D nézet így a képernyő aljáig ér; összecsukott panelnél csak a fogantyú, a lépéssáv és ez az egy sor látszik. Az ár és a gomb továbbra is mindig elérhető.

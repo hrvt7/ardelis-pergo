@@ -158,6 +158,24 @@ function offlineSw(mode: string): Plugin {
   }
 }
 
+/**
+ * Nyitó animáció: a src/intro/boot.ts-t esbuild-del inline szkriptként a <body> elejére teszi, hogy a videó az
+ * alkalmazás JavaScriptje előtt induljon (telepített webapp, mobil/tablet, konfigurátor-útvonal; lásd src/lib/introSplash.ts).
+ */
+function introInline(): Plugin {
+  let code = ""
+  return {
+    name: "intro-inline",
+    async transformIndexHtml() {
+      if (!code) {
+        const result = await esbuild({ entryPoints: [path.resolve(__dirname, "src/intro/boot.ts")], bundle: true, write: false, format: "iife", target: "es2019", minify: true, legalComments: "none", logLevel: "warning" })
+        code = result.outputFiles[0].text.trim()
+      }
+      return [{ tag: "script", children: code, injectTo: "body-prepend" }]
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, "")
   return {
@@ -167,6 +185,7 @@ export default defineConfig(({ mode }) => {
       react(),
       staticSeo(siteOrigin(env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL)),
       offlineSw(mode),
+      introInline(),
     ],
     server: { port: 3000 },
     // Előre optimalizált függőségek: különben fejlesztés közben az első AR-megnyitás teljes oldal-újratöltést okozna.

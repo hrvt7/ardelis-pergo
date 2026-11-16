@@ -126,3 +126,24 @@ describe('offline előtöltési lista (build közben generálva)', () => {
     expect(code).toContain('SKIP_WAITING')
   })
 })
+
+describe('tartomány-kérés tárból (videó offline)', () => {
+  it('bytes=a-b, bytes=a-, bytes=-n', async () => {
+    const { parseByteRange } = await import('../src/lib/swRoutes')
+    expect(parseByteRange('bytes=0-1', 100)).toEqual({ start: 0, end: 1 })
+    expect(parseByteRange('bytes=10-', 100)).toEqual({ start: 10, end: 99 })
+    expect(parseByteRange('bytes=-20', 100)).toEqual({ start: 80, end: 99 })
+    expect(parseByteRange('bytes=50-500', 100)).toEqual({ start: 50, end: 99 })
+  })
+  it('érvénytelen vagy fájlon túli tartomány: null (416)', async () => {
+    const { parseByteRange } = await import('../src/lib/swRoutes')
+    expect(parseByteRange('bytes=200-', 100)).toBeNull()
+    expect(parseByteRange('bytes=5-2', 100)).toBeNull()
+    expect(parseByteRange('bytes=-', 100)).toBeNull()
+    expect(parseByteRange('items=0-1', 100)).toBeNull()
+    expect(parseByteRange('bytes=0-1,5-6', 100)).toBeNull()
+  })
+  it('a videó cache-first', () => {
+    expect(get('/assets/intro/lamelix-intro.mp4')).toBe('cache-first')
+  })
+})

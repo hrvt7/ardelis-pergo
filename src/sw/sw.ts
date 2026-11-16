@@ -4,7 +4,7 @@
 //
 // Stratégiák: hash-elt build-fájlok és public/assets → cache-first; oldalbetöltés → network-first (offline: tárolt
 // index.html); /api/*, admin, ajánlat, belépés és minden nem-GET kérés → mindig hálózat, nem kerül tárba.
-import { ASSET_CACHE, CACHE_PREFIX, REV_HEADER, buildCacheName, isBuildFile, navigationCacheKey, swStrategy, type OfflineFile, type OfflineManifest } from '../lib/swRoutes'
+import { ASSET_CACHE, CACHE_PREFIX, REV_HEADER, buildCacheName, isBuildFile, navigationCacheKey, parseByteRange, swStrategy, type OfflineFile, type OfflineManifest } from '../lib/swRoutes'
 
 declare const __OFFLINE_MANIFEST__: OfflineManifest
 
@@ -54,10 +54,29 @@ async function freshMatch(path: string) {
   return hit
 }
 
-async function cacheFirst(request: Request) {
+/** Tartomány-kérés (a videót a Safari így kéri): a tárolt teljes fájlból 206-os választ vágunk; ha még nincs tárban,
+ *  a hálózat válaszol, és a háttérben a teljes fájl tárba kerül (a következő, akár offline indításhoz). */
+async function rangeFromCache(request: Request, path: string, background: (work: Promise<unknown>) => void) {
+  const hit = await freshMatch(path)
+  if (!hit) {
+    if (revByUrl.has(path)) background(fetch(path).then((full) => store(cacheFor(path), path, full, revByUrl.get(path))).catch(() => undefined))
+    return fetch(request)
+  }
+  const blob = await hit.blob()
+  const range = parseByteRange(request.headers.get('range') ?? '', blob.size)
+  if (!range) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${blob.size}` } })
+  const headers = new Headers({
+    'Content-Type': hit.headers.get('content-type') ?? 'application/octet-stream',
+    'Content-Range': `bytes ${range.start}-${range.end}/${blob.size}`,
+    'Content-Length': String(range.end - range.start + 1),
+    'Accept-Ranges': 'bytes',
+  })
+  return new Response(blob.slice(range.start, range.end + 1), { status: 206, headers })
+}
+
+async function cacheFirst(request: Request, background: (work: Promise<unknown>) => void) {
   const path = new URL(request.url).pathname
-  // Tartomány-kérés (videó, nagy bináris részlet): a tárolt teljes válasz nem felel meg rá, hálózat.
-  if (request.headers.has('range')) return fetch(request)
+  if (request.headers.has('range')) return rangeFromCache(request, path, background)
   const hit = await freshMatch(path)
   if (hit) return hit
   const response = await fetch(request)
@@ -112,7 +131,7 @@ sw.addEventListener('fetch', (event) => {
   const strategy = swStrategy({ url: request.url, origin: ORIGIN, method: request.method, mode: request.mode, destination: request.destination })
   // network-only: a SW nem avatkozik be (a böngésző szokásos hálózati kérése, a meglévő hibakezeléssel).
   if (strategy === 'network-only') return
-  event.respondWith(strategy === 'cache-first' ? cacheFirst(request) : networkFirst(request))
+  event.respondWith(strategy === 'cache-first' ? cacheFirst(request, (work) => event.waitUntil(work)) : networkFirst(request))
 })
 
 interface Progress { done: number; total: number; bytesDone: number; bytesTotal: number; failed: number }

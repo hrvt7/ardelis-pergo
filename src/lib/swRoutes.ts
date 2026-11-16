@@ -13,7 +13,7 @@ export const buildCacheName = (buildId: string) => `${CACHE_PREFIX}build-${build
 export const REV_HEADER = 'x-lamelix-rev'
 
 /** Offline is szükséges jelenet- és felületi fájlok kiterjesztései (public/assets és public/vendor alatt). */
-export const OFFLINE_ASSET_EXT = ['glb', 'gltf', 'bin', 'hdr', 'ktx2', 'jpg', 'jpeg', 'png', 'webp', 'avif', 'svg', 'woff', 'woff2', 'json', 'mjs', 'js', 'gz'] as const
+export const OFFLINE_ASSET_EXT = ['glb', 'gltf', 'bin', 'hdr', 'ktx2', 'jpg', 'jpeg', 'png', 'webp', 'avif', 'svg', 'woff', 'woff2', 'json', 'mjs', 'js', 'gz', 'mp4'] as const
 
 /** Vite által hash-elt build-fájl: /assets/<név>-<8 karakteres hash>.<kiterjesztés> (közvetlenül az assets alatt, almappa nélkül). */
 const BUILD_FILE = /^\/assets\/[^/]+-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/
@@ -74,3 +74,23 @@ export const navigationCacheKey = (url: string, origin: string) => new URL(url, 
 
 export interface OfflineFile { url: string; rev: string; size: number }
 export interface OfflineManifest { version: string; build: OfflineFile[]; assets: OfflineFile[] }
+
+/** A konfigurátor oldalai: csak innen regisztrál a SW, és csak itt fut a nyitó animáció (a nyitóoldal és az admin nem). */
+export const isAppPath = (pathname: string) => /^\/(konfigurator|embed)(\/|$)/.test(pathname) || (/^\/k\/[^/]+/.test(pathname) && !/^\/k\/[^/]+\/admin(\/|$)/.test(pathname))
+
+/**
+ * HTTP Range fejléc értelmezése egy ismert méretű, tárolt fájlra (a videót a Safari mindig tartományokban kéri; offline a
+ * SW a tárolt teljes fájlból vág). Egyetlen tartományt kezel: bytes=a-b, bytes=a-, bytes=-n. Érvénytelen → null.
+ */
+export function parseByteRange(header: string, size: number): { start: number; end: number } | null {
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header.trim())
+  if (!match || size <= 0) return null
+  const [, from, to] = match
+  if (from === '' && to === '') return null
+  let start: number
+  let end: number
+  if (from === '') { const suffix = Number(to); if (suffix === 0) return null; start = Math.max(0, size - suffix); end = size - 1 }
+  else { start = Number(from); end = to === '' ? size - 1 : Math.min(Number(to), size - 1) }
+  if (start > end || start >= size) return null
+  return { start, end }
+}
