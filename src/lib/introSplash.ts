@@ -4,6 +4,8 @@
 import { isAppPath } from './swRoutes'
 
 export const INTRO_SRC = '/assets/intro/lamelix-intro.mp4'
+/** A logó + „lamelix” felirat zárókockája (mp): ezt mutatjuk állóképként, ha az automatikus lejátszás tiltott. */
+export const INTRO_LOGO_FRAME_S = 8.6
 /** A munkameneten belül csak egyszer (pl. a „Frissítés” utáni újratöltésnél már nem). */
 export const INTRO_SESSION_KEY = 'lamelix-intro-played'
 /** A videó vége után legfeljebb ennyit várunk a 3D jelenetre (az utolsó, logós képkockán állva), utána mindenképp eltűnik. */
@@ -48,7 +50,6 @@ export interface IntroState {
   /** A videó ténylegesen fut (playing vagy előrehaladó lejátszási idő). */
   started: boolean
   ended: boolean
-  skipped: boolean
   /** Az automatikus lejátszást a rendszer tiltja (pl. iOS energiatakarékos mód): koppintásra indítható. */
   blocked: boolean
   sceneReady: boolean
@@ -58,14 +59,13 @@ export interface IntroState {
 
 /**
  * Mikor tűnhet el a nyitókép:
- * - kihagyásra azonnal;
  * - lejátszás közben nem (végigfut, akkor is, ha a 3D már kész), csak ha elakad: INTRO_HARD_CAP_MS után;
  * - a vége után, ha a 3D kész, különben legfeljebb INTRO_MAX_HOLD_MS-ig áll a logós zárókockán;
- * - ha még nem indult el (lassú betöltés vagy tiltott automatikus lejátszás): amint a 3D kész, mert a konfigurátort
- *   nem tartjuk vissza egy álló képpel; különben legkésőbb INTRO_START_TIMEOUT_MS után.
+ * - ha még nem indult el (lassú betöltés vagy tiltott automatikus lejátszás, ilyenkor a logós zárókocka áll): amint
+ *   a 3D kész, mert a konfigurátort nem tartjuk vissza egy állóképpel; különben legkésőbb INTRO_START_TIMEOUT_MS után.
  */
 export function introCanClose(state: IntroState) {
-  if (state.skipped || state.msSinceOpen >= INTRO_HARD_CAP_MS) return true
+  if (state.msSinceOpen >= INTRO_HARD_CAP_MS) return true
   if (state.ended) return state.sceneReady || state.msSinceEnd >= INTRO_MAX_HOLD_MS
   if (state.started) return false
   return state.sceneReady || state.msSinceOpen >= INTRO_START_TIMEOUT_MS

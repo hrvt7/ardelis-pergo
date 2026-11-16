@@ -1,5 +1,12 @@
 # Változások
 
+## 4.55 – Nyitó animáció gombok nélkül, teljes képernyőn
+
+- **A nyitó animáció magától indul, teljes képernyőn, és végigfut:** nincs „Kihagyás” és „Lejátszás” gomb, az érintés nem zárja be (és nem jut át a háttérben töltődő konfigurátorra). Minden kijelzőn kitölti a képernyőt (fekvő telefonon is).
+- Ha a rendszer tiltja az automatikus lejátszást (iOS energiatakarékos mód – ezt weboldal nem írhatja felül), gomb helyett a videó logós zárókockája (Lamelix logó + felirat) áll, amíg a 3D betölt, utána eltűnik. Elakadt lejátszásnál 22 mp után mindenképp eltűnik.
+- Tesztek: `introSplash.test.ts` (nincs gomb az indító szkriptben, zárási szabályok), `tests/e2e/intro.cjs` (nincs gomb, érintésre nem zárul, teljes képernyő, tiltott lejátszásnál a logós kocka áll és a 3D elkészültekor eltűnik): mind zöld.
+- Nem ellenőrzött: valódi iPaden.
+
 ## 4.54 – Kipróbálható stúdió stílus (?style=studio)
 
 - **Új, kipróbálható stílus: `?style=studio`** (letisztult, modernebb változat; az alapértelmezett nézet nem változik, a választást a böngésző megjegyzi, visszaállítás: `?style=soft`).

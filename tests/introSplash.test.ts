@@ -29,7 +29,7 @@ describe('nyitó animáció: mikor fut', () => {
 })
 
 describe('nyitó animáció: mikor tűnik el', () => {
-  const base = { started: true, ended: false, skipped: false, blocked: false, sceneReady: false, msSinceOpen: 3000, msSinceEnd: 0 }
+  const base = { started: true, ended: false, blocked: false, sceneReady: false, msSinceOpen: 3000, msSinceEnd: 0 }
   it('lejátszás közben marad, akkor is, ha a 3D már kész', () => {
     expect(introCanClose({ ...base, sceneReady: true })).toBe(false)
   })
@@ -38,9 +38,6 @@ describe('nyitó animáció: mikor tűnik el', () => {
     expect(introCanClose({ ...base, ended: true, msSinceEnd: 1000 })).toBe(false)
     expect(introCanClose({ ...base, ended: true, msSinceEnd: INTRO_MAX_HOLD_MS })).toBe(true)
   })
-  it('kihagyásra azonnal', () => {
-    expect(introCanClose({ ...base, skipped: true })).toBe(true)
-  })
   it('HIBA (iPad): lassú betöltésnél nem adja fel 2,5 mp után – a 3D elkészültéig vagy a türelmi időig vár', () => {
     const loading = { ...base, started: false }
     expect(introCanClose({ ...loading, msSinceOpen: 2600 })).toBe(false)
@@ -48,7 +45,7 @@ describe('nyitó animáció: mikor tűnik el', () => {
     expect(introCanClose({ ...loading, msSinceOpen: INTRO_START_TIMEOUT_MS })).toBe(true)
     expect(introCanClose({ ...loading, msSinceOpen: 2600, sceneReady: true })).toBe(true)
   })
-  it('HIBA (iPad): tiltott automatikus lejátszásnál nem tűnik el azonnal – koppintásra indítható, a 3D elkészültéig marad', () => {
+  it('HIBA (iPad): tiltott automatikus lejátszásnál nem tűnik el azonnal – a logós zárókocka áll a 3D elkészültéig', () => {
     const blocked = { ...base, started: false, blocked: true, msSinceOpen: 400 }
     expect(introCanClose(blocked)).toBe(false)
     expect(introCanClose({ ...blocked, sceneReady: true })).toBe(true)
@@ -65,6 +62,11 @@ describe('nyitó animáció: fájl és offline', () => {
     expect(fs.statSync(file).size).toBeLessThan(4 * 1024 * 1024)
     expect(isOfflineAsset(INTRO_SRC)).toBe(true)
     expect(swStrategy({ url: INTRO_SRC, origin: 'https://lamelix.vercel.app' })).toBe('cache-first')
+  })
+  it('nincs gomb: sem kihagyás, sem lejátszás', async () => {
+    const source = fs.readFileSync(path.resolve(import.meta.dirname, '../src/intro/boot.ts'), 'utf8')
+    expect(source).not.toMatch(/createElement\('button'\)/)
+    expect(source).not.toMatch(/Kihagyás|Lejátszás/)
   })
   it('az indító szkript lefordul, és nem húz be React-et vagy az alkalmazást (inline, kicsi)', async () => {
     const result = await build({ entryPoints: [path.resolve(import.meta.dirname, '../src/intro/boot.ts')], bundle: true, write: false, format: 'iife', minify: true, logLevel: 'silent' })
