@@ -1,5 +1,13 @@
 # Változások
 
+## 4.61 – Nyitó animáció hardveres dekóderrel iPhone-on és iPaden is, ha a videó automatikus lejátszása tiltott
+
+- **Hiba: iPhone 14 Pro-n az animáció szaggatott.** Mivel a telefon tiltja a videó automatikus indítását, a tartalék animált AVIF kép futott. Az AVIF-et az A16 chip (iPhone 14 Pro) nem tudja hardveresen kibontani (erre csak az A17 Pro-tól képes), ezért szoftveresen, szaggatva játszotta le.
+- **Javítás:** tiltott automatikus lejátszásnál ugyanaz a videó a hardveres H.264-dekóderrel (WebCodecs) kerül vászonra (`src/intro/decoderPlayer.ts`). Erre a tiltás nem vonatkozik, és ugyanúgy a hardver dolgozik, mint a sima videólejátszásnál. A minták helye előre ki van számolva (`public/assets/intro/lamelix-intro.json`, 6 KB, a videóból generálva; teszt ellenőrzi, hogy egyezik). Az animált kép csak akkor jön, ha a böngésző ezt sem tudja.
+- Mérés (tiltott videó, csak a lejátszás alatt): Chrome-ban a leghosszabb képkocka-kihagyás 33 ms; a Safari motorjában ebben a gyenge, hardveres dekóder nélküli környezetben 107 ms (az animált képnél 246 ms volt). A zárókockáig, 9,2–9,5 mp-ig végigfut.
+- Tesztek: `introSplash.test.ts` (az index a videóhoz tartozik: 216 minta, érvényes NAL-hosszak, egyező avcC; tiltásnál előbb a dekóder, utána az animált kép), `tests/e2e/intro.cjs` (dekóderes vászon fut és mozog, gomb nincs, végigfut; dekóder nélkül animált kép): mind zöld.
+- Nem ellenőrzött: valódi iPhone 14 Pro-n és iPaden.
+
 ## 4.60 – Javítás: a nyitó animáció szaggatott, és a konfigurátor a logó előtt bejött
 
 - **Hiba:** az animáció közben épült fel a felület és a 3D jelenet; ez a fő szálat és a grafikus processzort lefoglalta, ezért az animált kép (amit az iPad a tiltott videó helyett játszik le) szaggatott, és lemaradt az időzítőhöz képest, így a konfigurátor már az animáció közepén bejött.

@@ -72,7 +72,7 @@ describe('nyitó animáció: fájl és offline', () => {
     expect(fs.statSync(path.resolve(import.meta.dirname, '../public', INTRO_ANIM_SRC.slice(1))).size).toBeLessThan(2.5 * 1024 * 1024)
     const source = fs.readFileSync(path.resolve(import.meta.dirname, '../src/intro/boot.ts'), 'utf8')
     expect(source).toContain('-webkit-media-controls-start-playback-button')
-    expect(source).toMatch(/attempt\.then\(markStarted, playAnimatedFallback\)/)
+    expect(source).toContain('playAnimatedFallback()')
   })
   it('nincs gomb: sem kihagyás, sem lejátszás', async () => {
     const source = fs.readFileSync(path.resolve(import.meta.dirname, '../src/intro/boot.ts'), 'utf8')
@@ -83,7 +83,7 @@ describe('nyitó animáció: fájl és offline', () => {
     const result = await build({ entryPoints: [path.resolve(import.meta.dirname, '../src/intro/boot.ts')], bundle: true, write: false, format: 'iife', minify: true, logLevel: 'silent' })
     const code = result.outputFiles[0].text
     expect(code).toContain(INTRO_SRC)
-    expect(code.length).toBeLessThan(6000)
+    expect(code.length).toBeLessThan(10000)
   })
 })
 
@@ -111,5 +111,33 @@ describe('nyitó animáció: a 3D és a felület csak utána épül (nem szaggat
   it('a nyitókép csak az animáció vége után zárul, a 3D elkészültéig a logón áll (legfeljebb 10 mp)', () => {
     expect(INTRO_MAX_HOLD_MS).toBe(10000)
     expect(introCanClose({ started: true, ended: false, blocked: false, sceneReady: true, msSinceOpen: 5000, msSinceEnd: 0 })).toBe(false)
+  })
+})
+
+describe('nyitó videó hardveres dekóderrel (tiltott automatikus lejátszás, iPhone/iPad)', () => {
+  const read = (f: string) => fs.readFileSync(path.resolve(import.meta.dirname, '../public', f.slice(1)))
+  it('az index a videóhoz tartozik: 216 minta, a fájlon belül, H.264 hosszelőtagos NAL-egységekkel, kulcskockával kezd', async () => {
+    const { INTRO_INDEX_SRC } = await import('../src/lib/introSplash')
+    const index = JSON.parse(read(INTRO_INDEX_SRC).toString('utf8')) as { codec: string; description: string; samples: [number, number, number, number][]; durationUs: number }
+    const video = read(INTRO_SRC)
+    expect(index.codec).toMatch(/^avc1\.[0-9a-f]{6}$/)
+    expect(index.samples).toHaveLength(216)
+    expect(index.samples[0][3]).toBe(1)
+    // Az avcC a videó fájlban lévővel egyezik (ha a videó cserélődik, az indexet újra kell generálni).
+    expect(video.includes(Buffer.from(index.description, 'base64'))).toBe(true)
+    for (const [offset, size] of index.samples) {
+      expect(offset + size).toBeLessThanOrEqual(video.length)
+      let cursor = offset
+      while (cursor < offset + size) { const nal = video.readUInt32BE(cursor); expect(nal).toBeGreaterThan(0); cursor += 4 + nal }
+      expect(cursor).toBe(offset + size)
+    }
+    const last = Math.max(...index.samples.map((sample) => sample[2]))
+    expect(last).toBeLessThan(index.durationUs)
+  })
+  it('tiltásnál előbb a dekóder, és csak ha az nem megy, az animált kép', () => {
+    const source = fs.readFileSync(path.resolve(import.meta.dirname, '../src/intro/boot.ts'), 'utf8')
+    expect(source).toMatch(/attempt\.then\(markStarted, playBlockedFallback\)/)
+    expect(source).toMatch(/playWithDecoder\(canvas, INTRO_SRC, INTRO_INDEX_SRC\)/)
+    expect(source).toMatch(/giveUp = \(\) => \{ canvas\.remove\(\); if \(!state\.closed && !state\.started\) playAnimatedFallback\(\) \}/)
   })
 })

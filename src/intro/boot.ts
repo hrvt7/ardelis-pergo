@@ -2,9 +2,11 @@
 // inline szkriptként, így a videó már az alkalmazás JavaScriptjének letöltése ELŐTT elindul; közben a háttérben
 // betölt a 3D konfigurátor. Teljes képernyős, gomb és kihagyás nélkül végigfut; eltűnik, ha a videó véget ért és a
 // 3D kész (vagy a vég után legfeljebb 6 mp-cel). Ha a rendszer tiltja az automatikus lejátszást (pl. iOS
-// energiatakarékos mód, „Videók automatikus lejátszása” ki), ugyanez az animáció animált AVIF képként fut le – a
-// képekre a tiltás nem vonatkozik, és az iOS saját play-jele sem jelenik meg.
-import { INTRO_ANIM_SRC, INTRO_DONE_EVENT, INTRO_DURATION_MS, INTRO_FLAG, INTRO_LOGO_SRC, INTRO_RELEASE_IF_NOT_STARTED_MS, INTRO_SESSION_KEY, INTRO_SRC, introCanClose, shouldPlayIntro } from '../lib/introSplash'
+// energiatakarékos mód, „Videók automatikus lejátszása” ki), ugyanez a videó a hardveres dekóderrel (WebCodecs)
+// vászonra rajzolva fut le – erre a tiltás nem vonatkozik, és nem szaggat; ha ez sem elérhető, animált AVIF kép.
+// Az iOS saját play-jele egyik esetben sem jelenik meg.
+import { playWithDecoder } from './decoderPlayer'
+import { INTRO_ANIM_SRC, INTRO_DONE_EVENT, INTRO_INDEX_SRC, INTRO_DURATION_MS, INTRO_FLAG, INTRO_LOGO_SRC, INTRO_RELEASE_IF_NOT_STARTED_MS, INTRO_SESSION_KEY, INTRO_SRC, introCanClose, shouldPlayIntro } from '../lib/introSplash'
 
 const media = (query: string) => typeof matchMedia === 'function' && matchMedia(query).matches
 
@@ -88,7 +90,6 @@ function boot() {
   const playAnimatedFallback = () => {
     if (state.started || state.closed) return
     state.blocked = true
-    video.style.display = 'none'
     const logo = still(INTRO_LOGO_SRC)
     root.append(logo)
     const anim = still(INTRO_ANIM_SRC)
@@ -104,6 +105,26 @@ function boot() {
     // Ha az animált kép sem tölthető be, a 3D a logós kép mögött épül fel.
     anim.addEventListener('error', releaseScene, { once: true })
   }
+  // Tiltott automatikus lejátszás: 1. hardveres dekóder vászonra (sima, mint a videó), 2. animált kép.
+  const playBlockedFallback = () => {
+    if (state.started || state.closed) return
+    state.blocked = true
+    video.style.display = 'none'
+    const canvas = document.createElement('canvas')
+    canvas.style.cssText = fill
+    root.append(canvas)
+    const giveUp = () => { canvas.remove(); if (!state.closed && !state.started) playAnimatedFallback() }
+    playWithDecoder(canvas, INTRO_SRC, INTRO_INDEX_SRC).then((playback) => {
+      if (!playback) { giveUp(); return }
+      if (state.closed) { playback.stop(); return }
+      playback.started.then(() => {
+        if (state.closed) { playback.stop(); return }
+        state.blocked = false
+        state.started = true
+        playback.ended.then(() => { state.ended = true; state.endedAt = Date.now(); releaseScene(); check() })
+      }, giveUp)
+    }, giveUp)
+  }
   video.addEventListener('playing', markStarted)
   video.addEventListener('timeupdate', () => { if (video.currentTime > 0 && !state.blocked) markStarted() })
   video.addEventListener('ended', () => { state.ended = true; state.endedAt = Date.now(); releaseScene(); check() })
@@ -111,7 +132,7 @@ function boot() {
   video.addEventListener('error', () => { if (!state.blocked) close() })
   timer = window.setInterval(check, 150)
   const attempt = video.play()
-  if (attempt && typeof attempt.then === 'function') attempt.then(markStarted, playAnimatedFallback)
+  if (attempt && typeof attempt.then === 'function') attempt.then(markStarted, playBlockedFallback)
 }
 
 try { boot() } catch { /* a nyitókép soha nem akadályozhatja az alkalmazás indulását */ }

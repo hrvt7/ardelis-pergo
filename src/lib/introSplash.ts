@@ -10,6 +10,12 @@ export const INTRO_SRC = '/assets/intro/lamelix-intro.mp4'
  * képként: a képekre ez a tiltás nem vonatkozik, így gomb nélkül magától lefut.
  */
 export const INTRO_ANIM_SRC = '/assets/intro/lamelix-intro.avif'
+/**
+ * Elsődleges tartalék tiltott automatikus lejátszásnál: ugyanaz a videó hardveres dekóderrel (WebCodecs) vászonra
+ * (src/intro/decoderPlayer.ts). A minták helye a fájlban: ez az index (a videóból generálva; teszt ellenőrzi).
+ * Az animált AVIF csak akkor jön, ha ez nem elérhető: azt pl. az iPhone 14 Pro (A16) szoftveresen bontja, szaggat.
+ */
+export const INTRO_INDEX_SRC = '/assets/intro/lamelix-intro.json'
 /** A logó + „lamelix” felirat zárókockája állóképként (a tartalék animáció végén és betöltése alatt ez áll). */
 export const INTRO_LOGO_SRC = '/assets/intro/lamelix-intro-logo.webp'
 /** Az animáció hossza (a videóé is): a tartalék képnél ennyi után vált a logós állóképre (a WebKit újraindítaná). */
