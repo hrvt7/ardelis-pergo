@@ -3269,8 +3269,8 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 /* ============ Világos, pasztell felület („light”, alapértelmezett 4.55-től; a sötét: ?style=soft) ============
    Urbanist betű, fehér kártyák nagy lekerekítéssel világosszürke alapon, fekete „pill” gombok, kerek nyíl-gombok,
    pasztell kiemelések: Alice Blue #D8DFE9, Honeydew #CFDECA, Vanilla #EFF0A3, Eerie Black #212121, Ghost White #F6F5FA. */
-.layout-a.style-light {
-  --l-bg: #ECECEF; --l-card: #FFFFFF; --l-ghost: #F6F5FA; --l-blue: #D8DFE9; --l-green: #CFDECA; --l-vanilla: #EFF0A3; --l-ink: #212121; --l-muted: #6E7076; --l-line: rgba(33,33,33,.08);
+.layout-a.style-light, body.ui-light {
+  --l-bg: #ECECEF; --l-card: #FFFFFF; --l-ghost: #F6F5FA; --l-blue: #D8DFE9; --l-green: #CFDECA; --l-vanilla: #EFF0A3; --l-ink: #212121; --l-muted: #5C5E64; --l-line: rgba(33,33,33,.08);
   --ink-1000: #ECECEF; --surface-app: var(--l-bg); --surface-panel: var(--l-ghost); --surface-card: var(--l-card); --surface-raised: #FFFFFF;
   --surface-border: var(--l-line); --field-border: rgba(33,33,33,.16);
   --text-primary: var(--l-ink); --text-secondary: var(--l-muted); --text-soft: #4A4C51;
@@ -3369,3 +3369,65 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 .layout-a.style-light .color-tabs button.active, .layout-a.style-light .color-tabs button.selected, .layout-a.style-light .color-tabs button[aria-selected="true"] { background: var(--l-vanilla); color: var(--l-ink); box-shadow: inset 0 0 0 1.5px var(--l-ink); }
 .layout-a.style-light .color-tabs small { color: var(--l-muted); }
 .layout-a.style-light .studio-home-link { color: var(--l-muted); text-shadow: none; }
+
+/* ============ Világos felület: olvashatósági kör (4.59) ============
+   Minden lebegő felület (menük, panelek, párbeszédablakok, értesítések) fehér kártya sötét szöveggel; a body.ui-light
+   osztály a body-ba portált ablakokat (fotós színmintavétel) is lefedi. A 3D-jelenet címkéi szándékosan sötétek maradnak. */
+:is(.layout-a.style-light, body.ui-light) .view-popover, :is(.layout-a.style-light, body.ui-light) .modal-dialog, :is(.layout-a.style-light, body.ui-light) .sun-panel, :is(.layout-a.style-light, body.ui-light) .mood-panel, :is(.layout-a.style-light, body.ui-light) .winter-panel, :is(.layout-a.style-light, body.ui-light) .hotspot-card, :is(.layout-a.style-light, body.ui-light) .camera-menu-list,
+:is(.layout-a.style-light, body.ui-light) .toast, :is(.layout-a.style-light, body.ui-light) .welcome-back, :is(.layout-a.style-light, body.ui-light) .sw-update, :is(.layout-a.style-light, body.ui-light) .automation-status, :is(.layout-a.style-light, body.ui-light) .presentation-note, :is(.layout-a.style-light, body.ui-light) .pov-note, :is(.layout-a.style-light, body.ui-light) .walk-note,
+:is(.layout-a.style-light, body.ui-light) .walk-hint, :is(.layout-a.style-light, body.ui-light) .walk-badge, :is(.layout-a.style-light, body.ui-light) .fs-hint, :is(.layout-a.style-light, body.ui-light) .camera-toolbar, :is(.layout-a.style-light, body.ui-light) .area-tip, :is(.layout-a.style-light, body.ui-light) .change-pill, :is(.layout-a.style-light, body.ui-light) .glass-panel.price-panel {
+  background: #fff; color: var(--l-ink); border: 1px solid var(--l-line); box-shadow: var(--shadow-lg); backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+:is(.layout-a.style-light, body.ui-light) .view-popover-head { background: rgba(255,255,255,.96); border-bottom: 1px solid var(--l-line); color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .view-popover-head button, :is(.layout-a.style-light, body.ui-light) .toast button, :is(.layout-a.style-light, body.ui-light) .modal-header button { color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .view-popover-head button:hover { background: var(--l-ghost); }
+:is(.layout-a.style-light, body.ui-light) .modal-backdrop { background: rgba(236,236,239,.72); }
+:is(.layout-a.style-light, body.ui-light) .modal-header span, :is(.layout-a.style-light, body.ui-light) .modal-intro { color: var(--l-muted); }
+:is(.layout-a.style-light, body.ui-light) .modal-dialog h2, :is(.layout-a.style-light, body.ui-light) .modal-dialog h3, :is(.layout-a.style-light, body.ui-light) .modal-dialog strong { color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .tools-item { color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .tools-item:hover { background: var(--l-ghost); }
+:is(.layout-a.style-light, body.ui-light) .tools-item.is-active { background: var(--l-vanilla); border-color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .tools-item > svg, :is(.layout-a.style-light, body.ui-light) .tools-item em, :is(.layout-a.style-light, body.ui-light) .toast > svg { color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .weather-toolbar .camera-menu .camera-menu-list button { color: var(--l-ink); background: transparent; }
+:is(.layout-a.style-light, body.ui-light) .weather-toolbar .camera-menu .camera-menu-list button:hover { background: var(--l-ghost); color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .weather-toolbar .camera-menu .camera-menu-list button.selected { background: var(--l-vanilla); color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .scene-options button { background: var(--l-ghost); border-color: var(--l-line); color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .scene-options button.selected, :is(.layout-a.style-light, body.ui-light) .scene-options button[aria-pressed="true"] { background: var(--l-vanilla); border-color: var(--l-ink); color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .price-mode button { color: var(--l-muted); }
+:is(.layout-a.style-light, body.ui-light) .price-mode button.selected { background: var(--l-ink); color: #fff; }
+:is(.layout-a.style-light, body.ui-light) .price-actions .secondary-action, :is(.layout-a.style-light, body.ui-light) .secondary-action { background: transparent; color: var(--l-ink); border: 1px solid rgba(33,33,33,.22); }
+:is(.layout-a.style-light, body.ui-light) .secondary-action:hover { background: var(--l-ghost); }
+:is(.layout-a.style-light, body.ui-light) .primary-action { background: var(--l-ink); color: #fff; border: 0; }
+:is(.layout-a.style-light, body.ui-light) .primary-action:hover { background: #000; color: #fff; }
+:is(.layout-a.style-light, body.ui-light) .showroom-share { background: var(--l-ink); color: #fff; box-shadow: none; }
+:is(.layout-a.style-light, body.ui-light) .showroom-share:hover:not(:disabled) { box-shadow: var(--shadow-md); }
+:is(.layout-a.style-light, body.ui-light) .showroom-share small { opacity: .82; }
+:is(.layout-a.style-light, body.ui-light) .showroom-share.is-pdf + .showroom-share, :is(.layout-a.style-light, body.ui-light) .showroom-share.is-video { background: #fff; color: var(--l-ink); border: 1px solid rgba(33,33,33,.16); }
+:is(.layout-a.style-light, body.ui-light) .showroom-image { background: var(--l-blue); }
+:is(.layout-a.style-light, body.ui-light) .showroom-skeleton span { color: var(--text-soft); }
+:is(.layout-a.style-light, body.ui-light) .showroom-refresh { background: rgba(255,255,255,.94); color: var(--l-ink); box-shadow: var(--shadow-sm); }
+:is(.layout-a.style-light, body.ui-light) .text-field input, :is(.layout-a.style-light, body.ui-light) .select-field select, :is(.layout-a.style-light, body.ui-light) .color-search, :is(.layout-a.style-light, body.ui-light) .color-code-field input, :is(.layout-a.style-light, body.ui-light) .real-lead-form .lead-grid input,
+:is(.layout-a.style-light, body.ui-light) .real-lead-form .lead-grid select, :is(.layout-a.style-light, body.ui-light) .real-lead-form .lead-grid textarea { background: #fff; color: var(--l-ink); border-color: rgba(33,33,33,.16); }
+:is(.layout-a.style-light, body.ui-light) select option { background: #fff; color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .summary-thumbnail > button, :is(.layout-a.style-light, body.ui-light) .spec-code, :is(.layout-a.style-light, body.ui-light) .energy-solar-stats > div, :is(.layout-a.style-light, body.ui-light) .energy-warnings li, :is(.layout-a.style-light, body.ui-light) .poster-skeleton span { background: var(--l-ghost); color: var(--l-ink); border-color: var(--l-line); }
+:is(.layout-a.style-light, body.ui-light) .step-navigation { background: transparent; }
+:is(.layout-a.style-light, body.ui-light) .viewer-live { background: rgba(255,255,255,.9); color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) ::placeholder { color: #7A7C82; }
+@media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse), (orientation: portrait) and (max-width: 1100px) {
+  :is(.layout-a.style-light, body.ui-light) .mobile-price-bar { background: #fff; color: var(--l-ink); }
+}
+:is(.layout-a.style-light, body.ui-light) .automation-status { border-color: rgba(33,33,33,.14); }
+:is(.layout-a.style-light, body.ui-light) .automation-status strong, :is(.layout-a.style-light, body.ui-light) .walk-hint span, :is(.layout-a.style-light, body.ui-light) .walk-hint strong, :is(.layout-a.style-light, body.ui-light) .walk-note, :is(.layout-a.style-light, body.ui-light) .walk-badge { color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .automation-status span { color: var(--l-muted); }
+:is(.layout-a.style-light, body.ui-light) .automation-status svg { color: var(--l-ink); }
+
+/* Világos felület: a sötét téma neon-lime kiemelései helyett fekete gyűrű és Vanilla kijelölés. */
+:is(.layout-a.style-light, body.ui-light) .roof-options > button.selected, :is(.layout-a.style-light, body.ui-light) .extra-card.is-on, :is(.layout-a.style-light, body.ui-light) .catalog-choices button.selected, :is(.layout-a.style-light, body.ui-light) .sun-chips button.selected, :is(.layout-a.style-light, body.ui-light) .sun-facing button.selected, :is(.layout-a.style-light, body.ui-light) .furniture-card.selected, :is(.layout-a.style-light, body.ui-light) .budget-chips button.selected, :is(.layout-a.style-light, body.ui-light) .budget-plan.is-best, :is(.layout-a.style-light, body.ui-light) .side-type-card.selected, :is(.layout-a.style-light, body.ui-light) .sub-option.is-on, :is(.layout-a.style-light, body.ui-light) .color-groups button.selected, :is(.layout-a.style-light, body.ui-light) .house-finish-grid button.selected, :is(.layout-a.style-light, body.ui-light) .house-windows button.selected, :is(.layout-a.style-light, body.ui-light) .roof-shade-fabrics button.selected, :is(.layout-a.style-light, body.ui-light) .glazing-chip.selected, :is(.layout-a.style-light, body.ui-light) .climate-run button.on, :is(.layout-a.style-light, body.ui-light) .preset-list button.applied, :is(.layout-a.style-light, body.ui-light) .half-tabs button.selected:not(.color-targets button), :is(.layout-a.style-light, body.ui-light) .door-toggle[aria-pressed="true"] { background: var(--l-vanilla); border-color: var(--l-ink); color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .extra-card:hover, :is(.layout-a.style-light, body.ui-light) .sun-chips button:hover, :is(.layout-a.style-light, body.ui-light) .sun-facing button:hover, :is(.layout-a.style-light, body.ui-light) .furniture-card:hover, :is(.layout-a.style-light, body.ui-light) .budget-chips button:hover, :is(.layout-a.style-light, body.ui-light) .price-collapse:hover, :is(.layout-a.style-light, body.ui-light) .roof-card:hover, :is(.layout-a.style-light, body.ui-light) .advisor-card:hover, :is(.layout-a.style-light, body.ui-light) .advisor-options button:hover, :is(.layout-a.style-light, body.ui-light) .advisor-alt:hover, :is(.layout-a.style-light, body.ui-light) .side-type-card:hover, :is(.layout-a.style-light, body.ui-light) .photo-color-match:hover, :is(.layout-a.style-light, body.ui-light) .color-tab-back:hover, :is(.layout-a.style-light, body.ui-light) .roof-change-link:hover, :is(.layout-a.style-light, body.ui-light) .glazing-chip:hover, :is(.layout-a.style-light, body.ui-light) .building-card:hover, :is(.layout-a.style-light, body.ui-light) .showroom-name:focus-within, :is(.layout-a.style-light, body.ui-light) .color-search:focus-within { border-color: rgba(33,33,33,.45); }
+:is(.layout-a.style-light, body.ui-light) .side-motion-control, :is(.layout-a.style-light, body.ui-light) .upload-button, :is(.layout-a.style-light, body.ui-light) .automation-status, :is(.layout-a.style-light, body.ui-light) .pov-note, :is(.layout-a.style-light, body.ui-light) .sun-panel, :is(.layout-a.style-light, body.ui-light) .sun-play, :is(.layout-a.style-light, body.ui-light) .sun-compass, :is(.layout-a.style-light, body.ui-light) .mech-cta, :is(.layout-a.style-light, body.ui-light) .furniture-suggest, :is(.layout-a.style-light, body.ui-light) .budget-trigger, :is(.layout-a.style-light, body.ui-light) .advisor-hero, :is(.layout-a.style-light, body.ui-light) .energy-band.is-below, :is(.layout-a.style-light, body.ui-light) .color-photo-button, :is(.layout-a.style-light, body.ui-light) .photo-color-drop, :is(.layout-a.style-light, body.ui-light) .change-pill, :is(.layout-a.style-light, body.ui-light) .welcome-back, :is(.layout-a.style-light, body.ui-light) .house-match, :is(.layout-a.style-light, body.ui-light) .house-match.is-matched, :is(.layout-a.style-light, body.ui-light) .fs-hint, :is(.layout-a.style-light, body.ui-light) .install-tip, :is(.layout-a.style-light, body.ui-light) .sw-update, :is(.layout-a.style-light, body.ui-light) .control-tabs button.complete .step-dot, :is(.layout-a.style-light, body.ui-light) .color-chip.selected, :is(.layout-a.style-light, body.ui-light) .house-swatches > .selected { border-color: rgba(33,33,33,.2); }
+:is(.layout-a.style-light, body.ui-light) .color-chip.selected, :is(.layout-a.style-light, body.ui-light) .house-swatches > .selected { border-color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) .advisor-icon, :is(.layout-a.style-light, body.ui-light) .advisor-progress i.done, :is(.layout-a.style-light, body.ui-light) .advisor-reasons li > svg, :is(.layout-a.style-light, body.ui-light) .furniture-card.selected .furniture-card-icon, :is(.layout-a.style-light, body.ui-light) .mech-label, :is(.layout-a.style-light, body.ui-light) .sw-update button, :is(.layout-a.style-light, body.ui-light) .preset-list button.is-featured, :is(.layout-a.style-light, body.ui-light) .mix-structure { background: var(--l-ink); color: #fff; }
+:is(.layout-a.style-light, body.ui-light) .text-link { color: var(--l-ink); text-decoration: underline; text-underline-offset: 3px; }
+:is(.layout-a.style-light, body.ui-light) .range-input::-webkit-slider-runnable-track { background: rgba(33,33,33,.18); }
+:is(.layout-a.style-light, body.ui-light) .real-lead-form input:user-valid:not([type=checkbox]):not([name=website]) { border-color: #4E7A3A; box-shadow: none; }
+:is(.layout-a.style-light, body.ui-light) .shade-chart .area { fill: rgba(33,33,33,.12); }

@@ -369,6 +369,8 @@ export default function PergoStudio() {
   // Felületi stílus: ?style=glass (üveges panelek a 3D fölött) vagy a jelenlegi; a választást a böngésző megjegyzi.
   const [uiStyle] = useState(() => { try { return resolveUiStyle(window.location.search, localStorage.getItem(UI_STYLE_KEY)) } catch { return resolveUiStyle(window.location.search, null) } })
   useEffect(() => { try { if (new URLSearchParams(window.location.search).has('style')) localStorage.setItem(UI_STYLE_KEY, uiStyle) } catch { /* privát mód */ } }, [uiStyle])
+  // A body-ba portált ablakok (fotós színválasztó) is a világos felületet kapják.
+  useEffect(() => { document.body.classList.toggle('ui-light', uiStyle === 'light'); return () => { document.body.classList.remove('ui-light') } }, [uiStyle])
   const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth)
   useEffect(() => { const update = () => setViewportWidth(window.innerWidth); window.addEventListener('resize', update); return () => window.removeEventListener('resize', update) }, [])
   // Húzással állítható panelszélesség (asztalon és fekvő telefonon); álló telefonon alsó lap van, ott nincs.

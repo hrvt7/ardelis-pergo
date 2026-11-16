@@ -1,5 +1,13 @@
 # Változások
 
+## 4.59 – Olvashatóság a világos felületen, egységes admin
+
+- **Olvashatóság a világos felületen:** az Eszközök menü, a Nézet és vizualizáció panel, a kameramenü, az ár részletei, a Tudnivalók, a tanácsadó, a költségkeret, az energia- és az újrakezdés-ablak, az értesítések és a jelenet fölötti jelzések (esőautomata, bejárás) eddig sötét háttéren sötét szöveggel jelentek meg. Most fehér kártyák sötét szöveggel; a body-ba portált ablakok (fotós színmintavétel) a `body.ui-light` osztályon át ugyanezt kapják.
+- A másodlagos szöveg színe `#5C5E64` lett: fehér, Ghost White, alap-, Vanilla és Honeydew háttéren is legalább 4,5:1 kontraszt (WCAG AA). A sötét téma neon-lime kiemelései helyett világosan Vanilla kijelölés és fekete gyűrű; a „PDF összefoglaló” gomb fekete pill fehér szöveggel.
+- Automatikus kontrasztszkenner (WCAG) futott mind a 7 lépésen, asztali, álló és fekvő mobil nézetben, és minden menün és ablakon: 0 hiba.
+- **Admin egységesítve:** ugyanaz a világos, pasztell rendszer (Urbanist betű, #ECECEF alap, világos oldalsáv fehér kártyán, fekete pill elsődleges gomb, Vanilla kijelölés, fekete grafikonvonal, pasztell sávok); a Lamelix logó sötét változata a világos oldalsávon. Kontrasztszkenner az admin négy nézetén és a lead-fiókon: 0 hiba.
+- Tesztek: `lightReadability.test.ts` (kontrasztarányok számolva, lebegő felületek felülírásai, body-osztály, admin tokenek és logó).
+
 ## 4.58 – Világos felület magas/ultra minőségen: nem sötét, nincs horizontvonal
 
 - **Hiba: a világos felület magas és ultra 3D-minőségen (erősebb asztali gépek) sötétnek, „koszosnak” hatott,** és látszott a padló és a háttér határvonala. Világos stúdió-háttérnél az utófeldolgozás most lágyabb árnyékolást (AO 2,6 helyett 1,25) használ, nincs sötét vignetta, a kép kissé világosabb; a háttér horizontja pontosan a köd színe, így nincs vonal. A sötét felület (`?style=soft`) változatlan.

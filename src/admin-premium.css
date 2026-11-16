@@ -278,3 +278,69 @@ kbd{font:600 10.5px/1 ui-monospace,monospace;padding:3px 6px;border-radius:5px;b
 .admin-forgot a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .admin-light .admin-page:has(.admin-login), .admin-page.admin-light:has(> .admin-login){min-height:100svh;display:grid;place-items:center}
 .admin-page.admin-light > .admin-login{margin-top:0}
+
+/* ==========================================================================
+   4.59 – Az admin a konfigurátor világos, pasztell rendszerét követi (egységes termék):
+   Urbanist betű, #ECECEF alap, fehér kártyák nagy sarokkal, világos oldalsáv,
+   fekete „pill” elsődleges gombok, Vanilla #EFF0A3 kijelölés, Honeydew #CFDECA / Alice Blue #D8DFE9 grafikonszínek.
+   Kontraszt (számolt): fő szöveg #212121 16:1 fehéren, másodlagos #5C5E64 6,2:1 fehéren, 5,4:1 #ECECEF-en.
+   ========================================================================== */
+.admin-page.admin-light{
+  --l-bg:#ECECEF;--l-ghost:#F6F5FA;--l-blue:#D8DFE9;--l-green:#CFDECA;--l-vanilla:#EFF0A3;--l-ink:#212121;--l-muted:#5C5E64;
+  --text-primary:#212121;--a-muted:#5C5E64;--a-edge:rgba(33,33,33,.08);--a-edge-hi:rgba(33,33,33,.16);
+  --accent-primary:#212121;--accent-hover:#000;--accent-subtle:#F4F5C8;--lime-fill:#EFF0A3;--lime-fill-hover:#E4E58A;--ink-1000:#212121;
+  --font-ui:'Urbanist Variable',Urbanist,system-ui,sans-serif;--ap-glow:rgba(239,240,163,.5);
+  background:var(--l-bg);-webkit-font-smoothing:antialiased;
+}
+.admin-page.admin-light,.admin-page.admin-light button,.admin-page.admin-light input,.admin-page.admin-light select,.admin-page.admin-light textarea{font-family:var(--font-ui)}
+.admin-light .admin-layout{background:var(--l-bg)}
+/* Világos oldalsáv: fehér kártya, az aktív menüpont fekete pill fehér szöveggel. */
+.admin-light .admin-side{--text-primary:#212121;--a-muted:#5C5E64;--a-edge:rgba(33,33,33,.08);--a-edge-hi:rgba(33,33,33,.16);--accent-primary:#212121;
+  background:#FFFFFF;color:#212121;box-shadow:0 18px 40px -18px rgba(33,33,33,.18)}
+@media (min-width:861px){.admin-light .admin-side{margin:12px;border-radius:28px;height:calc(100dvh - 24px)}}
+.admin-light .admin-nav button{color:#212121}
+.admin-light .admin-nav button:hover{background:var(--l-ghost)}
+.admin-light .admin-nav button.is-on{background:#212121;color:#FFFFFF}
+.admin-light .admin-nav button.is-on svg{color:#FFFFFF}
+.admin-light .admin-nav button.is-on em{background:var(--l-vanilla);color:#212121}
+.admin-light .admin-nav button em{background:var(--l-ghost);color:#212121}
+.admin-light .brand-mark{background:#212121;color:var(--l-vanilla)}
+@media (min-width:861px){.admin-light .admin-main{background:var(--l-ghost)}}
+.admin-light .admin-top{background:linear-gradient(180deg,var(--l-ghost) 70%,rgba(246,245,250,0))}
+.admin-light .admin-top h1{font-weight:400;letter-spacing:-.035em}
+.admin-light .admin-savebar{background:linear-gradient(rgba(246,245,250,0),var(--l-ghost) 45%)}
+/* Kártyák: tiszta fehér, nagyobb sarok, lágy árnyék. */
+.admin-light .kpi,.admin-light .card,.admin-light .admin-section,.admin-light .admin-card,.admin-light .board-card{border-radius:24px;border-color:transparent;box-shadow:0 2px 10px rgba(33,33,33,.05)}
+.admin-light .kpi strong{font-weight:400;letter-spacing:-.035em}
+.admin-light .card h3,.admin-light .card header h2,.admin-light .admin-section h2{font-weight:600}
+.admin-light .kpi-spark-line,.admin-light .kpi-ring-fill{stroke:#212121}
+.admin-light .kpi-ring-track{stroke:var(--l-blue)}
+.admin-light .board-col{background:#ECECEF}
+/* Gombok: elsődleges fekete pill, másodlagos fehér pill. */
+.admin-light .btn.primary,.admin-light .admin-save{background:#212121;color:#FFFFFF}
+.admin-light .btn.primary:hover,.admin-light .admin-save:hover:not(:disabled){background:#000;color:#FFFFFF}
+.admin-light .btn{border-color:rgba(33,33,33,.18)}
+.admin-light .btn:hover:not(:disabled){background:var(--l-ghost);border-color:rgba(33,33,33,.35)}
+.admin-light .admin-form input:focus,.admin-light .admin-form textarea:focus,.admin-light .admin-login input:focus,.admin-light .drawer textarea:focus,.admin-light .search:focus-within{border-color:#212121;box-shadow:0 0 0 3px rgba(239,240,163,.8)}
+.admin-light .admin-check input{accent-color:#212121}
+.admin-light .seg{background:#FFFFFF;box-shadow:0 2px 10px rgba(33,33,33,.05)}
+.admin-light .tabs button.is-on{border-bottom-color:#212121}
+.admin-light .matrix-tabs button.is-on{background:var(--l-vanilla);box-shadow:inset 0 0 0 1.5px #212121}
+.admin-light button.tr.is-open{background:#FBFBE6;box-shadow:inset 0 0 0 1.5px #212121}
+.admin-light .drawer-price,.admin-light .pipe-forecast,.admin-light .admin-message.is-ok{background:#EEF4EC;border-color:var(--l-green)}
+.admin-light .embed-code{background:#212121;color:var(--l-vanilla)}
+/* Grafikonok: fekete vonal, pasztell sávok. */
+.admin-light .area-line{stroke:#212121}
+.admin-light .area-dot{stroke:#212121}
+.admin-light .area-tip{background:#212121}
+.admin-light .hbars div,.admin-light .stackbar,.admin-light .pipe-bar,.admin-light .score-bar{background:#ECECEF}
+.admin-light .hbars i{background:#212121}
+.admin-light .funnel-bar{background:color-mix(in srgb,#CFDECA calc(100% * var(--shade)),#F6F5FA);color:#212121}
+.admin-light .checklist li.is-done .check-dot{background:var(--l-green)}
+.admin-light .ps-roof{fill:rgba(216,223,233,.6);stroke:#212121}.admin-light .ps-louver{stroke:#212121}
+.admin-light .admin-login .admin-powered svg{filter:none;opacity:1}
+/* Telefon: az alsó navigáció is világos. */
+@media (max-width:860px){
+  .admin-light .admin-side{background:#FFFFFF;box-shadow:0 -8px 30px -12px rgba(33,33,33,.2)}
+  .admin-light .admin-main{background:var(--l-ghost)}
+}

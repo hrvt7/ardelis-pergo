@@ -93,7 +93,7 @@ function AdminForTenant({ base }: { base: Tenant }) {
       {loginError && <p className="admin-message is-error" role="alert">{loginError}</p>}
       <button className="admin-save" type="submit">Belépés</button>
       <p className="admin-forgot">Elfelejtette a jelszót? Írjon a <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Admin jelszó – ${base.brand.name}`)}`}>{SUPPORT_EMAIL}</a> címre, és új jelszót küldünk.</p>
-      <a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><span>Működteti:</span><LamelixLogo height={18} title={null} /></a>
+      <a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><span>Működteti:</span><LamelixLogo height={18} title={null} tone="onLight" /></a>
     </form></main>
   }
 
@@ -224,7 +224,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
         <nav className="admin-nav" aria-label="Admin részek">
           {TABS.map(([key, label]) => <button type="button" key={key} className={tab === key ? 'is-on' : ''} onClick={() => choose(key)} aria-current={tab === key ? 'page' : undefined}>{TAB_INFO[key].icon}<span>{label}</span>{key === 'leads' && fresh > 0 && <em>{fresh}</em>}</button>)}
         </nav>
-        <div className="admin-side-foot"><Link to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor megnyitása</Link><button type="button" onClick={onLogout}><LogOut size={15} />Kilépés</button><a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><LamelixLogo height={16} title={null} /></a></div>
+        <div className="admin-side-foot"><Link to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor megnyitása</Link><button type="button" onClick={onLogout}><LogOut size={15} />Kilépés</button><a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><LamelixLogo height={16} title={null} tone="onLight" /></a></div>
       </aside>
       <section className="admin-main">
         {demo && <div className="demo-ribbon" role="status"><span><b>Demó adatok</b> · kitalált érdeklődők, a módosítások nem mentődnek.</span><button type="button" onClick={() => setDemoPref(false)}>Kikapcsolás</button></div>}
