@@ -1,5 +1,13 @@
 # Változások
 
+## 4.76 – Konfigurátor: lebegő elrendezés és oldalsó eszközfül
+
+- **Új elrendezés** Ádám referenciái alapján (világos, alapértelmezett stílus): a 3D jelenet kitölti a munkafelületet, a lépéspanel balra lebeg fehér kártyán. A pergola a panel és az eszközfül közötti szabad rész közepére kerül (nézet-eltolás, `floatViewShiftX`).
+- **Eszközfül:** minden jelenet-eszköz (kameranézet, napszak, bejárás, eső, AR, nézet és vizualizáció, árnyékelemzés, fotóba helyezés, működés, robbantott nézet, költségkeret, üzemeltetés, tanácsadó, bemutató, PDF, megosztás) a jobb szélből kinövő fekete fülben, két homorú lekerekítéssel, kerek ikongombokkal. A bekapcsolt eszköz Vanilla gyűrűt kap. A fülre mutatva minden felirat egyszerre kinyílik; az „Eszközök” menü ebben a stílusban megszűnt. Az árnyékelemzés saját ikont kapott (nem azonos a napszakéval).
+- **Mobil:** ugyanaz a fül kisebb gombokkal, görgethető; felhúzott lapnál elbújik, a pergola a fül nélküli rész közepén.
+- A többi stílus (`?style=soft`, `glass`, `studio`) és a többi termék-stúdió változatlan.
+- Tesztek: `studioFloat.test.ts` (bekapcsolási feltétel, nézet-eltolás, fül szerkezete, lekerekítések, bal panel).
+
 ## 4.75 – Gyártói admin: a 2. kritikus forduló javításai
 
 - **Egy kiemelés:** csak a legfontosabb teendő Vanilla, a nyitott érték számkártyája sötét (Vanilla számmal). Mobilon a teendők a számkártyák előtt jönnek, így a hívásgomb az első képernyőn van.

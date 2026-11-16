@@ -1,7 +1,8 @@
+import '@/studio-float.css'
 import { SCENE_READY_EVENT, sceneEvent, stepEvent } from '@/lib/funnelEvents'
 import IntroSceneGate from '@/components/IntroSceneGate'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { Armchair, Cog, Box, Footprints, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Layers, Maximize2, Rotate3d, Scan, ShieldCheck, SunMedium, View, Wallet, WandSparkles, X } from 'lucide-react'
+import { Armchair, CalendarClock, Cog, Box, Footprints, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Layers, Maximize2, Rotate3d, Scan, ShieldCheck, SunMedium, View, Wallet, WandSparkles, X } from 'lucide-react'
 import { Link } from 'react-router'
 import ConfiguratorControls, { SceneSettingsPanel } from '@/components/ConfiguratorControls'
 import { InfoDialog, PriceSettingsDialog, ResetDialog } from '@/components/Dialogs'
@@ -42,7 +43,7 @@ import PanelPrice from '@/components/studio/PanelPrice'
 import CameraViewMenu from '@/components/studio/CameraViewMenu'
 import WalkOverlay from '@/components/studio/WalkOverlay'
 import { buildWalkArea } from '@/lib/walkArea'
-import { glassViewShiftX, resolveUiStyle, studioInitialTime, UI_STYLE_KEY, usesCyclorama, type UiStyle } from '@/lib/uiStyle'
+import { floatPhoneShiftX, floatViewShiftX, glassViewShiftX, resolveUiStyle, studioInitialTime, UI_STYLE_KEY, usesCyclorama, usesFloatLayout, type UiStyle } from '@/lib/uiStyle'
 import { cameraViewsFor } from '@/lib/cameraViews'
 import { mobileBarAction } from '@/lib/configSteps'
 import { DEFAULT_USAGE, energyCostSupported, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
@@ -397,7 +398,8 @@ export default function PergoStudio() {
       return next
     })
   }, [panelLayout])
-  const viewShiftX = uiStyle === 'glass' && !isNarrow ? glassViewShiftX(viewportWidth, viewportWidth, 12, panelWidth) : 0
+  const floatLayout = usesFloatLayout(uiStyle)
+  const viewShiftX = uiStyle === 'glass' && !isNarrow ? glassViewShiftX(viewportWidth, viewportWidth, 12, panelWidth) : floatLayout && !isNarrow && !landscapePhone && !presentation ? floatViewShiftX(viewportWidth, panelWidth) : floatLayout && isNarrow && !landscapePhone && !presentation ? floatPhoneShiftX(viewportWidth) : 0
   // Bejárás: első személyű nézet emberi szemmagasságban; a konfiguráció és a jelenet ugyanaz.
   const [walking, setWalking] = useState(false)
   const enterWalk = useCallback(() => {
@@ -555,7 +557,7 @@ export default function PergoStudio() {
       }}>{modularMode ? (modular.step === 'summary' ? tr('Tovább tervezés', 'Weiter planen') : tr('Összegzés', 'Übersicht')) : mobileBarAction(step).label}<ChevronRight size={16} /></button></div>
   )
   return (
-    <div className={`app-shell layout-a ${modularMode ? '' : 'bar-in-panel'} ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''} ${uiStyle === 'studio' ? 'style-studio' : ''} ${uiStyle === 'light' ? 'style-light' : ''}`} style={panelLayout ? ({ '--panel-w': `${panelWidth}px`, '--side-w': `${panelWidth}px` } as CSSProperties) : undefined}>
+    <div className={`app-shell layout-a ${modularMode ? '' : 'bar-in-panel'} ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''} ${uiStyle === 'studio' ? 'style-studio' : ''} ${uiStyle === 'light' ? 'style-light' : ''} ${floatLayout ? 'layout-float' : ''}`} style={panelLayout ? ({ '--panel-w': `${panelWidth}px`, '--side-w': `${panelWidth}px` } as CSSProperties) : undefined}>
       <StudioHeader onHome={() => (modularMode ? modular.setView('perspective') : setView('perspective'))} canUndo={modularMode ? modular.canUndo : history.current.past.length > 0} canRedo={modularMode ? modular.canRedo : history.current.future.length > 0} onUndo={modularMode ? modular.undo : undo} onRedo={modularMode ? modular.redo : redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setModal('info')} onReset={() => (modularMode ? (window.confirm('Visszaállítod a modulházat az alapkonfigurációra?') && modular.reset()) : setModal('reset'))} />
 
       <main className="studio-shell" id="top">
@@ -575,7 +577,7 @@ export default function PergoStudio() {
             ]}
             toolsBusy={!modularMode && (scene.sunStudy || scene.photoMode || mechanismOn || scene.exploded)}
             tools={modularMode ? [] : ([
-              { id: 'sun', icon: SunMedium, name: tr('Árnyékelemzés', 'Schattenanalyse'), note: tr('Valós napállás a saját helyszíneden, dátum és óra szerint', 'Realer Sonnenstand an Ihrem Standort, nach Datum und Uhrzeit'), active: scene.sunStudy, run: toggleSunStudy },
+              { id: 'sun', icon: floatLayout ? CalendarClock : SunMedium, name: tr('Árnyékelemzés', 'Schattenanalyse'), note: tr('Valós napállás a saját helyszíneden, dátum és óra szerint', 'Realer Sonnenstand an Ihrem Standort, nach Datum und Uhrzeit'), active: scene.sunStudy, run: toggleSunStudy },
               { id: 'photo', icon: scene.photoUrl ? Image : ImagePlus, name: tr('Fotóba helyezés', 'Ins Foto setzen'), note: config.building === 'carport' ? (scene.photoUrl ? tr('A carport a saját udvarod fotóján', 'Der Carport auf dem Foto Ihres Hofs') : tr('Töltsd fel az udvarod fotóját, és helyezd rá a carportot', 'Laden Sie ein Foto Ihres Hofs hoch und platzieren Sie den Carport')) : (scene.photoUrl ? tr('A pergola a saját teraszod fotóján', 'Die Pergola auf dem Foto Ihrer Terrasse') : tr('Töltsd fel a teraszod fotóját, és helyezd rá a pergolát', 'Laden Sie ein Foto Ihrer Terrasse hoch und platzieren Sie die Pergola')), active: scene.photoMode, run: () => { if (!scene.photoUrl) openPhotoPicker(); else updateScene({ photoMode: !scene.photoMode, sunStudy: false }) } },
               ...(config.roof === 'louvered' ? [{ id: 'mechanism', icon: Cog, name: tr('Működés-bemutató', 'Funktionsvorführung'), note: tr('A lamellahajtás mozgásban, valós gyári adatokkal', 'Der Lamellenantrieb in Bewegung, mit realen Herstellerdaten'), active: mechanismOn, run: () => updateScene({ mechanism: !scene.mechanism, sunStudy: false, photoMode: false, exploded: false }) }] : []),
               { id: 'exploded', icon: Layers, name: tr('Robbantott nézet', 'Explosionsansicht'), note: tr('A szerkezet elemei szétválasztva', 'Die Bauteile auseinandergezogen'), active: scene.exploded, run: () => updateScene({ exploded: !scene.exploded, mechanism: false }) },
@@ -583,7 +585,7 @@ export default function PergoStudio() {
               { id: 'energy', icon: Gauge, name: energyCost ? `${tr('Üzemeltetés', 'Betrieb')} ≈ ${formatPrice(energyCost)} / ${tr('év', 'Jahr')}` : tr('Üzemeltetési költség', 'Betriebskosten'), note: tr('Áramköltség a valós lakossági tarifával', 'Stromkosten mit realem Haushaltstarif'), active: false, run: () => setModal('energy') },
               { id: 'advisor', icon: WandSparkles, name: tr('Tanácsadó', 'Berater'), note: tr('4 kérdés, és javaslunk egy hozzád illő kivitelt', '4 Fragen, und wir schlagen eine passende Ausführung vor'), active: false, run: () => setModal('advisor') },
             ] as ToolItem[]).filter(({ id }) => !(config.building === 'carport' && id === 'advisor') && !(id === 'energy' && !energySupported))}
-            presentation={presentation} onPresentation={() => setPresentation(!presentation)} onExport={handleExport} onShare={handleShare} />
+            presentation={presentation} onPresentation={() => setPresentation(!presentation)} onExport={handleExport} onShare={handleShare} variant={floatLayout ? 'rail' : 'bar'} />
           {scene.rain && config.sensors && isMovableRoof(config.roof) && <div className="automation-status" role="status"><ShieldCheck size={16} /><span><strong>{tr('Esőautomata aktív', 'Regenautomatik aktiv')}</strong>{config.roof === 'retractable' ? tr('A tolótető biztonságos, zárt pozícióban.', 'Das Schiebedach ist sicher geschlossen.') : tr('A tetőlamellák biztonságos, zárt pozícióban.', 'Die Dachlamellen sind sicher geschlossen.')}</span></div>}
           {scene.time === 'night' && !modularMode && !scene.sunStudy && !mechanismOn && !moodHidden && !scene.photoMode && <Suspense fallback={null}><div className={`sun-panel-slot is-mood${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MoodPanel config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} onClose={() => setMoodHidden(true)} /></div></Suspense>}
           {mechanismOn && <Suspense fallback={null}><div className={`sun-panel-slot is-mechanism${scene.rain && config.sensors && isMovableRoof(config.roof) ? ' below-status' : ''}`}><MechanismPanel config={config} onClose={() => updateScene({ mechanism: false })} /></div></Suspense>}
@@ -599,7 +601,7 @@ export default function PergoStudio() {
           <div className="viewer-footer"><span>{scene.photoMode ? tr('HELYI FOTÓS ELŐNÉZET', 'LOKALE FOTOVORSCHAU') : tr('1 egység = 1 méter', '1 Einheit = 1 Meter')}</span><span>{modularMode ? `bruttó ${modular.model.grossArea.toFixed(1).replace('.', ',')} m² · nettó ${modular.model.netArea.toFixed(1).replace('.', ',')} m²` : `${price.area.toFixed(1).replace('.', ',')} m²`}</span>{tenant.platformCredit !== false && <a className="platform-credit" href="/" target="_blank" rel="noopener" title={tr('3D konfigurátor: Lamelix', '3D-Konfigurator: Lamelix')}><LamelixLogo variant="symbol" tone="onDark" height={11} title={null} />Lamelix</a>}</div>
         </section>
 
-        {panelLayout && !presentation && !walking && <PanelResizer width={panelWidth} min={panelRange.min} max={panelRange.max} onChange={setPanelWidth} onReset={() => setPanelWidth(null)} />}
+        {panelLayout && !presentation && !walking && !floatLayout && <PanelResizer width={panelWidth} min={panelRange.min} max={panelRange.max} onChange={setPanelWidth} onReset={() => setPanelWidth(null)} />}
         {modularMode && modularChoice ? <>
           {modular.controls({ typePicker: <BuildingPicker config={config} prices={prices} onChange={exitModular} modular={modularChoice} />, footer: <PanelPrice gross={modular.price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />, mobileOpen: sheetView !== 'peek', onMobileToggle: () => setSheet(sheetView === 'peek' ? 'full' : 'peek') })}
           {modular.pricePanel({ detailsOpen, onToggle: () => setDetailsOpen((open) => !open) })}

@@ -72,7 +72,7 @@ export function StudioViewSettings({ view, productName, onChange }: { view: Stud
  * Jelenet-eszköztár (jobb felső sarok): napszak-váltó, a termék gyorsgombjai, „Eszközök” menü.
  * Az Eszközök menüben elöl a „Nézet és vizualizáció” és a termék saját eszközei, utána a közös Bemutató, PDF, Megosztás.
  */
-export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools = [], toolsBusy = false, presentation, onPresentation, onExport, onShare, leading }: { time: StudioTime; onTimeChange: (time: StudioTime) => void; viewPanel: ReactNode; /** Az eszközsor elejére kerülő elem (pl. kameranézet-menü). */ leading?: ReactNode; quick?: QuickToggle[]; tools?: ToolItem[]; toolsBusy?: boolean; presentation: boolean; onPresentation: () => void; onExport: () => void; onShare: () => void }) {
+export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools = [], toolsBusy = false, presentation, onPresentation, onExport, onShare, leading, variant = 'bar' }: { /** „rail”: a képernyő jobb széléből kinövő fekete fül, benne minden eszköz ikonként (a pergola-stúdió lebegő elrendezése, 4.76). */ variant?: 'bar' | 'rail'; time: StudioTime; onTimeChange: (time: StudioTime) => void; viewPanel: ReactNode; /** Az eszközsor elejére kerülő elem (pl. kameranézet-menü). */ leading?: ReactNode; quick?: QuickToggle[]; tools?: ToolItem[]; toolsBusy?: boolean; presentation: boolean; onPresentation: () => void; onExport: () => void; onShare: () => void }) {
   const [toolsOpen, setToolsOpen] = useState(false)
   const [viewOpen, setViewOpen] = useState(false)
   useEffect(() => {
@@ -89,12 +89,31 @@ export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools 
   const quickItems: (ToolItem & { mobileOnly: true })[] = quick.map(({ id, icon, label, title, active, run }) => ({ id: `quick-${id}`, icon, name: label, note: title, active, run, mobileOnly: true }))
   const items: (ToolItem & { mobileOnly?: boolean })[] = [
     ...quickItems,
-    { id: 'view', icon: SlidersHorizontal, name: tr('Nézet és vizualizáció', 'Ansicht und Visualisierung'), note: tr('Napszak, környezet, méretarány, feliratok, forgatás', 'Tageszeit, Umgebung, Maßstab, Beschriftungen, Drehung'), run: () => setViewOpen(true) },
+    { id: 'view', icon: SlidersHorizontal, name: tr('Nézet és vizualizáció', 'Ansicht und Visualisierung'), note: tr('Napszak, környezet, méretarány, feliratok, forgatás', 'Tageszeit, Umgebung, Maßstab, Beschriftungen, Drehung'), run: () => setViewOpen((open) => !open) },
     ...tools,
     { id: 'presentation', icon: Presentation, name: presentation ? tr('Kilépés a bemutatóból', 'Präsentation beenden') : tr('Bemutató mód', 'Präsentationsmodus'), note: tr('Csak a 3D jelenet, panelek nélkül — ügyfélnek mutatáshoz', 'Nur die 3D-Szene, ohne Panels — zum Zeigen beim Kunden'), active: presentation, run: onPresentation },
     { id: 'pdf', icon: Download, name: tr('PDF összefoglaló', 'PDF-Zusammenfassung'), note: tr('Műszaki tartalom, kép és tételes irányár', 'Technischer Inhalt, Bild und detaillierter Richtpreis'), run: onExport },
     { id: 'share', icon: Link2, name: tr('Megosztás', 'Teilen'), note: tr('Hivatkozás erre a konfigurációra', 'Link zu dieser Konfiguration'), run: onShare },
   ]
+  const viewPopover = viewOpen && <div className="view-popover glass-panel" role="dialog" aria-label={tr('Nézet és vizualizáció', 'Ansicht und Visualisierung')}><div className="view-popover-head"><strong>{tr('Nézet és vizualizáció', 'Ansicht und Visualisierung')}</strong><button type="button" aria-label={tr('Bezárás', 'Schließen')} onClick={() => setViewOpen(false)}><X size={16} /></button></div>{viewPanel}</div>
+  if (variant === 'rail') {
+    // Minden eszköz egy fülben, ikonként; a felirat a gomb bal oldalán jelenik meg (egér és billentyűzet-fókusz).
+    const groups: (ToolItem & { label?: string })[][] = [
+      quick.map(({ id, icon, label, title, active, run }) => ({ id, icon, name: label, note: title, active, run })),
+      items.filter((item) => !item.mobileOnly && !['presentation', 'pdf', 'share'].includes(item.id)).map((item) => item.id === 'view' ? { ...item, active: viewOpen } : item),
+      items.filter((item) => ['presentation', 'pdf', 'share'].includes(item.id)),
+    ]
+    return <>
+      <nav className="tool-rail" aria-label={tr('Eszközök', 'Werkzeuge')}>
+        <div className="tool-rail-scroll">
+          {leading}
+          <button type="button" className={`rail-btn${time !== 'day' ? ' is-active' : ''}`} aria-label={`${tr('Napszak', 'Tageszeit')}: ${timeLabel}`} onClick={() => onTimeChange(nextTime[time])}><TimeIcon size={19} /><span className="rail-tip">{tr('Napszak', 'Tageszeit')}: {timeLabel}</span></button>
+          {groups.map((group, index) => group.length > 0 && <div key={index} className="rail-group">{group.map(({ id, icon: Icon, name, active, run }) => <button type="button" key={id} className={`rail-btn${active ? ' is-active' : ''}`} aria-label={name} aria-pressed={active === undefined ? undefined : Boolean(active)} onClick={() => { if (id !== 'view') setViewOpen(false); run() }}><Icon size={19} /><span className="rail-tip">{name}</span></button>)}</div>)}
+        </div>
+      </nav>
+      {viewPopover}
+    </>
+  }
   return <>
     <div className="weather-toolbar" aria-label={tr('Gyors jelenetbeállítások', 'Schnelle Szeneneinstellungen')}>
       {leading}
@@ -105,7 +124,7 @@ export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools 
     {toolsOpen && <div className="view-popover tools-menu glass-panel" role="dialog" aria-label={tr('Eszközök', 'Werkzeuge')}><div className="view-popover-head"><strong>{tr('Eszközök', 'Werkzeuge')}</strong><button type="button" aria-label={tr('Bezárás', 'Schließen')} onClick={() => setToolsOpen(false)}><X size={16} /></button></div>
       <div className="tools-list">{items.map(({ id, icon: Icon, name, note, active, run, mobileOnly }) => <button type="button" key={id} className={`tools-item${active ? ' is-active' : ''}${mobileOnly ? ' is-mobile-only' : ''}`} aria-pressed={Boolean(active)} onClick={() => { setToolsOpen(false); run() }}><Icon size={18} /><span><strong>{name}</strong><small>{note}</small></span>{active && <em>Bekapcsolva</em>}</button>)}</div>
     </div>}
-    {viewOpen && <div className="view-popover glass-panel" role="dialog" aria-label={tr('Nézet és vizualizáció', 'Ansicht und Visualisierung')}><div className="view-popover-head"><strong>{tr('Nézet és vizualizáció', 'Ansicht und Visualisierung')}</strong><button type="button" aria-label={tr('Bezárás', 'Schließen')} onClick={() => setViewOpen(false)}><X size={16} /></button></div>{viewPanel}</div>}
+    {viewPopover}
   </>
 }
 

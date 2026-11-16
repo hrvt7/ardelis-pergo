@@ -2706,7 +2706,7 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
     const perspectiveCamera = camera as THREE.PerspectiveCamera
     // Üveges felületnél a panel a kép fölött lebeg: a nézet vízszintesen is eltolódik, hogy a pergola a szabad rész közepén legyen.
     if (walk) return
-    if (viewShift > 0 || viewShiftX > 0) perspectiveCamera.setViewOffset(size.width, size.height, Math.round(size.width * viewShiftX), Math.round(size.height * viewShift), size.width, size.height)
+    if (viewShift > 0 || viewShiftX !== 0) perspectiveCamera.setViewOffset(size.width, size.height, Math.round(size.width * viewShiftX), Math.round(size.height * viewShift), size.width, size.height)
     else perspectiveCamera.clearViewOffset()
     perspectiveCamera.updateProjectionMatrix()
     invalidate()

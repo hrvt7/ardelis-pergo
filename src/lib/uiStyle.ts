@@ -38,3 +38,19 @@ export const studioInitialTime = (style: UiStyle) => (style === 'studio' || styl
 
 /** Világos és stúdió stílusban a 3D jelenet semleges, hajlított stúdióháttérrel jelenik meg. */
 export const usesCyclorama = (style: UiStyle) => style === 'studio' || style === 'light'
+
+/** A lebegő elrendezés (világos stílus, 4.76) asztali szélességben: a panel balra lebeg, jobbra az eszközfül. */
+export const usesFloatLayout = (style: UiStyle) => style === 'light'
+/** Az eszközfül szélessége (px) – egyezik a CSS .tool-rail szélességével. */
+export const TOOL_RAIL_WIDTH = 68
+/**
+ * Lebegő elrendezésnél a vászon a teljes szélesség (12 px peremmel), balra a panel, jobbra az eszközfül fedi.
+ * A pergola a kettő közötti szabad rész közepére kerül: a nézetet jobbra toljuk (negatív eltolás).
+ */
+export function floatViewShiftX(viewportWidth: number, panelWidth: number, gutter = 24) {
+  const canvas = viewportWidth - 24
+  if (viewportWidth <= 820 || canvas <= 0 || !panelWidth) return 0
+  return -((panelWidth + gutter) - TOOL_RAIL_WIDTH) / 2 / canvas
+}
+/** Telefonon a jobb szélen 56 px-es fül van: a pergola a fül nélküli rész közepére kerül (balra tolva). */
+export const floatPhoneShiftX = (viewportWidth: number) => (viewportWidth > 0 ? 28 / viewportWidth : 0)
