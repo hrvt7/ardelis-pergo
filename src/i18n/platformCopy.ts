@@ -18,8 +18,8 @@ const hu = {
     liveDemo: 'Élő demó', requestDemo: 'Kérek demót', login: 'Gyártói belépés', langAria: 'Nyelv', langName: { hu: 'Magyar', en: 'English' },
   },
   hero: {
-    eyebrow: 'Digitális értékesítési eszköz · pergola, veranda, télikert',
-    line1: 'A bemutatótól', line2: 'az ajánlatig', line3: 'egy rendszerben.',
+    eyebrow: '3D pergola-, veranda- és télikert-konfigurátor gyártóknak, saját arculattal',
+    line1: 'Pergolák 3D-ben,', line2: 'saját arculattal,', line3: 'a weboldalán.',
     lead: 'A Lamelix nem egy újabb szoftver a vállalkozásában, hanem digitális értékesítési eszköz. Az ügyfél a weboldalukon vagy a bemutatóteremben 3D-ben megtervezi a pergolát, verandát vagy télikertet, azonnal látja az irányárat, és hazaviszi a kész tervet. Önökhöz beárazva, minden adattal érkezik az érdeklődés – saját arculattal, saját árakkal.',
     ctaDemo: 'Kérek demót', ctaLive: 'Kipróbálom élőben',
     proof: ['A vevőnek semmit sem kell telepítenie', 'Indulás 5–10 munkanapon belül', 'Nincs hűségidő'],
@@ -105,9 +105,9 @@ const hu = {
     beta: 'Béta: az első gyártópartnerekkel együtt fejlesztjük tovább, az Ön igényei alapján.',
   },
   form: {
-    name: 'Név *', company: 'Cég *', email: 'E-mail *', phone: 'Telefon', website: 'Weboldal', websitePlaceholder: 'ceged.hu', product: 'Termék',
+    name: 'Név *', company: 'Cég *', email: 'E-mail *', phone: 'Telefon', website: 'Weboldal', websiteHint: 'ceged.hu', product: 'Termék',
     products: { pergola: 'Pergola', veranda: 'Veranda / télikert', 'pergola+outdoor': 'Pergola + egyéb outdoor termék', other: 'Egyéb' },
-    planLegend: 'Melyik csomag érdekli?', planUnsure: 'Még nem tudom', message: 'Üzenet', messagePlaceholder: 'Például: milyen termékeik vannak, és mikor indulnának?',
+    planLegend: 'Melyik csomag érdekli?', planUnsure: 'Még nem tudom', message: 'Üzenet', messageHint: 'Például: milyen termékeik vannak, és mikor indulnának?',
     consent: 'Hozzájárulok, hogy a megadott adataimat a demó egyeztetéséhez felhasználják.', privacyLink: 'Adatkezelési tájékoztató', submit: 'Demót kérek', sending: 'Küldés…',
     note: 'Egy munkanapon belül válaszolunk. Az adatait nem adjuk tovább.', failed: 'A küldés nem sikerült.', offline: 'Nincs kapcsolat a szerverrel.',
     fallback: ' Írjon nekünk közvetlenül, ugyanilyen gyorsan válaszolunk:', copy: 'Másolás', copied: 'Másolva', mailSubject: 'Demókérés – Lamelix',
@@ -138,6 +138,36 @@ const hu = {
     admin: { title: 'Gyártói admin', text: 'Minden terv és érdeklődő egy helyen: státusz, belső megjegyzés (például visszahívás), jelzés, ha egy hete nincs válasz, látogatói tölcsér, CSV-export – számítógépen és telefonon is.', kpis: [['Érdeklődők', '54'], ['Nyitott érték', '134 M'], ['Nyerési arány', '65%']] as string[][] },
     matrix: { title: 'Ármátrix', text: 'Tetőtípusonként szélesség és mélység szerinti nettó árak, akár Excelből bemásolva. A köztes méretek árát a rendszer arányosan számolja.', corner: 'M Ft', widths: ['3 m', '4 m', '5 m', '6 m'], rows: [['3 m', ['1,52', '1,83', '2,21', '2,64']], ['4 m', ['1,96', '2,35', '2,88', '3,40']], ['5 m', ['2,41', '2,90', '3,52', '4,18']]] as [string, string[]][] },
   },
+  v2: {
+    why: {
+      title: ['Miért ', 'éri meg', '?'] as Em,
+      items: [['Magyarul és forintban', 'Magyar felület, forintos irányár 27% áfával, magyar ügyfélszolgálat. Havidíj 59 000 Ft-tól.'], ['A vevő hazaviszi a tervet', 'PDF-ajánlat QR-kóddal, WhatsApp-megosztás, AR és fotóba helyezés – minden csomagban.'], ['5–10 munkanap, hűségidő nélkül', 'A meglévő Excel-árlista is elég az induláshoz; bármikor felmondható.']] as string[][],
+    },
+    example: 'Példa',
+    planPick: 'Csomag',
+    faqPick: 'Kérdések',
+    hero: { stepLabel: 'Konfigurátor', stepNow: '3 / 7 · Tető', leadPing: 'Új felmérési kérelem', colorLabel: 'Szerkezet színe', angleLabel: 'Lamellaszög', scrollHint: 'Görgessen: kinyílnak a lamellák' },
+    steps: ['Típus', 'Méret', 'Tető', 'Oldalak', 'Szín', 'Komfort', 'Összegzés'],
+    build: {
+      eyebrow: 'A vevő szemével', title: ['Hét lépés, és ', 'összeáll', ' a pergola.'] as Em,
+      sub: 'Ez a valódi konfigurátor, képkockánként. Minden lépésnél frissül a 3D és az irányár, a demó-árlistával számolva.',
+      picks: ['Pergola, falhoz rögzítve', '5,0 × 4,0 m · 20 m²', 'Aero · motoros lamellás', 'Bal oldal · ZIP screen', 'Antracit · RAL 7016', 'Perimeter LED · eső- és szélérzékelő', 'Felmérést kér · PDF és QR-kód'],
+      priceLabel: 'Bruttó irányár, telepítéssel', pending: 'a tető kiválasztása után',
+    },
+    problem: {
+      eyebrow: 'Ma így megy', title: ['Árlista, telefon, PDF – ', 'egy helyre', ' rendezve.'] as Em,
+      sub: 'A legtöbb ajánlatkérés még mindig fél információval indul. A Lamelix a szétszórt lépéseket egyetlen tervvé rendezi, amit a vevő maga készít el.',
+      scraps: ['arlista_2026_vegleges_v3.xlsx', '„Kb. 5×4 méter, mennyi lenne?”', 'Katalógus_2026.pdf', 'Visszahívni: Kovács úr', 'Milyen színben kérné?', 'Ajánlat_kézzel_14.docx'],
+      solved: 'Egy terv, minden adattal', solvedSub: 'Méret, tető, oldalzárás, szín, irányár és elérhetőség – a vevő töltötte ki.',
+    },
+    admin: {
+      eyebrow: 'Az Ön oldala', title: ['Minden érdeklődő ', 'egy táblán', '.'] as Em,
+      sub: 'A beérkező terv kártyaként jelenik meg, és státuszról státuszra halad, amíg megrendelés nem lesz belőle. Hívás, e-mail és a 3D-terv egy koppintásra.',
+      columns: ['Új', 'Kapcsolatban', 'Ajánlat kiment', 'Megnyert'],
+      card: { name: 'Kovács Péter', place: 'Sárvár · Aero 5,0 × 4,0 m', price: '5 648 000 Ft', call: 'Hívás' },
+      demoNote: 'Demóadatok, kitalált érdeklődőkkel.',
+    },
+  },
 }
 
 export type PlatformCopy = typeof hu
@@ -154,8 +184,8 @@ const en: PlatformCopy = {
     liveDemo: 'Live demo', requestDemo: 'Request a demo', login: 'Manufacturer login', langAria: 'Language', langName: { hu: 'Magyar', en: 'English' },
   },
   hero: {
-    eyebrow: 'Digital sales tool · pergolas, verandas, conservatories',
-    line1: 'From showroom', line2: 'to quote', line3: 'in one system.',
+    eyebrow: '3D pergola, veranda and conservatory configurator for manufacturers, in your branding',
+    line1: 'Pergolas in 3D,', line2: 'in your branding,', line3: 'on your website.',
     lead: 'Lamelix is not just another piece of software in your business – it is a digital sales tool. On your website or in your showroom, the customer designs the pergola, veranda or conservatory in 3D, sees the guide price instantly and takes the finished design home. You receive the enquiry priced, with every detail – under your own brand and with your own prices.',
     ctaDemo: 'Request a demo', ctaLive: 'Try it live',
     proof: ['Nothing for the customer to install', 'Live within 5–10 business days', 'No lock-in period'],
@@ -245,9 +275,9 @@ const en: PlatformCopy = {
     beta: 'Beta: we are developing it further together with our first manufacturer partners, based on your needs.',
   },
   form: {
-    name: 'Name *', company: 'Company *', email: 'E-mail *', phone: 'Phone', website: 'Website', websitePlaceholder: 'yourcompany.com', product: 'Product',
+    name: 'Name *', company: 'Company *', email: 'E-mail *', phone: 'Phone', website: 'Website', websiteHint: 'yourcompany.com', product: 'Product',
     products: { pergola: 'Pergola', veranda: 'Veranda / conservatory', 'pergola+outdoor': 'Pergola + other outdoor product', other: 'Other' },
-    planLegend: 'Which plan are you interested in?', planUnsure: 'Not sure yet', message: 'Message', messagePlaceholder: 'For example: what products do you make, and when would you like to start?',
+    planLegend: 'Which plan are you interested in?', planUnsure: 'Not sure yet', message: 'Message', messageHint: 'For example: what products do you make, and when would you like to start?',
     consent: 'I agree that the data I provided may be used to arrange the demo.', privacyLink: 'Privacy notice (Hungarian)', submit: 'Request a demo', sending: 'Sending…',
     note: 'We reply within one business day. We do not share your data.', failed: 'Sending failed.', offline: 'No connection to the server.',
     fallback: ' Write to us directly – we reply just as fast:', copy: 'Copy', copied: 'Copied', mailSubject: 'Demo request – Lamelix',
@@ -277,6 +307,36 @@ const en: PlatformCopy = {
     lead: { title: 'Incoming requests', text: 'The survey request arrives immediately with the full configuration, the guide price, a link to the 3D design and the contact details – by e-mail and in the admin.', items: [['PK', 'Péter Kovács', 'Sárvár · Aero 5.0 × 4.0 m', 'HUF 5.6M'], ['AN', 'Anna Nagy', 'Győr · Glide 6.0 × 4.5 m', 'HUF 7.2M'], ['GS', 'Gábor Szabó', 'Kőszeg · Velum 4.0 × 3.0 m', 'HUF 3.9M']], isNew: 'new' },
     admin: { title: 'Manufacturer admin', text: 'Every design and lead in one place: status, internal notes (e.g. call back), an alert when there is no reply for a week, visitor funnel, CSV export – on computer and phone.', kpis: [['Leads', '54'], ['Open value', 'HUF 134M'], ['Win rate', '65%']] },
     matrix: { title: 'Price matrix', text: 'Net prices by width and depth for each roof type, even pasted from Excel. Prices for in-between sizes are calculated proportionally.', corner: 'HUF M', widths: ['3 m', '4 m', '5 m', '6 m'], rows: [['3 m', ['1.52', '1.83', '2.21', '2.64']], ['4 m', ['1.96', '2.35', '2.88', '3.40']], ['5 m', ['2.41', '2.90', '3.52', '4.18']]] },
+  },
+  v2: {
+    why: {
+      title: ['Why it ', 'pays off', '?'] as Em,
+      items: [['Your language, your currency', 'Localised interface, guide price in HUF with 27% VAT, local support. Monthly fee from HUF 59,000.'], ['The buyer takes the design home', 'PDF quote with QR code, WhatsApp sharing, AR and photo placement – in every plan.'], ['5–10 working days, no lock-in', 'Your existing Excel price list is enough to start; cancel any time.']] as string[][],
+    },
+    example: 'Example',
+    planPick: 'Plan',
+    faqPick: 'Questions',
+    hero: { stepLabel: 'Configurator', stepNow: '3 / 7 · Roof', leadPing: 'New survey request', colorLabel: 'Frame colour', angleLabel: 'Louvre angle', scrollHint: 'Scroll: the louvres open' },
+    steps: ['Type', 'Size', 'Roof', 'Sides', 'Colour', 'Comfort', 'Summary'],
+    build: {
+      eyebrow: 'Through the buyer’s eyes', title: ['Seven steps, and the pergola ', 'comes together', '.'] as Em,
+      sub: 'This is the real configurator, frame by frame. At every step the 3D and the guide price update, calculated with the demo price list.',
+      picks: ['Pergola, wall-mounted', '5.0 × 4.0 m · 20 m²', 'Aero · motorised louvres', 'Left side · ZIP screen', 'Anthracite · RAL 7016', 'Perimeter LED · rain and wind sensors', 'Requests a survey · PDF and QR code'],
+      priceLabel: 'Gross guide price, installed', pending: 'once the roof is chosen',
+    },
+    problem: {
+      eyebrow: 'How it works today', title: ['Price list, phone, PDF – ', 'in one place', '.'] as Em,
+      sub: 'Most quote requests still start with half the information. Lamelix turns the scattered steps into one design that the buyer builds themselves.',
+      scraps: ['pricelist_2026_final_v3.xlsx', '“About 5 by 4 metres, how much?”', 'Catalogue_2026.pdf', 'Call back: Mr Kovacs', 'Which colour would you like?', 'Quote_by_hand_14.docx'],
+      solved: 'One design, all the data', solvedSub: 'Size, roof, side enclosures, colour, guide price and contact details – filled in by the buyer.',
+    },
+    admin: {
+      eyebrow: 'Your side', title: ['Every lead ', 'on one board', '.'] as Em,
+      sub: 'An incoming design appears as a card and moves from status to status until it becomes an order. Call, e-mail and the 3D design are one tap away.',
+      columns: ['New', 'Contacted', 'Quote sent', 'Won'],
+      card: { name: 'Péter Kovács', place: 'Sárvár · Aero 5.0 × 4.0 m', price: 'HUF 5,648,000', call: 'Call' },
+      demoNote: 'Demo data with fictional leads.',
+    },
   },
 }
 

@@ -1,41 +1,46 @@
 // Lamelix – B2B nyitóoldal pergola- és árnyékolástechnikai gyártóknak. Cél: demókérés.
-// Látvány: 3D-ben dőlő termékképernyő, görgetésre kiegyenesedik; szövegfelfedés; rögzített bemutató
-// (konfigurátor → lead → statisztika → mobil); a gyártói képek a saját termékből készültek (demóadatokkal).
+// Koncepció (docs/landing/DESIGN.md): „az asztalon a termék” – a konfigurátor kódból újrarajzolt darabjai lebegnek
+// a valódi 3D tető körül; rendrakás-kollázs; a valódi konfigurátor képsorozata görgetésre; élő vonalas SVG-jelenetek;
+// a gyártói admin pipeline-ja. Világos, pasztell rendszer (Urbanist, #ECECEF, Vanilla kiemelés).
 import SimFrame from '@/components/SimFrame'
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type FormEvent, type PointerEvent, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { COLOR_CATALOG } from '@/lib/colors'
 import { ROOF_TYPES } from '@/lib/roofs'
 import { SIDE_TYPES } from '@/lib/sides'
 import { MOUNT_TYPES } from '@/lib/mount'
-import { ArrowRight, ArrowUpRight, Box, Check, Copy, LogIn, Mail, QrCode, Send, Smartphone, Table2 } from 'lucide-react'
+import { ArrowUpRight, Box, Check, Copy, LogIn, Mail, Send, Smartphone, Table2 } from 'lucide-react'
 import { Link } from 'react-router'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { assetUrl } from '@/lib/assetUrl'
 import LamelixLogo from '@/components/LamelixLogo'
-import BenefitCards from '@/components/platform/BenefitCards'
-import { CustomerFeatures, Faq, ProcessTimeline, RoiCalculator } from '@/components/platform/LandingSections'
+import { ProcessTimeline, RoiCalculator } from '@/components/platform/LandingSections'
+import Hero from '@/components/landing/Hero'
+import ProblemCollage from '@/components/landing/ProblemCollage'
+import BuildSequence from '@/components/landing/BuildSequence'
+import FeatureScenes from '@/components/landing/FeatureScenes'
+import AdminBoard from '@/components/landing/AdminBoard'
+import FinalCta from '@/components/landing/FinalCta'
+import InkDefs from '@/components/landing/InkDefs'
+import PlanSwitch from '@/components/landing/PlanSwitch'
+import FaqChat from '@/components/landing/FaqChat'
+import WhyStrip from '@/components/landing/WhyStrip'
 import { usePageSeo } from '@/lib/usePageSeo'
-import { formatMoney, monthlyPrice, PLANS, SETUP_FEE, type PlanId } from '@/lib/platformPricing'
+import { hint } from '@/lib/fieldHint'
+import { formatMoney, PLANS, SETUP_FEE, type PlanId } from '@/lib/platformPricing'
 import { LangProvider, type Lang } from '@/i18n/lang'
 import { useCopy } from '@/i18n/useCopy'
 import { Em } from '@/i18n/Em'
 import LangSwitch from '@/i18n/LangSwitch'
 import { funnel, funnelSourceLabel } from '@/lib/funnel'
-import { louvreAngle, type LouvreDrive } from '@/components/platform/louvreDrive'
 import '@/platform.css'
+import '@/landing.css'
 
 gsap.registerPlugin(ScrollTrigger)
 
 // Látványelemek (performative-ui) lustán: a könyvtár csak a nyitóoldallal töltődik, a konfigurátorral nem.
-// Élő 3D a hero-ban (three.js): csak tétlen időben töltődik, a statikus képernyőkép addig látszik.
-const HeroLouvre = lazy(() => import('@/components/platform/HeroLouvre'))
-/** A hero színválasztója a katalógus valódi színeiből. */
-const HERO_COLORS = (['RAL 7016', 'RAL 9016', 'FA DIÓ'] as const).map((code) => COLOR_CATALOG.find((color) => color.code === code)).filter((color): color is (typeof COLOR_CATALOG)[number] => !!color)
-const FeatureSlips = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.FeatureSlips })))
 const CountingStats = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.CountingStats })))
-const StickyCta = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.StickyCta })))
 const BigFooter = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.BigFooter })))
 const ImageCompare = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.ImageCompare })))
 const BeforeAfterList = lazy(() => import('@/components/Showpieces').then((m) => ({ default: m.BeforeAfterList })))
@@ -46,26 +51,12 @@ const STATS = { colors: COLOR_CATALOG.length, roofs: ROOF_TYPES.length, sides: S
 /** Kapcsolati cím a nyitóoldalon és a GYIK-ben; élesben a VITE_CONTACT_EMAIL környezeti változóból (céges domain). */
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'hrvtadam.7@icloud.com'
 const DEMO_PATH = '/konfigurator'
-const img = (name: string) => assetUrl(`/assets/platform/${name}.webp`)
-const imgSet = (name: string) => `${img(`${name}-900`)} 900w, ${img(name)} 1600w`
-
-function Shot({ name, alt, eager = false, sizes = '(max-width: 900px) 100vw, 60vw' }: { name: string; alt: string; eager?: boolean; sizes?: string }) {
-  return <img src={img(name)} srcSet={imgSet(name)} sizes={sizes} alt={alt} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : undefined} decoding="async" width={1600} height={1000} />
-}
-
 function Browser({ children, url }: { children: ReactNode; url?: string }) {
   return <div className="pf-browser">
     <div className="pf-browser-bar" aria-hidden="true"><i /><i /><i /><span>{url}</span></div>
     <div className="pf-browser-body">{children}</div>
   </div>
 }
-
-const BEATS = [
-  { id: 'konfigurator', index: '01', image: 'studio' },
-  { id: 'lead', index: '02', image: 'admin-leads' },
-  { id: 'meres', index: '03', image: 'admin-overview' },
-  { id: 'mobil', index: '04', image: 'admin-mobile', phone: true },
-] as const
 
 type FormState = { status: 'idle' | 'sending' | 'sent' | 'error'; message?: string; ref?: string; fallback?: string }
 
@@ -106,14 +97,14 @@ function DemoForm({ plan, onPlan }: { plan: PlanId | 'unsure'; onPlan: (plan: Pl
       <label><span>{f.company}</span><input name="company" required minLength={2} maxLength={160} autoComplete="organization" /></label>
       <label><span>{f.email}</span><input name="email" type="email" required maxLength={320} autoComplete="email" /></label>
       <label><span>{f.phone}</span><input name="phone" type="tel" maxLength={40} pattern="[+0-9 ()/\-]*" autoComplete="tel" /></label>
-      <label><span>{f.website}</span><input name="website" maxLength={300} placeholder={f.websitePlaceholder} autoComplete="url" /></label>
+      <label><span>{f.website}</span><input name="website" maxLength={300} {...hint(f.websiteHint)} autoComplete="url" /></label>
       <label><span>{f.product}</span><select name="product" defaultValue="pergola">{(Object.keys(f.products) as (keyof typeof f.products)[]).map((key) => <option key={key} value={key}>{f.products[key]}</option>)}</select></label>
     </div>
     <fieldset className="pf-plan-pick">
       <legend>{f.planLegend}</legend>
       {([...PLANS.map((item) => [item.id, c.pricing.plans[item.id].name] as const), ['unsure', f.planUnsure] as const]).map(([id, label]) => <label key={id} className={plan === id ? 'is-on' : ''}><input type="radio" name="plan" value={id} checked={plan === id} onChange={() => onPlan(id)} />{label}</label>)}
     </fieldset>
-    <label className="pf-wide"><span>{f.message}</span><textarea name="message" rows={3} maxLength={2000} placeholder={f.messagePlaceholder} /></label>
+    <label className="pf-wide"><span>{f.message}</span><textarea name="message" rows={3} maxLength={2000} {...hint(f.messageHint)} /></label>
     <input className="pf-hp" name="fax" tabIndex={-1} autoComplete="off" aria-hidden="true" />
     <label className="pf-consent"><input type="checkbox" name="consent" required /><span>{f.consent} <a href="/adatkezeles" target="_blank" rel="noopener">{f.privacyLink}</a></span></label>
     {state.status === 'error' && <div className="pf-form-error" role="alert">
@@ -134,21 +125,6 @@ function PlatformPage() {
   const { lang, c } = useCopy()
   usePageSeo(lang === 'en' ? '/en' : '/')
   const root = useRef<HTMLDivElement>(null)
-  // Élő 3D hero: a vezérlést egy ref viszi (görgetés, kurzor, csúszka, szín), így a jelenet újrarenderelés nélkül követi.
-  const drive = useRef<LouvreDrive>({ progress: 0, px: 0, py: 0, manual: null, frame: HERO_COLORS[0]?.hex ?? '#373f43' })
-  const [scene3d, setScene3d] = useState(false)
-  const [ready3d, setReady3d] = useState(false)
-  const [compact, setCompact] = useState(false)
-  const [frameHex, setFrameHex] = useState(HERO_COLORS[0]?.hex ?? '#373f43')
-  const angleOut = useRef<HTMLOutputElement>(null)
-  const angleInput = useRef<HTMLInputElement>(null)
-  const used3d = useRef(false)
-  const showAngle = () => {
-    const value = Math.round(louvreAngle(drive.current))
-    if (angleOut.current) angleOut.current.textContent = `${value}°`
-    if (angleInput.current && drive.current.manual == null) { angleInput.current.value = String(value); angleInput.current.setAttribute('aria-valuetext', `${value}°`) }
-  }
-  const markUsed = () => { if (!used3d.current) { used3d.current = true; funnel('hero_3d_use') } }
   const [annual, setAnnual] = useState(false)
   const [plan, setPlan] = useState<PlanId | 'unsure'>('unsure')
   const [scrolled, setScrolled] = useState(false)
@@ -158,32 +134,9 @@ function PlatformPage() {
     document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  // Kártyák: finom 3D dőlés az egér alatt (CSS változókkal, újrarenderelés nélkül).
-  const tilt = (event: PointerEvent<HTMLElement>) => {
-    if (event.pointerType !== 'mouse') return
-    const card = event.currentTarget
-    const box = card.getBoundingClientRect()
-    card.style.setProperty('--rx', `${((event.clientY - box.top) / box.height - 0.5) * -7}deg`)
-    card.style.setProperty('--ry', `${((event.clientX - box.left) / box.width - 0.5) * 9}deg`)
-    card.style.setProperty('--mx', `${((event.clientX - box.left) / box.width) * 100}%`)
-    card.style.setProperty('--my', `${((event.clientY - box.top) / box.height) * 100}%`)
-  }
-  const untilt = (event: PointerEvent<HTMLElement>) => { event.currentTarget.style.setProperty('--rx', '0deg'); event.currentTarget.style.setProperty('--ry', '0deg') }
-
-  // A 3D jelenet tétlen időben indul; WebGL2 nélkül (vagy ?gl=0) a képernyőkép marad.
+  // Tölcsér: a demókérő és az élő demó linkjei, valamint a belépés egy delegált figyelővel mérve.
   useEffect(() => {
-    const media = window.matchMedia('(max-width: 620px)')
-    const sync = () => setCompact(media.matches)
-    sync()
-    media.addEventListener('change', sync)
     funnelSourceLabel()
-    let ok = false
-    try { ok = !!document.createElement('canvas').getContext('webgl2') } catch { ok = false }
-    const off = new URLSearchParams(window.location.search).get('gl') === '0'
-    const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: object) => number }).requestIdleCallback
-    let timer = 0
-    if (ok && !off) { if (idle) idle(() => setScene3d(true), { timeout: 1500 }); else timer = window.setTimeout(() => setScene3d(true), 600) }
-    // Tölcsér: a demókérő és az élő demó linkjei, valamint a belépés egy delegált figyelővel mérve.
     const onClick = (event: MouseEvent) => {
       const link = (event.target as HTMLElement | null)?.closest<HTMLAnchorElement>('a[href]')
       if (!link) return
@@ -194,7 +147,7 @@ function PlatformPage() {
       else if (href === '/belepes') funnel('login_click', { placement })
     }
     document.addEventListener('click', onClick)
-    return () => { media.removeEventListener('change', sync); window.clearTimeout(timer); document.removeEventListener('click', onClick) }
+    return () => document.removeEventListener('click', onClick)
   }, [])
 
   useLayoutEffect(() => {
@@ -204,6 +157,7 @@ function PlatformPage() {
     const onScroll = () => setScrolled(window.scrollY > 24)
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
+    element.classList.add('is-in')
     if (reduced) { element.classList.add('pf-reduced'); return () => window.removeEventListener('scroll', onScroll) }
 
     let lenis: Lenis | undefined
@@ -215,107 +169,34 @@ function PlatformPage() {
       gsap.ticker.add(ticker)
       gsap.ticker.lagSmoothing(0)
 
-      // Belépés: címsor sorai, majd a döntött képernyő „leszáll”.
+      // Soremelés: a cím sorai maszk mögül felúsznak (a cím végig látszik, LCP), a többi utánuk.
       gsap.timeline({ defaults: { ease: 'power4.out' } })
-        .fromTo('.pf-hero-line > span', { y: 18 }, { y: 0, duration: 1.1, stagger: 0.09 }, 0.1) // a cím végig látszik (LCP), csak finoman beúszik
-        .fromTo('.pf-hero-fade', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.08 }, 0.45)
-        .fromTo('.pf-stage', { opacity: 0, y: 80, rotateX: 38 }, { opacity: 1, y: 0, rotateX: 24, duration: 1.6 }, 0.2)
-        .fromTo('.pf-chip', { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.7, stagger: 0.12, ease: 'back.out(1.6)' }, 1)
+        .fromTo('.lx-line > span', { yPercent: 70 }, { yPercent: 0, duration: 1.1, stagger: 0.09 }, 0.05)
+        .fromTo('.lx-rise', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.08 }, 0.4)
+        .fromTo('.lx-stage', { opacity: 0, y: 40, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 1.3 }, 0.15)
+        .fromTo('.lx-float', { opacity: 0, y: 26, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, stagger: 0.12, ease: 'back.out(1.5)', clearProps: 'opacity,scale' }, 0.8)
 
-      // Hero: görgetésre a képernyő kiegyenesedik és közelebb jön (3D perspektíva).
-      gsap.to('.pf-stage', { rotateX: 0, rotateY: 0, scale: 1.04, y: -40, ease: 'none', scrollTrigger: { trigger: '.pf-hero', start: 'top top', end: 'bottom 30%', scrub: 0.8 } })
-      // a 3D tető lamellái a görgetéssel nyílnak (amíg a csúszkához nem nyúltak)
-      ScrollTrigger.create({ trigger: '.pf-hero', start: 'top top', end: 'bottom top', onUpdate: (self) => { drive.current.progress = self.progress; showAngle() } })
-      gsap.to('.pf-chip-a', { y: -90, ease: 'none', scrollTrigger: { trigger: '.pf-hero', start: 'top top', end: 'bottom top', scrub: true } })
-      gsap.to('.pf-chip-b', { y: -150, ease: 'none', scrollTrigger: { trigger: '.pf-hero', start: 'top top', end: 'bottom top', scrub: true } })
-      gsap.to('.pf-chip-c', { y: -60, ease: 'none', scrollTrigger: { trigger: '.pf-hero', start: 'top top', end: 'bottom top', scrub: true } })
-      gsap.to('.pf-hero-glow', { opacity: 0.25, scale: 1.3, ease: 'none', scrollTrigger: { trigger: '.pf-hero', start: 'top top', end: 'bottom top', scrub: true } })
-
-      // Egérparallaxis a hero képernyőn.
-      const stage = element.querySelector<HTMLElement>('.pf-tilt')
-      const hero = element.querySelector<HTMLElement>('.pf-hero')
-      if (stage && hero && window.matchMedia('(pointer: fine)').matches) {
-        const rotX = gsap.quickTo(stage, 'rotateX', { duration: 0.8, ease: 'power3' })
-        const rotY = gsap.quickTo(stage, 'rotateY', { duration: 0.8, ease: 'power3' })
-        const move = (event: globalThis.PointerEvent) => {
-          rotY(((event.clientX / window.innerWidth) - 0.5) * 8)
-          rotX(((event.clientY / window.innerHeight) - 0.5) * -5)
-          drive.current.px = (event.clientX / window.innerWidth - 0.5) * 2
-          drive.current.py = (event.clientY / window.innerHeight - 0.5) * 2
-          showAngle()
-        }
-        hero.addEventListener('pointermove', move)
-        return () => hero.removeEventListener('pointermove', move)
-      }
-    }, element)
-
-    const scrollContext = gsap.context(() => {
-      // Kijelentés: a szavak a görgetéssel „kigyulladnak”.
-      gsap.fromTo('.pf-statement .pf-word', { opacity: 0.34 }, { opacity: 1, stagger: 0.08, ease: 'none', scrollTrigger: { trigger: '.pf-statement', start: 'top 78%', end: 'bottom 45%', scrub: true } })
-
-      // Belépő elemek.
+      // Belépő elemek a szakaszokban.
       gsap.utils.toArray<HTMLElement>('[data-pf-reveal]', element).forEach((section) => {
-        gsap.fromTo(section.querySelectorAll('[data-pf-item]'), { opacity: 0, y: 46, rotateX: 8 }, { opacity: 1, y: 0, rotateX: 0, duration: 1, stagger: 0.09, ease: 'power3.out', clearProps: 'transform', scrollTrigger: { trigger: section, start: 'top 80%', once: true } })
+        gsap.fromTo(section.querySelectorAll('[data-pf-item]'), { opacity: 0, y: 46 }, { opacity: 1, y: 0, duration: 1, stagger: 0.09, ease: 'power3.out', clearProps: 'transform', scrollTrigger: { trigger: section, start: 'top 80%', once: true } })
       })
-
+      // Kiemelő filc: a szakaszcímek kiemelt szava alá a Vanilla sáv behúzódik, amikor a cím beér.
+      gsap.utils.toArray<HTMLElement>('h2 em', element).forEach((em) => {
+        ScrollTrigger.create({ trigger: em, start: 'top 85%', once: true, onEnter: () => em.classList.add('is-drawn') })
+      })
       // Lépések: a vonal kirajzolódik.
       gsap.fromTo('.sx-line i', { '--sx': 0 }, { '--sx': 1, ease: 'none', scrollTrigger: { trigger: '.sx', start: 'top 75%', end: 'bottom 65%', scrub: true } })
-
-      // Záró blokk: a fény körbefordul.
-      gsap.fromTo('.pf-final', { '--pf-angle': '0deg' }, { '--pf-angle': '200deg', ease: 'none', scrollTrigger: { trigger: '.pf-final', start: 'top bottom', end: 'bottom top', scrub: true } })
     }, element)
-
-    // Rögzített bemutató csak széles képernyőn; mobilon egymás alatti kártyák.
-    const media = gsap.matchMedia()
-    media.add('(min-width: 961px)', () => {
-      const section = element.querySelector<HTMLElement>('.pf-show')
-      if (!section) return
-      const beats = gsap.utils.toArray<HTMLElement>('.pf-beat', section)
-      const frames = gsap.utils.toArray<HTMLElement>('.pf-show-frame', section)
-      const dots = gsap.utils.toArray<HTMLElement>('.pf-show-dots i', section)
-      gsap.set(beats.slice(1), { autoAlpha: 0, y: 40 })
-      gsap.set(frames.slice(1), { autoAlpha: 0, rotateY: -16, z: -160 })
-      const timeline = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: 'top top',
-          end: () => `+=${window.innerHeight * 2.2}`,
-          pin: '.pf-show-pin',
-          scrub: 0.8,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            const active = Math.min(beats.length - 1, Math.floor(self.progress * beats.length * 0.999))
-            dots.forEach((dot, index) => dot.classList.toggle('is-on', index === active))
-          },
-        },
-      })
-      beats.forEach((_, index) => {
-        if (index === 0) return
-        const at = index
-        timeline
-          .to(beats[index - 1], { autoAlpha: 0, y: -40, duration: 0.3 }, at - 0.35)
-          .to(frames[index - 1], { autoAlpha: 0, rotateY: 14, z: -180, duration: 0.45, ease: 'power2.in' }, at - 0.4)
-          .to(frames[index], { autoAlpha: 1, rotateY: 0, z: 0, duration: 0.5, ease: 'power2.out' }, at - 0.1)
-          .to(beats[index], { autoAlpha: 1, y: 0, duration: 0.3 }, at - 0.05)
-      })
-      timeline.to({}, { duration: 0.4 })
-    })
 
     return () => {
       window.removeEventListener('scroll', onScroll)
       if (ticker) gsap.ticker.remove(ticker)
       lenis?.destroy()
-      media.revert()
-      scrollContext.revert()
       context.revert()
     }
   }, [])
 
-  const statement = c.statement.text
-
   const n = c.nav
-  const h = c.hero
   const pr = c.pricing
   const statItems = lang === 'en'
     ? [{ value: STATS.colors, label: 'frame colours (RAL and wood look)' }, { value: STATS.roofs, label: 'roof systems, from louvres to glass' }, { value: STATS.sides, label: 'side enclosure types per side' }, { value: STATS.mounts, label: 'mounting layouts, wall to free-standing' }]
@@ -325,11 +206,11 @@ function PlatformPage() {
     { heading: lang === 'en' ? 'Contact' : 'Kapcsolat', links: [{ label: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` }, { label: n.login, href: '/belepes' }] },
     { heading: lang === 'en' ? 'Legal' : 'Jogi', links: [{ label: c.form.privacyLink, href: '/adatkezeles' }] },
   ]
-  const marqueeRows = [c.marquee.slice(0, 7), c.marquee.slice(6)]
   const compare = lang === 'en'
     ? { eyebrow: 'Before and after', title: <>The same terrace. <em>With a pergola.</em></>, text: 'Drag the line: the empty terrace on the left, the same shot with the pergola designed in the 3D studio on the right. Your customers get this view of their own terrace from a photo.', beforeAlt: 'Empty wooden terrace in front of a family house', afterAlt: 'The same terrace with an anthracite bioclimatic pergola and garden furniture', beforeLabel: 'Before', afterLabel: 'After', brand: 'with Lamelix', listBefore: ['Price list by e-mail, days later', 'Customer imagines the terrace from a catalogue', 'Requests arrive as “about 5 by 4 metres”', 'Every quote is drawn up by hand'], listAfter: ['Guide price while they design, at eleven at night', 'Their own terrace in 3D, from their own photo', 'Requests arrive with the full configuration and design link', 'The quote is generated, you only confirm'] }
     : { eyebrow: 'Előtte, utána', title: <>Ugyanaz a terasz. <em>Pergolával.</em></>, text: 'Húzza a vonalat: bal oldalt az üres terasz, jobb oldalt ugyanaz a kép a 3D stúdióban megtervezett pergolával. A vevői a saját teraszukról kapnak ilyen képet, egy fotóból.', beforeAlt: 'Üres faburkolatú terasz egy családi ház előtt', afterAlt: 'Ugyanaz a terasz antracit bioklimatikus pergolával és kerti bútorral', beforeLabel: 'Előtte', afterLabel: 'Utána', brand: 'Lamelix-szel', listBefore: ['Árlista e-mailben, napokkal később', 'A vevő katalógusból képzeli el a teraszt', 'A kérés úgy jön, hogy „kb. 5×4 méter”', 'Minden ajánlat kézzel készül'], listAfter: ['Irányár tervezés közben, este tizenegykor is', 'A saját terasza 3D-ben, a saját fotójáról', 'A kérés a teljes konfigurációval és a terv linkjével érkezik', 'Az ajánlat generálódik, Ön csak jóváhagyja'] }
-  return <div className="pf-page pui-lamelix" ref={root}>
+  return <div className="pf-page pui-lamelix lx-page" ref={root}>
+    <InkDefs />
     <header className={`pf-header${scrolled ? ' is-scrolled' : ''}`}>
       <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={30} title={null} tone="onLight" /><small>{n.brandSmall}</small></a>
       <nav aria-label={n.mainAria}><a href="#elonyok">{n.benefits}</a><a href="#bemutato">{n.showcase}</a><a href="#funkciok">{n.features}</a><a href="#mukodes">{n.how}</a><a href="#arak">{n.pricing}</a><a href="#gyik">{n.faq}</a></nav>
@@ -337,52 +218,20 @@ function PlatformPage() {
     </header>
 
     <main id="top">
-      <section className="pf-hero" aria-labelledby="pf-title">
-        <div className="pf-hero-glow" aria-hidden="true" />
-        <div className="pf-hero-copy">
-          <p className="pf-eyebrow pf-hero-fade"><span className="pf-pulse" />{h.eyebrow}</p>
-          <h1 id="pf-title"><span className="pf-hero-line"><span>{h.line1}</span></span><span className="pf-hero-line"><span><em>{h.line2}</em></span></span><span className="pf-hero-line"><span>{h.line3}</span></span></h1>
-          <p className="pf-lead pf-hero-fade">{h.lead}</p>
-          <div className="pf-hero-actions pf-hero-fade"><a className="pf-btn pf-btn-primary" href="#demo">{h.ctaDemo} <ArrowRight size={18} /></a><Link className="pf-btn pf-btn-ghost" to={DEMO_PATH}>{h.ctaLive} <ArrowUpRight size={17} /></Link></div>
-          <ul className="pf-proof pf-hero-fade">{h.proof.map((item) => <li key={item}><Check size={15} />{item}</li>)}</ul>
-        </div>
-        <div className="pf-scene" aria-hidden="false">
-          <div className="pf-stage">
-            <div className="pf-tilt">
-              <Browser url={h.browserUrl}>
-                <div className={`pf-live3d ${ready3d ? 'is-ready' : ''}`}>
-                  <Shot name="studio" alt={h.imgAlt} eager sizes="(max-width: 900px) 100vw, 58vw" />
-                  {scene3d && <div className="pf-live3d-canvas" aria-hidden="true"><Suspense fallback={null}><HeroLouvre drive={drive} compact={compact} onReady={() => setReady3d(true)} /></Suspense></div>}
-                  {ready3d && <div className="pf-live3d-panel" role="group" aria-label={h.control.group}>
-                    <label className="pf-live3d-angle"><span>{h.control.angle} <output ref={angleOut}>8°</output></span>
-                      <input ref={angleInput} type="range" min={0} max={90} step={1} defaultValue={8} onChange={(event) => { drive.current.manual = Number(event.target.value); showAngle(); event.target.setAttribute('aria-valuetext', `${event.target.value}°`); markUsed() }} aria-valuetext="8°" />
-                    </label>
-                    <div className="pf-live3d-colors" role="radiogroup" aria-label={h.control.color}>
-                      {HERO_COLORS.map((color, index) => { const key = (['anthracite', 'white', 'walnut'] as const)[index]; return <button key={color.code} type="button" role="radio" aria-checked={frameHex === color.hex} aria-label={h.control.colors[key]} title={h.control.colors[key]} style={{ ["--sw" as string]: color.hex }} onClick={() => { drive.current.frame = color.hex; setFrameHex(color.hex); markUsed() }} /> })}
-                    </div>
-                  </div>}
-                </div>
-              </Browser>
-              <div className="pf-chip pf-chip-a"><span>{h.chipA.label}</span><strong>{h.chipA.value}</strong><small>{h.chipA.sub}</small></div>
-              <div className="pf-chip pf-chip-b"><i className="pf-chip-dot" /><div><span>{h.chipB.label}</span><strong>{h.chipB.name}</strong><small>{h.chipB.detail}</small></div></div>
-              <div className="pf-chip pf-chip-c"><QrCode size={30} /><div><strong>{h.chipC.title}</strong><small>{h.chipC.sub}</small></div></div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Hero demoPath={DEMO_PATH} />
 
-      <Suspense fallback={<div className="pf-marquee" aria-hidden="true"><div className="pf-marquee-track">{[0, 1].map((copy) => <span key={copy}>{c.marquee.map((item) => <b key={item}>{item}<i>✦</i></b>)}</span>)}</div></div>}>
-        <FeatureSlips rows={marqueeRows} highlight={[c.marquee[0], c.marquee[7], c.marquee[12]]} />
+      <Suspense fallback={null}>
         <CountingStats items={statItems} />
-        <StickyCta after=".pf-hero" until="#demo" avoid="#elotte-utana .lx-compare, .pf-show-cta, #mukodes-elo, #arak" text={lang === 'en' ? 'See the live configurator' : 'Nézze meg élőben a konfigurátort'} cta={n.liveDemo} to={DEMO_PATH} />
       </Suspense>
 
-      <section className="pf-statement" aria-label={c.statement.aria}>
-        <p>{statement.split(' ').map((word, index) => <span className="pf-word" key={index}>{word} </span>)}</p>
-      </section>
+      <ProblemCollage />
+
+      <BuildSequence />
+
+      <WhyStrip />
 
       <section className="lx-compare-section" id="elotte-utana" aria-labelledby="compare-title">
-        <p className="pf-eyebrow">{compare.eyebrow}</p>
+        <p className="lx-eyebrow">{compare.eyebrow}</p>
         <h2 id="compare-title">{compare.title}</h2>
         <p>{compare.text}</p>
         <Suspense fallback={null}>
@@ -391,42 +240,19 @@ function PlatformPage() {
         </Suspense>
       </section>
 
-      <section className="pf-section" id="elonyok" aria-labelledby="elonyok-title" data-pf-reveal>
-        <div className="pf-head" data-pf-item><p className="pf-eyebrow">{c.benefits.eyebrow}</p><h2 id="elonyok-title"><Em parts={c.benefits.title} /></h2></div>
-        <BenefitCards demoPath={DEMO_PATH} />
-      </section>
-
-      <section className="pf-show" id="bemutato" aria-labelledby="bemutato-title">
-        <div className="pf-show-pin">
-          <div className="pf-show-copy">
-            <p className="pf-eyebrow">{c.showcase.eyebrow}</p>
-            <h2 id="bemutato-title" className="sr-only">{c.showcase.srTitle}</h2>
-            <div className="pf-beats">
-              {BEATS.map((beat, index) => { const text = c.showcase.beats[index]; return <article className="pf-beat" key={beat.id}>
-                <span className="pf-beat-index">{beat.index} / 04</span><h3>{text.title}</h3><p>{text.text}</p>
-                <div className="pf-beat-media">{'phone' in beat ? <div className="pf-phone"><img src={img(beat.image)} alt={text.alt} loading="lazy" decoding="async" width={520} height={1126} /></div> : <Browser url={beat.id === 'konfigurator' ? h.browserUrl : h.adminUrl}><Shot name={beat.image} alt={text.alt} /></Browser>}</div>
-              </article> })}
-            </div>
-            <div className="pf-show-dots" aria-hidden="true">{BEATS.map((beat) => <i key={beat.id} />)}</div>
-            <Link className="pf-btn pf-btn-ghost pf-show-cta" to={DEMO_PATH}>{c.showcase.cta} <ArrowUpRight size={17} /></Link>
-          </div>
-          <div className="pf-show-stage" aria-hidden="true">
-            {BEATS.map((beat) => <div className="pf-show-frame" key={beat.id}>{'phone' in beat ? <div className="pf-phone"><img src={img(beat.image)} alt="" loading="lazy" decoding="async" width={520} height={1126} /></div> : <Browser url={beat.id === 'konfigurator' ? h.browserUrl : h.adminUrl}><Shot name={beat.image} alt="" /></Browser>}</div>)}
-          </div>
-        </div>
-      </section>
-
-      <section className="pf-section" id="funkciok" aria-labelledby="funkciok-title" data-pf-reveal>
+      <section className="pf-section lx-feature-section" id="funkciok" aria-labelledby="funkciok-title" data-pf-reveal>
         <div className="pf-head pf-head-row" data-pf-item>
-          <div><p className="pf-eyebrow">{c.features.eyebrow}</p><h2 id="funkciok-title"><Em parts={c.features.title} /></h2></div>
+          <div><p className="lx-eyebrow">{c.features.eyebrow}</p><h2 id="funkciok-title"><Em parts={c.features.title} /></h2></div>
           <p className="pf-sub">{c.features.sub}</p>
         </div>
-        <CustomerFeatures />
+        <FeatureScenes />
       </section>
+
+      <AdminBoard />
 
       <section className="pf-section pf-live" id="mukodes-elo" aria-labelledby="live-title" data-pf-reveal>
         <div className="pf-head pf-head-row" data-pf-item>
-          <div><p className="pf-eyebrow">{c.live.eyebrow}</p><h2 id="live-title"><Em parts={c.live.title} /></h2></div>
+          <div><p className="lx-eyebrow">{c.live.eyebrow}</p><h2 id="live-title"><Em parts={c.live.title} /></h2></div>
           <p className="pf-sub">{c.live.sub}</p>
         </div>
         <div className="pf-live-stage" data-pf-item>
@@ -437,29 +263,17 @@ function PlatformPage() {
       </section>
 
       <section className="pf-section" id="mukodes" aria-labelledby="mukodes-title" data-pf-reveal>
-        <div className="pf-head" data-pf-item><p className="pf-eyebrow">{c.how.eyebrow}</p><h2 id="mukodes-title"><Em parts={c.how.title} /></h2></div>
+        <div className="pf-head" data-pf-item><p className="lx-eyebrow">{c.how.eyebrow}</p><h2 id="mukodes-title"><Em parts={c.how.title} /></h2></div>
         <ProcessTimeline />
       </section>
 
       <section className="pf-section" id="arak" aria-labelledby="arak-title" data-pf-reveal>
         <div className="pf-head pf-head-row" data-pf-item>
-          <div><p className="pf-eyebrow">{pr.eyebrow}</p><h2 id="arak-title"><Em parts={pr.title} /></h2><p className="pf-sub">{pr.sub}</p></div>
+          <div><p className="lx-eyebrow">{pr.eyebrow}</p><h2 id="arak-title"><Em parts={pr.title} /></h2><p className="pf-sub">{pr.sub}</p></div>
           <div className="pf-billing" role="group" aria-label={pr.billingAria}><button type="button" className={annual ? '' : 'is-on'} aria-pressed={!annual} onClick={() => setAnnual(false)}>{pr.monthly}</button><button type="button" className={annual ? 'is-on' : ''} aria-pressed={annual} onClick={() => setAnnual(true)}>{pr.annual} <em>{pr.annualBadge}</em></button></div>
         </div>
         <ul className="pf-every" data-pf-item aria-label={pr.everyAria}><li className="pf-every-label">{pr.everyLabel}</li>{pr.everyPlan.map((item) => <li key={item}><Check size={14} />{item}</li>)}</ul>
-        <div className="pf-plans">
-          {PLANS.map((item) => {
-            const price = monthlyPrice(item, annual)
-            const text = pr.plans[item.id]
-            return <article key={item.id} className={`pf-plan${item.featured ? ' is-featured' : ''}`} data-pf-item onPointerMove={tilt} onPointerLeave={untilt}>
-              <h3>{text.name}</h3><p className="pf-plan-tag">{text.tagline}</p>
-              <div className="pf-price">{price === null ? <strong>{pr.custom}</strong> : <><strong>{formatMoney(price, lang)}</strong><span>{pr.perMonth}</span></>}</div>
-              <p className="pf-price-note">{price === null ? pr.customNote : annual ? pr.annualNote(formatMoney(price * 12, lang)) : pr.monthlyNote}</p>
-              <ul>{text.features.map((feature) => <li key={feature}><Check size={16} />{feature}</li>)}</ul>
-              <button type="button" className={`pf-btn ${item.featured ? 'pf-btn-primary' : 'pf-btn-ghost'}`} onClick={() => choosePlan(item.id)}>{item.monthly === null ? pr.ctaQuote : pr.ctaDemo} <ArrowRight size={17} /></button>
-            </article>
-          })}
-        </div>
+        <PlanSwitch annual={annual} onChoose={choosePlan} />
         <div className="pf-setup" data-pf-item>
           <div><span className="pf-setup-icon"><Box size={22} /></span><div><strong>{pr.setupTitle(formatMoney(SETUP_FEE, lang))}</strong><p>{pr.setupLead}</p></div></div>
           <ul>{pr.setupIncludes.map((item) => <li key={item}><Check size={15} />{item}</li>)}</ul>
@@ -471,7 +285,7 @@ function PlatformPage() {
 
       <section className="pf-section pf-demo" id="demo" aria-labelledby="demo-title" data-pf-reveal>
         <div className="pf-demo-copy" data-pf-item>
-          <p className="pf-eyebrow">{c.demo.eyebrow}</p>
+          <p className="lx-eyebrow">{c.demo.eyebrow}</p>
           <h2 id="demo-title"><Em parts={c.demo.title} /></h2>
           <p className="pf-sub">{c.demo.sub}</p>
           <ul className="pf-demo-points"><li><Smartphone size={18} />{c.demo.points[0]}</li><li><Table2 size={18} />{c.demo.points[1]}</li><li><Mail size={18} />{c.demo.writeUs}<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li></ul>
@@ -482,16 +296,26 @@ function PlatformPage() {
       </section>
 
       <section className="pf-section pf-faq" id="gyik" aria-labelledby="gyik-title" data-pf-reveal>
-        <Faq email={CONTACT_EMAIL} demoPath={DEMO_PATH} />
+        <FaqChat email={CONTACT_EMAIL} demoPath={DEMO_PATH} />
       </section>
 
-      <section className="pf-final" aria-labelledby="final-title">
-        <div className="pf-final-inner">
-          <h2 id="final-title"><Em parts={c.final.title} /></h2>
-          <p>{c.final.text}</p>
-          <div className="pf-hero-actions"><a className="pf-btn pf-btn-primary" href="#demo">{n.requestDemo} <ArrowRight size={18} /></a><Link className="pf-btn pf-btn-ghost" to={DEMO_PATH}>{n.liveDemo} <ArrowUpRight size={17} /></Link></div>
+      <section className="pf-section pf-demo" id="demo" aria-labelledby="demo-title" data-pf-reveal>
+        <div className="pf-demo-copy" data-pf-item>
+          <p className="lx-eyebrow">{c.demo.eyebrow}</p>
+          <h2 id="demo-title"><Em parts={c.demo.title} /></h2>
+          <p className="pf-sub">{c.demo.sub}</p>
+          <ul className="pf-demo-points"><li><Smartphone size={18} />{c.demo.points[0]}</li><li><Table2 size={18} />{c.demo.points[1]}</li><li><Mail size={18} />{c.demo.writeUs}<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li></ul>
+          {c.demo.liveNote && <p className="pf-demo-note">{c.demo.liveNote}</p>}
+          <p className="pf-demo-beta"><b>β</b>{c.demo.beta}</p>
         </div>
+        <div className="pf-demo-form" data-pf-item><DemoForm plan={plan} onPlan={setPlan} /></div>
       </section>
+
+      <section className="pf-section pf-faq" id="gyik" aria-labelledby="gyik-title" data-pf-reveal>
+        <FaqChat email={CONTACT_EMAIL} demoPath={DEMO_PATH} />
+      </section>
+
+      <FinalCta demoPath={DEMO_PATH} />
     </main>
 
     <Suspense fallback={<footer className="pf-footer">

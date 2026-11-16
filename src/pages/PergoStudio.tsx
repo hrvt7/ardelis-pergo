@@ -333,6 +333,14 @@ export default function PergoStudio() {
     if (('houseStyle' in patch || 'wallFinish' in patch || 'wallColor' in patch || 'windowColor' in patch) && current.autoCamera && !current.photoMode && !current.sunStudy) overview()
     setScene((value) => ({ ...value, ...patch }))
   }, [overview])
+
+  // Csak fejlesztői szerveren: a nyitóoldal képsorozatának rögzítéséhez (képkockánként vezérelt konfigurátor). Élesben nincs.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return
+    const w = window as unknown as Record<string, unknown>
+    w.__lxCapture = { setConfig: updateConfig, setScene: updateScene, setPresentation }
+    return () => { delete w.__lxCapture }
+  }, [updateConfig, updateScene, setPresentation])
   useEffect(() => { sceneRef.current = scene }, [scene])
   useEffect(() => {
     if (!change) return

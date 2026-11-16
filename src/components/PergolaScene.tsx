@@ -1431,8 +1431,10 @@ function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'nig
   useEffect(() => { const id = window.setTimeout(() => { settled.current = true }, 2500); return () => window.clearTimeout(id) }, [])
   useFrame(({ clock }, delta) => {
     if (!introStart.current) introStart.current = clock.elapsedTime
+    const override = import.meta.env.DEV ? (window as unknown as { __lxExplode?: number }).__lxExplode : undefined
+    if (typeof override === 'number') { if (ex.current !== override) { ex.current = override; refreshShadows(gl); invalidate() } }
     const target = scene.exploded ? 1 : 0
-    if (Math.abs(ex.current - target) > 0.0005) { ex.current = REDUCED ? target : THREE.MathUtils.damp(ex.current, target, 4.5, delta); if (Math.abs(ex.current - target) < 0.0005) ex.current = target; refreshShadows(gl); invalidate() }
+    if (typeof override !== 'number' && Math.abs(ex.current - target) > 0.0005) { ex.current = REDUCED ? target : THREE.MathUtils.damp(ex.current, target, 4.5, delta); if (Math.abs(ex.current - target) < 0.0005) ex.current = target; refreshShadows(gl); invalidate() }
     if (model.current) {
       model.current.scale.y = REDUCED ? 1 : THREE.MathUtils.damp(model.current.scale.y, 1, 6, delta)
       if (Math.abs(model.current.scale.y - 1) > 0.001) { refreshShadows(gl); invalidate() }

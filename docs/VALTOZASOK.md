@@ -1,5 +1,16 @@
 # Változások
 
+## 4.63 – Új nyitóoldal: az asztalon a termék
+
+- **Új nyitóoldal („az asztalon a termék”):** Ádám referenciái (TrainerFlow, Kiwi) alapján, a világos pasztell rendszerben. A héróban a valódi 3D lamellás tető pasztell shader-égen, körülötte a konfigurátor kódból újrarajzolt darabjai lebegnek (lépéssáv, ár-dokk valódi árakkal, lamellaszög- és színválasztó, beérkező kérelem „Példa” jelöléssel), kurzorra mélység szerint dőlnek. Új cím: „Pergolák 3D-ben, saját arculattal, a weboldalán.”
+- **Rendrakás:** a mai ajánlatkérés szétszórt papírjai (Excel, telefon, PDF, cetli) görgetésre egyetlen tervlappá rendeződnek, kódból rajzolt vonalas SVG-vel.
+- **Hét lépés képsorozat:** a valódi konfigurátorból képkockánként rögzített 40 kép (robbantott nézet → összeállás → lamellanyitás), görgetésre, mellette a hét lépés és az irányár a valódi árazó motorból (4 610 000 → 5 264 000 → 5 648 000 Ft, demó-árlista).
+- **Miért éri meg?** sáv a brief három érvével; **funkció-bemutató** nagy színpaddal és élő vonalrajz-jelenetekkel (telefonon lapozható sín); **admin pipeline** ink lapon, oldalról oldalra lépő lead-kártyával; **csomagváltó** egyetlen nagy lappal és gördülő havidíjjal; **GYIK beszélgetésként** (kérdés-csipek, válasz-buborék); **záró CTA** Vanilla sávon, úszó vonalrajz-csempék előtt.
+- Kézi tinta-vonal szűrő a vonalrajzokon (a line-art-animation könyvtár paramétereivel, MIT, forrás megjelölve). A tartalmat takaró ragadós „Élő demó” sáv megszűnt; a fő cél a fejlécben és szakaszonként érhető el.
+- A nyitóoldal képernyőképei helyett a régi „Bemutató” szakasz kikerült; fejlesztői képkocka-rögzítő horog csak dev módban (élesben nem fut).
+- Ellenőrzés: 3 kör független kritikus (design-loop), kontrasztszkenner 0 hiba asztalon és mobilon, 390 px-en nincs túlcsordulás, copy-gate tiszta. Nyitott pontok: docs/landing/progress.md.
+- Tesztek: `landingV2.test.ts` (az árak a valódi motorból, képkockák, nyelvi szerkezet, tinta-szűrő, dev-horog, mozgáscsökkentés), `landingUi.test.ts` frissítve.
+
 ## 4.62 – Egységes világos design minden oldalon
 
 - **Egységes világos design mindenhol:** a nyitóoldal (HU és EN), a gyártói belépés, az adatkezelési tájékoztató, a 404-es oldal és a mintaoldal is a konfigurátor és az admin világos, pasztell rendszerét kapja: Urbanist betű, #ECECEF alap, fehér kártyák, fekete pill gombok, Vanilla kiemelés (a dőlt serif kiemelés helyett Vanilla aláfestés), Honeydew/Alice Blue díszítő színátmenet. A sötét zöldesfekete háttér és a neon-lime eltűnt.

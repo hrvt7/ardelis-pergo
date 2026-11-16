@@ -26,13 +26,20 @@ float hash(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
 float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
   return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y); }
 void main(){
+  // Pasztell ég: Vanilla, Honeydew és Alice Blue foltok lassan áramlanak (a nyitóoldal színei).
   vec2 uv = vUv;
-  vec3 zenith = vec3(0.55, 0.66, 0.70);
-  vec3 horizon = vec3(0.93, 0.91, 0.84);
-  vec3 col = mix(horizon, zenith, smoothstep(0.25, 1.0, uv.y));
+  float t = uTime * 0.05;
+  vec3 ghost = vec3(0.965, 0.961, 0.980);
+  vec3 vanilla = vec3(0.937, 0.941, 0.639);
+  vec3 honey = vec3(0.812, 0.871, 0.792);
+  vec3 alice = vec3(0.847, 0.875, 0.914);
+  float n1 = noise(uv * 2.2 + vec2(t, -t * 0.6));
+  float n2 = noise(uv * 1.7 + vec2(-t * 0.8, t * 0.5) + 7.3);
+  vec3 col = mix(alice, ghost, smoothstep(0.15, 0.85, uv.y));
+  col = mix(col, honey, smoothstep(0.45, 0.85, n1) * 0.55 * (1.0 - uv.y * 0.4));
+  col = mix(col, vanilla, smoothstep(0.55, 0.9, n2) * 0.6 * smoothstep(0.2, 0.9, uv.y));
   float d = distance(uv, uSun);
-  col += vec3(1.0, 0.93, 0.74) * exp(-d * 4.0) * 0.55;
-  col += (noise(uv * vec2(3.0, 9.0) + vec2(uTime * 0.01, 0.0)) - 0.5) * 0.035;
+  col = mix(col, vec3(1.0), exp(-d * 5.0) * 0.45);
   gl_FragColor = vec4(col, 1.0);
 }`
 
@@ -61,7 +68,7 @@ function Terrace({ drive, compact }: { drive: RefObject<LouvreDrive>; compact: b
     wall: new THREE.MeshStandardMaterial({ color: '#e4ded0', roughness: 0.92, map: plasterTexture() }),
     glass: new THREE.MeshStandardMaterial({ color: '#1f2826', roughness: 0.06, metalness: 0.7 }),
     trim: new THREE.MeshStandardMaterial({ color: '#2b2e2c', roughness: 0.5 }),
-    lawn: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 1, map: grassTexture() }),
+    lawn: new THREE.MeshStandardMaterial({ color: '#dfe6da', roughness: 1 }),
     fabric: new THREE.MeshStandardMaterial({ color: '#d8d1bf', roughness: 0.95 }),
     cushion: new THREE.MeshStandardMaterial({ color: '#6f7a4a', roughness: 0.9 }),
     wood: new THREE.MeshStandardMaterial({ color: '#6b5236', roughness: 0.7 }),
@@ -70,16 +77,16 @@ function Terrace({ drive, compact }: { drive: RefObject<LouvreDrive>; compact: b
   }), [])
   useEffect(() => () => { frame.dispose(); blade.dispose(); deck.map?.dispose(); deck.dispose(); Object.values(env).forEach((m) => { m.map?.dispose(); m.dispose() }) }, [frame, blade, deck, env])
   const sun = useRef<THREE.DirectionalLight>(null)
-  const look = useMemo(() => new THREE.Vector3(0, 1.5, 0), [])
+  const look = useMemo(() => new THREE.Vector3(0, 1.9, 0), [])
   const color = useMemo(() => new THREE.Color(), [])
   useFrame(({ camera, invalidate }, delta) => {
     const d = drive.current
     // a kamera lassan körbejár a kurzorral, a görgetéssel közelebb lép
     const az = -0.62 + d.px * 0.16
-    const r = (compact ? 9.4 : 8.6) - d.progress * 1.2
+    const r = (compact ? 12.6 : 12) - d.progress * 1.6
     camera.position.x = THREE.MathUtils.damp(camera.position.x, Math.sin(az) * r, 2.6, delta)
     camera.position.z = THREE.MathUtils.damp(camera.position.z, Math.cos(az) * r, 2.6, delta)
-    camera.position.y = THREE.MathUtils.damp(camera.position.y, 5.3 - d.py * 0.4, 2.6, delta)
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, 4.6 - d.py * 0.4, 2.6, delta)
     camera.lookAt(look)
     if (sun.current) sun.current.position.set(3.4 + d.px * 1.6, 7.5, 2.6)
     color.set(d.frame)
@@ -95,8 +102,8 @@ function Terrace({ drive, compact }: { drive: RefObject<LouvreDrive>; compact: b
     </directionalLight>
     <mesh rotation-x={-Math.PI / 2} position={[0, -0.02, 0]} receiveShadow material={env.lawn}><planeGeometry args={[40, 40]} /></mesh>
     <mesh rotation-x={-Math.PI / 2} position={[0, 0, 0.3]} receiveShadow material={deck}><planeGeometry args={[6.4, 5.2]} /></mesh>
-    <mesh position={[0, 2.6, -D / 2 - 0.16]} material={env.wall} receiveShadow castShadow><boxGeometry args={[11, 5.2, 0.24]} /></mesh>
-    {[[-3.4, 1.55, 1.5, 2.3], [0.1, 1.2, 1.2, 2.4], [3.3, 1.65, 1.6, 1.5]].map(([x, y, w, h]) => <group key={x} position={[x, y, -D / 2 - 0.02]}>
+    <mesh position={[0, 1.7, -D / 2 - 0.16]} material={env.wall} receiveShadow castShadow><boxGeometry args={[7.4, 3.4, 0.24]} /></mesh>
+    {[[-2.5, 1.45, 1.3, 2.1], [2.5, 1.6, 1.4, 1.4]].map(([x, y, w, h]) => <group key={x} position={[x, y, -D / 2 - 0.02]}>
       <mesh material={env.trim}><boxGeometry args={[w + 0.12, h + 0.12, 0.05]} /></mesh>
       <mesh material={env.glass} position={[0, 0, 0.03]}><boxGeometry args={[w, h, 0.02]} /></mesh>
     </group>)}
@@ -140,7 +147,7 @@ export default function HeroLouvre({ drive, compact, onReady }: { drive: RefObje
   return <Canvas
     shadows
     dpr={compact ? [1, 1.5] : [1, 1.75]}
-    camera={{ fov: 32, position: [-6.5, 5.3, 6.9], near: 0.1, far: 60 }}
+    camera={{ fov: 32, position: [-7, 4.6, 9.7], near: 0.1, far: 60 }}
     gl={{ antialias: true, powerPreference: 'high-performance' }}
     onCreated={({ gl, scene, camera }) => {
       gl.toneMapping = THREE.ACESFilmicToneMapping
@@ -152,6 +159,7 @@ export default function HeroLouvre({ drive, compact, onReady }: { drive: RefObje
     aria-hidden="true"
   >
     <Sky drive={drive} />
+    <fog attach="fog" args={['#eef0f2', 12, 26]} />
     <Terrace drive={drive} compact={compact} />
   </Canvas>
 }
@@ -199,27 +207,5 @@ function plasterTexture() {
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping
   texture.repeat.set(6, 3)
   texture.colorSpace = THREE.SRGBColorSpace
-  return texture
-}
-
-/** Gyep kódból: sávos nyírás és finom szemcse, hogy ne egyszínű sík legyen. */
-function grassTexture() {
-  const canvas = document.createElement('canvas')
-  canvas.width = 256
-  canvas.height = 256
-  const ctx = canvas.getContext('2d')
-  if (ctx) {
-    for (let i = 0; i < 8; i++) { ctx.fillStyle = i % 2 ? '#5a6a31' : '#637538'; ctx.fillRect(0, i * 32, 256, 32) }
-    for (let i = 0; i < 4200; i++) {
-      const g = 80 + Math.floor(Math.abs(Math.sin(i * 91.7)) * 50)
-      ctx.fillStyle = `rgba(${g - 30}, ${g + 10}, ${g - 50}, .55)`
-      ctx.fillRect(Math.abs(Math.sin(i * 12.9898)) * 256, Math.abs(Math.sin(i * 4.1414)) * 256, 1, 3)
-    }
-  }
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-  texture.repeat.set(10, 10)
-  texture.colorSpace = THREE.SRGBColorSpace
-  texture.anisotropy = 4
   return texture
 }
