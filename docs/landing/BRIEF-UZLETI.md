@@ -9,6 +9,12 @@
 - **Színek és betű (adott):** #ECECEF alap, #FFFFFF kártya, #212121 ink, Vanilla #EFF0A3, Honeydew #CFDECA, Alice Blue #D8DFE9, Ghost White #F6F5FA; Urbanist.
 - Ádám szavai: „a mostani túl AI-generált, gagyi minőség … kódból rajzolt kis képek, SVG, ami látványos és a valódi kalkulátort mutatja”.
 
+## Héró – Ádám későbbi döntései (2026-11-16, szó szerint)
+- „kicsit a hero sectiont is feldobnam … több animáció és görgetési effekt kell, prémium SaaS-t építünk, a betűtípus jó” → koncepció: **Felhők felett** (pasztell ég, felhőrétegek, mélységi parallax), **betűnkénti kinetikus cím**.
+- „A hero nagyító animációt cseréljük le, nem tetszik” → átvezetés: **Lamella-redőny** (12 lamella zár, a zárt tetőn mondat, a „Hét lépés” fölött nyílik).
+- „Az a kézben tartott telefonos rajz nagyon béna” → **lebegő laptop kéz nélkül, a kijelzőn a kalkulátor képével**.
+- „Lassúak és szaggatnak az animációk”, „Összecsúsznak a szövegek, javítsd ki az összes hibát végre” → teljesítmény és átfedésmentesség kötelező, minden méreten.
+
 ## Fő cél
 Demókérés (gomb: **Kérek demót**). Másodlagos: élő demó megnyitása (**Kipróbálom élőben**).
 

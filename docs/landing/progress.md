@@ -18,3 +18,12 @@ Lánc: weboldal-hrvt (A típus) → premium-weboldal-uzleti (kutatás, kérdése
 - Kontrasztszkenner (asztali + mobil): 0 hiba (az admin cím kiemelése javítva).
 - 390 px: nincs vízszintes túlcsordulás.
 - Copy-gate: CLEAN.
+
+## Audit 2026-11-16 (4.70) – 1. kör, mind a 12 kritikus FAIL
+| Darab | Brief | Rendszer | Kidolgozás |
+|---|---|---|---|
+| Héró + redőny | FAIL | FAIL | FAIL |
+| Közép | FAIL | FAIL | FAIL |
+| Vég | FAIL | FAIL | FAIL |
+| Mobil | FAIL | FAIL | FAIL |
+Részletek és ellenőrzött teendőlista: `AUDIT-2026-11-16.md`.

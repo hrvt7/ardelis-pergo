@@ -42,3 +42,9 @@ Egy oszlop; a héróban a 3D jelenet a cím alatt, a lebegő lapok közül kett�
 
 ## Teljesítmény
 3D és shader csak tétlen időben; képsorozat 40 képkocka webp (1200 / 720 px), csak a szekció közelében töltődik. `prefers-reduced-motion`: minden végállapotban.
+
+## Héró, frissítve (2026-11-16 délután)
+- Pasztell ég (#B7CBE5 → #F1F3F7) három felhőréteggel (mélységi parallax), lebegő laptop a valódi asztali konfigurátorral, körülötte ár-, lépés- és lead-lap.
+- Cím betűnként úszik fel; asztalon súly-lencse a kurzor körül.
+- Átvezetés: Lamella-redőny – 12 ink lamella (#141516–#3D3E42) felülről sorban zár, a zárt tetőn #ECECEF szöveg Vanilla kiemeléssel, majd a „Hét lépés” fölött nyílik.
+- A héró 3D/WebGL-je megszűnt (HeroLouvre), az „Összeszerelés” képsorozat a fő 3D-bizonyíték.
