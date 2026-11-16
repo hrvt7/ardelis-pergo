@@ -435,7 +435,7 @@
 @media (max-width: 760px) { .lx-final-band .lx-actions .lx-btn { flex: 1 1 100%; } }
 
 /* ============ Héró „Felhők felett” (2026-11-16): ég, felhőrétegek, lebegő laptop a valódi konfigurátorral ============ */
-.lx-sky { --dw: min(720px, 48vw, 78svh); position: relative; z-index: 1; height: 170vh; }
+.lx-sky { --dw: min(720px, 48vw, 72svh); position: relative; z-index: 1; height: 170vh; }
 /* a „Hét lépés” a héró utolsó képernyője alá csúszik: a zárt lamellák mögött cserélődik a kép */
 .lx-sky + .lx-build { margin-top: -100svh; }
 .lx-sky-sticky { position: sticky; top: 0; height: 100svh; padding: 12px; background: var(--lx-bg); }
@@ -451,7 +451,7 @@
 
 .lx-sky-copy, .lx-sky-side { position: relative; z-index: 5; }
 .lx-sky-copy .lx-eyebrow { color: #3A3C41; }
-.lx-kinetic { margin: 0; font-size: clamp(46px, 6.2vw, 104px); font-weight: 400; line-height: .98; letter-spacing: -.055em; color: var(--lx-ink); }
+.lx-kinetic { margin: 0; font-size: clamp(46px, min(6.2vw, 10svh), 104px); font-weight: 400; line-height: .98; letter-spacing: -.055em; color: var(--lx-ink); }
 .lx-kline { --wb: 360; display: block; padding-top: .14em; margin-top: -.14em; }
 .lx-kline.is-em { --wb: 640; width: fit-content; background: linear-gradient(var(--lx-vanilla), var(--lx-vanilla)) no-repeat 0 82% / 0% 36%; animation: lx-mark .8s var(--lx-ease) .55s forwards; }
 @keyframes lx-mark { to { background-size: 100% 36%; } }
@@ -465,7 +465,7 @@
 .lx-sky-side .lx-proof { color: #3A3C41; }
 .lx-sky-side .lx-btn-line { background: rgba(255,255,255,.86); }
 
-.lx-device { position: absolute; z-index: 3; left: calc(50% - var(--dw) / 2 + 9vw); bottom: -3%; width: var(--dw); animation: lx-rise-device 1s var(--lx-ease) .1s both; }
+.lx-device { position: absolute; z-index: 3; left: calc(50% - var(--dw) / 2 + 12vw); bottom: -3%; width: var(--dw); animation: lx-rise-device 1s var(--lx-ease) .1s both; }
 @keyframes lx-rise-device { from { translate: 0 18%; opacity: 0; } }
 /* laptop: grafit keret, ezüst alap, a kijelzőn a valódi konfigurátor */
 .lx-laptop { position: relative; transform: perspective(1800px) rotateX(7deg) rotateY(-9deg); transform-origin: 50% 100%; animation: lx-hover 7s ease-in-out 1.2s infinite alternate; }
@@ -508,17 +508,17 @@
   .lx-chip-price { left: auto; right: 10%; top: -26%; }
 }
 @media (max-width: 1080px) and (min-width: 761px) and (orientation: portrait) {
-  .lx-sky { --dw: 84vw; }
   .lx-sky-copy, .lx-sky-side { max-width: none; }
-  .lx-device { left: calc(50% - var(--dw) / 2); right: auto; bottom: 3%; }
+  /* álló tableten a laptop a szöveg alatt, normál elrendezésben áll: semmilyen magasságnál nem takarhat szöveget */
+  .lx-device { position: relative; left: auto; right: auto; bottom: auto; width: min(100%, 720px); margin: 36px auto 0; }
+  .lx-chip-price { right: -3%; top: 10%; }
 }
 @media (max-height: 820px) and (min-width: 761px) {
   .lx-sky-side .lx-proof { display: none; }
 }
 @media (max-width: 760px) {
-  .lx-sky { --dw: 94vw; height: 160vh; }
+  .lx-sky { --dw: 94vw; height: 190vh; }
   .lx-sky-copy, .lx-sky-side { max-width: none; }
-  .lx-device { right: auto; }
   .lx-chip-lead { display: none; }
   .lx-sky-sticky { padding: 8px; }
   .lx-sky-panel { padding: 86px 18px 0; border-radius: 28px; align-content: start; }
@@ -526,9 +526,10 @@
   .lx-sky-side p { font-size: 15.5px; }
   .lx-sky-side .lx-proof { display: none; }
   .lx-sky-side .lx-actions .lx-btn { flex: 1 1 0; padding: 0 12px; font-size: 14.5px; }
-  .lx-device { left: calc(50% - var(--dw) / 2); bottom: 3%; }
+  /* telefonon a laptop a gombok alatt, normál elrendezésben: nincs átfedés a szövegekkel */
+  .lx-device { position: relative; left: auto; right: auto; bottom: auto; width: 100%; margin: 30px 0 0; }
   .lx-chip-steps, .lx-chip-lead { display: none; }
-  .lx-chip-price { left: auto; right: 2%; top: -26%; min-width: 0; padding: 10px 12px; }
+  .lx-chip-price { left: -3%; right: auto; top: auto; bottom: 16%; min-width: 0; padding: 10px 12px; }
   .lx-chip-price strong { font-size: 21px; }
   .lx-chip-price small { display: none; }
   .lx-cloud { width: 260vw; }

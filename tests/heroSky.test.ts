@@ -69,7 +69,7 @@ describe('héró „Felhők felett”', () => {
   })
 
   it('telefonon külön elrendezés van, nem marad el a hatás', () => {
-    expect(css).toMatch(/@media \(max-width: 760px\) \{\n {2}\.lx-sky \{ --dw: 94vw; height: 160vh; \}/)
+    expect(css).toMatch(/@media \(max-width: 760px\) \{\n {2}\.lx-sky \{ --dw: 94vw; height: 190vh; \}/)
   })
 
   it('a képsorozat kockáit a .gitignore nem zárja ki (különben élesen 404)', () => {
@@ -104,5 +104,13 @@ describe('animációs teljesítmény (4.66)', () => {
     expect(sim).toMatch(/\{loaded \? <iframe/)
     expect(existsSync('public/assets/landing/sim-poster.webp')).toBe(true)
     expect(existsSync('public/assets/landing/sim-poster-800.webp')).toBe(true)
+  })
+
+  it('telefonon és álló tableten a laptop normál elrendezésben, a szöveg alatt áll (nem csúszhat rá), és ha nem fér ki, görgetésre felcsúszik', () => {
+    expect(css).toMatch(/@media \(max-width: 760px\) \{[\s\S]*?\.lx-device \{ position: relative; left: auto; right: auto; bottom: auto; width: 100%;/)
+    expect(css).toMatch(/orientation: portrait\) \{[\s\S]*?\.lx-device \{ position: relative;/)
+    expect(hero).toMatch(/overflow = Math\.max\(0, phone\.offsetTop \+ phone\.offsetHeight \+ 24 - panel\.clientHeight\)/)
+    expect(hero).toMatch(/const lift = -overflow \* ease\(clamp\(p \/ 0\.34\)\)/)
+    expect(hero).toMatch(/close = clamp\(\(p - 0\.38\) \/ 0\.56\)/)
   })
 })

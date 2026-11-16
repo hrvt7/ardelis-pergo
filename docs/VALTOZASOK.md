@@ -1,5 +1,14 @@
 # Változások
 
+## 4.70 – Héró: nem csúsznak egymásra a szövegek és a laptop
+
+- **Hiba: telefonon a laptop és az ár-lap a gombokra és a leírásra csúszott** (valódi iPhone, böngészősávokkal kisebb látható magasság). Telefonon és álló tableten a laptop mostantól normál elrendezésben, a gombok alatt áll, így semmilyen képernyőmagasságnál nem takarhat szöveget; az ár-lap a laptop képernyőjére került.
+- Ha a laptop nem fér ki a képernyőre (alacsony telefon), a görgetés első szakaszában a tartalom felcsúszik, és a laptop teljesen előjön, mielőtt a lamellák bezáródnak (a redőny ezért kicsit később indul; telefonon a héró 160 → 190 vh).
+- **Hiba: alacsony asztali képernyőn (1280×720, 1366×768, 1536×864) a laptop a cím utolsó sorára csúszott.** A laptop jobbra került, a mérete a képernyő magasságához is igazodik, a cím mérete alacsony képernyőn kisebb; görgetéskor a laptop már nem úszik fel a címre.
+- **Hiba: álló tableten az ár-lap a pipás listára lógott.**
+- Ellenőrzés: automatikus átfedés-vizsgálat 15 képernyőméreten (360×640-től 1920×1080-ig), betöltéskor és görgetés közben: nincs átfedés, nincs vízszintes túlcsordulás, a laptop mindenhol teljesen előjön.
+- Tesztek: `heroSky.test.ts` (elrendezés-szabályok).
+
 ## 4.69 – Héró: lebegő laptop a kézben tartott telefon rajza helyett
 
 - **Új főkép** (Ádám kérése): a vonalas kéz a telefonnal megszűnt. Helyette letisztult, kódból épített laptop lebeg a felhők felett (grafit keret, ezüst alap, finom lebegés), a kijelzőn a valódi asztali konfigurátor képe a Tető lépésnél (Aero tető, 5 648 000 Ft bruttó irányár). A laptop a kurzor felé dől, görgetéskor kissé előrebillen; körülötte maradnak a lebegő lapok.

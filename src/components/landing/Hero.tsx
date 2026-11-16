@@ -75,13 +75,23 @@ export default function Hero({ demoPath }: { demoPath: string }) {
     let roofShown = false
     let skyHidden = false
 
+    const panel = q<HTMLElement>('.lx-sky-panel')
+    const copy = q<HTMLElement>('.lx-sky-copy')
+    const side = q<HTMLElement>('.lx-sky-side')
+    // Ha a tartalom (a laptop alja) nem fér ki a rögzített panelbe (alacsony telefon, böngésző-sávok), a görgetés
+    // első szakaszában a tartalom felcsúszik, így a laptop teljesen előjön, mielőtt a lamellák zárnak.
+    let overflow = 0
+    const measure = () => {
+      if (!panel) return
+      overflow = Math.max(0, phone.offsetTop + phone.offsetHeight + 24 - panel.clientHeight)
+    }
     const clamp = (value: number) => Math.min(1, Math.max(0, value))
     const ease = (t: number) => t * t * (3 - 2 * t)
     const read = () => {
       const box = element.getBoundingClientRect()
       const span = Math.max(1, box.height - window.innerHeight)
       p = reduced ? 0 : clamp(-box.top / span)
-      close = clamp((p - 0.2) / 0.72)
+      close = clamp((p - 0.38) / 0.56)
       // nyitás: a következő szakasz teteje az ablak tetejére ért, onnan fél képernyőnyi görgetés alatt
       const next = element.nextElementSibling as HTMLElement | null
       open = next && !reduced ? clamp(-next.getBoundingClientRect().top / (window.innerHeight * 0.55)) : 0
@@ -107,7 +117,9 @@ export default function Hero({ demoPath }: { demoPath: string }) {
       if (back) back.style.transform = `translateX(-50%) translate3d(${(px * -12).toFixed(1)}px, ${(p * -60).toFixed(1)}px, 0)`
       if (mid) mid.style.transform = `translateX(-46%) translate3d(${(px * -26).toFixed(1)}px, ${(p * 20).toFixed(1)}px, 0)`
       if (front) front.style.transform = `translateX(-54%) translate3d(${(px * -48).toFixed(1)}px, ${(p * 6 * vh).toFixed(1)}px, 0)`
-      phone.style.transform = `translate3d(${(px * 10).toFixed(1)}px, ${(py * 6 - p * 4 * vh).toFixed(1)}px, 0)`
+      const lift = -overflow * ease(clamp(p / 0.34))
+      for (const block of [copy, side]) if (block) block.style.transform = lift ? `translate3d(0, ${lift.toFixed(1)}px, 0)` : ''
+      phone.style.transform = `translate3d(${(px * 10).toFixed(1)}px, ${(py * 6 + lift).toFixed(1)}px, 0)`
       // a laptop a kurzor felé dől (finoman), görgetéskor kissé előrebillen
       screen.style.transform = `perspective(1800px) rotateX(${(7 - py * 3 + p * 6).toFixed(2)}deg) rotateY(${(-9 + px * 5).toFixed(2)}deg)`
       for (const { chip, d } of chips) chip.style.transform = `translate3d(${(px * d * 14).toFixed(1)}px, ${(py * d * 10 - p * d * 3 * vh).toFixed(1)}px, 0)`
@@ -151,7 +163,9 @@ export default function Hero({ demoPath }: { demoPath: string }) {
     }
     const leave = () => { target = { x: 0, y: 0 }; pointer.cy = -9999; schedule() }
     const resetLens = () => { centers = [] }
-    const onResize = () => { resetLens(); schedule() }
+    const onResize = () => { resetLens(); measure(); schedule() }
+    measure()
+    void document.fonts?.ready.then(() => { measure(); schedule() })
     read()
     write()
     window.addEventListener('scroll', schedule, { passive: true })
