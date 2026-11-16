@@ -4,6 +4,8 @@
 import type { FrameColor, MountType, PergolaConfig, PriceSettings, RoofType, SideType } from '../types/pergola'
 import type { ProductFamily } from '../products'
 import type { Currency } from '../lib/money'
+import type { PricingRules } from './pricingRules'
+import type { CrmSettings } from './crm'
 import type { Locale } from '../i18n/locale'
 
 export interface TenantRoof {
@@ -70,6 +72,10 @@ export interface Tenant {
   platformCredit?: boolean
   /** A vevői felület nyelve (alapértelmezés: magyar). A betöltéskor, az URL-ből dől el (src/i18n/bootLocale.ts). */
   locale?: Locale
+  /** Árazási szabályok: regionális felár és viszonteladói árrés (src/tenants/pricingRules.ts). */
+  pricingRules?: PricingRules
+  /** CRM-webhook: aláírt JSON-események a gyártó saját rendszerébe (server/webhook.ts). Csak a szerver látja. */
+  crm?: CrmSettings
   /** Pénznem: az egységárak, az ajánlat és minden e-mail ebben szerepel. EUR csak teraszfedéssel (a többi termék árazója HUF-os). */
   currency: Currency
   /** Nettó egységárak; a szerver is ebből számol. */

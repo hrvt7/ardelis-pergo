@@ -21,6 +21,12 @@ export const demoAtTenant: Tenant = {
   },
   platformCredit: false,
   locale: 'de',
+  // Bemutató árazási szabályok (kitalált értékek): távolsági felár a nyugati tartományokra, egy demó-viszonteladó.
+  // Kipróbálás: /k/demo-at?h=graz (árrés), az űrlapon Tirol/Vorarlberg kiválasztása (felár).
+  pricingRules: {
+    regionSurcharges: { Vorarlberg: { net: 490 }, Tirol: { net: 390 }, Salzburg: { net: 290 }, 'Kärnten': { net: 190 } },
+    dealers: [{ id: 'graz', name: 'Demo-Händler Graz', marginPercent: 12 }],
+  },
   currency: 'EUR',
   prices: {
     louveredPerM2Net: 420,

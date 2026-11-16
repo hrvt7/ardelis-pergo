@@ -9,6 +9,8 @@ import { SIDE_TYPES } from '../lib/sides'
 import { MONEY_FIELDS } from './priceFields'
 import { isBookingUrl } from '../lib/booking'
 import { normalizeConfig, priceSettingsSchema } from './rules'
+import { DEALER_ID_PATTERN } from './pricingRules'
+import { isAllowedWebhookUrl, WEBHOOK_EVENTS } from './crm'
 import type { Tenant, TenantRoof } from './types'
 import type { PriceSettings, RoofType, SideType } from '../types/pergola'
 
@@ -64,6 +66,25 @@ export const tenantOverridesSchema = z.object({
     height: z.tuple([z.number().min(1.8).max(6), z.number().min(1.8).max(6)]),
     maxHeaters: z.number().int().min(0).max(20),
   }).partial().refine((limits) => (['width', 'depth', 'height'] as const).every((key) => !limits[key] || limits[key]![0] < limits[key]![1]), 'A minimum kisebb kell legyen a maximumnál.').optional(),
+  /** Árazási szabályok: regionális felár (régiónként) és viszonteladói árrés (viszonteladónként). */
+  pricingRules: z.object({
+    regionSurcharges: z.record(text(80), z.object({
+      percent: z.number().min(0, 'A felár nem lehet negatív.').max(50, 'A regionális felár legfeljebb 50% lehet.').optional(),
+      net: z.number().int().min(0, 'A felár nem lehet negatív.').max(100_000_000).optional(),
+    })).optional(),
+    dealers: z.array(z.object({
+      id: text(40).regex(DEALER_ID_PATTERN, 'A viszonteladó azonosítója kisbetű, szám és kötőjel lehet (pl. graz).'),
+      name: text(80).min(1, 'A viszonteladó neve kötelező.'),
+      marginPercent: z.number().min(0, 'Az árrés nem lehet negatív.').max(100, 'Az árrés legfeljebb 100% lehet.'),
+      email: email.optional(),
+    })).max(200).refine((dealers) => new Set(dealers.map((dealer) => dealer.id)).size === dealers.length, 'Két viszonteladónak nem lehet azonos azonosítója.').optional(),
+  }).optional(),
+  /** CRM-webhook (csak a szerver és az admin látja; a böngészőbe nem kerül). */
+  crm: z.object({
+    webhookUrl: text(500).refine((value) => value === '' || isAllowedWebhookUrl(value), 'Csak nyilvános https:// cím adható meg.'),
+    secret: text(200),
+    events: z.array(z.enum(WEBHOOK_EVENTS)).max(WEBHOOK_EVENTS.length),
+  }).partial().refine((crm) => !crm.webhookUrl || (crm.secret ?? '').length >= 16, 'A webhookhoz legalább 16 karakteres titok kell (Generálás gomb).').optional(),
 })
 
 export type TenantOverrides = z.infer<typeof tenantOverridesSchema>
@@ -86,12 +107,23 @@ export function parseOverrides(input: unknown): { ok: true; data: TenantOverride
   return { ok: true, data }
 }
 
-/** Az ügyfél számára is látható rész: a lead-fogadók e-mail címei nem kerülnek a böngészőbe. */
-export function publicOverrides(overrides: TenantOverrides): TenantOverrides {
-  const { lead, installations, ...rest } = overrides
-  void lead
-  void installations
-  return rest
+/**
+ * Az ügyfél számára is látható rész. Nem kerül a böngészőbe: a lead-fogadók e-mail címei, a telepítési beállítások, a CRM-webhook (cím, titok),
+ * a viszonteladók e-mail címei, és a többi viszonteladó adata — egy viszonteladói link (`?h=`) csak a saját árrését kapja,
+ * viszonteladó nélkül egyiket sem.
+ */
+export function publicOverrides(overrides: TenantOverrides, dealerId?: string): TenantOverrides {
+  const { lead, installations, crm, pricingRules, ...rest } = overrides
+  void lead; void installations; void crm
+  if (!pricingRules) return rest
+  const dealer = dealerId ? pricingRules.dealers?.find((item) => item.id === dealerId) : undefined
+  return {
+    ...rest,
+    pricingRules: {
+      regionSurcharges: pricingRules.regionSurcharges,
+      dealers: dealer ? [{ id: dealer.id, name: dealer.name, marginPercent: dealer.marginPercent }] : [],
+    },
+  }
 }
 
 const defaultRoof = (roof: RoofType): TenantRoof => ({ name: ROOF_INFO[roof].name, short: ROOF_INFO[roof].short, description: ROOF_INFO[roof].description })
@@ -130,6 +162,11 @@ export function applyOverrides(base: Tenant, overrides: unknown): Tenant {
     mounts: o.mounts ?? base.mounts,
     limits: { ...base.limits, ...o.limits },
     extras: { ...base.extras, ...o.extras },
+    pricingRules: o.pricingRules ? {
+      regionSurcharges: o.pricingRules.regionSurcharges ?? base.pricingRules?.regionSurcharges,
+      dealers: (o.pricingRules.dealers ?? base.pricingRules?.dealers)?.map((dealer) => ({ ...dealer, email: dealer.email || undefined })),
+    } : base.pricingRules,
+    crm: o.crm ? { ...base.crm, ...o.crm, webhookUrl: o.crm.webhookUrl || undefined, secret: o.crm.secret || undefined } : base.crm,
     lead: {
       recipients: o.lead?.recipients ?? base.lead.recipients,
       subjectPrefix: o.lead?.subjectPrefix || base.lead.subjectPrefix,

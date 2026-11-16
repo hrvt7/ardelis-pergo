@@ -13,6 +13,8 @@ import { permitNotes } from '../src/lib/buildings'
 import { INTL_LOCALE, withLocale } from '../src/i18n/locale'
 import { describeConfig, escapeHtml, oneLine, sendEmail, siteOrigin } from './lead'
 import { authorize, json, resolveTenant, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
+import { discountFromPercent } from '../src/tenants/pricingRules'
+import { deliverWebhook, quoteEventData } from './webhook'
 
 export type QuoteStatus = 'sent' | 'accepted' | 'declined' | 'superseded' | 'withdrawn'
 
@@ -57,8 +59,10 @@ const createSchema = z.object({
   leadRef: z.string().trim().min(3).max(80),
   validDays: z.number().int().min(1).max(180).default(30),
   depositPercent: z.number().int().min(0).max(100).default(30),
-  /** Nettó engedmény (Ft), az ajánlat nettó végösszegéből. */
+  /** Nettó engedmény a gyártó pénznemében, az ajánlat nettó végösszegéből. */
   discountNet: z.number().int().min(0).max(100_000_000).default(0),
+  /** Százalékos engedmény a nettó végösszegből; ha meg van adva, ez számít (a szerver számolja ki az összeget). */
+  discountPercent: z.number().min(0).max(100).optional(),
   note: z.string().trim().max(2000).optional().default(''),
   paymentInfo: z.string().trim().max(600).optional(),
   terms: z.string().trim().max(3000).optional(),
@@ -182,6 +186,15 @@ const say = (tenant: Tenant, hu: string, de: string) => (tenant.locale === 'de' 
 const dateText = (tenant: Tenant, date: Date) => date.toLocaleDateString(INTL_LOCALE[tenant.locale ?? 'hu'])
 const dateTimeText = (tenant: Tenant, date: Date) => date.toLocaleString(INTL_LOCALE[tenant.locale ?? 'hu'])
 
+/** A CRM-webhook ajánlat-eseménye egy ajánlatsorból. */
+const quoteEvent = (tenant: Tenant, row: QuoteRow, url?: string) => quoteEventData({
+  tenant, number: row.number, version: row.version, label: quoteLabel(row), leadRef: row.lead_ref, status: row.status, url,
+  customer: { name: row.customer_name, email: row.customer_email, phone: row.customer_phone ?? null },
+  price: row.price, totalNet: row.total_net, totalGross: row.total_gross, discountNet: row.discount_net,
+  depositPercent: row.deposit_percent, depositGross: row.deposit_gross, validUntil: row.valid_until,
+  acceptedAt: row.accepted_at, signerName: row.signer_name, declinedAt: row.declined_at, declineReason: row.decline_reason,
+})
+
 const mailShell = (tenant: Tenant, title: string, body: string) => `<!doctype html><html lang="${tenant.locale ?? 'hu'}"><body style="margin:0;background:#f1f4f4;font-family:Arial,Helvetica,sans-serif;color:#233039">
 <div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:8px;padding:20px 24px">
 <p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">${escapeHtml(tenant.brand.name.toUpperCase())}</p>
@@ -195,7 +208,9 @@ async function notify(env: AdminEnv, tenant: Tenant, message: { to: string[]; su
 
 const ownerRecipients = (env: AdminEnv, tenant: Tenant) => (tenant.lead.recipients.length ? tenant.lead.recipients : (env.LEAD_FALLBACK_EMAIL ?? '').split(',').map((item) => item.trim()).filter(Boolean))
 
-const LEAD_FIELDS = 'ref,customer_name,email,phone,address,postal_code,city,config,status'
+const LEAD_FIELDS = 'ref,customer_name,email,phone,address,postal_code,city,region,config,status'
+/** A `dealer_id` oszlop újabb (supabase/leads.sql 4.79); ha még nincs az adatbázisban, nélküle olvasunk. */
+const LEAD_FIELDS_WITH_DEALER = `${LEAD_FIELDS},dealer_id`
 
 /** POST/GET/PATCH /api/admin-quotes — gyártói ajánlatkezelés (a belépési tokennel). */
 export async function handleAdminQuotes(request: Request, env: AdminEnv): Promise<Response> {
@@ -203,7 +218,8 @@ export async function handleAdminQuotes(request: Request, env: AdminEnv): Promis
   const auth = await authorize(request, env)
   if (auth instanceof Response) return auth
   if (!storeConfigured(env)) return json(503, { ok: false, error: 'Az adattár (Supabase) nincs beállítva, az ajánlatok nem érhetők el.' })
-  const { tenant } = auth
+  // A gyártó szerkesztett beállításaival (árak, árazási szabályok, CRM), ugyanúgy, mint a lead-végpont.
+  const tenant = (await resolveTenant(env, auth.tenant.id)) ?? auth.tenant
   const tenantId = encodeURIComponent(tenant.id)
   const origin = siteOrigin(request, env)
 
@@ -234,18 +250,21 @@ export async function handleAdminQuotes(request: Request, env: AdminEnv): Promis
     if (!parsed.success) return json(422, { ok: false, error: 'Kérlek, ellenőrizd az ajánlat adatait.', field: parsed.error.issues[0]?.path.join('.') ?? '' })
     const input = parsed.data
 
-    const leadResponse = await fetch(`${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/leads?ref=eq.${encodeURIComponent(input.leadRef)}&tenant_id=eq.${tenantId}&select=${LEAD_FIELDS}&limit=1`, { headers: storeHeaders(env), signal: timeout() })
+    const leadUrl = (fields: string) => `${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/leads?ref=eq.${encodeURIComponent(input.leadRef)}&tenant_id=eq.${tenantId}&select=${fields}&limit=1`
+    let leadResponse = await fetch(leadUrl(LEAD_FIELDS_WITH_DEALER), { headers: storeHeaders(env), signal: timeout() })
+    if (leadResponse.status === 400) leadResponse = await fetch(leadUrl(LEAD_FIELDS), { headers: storeHeaders(env), signal: timeout() })
     if (!leadResponse.ok) throw new Error(`Supabase ${leadResponse.status}`)
-    const lead = ((await leadResponse.json()) as { ref: string; customer_name: string; email: string; phone: string; address: string | null; postal_code: string; city: string; config: unknown; status: string }[])[0]
+    const lead = ((await leadResponse.json()) as { ref: string; customer_name: string; email: string; phone: string; address: string | null; postal_code: string; city: string; region?: string; dealer_id?: string | null; config: unknown; status: string }[])[0]
     if (!lead) return json(404, { ok: false, error: 'Az érdeklődő nem található.' })
 
     const config = parseConfig(tenant, lead.config)
     if (!config) return json(422, { ok: false, error: 'A konfiguráció már nem érvényes a gyártó jelenlegi beállításaival. Nyisd meg a tervet, és mentsd újra.' })
     // A tételek a gyártó nyelvén kerülnek az ajánlatba (a vevő ezt látja és ezt fogadja el).
-    const price = withLocale(tenant.locale ?? 'hu', () => tenantPrice(tenant, config))
+    // A lead régiójának felára és a viszonteladó árrése az ajánlatban is ugyanúgy érvényes, mint az érdeklődéskor.
+    const price = withLocale(tenant.locale ?? 'hu', () => tenantPrice(tenant, config, tenant.prices, { region: lead.region, dealerId: lead.dealer_id ?? undefined }))
 
-    // Engedmény: a nettó összegből; az ÁFÁ-s érték az árképpel azonos arányból jön.
-    const discountNet = Math.min(input.discountNet, price.totalNet)
+    // Engedmény: a nettó összegből (százalékból vagy összegként); az ÁFÁ-s érték az árképpel azonos arányból jön.
+    const discountNet = input.discountPercent !== undefined ? discountFromPercent(price.totalNet, input.discountPercent, tenant.currency) : Math.min(input.discountNet, price.totalNet)
     const totalNet = price.totalNet - discountNet
     const totalGross = price.totalNet > 0 ? Math.round(totalNet * (price.totalGross / price.totalNet)) : 0
     const depositGross = Math.round((totalGross * input.depositPercent) / 100)
@@ -308,6 +327,7 @@ export async function handleAdminQuotes(request: Request, env: AdminEnv): Promis
 <p style="font-size:12px;color:#62727a">Az oldalon áttekintheted a részleteket, és online el is fogadhatod az ajánlatot.</p>${contact ? `<p style="font-size:12px;color:#62727a">${contact}</p>` : ''}`),
       })
     }
+    await deliverWebhook(tenant, 'quote.sent', quoteEvent(tenant, created, url))
     return json(200, { ok: true, quote: adminView(created, origin), emailed, superseded: previous ? quoteLabel(previous) : null, configUrl: `${origin}/k/${tenant.id}#${shareHash(config)}` })
   } catch (error) {
     console.error('[quote] Ajánlatkezelés sikertelen', tenant.id, error)
@@ -400,6 +420,7 @@ export async function handleQuote(request: Request, env: AdminEnv): Promise<Resp
             : mailShell(tenant, 'Köszönjük, elfogadtad az ajánlatot!', `<p>Kedves ${escapeHtml(row.customer_name)}!</p><p>Az <strong>${escapeHtml(label)}</strong> számú ajánlatot elfogadtad (${escapeHtml(formatMoney(row.total_gross, tenant.currency))}, bruttó). A foglaló összege <strong>${escapeHtml(formatMoney(row.deposit_gross, tenant.currency))}</strong> (${row.deposit_percent}%).</p>${pay}<p>Hamarosan jelentkezünk a kivitelezés részleteivel.</p>${contact ? `<p style="font-size:12px;color:#62727a">${contact}</p>` : ''}`),
         }),
       ])
+      await deliverWebhook(tenant, 'quote.accepted', quoteEvent(tenant, { ...row, status: 'accepted', accepted_at: nowIso, signer_name: input.name }))
       return json(200, { ok: true, status: 'accepted', acceptedAt: nowIso })
     }
 
@@ -409,6 +430,7 @@ export async function handleQuote(request: Request, env: AdminEnv): Promise<Resp
       to: recipients, replyTo: row.customer_email, subject: oneLine(`${say(tenant, 'Elutasítva', 'Abgelehnt')}: ${label} – ${row.customer_name}`),
       html: mailShell(tenant, say(tenant, `${row.customer_name} elutasította az ajánlatot`, `${row.customer_name} hat das Angebot abgelehnt`), `<p><strong>${escapeHtml(label)}</strong> · ${escapeHtml(formatMoney(row.total_gross, tenant.currency))}</p>${input.reason ? `<p>${say(tenant, 'Indok', 'Grund')}: ${escapeHtml(input.reason)}</p>` : ''}<p style="font-size:12px;color:#62727a">Telefon: ${escapeHtml(row.customer_phone ?? '')} · E-mail: ${escapeHtml(row.customer_email)}</p>`),
     })
+    await deliverWebhook(tenant, 'quote.declined', quoteEvent(tenant, { ...row, status: 'declined', declined_at: nowIso, decline_reason: input.reason || null }))
     return json(200, { ok: true, status: 'declined' })
   } catch (error) {
     console.error('[quote] Ajánlat kezelése sikertelen', error)

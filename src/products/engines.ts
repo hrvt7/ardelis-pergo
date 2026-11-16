@@ -11,6 +11,7 @@ import { calculateOutdoorPrice, encodeOutdoorHash, OUTDOOR_PRICE_DEFAULTS, outdo
 import type { ProductFamily } from './index'
 import { calculateModularPrice, encodeModularHash, MODULAR_PRICE_DEFAULTS, modularHeadline, modularSpecRows, parseModularConfig, type ModularHouseConfig } from './modularHouse'
 import { calculateGaragePrice, encodeGarageHash, GARAGE_PRICE_DEFAULTS, garageHeadline, garageSpecRows, parseGarageConfig, type GarageConfig } from './garage'
+import type { PriceContext } from '../tenants/pricingRules'
 
 export interface ProductEngine<C = unknown> {
   id: ProductFamily
@@ -19,7 +20,8 @@ export interface ProductEngine<C = unknown> {
   /** Ismeretlen bemenetből (link, lead) érvényes, a gyártóhoz igazított konfiguráció — vagy null. */
   parse(tenant: Tenant, raw: unknown): C | null
   /** A gyártó árlistájából újraszámolt ár; a böngészőből érkező összeg sosem számít. */
-  price(tenant: Tenant, config: C): PriceBreakdown
+  /** `context`: a vevő régiója és a viszonteladó (csak a pergola árazza; a többi család figyelmen kívül hagyja). */
+  price(tenant: Tenant, config: C, context?: PriceContext): PriceBreakdown
   /** A konfiguráció megosztó-kódja a hash-be (`kulcs=kód`). */
   shareHash(config: C): string
   /** Egy soros fejléc a lead-e-mailbe és a vevői visszaigazolásba (pl. „Aero · 5,0 × 4,0 m”). A pergolánál a lead-végpont adja. */
@@ -32,7 +34,7 @@ export const pergolaEngine: ProductEngine<PergolaConfig> = {
   id: 'pergola',
   shareKey: 'c',
   parse: (tenant, raw) => parseConfig(tenant, raw),
-  price: (tenant, config) => tenantPrice(tenant, config),
+  price: (tenant, config, context) => tenantPrice(tenant, config, tenant.prices, context),
   shareHash: (config) => shareHash(config),
 }
 

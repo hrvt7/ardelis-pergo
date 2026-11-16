@@ -20,18 +20,20 @@ export interface TenantContextValue {
   embed: boolean
   /** Hová vigyen a „Kezdőlap” link; null esetén nem jelenik meg. */
   homeHref: string | null
+  /** Viszonteladói link (?h=): az árak már a viszonteladói egységárakkal számolnak; a lead ezt az azonosítót viszi. */
+  dealer?: { id: string; name: string }
 }
 
 const TenantContext = createContext<TenantContextValue | null>(null)
 
-export function TenantProvider({ tenant, admin, embed, homeHref, product = 'pergola', mode = 'demo', children }: Omit<TenantContextValue, 'labels' | 'product' | 'mode'> & { product?: ProductFamily; mode?: TenantContextValue['mode']; children: ReactNode }) {
+export function TenantProvider({ tenant, admin, embed, homeHref, dealer, product = 'pergola', mode = 'demo', children }: Omit<TenantContextValue, 'labels' | 'product' | 'mode'> & { product?: ProductFamily; mode?: TenantContextValue['mode']; children: ReactNode }) {
   // Egy oldal egy gyártót mutat: a felületi árformázás (formatPrice) az ő pénznemében fut.
   // Renderelés közben, a gyerekek előtt állítjuk, hogy már az első kép is jó pénznemmel készüljön.
   setDisplayCurrency(tenant.currency)
   // A nyelv a betöltéskor dől el (a szövegtárak már létrejöttek). Ha egy kattintás más nyelvű gyártóra
   // vitt (ritka: belső navigáció), egy teljes újratöltés hozza a jó nyelvet.
   if (typeof window !== 'undefined' && (tenant.locale ?? 'hu') !== getLocale()) window.location.reload()
-  const value = useMemo(() => ({ tenant, product, mode, labels: roofLabels(tenant), admin, embed, homeHref }), [tenant, product, mode, admin, embed, homeHref])
+  const value = useMemo(() => ({ tenant, product, mode, labels: roofLabels(tenant), admin, embed, homeHref, dealer }), [tenant, product, mode, admin, embed, homeHref, dealer])
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>
 }
 

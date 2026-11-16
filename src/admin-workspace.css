@@ -346,7 +346,6 @@
   .admin-ws .tr.install-tr > span:nth-child(2), .admin-ws .tr.install-tr > span:nth-child(3) { display: none; }
   .admin-ws .install-form fieldset { grid-template-columns: minmax(0, 1fr); }
 }
-=======
 /* ── 4.81: minden aloldal ugyanazzal a nyelvvel – nagy kártyák, monogramos kör, öt pötty, sarokkivágás ── */
 .ws-interest { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .ws-interest small { display: inline-flex; align-items: center; gap: 4px; color: var(--ws-muted); font-size: 13px; white-space: nowrap; }
@@ -427,3 +426,30 @@
 .admin-ws .card > header { margin-bottom: 14px; }
 .admin-ws .admin-section > h2 { font-size: 22px; font-weight: 500; letter-spacing: -.02em; }
 .admin-ws .who .only-narrow .ws-interest { flex-direction: row; align-items: center; gap: 10px; margin-top: 6px; }
+/* Árazási szabályok és CRM-kapcsolat (4.79) */
+.admin-ghost { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--ws-line, rgba(0,0,0,.12)); background: transparent; color: inherit; font: inherit; font-size: 14px; cursor: pointer; }
+.admin-ghost:hover:not(:disabled) { border-color: var(--ws-accent, #3B6E0F); }
+.admin-ghost:disabled { opacity: .45; cursor: not-allowed; }
+.admin-ghost.is-danger:hover { border-color: #ff8a80; color: #ff8a80; }
+.admin-rules-table { display: grid; gap: 8px; margin-top: 14px; }
+.admin-rules-head, .admin-rules-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, .8fr) minmax(0, 1fr); gap: 10px; align-items: center; }
+.admin-rules-head { color: var(--ws-muted, #666); font-size: 13px; }
+.admin-dealer { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--ws-line, rgba(0,0,0,.08)); }
+.admin-dealer label { display: grid; gap: 6px; font-size: 13px; }
+.admin-dealer-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-dealer-link { grid-column: 1 / -1; font-size: 12px; color: var(--ws-muted, #666); word-break: break-all; }
+.admin-secret { display: flex; gap: 8px; align-items: center; }
+.admin-secret input { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.admin-events { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+.admin-events legend { font-size: 14px; margin-bottom: 6px; }
+.admin-events code, .admin-crm-help code { font-size: 12px; opacity: .7; }
+.admin-crm-test { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-size: 14px; }
+.admin-crm-test .is-ok { color: var(--ws-accent, #3B6E0F); }
+.admin-crm-test .is-error { color: #ff8a80; }
+.admin-crm-help summary { cursor: pointer; font-size: 14px; }
+.admin-crm-help ol { padding-left: 20px; display: grid; gap: 8px; font-size: 14px; line-height: 1.5; }
+.admin-crm-help pre { overflow: auto; max-height: 320px; padding: 14px; border-radius: 14px; background: var(--ws-card-2, #f3f3f3); font-size: 12px; line-height: 1.5; }
+@media (max-width: 860px) {
+  .admin-dealer { grid-template-columns: 1fr 1fr; }
+  .admin-rules-head, .admin-rules-row { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr) minmax(0, 1fr); }
+}

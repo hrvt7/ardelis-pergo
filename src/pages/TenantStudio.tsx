@@ -1,9 +1,10 @@
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router'
 import NotFound from '@/pages/NotFound'
 import { DEFAULT_TENANT_ID, getTenant } from '@/tenants'
 import { TenantProvider } from '@/tenants/TenantContext'
 import { applyOverrides } from '@/tenants/overrides'
+import { dealerPrices, findDealer } from '@/tenants/pricingRules'
 import type { Tenant } from '@/tenants/types'
 import { DEFAULT_PRODUCT, HUB_SLUG, isHiddenProduct, productBySlug, productPath, PRODUCTS, tenantProducts, type ProductFamily } from '@/products'
 import { hasStudio, preloadStudio, ProductStudio } from '@/products/studios'
@@ -19,7 +20,7 @@ function PageLoading() {
  * betöltésével párhuzamosan fut, legfeljebb ~1,5 s-ot vár; hiba vagy időtúllépés esetén a kódban
  * lévő alapbeállítás érvényes. Így az ár nem „ugrik” a megnyitás után.
  */
-function useEffectiveTenant(base: Tenant | undefined, product: ProductFamily): Tenant | undefined | null {
+function useEffectiveTenant(base: Tenant | undefined, product: ProductFamily, dealerId: string | null): Tenant | undefined | null {
   const [state, setState] = useState<{ id: string; tenant: Tenant } | null>(null)
   const id = base?.id
   useEffect(() => {
@@ -28,13 +29,14 @@ function useEffectiveTenant(base: Tenant | undefined, product: ProductFamily): T
     void preloadStudio(product)
     const controller = new AbortController()
     const timer = window.setTimeout(() => controller.abort(), 1500)
-    fetch(`/api/tenant?id=${encodeURIComponent(id)}`, { signal: controller.signal })
+    // A viszonteladói link (?h=) a saját árrését kapja meg; a többi viszonteladó adata nem jön le.
+    fetch(`/api/tenant?id=${encodeURIComponent(id)}${dealerId ? `&h=${encodeURIComponent(dealerId)}` : ''}`, { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data: { overrides?: unknown } | null) => setState({ id, tenant: data?.overrides ? applyOverrides(base, data.overrides) : base }))
       .catch(() => setState({ id, tenant: base }))
       .finally(() => window.clearTimeout(timer))
     return () => { controller.abort(); window.clearTimeout(timer) }
-  }, [base, id, product])
+  }, [base, id, product, dealerId])
   if (!base) return undefined
   // Előnézeti buildben nincs szerver: az alapbeállítás érvényes.
   if (import.meta.env.VITE_PREVIEW_MODE === '1') return base
@@ -56,7 +58,12 @@ export default function TenantStudio({ mode }: { mode: 'demo' | 'standalone' | '
   const hub = params.product === HUB_SLUG
   // Termékcsalád az útvonalból; nincs megadva = pergola. Ismeretlen szelet, vagy olyan család, amit a gyártó nem kínál → 404.
   const product = params.product && !hub ? productBySlug(params.product) : { id: DEFAULT_PRODUCT, status: 'live' as const }
-  const tenant = useEffectiveTenant(base, product?.id ?? DEFAULT_PRODUCT)
+  const dealerId = search.get('h')
+  const loaded = useEffectiveTenant(base, product?.id ?? DEFAULT_PRODUCT, dealerId)
+  // Viszonteladói link: a konfigurátor minden ára (3D, összegzés, PDF) a viszonteladói egységárakkal számol;
+  // a lead a viszonteladó azonosítóját viszi, a szerver a gyártói alapárakból ugyanígy újraszámol.
+  const dealer = loaded ? findDealer(loaded.pricingRules, dealerId ?? undefined) : undefined
+  const tenant = useMemo(() => (loaded && dealer ? { ...loaded, prices: dealerPrices(loaded.prices, dealer.marginPercent, loaded.currency) } : loaded), [loaded, dealer])
   if (!base || !product) return <NotFound />
   // MVP: a félretett családok (carport, kerítés, garázskapu, kerti ház) régi linkjei és a választó – amikor csak egy család
   // maradt benne – a pergola konfigurátorra visznek.
@@ -69,7 +76,7 @@ export default function TenantStudio({ mode }: { mode: 'demo' | 'standalone' | '
   // A család Stúdiója (src/products/studios); amíg nincs, a „hamarosan” oldal.
   const live = product.status === 'live' && hasStudio(product.id)
   return (
-    <TenantProvider key={`${tenant.id}:${product.id}`} tenant={tenant} product={product.id} mode={mode} admin={search.get('admin') === '1'} embed={embed} homeHref={homeHref}>
+    <TenantProvider key={`${tenant.id}:${product.id}:${dealer?.id ?? ''}`} tenant={tenant} product={product.id} mode={mode} admin={search.get('admin') === '1'} embed={embed} homeHref={homeHref} dealer={dealer}>
       {hub ? <ProductHub /> : live ? <Suspense fallback={<PageLoading />}><ProductStudio id={product.id} /></Suspense> : <ProductSoon product={product.id} />}
     </TenantProvider>
   )

@@ -1,5 +1,18 @@
 # Változások
 
+## 4.82 – Árazási szabályok (regionális felár, viszonteladói árrés, %-os engedmény) és CRM-webhook
+
+- **Viszonteladói árrés:** a gyártó viszonteladónként saját linket ad (`…/k/:gyártó?h=:viszonteladó`, beágyazókóddal). Az árrés a gyártó egységáraira és ármátrixára kerül (nem a végösszegre), így a vevő tételes kalkulációja egységes, az árrés külön nem látszik. Egy viszonteladói link csak a saját árrését tölti le (`/api/tenant?h=`), a többiekét és az e-mail-címeket nem. A lead a viszonteladóval érkezik (e-mail tárgy, CRM), a viszonteladó másolatot kap, ha van e-mail-címe.
+- **Regionális felár:** régiónként (megye / Bundesland) százalékos és/vagy fix nettó felár, külön tételként, a telepítési arány nélkül. Az ajánlatkérő űrlapon a régió kiválasztása után azonnal látszik; ilyenkor a régió a kötelező mezők között van és nincs előre kiválasztva (a rejtett alapérték csendben rossz árat adott volna). A lead, az e-mail, a CRM és az ajánlat ugyanígy számol.
+- **Százalékos engedmény** az ajánlatnál (összeg vagy százalék; az összeget a szerver számolja).
+- **CRM-webhook:** aláírt JSON-események (`lead.created`, `quote.sent`, `quote.accepted`, `quote.declined`) a gyártó címére: HMAC-SHA256 aláírás időbélyeggel, 5 mp időkorlát, egy újrapróbálás 5xx/hálózati hibánál, átirányítás nem követve. Csak nyilvános https-cím (belső, privát, localhost, metaadat-cím tiltva). Make, n8n, Zapier közvetlenül; HubSpot ezeken át. A webhook hibája nem akasztja meg a leadet vagy az ajánlatot. Admin: cím, titok-generálás, események, tesztküldés mentés nélkül, minta-payload, Node-os ellenőrző kód, beállítási útmutató.
+- **Hiba: az ajánlat a kódban lévő alapárakkal számolt**, nem a gyártó adminban szerkesztett áraival (a lead már a szerkesztettekkel). Mostantól az ajánlatkezelő is a ráfésült beállításból számol.
+- **Hiba: feloldatlan git-ütközésjelző (`=======`) az admin CSS-ében** (4.81) — a `.ws-interest` szabály emiatt nem érvényesült. Eltávolítva, és új teszt figyeli az összes forrásfájlt.
+- **Adatbázis:** új, nem kötelező `leads.dealer_id` oszlop (`supabase/leads.sql`). Ha hiányzik, a lead nélküle mentődik, az ajánlat nélküle olvas.
+- **Bemutató:** `/k/demo-at?h=graz` (12% árrés), az űrlapon Tirol / Vorarlberg / Salzburg / Kärnten választásakor fix felár (kitalált bemutató értékek).
+- **Korlát:** az árazási szabályok csak a teraszfedés (pergola) árára vonatkoznak; az admin felülete magyar.
+- Tesztek: `pricing-rules.test.ts` (árrés és régiós felár számítása, HUF/EUR kerekítés, %-os engedmény, beállítás-ellenőrzés, böngészőbe kerülő adatok szűrése, SSRF-védelem, HMAC-aláírás Node-os ellenőrzéssel, újrapróbálás, tesztküldés, lead és ajánlat végponttól végpontig, régi adatbázis `dealer_id` nélkül, az ajánlat-árhiba), `no-conflict-markers.test.ts`.
+
 ## 4.81 – Gyártói admin: egységes kinézet minden aloldalon
 
 - **Érdeklődők – kanban:** a kártyák ugyanúgy néznek ki, mint az áttekintő „Új érdeklődők” kártyái: monogramos kör, település és tető, forrás-címkék, érdeklődés szintje és pontszáma öt pöttyel, irányár és idő, Vanilla hívásgomb, sarokkivágásban a részletek gomb. Az oszlopfej a munkaterület szakaszfeje (cím, darabszám, összérték), az oszlopok olvasható szélességűek, vízszintes sínen; a nevek nem vágódnak. A színes „áthelyezés” pöttyök kikerültek (áthelyezés húzással vagy a részletes panelen).

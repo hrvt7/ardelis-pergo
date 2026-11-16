@@ -27,6 +27,8 @@ export default function QuoteSection({ leadRef, api }: { leadRef: string; api: Q
   const [validDays, setValidDays] = useState(30)
   const [depositPercent, setDepositPercent] = useState(30)
   const [discountNet, setDiscountNet] = useState(0)
+  const [discountMode, setDiscountMode] = useState<'amount' | 'percent'>('amount')
+  const [discountPercent, setDiscountPercent] = useState(0)
   const [note, setNote] = useState('')
   const [paymentInfo, setPaymentInfo] = useState(readStored)
   const [sendEmail, setSendEmail] = useState(true)
@@ -37,7 +39,7 @@ export default function QuoteSection({ leadRef, api }: { leadRef: string; api: Q
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setBusy(true); setResult(null)
-    const response = await api.create({ leadRef, validDays, depositPercent, discountNet, note, paymentInfo, sendEmail })
+    const response = await api.create({ leadRef, validDays, depositPercent, discountNet: discountMode === 'amount' ? discountNet : 0, ...(discountMode === 'percent' ? { discountPercent } : {}), note, paymentInfo, sendEmail })
     setBusy(false)
     if (!response.ok) { setResult({ tone: 'error', text: response.error }); return }
     writeStored(paymentInfo)
@@ -76,7 +78,10 @@ export default function QuoteSection({ leadRef, api }: { leadRef: string; api: Q
       <div className="quote-admin-fields">
         <label>Érvényesség (nap)<input type="number" min={1} max={180} value={validDays} onChange={(event) => setValidDays(Math.max(1, Math.min(180, Number(event.target.value) || 1)))} /></label>
         <label>Foglaló (%)<input type="number" min={0} max={100} value={depositPercent} onChange={(event) => setDepositPercent(Math.max(0, Math.min(100, Number(event.target.value) || 0)))} /></label>
-        <label>Nettó engedmény ({priceSymbol()})<input type="number" min={0} step={priceInputStep()} value={discountNet} onChange={(event) => setDiscountNet(Math.max(0, Math.round(Number(event.target.value) || 0)))} /></label>
+        <label>Engedmény módja<select value={discountMode} onChange={(event) => setDiscountMode(event.target.value as 'amount' | 'percent')}><option value="amount">Összeg ({priceSymbol()})</option><option value="percent">Százalék (%)</option></select></label>
+        {discountMode === 'amount'
+          ? <label>Nettó engedmény ({priceSymbol()})<input type="number" min={0} step={priceInputStep()} value={discountNet} onChange={(event) => setDiscountNet(Math.max(0, Math.round(Number(event.target.value) || 0)))} /></label>
+          : <label>Engedmény a nettó végösszegből (%)<input type="number" min={0} max={100} step={0.5} value={discountPercent} onChange={(event) => setDiscountPercent(Math.max(0, Math.min(100, Number(event.target.value) || 0)))} /></label>}
       </div>
       <label>Üzenet a vevőnek <small>(az ajánlaton látszik)</small><textarea rows={2} maxLength={2000} value={note} onChange={(event) => setNote(event.target.value)} placeholder="pl. A kivitelezés a foglaló beérkezése után 6–8 héten belül." /></label>
       <label>Fizetési tudnivalók <small>(számlaszám, kedvezményezett — megjegyzi a böngésző)</small><textarea rows={2} maxLength={600} value={paymentInfo} onChange={(event) => setPaymentInfo(event.target.value)} placeholder="Kedvezményezett: …, Számlaszám: …, Közlemény: az ajánlat száma" /></label>

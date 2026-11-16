@@ -102,7 +102,7 @@ export async function handleTenantRequest(request: Request, env: AdminEnv): Prom
   if (!base) return json(404, { ok: false, error: 'Ismeretlen konfigurátor.' })
   const stored = await loadOverrides(env, base.id)
   const parsed = stored ? parseOverrides(stored) : null
-  return json(200, { ok: true, overrides: parsed?.ok ? publicOverrides(parsed.data) : null })
+  return json(200, { ok: true, overrides: parsed?.ok ? publicOverrides(parsed.data, new URL(request.url).searchParams.get('h') ?? undefined) : null })
 }
 
 const loginSchema = z.object({ tenantId: z.string().trim().min(1).max(64), password: z.string().max(200).default('') })

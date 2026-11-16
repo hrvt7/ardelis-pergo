@@ -41,3 +41,7 @@ alter table public.leads add column if not exists reminder_sent_at timestamptz;
 
 -- 3.91: termékcsalád (src/products); régi sorok = pergola.
 alter table public.leads add column if not exists product text not null default 'pergola';
+
+-- 4.79: viszonteladói link (…?h=graz) — a lead a viszonteladó azonosítóját viszi (árrés, másolat e-mail, CRM).
+-- Nem kötelező: ha az oszlop hiányzik, a lead nélküle mentődik (server/lead.ts), az ajánlat nélküle olvas (server/quotes.ts).
+alter table public.leads add column if not exists dealer_id text;

@@ -450,6 +450,7 @@ a { color: inherit; } svg { flex-shrink: 0; }
 .lead-wide { grid-column: 1 / -1; }
 .real-lead-form .lead-form-intro > span { display: flex; align-items: center; gap: 6px; color: var(--accent-primary); font-size: var(--text-sm); font-weight: 700; }
 .real-lead-form .lead-form-intro p, .real-lead-success p, .real-lead-success small { color: var(--text-secondary); font-size: var(--text-xs); line-height: 1.6; }
+.real-lead-form .lead-surcharge { grid-column: 1 / -1; margin: 0; padding: 8px 10px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--accent-primary) 40%, transparent); color: var(--text-primary); font-size: var(--text-xs); line-height: 1.5; }
 .real-lead-success { align-items: flex-start; }
 .real-lead-success .booking-cta { display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 10px; padding: 11px 16px; border-radius: var(--radius-lg); background: var(--accent-primary); color: #10140f; font-weight: 700; font-size: var(--text-sm); text-decoration: none; }
 .real-lead-success .booking-cta:hover { transform: translateY(-1px); }

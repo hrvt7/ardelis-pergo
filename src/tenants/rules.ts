@@ -9,6 +9,7 @@ import { normalizeColorCode, pickCatalogColor, supportsTwoTone } from '../lib/co
 import type { PergolaConfig, PriceBreakdown, PriceSettings, RoofType, SideKey } from '../types/pergola'
 import { availableBuildings, BUILDING_ROOFS, CONSERVATORY_SIDE_TYPES, defaultWallGlazing, wallGlazingOptions } from '../lib/buildings'
 import type { Tenant } from './types'
+import { applyRegionSurcharge, dealerPrices, findDealer, type PriceContext } from './pricingRules'
 
 const sideEnum = z.enum(['none', 'zip', 'glass', 'glassFramed', 'glassFixed', 'door', 'doorSliding', 'louver', 'slatAlu', 'slatWood'])
 
@@ -223,6 +224,13 @@ export function presetConfig(tenant: Tenant, patch: Partial<PergolaConfig>): Per
   return normalizeConfig(tenant, { ...tenant.defaultConfig, ...patch, sides: { ...tenant.defaultConfig.sides, ...patch.sides } })
 }
 
-export function tenantPrice(tenant: Tenant, config: PergolaConfig, prices: PriceSettings = tenant.prices): PriceBreakdown {
-  return calculatePrice(config, prices, roofLabels(tenant), tenant.currency)
+/**
+ * A gyártó ára egy konfigurációra. A `context` a vevő régiója (ajánlatkérő űrlap, lead, ajánlat) és a viszonteladó
+ * (link): a viszonteladói árrés az egységárakra kerül, a regionális felár külön tételként (src/tenants/pricingRules.ts).
+ */
+export function tenantPrice(tenant: Tenant, config: PergolaConfig, prices: PriceSettings = tenant.prices, context: PriceContext = {}): PriceBreakdown {
+  const dealer = findDealer(tenant.pricingRules, context.dealerId)
+  const effective = dealer ? dealerPrices(prices, dealer.marginPercent, tenant.currency) : prices
+  const price = calculatePrice(config, effective, roofLabels(tenant), tenant.currency)
+  return applyRegionSurcharge(price, tenant.pricingRules, context.region, effective, tenant.currency)
 }

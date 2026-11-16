@@ -28,6 +28,8 @@ import type { RoofType } from '@/types/pergola'
 import PriceMatrixEditor, { type MatrixDraft, type MatrixErrors } from '@/components/admin/PriceMatrixEditor'
 import { pointsToRows, validateMatrixRows } from '@/lib/priceMatrixEdit'
 import { DEFAULT_WARRANTY_MONTHS, WARRANTY_GROUPS, warrantyGroupLabel, type WarrantyMonths } from '@/lib/installations'
+import { CrmEditor, PricingRulesEditor } from '@/components/admin/SalesRules'
+import { crmDraftFrom, crmFromDraft, pricingDraftFrom, pricingRulesFromDraft } from '@/lib/salesRulesDraft'
 
 const RATE_FIELDS = [['customColorRate', 'Egyedi RAL felár'], ['woodColorRate', 'Fa hatású bevonat felára'], ['installationRate', 'Telepítési arány'], ['vatRate', 'ÁFA kulcs']] as const
 const EXTRA_FIELDS = [['led', 'LED-világítás'], ['speakers', 'Hangrendszer'], ['sensors', 'Szenzorcsomag'], ['solar', 'Napelemes tető'], ['rgb', 'RGB LED'], ['fans', 'Mennyezeti ventilátor'], ['smartHome', 'Okosotthon'], ['roofShade', 'Tetőárnyékoló']] as const
@@ -105,7 +107,7 @@ function AdminForTenant({ base }: { base: Tenant }) {
   if (overrides === undefined) return <main className="admin-page admin-ws"><p className="admin-card" role="status">Betöltés…</p></main>
 
   return <AdminShell base={base} token={token} overrides={overrides} onExpired={logout} onLogout={logout}>
-    <AdminEditor base={base} initial={overrides} storage={storage} saving={saving} message={message}
+    <AdminEditor base={base} token={token} initial={overrides} storage={storage} saving={saving} message={message}
       onSave={async (next) => {
       setSaving(true); setMessage(null)
       try {
@@ -267,7 +269,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
   </main>
 }
 
-function AdminEditor({ base, initial, storage, saving, message, onSave }: { base: Tenant; initial: TenantOverrides | null; storage: boolean; saving: boolean; message: { kind: 'ok' | 'error'; text: string } | null; onSave: (next: TenantOverrides) => void }) {
+function AdminEditor({ base, token, initial, storage, saving, message, onSave }: { base: Tenant; token: string; initial: TenantOverrides | null; storage: boolean; saving: boolean; message: { kind: 'ok' | 'error'; text: string } | null; onSave: (next: TenantOverrides) => void }) {
   // Az űrlap a kód + eddigi felülírások együttes (érvényes) állapotából indul.
   const effective = useMemo(() => (initial ? applyOverrides(base, initial) : base), [base, initial])
   const [brand, setBrand] = useState<Brand>(() => Object.fromEntries(BRAND_FIELDS.map(([key]) => [key, effective.brand[key] ?? ''])) as Brand)
@@ -286,6 +288,8 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
   const [limits, setLimits] = useState(() => ({ widthMin: effective.limits.width[0], widthMax: effective.limits.width[1], depthMin: effective.limits.depth[0], depthMax: effective.limits.depth[1], heightMin: effective.limits.height[0], heightMax: effective.limits.height[1], maxHeaters: effective.limits.maxHeaters }))
   const setLimit = (key: keyof typeof limits, value: string) => setLimits((current) => ({ ...current, [key]: Number(value) }))
   const [matrixRoof, setMatrixRoof] = useState<RoofType | null>(null)
+  const [pricing, setPricing] = useState(() => pricingDraftFrom(effective))
+  const [crm, setCrm] = useState(() => crmDraftFrom(effective))
   const [formError, setFormError] = useState('')
   const [warranty, setWarranty] = useState<WarrantyMonths>(() => ({ ...DEFAULT_WARRANTY_MONTHS, ...effective.installations?.warranty }))
   const [retentionMonths, setRetentionMonths] = useState(effective.installations?.retentionMonths ?? 120)
@@ -324,6 +328,9 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
       roofNames: Object.fromEntries(ROOF_TYPES.map((roof) => [roof, { name: roofNames[roof].name.trim(), short: roofNames[roof].short.trim() }])) as TenantOverrides['roofNames'],
       limits: { width: [limits.widthMin, limits.widthMax], depth: [limits.depthMin, limits.depthMax], height: [limits.heightMin, limits.heightMax], maxHeaters: limits.maxHeaters },
       installations: { warranty, retentionMonths },
+      // Az árazási szabályok és a CRM is a teljes beállítás része: nélkülük egy mentés törölné őket.
+      ...((rules) => (rules ? { pricingRules: rules } : {}))(pricingRulesFromDraft(pricing)),
+      ...((settings) => (settings ? { crm: settings } : {}))(crmFromDraft(crm)),
     }
     const checked = parseOverrides(next)
     if (!checked.ok) { setFormError(checked.error); return }
@@ -374,6 +381,10 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
         <PriceMatrixEditor roofs={ROOF_TYPES.filter((roof) => roofs.includes(roof))} value={matrix} errors={matrixErrors} active={matrixRoof} onActiveChange={setMatrixRoof}
           onChange={(roof, rows) => { setMatrix((current) => ({ ...current, [roof]: rows })); if (matrixErrors[roof]) setMatrixErrors((current) => ({ ...current, [roof]: undefined })) }} />
       </section>
+
+      <PricingRulesEditor tenant={effective} value={pricing} onChange={setPricing} symbol={unitLabel('Ft')} />
+
+      <CrmEditor value={crm} onChange={setCrm} token={token} />
 
       <Section title="Gyártható méretek">
         <label><span>Szélesség min. <small>m</small></span><input type="number" min="1" max="30" step="0.1" value={limits.widthMin} onChange={(event) => setLimit('widthMin', event.target.value)} /></label>

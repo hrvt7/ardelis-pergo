@@ -72,6 +72,8 @@ export interface QuoteDraft {
   validDays: number
   depositPercent: number
   discountNet: number
+  /** Százalékos engedmény; ha meg van adva, a szerver ebből számolja az összeget (a `discountNet` ekkor figyelmen kívül marad). */
+  discountPercent?: number
   note: string
   paymentInfo: string
   sendEmail: boolean

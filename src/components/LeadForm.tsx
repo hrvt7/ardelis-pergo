@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, useMemo } from 'react'
 import { track } from '@/lib/analytics'
 import { readEngagement } from '@/lib/engagement'
 import { ArrowRight, CalendarCheck, LockKeyhole, MapPin, ShieldCheck } from 'lucide-react'
@@ -7,6 +7,10 @@ import { useTenant } from '@/tenants/TenantContext'
 import { bookingLink } from '@/lib/booking'
 import { buyerProductName, firstInvalid, validateLead, type LeadFieldName } from '@/lib/leadValidation'
 import { localized, tr } from '../i18n/locale'
+import { applyRegionSurcharge, regionSurcharge } from '@/tenants/pricingRules'
+import { tenantPrice } from '@/tenants/rules'
+import { formatPrice } from '@/lib/money'
+import type { PergolaConfig } from '@/types/pergola'
 
 interface Props {
   productFamily: ProductFamily | 'garage-door' | 'modular-house'
@@ -33,7 +37,17 @@ const FIELD_NAMES: Record<string, string> = localized(() => ({
 }))
 
 export default function LeadForm({ productFamily, config, house }: Props) {
-  const { tenant, embed, product } = useTenant()
+  const { tenant, embed, product, dealer } = useTenant()
+  const hasRegionRules = productFamily === 'pergola' && Object.keys(tenant.pricingRules?.regionSurcharges ?? {}).length > 0
+  // Regionális felárnál nincs előre kiválasztott régió: a vevő maga választ (a rossz alapérték csendben rossz árat adna).
+  const [region, setRegion] = useState(() => (hasRegionRules ? '' : tenant.regions.includes('Vas') ? 'Vas' : tenant.regions[0]))
+  // Regionális felár (ha a gyártó beállította): a régió kiválasztása után azonnal látszik, és a szerver ugyanígy számol.
+  const surcharge = useMemo(() => {
+    if (productFamily !== 'pergola' || !regionSurcharge(tenant.pricingRules, region)) return null
+    const base = tenantPrice(tenant, config as PergolaConfig)
+    const withRegion = applyRegionSurcharge(base, tenant.pricingRules, region, tenant.prices, tenant.currency)
+    return { amountNet: withRegion.totalNet - base.totalNet, totalGross: withRegion.totalGross }
+  }, [productFamily, tenant, config, region])
   const booking = bookingLink(tenant)
   const startedAt = useRef(Date.now())
   const formRef = useRef<HTMLFormElement>(null)
@@ -60,6 +74,11 @@ export default function LeadForm({ productFamily, config, house }: Props) {
     const field = (name: string) => String(form.get(name) ?? '')
     const errors = validateLead({ customerName: field('customerName'), phone: field('phone'), email: field('email'), city: field('city'), consent })
     const first = firstInvalid(errors)
+    if (!first && hasRegionRules && !region) {
+      setError(tr('Kérlek, válaszd ki a megyét: ettől függ a regionális felár.', 'Bitte wählen Sie Ihr Bundesland – davon hängt der Regionalzuschlag ab.'))
+      event.currentTarget.querySelector<HTMLElement>('select[name=county]')?.focus()
+      return
+    }
     setFieldErrors(errors)
     if (first) {
       track(tenant.id, 'lead_error')
@@ -100,6 +119,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
           website: field('website'),
           elapsedMs: Date.now() - startedAt.current,
           source: embed ? 'embed' : tenant.demo ? 'demo' : 'standalone',
+          ...(dealer ? { dealer: dealer.id } : {}),
           pageUrl: embed && document.referrer ? document.referrer : window.location.origin + window.location.pathname,
           engagement: readEngagement(tenant.id),
         }),
@@ -132,9 +152,12 @@ export default function LeadForm({ productFamily, config, house }: Props) {
       <label><span>{tr('Telefon', 'Telefon')} *</span><input {...fieldProps('phone')} type="tel" autoComplete="tel" required minLength={6} maxLength={40} pattern="[+0-9 \(\)\/\-]{6,40}" title={tr('Csak számjegy, szóköz és + - / ( ) karakter', 'Nur Ziffern, Leerzeichen und + - / ( )')} placeholder={tr('+36 30 123 4567', '+43 664 1234567')} />{fieldError('phone')}</label>
       <label><span>E-mail *</span><input {...fieldProps('email')} type="email" autoComplete="email" required maxLength={320} pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title={tr('Pl. nev@email.hu', 'z. B. name@beispiel.at')} placeholder={tr('nev@email.hu', 'name@beispiel.at')} />{fieldError('email')}</label>
       <label><span>{tr('Település *', 'Ort *')}</span><input {...fieldProps('city')} autoComplete="address-level2" required minLength={2} maxLength={120} placeholder={tr('Település', 'Ort')} />{fieldError('city')}</label>
+      {/* Ha a gyártónak van regionális felára, a régió a kötelező mezők között van: a felár ettől függ, ne a rejtett alapértékből jöjjön. */}
+      {hasRegionRules && <label><span>{tr('Megye', 'Bundesland')} *</span><select name="county" autoComplete="address-level1" required value={region} onChange={(event) => setRegion(event.target.value)}><option value="" disabled>{tr('Válassz…', 'Bitte wählen…')}</option>{tenant.regions.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>}
+      {hasRegionRules && surcharge && <p className="lead-surcharge" role="status">{tr(`Regionális felár (${region}): +${formatPrice(surcharge.amountNet)} nettó · bruttó irányár ezzel: ${formatPrice(surcharge.totalGross)}`, `Regionalzuschlag (${region}): +${formatPrice(surcharge.amountNet)} netto · Richtpreis brutto damit: ${formatPrice(surcharge.totalGross)}`)}</p>}
     </div>
     <details className="lead-more"><summary>{tr('További adatok (nem kötelező)', 'Weitere Angaben (optional)')}</summary><div className="lead-grid">
-      <label><span>{tr('Megye', 'Bundesland')} *</span><select name="county" autoComplete="address-level1" required defaultValue={tenant.regions.includes('Vas') ? 'Vas' : tenant.regions[0]}>{tenant.regions.map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
+      {!hasRegionRules && <label><span>{tr('Megye', 'Bundesland')} *</span><select name="county" autoComplete="address-level1" required value={region} onChange={(event) => setRegion(event.target.value)}>{tenant.regions.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>}
       <label><span>{tr('Irányítószám', 'Postleitzahl')}</span><input name="postalCode" autoComplete="postal-code" maxLength={12} inputMode="numeric" placeholder="9600" /></label>
       <label className="lead-wide"><span>{tr('Cím / helyszín', 'Adresse / Standort')}</span><input name="address" autoComplete="street-address" maxLength={220} placeholder={tr('Utca, házszám', 'Straße, Hausnummer')} /></label>
       <label className="lead-wide"><span>{tr('Megjegyzés', 'Anmerkung')}</span><textarea name="notes" rows={3} maxLength={2000} placeholder={tr('Pl. várható kezdés, meglévő szerkezet, megközelítés…', 'z. B. geplanter Beginn, bestehende Konstruktion, Zufahrt…')} /></label>

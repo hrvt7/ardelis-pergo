@@ -28,6 +28,8 @@ import { hasPrivacyUrl } from '../src/tenants/privacy'
 import { scoreLead, TIER_LABELS } from '../src/lib/leadScore'
 import { bookingLink } from '../src/lib/booking'
 import type { PergolaConfig, PriceBreakdown, SideKey } from '../src/types/pergola'
+import { DEALER_ID_PATTERN, findDealer, type Dealer } from '../src/tenants/pricingRules'
+import { deliverWebhook, leadEventData } from './webhook'
 
 export type LeadEnv = Record<string, string | undefined>
 
@@ -59,6 +61,8 @@ const leadSchema = z.object({
   /** Mennyi ideig volt nyitva az űrlap a beküldésig (ms), a böngésző saját órájával mérve. */
   elapsedMs: z.number().int().nonnegative().max(1_000_000_000).optional(),
   source: z.enum(['demo', 'standalone', 'embed']).default('standalone'),
+  /** Viszonteladó a linkből (…?h=graz). Ismeretlen azonosító esetén a gyártói ár érvényes. */
+  dealer: z.string().trim().max(40).regex(DEALER_ID_PATTERN).optional(),
   pageUrl: z.string().max(2000).optional(),
   /** Viselkedési jelek a lead-pontozáshoz (PDF, AR, megosztás, lépések, visszatérés) — a vevő hozzájárulásával. */
   engagement: z.object({
@@ -72,6 +76,8 @@ export type LeadInput = z.infer<typeof leadSchema>
 export interface LeadRecord {
   ref: string
   tenant: Tenant
+  /** A link viszonteladója (ha a gyártónál létezik). */
+  dealer?: Dealer
   input: LeadInput
   /** A család motorja által érvényesített konfiguráció (pergola: PergolaConfig, kerítés: OutdoorConfig …). */
   config: unknown
@@ -168,6 +174,7 @@ function managerEmailHtmlIn(record: LeadRecord) {
     [tr('E-mail', 'E-Mail'), input.customer.email],
     [tr('Helyszín', 'Standort'), [input.customer.postalCode, input.customer.city, input.customer.address].filter(Boolean).join(' ')],
     [tr('Régió', 'Region'), input.customer.region],
+    ...(record.dealer ? [[tr('Viszonteladó', 'Händler'), record.dealer.name] as [string, string]] : []),
     ...(input.customer.notes ? [[tr('Megjegyzés', 'Anmerkung'), input.customer.notes] as [string, string]] : []),
     ...(input.house ? [[tr('A háza (3D alapján)', 'Haus (laut 3D)'), input.house] as [string, string]] : []),
   ]
@@ -235,7 +242,7 @@ export async function sendEmail(env: LeadEnv, message: { to: string[]; subject: 
   if (!response.ok) throw new Error(`Resend ${response.status}: ${(await response.text()).slice(0, 300)}`)
 }
 
-async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true, withProduct = true) {
+async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true, withProduct = true, withDealer = true): Promise<void> {
   const response = await fetch(`${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/leads`, {
     method: 'POST',
     headers: {
@@ -247,6 +254,7 @@ async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true
     body: JSON.stringify({
       ...(withEngagement && record.input.engagement ? { engagement: record.input.engagement } : {}),
       ...(withProduct ? { product: record.input.product } : {}),
+      ...(withDealer && record.dealer ? { dealer_id: record.dealer.id } : {}),
       ref: record.ref,
       tenant_id: record.tenant.id,
       source: record.input.source,
@@ -269,9 +277,11 @@ async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true
   if (!response.ok) {
     const detail = (await response.text()).slice(0, 300)
     // Ha a gyártó adatbázisában még nincs `engagement` oszlop (supabase/leads.sql), a lead ne vesszen el: mentés a jelek nélkül.
-    if (withEngagement && record.input.engagement && response.status === 400 && /engagement/.test(detail)) return storeLead(env, record, false, withProduct)
+    if (withEngagement && record.input.engagement && response.status === 400 && /engagement/.test(detail)) return storeLead(env, record, false, withProduct, withDealer)
     // Ugyanígy a `product` oszlop nélkül (régebbi tábla): a lead a családjelölés nélkül is elmentődik.
-    if (withProduct && response.status === 400 && /product/.test(detail)) return storeLead(env, record, withEngagement, false)
+    if (withProduct && response.status === 400 && /product/.test(detail)) return storeLead(env, record, withEngagement, false, withDealer)
+    // És a `dealer_id` oszlop nélkül (supabase/leads.sql 4.79): a lead a viszonteladó nélkül is elmentődik.
+    if (withDealer && record.dealer && response.status === 400 && /dealer_id/.test(detail)) return storeLead(env, record, withEngagement, withProduct, false)
     throw new Error(`Supabase ${response.status}: ${detail}`)
   }
 }
@@ -327,14 +337,16 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   if (limited) return json(429, { ok: false, error: say('Túl sok kérelem érkezett rövid idő alatt. Kérlek, próbáld újra néhány perc múlva.', 'Zu viele Anfragen in kurzer Zeit. Bitte in einigen Minuten erneut versuchen.') })
 
   // Az ártételek, a fejléc és a leírás a gyártó nyelvén (szinkron, await nélkül).
-  const price = withLocale(locale, () => engine.price(tenant, config))
+  const dealer = findDealer(tenant.pricingRules, input.dealer)
+  // Régiós felár és viszonteladói árrés: a szerver a gyártói alapárakból maga számolja (a böngésző ára csak tájékoztató).
+  const price = withLocale(locale, () => engine.price(tenant, config, { region: input.customer.region, dealerId: dealer?.id }))
   const configUrl = `${siteOrigin(request, env)}${productPath('standalone', tenant.id, input.product)}#${engine.shareHash(config)}`
   // A leírás a pergola (és carport) esetén itt készül, a többi családnál a motor adja.
   const pergola = engine.id === 'pergola' ? (config as PergolaConfig) : null
   const headline = withLocale(locale, () => pergola ? `${roofLabels(tenant)[pergola.roof]} · ${formatNumber(pergola.width, 2)} × ${formatNumber(pergola.depth, 2)} m` : engine.headline?.(tenant, config) ?? productInfo(input.product).label)
   const spec = pergola ? describeConfig(tenant, pergola, price) : engine.describe?.(tenant, config, price) ?? []
   const bom = withLocale(locale, () => pergola ? getBom(pergola).map((line) => [line.label, line.value] as [string, string]) : [])
-  const record: LeadRecord = { ref, tenant, input, config, price, configUrl, createdAt: now, headline, spec, bom }
+  const record: LeadRecord = { ref, tenant, dealer, input, config, price, configUrl, createdAt: now, headline, spec, bom }
 
   const recipients = tenant.lead.recipients.length ? tenant.lead.recipients : (env.LEAD_FALLBACK_EMAIL ?? '').split(',').map((item) => item.trim()).filter(Boolean)
   const canEmail = Boolean(env.RESEND_API_KEY && recipients.length)
@@ -352,11 +364,14 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   const results = await Promise.allSettled([
     canStore ? storeLead(env, record) : Promise.resolve('skipped'),
     canEmail ? sendEmail(env, {
-      to: recipients,
-      subject: oneLine(`${tenant.lead.subjectPrefix} ${input.customer.name} – ${input.customer.city} – ${formatMoney(price.totalGross, tenant.currency)}`),
+      // A viszonteladó a saját leadjeiről másolatot kap.
+      to: dealer?.email && !recipients.includes(dealer.email) ? [...recipients, dealer.email] : recipients,
+      subject: oneLine(`${tenant.lead.subjectPrefix}${dealer ? ` [${dealer.name}]` : ''} ${input.customer.name} – ${input.customer.city} – ${formatMoney(price.totalGross, tenant.currency)}`),
       html: managerEmailHtml(record),
       replyTo: input.customer.email,
     }) : Promise.resolve('skipped'),
+    // CRM-webhook (ha a gyártó bekapcsolta). Hibája nem akasztja meg a leadet.
+    deliverWebhook(tenant, 'lead.created', leadEventData({ ref, tenant, createdAt: now, product: input.product, source: input.source, dealerId: dealer?.id, customer: input.customer, headline, configUrl, pageUrl: input.pageUrl, spec, price })),
   ])
   const [stored, emailed] = results
   if (stored.status === 'rejected') console.error('[lead] Supabase mentés sikertelen', ref, stored.reason)
