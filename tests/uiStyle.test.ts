@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { glassViewShiftX, panelWidthFor, resolveUiStyle } from '../src/lib/uiStyle'
 
 describe('felületi stílus', () => {
-  it('a ?style= paraméter választ, különben a megjegyzett, végül a jelenlegi (soft)', () => {
+  it('a ?style= paraméter választ, különben a megjegyzett, végül az alapértelmezett világos (light)', () => {
     expect(resolveUiStyle('?style=glass', null)).toBe('glass')
     expect(resolveUiStyle('?style=soft', 'glass')).toBe('soft')
     expect(resolveUiStyle('', 'glass')).toBe('glass')
-    expect(resolveUiStyle('?style=valami', null)).toBe('soft')
-    expect(resolveUiStyle('', 'hibás')).toBe('soft')
+    expect(resolveUiStyle('?style=valami', null)).toBe('light')
+    expect(resolveUiStyle('', 'hibás')).toBe('light')
   })
   it('a panelszélesség a CSS töréspontjait követi', () => {
     expect(panelWidthFor(1440)).toBe(420)

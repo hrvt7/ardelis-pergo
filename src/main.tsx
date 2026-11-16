@@ -24,6 +24,7 @@ import '@fontsource-variable/inter/index.css'
 import '@fontsource-variable/manrope/index.css'
 // Üveges felületi változat (?style=glass): Outfit.
 import '@fontsource-variable/outfit/index.css'
+import '@fontsource-variable/urbanist/index.css'
 // Gyártói admin (világos felület): Poppins.
 import '@fontsource/poppins/400.css'
 import '@fontsource/poppins/500.css'

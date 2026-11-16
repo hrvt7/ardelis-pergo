@@ -41,7 +41,7 @@ import PanelPrice from '@/components/studio/PanelPrice'
 import CameraViewMenu from '@/components/studio/CameraViewMenu'
 import WalkOverlay from '@/components/studio/WalkOverlay'
 import { buildWalkArea } from '@/lib/walkArea'
-import { glassViewShiftX, resolveUiStyle, studioInitialTime, UI_STYLE_KEY, type UiStyle } from '@/lib/uiStyle'
+import { glassViewShiftX, resolveUiStyle, studioInitialTime, UI_STYLE_KEY, usesCyclorama, type UiStyle } from '@/lib/uiStyle'
 import { cameraViewsFor } from '@/lib/cameraViews'
 import { mobileBarAction } from '@/lib/configSteps'
 import { DEFAULT_USAGE, energyCostSupported, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
@@ -544,13 +544,13 @@ export default function PergoStudio() {
       }}>{modularMode ? (modular.step === 'summary' ? tr('Tovább tervezés', 'Weiter planen') : tr('Összegzés', 'Übersicht')) : mobileBarAction(step).label}<ChevronRight size={16} /></button></div>
   )
   return (
-    <div className={`app-shell layout-a ${modularMode ? '' : 'bar-in-panel'} ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''} ${uiStyle === 'studio' ? 'style-studio' : ''}`} style={panelLayout ? ({ '--panel-w': `${panelWidth}px`, '--side-w': `${panelWidth}px` } as CSSProperties) : undefined}>
+    <div className={`app-shell layout-a ${modularMode ? '' : 'bar-in-panel'} ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''} ${uiStyle === 'studio' ? 'style-studio' : ''} ${uiStyle === 'light' ? 'style-light' : ''}`} style={panelLayout ? ({ '--panel-w': `${panelWidth}px`, '--side-w': `${panelWidth}px` } as CSSProperties) : undefined}>
       <StudioHeader onHome={() => (modularMode ? modular.setView('perspective') : setView('perspective'))} canUndo={modularMode ? modular.canUndo : history.current.past.length > 0} canRedo={modularMode ? modular.canRedo : history.current.future.length > 0} onUndo={modularMode ? modular.undo : undo} onRedo={modularMode ? modular.redo : redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setModal('info')} onReset={() => (modularMode ? (window.confirm('Visszaállítod a modulházat az alapkonfigurációra?') && modular.reset()) : setModal('reset'))} />
 
       <main className="studio-shell" id="top">
         <section className={`viewer-panel ${scene.photoMode ? 'photo-preview' : ''}`} aria-label={tr('3D előnézet', '3D-Vorschau')}>
           {scene.photoMode && scene.photoUrl && <img className="photo-backdrop" src={scene.photoUrl} alt={tr('A feltöltött teraszfotó háttere', 'Hintergrund aus dem hochgeladenen Terrassenfoto')} />}
-          <PergolaScene cyclorama={uiStyle === 'studio'} config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={walking || modularMode ? undefined : handleSideSelect} onSceneChange={updateScene} modular={modularMode ? { config: modular.config, view: modular.view, dimensions: scene.showDimensions } : null} onShade={setShade} walk={walking} viewShiftX={viewShiftX} />
+          <PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={scene} view={view} focus={focus} viewShift={sheetView === 'half' && isNarrow && !landscapePhone ? 0.2 : 0} onSideSelect={walking || modularMode ? undefined : handleSideSelect} onSceneChange={updateScene} modular={modularMode ? { config: modular.config, view: modular.view, dimensions: scene.showDimensions } : null} onShade={setShade} walk={walking} viewShiftX={viewShiftX} />
           {walking && <WalkOverlay onExit={exitWalk} touch={coarsePointer || isNarrow} roofBlocked={walkRoofBlocked} />}
           {modularMode ? <div className="viewer-heading"><span>{tr('ÉLŐ ÉPÍTÉSZETI JELENET', 'LIVE-ARCHITEKTURSZENE')}</span><h1><span className="kinetic" key={modular.model.name}>{modular.model.name}</span> <i>/</i> <span className="kinetic">{modular.model.grossArea.toFixed(1).replace('.', ',')}</span><small> m²</small></h1><p>{modular.model.title} · {modular.model.footprint.width.toFixed(2).replace('.', ',')} × {modular.model.footprint.depth.toFixed(2).replace('.', ',')} m</p></div>
             : <div className="viewer-heading"><span>{scene.photoMode ? tr('SAJÁT TERASZ / ELŐNÉZET', 'EIGENE TERRASSE / VORSCHAU') : tr('ÉLŐ ÉPÍTÉSZETI JELENET', 'LIVE-ARCHITEKTURSZENE')}</span><h1><span className="kinetic" key={ROOF_LABELS[config.roof]}>{ROOF_LABELS[config.roof].split(' · ')[0]}</span> <i>/</i> <span className="kinetic" key={`w${config.width}`}>{config.width.toFixed(1).replace('.', ',')}</span><small> m</small></h1><p>{ROOF_LABELS[config.roof].split(' · ')[1]} · {config.depth.toFixed(1).replace('.', ',')} m {tr('mély', 'tief')}</p></div>}

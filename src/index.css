@@ -3265,3 +3265,107 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 /* 4) Tipográfia: egy betűcsalád, nagy, táblázatos ár. */
 .layout-a.style-studio { --font-display: 'Inter Variable', Inter, system-ui, sans-serif; }
 .layout-a.style-studio .panel-price-value > strong, .layout-a.style-studio .mobile-price-bar strong { font-variant-numeric: tabular-nums; letter-spacing: -.02em; font-weight: 600; }
+
+/* ============ Világos, pasztell felület („light”, alapértelmezett 4.55-től; a sötét: ?style=soft) ============
+   Urbanist betű, fehér kártyák nagy lekerekítéssel világosszürke alapon, fekete „pill” gombok, kerek nyíl-gombok,
+   pasztell kiemelések: Alice Blue #D8DFE9, Honeydew #CFDECA, Vanilla #EFF0A3, Eerie Black #212121, Ghost White #F6F5FA. */
+.layout-a.style-light {
+  --l-bg: #ECECEF; --l-card: #FFFFFF; --l-ghost: #F6F5FA; --l-blue: #D8DFE9; --l-green: #CFDECA; --l-vanilla: #EFF0A3; --l-ink: #212121; --l-muted: #6E7076; --l-line: rgba(33,33,33,.08);
+  --ink-1000: #ECECEF; --surface-app: var(--l-bg); --surface-panel: var(--l-ghost); --surface-card: var(--l-card); --surface-raised: #FFFFFF;
+  --surface-border: var(--l-line); --field-border: rgba(33,33,33,.16);
+  --text-primary: var(--l-ink); --text-secondary: var(--l-muted); --text-soft: #4A4C51;
+  --accent-primary: var(--l-ink); --accent-hover: #000; --accent-subtle: rgba(239,240,163,.55); --accent-selected: var(--l-vanilla);
+  --radius-sm: 14px; --radius-md: 18px; --radius-lg: 28px; --radius-xl: 32px;
+  --shadow-sm: 0 2px 10px rgba(33,33,33,.05); --shadow-md: 0 18px 40px -18px rgba(33,33,33,.18); --shadow-lg: 0 30px 70px -20px rgba(33,33,33,.18);
+  --font-ui: 'Urbanist Variable', Urbanist, system-ui, sans-serif; --font-display: 'Urbanist Variable', Urbanist, system-ui, sans-serif;
+  color: var(--l-ink); background: var(--l-bg); color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+}
+.layout-a.style-light .app-header { background: var(--l-bg); border-bottom: 0; }
+.layout-a.style-light .brand svg path, .layout-a.style-light .brand { color: var(--l-ink); }
+.layout-a.style-light .project-identity > span { color: var(--l-muted); letter-spacing: .02em; text-transform: none; font-weight: 500; }
+/* Fejléc gombjai: fehér kör, vékony árnyék; a szöveges gombok fehér pillek. */
+.layout-a.style-light .header-actions button, .layout-a.style-light .history-actions button { background: var(--l-card); border: 0; color: var(--l-ink); box-shadow: var(--shadow-sm); }
+.layout-a.style-light .header-actions button:disabled, .layout-a.style-light .history-actions button:disabled { opacity: .45; }
+/* 3D nézet keret: nagy lekerekítés, a háttér világos stúdió. */
+.layout-a.style-light .viewer-panel { border-radius: var(--radius-xl); background: #E9EBEF; }
+.layout-a.style-light .viewer-heading > span, .layout-a.style-light .viewer-footer, .layout-a.style-light .config-head, .layout-a.style-light .step-heading > span { display: none; }
+.layout-a.style-light .viewer-heading h1 { color: var(--l-ink); text-shadow: none; font-weight: 400; letter-spacing: -.035em; }
+.layout-a.style-light .viewer-heading h1 i { color: rgba(33,33,33,.25); }
+.layout-a.style-light .viewer-heading h1 .kinetic, .layout-a.style-light .viewer-heading h1 small { color: var(--l-ink); }
+.layout-a.style-light .viewer-heading p { background: var(--l-card); color: var(--l-ink); box-shadow: var(--shadow-sm); border-radius: 999px; }
+.layout-a.style-light .studio-home-link { color: var(--l-muted); }
+/* Eszközsor: egy fehér pill, az aktív gomb fekete kör fehér ikonnal. */
+.layout-a.style-light .weather-toolbar { gap: 2px; padding: 5px; border-radius: 999px; background: rgba(255,255,255,.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: var(--shadow-md); border: 0; }
+.layout-a.style-light .weather-toolbar button, .layout-a.style-light .weather-toolbar .camera-menu-toggle { border: 0; background: transparent; color: var(--l-ink); box-shadow: none; border-radius: 999px; }
+.layout-a.style-light .weather-toolbar button:hover { background: var(--l-ghost); color: var(--l-ink); border: 0; }
+.layout-a.style-light .weather-toolbar button.selected { background: var(--l-ink); color: #fff; border: 0; }
+/* Beállítópanel: Ghost White kártya nagy sarkokkal, a lépések pill-sávban. */
+.layout-a.style-light .controls-panel { background: var(--l-ghost); border: 0; box-shadow: var(--shadow-lg); border-radius: var(--radius-xl); }
+.layout-a.style-light .control-tabs { background: var(--l-card); border: 0; box-shadow: var(--shadow-sm); }
+.layout-a.style-light .control-tabs button { color: var(--l-muted); }
+.layout-a.style-light .control-tabs button.active { background: var(--l-ink); color: #fff; }
+.layout-a.style-light .control-tabs button.active .step-dot, .layout-a.style-light .control-tabs button.active > span:first-child { background: var(--l-vanilla); color: var(--l-ink); }
+.layout-a.style-light .control-tabs button.done .step-dot, .layout-a.style-light .control-tabs button.complete .step-dot { background: var(--l-green); color: var(--l-ink); border-color: transparent; }
+.layout-a.style-light .step-heading h2 { font-weight: 400; font-size: 34px; letter-spacing: -.035em; color: var(--l-ink); }
+.layout-a.style-light .controls-scroll h3, .layout-a.style-light .control-section h3 { font-weight: 600; color: var(--l-ink); }
+/* Kártyák (tető, épülettípus, opciók): fehér, nagy sarok, árnyék; a kiválasztott Vanilla háttér + fekete gyűrű. */
+.layout-a.style-light .roof-card, .layout-a.style-light .building-card, .layout-a.style-light .advisor-card, .layout-a.style-light .summary-more, .layout-a.style-light .showroom, .layout-a.style-light .summary-section { background: var(--l-card); border: 0; border-radius: 24px; box-shadow: var(--shadow-sm); }
+.layout-a.style-light .roof-card.selected, .layout-a.style-light .building-card.selected { background: var(--l-vanilla); box-shadow: inset 0 0 0 1.5px var(--l-ink); border: 0; }
+.layout-a.style-light .roof-card.selected::after { display: none; }
+.layout-a.style-light .roof-card.selected .roof-card-head em, .layout-a.style-light .building-card.selected .building-card-head em { color: var(--l-ink); }
+.layout-a.style-light .building-card.selected .building-icon, .layout-a.style-light .building-card.selected .building-icon .bi-car, .layout-a.style-light .building-icon { stroke: var(--l-ink); }
+.layout-a.style-light .building-card-traits > *, .layout-a.style-light .building-season { border: 1px solid rgba(33,33,33,.18); background: transparent; color: var(--l-ink); border-radius: 999px; }
+.layout-a.style-light .advisor-card { background: var(--l-green); }
+.layout-a.style-light .advisor-card-icon { background: var(--l-ink); color: #fff; }
+/* Gombok: elsődleges = fekete pill fehér szöveggel; másodlagos = körvonalas pill. */
+.layout-a.style-light .next-step, .layout-a.style-light .mobile-price-bar button, .layout-a.style-light .lead-submit, .layout-a.style-light .primary-button, .layout-a.style-light .admin-save { background: var(--l-ink); color: #fff; border: 0; border-radius: 999px; box-shadow: none; }
+.layout-a.style-light .next-step:hover, .layout-a.style-light .mobile-price-bar button:hover, .layout-a.style-light .lead-submit:hover { background: #000; color: #fff; }
+.layout-a.style-light .step-navigation button:not(.next-step), .layout-a.style-light .panel-price-details { background: transparent; border: 1px solid rgba(33,33,33,.2); color: var(--l-ink); border-radius: 999px; }
+/* Ár-dokk: fehér kártya, nagy könnyű számjegyek. */
+.layout-a.style-light .panel-dock { background: var(--l-card); border: 0; box-shadow: var(--shadow-md); border-radius: 26px; }
+.layout-a.style-light .panel-price-value > strong, .layout-a.style-light .mobile-price-bar strong { font-weight: 400; letter-spacing: -.03em; color: var(--l-ink); font-variant-numeric: tabular-nums; }
+.layout-a.style-light .panel-price-value > span, .layout-a.style-light .mobile-price-bar span { color: var(--l-muted); }
+/* Mezők, csúszkák, szegmensek. */
+.layout-a.style-light input, .layout-a.style-light select, .layout-a.style-light textarea { background: var(--l-card); color: var(--l-ink); border-color: rgba(33,33,33,.14); }
+.layout-a.style-light .segmented, .layout-a.style-light .number-with-unit, .layout-a.style-light .price-mode { background: var(--l-card); border: 0; box-shadow: var(--shadow-sm); }
+.layout-a.style-light .segmented button.active, .layout-a.style-light .segmented button.selected, .layout-a.style-light .segmented [aria-pressed="true"] { background: var(--l-ink); color: #fff; }
+.layout-a.style-light input[type="range"] { accent-color: var(--l-ink); background: transparent; }
+.layout-a.style-light .inline-link { color: var(--l-ink); }
+@media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse), (orientation: portrait) and (max-width: 1100px) {
+  .layout-a.style-light .controls-panel { border-radius: 30px; }
+  .layout-a.style-light .controls-panel > .mobile-price-bar { background: transparent; border-top-color: var(--l-line); }
+  .layout-a.style-light .sheet-toggle { color: var(--l-ink); border-bottom-color: var(--l-line); }
+  .layout-a.style-light .sheet-handle { background: rgba(33,33,33,.18); }
+}
+/* Világos felület: a Lamelix logó sötét változata (a világos fehér jel eltűnne a világos alapon). */
+.layout-a.style-light .tenant-mark-lamelix [fill="#F3F2EC"] { fill: #212121; }
+.layout-a.style-light .tenant-mark-lamelix [fill="#D8FF72"] { fill: #5E8C0A; }
+.layout-a.style-light .brand span strong, .layout-a.style-light .brand span small { color: var(--l-ink); }
+/* Szín lépés: „Pergola / A házad” választó és a terv neve mező világosan. */
+.layout-a.style-light .half-tabs { padding: 4px; border-radius: 999px; background: var(--l-card); box-shadow: var(--shadow-sm); }
+.layout-a.style-light .half-tabs button { border: 0; border-radius: 999px; background: transparent; color: var(--l-ink); }
+.layout-a.style-light .half-tabs button.selected { background: var(--l-ink); color: #fff; }
+.layout-a.style-light .half-tabs button.selected small { color: rgba(255,255,255,.7); }
+.layout-a.style-light .showroom-name { background: var(--l-ghost); border: 1px solid var(--l-line); border-radius: 999px; color: var(--l-muted); }
+.layout-a.style-light .showroom-name input { background: transparent; border: 0; }
+.layout-a.style-light .studio-home-link { color: var(--l-muted); opacity: .8; }
+/* Világos felület: betöltés közben is világos (fehér kártya, világos poszter), nem sötét olívzöld. */
+.layout-a.style-light .scene-poster { background: #E9EBEF; }
+.layout-a.style-light .scene-poster-image { filter: saturate(.5) brightness(1.15) contrast(.85); opacity: .35; }
+.layout-a.style-light .branded-loader { background: rgba(255,255,255,.92); border: 0; box-shadow: var(--shadow-lg); border-radius: 28px; color: var(--l-ink); }
+.layout-a.style-light .branded-loader .tenant-mark-lamelix [fill="#F3F2EC"], .layout-a.style-light .branded-loader [fill="#F3F2EC"] { fill: #212121; }
+.layout-a.style-light .branded-loader .loader-track { background: var(--l-blue); }
+.layout-a.style-light .branded-loader .loader-track > span { background: var(--l-ink); }
+.layout-a.style-light .branded-loader strong { color: var(--l-ink); }
+/* A „Pergola / A házad” választó (szín lépés): fehér pill, a kiválasztott Vanilla. */
+.layout-a.style-light .half-tabs.color-targets button, .layout-a.style-light .half-tabs.color-targets button:hover { border: 0; background: transparent; color: var(--l-ink); }
+.layout-a.style-light .half-tabs.color-targets button.selected { background: var(--l-vanilla); color: var(--l-ink); box-shadow: inset 0 0 0 1.5px var(--l-ink); }
+.layout-a.style-light .half-tabs.color-targets button small { color: var(--l-muted); }
+.layout-a.style-light .color-targets .target-swatch { box-shadow: inset 0 0 0 1px rgba(33,33,33,.2); }
+/* Szín lépés felső „Pergola / A házad” választója (color-tabs): fehér pill, a kiválasztott Vanilla fekete gyűrűvel. */
+.layout-a.style-light .color-tabs { background: var(--l-card); border: 0; box-shadow: var(--shadow-sm); border-radius: 999px; padding: 4px; }
+.layout-a.style-light .color-tabs button { background: transparent; border: 0; color: var(--l-ink); border-radius: 999px; }
+.layout-a.style-light .color-tabs button.active, .layout-a.style-light .color-tabs button.selected, .layout-a.style-light .color-tabs button[aria-selected="true"] { background: var(--l-vanilla); color: var(--l-ink); box-shadow: inset 0 0 0 1.5px var(--l-ink); }
+.layout-a.style-light .color-tabs small { color: var(--l-muted); }
+.layout-a.style-light .studio-home-link { color: var(--l-muted); text-shadow: none; }

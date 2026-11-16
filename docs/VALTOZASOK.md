@@ -1,5 +1,14 @@
 # Változások
 
+## 4.57 – Világos, pasztell konfigurátor-felület (alapértelmezett)
+
+- **Új, világos, pasztell felület a konfigurátorban (alapértelmezett):** a kért referenciák alapján Urbanist betű; világosszürke alap; Ghost White panel és fehér kártyák nagy (24–32 px) lekerekítéssel és puha árnyékkal; fekete „pill” fő gombok fehér felirattal, körvonalas másodlagos gombok; pasztell kiemelések: Vanilla (#EFF0A3) a kiválasztott kártyán, Honeydew (#CFDECA) a tanácsadón és a kész lépéseken, Alice Blue (#D8DFE9) a betöltősávon. A lépéssávban az aktív lépés fekete pill vanília számmal. A „Pergola / A házad” választó és a jelenet eszközsora fehér pill.
+- **3D jelenet:** világos, kékesszürke stúdióháttér, semleges nappali fény; a betöltő kártya és a poszter is világos.
+- **Kevesebb címke:** kicker-feliratok, léptékjelzés és „Konfiguráció 01/07” sor nélkül; a Lamelix logó sötét változata.
+- A korábbi sötét felület továbbra is elérhető: `?style=soft` (a választást a böngésző megjegyzi).
+- Új függőség: `@fontsource-variable/urbanist` (a kért Urbanist betű, helyben kiszolgálva, külső betűszerver nélkül).
+- Tesztek: `studioStyle.test.ts`, `uiStyle.test.ts` (alapértelmezett stílus, paletta, betű, gombok, világos stúdióháttér).
+
 ## 4.56 – Javítás: iPaden play-jel jelent meg a nyitó animáción, rákoppintva a konfigurátor jött
 
 - **Hiba:** ha az iPad tiltja a videók automatikus lejátszását (energiatakarékos mód, vagy Kisegítő lehetőségek → Mozgás → „Videók automatikus lejátszása” kikapcsolva), az iOS a videóra a saját play-jelét tette; a videó nem indult, és a 3D elkészültekor a nyitókép bezárult.
