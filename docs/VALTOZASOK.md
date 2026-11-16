@@ -7,6 +7,7 @@
 - **Részletes panel:** nagy monogram, a pontszám mellett az öt pötty, az állapotgombok egyforma rácsban.
 - **Beágyazás és beállítások:** ugyanaz a kártya- és szakaszcím-lépték, mint az áttekintőn.
 - **Hiba:** az előző beadásnál (f39a463) ütközésjelölő maradt az `admin-workspace.css`-ben, ezért a Vercel build elbukott; javítva, a párhuzamos „Telepítések” stílusai megmaradtak.
+- A kanbankártyán az érdeklődés szintje balra, a pöttyök jobbra, nem csúsznak össze.
 - Tesztek: `adminWorkspace.test.ts` (közös érdeklődés-jelző, kanbankártya, oszlopszélesség).
 ## 4.80 – Telepítések 3/6: tulajdonosi oldal (/t/:token)
 

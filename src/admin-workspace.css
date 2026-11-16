@@ -421,7 +421,7 @@
 @media (min-width: 1180px) { .admin-ws .board { grid-template-columns: none; overflow-x: auto; } }
 .admin-ws .board-col { scroll-snap-align: start; }
 .admin-ws .board-card .bc-meta { flex-direction: column; align-items: stretch; gap: 12px; }
-.admin-ws .board-card .ws-interest { flex-direction: row; align-items: center; justify-content: space-between; }
+.admin-ws .board-card .ws-interest { display: flex; width: 100%; flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
 /* Kártyacímek mindenhol a munkaterület szakaszcímének léptékén (beágyazás, áttekintő kártyái) */
 .admin-ws .card > header h2, .admin-ws .card > header h3 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -.02em; color: var(--ws-text); }
 .admin-ws .card > header { margin-bottom: 14px; }
