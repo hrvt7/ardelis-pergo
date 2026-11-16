@@ -6,7 +6,6 @@
 - Az új videó egyszerűbb grafika, így kisebb is: videó 0,47 MB (eddig 2,8 MB), animált tartalék 0,2 MB (eddig 1,7 MB); jobb minőséggel kódolva (a sötét háttér színátmenete nem sávosodik). A nyitókép háttérszíne az új videóhoz igazítva.
 - Új: `scripts/intro-assets.sh <forrás.mp4>` – egy paranccsal előállítja a négy fájlt (videó, dekóder-index, animált tartalék, logós állókép) a következő cseréhez.
 - Tesztek: `introSplash.test.ts` (240 képkocka, 10 mp, az index a videóhoz tartozik), `tests/e2e/intro.cjs`: zöld; a dekóderes út Chrome-ban és a Safari motorjában is végigfut (10,3–10,6 mp).
-- Kapu: a `landingV2.test.ts` egy tesztje a mostani main-en is piros (a nyitóoldal képsorozata, `public/assets/landing/build/`, a `.gitignore` `build/` szabálya miatt nincs a repóban, élesben 404) – nem ennek a változtatásnak a része.
 - Nem ellenőrzött: valódi iPhone-on és iPaden.
 
 ## 4.65 – Héró „Felhők felett”: kéz a telefonnal, betűnkénti cím, ráközelítés a képernyőre
