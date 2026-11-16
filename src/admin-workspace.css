@@ -297,3 +297,22 @@
 /* Finomítás a render után: a kiemelt kártyán is látszik az állapotpötty, a teendő címe egy sorban marad */
 .ws-task.is-hero .ws-status i { box-shadow: 0 0 0 1.5px var(--ws-ink); }
 .ws-task-body h3 { font-size: clamp(22px, 1.75vw, 26px); }
+
+/* UX-kör, 2. forduló: egyetlen Vanilla kiemelés (a legfontosabb teendő), csendes lejárt-jelölés, kanban-fej egy sorban,
+   állapotgombok vágás nélkül, olvasható apró szöveg, mobilon a teendők a számok előtt */
+.ws-stat.is-value strong { color: var(--ws-accent); }
+.ws-late { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: rgba(239,240,163,.12); color: var(--ws-accent) !important; font-size: 13px; }
+.ws-task.is-hero .ws-late { background: rgba(18,18,18,.1); color: var(--ws-ink) !important; }
+.ws-task header { padding-right: 56px; }
+.admin-ws .board-col header { flex-wrap: nowrap; min-width: 0; }
+.admin-ws .board-col header h3 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-ws .board-card .bc-top b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-ws .status-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); overflow: visible; }
+.admin-ws .status-chips button { width: 100%; }
+.admin-ws .pipe-stages small, .admin-ws .pipe-forecast small, .admin-ws .chart-note { color: var(--ws-muted); font-size: 13px; }
+.admin-ws .score-box small { display: block; font-size: 13px; line-height: 1.5; }
+@media (max-width: 860px) {
+  .ws-stats { order: 2; }
+  .ws-stat em { font-size: 12.5px; }
+  .admin-ws .tr small.only-narrow { font-size: 13px; line-height: 1.45; }
+}

@@ -39,7 +39,7 @@ export function todayTasks(leads: LeadRow[], now: number): Task[] {
     const days = age(lead)
     if (lead.status === 'new') return [{ lead, title: 'Első hívás', why: days < 1 ? 'Ma érkezett' : `${Math.floor(days)} napja vár`, overdue: days >= 2, weight: 3 + days }]
     if (lead.status === 'contacted' && days > 3) return [{ lead, title: 'Utánkövetés', why: 'Még nincs ajánlat', overdue: days > 5, weight: 2 }]
-    if (lead.status === 'offered' && days > 5) return [{ lead, title: 'Ajánlat nyomon követése', why: `${Math.floor(days)} napja kiment`, overdue: days > 7, weight: 2.5 }]
+    if (lead.status === 'offered' && days > 5) return [{ lead, title: 'Ajánlat követése', why: `${Math.floor(days)} napja kiment`, overdue: days > 7, weight: 2.5 }]
     return []
   }).sort((a, b) => b.weight - a.weight)
 }

@@ -13,31 +13,8 @@ import Workspace from '@/components/admin/Workspace'
 const compactHuf = (value: number) => (getDisplayCurrency() === 'HUF' && value >= 1_000_000 ? `${(value / 1_000_000).toLocaleString('hu-HU', { maximumFractionDigits: 1 })} M Ft` : formatPrice(value))
 const shortDate = (day: string) => new Date(`${day}T12:00:00`).toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' })
 
-/**
- * Sima, monoton görbe a pontokon át (Fritsch–Carlson): nem lő túl a pontokon,
- * így nulla napnál sem bukik a tengely alá, és csúcsot sem talál ki.
- */
-function smoothPath(points: [number, number][]) {
-  const n = points.length
-  if (n < 2) return ''
-  const dx = points.slice(1).map((point, i) => point[0] - points[i][0])
-  const slope = points.slice(1).map((point, i) => (point[1] - points[i][1]) / (dx[i] || 1))
-  const tangent = points.map((_, i) => {
-    if (i === 0) return slope[0]
-    if (i === n - 1) return slope[n - 2]
-    const a = slope[i - 1]
-    const b = slope[i]
-    return a * b <= 0 ? 0 : (3 * (dx[i - 1] + dx[i])) / ((2 * dx[i] + dx[i - 1]) / a + (dx[i] + 2 * dx[i - 1]) / b)
-  })
-  let path = `M${points[0][0]},${points[0][1]}`
-  for (let i = 0; i < n - 1; i++) {
-    const [x0, y0] = points[i]
-    const [x1, y1] = points[i + 1]
-    const h = dx[i] / 3
-    path += ` C${x0 + h},${y0 + tangent[i] * h} ${x1 - h},${y1 - tangent[i + 1] * h} ${x1},${y1}`
-  }
-  return path
-}
+// Egyenes szakaszok a napi egész értékek között: a simított görbe nem létező hullámokat rajzolt (UX-kör, 2. forduló).
+const linePath = (points: [number, number][]) => points.map(([px, py], index) => `${index ? 'L' : 'M'}${px.toFixed(1)},${py.toFixed(1)}`).join(' ')
 
 function CountValue({ value }: { value: string }) {
   const match = /^(\d[\d\s\u00a0]*)(.*)$/.exec(value)
@@ -69,7 +46,7 @@ function AreaChart({ daily }: { daily: { day: string; count: number }[] }) {
   const base = height - 26
   const y = (count: number) => base - (count / max) * (height - 40)
   const points = daily.map((item, index): [number, number] => [x(index), y(item.count)])
-  const line = smoothPath(points)
+  const line = linePath(points)
   const onMove = (event: PointerEvent<SVGSVGElement>) => {
     const box = ref.current?.getBoundingClientRect()
     if (!box) return

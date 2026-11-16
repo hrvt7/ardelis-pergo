@@ -36,7 +36,7 @@ describe('munkaterület – valódi adatokból', () => {
     expect(tasks.map((task) => task.lead.ref)).toEqual(['A', 'B', 'E', 'C'])
     expect(tasks.find((task) => task.lead.ref === 'A')).toMatchObject({ title: 'Első hívás', overdue: true })
     expect(tasks.find((task) => task.lead.ref === 'B')).toMatchObject({ why: 'Ma érkezett', overdue: false })
-    expect(tasks.find((task) => task.lead.ref === 'E')).toMatchObject({ title: 'Ajánlat nyomon követése', overdue: true })
+    expect(tasks.find((task) => task.lead.ref === 'E')).toMatchObject({ title: 'Ajánlat követése', overdue: true })
   })
 
   it('a felület: sötét munkaterület-téma, Vanilla kiemelő, fordított sugarú kivágás maszk nélkül, fotó helyett monogram', () => {
@@ -63,6 +63,9 @@ describe('munkaterület – valódi adatokból', () => {
     expect(overview).not.toMatch(/className="kpis"/)
     expect(overview).not.toMatch(/Legfrissebb|Státuszok/)
     expect(overview).toMatch(/<details className="card span-2 dash-more">/)
+    // 2. forduló: a napi grafikon egyenes szakaszokkal, nem kitalált hullámokkal; csak egy Vanilla kártya
+    expect(overview).not.toMatch(/smoothPath/)
+    expect(ws).not.toMatch(/ws-stat is-accent/)
   })
 
   it('UX-kör: egy hangcsalád az állapotokra (nincs szivárvány-zöld/piros), és nincs fejlesztői szakszó a mentési hibában', async () => {

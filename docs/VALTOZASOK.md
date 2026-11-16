@@ -1,5 +1,13 @@
 # Változások
 
+## 4.75 – Gyártói admin: a 2. kritikus forduló javításai
+
+- **Egy kiemelés:** csak a legfontosabb teendő Vanilla, a nyitott érték számkártyája sötét (Vanilla számmal). Mobilon a teendők a számkártyák előtt jönnek, így a hívásgomb az első képernyőn van.
+- **Grafikon:** a napi érdeklődők egyenes szakaszokkal, a simított görbe nem létező hullámokat rajzolt.
+- **Lejárt jelölés:** csengő-gomb helyett csendes „lejárt” címke a sorban; a teendő címe rövidebb („Ajánlat követése”), egy sorban marad.
+- **Kanban és panel:** az oszlopfej és a kártyanév egy sorban (levágással), az állapotgombok rácsban, vágás nélkül; az apró magyarázó szövegek 13 px-esek.
+- Tesztek: `adminWorkspace.test.ts` (egyenes grafikon, egyetlen Vanilla számkártya).
+
 ## 4.74 – Gyártói admin: UX-kritikus kör javításai
 
 - **Áttekintés átrendezve:** felül négy egyforma számkártya (nyitott érdeklődő, megnyert, nyerési arány, nyitott érték), utána **elsőként a Teendők** rácsban, vízszintes görgetés nélkül, a lejártak elöl, minden kártyán hívás- és e-mail-gomb; szűrők darabszámmal (Mind / Lejárt / Esedékes / Forró), legfeljebb 6 kártya + „Összes teendő”. Az „Új érdeklődők” tömör kártyákon (legfeljebb 3), hívásgombbal.

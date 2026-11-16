@@ -26,15 +26,14 @@ function StatusSelect({ lead, onUpdate }: { lead: LeadRow; onUpdate: (ref: strin
 
 function TaskCard({ task, hero, onOpen, onUpdate }: { task: Task; hero: boolean; onOpen: (ref: string) => void; onUpdate: (ref: string, patch: { status: string }) => void }) {
   const { lead } = task
-  return <article className={`ws-card ws-task has-pair${hero ? ' is-hero' : ''}`}>
+  return <article className={`ws-card ws-task ${hero ? ' is-hero' : ''}`}>
     <div className="ws-notch">
-      <span className={`ws-round${task.overdue ? ' has-dot' : ''}`} title={task.overdue ? 'Lejárt határidő' : 'Esedékes'} role="img" aria-label={task.overdue ? 'Lejárt határidő' : 'Esedékes'}><Bell size={17} /></span>
       <button type="button" className="ws-round" onClick={() => onOpen(lead.ref)} title="Részletek" aria-label={`${lead.customer_name} részletei`}><ArrowUpRight size={18} /></button>
     </div>
     <header><span className="ws-avatar sm">{initials(lead.customer_name)}</span><div><strong>{lead.customer_name}</strong><small>{lead.city}{roofName(lead) ? ` · ${roofName(lead)}` : ''}</small></div></header>
     <div className="ws-task-body">
       <span className="ws-round ghost" aria-hidden="true">{lead.status === 'offered' ? <FileText size={20} /> : <PhoneCall size={20} />}</span>
-      <div><h3>{task.title}</h3><p><b>{compactMoney(lead.estimate_gross)}</b> · {task.why}{task.overdue && <em> · lejárt</em>}</p></div>
+      <div><h3>{task.title}</h3><p><b>{compactMoney(lead.estimate_gross)}</b> · {task.why}{task.overdue && <em className="ws-late"><Bell size={13} aria-hidden="true" />lejárt</em>}</p></div>
     </div>
     <footer>
       <StatusSelect lead={lead} onUpdate={onUpdate} />
@@ -86,10 +85,10 @@ export default function Workspace({ leads, onOpenLead, onOpenLeads, onUpdate }: 
 
   return <div className="ws">
     <div className="ws-stats">
-      <div className="ws-stat"><small>Nyitott érdeklődő</small><strong>{open.length}</strong>{week > 0 && <em>+{week} az elmúlt 7 napban</em>}</div>
+      <div className="ws-stat"><small>Nyitott érdeklődő</small><strong>{open.length}</strong>{week > 0 && <em>+{week} / 7 nap</em>}</div>
       <div className="ws-stat"><small>Megnyert</small><strong>{won}</strong><em className="is-muted">{lost} elveszett</em></div>
       <div className="ws-stat"><small>Nyerési arány</small><strong>{winRate === null ? '—' : `${winRate}%`}</strong><em className="is-muted">megnyert / lezárt</em></div>
-      <div className="ws-stat is-accent"><small>Nyitott érték</small><strong>{compactMoney(openValue)}</strong><em className="is-muted">bruttó irányár, {open.length} érdeklődő</em></div>
+      <div className="ws-stat is-value"><small>Nyitott érték</small><strong>{compactMoney(openValue)}</strong><em className="is-muted">bruttó irányár</em></div>
     </div>
 
     <section className="ws-row" aria-labelledby="ws-tasks">
