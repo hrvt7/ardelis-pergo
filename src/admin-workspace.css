@@ -466,3 +466,6 @@
 .admin-ws .service-photos img { width: 100%; height: 100%; object-fit: cover; }
 .admin-ws .service-card footer { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; color: var(--ws-muted); }
 .admin-ws .service-card footer a { color: var(--ws-text); }
+.admin-ws .sticker-box { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.admin-ws .sticker-box img { border-radius: 12px; background: #fff; padding: 6px; }
+.admin-ws .sticker-box > div { flex: 1 1 240px; display: grid; gap: 10px; }

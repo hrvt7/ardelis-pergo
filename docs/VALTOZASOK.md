@@ -1,5 +1,11 @@
 # Változások
 
+## 4.85 – Telepítések 6/6: nyomtatható QR-matrica
+
+- **QR-matrica a termékre:** a telepítés részleteinél letölthető PDF (80 × 100 mm, nyomtatáshoz) és PNG (1000 × 1250 px). Rajta a gyártó logója (ha PNG/JPEG és a böngésző letöltheti; különben a gyártó neve), „Digitális termékkönyv”, a QR-kód a tulajdonosi oldalra (Q szintű hibajavítással), a termék neve és a weboldal címe. A token szövegként nem kerül a matricára, csak a QR-kódba.
+- Javítás: az admin telepítés-részleteiben a garancialista csak a termékben ténylegesen lévő komponenscsoportokat mutatja (mint a tulajdonosi oldal), az „Egyéb / nem tudom” bejelentési választás nem hoz létre külön sort.
+- Tesztek: `qrSticker.test.ts` (oldalméret, QR, token nincs a szövegben, logó/név, fájlnév). Böngészőben ellenőrizve: a letöltött PDF és PNG QR-kódja visszaolvasva a tulajdonosi linket adja.
+
 ## 4.84 – Telepítések 5/6: bővítés a tulajdonosi oldalról
 
 - **„Bővíteném” gomb a tulajdonosi oldalon:** a gyártó konfigurátora a felszerelt (befagyasztott) változatból indul. A méret, a rögzítés és a szín lépés zárolt, a tetőnél csak a tetőárnyékoló választható, a nyitott oldalak zárhatók le, a Komfort lépésben LED, fűtés, ventilátor, szenzor, hangrendszer, okosotthon adható hozzá; ami már megvan, nem vehető el. A felület tetején/alján „Bővítés” sáv, kilépés gombbal.

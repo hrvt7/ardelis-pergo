@@ -1,6 +1,8 @@
 // Admin „Telepítések” nézet: a rögzített digitális ikerpéldányok listája, részletek (komponensek, garancia), link, törlés.
-import { useMemo, useState } from 'react'
-import { Check, Copy, ExternalLink, ShieldCheck, ShieldOff, Trash2, Wrench, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Check, Copy, Download, ExternalLink, ShieldCheck, ShieldOff, Trash2, Wrench, X } from 'lucide-react'
+import { qrDataUrl } from '@/lib/qrSticker'
+import { downloadStickerPdf, downloadStickerPng } from '@/components/admin/stickerDownload'
 import { ownerLink, type AdminInstallation } from '@/lib/adminInstallations'
 import { warrantyGroupLabel, warrantyState } from '@/lib/installations'
 import { formatMoney } from '@/lib/money'
@@ -16,12 +18,31 @@ function CopyLink({ url }: { url: string }) {
   return <button type="button" className="btn" onClick={() => { void navigator.clipboard?.writeText(url).then(() => { setDone(true); window.setTimeout(() => setDone(false), 1400) }).catch(() => undefined) }}>{done ? <Check size={15} /> : <Copy size={15} />}{done ? 'Másolva' : 'Link másolása'}</button>
 }
 
-function Detail({ item, customer, onClose, onDelete }: { item: AdminInstallation; customer?: string; onClose: () => void; onDelete: (item: AdminInstallation) => Promise<string | null> }) {
+function Sticker({ url, brand, headline }: { url: string; brand: { name: string; logoUrl?: string }; headline: string }) {
+  const [preview, setPreview] = useState('')
+  const [state, setState] = useState<'idle' | 'busy' | 'error'>('idle')
+  useEffect(() => { let alive = true; void qrDataUrl(url, 360).then((data) => { if (alive) setPreview(data) }).catch(() => undefined); return () => { alive = false } }, [url])
+  const run = async (kind: 'png' | 'pdf') => {
+    setState('busy')
+    try { await (kind === 'png' ? downloadStickerPng : downloadStickerPdf)({ url, brandName: brand.name, headline, logoUrl: brand.logoUrl }); setState('idle') } catch { setState('error') }
+  }
+  return <div className="sticker-box">
+    {preview && <img src={preview} width={140} height={140} alt="QR-kód a tulajdonosi oldalhoz" />}
+    <div>
+      <p className="admin-hint">Nyomtatható matrica (80 × 100 mm) a termékre: logó, QR-kód, a termék neve. A tulajdonos a beolvasással éri el a termékkönyvet és a hibabejelentést. Kültérre időjárásálló matricapapír ajánlott.</p>
+      <div className="install-actions"><button type="button" className="btn" disabled={state === 'busy'} onClick={() => void run('pdf')}><Download size={15} />PDF (nyomtatáshoz)</button><button type="button" className="btn" disabled={state === 'busy'} onClick={() => void run('png')}><Download size={15} />PNG</button></div>
+      {state === 'error' && <p className="admin-message is-error" role="alert">A matrica nem készült el. Próbáld újra.</p>}
+    </div>
+  </div>
+}
+
+function Detail({ item, customer, brand, onClose, onDelete }: { item: AdminInstallation; customer?: string; brand: { name: string; logoUrl?: string }; onClose: () => void; onDelete: (item: AdminInstallation) => Promise<string | null> }) {
   const [confirm, setConfirm] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const url = ownerLink(window.location.origin, item.token)
-  const groups = [...new Set(item.components.map((component) => component.group))]
+  // A „nem tudom” választás nem valódi komponens: a garancia csak a termékben lévő csoportokra jelenik meg (mint a tulajdonosi oldalon).
+  const groups = [...new Set(item.components.filter((component) => component.key !== 'other').map((component) => component.group))]
   return <section className="card install-detail" aria-label="Telepítés részletei">
     <header><div><h2>{item.headline}</h2><small>{[customer, item.leadRef, PRODUCT_LABEL[item.product] ?? item.product].filter(Boolean).join(' · ')}</small></div><button type="button" className="icon-btn" aria-label="Bezárás" onClick={onClose}><X size={17} /></button></header>
     <dl className="facts">
@@ -41,6 +62,8 @@ function Detail({ item, customer, onClose, onDelete }: { item: AdminInstallation
     <div className="field-label">Tulajdonosi oldal</div>
     <p className="admin-hint">Bejelentkezés nélküli, titkos link: a tulajdonos itt látja a termékét és a garanciát, és innen jelent be hibát. Személyes adatot nem mutat. Aki a linket ismeri, megnyithatja: csak a tulajdonosnak add át.</p>
     <div className="install-actions"><a className="btn primary" href={url} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} />Megnyitás</a><CopyLink url={url} /></div>
+    <div className="field-label">QR-matrica</div>
+    <Sticker url={url} brand={brand} headline={item.headline} />
     <div className="field-label">Törlés</div>
     <p className="admin-hint">Végleges: a telepítés, a hibabejelentések, a fotók és a napló is törlődik, a tulajdonosi link megszűnik.</p>
     {error && <p className="admin-message is-error" role="alert">{error}</p>}
@@ -49,7 +72,7 @@ function Detail({ item, customer, onClose, onDelete }: { item: AdminInstallation
   </section>
 }
 
-export default function AdminInstallations({ installations, leads, error, selected, onSelect, onDelete, demo }: { installations: AdminInstallation[]; leads: LeadRow[]; error: string; selected: number | null; onSelect: (id: number | null) => void; onDelete: (item: AdminInstallation) => Promise<string | null>; demo?: boolean }) {
+export default function AdminInstallations({ installations, leads, error, selected, onSelect, onDelete, demo, brand }: { brand: { name: string; logoUrl?: string }; installations: AdminInstallation[]; leads: LeadRow[]; error: string; selected: number | null; onSelect: (id: number | null) => void; onDelete: (item: AdminInstallation) => Promise<string | null>; demo?: boolean }) {
   const names = useMemo(() => new Map(leads.map((lead) => [lead.ref, lead.customer_name])), [leads])
   const open = installations.find((item) => item.id === selected) ?? null
   return <div className="installations">
@@ -59,7 +82,7 @@ export default function AdminInstallations({ installations, leads, error, select
       : <div className="card table" role="table">
         <div className="tr-wrap" role="row"><div className="tr th install-tr"><span>Ügyfél</span><span>Termék</span><span>Telepítve</span><span>Garancia</span></div></div>
         {installations.map((item) => {
-          const active = Object.entries(item.warranty).filter(([group]) => item.components.some((component) => component.group === group)).some(([, months]) => warrantyState(item.installedAt, months).active)
+          const active = Object.entries(item.warranty).filter(([group]) => item.components.some((component) => component.key !== 'other' && component.group === group)).some(([, months]) => warrantyState(item.installedAt, months).active)
           return <div role="row" key={item.id} className="tr-wrap"><button type="button" className={`tr install-tr${selected === item.id ? ' is-open' : ''}`} onClick={() => onSelect(item.id)}>
             <span className="who"><span className="avatar"><Wrench size={14} /></span><span><b>{(item.leadRef && names.get(item.leadRef)) || item.leadRef || '—'}</b><small>{item.leadRef}</small></span></span>
             <span className="muted">{item.headline}</span>
@@ -68,6 +91,6 @@ export default function AdminInstallations({ installations, leads, error, select
           </button></div>
         })}
       </div>}
-    {open && <Detail key={open.id} item={open} customer={open.leadRef ? names.get(open.leadRef) : undefined} onClose={() => onSelect(null)} onDelete={onDelete} />}
+    {open && <Detail key={open.id} brand={brand} item={open} customer={open.leadRef ? names.get(open.leadRef) : undefined} onClose={() => onSelect(null)} onDelete={onDelete} />}
   </div>
 }
