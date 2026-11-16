@@ -529,8 +529,18 @@ export default function PergoStudio() {
     if (walking) exitWalk()
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`)
   }
+  // Ár + következő lépés: telefonon és fekvő telefonon a beállítópanel saját alsó sora (nem külön, mindig látható sáv).
+  const mobileBar = (
+    <div className="mobile-price-bar"><div><span>{tr('Bruttó irányár', 'Richtpreis brutto')}</span><strong data-value={modularMode ? modular.price.totalGross : price.totalGross}><AnimatedPrice value={modularMode ? modular.price.totalGross : price.totalGross} /></strong><PriceDeltaPop value={modularMode ? modular.price.totalGross : price.totalGross} /></div><button type="button" onClick={() => {
+        if (modularMode) { modular.setStep(modular.step === 'summary' ? 'model' : 'summary'); setSheet('full'); return }
+        const action = mobileBarAction(step)
+        if (action.kind === 'step') { goStep(action.step); setMobileControlsOpen(true); return }
+        setSheet('full')
+        window.setTimeout(() => document.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 260)
+      }}>{modularMode ? (modular.step === 'summary' ? tr('Tovább tervezés', 'Weiter planen') : tr('Összegzés', 'Übersicht')) : mobileBarAction(step).label}<ChevronRight size={16} /></button></div>
+  )
   return (
-    <div className={`app-shell layout-a ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''}`} style={panelLayout ? ({ '--panel-w': `${panelWidth}px`, '--side-w': `${panelWidth}px` } as CSSProperties) : undefined}>
+    <div className={`app-shell layout-a ${modularMode ? '' : 'bar-in-panel'} ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''}`} style={panelLayout ? ({ '--panel-w': `${panelWidth}px`, '--side-w': `${panelWidth}px` } as CSSProperties) : undefined}>
       <StudioHeader onHome={() => (modularMode ? modular.setView('perspective') : setView('perspective'))} canUndo={modularMode ? modular.canUndo : history.current.past.length > 0} canRedo={modularMode ? modular.canRedo : history.current.future.length > 0} onUndo={modularMode ? modular.undo : undo} onRedo={modularMode ? modular.redo : redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setModal('info')} onReset={() => (modularMode ? (window.confirm('Visszaállítod a modulházat az alapkonfigurációra?') && modular.reset()) : setModal('reset'))} />
 
       <main className="studio-shell" id="top">
@@ -579,18 +589,12 @@ export default function PergoStudio() {
           {modular.controls({ typePicker: <BuildingPicker config={config} prices={prices} onChange={exitModular} modular={modularChoice} />, footer: <PanelPrice gross={modular.price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />, mobileOpen: sheetView !== 'peek', onMobileToggle: () => setSheet(sheetView === 'peek' ? 'full' : 'peek') })}
           {modular.pricePanel({ detailsOpen, onToggle: () => setDetailsOpen((open) => !open) })}
         </> : <>
-          <ConfiguratorControls modular={modularChoice} config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={(next) => { goStep(next); if (isNarrow) setMobileControlsOpen(true) }} onSideSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} sheet={sheetView} onSheetChange={setSheet} onAdvisor={() => setModal('advisor')} energyCost={energyCost} onEnergy={openEnergy} footer={<PanelPrice gross={price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />} />
+          <ConfiguratorControls mobileBar={mobileBar} modular={modularChoice} config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={(next) => { goStep(next); if (isNarrow) setMobileControlsOpen(true) }} onSideSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} sheet={sheetView} onSheetChange={setSheet} onAdvisor={() => setModal('advisor')} energyCost={energyCost} onEnergy={openEnergy} footer={<PanelPrice gross={price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />} />
           <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={admin ? () => setModal('prices') : undefined} onExport={handleExport} onShare={handleShare} onBudget={() => setModal('budget')} collapsed={!detailsOpen} onToggleCollapse={() => setDetailsOpen((open) => !open)} energyCost={energyCost} onEnergy={openEnergy} />
         </>}
       </main>
 
-      <div className="mobile-price-bar"><div><span>{tr('Bruttó irányár', 'Richtpreis brutto')}</span><strong data-value={modularMode ? modular.price.totalGross : price.totalGross}><AnimatedPrice value={modularMode ? modular.price.totalGross : price.totalGross} /></strong><PriceDeltaPop value={modularMode ? modular.price.totalGross : price.totalGross} /></div><button type="button" onClick={() => {
-        if (modularMode) { modular.setStep(modular.step === 'summary' ? 'model' : 'summary'); setSheet('full'); return }
-        const action = mobileBarAction(step)
-        if (action.kind === 'step') { goStep(action.step); setMobileControlsOpen(true); return }
-        setSheet('full')
-        window.setTimeout(() => document.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 260)
-      }}>{modularMode ? (modular.step === 'summary' ? tr('Tovább tervezés', 'Weiter planen') : tr('Összegzés', 'Übersicht')) : mobileBarAction(step).label}<ChevronRight size={16} /></button></div>
+      {modularMode && mobileBar}
       {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
       {modal === 'prices' && admin && <PriceSettingsDialog prices={prices} onChange={setPrices} onReset={() => { setPrices(tenant.prices); setToast(tr('A gyártói árlista visszaállt.', 'Die Herstellerpreisliste wurde wiederhergestellt.')) }} onClose={() => setModal(null)} />}
       {modal === 'info' && <InfoDialog onClose={() => setModal(null)} />}

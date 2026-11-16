@@ -33,7 +33,7 @@ export const BUILDING_INFO: Record<BuildingType, BuildingInfo> = localized(() =>
   pergola: {
     label: 'Pergola', short: tr('Nyitott, szellős terasz', 'Offene, luftige Terrasse'), season: tr('Tavasztól őszig', 'Vom Frühling bis Herbst'),
     description: tr('Árnyékolt, nyitott vagy részben zárt terasz állítható lamellákkal vagy fix tetővel.', 'Beschattete, offene oder teilweise geschlossene Terrasse mit verstellbaren Lamellen oder festem Dach.'),
-    traits: ['Nyitott oldalak', tr('Mozgatható tető', 'Bewegliches Dach'), tr('Gyors telepítés', 'Schnelle Montage')],
+    traits: [tr('Nyitott oldalak', 'Offene Seiten'), tr('Mozgatható tető', 'Bewegliches Dach'), tr('Gyors telepítés', 'Schnelle Montage')],
   },
   veranda: {
     label: 'Veranda', short: tr('Zárt üvegezett terasz', 'Geschlossene verglaste Terrasse'), season: tr('Tavasztól késő őszig', 'Vom Frühling bis Spätherbst'),

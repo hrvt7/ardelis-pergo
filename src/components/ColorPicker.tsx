@@ -106,7 +106,7 @@ function ColorChip({ color, selected, standard, onPick }: { color: CatalogColor;
   return <button type="button" className={`color-chip${selected ? ' selected' : ''}${color.kind === 'wood' ? ' is-wood' : ''}${color.kind === 'db' || color.code.startsWith('RAL 900') && color.group === 'metallic' ? ' is-metal' : ''}`} aria-pressed={selected} title={`${color.name} · ${color.code}`} onClick={onPick}>
     <span className="chip-swatch" style={{ '--swatch': color.hex } as React.CSSProperties}>{selected && <Check size={13} />}</span>
     <strong>{color.kind === 'wood' ? color.name : color.code.replace('RAL ', '')}</strong>
-    <small>{color.kind === 'wood' ? tr('fa hatású', 'Holzoptik') : color.name}{standard ? ' · alap' : ''}</small>
+    <small>{color.kind === 'wood' ? tr('fa hatású', 'Holzoptik') : color.name}{standard ? tr(' · alap', ' · Standard') : ''}</small>
   </button>
 }
 

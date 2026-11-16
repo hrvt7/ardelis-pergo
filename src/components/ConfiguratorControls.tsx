@@ -54,6 +54,8 @@ interface Props {
   onEnergy?: () => void
   /** A panel alján, a lépésgombok fölött (asztali nézetben az élő ár és a Részletek gomb). */
   footer?: ReactNode
+  /** Telefonos elrendezésben a panel alsó sora (ár + következő lépés). */
+  mobileBar?: ReactNode
 }
 
 
@@ -327,7 +329,7 @@ export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneCha
   )
 }
 
-export default function ConfiguratorControls({ config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, sheet, onSheetChange, onAdvisor, energyCost, onEnergy, footer, modular }: Props) {
+export default function ConfiguratorControls({ mobileBar, config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, sheet, onSheetChange, onAdvisor, energyCost, onEnergy, footer, modular }: Props) {
   const { tenant, product } = useTenant()
   const { limits } = tenant
   // A carport ugyanennek a konfigurátornak egy építménytípusa (a „Mit építesz?” választóból): a pergola-komfort opciók
@@ -516,6 +518,7 @@ export default function ConfiguratorControls({ config, scene, step, selectedSide
       <div className={`panel-dock${step === 'summary' ? ' is-summary' : ''}`}>{footer}<div className="step-navigation"><button type="button" disabled={stepIndex === 0} onClick={() => go(stepIndex - 1)}><ArrowLeft size={16} />{tr('Vissza', 'Zurück')}</button>{stepIndex === STEPS.length - 1
         ? <button type="button" className="next-step" onClick={() => scrollRef.current?.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{tr('Felmérést kérek', 'Aufmaß anfragen')}<ArrowRight size={16} /></button>
         : <button type="button" className="next-step" onClick={() => go(stepIndex + 1)}>{stepIndex === STEPS.length - 2 ? tr('Összegzés', 'Übersicht') : tr('Következő', 'Weiter')}<ArrowRight size={16} /></button>}</div></div>
+      {mobileBar}
     </aside>
   )
 }

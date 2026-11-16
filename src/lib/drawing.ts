@@ -704,7 +704,7 @@ export function technicalDrawing(config: PergolaConfig, meta: DrawingMeta, sheet
     cell(x + 3 * q, y + 24, q, 9, 'Lap', meta.sheet ?? '1 / 1', 2.2)
     // 4. sor: rajzszám + tartalom.
     cell(x, y + 33, W * 0.55, 9, tr('Rajzszám', 'Plannummer'), meta.code, 2.3)
-    cell(x + W * 0.55, y + 33, W * 0.45, 9, 'Tartalom', 'homlokzat · metszet · alaprajz', 1.95, 'semi')
+    cell(x + W * 0.55, y + 33, W * 0.45, 9, tr('Tartalom', 'Inhalt'), tr('homlokzat · metszet · alaprajz', 'Ansicht · Schnitt · Grundriss'), 1.95, 'semi')
     // 5. sor: tervezői aláírás és pecsét (üresen, a gyártó tervezője tölti ki).
     cell(x, y + 42, W * 0.62, 20, tr('Tervező / ellenőrző — név, aláírás, kamarai szám', 'Planer / Prüfer — Name, Unterschrift, Kammernummer'))
     svg.line(x + 4, y + 42 + 15.5, x + W * 0.62 - 4, y + 42 + 15.5, 0.13, FAINT)

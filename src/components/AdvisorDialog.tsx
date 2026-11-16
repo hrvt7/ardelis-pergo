@@ -23,8 +23,8 @@ function sidesSummary(config: PergolaConfig) {
   const types = Object.values(config.sides) as SideType[]
   // A tanácsadó ma csak tolóüveget és ZIP-et javasol; a többi típus általános megnevezést kap.
   if (types.includes('glass')) return tr('Tolóüveg + ZIP', 'Glasschiebewand + ZIP')
-  if (types.includes('zip')) return 'ZIP screen oldalt'
-  return 'Nyitott oldalak'
+  if (types.includes('zip')) return tr('ZIP screen oldalt', 'ZIP-Screen seitlich')
+  return tr('Nyitott oldalak', 'Offene Seiten')
 }
 
 export default function AdvisorDialog({ prices, onApply, onClose }: { prices: PriceSettings; onApply: (config: PergolaConfig, furniture: FurnitureSet) => void; onClose: () => void }) {

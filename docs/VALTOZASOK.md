@@ -1,5 +1,13 @@
 # Változások
 
+## 4.50 – Az ársáv a panelbe került, német fordítási hibák, színnevek
+
+- **Az irányár-sáv nem foglal külön helyet:** telefonon (álló és fekvő) az ár és a „Tovább” gomb a beállítópanel saját alsó sora lett, nem egy külön, mindig látható sáv a képernyő alján. A 3D nézet így a képernyő aljáig ér; összecsukott panelnél csak a fogantyú, a lépéssáv és ez az egy sor látszik. Az ár és a gomb továbbra is mindig elérhető.
+- **Hiba: fekvő telefonon az ársáv nem illeszkedett a panelhez** (kilógott jobbra, a „Tovább: Méret” két sorba tört). Most a panel része, egysoros, és figyelembe veszi a notch melletti sávot.
+- **Hiba: a német nyelvű konfigurátorban magyar feliratok maradtak** („Nyitott oldalak” címke, „· alap” a színeknél, a tanácsadó összegzése, a műszaki rajz fejlécében „Tartalom”). Mind fordítva.
+- **Színminták neve:** két sorban kiírva („Antracitszürke”, „Közlekedési fehér”) a levágott „Antracitszü…” helyett; egérrel fölé állva a kód és a teljes név is látszik.
+- Tesztek: `sheetBar.test.ts` (a sor a panelen belül, teljes magasságú 3D nézet, német feliratok, színnevek).
+
 ## 4.49 – Húzható panelszél, fekvő telefonos nézet rendbetétele
 
 - **Húzható panelszél:** a beállítópanel bal szélén lévő fogantyúval a panel szélessége állítható, asztali gépen és elforgatott (fekvő) telefonon egyaránt; billentyűzettel (← →) is. Dupla kattintás visszaállítja az alapot. A választott szélesség böngészőnként, elrendezésenként külön megmarad. A 3D nézetnek mindig marad hely: fekvő telefonon legalább 40%, asztalon legalább 50%.
