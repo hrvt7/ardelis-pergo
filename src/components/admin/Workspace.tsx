@@ -16,7 +16,7 @@ export function Dots({ score, reasons }: { score: number; reasons: string[] }) {
   return <span className="ws-dots" role="img" aria-label={`Érdeklődés: ${on} / 5`} title={reasons.length ? `Lead-pontszám ${score}/100: ${reasons.join(' · ')}` : `Lead-pontszám ${score}/100 (nincs viselkedési adat)`}>{[0, 1, 2, 3, 4].map((index) => <i key={index} className={index < on ? `is-on d${index}` : ''} />)}</span>
 }
 
-/** Az áttekintő és az érdeklődők oldal közös érdeklődés-jelzője: szint és pontszám + öt pötty (4.78). */
+/** Az áttekintő és az érdeklődők oldal közös érdeklődés-jelzője: szint és pontszám + öt pötty (4.81). */
 export function LeadInterest({ lead }: { lead: LeadRow }) {
   const score = scoreLead(lead)
   return <span className="ws-interest"><small>{score.tier === 'hot' && <Flame size={12} />}{TIER_LABELS[score.tier]} · {score.score}</small><Dots score={score.score} reasons={score.reasons} /></span>

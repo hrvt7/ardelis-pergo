@@ -79,7 +79,7 @@ describe('munkaterület – valódi adatokból', () => {
     expect(page).toMatch(/A mentés most nem működik/)
   })
 
-  it('4.78: az érdeklődők oldal ugyanazt a jelzést használja – kanbankártya monogrammal, öt pöttyel, hívással, sarokkivágással', () => {
+  it('4.81: az érdeklődők oldal ugyanazt a jelzést használja – kanbankártya monogrammal, öt pöttyel, hívással, sarokkivágással', () => {
     const leads = readFileSync('src/pages/AdminLeads.tsx', 'utf8')
     const css = readFileSync('src/admin-workspace.css', 'utf8')
     expect(leads).toMatch(/import \{ Dots, LeadInterest \} from '@\/components\/admin\/Workspace'/)

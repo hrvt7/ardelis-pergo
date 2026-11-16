@@ -1,4 +1,4 @@
-/* ==========================================================================
+/* ===================================================================
    Gyártói admin – „munkaterület” sötét réteg (2026-11-16, Ádám referenciája: sötét CRM, nagy lekerekített kártyák,
    fülszerű sarokkivágás kerek gombbal, pill-szűrők, egy kiemelt kártya). A kiemelő szín a márka Vanilla-ja
    (#EFF0A3); egy változóban (--ws-accent) cserélhető. Kontraszt: fő szöveg #F2F2F3 a #1C1C1F lapon ≈ 16:1,
@@ -317,7 +317,6 @@
   .admin-ws .tr small.only-narrow { font-size: 13px; line-height: 1.45; }
 }
 
-<<<<<<< Updated upstream
 /* ── Telepítések (digitális ikerpéldány) ──────────────────────────────────── */
 .admin-ws .install-box { margin-top: 18px; display: grid; gap: 10px; }
 .admin-ws .install-box p { margin: 0; display: flex; gap: 8px; align-items: center; color: var(--ws-text); }
@@ -348,7 +347,7 @@
   .admin-ws .install-form fieldset { grid-template-columns: minmax(0, 1fr); }
 }
 =======
-/* ── 4.78: minden aloldal ugyanazzal a nyelvvel – nagy kártyák, monogramos kör, öt pötty, sarokkivágás ── */
+/* ── 4.81: minden aloldal ugyanazzal a nyelvvel – nagy kártyák, monogramos kör, öt pötty, sarokkivágás ── */
 .ws-interest { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .ws-interest small { display: inline-flex; align-items: center; gap: 4px; color: var(--ws-muted); font-size: 13px; white-space: nowrap; }
 .ws-interest small svg { color: var(--ws-accent); }
@@ -428,4 +427,3 @@
 .admin-ws .card > header { margin-bottom: 14px; }
 .admin-ws .admin-section > h2 { font-size: 22px; font-weight: 500; letter-spacing: -.02em; }
 .admin-ws .who .only-narrow .ws-interest { flex-direction: row; align-items: center; gap: 10px; margin-top: 6px; }
->>>>>>> Stashed changes

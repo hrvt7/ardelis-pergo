@@ -1,5 +1,13 @@
 # Változások
 
+## 4.81 – Gyártói admin: egységes kinézet minden aloldalon
+
+- **Érdeklődők – kanban:** a kártyák ugyanúgy néznek ki, mint az áttekintő „Új érdeklődők” kártyái: monogramos kör, település és tető, forrás-címkék, érdeklődés szintje és pontszáma öt pöttyel, irányár és idő, Vanilla hívásgomb, sarokkivágásban a részletek gomb. Az oszlopfej a munkaterület szakaszfeje (cím, darabszám, összérték), az oszlopok olvasható szélességűek, vízszintes sínen; a nevek nem vágódnak. A színes „áthelyezés” pöttyök kikerültek (áthelyezés húzással vagy a részletes panelen).
+- **Érdeklődők – tábla és mobillista:** a régi pontszám-címke helyett ugyanaz az öt pöttyös jelzés (új „Érdeklődés” oszlop), monogramos kör, kártyán ülő sorok; a szűrők és az eszközsor a munkaterület pill-gombjai.
+- **Részletes panel:** nagy monogram, a pontszám mellett az öt pötty, az állapotgombok egyforma rácsban.
+- **Beágyazás és beállítások:** ugyanaz a kártya- és szakaszcím-lépték, mint az áttekintőn.
+- **Hiba:** az előző beadásnál (f39a463) ütközésjelölő maradt az `admin-workspace.css`-ben, ezért a Vercel build elbukott; javítva, a párhuzamos „Telepítések” stílusai megmaradtak.
+- Tesztek: `adminWorkspace.test.ts` (közös érdeklődés-jelző, kanbankártya, oszlopszélesség).
 ## 4.80 – Telepítések 3/6: tulajdonosi oldal (/t/:token)
 
 - **Tulajdonosi oldal bejelentkezés nélkül:** a titkos linkkel a tulajdonos látja a terméket forgatható 3D-ben (a rögzítéskor befagyasztott konfigurációból, nem szerkeszthető), a garanciát csoportonként lejárati dátummal és állapottal, a komponenslistát, a műszaki adatokat és a gyártó elérhetőségét, a gyártó arculatával és nyelvén.
