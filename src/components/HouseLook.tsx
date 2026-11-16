@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { Check, Palette, Pipette, Wand2 } from 'lucide-react'
 import { PhotoColorDialog } from '@/components/ColorPicker'
 import { describeColor, normalizeColorCode, pickCatalogColor } from '@/lib/colors'
-import { findWindowColor, finishPreview, HOUSE_STYLES, HOUSE_STYLE_INFO, WALL_COLORS, WALL_FINISH_INFO, WINDOW_COLORS, defaultWallColor, wallColorHex, wallColorName, type WindowSwatch } from '@/lib/house'
+import { findWindowColor, finishPreview, houseStylePatch, HOUSE_STYLES, HOUSE_STYLE_INFO, WALL_COLORS, WALL_FINISH_INFO, WINDOW_COLORS, defaultWallColor, wallColorHex, wallColorName, type WindowSwatch } from '@/lib/house'
 import { useTenant } from '@/tenants/TenantContext'
 import type { HouseStyle, PergolaConfig, SceneSettings, WallFinish } from '@/types/pergola'
 import { tr } from '../i18n/locale'
@@ -23,7 +23,7 @@ type Props = {
 const FINISHES: WallFinish[] = ['plaster', 'brick', 'cedar']
 
 /** A háztípus sziluettje a választókártyán. */
-function StyleIcon({ style }: { style: HouseStyle }) {
+export function StyleIcon({ style }: { style: HouseStyle }) {
   const glass = 'rgba(160,205,220,.55)'
   return <svg viewBox="0 0 96 46" width="100%" height="46" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
     {style === 'classic' && <><path d="M6 24 L48 8 L90 24 L90 27 L6 27 Z" fill="#5b6468" /><rect x="10" y="27" width="76" height="15" fill="#8a5a3c" /><rect x="34" y="29" width="28" height="13" fill={glass} /><rect x="16" y="31" width="10" height="7" fill={glass} /><rect x="70" y="31" width="10" height="7" fill={glass} /></>}
@@ -88,14 +88,12 @@ export default function HouseLook({ config, scene, photoUrl, onSceneChange, onCh
   // A modellezett házak vakolt homlokzattal mutatnak a legjobban: az eredeti fa burkolatról váltva fehér vakolatot kapnak,
   // a fa–cink házra visszaváltva pedig (ha a homlokzathoz nem nyúltak) visszajön az eredeti fa.
   const pickStyle = (next: HouseStyle) => {
-    if (next === style) return
-    const patch: Partial<SceneSettings> = { houseStyle: next }
-    if (next !== 'classic' && finish === 'cedar' && hex === defaultWallColor('cedar')) { patch.wallFinish = 'plaster'; patch.wallColor = defaultWallColor('plaster') }
-    if (next === 'classic' && finish === 'plaster' && hex === defaultWallColor('plaster')) { patch.wallFinish = 'cedar'; patch.wallColor = defaultWallColor('cedar') }
-    onSceneChange(patch)
+    const patch = houseStylePatch(scene, next)
+    if (Object.keys(patch).length) onSceneChange(patch)
   }
   return <section className="house-look" aria-label={tr('A házad', 'Ihr Haus')}>
     <div className="house-look-head"><span><strong>{tr('Ház típusa', 'Haustyp')}</strong><small>{tr('Melyik hasonlít a tiédre?', 'Welches ähnelt Ihrem?')}</small></span></div>
+    {scene.ground === 'studio' && <p className="split-note">{tr('Most semleges háttér előtt látod a terméket – egy háztípust választva átváltunk a „Családi ház” környezetre.', 'Sie sehen das Produkt vor neutralem Hintergrund – mit der Wahl eines Haustyps wechseln wir zur Umgebung „Einfamilienhaus“.')}</p>}
     <div className="house-finish-grid" role="radiogroup" aria-label={tr('Ház típusa', 'Haustyp')}>
       {HOUSE_STYLES.map((item) => <button type="button" role="radio" aria-checked={style === item} key={item} className={style === item ? 'selected' : ''} onClick={() => pickStyle(item)}>
         <span className="house-finish-preview house-style-preview"><StyleIcon style={item} /></span>

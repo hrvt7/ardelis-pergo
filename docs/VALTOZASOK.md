@@ -1,5 +1,12 @@
 # Változások
 
+## 4.52 – A háztípus (fa–cink, lapostetős, nyeregtetős) újra könnyen megtalálható
+
+- **Hiba:** a háztípus-választó csak a Szín lépés „A házad” fülén volt, és mióta az alapkörnyezet a semleges stúdió („Csak a pergola”), a választásnak nem volt látható hatása – úgy tűnt, mintha eltűnt volna.
+- **Javítás:** a háztípus a Nézet és vizualizáció panelen, a Környezet alatt is választható (ikonnal). Stúdió háttérből egy háztípust választva a jelenet a „Családi ház” környezetre vált, így a ház azonnal látszik; a Szín lépésben ugyanez történik, és egy rövid megjegyzés jelzi.
+- A vevő saját homlokzatszínét a háztípus-váltás nem írja felül (csak az eredeti alapszínt cseréli fa ↔ vakolat).
+- Tesztek: `houseStylePatch.test.ts` (környezetváltás stúdióból, homlokzat-alapszín cseréje, a saját szín megtartása).
+
 ## 4.51 – Nyitó animáció a telepített webapp indításakor (mobil, tablet)
 
 - **Lamelix logó-animáció (9:16, 9 mp):** a kezdőképernyőről indított webapp konfigurátor-oldalain (/konfigurator, /k/<id>, /embed/<id>) érintőképernyős eszközön lejátszódik, miközben a háttérben betölt a 3D konfigurátor. Inline szkriptként indul az alkalmazás JavaScriptje előtt, így nincs üres képernyő. A végén eltűnik, ha a 3D kész; ha még nem, legfeljebb 6 mp-ig a logós zárókockán áll. „Kihagyás” gombbal (vagy koppintással) azonnal bezárható.

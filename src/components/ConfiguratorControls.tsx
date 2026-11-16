@@ -14,8 +14,8 @@ import { getSizeRecommendation } from '@/lib/specification'
 import { closedSegments } from '@/lib/sides'
 import { estimateSolar } from '@/lib/solar'
 import FurniturePicker from '@/components/FurniturePicker'
-import HouseLook, { WindowMatch } from '@/components/HouseLook'
-import { findWindowColor, finishPreview, houseSummary, wallColorHex, wallColorName } from '@/lib/house'
+import HouseLook, { StyleIcon, WindowMatch } from '@/components/HouseLook'
+import { findWindowColor, finishPreview, HOUSE_STYLE_INFO, HOUSE_STYLES, houseStylePatch, houseSummary, wallColorHex, wallColorName } from '@/lib/house'
 import { describeColor } from '@/lib/colors'
 import ColorPicker from '@/components/ColorPicker'
 import { BuildingIssues, BuildingPicker, ClimateSection, WallGlazingPicker, type ModularChoice } from '@/components/BuildingControls'
@@ -304,6 +304,10 @@ export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneCha
             <SectionTitle title={tr('Környezet', 'Umgebung')} hint={carport ? tr('Családi ház előtt, vagy csak a carport semleges háttér előtt – katalógus-bemutatóhoz.', 'Vor einem Einfamilienhaus oder nur der Carport vor neutralem Hintergrund – für die Katalogpräsentation.') : tr('Családi ház teraszán, vagy csak a pergola semleges háttér előtt – vendéglátós, ipari vagy katalógus-bemutatóhoz.', 'Auf der Terrasse eines Einfamilienhauses oder nur die Pergola vor neutralem Hintergrund – für Gastronomie, Gewerbe oder Katalog.')} />
             <div className="scene-options compact two" role="radiogroup" aria-label={tr('Környezet', 'Umgebung')}>
               {([['terrace', tr('Családi ház', 'Einfamilienhaus'), House], ['studio', tr(`Csak ${thing}`, `Nur ${thing}`), Box]] as const).map(([ground, label, Icon]) => { const active = (scene.ground === 'studio') === (ground === 'studio'); return <button type="button" role="radio" aria-checked={active} key={ground} className={active ? 'selected' : ''} onClick={() => onSceneChange({ ground })}><Icon size={17} /><span>{label}</span></button> })}
+            </div>
+            {/* A ház típusa mindig választható: stúdió háttérből a választás a „Családi ház” környezetre vált (lásd houseStylePatch). */}
+            <div className="scene-options compact house-styles" role="radiogroup" aria-label={tr('Ház típusa', 'Haustyp')}>
+              {HOUSE_STYLES.map((style) => { const active = scene.ground !== 'studio' && (scene.houseStyle ?? 'classic') === style; return <button type="button" role="radio" aria-checked={active} key={style} className={active ? 'selected' : ''} onClick={() => { const patch = houseStylePatch(scene, style); if (Object.keys(patch).length) onSceneChange(patch) }}><StyleIcon style={style} /><span>{HOUSE_STYLE_INFO[style].label}</span></button> })}
             </div>
             {/* A berendezés a jelenet része (nem a terméké): itt van, a környezet mellett, nem a lépések között. */}
             {!carport && <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />}

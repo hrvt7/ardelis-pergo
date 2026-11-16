@@ -38,6 +38,24 @@ export const STYLED_HOUSE = { main: 10, annex: 5.5, depth: 9 } as const
 /** A modellezett ház léptéke: a pergola (kétoldalt 0,6 m ráhagyással) férjen el a főtömeg homlokzata előtt. */
 export const styledHouseScale = (pergolaWidth: number) => Math.max(1, (pergolaWidth + 1.2) / STYLED_HOUSE.main)
 
+/**
+ * Háztípus váltása: a modellezett házak vakolt homlokzattal mutatnak a legjobban (az eredeti fa burkolatról váltva fehér vakolat),
+ * a fa–cink házra visszaváltva (ha a homlokzathoz nem nyúltak) visszajön a fa. A ház csak „Családi ház” környezetben látszik,
+ * ezért stúdióból a választás oda is átvált – különben a vevő nem látná, mit választott.
+ */
+export function houseStylePatch(scene: Pick<SceneSettings, 'houseStyle' | 'wallFinish' | 'wallColor' | 'ground'>, next: HouseStyle): Partial<SceneSettings> {
+  const style = scene.houseStyle ?? 'classic'
+  const patch: Partial<SceneSettings> = {}
+  if (next !== style) {
+    patch.houseStyle = next
+    const hex = wallColorHex(scene.wallFinish, scene.wallColor)
+    if (next !== 'classic' && scene.wallFinish === 'cedar' && hex === defaultWallColor('cedar')) { patch.wallFinish = 'plaster'; patch.wallColor = defaultWallColor('plaster') }
+    if (next === 'classic' && scene.wallFinish === 'plaster' && hex === defaultWallColor('plaster')) { patch.wallFinish = 'cedar'; patch.wallColor = defaultWallColor('cedar') }
+  }
+  if (scene.ground === 'studio') patch.ground = 'terrace'
+  return patch
+}
+
 export const WALL_FINISH_INFO: Record<WallFinish, { label: string; description: string }> = localized(() => ({
   plaster: { label: tr('Vakolt', 'Verputzt'), description: tr('Színezett nemesvakolat', 'Durchgefärbter Edelputz') },
   brick: { label: tr('Tégla', 'Ziegel'), description: tr('Látszótégla, klinker', 'Sichtziegel, Klinker') },
