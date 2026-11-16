@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import { build } from 'esbuild'
-import { INTRO_ANIM_SRC, INTRO_HARD_CAP_MS, INTRO_LOGO_SRC, INTRO_MAX_HOLD_MS, INTRO_SRC, INTRO_START_TIMEOUT_MS, introCanClose, introParam, shouldPlayIntro, type IntroEnvironment } from '../src/lib/introSplash'
+import { INTRO_ANIM_SRC, INTRO_DURATION_MS, INTRO_HARD_CAP_MS, INTRO_LOGO_SRC, INTRO_MAX_HOLD_MS, INTRO_SRC, INTRO_START_TIMEOUT_MS, introCanClose, introParam, shouldPlayIntro, type IntroEnvironment } from '../src/lib/introSplash'
 import { isOfflineAsset, swStrategy } from '../src/lib/swRoutes'
 
 const app: IntroEnvironment = { pathname: '/konfigurator', search: '', standalone: true, touch: true, reducedMotion: false, playedThisSession: false }
@@ -59,7 +59,7 @@ describe('nyitó animáció: fájl és offline', () => {
   it('a videó létezik, kicsi, és offline is tárból jön (az előtöltési listában van)', () => {
     const file = path.resolve(import.meta.dirname, '../public', INTRO_SRC.slice(1))
     expect(fs.existsSync(file)).toBe(true)
-    expect(fs.statSync(file).size).toBeLessThan(4 * 1024 * 1024)
+    expect(fs.statSync(file).size).toBeLessThan(1024 * 1024)
     expect(isOfflineAsset(INTRO_SRC)).toBe(true)
     expect(swStrategy({ url: INTRO_SRC, origin: 'https://lamelix.vercel.app' })).toBe('cache-first')
   })
@@ -116,12 +116,13 @@ describe('nyitó animáció: a 3D és a felület csak utána épül (nem szaggat
 
 describe('nyitó videó hardveres dekóderrel (tiltott automatikus lejátszás, iPhone/iPad)', () => {
   const read = (f: string) => fs.readFileSync(path.resolve(import.meta.dirname, '../public', f.slice(1)))
-  it('az index a videóhoz tartozik: 216 minta, a fájlon belül, H.264 hosszelőtagos NAL-egységekkel, kulcskockával kezd', async () => {
+  it('az index a videóhoz tartozik: minden képkocka (10 mp × 24 = 240) benne, a fájlon belül, H.264 hosszelőtagos NAL-egységekkel, kulcskockával kezd', async () => {
     const { INTRO_INDEX_SRC } = await import('../src/lib/introSplash')
     const index = JSON.parse(read(INTRO_INDEX_SRC).toString('utf8')) as { codec: string; description: string; samples: [number, number, number, number][]; durationUs: number }
     const video = read(INTRO_SRC)
     expect(index.codec).toMatch(/^avc1\.[0-9a-f]{6}$/)
-    expect(index.samples).toHaveLength(216)
+    expect(index.samples).toHaveLength(240)
+    expect(index.durationUs).toBe(INTRO_DURATION_MS * 1000)
     expect(index.samples[0][3]).toBe(1)
     // Az avcC a videó fájlban lévővel egyezik (ha a videó cserélődik, az indexet újra kell generálni).
     expect(video.includes(Buffer.from(index.description, 'base64'))).toBe(true)

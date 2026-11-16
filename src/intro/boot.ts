@@ -29,7 +29,7 @@ function boot() {
   root.setAttribute('role', 'presentation')
   root.setAttribute('aria-hidden', 'true')
   // Teljes képernyő: a 9:16 videó kitölti a kijelzőt (fekvő tableten a középső, logós sáv látszik).
-  root.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:#010503;opacity:1;transition:opacity .45s ease;touch-action:none;overflow:hidden'
+  root.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:#111611;opacity:1;transition:opacity .45s ease;touch-action:none;overflow:hidden'
   const video = document.createElement('video')
   video.muted = true
   video.defaultMuted = true
