@@ -1,5 +1,12 @@
 # Változások
 
+## 4.68 – Héró-átvezetés: „Lamella-redőny” a ráközelítés helyett
+
+- **Új átvezetés a héró és a „Hét lépés” között** (Ádám választása): a ráközelítés megszűnt. A héró végén felülről sorban 12 lamella fordul be és záródik (90° → 0°), mint egy bezáródó lamellás tető; a zárt tetőn egy mondat áll („Hét lépés a vevőnek, kész ajánlatkérés Önnek.”). A „Hét lépés” szakasz elején a lamellák felülről sorban kinyílnak, és alattuk már az a szakasz áll (a szakasz a héró utolsó képernyője alá csúszik, a csere a zárt lamellák mögött történik).
+- A héró rövidebb lett (240 → 170 vh, telefonon 210 → 160 vh); a kéz, a lapok és a felhők finom parallaxszal mozognak.
+- Csak transform-animáció (12 GPU-réteg), mozgáscsökkentésnél nincs redőny.
+- Tesztek: `heroSky.test.ts` frissítve (redőny, sorrend, mobil, mozgáscsökkentés).
+
 ## 4.67 – Gyorsabb, akadásmentes animációk a nyitóoldalon
 
 - **Héró: nincs több teljes újraszámolás képkockánként.** A görgetés és a kurzor eddig CSS-változókat írt a héró gyökerére, ami minden képkockán a teljes részfa (benne a kéz több száz SVG-eleme) stílusát újraszámoltatta. Most egyetlen rAF-ben, közvetlenül a néhány mozgó elem transform/opacity értéke változik; a kurzor-parallax simítása is itt történik (a minden képkockán újrainduló CSS-átmenetek megszűntek). A telefon mozgás közben saját GPU-rétegen csúszik, nagyításkor a tinta-szűrő kikapcsol.

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
-import { PHONE_TILT, SCREEN_ORIGIN } from '../src/components/landing/handGeometry'
 import { PLATFORM_COPY } from '../src/i18n/platformCopy'
 
 const read = (path: string) => readFileSync(path, 'utf8')
@@ -34,26 +33,34 @@ describe('héró „Felhők felett”', () => {
     }
   })
 
-  it('a ráközelítés a képernyő közepére céloz, és a telefon kiegyenesedik', () => {
-    expect(SCREEN_ORIGIN.x).toBeCloseTo((300 / 620) * 100, 5)
-    expect(SCREEN_ORIGIN.y).toBeCloseTo((290 / 760) * 100, 5)
-    expect(hero).toMatch(/rotate\(\$\{\(-PHONE_TILT \* z\)\.toFixed\(3\)\}deg\)/)
-    expect(PHONE_TILT).toBeLessThan(0)
-    expect(css).toMatch(/transform-origin: var\(--ox\) var\(--oy\)/)
+  it('átvezetés „Lamella-redőny”: 12 lamella felülről sorban zár, a zárt tetőn mondat, a következő szakaszon nyílik', () => {
+    expect(hero).toMatch(/const SLATS = 12/)
+    expect(hero).toMatch(/rotateX\(\$\{\(o > 0 \? -90 \* o : 90 \* \(1 - c\)\)\.toFixed\(2\)\}deg\)/)
+    expect(hero).toMatch(/const delay = \(index \/ n\) \* 0\.45/)
+    expect(hero).toMatch(/element\.nextElementSibling/)
+    expect(hero).not.toMatch(/scale\(\$\{\(1 \+ \(geo\.zoom/)
+    expect(css).toMatch(/\.lx-sky \+ \.lx-build \{ margin-top: -100svh; \}/)
+    expect(css).toMatch(/\.lx-louvers \{ position: fixed; inset: 0; z-index: 40;/)
+    for (const lang of ['hu', 'en'] as const) {
+      const v = PLATFORM_COPY[lang].v2.hero
+      expect(v.louver).toHaveLength(3)
+      expect(v.louverLabel.length).toBeGreaterThan(5)
+    }
   })
 
-  it('mozgáscsökkentésnél nincs görgetéses zoom és nincs betű-animáció', () => {
+  it('mozgáscsökkentésnél nincs redőny és nincs betű-animáció', () => {
     expect(hero).toMatch(/p = reduced \? 0 :/)
     expect(css).toMatch(/\.pf-reduced \.lx-ch, \.pf-reduced \.lx-device/)
+    expect(css).toMatch(/\.pf-reduced \.lx-louvers \{ display: none; \}/)
   })
 
-  it('a zoom után közvetlenül a „Hét lépés” szakasz jön', () => {
+  it('a lamellák mögött közvetlenül a „Hét lépés” szakasz jön', () => {
     const page = read('src/pages/Platform.tsx')
     expect(page).toMatch(/<Hero demoPath=\{DEMO_PATH\} \/>\s*<BuildSequence \/>/)
   })
 
   it('telefonon külön elrendezés van, nem marad el a hatás', () => {
-    expect(css).toMatch(/@media \(max-width: 760px\) \{\n {2}\.lx-sky \{ --dw: 74vw; height: 210vh; \}/)
+    expect(css).toMatch(/@media \(max-width: 760px\) \{\n {2}\.lx-sky \{ --dw: 74vw; height: 160vh; \}/)
   })
 
   it('a képsorozat kockáit a .gitignore nem zárja ki (különben élesen 404)', () => {

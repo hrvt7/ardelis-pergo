@@ -1,6 +1,6 @@
 // Kódból rajzolt, vonalas kéz (jobb kéz, alulról) egy telefonnal, a képernyőn a VALÓDI konfigurátor képe
 // (public/assets/landing/phone-screen.webp, a mobil konfigurátorból rögzítve). A tinta-szűrő (#lx-ink) teszi
-// tollrajzzá. A telefon képernyőjének középpontja SCREEN_ORIGIN: a héró erre közelít rá görgetéskor.
+// tollrajzzá.
 import { PHONE_TILT } from './handGeometry'
 import { assetUrl } from '@/lib/assetUrl'
 
