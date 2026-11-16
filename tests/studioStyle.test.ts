@@ -42,3 +42,14 @@ describe('világos, pasztell felület (alapértelmezett)', () => {
     expect(readFileSync('src/components/PergolaScene.tsx', 'utf8')).toMatch(/tone === 'light' \? '#f4f6fa'/)
   })
 })
+
+describe('világos felület magas/ultra minőségen (utófeldolgozás)', () => {
+  it('lágyabb AO, nincs sötét vignetta, kissé világosabb kép; a horizont a köd színe', () => {
+    const effects = readFileSync('src/components/SceneEffects.tsx', 'utf8')
+    expect(effects).toMatch(/intensity=\{night \? 1\.7 : airy \? 1\.25 : 2\.6\}/)
+    expect(effects).toMatch(/vignette && !airy/)
+    const scene = readFileSync('src/components/PergolaScene.tsx', 'utf8')
+    expect(scene.match(/airy=\{cyclorama\}/g)?.length).toBe(2)
+    expect(scene).toMatch(/horizon: \{ value: new THREE\.Color\(night \? '#1b1f22' : '#e8e5de'\) \}/)
+  })
+})

@@ -1,5 +1,10 @@
 # Változások
 
+## 4.58 – Világos felület magas/ultra minőségen: nem sötét, nincs horizontvonal
+
+- **Hiba: a világos felület magas és ultra 3D-minőségen (erősebb asztali gépek) sötétnek, „koszosnak” hatott,** és látszott a padló és a háttér határvonala. Világos stúdió-háttérnél az utófeldolgozás most lágyabb árnyékolást (AO 2,6 helyett 1,25) használ, nincs sötét vignetta, a kép kissé világosabb; a háttér horizontja pontosan a köd színe, így nincs vonal. A sötét felület (`?style=soft`) változatlan.
+- Tesztek: `studioStyle.test.ts` (utófeldolgozás világos stílusban, horizontszín).
+
 ## 4.57 – Világos, pasztell konfigurátor-felület (alapértelmezett)
 
 - **Új, világos, pasztell felület a konfigurátorban (alapértelmezett):** a kért referenciák alapján Urbanist betű; világosszürke alap; Ghost White panel és fehér kártyák nagy (24–32 px) lekerekítéssel és puha árnyékkal; fekete „pill” fő gombok fehér felirattal, körvonalas másodlagos gombok; pasztell kiemelések: Vanilla (#EFF0A3) a kiválasztott kártyán, Honeydew (#CFDECA) a tanácsadón és a kész lépéseken, Alice Blue (#D8DFE9) a betöltősávon. A lépéssávban az aktív lépés fekete pill vanília számmal. A „Pergola / A házad” választó és a jelenet eszközsora fehér pill.

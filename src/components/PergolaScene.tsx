@@ -2301,7 +2301,7 @@ function Cyclorama({ night, tone = 'neutral' }: { night: boolean; tone?: 'neutra
     depthWrite: false,
     fog: false,
     toneMapped: true,
-    uniforms: { horizon: { value: new THREE.Color(night ? '#1b1f22' : tone === 'light' ? '#eef0f3' : '#e8e5de') }, top: { value: new THREE.Color(night ? '#0d1012' : tone === 'light' ? '#f4f6fa' : '#cfd0cd') } },
+    uniforms: { horizon: { value: new THREE.Color(night ? '#1b1f22' : '#e8e5de') }, top: { value: new THREE.Color(night ? '#0d1012' : tone === 'light' ? '#f4f6fa' : '#cfd0cd') } },
     vertexShader: 'varying vec3 vPos; void main() { vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: 'uniform vec3 horizon; uniform vec3 top; varying vec3 vPos; void main() { float h = clamp(normalize(vPos).y, 0.0, 1.0); gl_FragColor = vec4(mix(horizon, top, smoothstep(0.1, 0.85, h)), 1.0);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}',
   }), [night, tone])
@@ -3144,7 +3144,7 @@ function SceneContent({ cyclorama = false, cycloramaTone = 'neutral', config, sc
       {modular.dimensions && <ModularDimensions config={modular.config} />}
       {scene.showPerson && <OptionalSceneAsset name="180 cm reference person"><RealisticAsset url={assetUrl('/assets/models/scale_person/person.glb')} position={[1, 0.035, 5.2]} height={1.8} rotation={0.28} /></OptionalSceneAsset>}
       {lighting.night && !studio && <Stars />}
-      {!EFFECTS_DISABLED && !coreOnly && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} /></Suspense></SceneAssetBoundary>}
+      {!EFFECTS_DISABLED && !coreOnly && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} airy={cyclorama} /></Suspense></SceneAssetBoundary>}
       <ModularCameraRig config={modular.config} view={modular.view} autoRotate={scene.autoRotate} />
     </>
   }
@@ -3166,7 +3166,7 @@ function SceneContent({ cyclorama = false, cycloramaTone = 'neutral', config, sc
     {scene.rain && <Rain config={config} quality={quality} />}
     {scene.sunStudy && !scene.photoMode && <CompassRose config={config} facing={scene.facing} />}
     {scene.sunStudy && !scene.photoMode && !coreOnly && onShade && <SceneAssetBoundary name="shade analysis"><Suspense fallback={null}><ShadeProbe config={config} scene={scene} onResult={onShade} /></Suspense></SceneAssetBoundary>}
-    {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} /></Suspense></SceneAssetBoundary>}
+    {!EFFECTS_DISABLED && !coreOnly && !scene.photoMode && quality.enablePostprocessing && <SceneAssetBoundary name="post-processing"><Suspense fallback={null}><SceneEffects ultra={quality.ultraEffects} night={lighting.night} vignette={quality.vignette} bloomScale={quality.bloomScale} airy={cyclorama} /></Suspense></SceneAssetBoundary>}
     {scene.photoMode
       ? <PhotoRig config={config} placement={placement} onCommit={(next) => onSceneChange(next)} />
       : <><TurntableDriver fullTurn={studio && !hasBackWall(config.mount)} /><CameraController walk={walk} viewShiftX={viewShiftX} view={view} focus={focus ?? null} viewShift={viewShift} revealed={revealed} config={config} autoRotate={scene.autoRotate} furniture={scene.furniture} mechanism={config.roof === 'louvered' && (!!scene.mechanism || rainShow > 0)} autoCamera={scene.autoCamera} houseFrontZ={studio || hasBackWall(config.mount) ? null : getHouseLayout(config, scene.houseStyle ?? 'classic').frontZ} />{walk && <WalkController config={config} scene={scene} />}</>}

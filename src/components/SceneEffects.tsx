@@ -3,7 +3,7 @@
 // színhű (Khronos Neutral) tónusleképezés. Mobilon és fotós előnézetben nem töltődik be.
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Bloom, DepthOfField, EffectComposer, HueSaturation, N8AO, ToneMapping, Vignette } from '@react-three/postprocessing'
+import { Bloom, BrightnessContrast, DepthOfField, EffectComposer, HueSaturation, N8AO, ToneMapping, Vignette } from '@react-three/postprocessing'
 import { DepthOfFieldEffect, ShaderPass, ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
 import { cameraMotion } from '@/lib/cameraMotion'
@@ -35,7 +35,7 @@ function createClampPass() {
   return new ShaderPass(material, 'inputBuffer')
 }
 
-export default function SceneEffects({ ultra, night, vignette, bloomScale }: { ultra: boolean; night: boolean; vignette: boolean; bloomScale: number }) {
+export default function SceneEffects({ ultra, night, vignette, bloomScale, airy = false }: { ultra: boolean; night: boolean; vignette: boolean; bloomScale: number; /** Világos stúdió-felület: lágyabb árnyékolás (AO), nincs sötét vignetta, kissé világosabb kép — különben a világos háttér szürkén, „koszosan” hat. */ airy?: boolean }) {
   const clampPass = useMemo(() => createClampPass(), [])
   useEffect(() => () => clampPass.dispose(), [clampPass])
   // Filmszerű vágás: kameraváltás közben a célpont marad éles, a környezet enyhén elmosódik („fókuszálás”); nyugalomban a hatás nulla, nem kerül képre.
@@ -57,7 +57,7 @@ export default function SceneEffects({ ultra, night, vignette, bloomScale }: { u
       <N8AO
         aoRadius={0.75}
         distanceFalloff={0.55}
-        intensity={night ? 1.7 : 2.6}
+        intensity={night ? 1.7 : airy ? 1.25 : 2.6}
         aoSamples={ultra ? 16 : 10}
         denoiseSamples={ultra ? 8 : 4}
         denoiseRadius={ultra ? 10 : 12}
@@ -70,7 +70,8 @@ export default function SceneEffects({ ultra, night, vignette, bloomScale }: { u
       <Bloom mipmapBlur luminanceThreshold={night ? 1 : 1.25} luminanceSmoothing={0.2} intensity={(night ? 0.85 : 0.1) * Math.max(bloomScale, 1)} radius={0.7} />
       <ToneMapping mode={ToneMappingMode.NEUTRAL} />
       {/* Finom vignetta és enyhe telítettség a tónusleképezés után: a kép „fotósabb”, a figyelem a pergolára esik. */}
-      {vignette ? <Vignette eskil={false} offset={0.32} darkness={night ? 0.5 : 0.42} /> : <></>}
+      {vignette && !airy ? <Vignette eskil={false} offset={0.32} darkness={night ? 0.5 : 0.42} /> : <></>}
+      {airy && !night ? <BrightnessContrast brightness={0.045} contrast={-0.03} /> : <></>}
       {vignette ? <HueSaturation saturation={0.05} /> : <></>}
     </EffectComposer>
   )
