@@ -1,5 +1,12 @@
 # Változások
 
+## 4.78 – Telepítések (digitális ikerpéldány) 1/6: adatmodell és migráció
+
+- **Új táblák (Supabase, `supabase/installations.sql`):** `installations` (befagyasztott pillanatkép: konfiguráció, megosztási kód, zárt komponenslista, az akkori ár, sémaverzió, ujjlenyomat; telepítés napja, garancia komponenscsoportonként), `service_requests` (hibabejelentés: komponens, leírás, legfeljebb 4 fotóút, állapot, hozzájárulás ideje és verziója, üres `ai_suggestion` a B-lépéshez), `installation_events` (csak hozzáfűzhető napló; módosítást trigger tilt) és `component_part_numbers` (B-lépés, opcionális). A `leads` tábla új `installation_id` oszlopot kapott (bővítési kérés). Privát `service-photos` tárhely (csak JPEG, ≤ 4 MB).
+- **Hozzáférés:** minden táblán RLS, az anon/authenticated szerepkör semmit nem lát; csak a szerver (service role) ír és olvas, a tenant-elkülönítést a szerver a `tenant_id` szűrővel biztosítja.
+- **Közös logika (`src/lib/installations.ts`):** 256 bites nyilvános token, pillanatkép és SHA-256 ujjlenyomat, komponenslista a konfigurációból, garancia-lejárat, a bővítés szabályai (a szerkezet zárolt, csak hozzáadni lehet). Felület még nincs.
+- Tesztek: `installations.test.ts` (token, befagyasztás árváltozás után, zárt komponenslista, garancia, bővítési zár, séma).
+
 ## 4.77 – Konfigurátor: a régi, megjegyzett stílus nem írja felül az új elrendezést
 
 - **Hiba:** aki korábban `?style=soft` (vagy más) címmel nyitotta meg a konfigurátort, annak a böngészője ezt megjegyezte, ezért frissítés után is a régi, sötét felületet látta az új lebegő elrendezés helyett. **Javítás:** új tárolókulcs (`lamelix-ui-style-v2`), így mindenki az alapértelmezett világos, lebegő elrendezést kapja; a `?style=` paraméter továbbra is választ, és azt megjegyzi.
