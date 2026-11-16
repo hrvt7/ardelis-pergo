@@ -4,8 +4,16 @@
 import { isAppPath } from './swRoutes'
 
 export const INTRO_SRC = '/assets/intro/lamelix-intro.mp4'
-/** A logó + „lamelix” felirat zárókockája (mp): ezt mutatjuk állóképként, ha az automatikus lejátszás tiltott. */
-export const INTRO_LOGO_FRAME_S = 8.6
+/**
+ * Tartalék, ha a rendszer tiltja a videó automatikus lejátszását (iOS energiatakarékos mód, „Videók automatikus
+ * lejátszása” kikapcsolva – ilyenkor az iOS saját play-jelet tenne a videóra). Ugyanez az animáció animált AVIF
+ * képként: a képekre ez a tiltás nem vonatkozik, így gomb nélkül magától lefut.
+ */
+export const INTRO_ANIM_SRC = '/assets/intro/lamelix-intro.avif'
+/** A logó + „lamelix” felirat zárókockája állóképként (a tartalék animáció végén és betöltése alatt ez áll). */
+export const INTRO_LOGO_SRC = '/assets/intro/lamelix-intro-logo.webp'
+/** Az animáció hossza (a videóé is): a tartalék képnél ennyi után vált a logós állóképre (a WebKit újraindítaná). */
+export const INTRO_DURATION_MS = 9000
 /** A munkameneten belül csak egyszer (pl. a „Frissítés” utáni újratöltésnél már nem). */
 export const INTRO_SESSION_KEY = 'lamelix-intro-played'
 /** A videó vége után legfeljebb ennyit várunk a 3D jelenetre (az utolsó, logós képkockán állva), utána mindenképp eltűnik. */

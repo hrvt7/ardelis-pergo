@@ -1,5 +1,12 @@
 # Változások
 
+## 4.56 – Javítás: iPaden play-jel jelent meg a nyitó animáción, rákoppintva a konfigurátor jött
+
+- **Hiba:** ha az iPad tiltja a videók automatikus lejátszását (energiatakarékos mód, vagy Kisegítő lehetőségek → Mozgás → „Videók automatikus lejátszása” kikapcsolva), az iOS a videóra a saját play-jelét tette; a videó nem indult, és a 3D elkészültekor a nyitókép bezárult.
+- **Javítás:** ilyenkor ugyanez az animáció animált AVIF képként fut le (`public/assets/intro/lamelix-intro.avif`, 720×1280, 1,7 MB) – a képekre ez a tiltás nem vonatkozik, így gomb nélkül, magától indul, teljes képernyőn. A végén a logós állókép (`lamelix-intro-logo.webp`) áll, amíg a 3D kész; amíg az animáció betölt, szintén ez látszik. Az iOS play-jele CSS-sel rejtve, a videó elem tiltásnál el is tűnik. Mindkét fájl benne van az offline letöltésben.
+- Tesztek: `introSplash.test.ts` (tartalék fájlok, offline, a play-jel rejtése, a tartalékra váltás). Böngészős próba (`tests/e2e/intro.cjs`, tiltott automatikus lejátszás): az animált kép fut és mozog, nincs gomb, a végén eltűnik; WebKit-motorral (Safari motorja, iPad-nézet) is lefut.
+- Nem ellenőrzött: valódi iPaden. Ha az iPaden az „Animált képek automatikus lejátszása” is ki van kapcsolva, a tartalék is állna – ilyenkor a logós kép látszik.
+
 ## 4.55 – Nyitó animáció gombok nélkül, teljes képernyőn
 
 - **A nyitó animáció magától indul, teljes képernyőn, és végigfut:** nincs „Kihagyás” és „Lejátszás” gomb, az érintés nem zárja be (és nem jut át a háttérben töltődő konfigurátorra). Minden kijelzőn kitölti a képernyőt (fekvő telefonon is).

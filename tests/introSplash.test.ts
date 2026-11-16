@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import { build } from 'esbuild'
-import { INTRO_HARD_CAP_MS, INTRO_MAX_HOLD_MS, INTRO_SRC, INTRO_START_TIMEOUT_MS, introCanClose, introParam, shouldPlayIntro, type IntroEnvironment } from '../src/lib/introSplash'
+import { INTRO_ANIM_SRC, INTRO_HARD_CAP_MS, INTRO_LOGO_SRC, INTRO_MAX_HOLD_MS, INTRO_SRC, INTRO_START_TIMEOUT_MS, introCanClose, introParam, shouldPlayIntro, type IntroEnvironment } from '../src/lib/introSplash'
 import { isOfflineAsset, swStrategy } from '../src/lib/swRoutes'
 
 const app: IntroEnvironment = { pathname: '/konfigurator', search: '', standalone: true, touch: true, reducedMotion: false, playedThisSession: false }
@@ -62,6 +62,17 @@ describe('nyitó animáció: fájl és offline', () => {
     expect(fs.statSync(file).size).toBeLessThan(4 * 1024 * 1024)
     expect(isOfflineAsset(INTRO_SRC)).toBe(true)
     expect(swStrategy({ url: INTRO_SRC, origin: 'https://lamelix.vercel.app' })).toBe('cache-first')
+  })
+  it('HIBA (iPad, play-jel): tiltott automatikus lejátszásra ugyanez az animáció animált képként és a logós állókép a tartalék, offline is', () => {
+    for (const src of [INTRO_ANIM_SRC, INTRO_LOGO_SRC]) {
+      const file = path.resolve(import.meta.dirname, '../public', src.slice(1))
+      expect(fs.existsSync(file), src).toBe(true)
+      expect(isOfflineAsset(src), src).toBe(true)
+    }
+    expect(fs.statSync(path.resolve(import.meta.dirname, '../public', INTRO_ANIM_SRC.slice(1))).size).toBeLessThan(2.5 * 1024 * 1024)
+    const source = fs.readFileSync(path.resolve(import.meta.dirname, '../src/intro/boot.ts'), 'utf8')
+    expect(source).toContain('-webkit-media-controls-start-playback-button')
+    expect(source).toMatch(/attempt\.then\(markStarted, playAnimatedFallback\)/)
   })
   it('nincs gomb: sem kihagyás, sem lejátszás', async () => {
     const source = fs.readFileSync(path.resolve(import.meta.dirname, '../src/intro/boot.ts'), 'utf8')

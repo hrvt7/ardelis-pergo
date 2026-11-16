@@ -47,7 +47,7 @@ const state = (p) => p.evaluate(() => {
     ok(box && box.width >= 389 && box.height >= 843, `teljes képernyő (${box && Math.round(box.width)}×${box && Math.round(box.height)})`);
     await p.waitForSelector('#lamelix-intro', { state: 'detached', timeout: 60000 });
 
-    log('3b) tiltott automatikus lejátszás (iOS energiatakarékos mód): gomb helyett a logós zárókocka áll, amíg a 3D betölt');
+    log('3b) tiltott automatikus lejátszás (iOS energiatakarékos mód, play-jel): ugyanez az animáció animált képként fut, gomb nélkül');
     const blockedPage = await ctx.newPage(); blockedPage.setDefaultTimeout(60000);
     await blockedPage.addInitScript(() => {
       // Mint iOS energiatakarékos módban: sem az autoplay attribútum, sem a play() nem indít.
@@ -56,13 +56,18 @@ const state = (p) => p.evaluate(() => {
       Element.prototype.setAttribute = function (name, value) { if (this instanceof HTMLMediaElement && name === 'autoplay') return; return setAttr.call(this, name, value) };
       HTMLMediaElement.prototype.play = function () { return Promise.reject(new DOMException('blocked', 'NotAllowedError')) };
     });
+    const t0 = Date.now();
     await blockedPage.goto(`${BASE}/konfigurator?intro=1`, { waitUntil: 'commit' });
-    const logo = await blockedPage.waitForFunction(() => { const v = document.querySelector('#lamelix-intro video'); return v && v.paused && v.currentTime > 8 }, null, { timeout: 15000 }).then(() => true).catch(() => false);
-    ok(logo && await blockedPage.locator('#lamelix-intro button').count() === 0, 'a logós zárókocka áll, nincs gomb');
+    await blockedPage.waitForSelector('#lamelix-intro img[src$="lamelix-intro.avif"]', { timeout: 20000 });
+    const videoHidden = await blockedPage.evaluate(() => getComputedStyle(document.querySelector('#lamelix-intro video')).display === 'none');
+    ok(videoHidden && await blockedPage.locator('#lamelix-intro button').count() === 0, 'a videó (és a play-jel) rejtve, az animált kép fut, nincs gomb');
+    await blockedPage.waitForTimeout(2500); const a1 = await blockedPage.screenshot();
+    await blockedPage.waitForTimeout(2500); const a2 = await blockedPage.screenshot();
+    ok(!a1.equals(a2), 'az animált kép mozog (két képkocka eltér)');
     await blockedPage.screenshot({ path: '/tmp/intro-blocked.png' });
-    await blockedPage.waitForSelector('.scene-canvas-wrap[data-scene-ready="true"]', { state: 'attached', timeout: 120000 });
-    await blockedPage.waitForSelector('#lamelix-intro', { state: 'detached', timeout: 5000 });
-    ok(true, 'a 3D elkészültekor eltűnik');
+    await blockedPage.waitForSelector('#lamelix-intro', { state: 'detached', timeout: 30000 });
+    const took = (Date.now() - t0) / 1000;
+    ok(took >= 9, `végigfut, utána eltűnik (${took.toFixed(1)} mp)`);
     await blockedPage.close();
 
     log('3c) lassú hálózat: a videó 4 mp késéssel érkezik – nem adja fel, utána lejátszik');
