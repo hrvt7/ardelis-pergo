@@ -68,3 +68,6 @@
 .owner-error { margin: 0; color: #B42318; font-size: 14px; }
 .owner-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 @media (max-width: 420px) { .owner-shots { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.owner-expand { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 18px; border-radius: 18px; border: 1px solid var(--o-line); }
+.owner-expand > div { flex: 1 1 280px; }
+.owner-expand h2 { margin: 0 0 6px; }

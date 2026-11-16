@@ -1,6 +1,7 @@
 import { issuesForStep, STEPS } from '@/lib/configSteps'
 import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
-import { ArrowLeft, ArrowLeftRight, ArrowRight, Box, Check, ChevronDown, ChevronRight, CloudRain, Cog, Columns3, Gauge, House, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowLeftRight, ArrowRight, Box, Check, ChevronDown, ChevronRight, Lock, CloudRain, Cog, Columns3, Gauge, House, Image, LampCeiling, Minus, Moon, Move, Plus, SlidersHorizontal, SolarPanel, Sparkles, Sun, Sunset, Upload, WandSparkles, Zap } from 'lucide-react'
+import { LOCKED_STEPS } from '@/lib/expansion'
 import { isWallSide, MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_SHORT, MOUNT_TYPES, wallLabel } from '@/lib/mount'
 import { formatPrice, formatNumber } from '@/lib/pricing'
 import { bayWidth, moduleCount, modulesLabel } from '@/lib/modules'
@@ -31,6 +32,8 @@ import { tr } from '../i18n/locale'
 // Az azonosítók történeti okból maradtak ('size' = Típus, 'mount' = Elhelyezés és méret, 'roof' = Tető, 'sides' = Oldalak, 'extras' = Komfort).
 
 interface Props {
+  /** Bővítés a tulajdonosi oldalról: a méret, rögzítés, szín lépés zárolt, a tetőnél csak az árnyékoló választható. */
+  expansion?: boolean
   config: PergolaConfig
   scene: SceneSettings
   step: ConfigStep
@@ -333,7 +336,7 @@ export function SceneSettingsPanel({ config, scene, prices, onChange, onSceneCha
   )
 }
 
-export default function ConfiguratorControls({ mobileBar, config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, sheet, onSheetChange, onAdvisor, energyCost, onEnergy, footer, modular }: Props) {
+export default function ConfiguratorControls({ expansion = false, mobileBar, config, scene, step, selectedSide, summary, onStepChange, onSideSelect, onChange, onSceneChange, onPreset, prices, sheet, onSheetChange, onAdvisor, energyCost, onEnergy, footer, modular }: Props) {
   const { tenant, product } = useTenant()
   const { limits } = tenant
   // A carport ugyanennek a konfigurátornak egy építménytípusa (a „Mit építesz?” választóból): a pergola-komfort opciók
@@ -398,8 +401,8 @@ export default function ConfiguratorControls({ mobileBar, config, scene, step, s
       </div>
       <div className="control-tabs" ref={tabsRef} role="tablist" aria-label={tr('Konfigurációs lépések', 'Konfigurationsschritte')}>
         {STEPS.map((item, index) => (
-          <button key={item.id} type="button" role="tab" aria-selected={step === item.id} className={`${step === item.id ? 'active' : ''} ${index < stepIndex ? 'complete' : ''}`} onClick={() => onStepChange(item.id)} title={stepLabel(item.id)}>
-            <span className="step-dot">{index < stepIndex ? <Check size={11} /> : index + 1}</span><span>{stepLabel(item.id)}</span>
+          <button key={item.id} type="button" role="tab" aria-selected={step === item.id} className={`${step === item.id ? 'active' : ''} ${index < stepIndex ? 'complete' : ''}${expansion && LOCKED_STEPS.includes(item.id) ? ' is-locked' : ''}`} disabled={expansion && LOCKED_STEPS.includes(item.id)} onClick={() => onStepChange(item.id)} title={expansion && LOCKED_STEPS.includes(item.id) ? tr('A meglévő szerkezet része, bővítésnél nem változik', 'Teil der bestehenden Konstruktion, bei Erweiterung unverändert') : stepLabel(item.id)}>
+            <span className="step-dot">{expansion && LOCKED_STEPS.includes(item.id) ? <Lock size={11} /> : index < stepIndex ? <Check size={11} /> : index + 1}</span><span>{stepLabel(item.id)}</span>
           </button>
         ))}
       </div>
@@ -461,7 +464,13 @@ export default function ConfiguratorControls({ mobileBar, config, scene, step, s
             </div>}
           </>}
 
-          {step === 'roof' && <>
+          {step === 'roof' && expansion && <>
+            <SectionTitle title={tr('Tetőárnyékoló', 'Dachbeschattung')} hint={tr('A tető a meglévő szerkezet része, bővítésnél nem változik. Üveg- vagy polikarbonát tetőhöz motoros árnyékoló adható hozzá.', 'Das Dach ist Teil der bestehenden Konstruktion. Für Glas- oder Polycarbonatdächer kann eine motorisierte Beschattung ergänzt werden.')} />
+            <RoofShadeOption config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
+            {!config.roofShade && config.roof !== 'glass' && config.roof !== 'polycarbonate' && <p className="split-note">{tr('Ennél a tetőnél nincs hozzáadható elem.', 'Für dieses Dach gibt es keine Ergänzung.')}</p>}
+          </>}
+
+          {step === 'roof' && !expansion && <>
             <SectionTitle title={tr('Tetőrendszer', 'Dachsystem')} hint={isClosedBuilding(config.building) ? (config.building === 'conservatory' ? tr('Télikerthez üveg- vagy fix (szigetelt) tető való: a mozgó tető nem zárható megfelelően.', 'Für einen Wintergarten eignet sich ein Glas- oder festes (gedämmtes) Dach: ein bewegliches Dach schließt nicht dicht genug.') : tr('Verandához üveg-, polikarbonát vagy fix tető való.', 'Für eine Veranda eignet sich ein Glas-, Polycarbonat- oder festes Dach.')) : tr('A tető típusa határozza meg az árnyékolást, az esővédelmet és az árat.', 'Der Dachtyp bestimmt Beschattung, Regenschutz und Preis.')} />
             <RoofPicker config={config} prices={prices} onChange={onChange} />
             <GlazingPicker config={config} prices={prices} onChange={onChange} />
@@ -475,6 +484,7 @@ export default function ConfiguratorControls({ mobileBar, config, scene, step, s
           </>}
 
           {step === 'sides' && <>
+            {expansion && <p className="split-note">{tr('Bővítés: csak a nyitott oldalak zárhatók le; a meglévő oldalelemek és a falas oldalak nem változnak.', 'Erweiterung: Nur offene Seiten können geschlossen werden; bestehende Seitenelemente und Wandseiten bleiben.')}</p>}
             <SectionTitle title={tr('Melyik oldalt zárod?', 'Welche Seite schließen Sie?')} hint={tr('Koppints egy oldalra a felülnézeten vagy a 3D modellen. A középső mező a tető.', 'Tippen Sie auf eine Seite in der Draufsicht oder im 3D-Modell. Das mittlere Feld ist das Dach.')} />
             <SideDiagram config={config} selected={selectedSide} roofName={tenant.roofs[config.roof]?.name ?? ''} onSelect={onSideSelect} />
             {selectedSide === 'roof' ? <div className="selected-side-head"><strong>{tr('Tető kijelölve', 'Dach ausgewählt')}</strong><span>{roofLabelsFor(config.roof)} · {tr('a beállításai a ', 'Einstellungen im ')}<button type="button" className="inline-link" onClick={() => onStepChange('roof')}>{tr('Tető lépésben', 'Schritt Dach')}</button>{tr(' vannak. Koppints egy oldalra a záráshoz.', '. Tippen Sie auf eine Seite, um sie zu schließen.')}</span></div> : sideSettings(selectedSide)}

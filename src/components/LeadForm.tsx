@@ -11,6 +11,8 @@ import { applyRegionSurcharge, regionSurcharge } from '@/tenants/pricingRules'
 import { tenantPrice } from '@/tenants/rules'
 import { formatPrice } from '@/lib/money'
 import type { PergolaConfig } from '@/types/pergola'
+import { clearExpansion, readExpansion } from '@/lib/expansion'
+import { normalizeConfig } from '@/tenants/rules'
 
 interface Props {
   productFamily: ProductFamily | 'garage-door' | 'modular-house'
@@ -48,6 +50,13 @@ export default function LeadForm({ productFamily, config, house }: Props) {
     const withRegion = applyRegionSurcharge(base, tenant.pricingRules, region, tenant.prices, tenant.currency)
     return { amountNet: withRegion.totalNet - base.totalNet, totalGross: withRegion.totalGross }
   }, [productFamily, tenant, config, region])
+  // Bővítés a tulajdonosi oldalról: a kérelem a telepítéshez kapcsolódik; az ár a bővítés becsült ára (új teljes ár − meglévő rész).
+  const [expansion] = useState(() => (productFamily === 'pergola' ? readExpansion(tenant.id) : null))
+  const expansionDelta = useMemo(() => {
+    if (!expansion) return null
+    const before = tenantPrice(tenant, normalizeConfig(tenant, expansion.config))
+    return Math.max(0, tenantPrice(tenant, config as PergolaConfig).totalGross - before.totalGross)
+  }, [expansion, tenant, config])
   const booking = bookingLink(tenant)
   const startedAt = useRef(Date.now())
   const formRef = useRef<HTMLFormElement>(null)
@@ -118,7 +127,8 @@ export default function LeadForm({ productFamily, config, house }: Props) {
           consent: true,
           website: field('website'),
           elapsedMs: Date.now() - startedAt.current,
-          source: embed ? 'embed' : tenant.demo ? 'demo' : 'standalone',
+          source: expansion ? 'expansion' : embed ? 'embed' : tenant.demo ? 'demo' : 'standalone',
+          ...(expansion ? { expansion: { t: expansion.token } } : {}),
           ...(dealer ? { dealer: dealer.id } : {}),
           pageUrl: embed && document.referrer ? document.referrer : window.location.origin + window.location.pathname,
           engagement: readEngagement(tenant.id),
@@ -132,6 +142,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
         return
       }
       setResult({ publicRef: data.ref })
+      if (expansion) clearExpansion()
       if (embed && window.parent !== window) {
         // A gyártó weboldala ebből mérheti a konverziót (személyes adat nélkül).
         window.parent.postMessage({ type: 'pergola:lead', tenant: tenant.id, ref: data.ref }, '*')
@@ -147,6 +158,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
 
   return <form ref={formRef} className="real-lead-form" noValidate onSubmit={submit} onFocus={() => track(tenant.id, 'lead_start')}>
     <div className="lead-form-intro"><span><MapPin size={16} />{productFamily === 'garage-door' ? tr('Garázskapu', 'Garagentor') : productFamily === 'modular-house' ? tr('Modulház', 'Modulhaus') : buyerProductName(PRODUCT_LABELS[productFamily])}</span><p>{tr('A konfigurációt és az irányárat a kérelmedhez csatoljuk, hogy a felmérés egyeztetése konkrét műszaki elképzelésből induljon.', 'Konfiguration und Richtpreis werden Ihrer Anfrage beigefügt, damit die Aufmaß-Abstimmung von einem konkreten technischen Entwurf ausgeht.')}</p></div>
+    {expansion && expansionDelta !== null && <p className="lead-expansion" role="status"><strong>{tr('Bővítési kérés', 'Erweiterungsanfrage')}</strong> · {tr('a bővítés becsült bruttó ára', 'geschätzter Bruttopreis der Erweiterung')}: <b>{formatPrice(expansionDelta)}</b><small>{tr('A mai árlistával: a teljes új konfiguráció ára mínusz a meglévő rész ára. Tájékoztató, a végleges ár a felmérés után készül.', 'Mit heutiger Preisliste: neue Gesamtkonfiguration minus Bestand. Unverbindlich; der Endpreis folgt nach dem Aufmaß.')}</small></p>}
     <div className="lead-grid">
       <label><span>{tr('Név *', 'Name *')}</span><input {...fieldProps('customerName')} autoComplete="name" required minLength={2} maxLength={120} placeholder={tr('Teljes név', 'Vollständiger Name')} />{fieldError('customerName')}</label>
       <label><span>{tr('Telefon', 'Telefon')} *</span><input {...fieldProps('phone')} type="tel" autoComplete="tel" required minLength={6} maxLength={40} pattern="[+0-9 \(\)\/\-]{6,40}" title={tr('Csak számjegy, szóköz és + - / ( ) karakter', 'Nur Ziffern, Leerzeichen und + - / ( )')} placeholder={tr('+36 30 123 4567', '+43 664 1234567')} />{fieldError('phone')}</label>

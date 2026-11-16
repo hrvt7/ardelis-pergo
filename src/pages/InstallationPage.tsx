@@ -2,7 +2,7 @@
 // A titkos link a hitelesítés. Személyes adatot nem mutat; a 3D a rögzítéskor befagyasztott konfigurációból készül.
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useParams } from 'react-router'
-import { Box, Mail, Phone, ShieldCheck, ShieldOff, Globe } from 'lucide-react'
+import { Box, Mail, Phone, PlusCircle, ShieldCheck, ShieldOff, Globe } from 'lucide-react'
 import { usePageSeo } from '@/lib/usePageSeo'
 import { intlLocale, setLocale, tr } from '@/i18n/locale'
 import { setDisplayCurrency } from '@/lib/money'
@@ -13,6 +13,8 @@ import { applyOverrides } from '@/tenants/overrides'
 import { warrantyGroupLabel, type WarrantyGroup } from '@/lib/installations'
 import type { PergolaConfig, SceneSettings } from '@/types/pergola'
 import ServiceReport from '@/components/owner/ServiceReport'
+import { EXPANSION_PARAM, startExpansion } from '@/lib/expansion'
+import { productPath } from '@/products'
 import '@/owner.css'
 
 const PergolaScene = lazy(() => import('@/components/PergolaScene'))
@@ -106,6 +108,11 @@ export default function InstallationPage() {
             {show3d ? <Scene config={data.config} /> : <button type="button" className="owner-scene-wait" onClick={() => setShow3d(true)}><Box size={18} />{tr('3D nézet', '3D-Ansicht')}</button>}
           </div>
           <p className="owner-hint">{tr('A 3D-modell a felszereléskor rögzített terv. Forgatható, nagyítható; nem módosítható.', 'Das 3D-Modell zeigt den bei der Montage festgehaltenen Entwurf. Drehbar und zoombar, nicht änderbar.')}</p>
+        </section>
+
+        <section className="owner-expand">
+          <div><h2>{tr('Bővítenéd?', 'Erweitern?')}</h2><p className="owner-hint">{tr('A meglévő termékedhez adhatsz oldalfalat, árnyékolót, fűtést, LED-et: a konfigurátor a felszerelt változatból indul, a szerkezet nem változik. A kérés a gyártóhoz kerül, becsült árral.', 'Ergänzen Sie Seitenwände, Beschattung, Heizung oder LED: Der Konfigurator startet mit Ihrer montierten Version, die Konstruktion bleibt. Die Anfrage geht mit geschätztem Preis an den Hersteller.')}</p></div>
+          <button type="button" className="owner-btn" onClick={() => { startExpansion({ tenantId: tenant.id, token, config: data.config, headline: data.headline }); window.location.assign(`${productPath('standalone', tenant.id, 'pergola')}?${EXPANSION_PARAM}=1`) }}><PlusCircle size={16} />{tr('Bővíteném', 'Erweitern')}</button>
         </section>
 
         <ServiceReport token={token} components={data.components} brandName={data.brand.name} privacyUrl={data.brand.privacyUrl} />

@@ -30,6 +30,8 @@ import { bookingLink } from '../src/lib/booking'
 import type { PergolaConfig, PriceBreakdown, SideKey } from '../src/types/pergola'
 import { DEALER_ID_PATTERN, findDealer, type Dealer } from '../src/tenants/pricingRules'
 import { deliverWebhook, leadEventData } from './webhook'
+import { installationByToken, logEvent } from './installationStore'
+import { clampExpansion, expansionAdditions, installationComponents } from '../src/lib/installations'
 
 export type LeadEnv = Record<string, string | undefined>
 
@@ -60,7 +62,9 @@ const leadSchema = z.object({
   startedAt: z.number().int().positive().optional(),
   /** Mennyi ideig volt nyitva az űrlap a beküldésig (ms), a böngésző saját órájával mérve. */
   elapsedMs: z.number().int().nonnegative().max(1_000_000_000).optional(),
-  source: z.enum(['demo', 'standalone', 'embed']).default('standalone'),
+  source: z.enum(['demo', 'standalone', 'embed', 'expansion']).default('standalone'),
+  /** Bővítési kérés a tulajdonosi oldalról: a telepítés tokenje. A szerver zárolja a meglévő szerkezetet. */
+  expansion: z.object({ t: z.string().max(64) }).strict().optional(),
   /** Viszonteladó a linkből (…?h=graz). Ismeretlen azonosító esetén a gyártói ár érvényes. */
   dealer: z.string().trim().max(40).regex(DEALER_ID_PATTERN).optional(),
   pageUrl: z.string().max(2000).optional(),
@@ -90,6 +94,8 @@ export interface LeadRecord {
   spec: [string, string][]
   /** Tájékoztató anyaglista (ma csak a pergolának van). */
   bom: [string, string][]
+  /** Bővítési kérés: az eredeti telepítés, a hozzáadott elemek és a bővítés becsült ára (teljes új ár − a meglévő rész mai ára). */
+  expansion?: { installationId: number; originalRef: string | null; added: string[]; deltaNet: number; deltaGross: number }
 }
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), {
@@ -181,8 +187,9 @@ function managerEmailHtmlIn(record: LeadRecord) {
   const lines: [string, string][] = [...price.lines.map((line) => [line.label, formatMoney(line.amountNet, tenant.currency)] as [string, string]), [tr('Telepítés', 'Montage'), formatMoney(price.installationNet, tenant.currency)]]
   return `<!doctype html><html lang="${tr('hu', 'de')}"><body style="margin:0;background:#f1f4f4;font-family:Arial,Helvetica,sans-serif;color:#233039">
 <div style="max-width:640px;margin:0 auto;padding:24px">
-<p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">${tr('ÚJ FELMÉRÉSI KÉRELEM', 'NEUE AUFMASS-ANFRAGE')} · ${escapeHtml(record.ref)}</p>
-<h1 style="font-size:22px;margin:0 0 4px">${escapeHtml(input.customer.name)} – ${escapeHtml(formatMoney(price.totalGross, tenant.currency))} ${tr('bruttó irányár', 'Richtpreis brutto')}</h1>
+<p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">${record.expansion ? tr('BŐVÍTÉSI KÉRÉS', 'ERWEITERUNGSANFRAGE') : tr('ÚJ FELMÉRÉSI KÉRELEM', 'NEUE AUFMASS-ANFRAGE')} · ${escapeHtml(record.ref)}</p>
+<h1 style="font-size:22px;margin:0 0 4px">${escapeHtml(input.customer.name)} – ${escapeHtml(formatMoney(record.expansion ? record.expansion.deltaGross : price.totalGross, tenant.currency))} ${record.expansion ? tr('a bővítés becsült bruttó ára', 'geschätzter Bruttopreis der Erweiterung') : tr('bruttó irányár', 'Richtpreis brutto')}</h1>
+${record.expansion ? `<div style="background:#fff8d6;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:14px"><b>${tr('Bővítés egy meglévő telepítéshez', 'Erweiterung einer bestehenden Montage')}</b>${record.expansion.originalRef ? ` · ${tr('eredeti', 'ursprünglich')}: ${escapeHtml(record.expansion.originalRef)}` : ''}<br>${tr('Hozzáadva', 'Hinzugefügt')}: ${escapeHtml(record.expansion.added.join(', '))}<br><span style="color:#62727a">${tr('A becsült ár: a teljes új konfiguráció mai ára mínusz a meglévő rész mai ára. A meglévő szerkezet (méret, tető, rögzítés, szín) zárolt volt.', 'Schätzung: heutiger Preis der neuen Gesamtkonfiguration minus heutiger Preis des Bestands. Die bestehende Konstruktion (Größe, Dach, Montage, Farbe) war gesperrt.')}</span></div>` : ''}
 <p style="margin:0 0 20px;color:#62727a">${escapeHtml(input.customer.city)} · ${escapeHtml(record.headline)}</p>
 <div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px"><h2 style="font-size:15px;margin:0 0 8px">${tr('Ügyfél', 'Kunde')}</h2><table style="border-collapse:collapse;font-size:14px">${rows(customer)}</table>
 <p style="margin:12px 0 0"><a href="tel:${escapeHtml(input.customer.phone.replace(/[^+0-9]/g, ''))}" style="color:#007fae">${tr('Hívás', 'Anrufen')}</a> · <a href="mailto:${escapeHtml(input.customer.email)}" style="color:#007fae">${tr('Válasz e-mailben', 'Per E-Mail antworten')}</a></p></div>
@@ -219,7 +226,7 @@ function customerEmailHtmlIn(record: LeadRecord) {
 <p>${tr(`Kedves ${escapeHtml(input.customer.name)}!`, `Guten Tag ${escapeHtml(input.customer.name)},`)}</p>
 <p>${tr(`A(z) ${escapeHtml(tenant.brand.name)} munkatársa hamarosan felveszi veled a kapcsolatot a helyszíni felmérés egyeztetéséhez.`, `ein Mitarbeiter von ${escapeHtml(tenant.brand.name)} meldet sich in Kürze bei Ihnen, um das Aufmaß vor Ort zu vereinbaren.`)}</p>
 <p style="margin:16px 0 4px"><strong>${escapeHtml(record.headline)}</strong></p>
-<p style="margin:0 0 16px">${tr('Bruttó irányár', 'Richtpreis brutto')}: <strong>${escapeHtml(formatMoney(price.totalGross, tenant.currency))}</strong> ${tr('(telepítéssel)', '(inkl. Montage)')}</p>
+<p style="margin:0 0 16px">${record.expansion ? `${tr('A bővítés becsült bruttó ára', 'Geschätzter Bruttopreis der Erweiterung')}: <strong>${escapeHtml(formatMoney(record.expansion.deltaGross, tenant.currency))}</strong> (${escapeHtml(record.expansion.added.join(', '))})` : `${tr('Bruttó irányár', 'Richtpreis brutto')}: <strong>${escapeHtml(formatMoney(price.totalGross, tenant.currency))}</strong> ${tr('(telepítéssel)', '(inkl. Montage)')}`}</p>
 <p><a href="${escapeHtml(record.configUrl)}" style="color:#007fae">${tr('A konfigurációd megnyitása →', 'Ihre Konfiguration öffnen →')}</a></p>
 ${booking ? `<p style="margin:20px 0"><a href="${escapeHtml(booking)}" style="display:inline-block;background:#007fae;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px">${tr('Felmérési időpont foglalása →', 'Aufmaß-Termin buchen →')}</a></p>` : ''}
 <p style="font-size:12px;color:#62727a">${tr('Az irányár tájékoztató jellegű, nem minősül árajánlatnak. A végleges ár helyszíni felmérés után készül.', 'Der Richtpreis ist unverbindlich und kein Angebot. Der Endpreis wird nach dem Aufmaß vor Ort erstellt.')}</p>
@@ -257,7 +264,8 @@ async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true
       ...(withDealer && record.dealer ? { dealer_id: record.dealer.id } : {}),
       ref: record.ref,
       tenant_id: record.tenant.id,
-      source: record.input.source,
+      source: record.expansion ? 'expansion' : record.input.source,
+      ...(record.expansion ? { installation_id: record.expansion.installationId } : {}),
       customer_name: record.input.customer.name,
       email: record.input.customer.email.toLowerCase(),
       phone: record.input.customer.phone,
@@ -265,10 +273,10 @@ async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true
       city: record.input.customer.city,
       region: record.input.customer.region,
       address: record.input.customer.address || null,
-      notes: [record.input.customer.notes, record.input.house && `Ház (3D): ${record.input.house}`].filter(Boolean).join('\n') || null,
+      notes: [record.expansion && `[Bővítés]${record.expansion.originalRef ? ` Eredeti: ${record.expansion.originalRef}.` : ''} Hozzáadva: ${record.expansion.added.join(', ')}`, record.input.customer.notes, record.input.house && `Ház (3D): ${record.input.house}`].filter(Boolean).join('\n') || null,
       config: record.config,
-      estimate_net: record.price.totalNet,
-      estimate_gross: record.price.totalGross,
+      estimate_net: record.expansion ? record.expansion.deltaNet : record.price.totalNet,
+      estimate_gross: record.expansion ? record.expansion.deltaGross : record.price.totalGross,
       config_url: record.configUrl,
       page_url: record.input.pageUrl ?? null,
       consent_at: record.createdAt.toISOString(),
@@ -320,8 +328,25 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   // A család motorja érvényesít és áraz; a „hamarosan” családokra még nem fogadunk kérelmet.
   const engine = getEngine(input.product)
   if (!engine) return json(422, { ok: false, error: say('Ehhez a termékhez még nem fogadunk felmérési kérelmet.', 'Für dieses Produkt nehmen wir noch keine Aufmaß-Anfragen an.'), field: 'product' })
-  const config = engine.parse(tenant, input.config)
+  let config = engine.parse(tenant, input.config)
   if (!config) return json(422, { ok: false, error: say('A konfiguráció nem érvényes. Frissítsd az oldalt, és próbáld újra.', 'Die Konfiguration ist ungültig. Bitte Seite neu laden und erneut versuchen.'), field: 'config' })
+
+  // Bővítés: csak érvényes, ugyanehhez a gyártóhoz tartozó telepítéshez; a meglévő szerkezet zárolt, csak hozzáadni lehet.
+  let expansion: { row: NonNullable<Awaited<ReturnType<typeof installationByToken>>>; original: PergolaConfig; added: string[] } | null = null
+  if (input.expansion) {
+    const invalid = say('A bővítési link érvénytelen vagy megszűnt. Nyisd meg újra a termék oldaláról.', 'Der Erweiterungslink ist ungültig. Bitte über die Produktseite erneut öffnen.')
+    if (engine.id !== 'pergola' || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return json(422, { ok: false, error: invalid, field: 'config' })
+    const row = await installationByToken(env, input.expansion.t).catch(() => null)
+    if (!row || row.tenant_id !== tenant.id) return json(422, { ok: false, error: invalid, field: 'config' })
+    const original = row.config_snapshot.config
+    const clamped = engine.parse(tenant, clampExpansion(original, config as PergolaConfig)) as PergolaConfig | null
+    if (!clamped) return json(422, { ok: false, error: invalid, field: 'config' })
+    const locked = clampExpansion(original, clamped)
+    const added = expansionAdditions(original, locked)
+    if (added.length === 0) return json(422, { ok: false, error: say('Adj hozzá legalább egy új elemet (oldalfal, árnyékoló, fűtés, LED…).', 'Bitte fügen Sie mindestens ein neues Element hinzu.'), field: 'config' })
+    config = locked
+    expansion = { row, original, added }
+  }
 
   const now = new Date()
   const ref = makeRef(tenant, now)
@@ -347,6 +372,17 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
   const spec = pergola ? describeConfig(tenant, pergola, price) : engine.describe?.(tenant, config, price) ?? []
   const bom = withLocale(locale, () => pergola ? getBom(pergola).map((line) => [line.label, line.value] as [string, string]) : [])
   const record: LeadRecord = { ref, tenant, dealer, input, config, price, configUrl, createdAt: now, headline, spec, bom }
+  if (expansion) {
+    const before = withLocale(locale, () => engine.price(tenant, expansion.original, { region: input.customer.region, dealerId: dealer?.id }))
+    const labels = new Map(withLocale(locale, () => installationComponents(config as PergolaConfig)).map((item) => [item.key, item.label]))
+    record.expansion = {
+      installationId: expansion.row.id,
+      originalRef: expansion.row.lead_ref,
+      added: expansion.added.map((key) => labels.get(key) ?? key),
+      deltaNet: Math.max(0, price.totalNet - before.totalNet),
+      deltaGross: Math.max(0, price.totalGross - before.totalGross),
+    }
+  }
 
   const recipients = tenant.lead.recipients.length ? tenant.lead.recipients : (env.LEAD_FALLBACK_EMAIL ?? '').split(',').map((item) => item.trim()).filter(Boolean)
   const canEmail = Boolean(env.RESEND_API_KEY && recipients.length)
@@ -366,7 +402,7 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
     canEmail ? sendEmail(env, {
       // A viszonteladó a saját leadjeiről másolatot kap.
       to: dealer?.email && !recipients.includes(dealer.email) ? [...recipients, dealer.email] : recipients,
-      subject: oneLine(`${tenant.lead.subjectPrefix}${dealer ? ` [${dealer.name}]` : ''} ${input.customer.name} – ${input.customer.city} – ${formatMoney(price.totalGross, tenant.currency)}`),
+      subject: oneLine(`${tenant.lead.subjectPrefix}${dealer ? ` [${dealer.name}]` : ''}${record.expansion ? ` ${say('[Bővítés]', '[Erweiterung]')}` : ''} ${input.customer.name} – ${input.customer.city} – ${formatMoney(record.expansion ? record.expansion.deltaGross : price.totalGross, tenant.currency)}`),
       html: managerEmailHtml(record),
       replyTo: input.customer.email,
     }) : Promise.resolve('skipped'),
@@ -374,6 +410,7 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
     deliverWebhook(tenant, 'lead.created', leadEventData({ ref, tenant, createdAt: now, product: input.product, source: input.source, dealerId: dealer?.id, customer: input.customer, headline, configUrl, pageUrl: input.pageUrl, spec, price })),
   ])
   const [stored, emailed] = results
+  if (expansion && stored.status === 'fulfilled' && canStore) await logEvent(env, expansion.row, 'expansion_request', 'owner', { leadRef: ref, added: expansion.added })
   if (stored.status === 'rejected') console.error('[lead] Supabase mentés sikertelen', ref, stored.reason)
   if (emailed.status === 'rejected') console.error('[lead] Gyártói e-mail sikertelen', ref, emailed.reason)
 

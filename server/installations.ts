@@ -4,55 +4,22 @@
 // - Megőrzési idő: a napi cron (api/followup) a gyártónként beállított idő után törli a telepítéseket.
 // Minden lekérdezés a bejelentkezett gyártó tenant_id-jára szűr.
 import { z } from 'zod'
+import { INSTALL_COLUMNS, installationByToken, logEvent, rest, select, storage, timeout, type InstallationRow } from './installationStore'
 import { authorize, json, loadOverrides, resolveTenant, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
 import { parseOverrides, publicOverrides, type TenantOverrides } from '../src/tenants/overrides'
 import { describeConfig } from './lead'
 import { parseConfig, roofLabels, tenantPrice } from '../src/tenants/rules'
 import { withLocale } from '../src/i18n/locale'
 import { formatNumber } from '../src/lib/pricing'
-import { buildSnapshot, DEFAULT_WARRANTY_MONTHS, INSTALLATION_TOKEN_RE, newInstallationToken, snapshotHash, warrantyState, type InstallationSnapshot, type WarrantyMonths } from '../src/lib/installations'
+import { buildSnapshot, DEFAULT_WARRANTY_MONTHS, INSTALLATION_TOKEN_RE, newInstallationToken, snapshotHash, warrantyState, type WarrantyMonths } from '../src/lib/installations'
 import type { Tenant } from '../src/tenants/types'
 
 export const DEFAULT_RETENTION_MONTHS = 120
 export const PHOTO_BUCKET = 'service-photos'
-
-export interface InstallationRow {
-  id: number
-  tenant_id: string
-  lead_id: number | null
-  lead_ref: string | null
-  public_token: string
-  config_snapshot: InstallationSnapshot
-  snapshot_hash: string
-  schema_version: number
-  product_type: string
-  installed_at: string
-  warranty: WarrantyMonths
-  status: 'active' | 'archived'
-  internal_note: string | null
-  created_at: string
-}
-
-const rest = (env: AdminEnv, table: string) => `${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/${table}`
-const storage = (env: AdminEnv, path: string) => `${env.SUPABASE_URL!.replace(/\/$/, '')}/storage/v1/${path}`
-const timeout = () => AbortSignal.timeout(6000)
+export { installationByToken, logEvent, type InstallationRow }
 
 export const tenantWarranty = (tenant: Tenant): WarrantyMonths => ({ ...DEFAULT_WARRANTY_MONTHS, ...tenant.installations?.warranty })
 export const tenantRetentionMonths = (tenant: Tenant) => tenant.installations?.retentionMonths ?? DEFAULT_RETENTION_MONTHS
-
-async function select<T>(env: AdminEnv, table: string, query: string): Promise<T[]> {
-  const response = await fetch(`${rest(env, table)}?${query}`, { headers: storeHeaders(env), signal: timeout() })
-  if (!response.ok) throw new Error(`Supabase ${table} ${response.status}: ${(await response.text()).slice(0, 200)}`)
-  return response.json() as Promise<T[]>
-}
-
-export async function logEvent(env: AdminEnv, row: Pick<InstallationRow, 'id' | 'tenant_id'>, kind: 'created' | 'service_request' | 'status_change' | 'expansion_request', actor: 'manufacturer' | 'owner' | 'system', detail: Record<string, unknown> | null = null) {
-  const response = await fetch(rest(env, 'installation_events'), {
-    method: 'POST', headers: { ...storeHeaders(env), Prefer: 'return=minimal' },
-    body: JSON.stringify({ installation_id: row.id, tenant_id: row.tenant_id, kind, actor, detail }), signal: timeout(),
-  })
-  if (!response.ok) console.error('[installations] Napló írása sikertelen', row.id, kind, response.status)
-}
 
 /** Fotók törlése a privát tárhelyről (egy hívásban, legfeljebb 1000 út). */
 export async function removePhotos(env: AdminEnv, paths: string[]) {
@@ -103,7 +70,6 @@ function adminView(row: InstallationRow) {
 }
 export type AdminInstallation = ReturnType<typeof adminView>
 
-const INSTALL_COLUMNS = 'id,tenant_id,lead_id,lead_ref,public_token,config_snapshot,snapshot_hash,schema_version,product_type,installed_at,warranty,status,internal_note,created_at'
 
 /**
  * GET /api/admin-installations → a gyártó telepítései;
@@ -226,13 +192,6 @@ export function rateLimited(request: Request, bucket: string, max: number, windo
 }
 
 const privateJson = (status: number, body: unknown) => json(status, body, { 'X-Robots-Tag': 'noindex, nofollow, noarchive', 'Referrer-Policy': 'no-referrer' })
-
-/** A token alapján az aktív telepítés (vagy null). Érvénytelen formátumnál adatbázis-hívás sincs. */
-export async function installationByToken(env: AdminEnv, token: string): Promise<InstallationRow | null> {
-  if (!INSTALLATION_TOKEN_RE.test(token)) return null
-  const [row] = await select<InstallationRow>(env, 'installations', `public_token=eq.${encodeURIComponent(token)}&status=eq.active&select=${INSTALL_COLUMNS}&limit=1`)
-  return row ?? null
-}
 
 export function publicInstallation(row: InstallationRow, tenant: Tenant, overrides: TenantOverrides | null, now = new Date()) {
   const snapshot = row.config_snapshot

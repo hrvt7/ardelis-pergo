@@ -46,6 +46,8 @@ import { buildWalkArea } from '@/lib/walkArea'
 import { floatPhoneShiftX, floatViewShiftX, glassViewShiftX, resolveUiStyle, studioInitialTime, UI_STYLE_KEY, usesCyclorama, usesFloatLayout, type UiStyle } from '@/lib/uiStyle'
 import { cameraViewsFor } from '@/lib/cameraViews'
 import { mobileBarAction } from '@/lib/configSteps'
+import { clearExpansion, LOCKED_STEPS, readExpansion } from '@/lib/expansion'
+import { clampExpansion } from '@/lib/installations'
 import { DEFAULT_USAGE, energyCostSupported, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
 import type { FurnitureSet } from '@/types/pergola'
 
@@ -95,9 +97,12 @@ function loadSaved(tenant: Tenant): SavedConfiguration[] {
 export default function PergoStudio() {
   const { tenant, labels: ROOF_LABELS, admin, embed, homeHref, product } = useTenant()
   usePageSeo(product === 'carport' ? '/konfigurator/carport' : '/konfigurator', { noindex: embed || !tenant.demo, title: tenant.demo ? undefined : `${tenant.brand.name} · ${product === 'carport' ? 'Carport' : 'Pergola'} ${tr('konfigurátor', 'Konfigurator')}` })
-  const [config, setConfig] = useState<PergolaConfig>(() => loadInitialConfig(tenant, product))
+  // Bővítés a tulajdonosi oldalról: a felszerelt termékből indul, a meglévő szerkezet zárolt (csak hozzáadni lehet).
+  const [expansion] = useState(() => (product === 'pergola' ? readExpansion(tenant.id) : null))
+  const expansionBase = useMemo(() => (expansion ? normalizeConfig(tenant, expansion.config) : null), [expansion, tenant])
+  const [config, setConfig] = useState<PergolaConfig>(() => expansionBase ?? loadInitialConfig(tenant, product))
   // Visszatérő látogató: ha piszkozatból (nem linkből) indultunk, és az nem az alapterv, felajánljuk a folytatást.
-  const [welcomeBack, setWelcomeBack] = useState(() => !window.location.hash && JSON.stringify(config) !== JSON.stringify(normalizeConfig(tenant, productDefaultConfig(tenant, product))) && hasStoredDraft(tenant, product))
+  const [welcomeBack, setWelcomeBack] = useState(() => !expansion && !window.location.hash && JSON.stringify(config) !== JSON.stringify(normalizeConfig(tenant, productDefaultConfig(tenant, product))) && hasStoredDraft(tenant, product))
   const projectKey = `pergo-project-name:${tenant.id}`
   const [projectName, setProjectName] = useState(() => { try { return localStorage.getItem(projectKey) ?? '' } catch { return '' } })
   useEffect(() => { try { localStorage.setItem(projectKey, projectName) } catch { /* privát mód */ } }, [projectKey, projectName])
@@ -114,12 +119,14 @@ export default function PergoStudio() {
   const modularKey = `lamelix-studio-kind:${tenant.id}`
   const modularOffered = product === 'pergola' && offersModularHouse(tenant)
   const [modularMode, setModularMode] = useState(() => {
-    if (!modularOffered) return false
+    if (!modularOffered || expansion) return false
     if (window.location.hash) return window.location.hash.startsWith('#h=')
     try { return localStorage.getItem(modularKey) === 'modular' } catch { return false }
   })
   useEffect(() => { if (modularOffered) { try { localStorage.setItem(modularKey, modularMode ? 'modular' : 'frame') } catch { /* privát mód */ } } }, [modularKey, modularMode, modularOffered])
-  const [step, setStep] = useState<ConfigStep>('size')
+  const [step, setStep] = useState<ConfigStep>(expansion ? 'sides' : 'size')
+  const stepRef = useRef(step)
+  useEffect(() => { stepRef.current = step }, [step])
   // Mobilon az alsó lap három állású: kicsi (csak lépés), fél (a 3D felül látszik), teljes.
   const [sheet, setSheet] = useState<SheetState>('peek')
   const setMobileControlsOpen = useCallback((open: boolean) => setSheet((current) => (open ? (current === 'peek' ? 'half' : current) : 'peek')), [])
@@ -195,7 +202,8 @@ export default function PergoStudio() {
   const energyCost = energySupported && energy.hasElectrics ? roundCost(energy.cost) : null
   const openEnergy = energySupported ? () => setModal('energy') : undefined
 
-  useEffect(() => persistConfig(tenant, config, product), [tenant, config, product])
+  // A bővítés nem írja felül a látogató saját piszkozatát.
+  useEffect(() => { if (!expansion) persistConfig(tenant, config, product) }, [tenant, config, product, expansion])
   // Névtelen konverziómérés: megnyitás és az első érdemi módosítás (csak vásárlói nézetben).
   const firstConfig = useRef(config)
   useEffect(() => { if (!admin) { track(tenant.id, 'open'); startEngagement(tenant.id) } }, [tenant.id, admin])
@@ -294,7 +302,7 @@ export default function PergoStudio() {
         buildingStash.current = null
       }
     }
-    const next = normalizeConfig(tenant, merged)
+    const next = expansionBase ? clampExpansion(expansionBase, normalizeConfig(tenant, clampExpansion(expansionBase, merged))) : normalizeConfig(tenant, merged)
     if (enteringBuilding) buildingStash.current = { roof: config.roof, sides: config.sides, split: config.split, pitch: config.pitch, closedSides: next.sides }
     if (JSON.stringify(next) === JSON.stringify(config)) return
     const nextPrice = calculatePrice(next, prices, ROOF_LABELS, tenant.currency)
@@ -324,7 +332,7 @@ export default function PergoStudio() {
     history.current.future = []
     configRef.current = next
     setConfig(next)
-  }, [config, price.totalGross, prices, tenant, ROOF_LABELS, reactToChange, overview])
+  }, [config, price.totalGross, prices, tenant, ROOF_LABELS, reactToChange, overview, expansionBase])
 
   const updateConfig = useCallback((patch: Partial<PergolaConfig>) => applyConfig(patch), [applyConfig])
   const replaceConfig = useCallback((next: PergolaConfig) => applyConfig(next, true), [applyConfig])
@@ -349,14 +357,22 @@ export default function PergoStudio() {
     return () => window.clearTimeout(timer)
   }, [change])
   /** Lépésváltás: a kamera a lépéshez illő nézetre áll (szín: közeli, oldalak: a kiválasztott oldal, összegzés: körbeforgás). */
-  const goStep = useCallback((next: ConfigStep) => {
+  const goStep = useCallback((requested: ConfigStep) => {
+    // Bővítésnél a zárolt lépéseket átugorjuk (a lépés iránya szerint a következő szabadra).
+    const order: ConfigStep[] = ['size', 'mount', 'roof', 'sides', 'color', 'extras', 'summary']
+    let next = requested
+    if (expansion && LOCKED_STEPS.includes(next)) {
+      const forward = order.indexOf(next) >= order.indexOf(stepRef.current)
+      const pool = forward ? order.slice(order.indexOf(next)) : order.slice(0, order.indexOf(next) + 1).reverse()
+      next = pool.find((item) => !LOCKED_STEPS.includes(item)) ?? 'sides'
+    }
     setStep(next)
     const current = sceneRef.current
     if (!current.autoCamera || current.photoMode || current.sunStudy) return
     if (next === 'color' || next === 'size' || next === 'mount' || next === 'roof' || next === 'extras') overview()
     else if (next === 'sides') { setView('perspective'); if (selectedSideRef.current !== 'roof') focusSide(selectedSideRef.current) }
     else if (next === 'summary') { setView('perspective'); setFocus({ id: ++focusSeq.current, kind: 'showcase' }) }
-  }, [focusSide, overview])
+  }, [focusSide, overview, expansion])
   const selectedSideRef = useRef<SideKey | 'roof'>('front')
   useEffect(() => { selectedSideRef.current = selectedSide }, [selectedSide])
   const selectSide = useCallback((side: SideKey | 'roof') => {
@@ -596,6 +612,7 @@ export default function PergoStudio() {
           {presentation && !modularMode && <div className="presentation-note"><span>{tr('ÜGYFÉL-BEMUTATÓ', 'KUNDENPRÄSENTATION')}</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><small>{tr('Húzd a jelenetet a forgatáshoz · ESC a szerkesztéshez', 'Szene zum Drehen ziehen · ESC zum Bearbeiten')}</small></div>}
           {scene.photoMode ? <PhotoBar placement={{ photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt, photoLens: scene.photoLens }} coarse={isNarrow || window.matchMedia('(pointer: coarse)').matches} onChange={(next) => updateScene(next)} onReset={() => updateScene({ ...DEFAULT_PLACEMENT })} onReplace={openPhotoPicker} onDelete={deleteUserPhoto} onDone={() => updateScene({ photoMode: false })} />
             : null}
+          {expansion && <div className="expansion-banner" role="status"><strong>{tr('Bővítés', 'Erweiterung')}</strong><span>{tr(`A meglévő ${expansion.headline} szerkezete (méret, tető, rögzítés, szín) zárolt. Nyitott oldalt zárhatsz le, és árnyékolót, fűtést, LED-et, ventilátort, szenzort adhatsz hozzá.`, `Die bestehende Konstruktion (${expansion.headline}: Größe, Dach, Montage, Farbe) ist gesperrt. Offene Seiten schließen sowie Beschattung, Heizung, LED, Ventilator, Sensor hinzufügen.`)}</span><button type="button" onClick={() => { clearExpansion(); window.location.replace(window.location.pathname) }}>{tr('Kilépés', 'Beenden')}</button></div>}
           {welcomeBack && !modularMode && <WelcomeBack summary={`${config.width.toFixed(1).replace('.', ',')} × ${config.depth.toFixed(1).replace('.', ',')} m · ${formatPrice(price.totalGross)}`} onContinue={() => setWelcomeBack(false)} onFresh={() => { replaceConfig(productDefaultConfig(tenant, product)); setProjectName(''); setWelcomeBack(false); goStep('size') }} />}
           {!presentation && (modularMode ? <ChangePill change={modular.change} onUndo={() => { modular.undo(); modular.clearChange() }} /> : <ChangePill change={change} onUndo={() => { undo(); setChange(null) }} />)}
           <div className="viewer-footer"><span>{scene.photoMode ? tr('HELYI FOTÓS ELŐNÉZET', 'LOKALE FOTOVORSCHAU') : tr('1 egység = 1 méter', '1 Einheit = 1 Meter')}</span><span>{modularMode ? `bruttó ${modular.model.grossArea.toFixed(1).replace('.', ',')} m² · nettó ${modular.model.netArea.toFixed(1).replace('.', ',')} m²` : `${price.area.toFixed(1).replace('.', ',')} m²`}</span>{tenant.platformCredit !== false && <a className="platform-credit" href="/" target="_blank" rel="noopener" title={tr('3D konfigurátor: Lamelix', '3D-Konfigurator: Lamelix')}><LamelixLogo variant="symbol" tone="onDark" height={11} title={null} />Lamelix</a>}</div>
@@ -606,7 +623,7 @@ export default function PergoStudio() {
           {modular.controls({ typePicker: <BuildingPicker config={config} prices={prices} onChange={exitModular} modular={modularChoice} />, footer: <PanelPrice gross={modular.price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />, mobileOpen: sheetView !== 'peek', onMobileToggle: () => setSheet(sheetView === 'peek' ? 'full' : 'peek') })}
           {modular.pricePanel({ detailsOpen, onToggle: () => setDetailsOpen((open) => !open) })}
         </> : <>
-          <ConfiguratorControls mobileBar={mobileBar} modular={modularChoice} config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={(next) => { goStep(next); if (isNarrow) setMobileControlsOpen(true) }} onSideSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} sheet={sheetView} onSheetChange={setSheet} onAdvisor={() => setModal('advisor')} energyCost={energyCost} onEnergy={openEnergy} footer={<PanelPrice gross={price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />} />
+          <ConfiguratorControls mobileBar={mobileBar} expansion={Boolean(expansion)} modular={modularChoice} config={config} scene={scene} step={step} selectedSide={selectedSide} summary={summary} onStepChange={(next) => { goStep(next); if (isNarrow) setMobileControlsOpen(true) }} onSideSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} onPreset={replaceConfig} prices={prices} sheet={sheetView} onSheetChange={setSheet} onAdvisor={() => setModal('advisor')} energyCost={energyCost} onEnergy={openEnergy} footer={<PanelPrice gross={price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />} />
           <PricePanel config={config} price={price} exporting={exporting} delta={delta} compact onEditPrices={admin ? () => setModal('prices') : undefined} onExport={handleExport} onShare={handleShare} onBudget={() => setModal('budget')} collapsed={!detailsOpen} onToggleCollapse={() => setDetailsOpen((open) => !open)} energyCost={energyCost} onEnergy={openEnergy} />
         </>}
       </main>

@@ -1,5 +1,12 @@
 # Változások
 
+## 4.84 – Telepítések 5/6: bővítés a tulajdonosi oldalról
+
+- **„Bővíteném” gomb a tulajdonosi oldalon:** a gyártó konfigurátora a felszerelt (befagyasztott) változatból indul. A méret, a rögzítés és a szín lépés zárolt, a tetőnél csak a tetőárnyékoló választható, a nyitott oldalak zárhatók le, a Komfort lépésben LED, fűtés, ventilátor, szenzor, hangrendszer, okosotthon adható hozzá; ami már megvan, nem vehető el. A felület tetején/alján „Bővítés” sáv, kilépés gombbal.
+- **A token nem kerül az URL-be:** a böngészőfül munkamenet-tárolójában van (2 óráig), a konfigurátor csak `?bovites=1` mellett és ugyanannál a gyártónál veszi át. A bővítés nem írja felül a látogató saját piszkozatát.
+- **A szerver dönt:** a lead a meglévő lead-flow-n megy, de a szerver ellenőrzi a tokent és a gyártót, a beküldött konfigurációt visszazárolja az eredetire (csak hozzáadás), új elem nélkül elutasítja. A lead `expansion` forrással, az eredeti telepítésre hivatkozva (`installation_id`), „[Bővítés] Eredeti: … Hozzáadva: …” megjegyzéssel mentődik; az irányár a bővítés becsült ára (a teljes új konfiguráció mai ára mínusz a meglévő rész mai ára), ezt a gyártói és a vevői e-mail is így mutatja. A napló `expansion_request` eseményt kap.
+- Tesztek: `expansion.test.ts` (szerveroldali zár, különbözeti ár, hivatkozás és napló, új elem nélkül 422, idegen/érvénytelen token, munkamenet-szabályok). Böngészőben ellenőrizve: zárolt lépések, „Oldalak” kezdőlépés, a befagyasztott terv betöltése.
+
 ## 4.83 – Telepítések 4/6: hibabejelentés és Szerviz nézet
 
 - **Hibabejelentés a tulajdonosi oldalon:** komponens a telepítés zárt listájából, leírás, legfeljebb 4 fotó (eredetileg egyenként max. 8 MB), kötelező hozzájárulás. A böngésző a fotót vásznon keresztül JPEG-be kódolja újra (max. 2560 px, ≤ 4 MB): ez eldobja az EXIF-et (GPS, eszköz, időpont); a szerver ellenőrzi, hogy JPEG-e, és második védvonalként eltávolít minden metaadat-szegmenst (`server/jpeg.ts`). A fotók a privát `service-photos` tárhelyre kerülnek, a tárolási utat a szerver képzi (gyártó / telepítés / véletlen azonosító).
