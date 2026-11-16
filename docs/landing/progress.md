@@ -27,3 +27,16 @@ Lánc: weboldal-hrvt (A típus) → premium-weboldal-uzleti (kutatás, kérdése
 | Vég | FAIL | FAIL | FAIL |
 | Mobil | FAIL | FAIL | FAIL |
 Részletek és ellenőrzött teendőlista: `AUDIT-2026-11-16.md`.
+
+## 2. kör (4.71 → 4.72 után) – 12/12 FAIL, de szűkebb hibákkal
+Javítva a 2. kör után: „Hét lépés” címke a cím sorai között; redőny-címke („A gyártó oldalán”); ár-lap „Példa”; bevezetés az első érvben; becslés jelölve; palettán kívüli zöld a kalkulátorban; béta-pötty; szürke űrlap; inaktív funkciócímek kontrasztja; mobil demó-gombok ütközése.
+
+### Hiánytörténet (gap history)
+- 1. kör: az első képernyőn hiányzó érvek; duplán megjelenő űrlap+GYIK; jelöletlen becslés; túlígérés (fotó, generált ajánlat); Vanilla-túlhasználat; nincs közös rács; apró szöveg; palettán kívüli színek; generikus ikonok.
+- 2. kör: címke a cím sorai között; „Ön” kétértelmű a redőnyön; a kidolgozás-kritikusok szerint a termék-render lapos (bézs doboz, gyenge fény), a laptop képernyője olvashatatlan méretű, az oldal hosszú és ismétel (két lépés-szakasz, érvek háromszor), az űrlap 8 mezős, a kapcsolat személyes e-mail.
+
+### Nyitott, döntést igénylő pontok
+1. A „Hét lépés” 3D-képsorozat újrarenderelése jobb fénnyel és környezettel (nem bézs doboz).
+2. Rövidítés: „Négy lépés” vagy „Miért éri meg?” összevonása/elhagyása.
+3. Demóűrlap 4 mezőre (Név, Cég, E-mail, Telefon), a többi a demón.
+4. Céges kapcsolati e-mail a személyes helyett.
