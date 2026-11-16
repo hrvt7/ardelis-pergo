@@ -1,5 +1,15 @@
 # Változások
 
+## 4.62 – Egységes világos design minden oldalon
+
+- **Egységes világos design mindenhol:** a nyitóoldal (HU és EN), a gyártói belépés, az adatkezelési tájékoztató, a 404-es oldal és a mintaoldal is a konfigurátor és az admin világos, pasztell rendszerét kapja: Urbanist betű, #ECECEF alap, fehér kártyák, fekete pill gombok, Vanilla kiemelés (a dőlt serif kiemelés helyett Vanilla aláfestés), Honeydew/Alice Blue díszítő színátmenet. A sötét zöldesfekete háttér és a neon-lime eltűnt.
+- A nyitóoldal termékképei (konfigurátor, admin áttekintés, érdeklődők, mobil lead-adatlap) újra készültek az új, világos felületről, így a bemutató a valódi mai kinézetet mutatja.
+- A Lamelix logó a világos oldalakon a sötét változatot használja; a nyelvváltó aktív gombja fehér felirattal.
+- A 404-es oldal saját, egyszerű világos kártyát kapott, a Lamelix kezdőlapra mutat.
+- A mintaoldal fotós, „esti” jelenetei továbbra is sötét fotón ülnek (a kép miatt), a betű és a kiemelés ott is az új rendszeré.
+- Ellenőrzés: kontrasztszkenner a nyitóoldalon (HU, EN, mobil), belépésen, adatkezelésen, 404-en: 0 hiba; a mintaoldalon a valódi hibák javítva (a maradék jelzés fotón ülő szöveg, ahol a szkenner nem látja a képet).
+- Tesztek: `lightReadability.test.ts` bővítve (főoldal tokenjei, lime nélkül; performative-ui elemek; jogi oldalak és logók; mintaoldal).
+
 ## 4.61 – Nyitó animáció hardveres dekóderrel iPhone-on és iPaden is, ha a videó automatikus lejátszása tiltott
 
 - **Hiba: iPhone 14 Pro-n az animáció szaggatott.** Mivel a telefon tiltja a videó automatikus indítását, a tartalék animált AVIF kép futott. Az AVIF-et az A16 chip (iPhone 14 Pro) nem tudja hardveresen kibontani (erre csak az A17 Pro-tól képes), ezért szoftveresen, szaggatva játszotta le.

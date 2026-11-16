@@ -1,13 +1,23 @@
-.legal-page{min-height:100vh;background:#0e110d;color:#e8ece2;padding:24px max(16px,env(safe-area-inset-right,0px)) 64px max(16px,env(safe-area-inset-left,0px));font-family:inherit}
+.legal-page{min-height:100vh;background:#ECECEF;color:#212121;padding:24px max(16px,env(safe-area-inset-right,0px)) 64px max(16px,env(safe-area-inset-left,0px));font-family:'Urbanist Variable',Urbanist,system-ui,sans-serif}
 .legal-page>header,.legal-page>article,.legal-page>footer{max-width:720px;margin:0 auto}
 .legal-page>header{padding:8px 0 28px}
 .legal-page h1{font-size:clamp(28px,5vw,40px);letter-spacing:-.02em;margin:6px 0 14px;text-wrap:balance}
-.legal-page h2{font-size:20px;margin:34px 0 8px}.legal-page h3{font-size:15px;margin:20px 0 6px;color:#d8ff72}
-.legal-page p,.legal-page li{line-height:1.65;color:rgba(232,236,226,.82);max-width:68ch}
-.legal-page ul{padding-left:20px;display:grid;gap:6px}.legal-page a{color:#d8ff72}
-.legal-eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:rgba(232,236,226,.55)!important}
+.legal-page h2{font-size:20px;margin:34px 0 8px}.legal-page h3{font-size:15px;margin:20px 0 6px;color:#212121}
+.legal-page p,.legal-page li{line-height:1.65;color:#3A3C41;max-width:68ch}
+.legal-page ul{padding-left:20px;display:grid;gap:6px}.legal-page a{color:#212121;text-decoration:underline;text-underline-offset:3px}
+.legal-eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5C5E64!important}
 .legal-page>footer{margin-top:40px}
 
-.sample-banner{position:relative;z-index:30;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;padding:9px max(16px,env(safe-area-inset-right,0px)) 9px max(16px,env(safe-area-inset-left,0px));background:#d8ff72;color:#0e110d;font-size:13px;line-height:1.4;text-align:center}
-.sample-banner b{letter-spacing:.04em;text-transform:uppercase;font-size:11.5px}.sample-banner a{color:#0e110d;font-weight:700;text-decoration:underline}
+.sample-banner{position:relative;z-index:30;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;padding:9px max(16px,env(safe-area-inset-right,0px)) 9px max(16px,env(safe-area-inset-left,0px));background:#EFF0A3;color:#212121;font-size:13px;line-height:1.4;text-align:center}
+.sample-banner b{letter-spacing:.04em;text-transform:uppercase;font-size:11.5px}.sample-banner a{color:#212121;font-weight:700;text-decoration:underline}
 .bom-note{margin:8px 0 0;font-size:12px;line-height:1.5;opacity:.65}
+
+/* 4.60: a szöveg fehér kártyán, mint a termék többi felülete. */
+.legal-page>article{background:#fff;border-radius:28px;padding:clamp(22px,4vw,44px);box-shadow:0 2px 10px rgba(33,33,33,.05)}
+.legal-page h1,.legal-page h2{font-weight:500;letter-spacing:-.03em;color:#212121}
+body:has(.legal-page){background:#ECECEF}
+.notfound-page>article{margin-top:8vh}
+.notfound-page h1{font-size:clamp(40px,7vw,72px);line-height:1;font-weight:400}
+.notfound-page h1 em{font-style:normal;background:linear-gradient(transparent 58%,#EFF0A3 58%,#EFF0A3 92%,transparent 92%)}
+.notfound-cta{display:inline-flex;align-items:center;gap:8px;margin-top:18px;min-height:48px;padding:0 22px;border-radius:999px;background:#212121;color:#fff!important;font-weight:600;text-decoration:none!important}
+.notfound-cta:hover{background:#000}

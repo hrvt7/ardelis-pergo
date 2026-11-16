@@ -47,3 +47,32 @@ describe('admin – ugyanaz a világos, pasztell rendszer', () => {
     expect(page.match(/<LamelixLogo[^>]*tone="onLight"/g)?.length).toBe(2)
   })
 })
+
+describe('mindenhol ugyanaz a világos design (4.60)', () => {
+  it('a főoldal tokenjei világosak, Urbanist betűvel, fekete kiemeléssel', () => {
+    const pf = readFileSync('src/platform.css', 'utf8')
+    expect(pf).toMatch(/--pf-bg: #ECECEF;/)
+    expect(pf).toMatch(/--pf-text: #212121;/)
+    expect(pf).toMatch(/--pf-accent: #212121;/)
+    expect(pf).toMatch(/font-family: 'Urbanist Variable'/)
+    expect(pf).not.toMatch(/#d8ff72/i)
+    expect(pf).not.toMatch(/rgba\(216,\s*255,\s*114/)
+    expect(contrast('#5C5E64', '#ECECEF')).toBeGreaterThanOrEqual(4.5)
+  })
+  it('a performative-ui elemek (ragadós sáv, lábléc) a világos tokeneket kapják', () => {
+    const pui = readFileSync('src/pui-theme.css', 'utf8')
+    expect(pui).toMatch(/--pui-fg: var\(--pf-text, #212121\);/)
+    expect(pui).toMatch(/\.lx-sticky a \{[^}]*color: #fff;/)
+  })
+  it('adatkezelés, 404 és belépés világos alapon, a logó sötét változatával', () => {
+    const legal = readFileSync('src/legal.css', 'utf8')
+    expect(legal).toMatch(/\.legal-page\{min-height:100vh;background:#ECECEF;color:#212121;/)
+    for (const page of ['src/pages/NotFound.tsx', 'src/pages/Privacy.tsx', 'src/pages/Login.tsx']) expect(readFileSync(page, 'utf8')).toMatch(/tone="onLight"/)
+    expect(readFileSync('src/pages/Platform.tsx', 'utf8').match(/tone="onLight"/g)?.length).toBe(3)
+  })
+  it('a mintaoldal is Urbanist betűt és Vanilla kiemelést használ', () => {
+    const film = readFileSync('src/home-film.css', 'utf8')
+    expect(film).toMatch(/--display: 'Urbanist Variable'/)
+    expect(film).toMatch(/--primitive-bronze: #EFF0A3;/)
+  })
+})

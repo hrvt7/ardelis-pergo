@@ -465,7 +465,7 @@ a { color: inherit; } svg { flex-shrink: 0; }
 
 /* Marketing and shared public chrome */
 body:has(.marketing-page) { overflow: visible; background: #e8e7e0; }
-.marketing-page { --paper: #e8e7e0; --paper-deep: #d7d8cf; --forest: #18322b; --forest-soft: #29463b; --acid: #d9f99d; --muted-ink: #67716b; min-height: 100dvh; background: var(--paper); color: var(--forest); font-family: var(--font-ui); }
+.marketing-page { --paper: #ECECEF; --paper-deep: #F6F5FA; --forest: #212121; --forest-soft: #3A3C41; --acid: #EFF0A3; --muted-ink: #5C5E64; min-height: 100dvh; background: var(--paper); color: var(--forest); font-family: var(--font-ui); }
 .marketing-page ::selection { background: var(--forest); color: var(--acid); }
 .site-header { position: relative; z-index: 40; height: 82px; display: grid; grid-template-columns: 250px 1fr auto; align-items: center; padding: 0 clamp(22px,4vw,68px); border-bottom: 1px solid rgba(24,50,43,.18); background: rgba(232,231,224,.94); backdrop-filter: blur(16px); }
 .site-brand { display: inline-flex; align-items: center; gap: 11px; width: max-content; text-decoration: none; color: inherit; }
@@ -555,7 +555,7 @@ body:has(.marketing-page) { overflow: visible; background: #e8e7e0; }
 .partner-banner .button-primary { border-color: var(--acid); background: var(--acid); color: var(--forest); }
 .partner-admin-link { display: block; width: max-content; margin-top: 20px; color: #b9c5bb; font-size: var(--text-sm); }
 .partner-map-icon { position: absolute; width: 400px; height: 400px; right: -60px; bottom: -120px; color: rgba(217,249,157,.09); }
-.site-footer { display: grid; grid-template-columns: 1fr 1.4fr 1fr; align-items: start; gap: 30px; padding: 55px clamp(22px,4vw,68px) 28px; background: #10251f; color: #e8e7e0; }
+.site-footer { display: grid; grid-template-columns: 1fr 1.4fr 1fr; align-items: start; gap: 30px; padding: 55px clamp(22px,4vw,68px) 28px; background: #212121; color: #ECECEF; }
 .site-footer p { margin: 0; max-width: 380px; color: #a6b5aa; font-size: var(--text-md); line-height: 1.7; }
 .site-footer > div { display: flex; justify-content: flex-end; gap: 20px; }
 .site-footer > div a { color: #e8e7e0; font-size: var(--text-sm); }

@@ -11,7 +11,7 @@ const CONTACT = import.meta.env.VITE_CONTACT_EMAIL || 'hrvtadam.7@icloud.com'
 export default function Privacy() {
   usePageSeo('/adatkezeles')
   return <main className="legal-page">
-    <header><Link to="/" aria-label="Lamelix kezdőlap"><LamelixLogo height={26} title={null} /></Link></header>
+    <header><Link to="/" aria-label="Lamelix kezdőlap"><LamelixLogo height={26} title={null} tone="onLight" /></Link></header>
     <article>
       <p className="legal-eyebrow">Hatályos: 2026. november · verzió {PRIVACY_VERSION}</p>
       <h1>Adatkezelési tájékoztató</h1>

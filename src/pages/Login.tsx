@@ -22,7 +22,7 @@ export default function Login() {
   }
   return <div className="pf-page pf-login">
     <form className="pf-login-card" onSubmit={submit} noValidate>
-      <Link to="/" aria-label="Lamelix kezdőlap"><LamelixLogo height={26} title={null} /></Link>
+      <Link to="/" aria-label="Lamelix kezdőlap"><LamelixLogo height={26} title={null} tone="onLight" /></Link>
       <h1>Gyártói belépés</h1>
       <p>Adja meg a gyártói azonosítóját (például a konfigurátor címében szereplő nevet), utána a jelszavával lép be az adminfelületre.</p>
       <label>Gyártói azonosító

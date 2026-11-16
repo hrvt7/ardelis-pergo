@@ -331,7 +331,7 @@ function PlatformPage() {
     : { eyebrow: 'Előtte, utána', title: <>Ugyanaz a terasz. <em>Pergolával.</em></>, text: 'Húzza a vonalat: bal oldalt az üres terasz, jobb oldalt ugyanaz a kép a 3D stúdióban megtervezett pergolával. A vevői a saját teraszukról kapnak ilyen képet, egy fotóból.', beforeAlt: 'Üres faburkolatú terasz egy családi ház előtt', afterAlt: 'Ugyanaz a terasz antracit bioklimatikus pergolával és kerti bútorral', beforeLabel: 'Előtte', afterLabel: 'Utána', brand: 'Lamelix-szel', listBefore: ['Árlista e-mailben, napokkal később', 'A vevő katalógusból képzeli el a teraszt', 'A kérés úgy jön, hogy „kb. 5×4 méter”', 'Minden ajánlat kézzel készül'], listAfter: ['Irányár tervezés közben, este tizenegykor is', 'A saját terasza 3D-ben, a saját fotójáról', 'A kérés a teljes konfigurációval és a terv linkjével érkezik', 'Az ajánlat generálódik, Ön csak jóváhagyja'] }
   return <div className="pf-page pui-lamelix" ref={root}>
     <header className={`pf-header${scrolled ? ' is-scrolled' : ''}`}>
-      <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={30} title={null} /><small>{n.brandSmall}</small></a>
+      <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={30} title={null} tone="onLight" /><small>{n.brandSmall}</small></a>
       <nav aria-label={n.mainAria}><a href="#elonyok">{n.benefits}</a><a href="#bemutato">{n.showcase}</a><a href="#funkciok">{n.features}</a><a href="#mukodes">{n.how}</a><a href="#arak">{n.pricing}</a><a href="#gyik">{n.faq}</a></nav>
       <div className="pf-header-actions"><LangSwitch /><Link className="pf-link-quiet" to="/belepes">{n.login}</Link><Link className="pf-login-icon" to="/belepes" aria-label={n.login} title={n.login}><LogIn size={18} /></Link><Link className="pf-link-quiet" to={DEMO_PATH}>{n.liveDemo}</Link><a className="pf-btn pf-btn-primary pf-btn-sm" href="#demo">{n.requestDemo}</a></div>
     </header>
@@ -495,12 +495,12 @@ function PlatformPage() {
     </main>
 
     <Suspense fallback={<footer className="pf-footer">
-      <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={28} title={null} /></a>
+      <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={28} title={null} tone="onLight" /></a>
       <p>{c.footer.text}</p>
       <nav aria-label={n.footerAria}><Link to={DEMO_PATH}>{n.liveDemo}</Link>{c.footer.sample && <Link to="/minta">{c.footer.sample}</Link>}<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a><Link to="/belepes">{n.login}</Link></nav>
       <small>© {new Date().getFullYear()} Lamelix</small>
     </footer>}>
-      <BigFooter company="LAMELIX" columns={footerColumns} brand={<LamelixLogo className="pf-logo" height={26} title={null} />} copyright={<>© {new Date().getFullYear()} Lamelix · {c.footer.text}</>} />
+      <BigFooter company="LAMELIX" columns={footerColumns} brand={<LamelixLogo className="pf-logo" height={26} title={null} tone="onLight" />} copyright={<>© {new Date().getFullYear()} Lamelix · {c.footer.text}</>} />
     </Suspense>
   </div>
 }
