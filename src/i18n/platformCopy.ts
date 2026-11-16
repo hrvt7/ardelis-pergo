@@ -22,7 +22,7 @@ const hu = {
     line1: 'Pergolák 3D-ben,', line2: 'saját arculattal,', line3: 'a weboldalán.',
     lead: 'A Lamelix nem egy újabb szoftver a vállalkozásában, hanem digitális értékesítési eszköz. Az ügyfél a weboldalukon vagy a bemutatóteremben 3D-ben megtervezi a pergolát, verandát vagy télikertet, azonnal látja az irányárat, és hazaviszi a kész tervet. Önökhöz beárazva, minden adattal érkezik az érdeklődés – saját arculattal, saját árakkal.',
     ctaDemo: 'Kérek demót', ctaLive: 'Kipróbálom élőben',
-    proof: ['Magyarul, forintban: havidíj 59 000 Ft-tól + áfa', 'A vevő hazaviszi a tervet: PDF, QR-kód, AR', 'Indulás 5–10 munkanap, hűségidő nélkül'],
+    proof: ['Magyarul, forintban: 59 000 Ft/hó-tól (+ áfa, + egyszeri bevezetés)', 'A vevő hazaviszi a tervet: PDF, QR-kód, AR', 'Indulás 5–10 munkanap, hűségidő nélkül'],
     imgAlt: 'A konfigurátor: 3D teraszfedés, méretek és azonnali bruttó irányár',
     chipA: { label: 'Bruttó irányár', value: '5 648 000 Ft', sub: 'telepítéssel, 27% áfával' },
     chipB: { label: 'Új érdeklődő · most', name: 'Kovács Péter · Sárvár', detail: 'Aero 5,0 × 4,0 m · falhoz' },
@@ -76,7 +76,7 @@ const hu = {
   },
   pricing: {
     eyebrow: '06 – Árak', title: ['Néhány plusz megrendelés ', 'kifizeti', ' az évet.'] as Em,
-    sub: 'Egy pergola-, veranda- vagy télikertprojekt jellemzően 3–6 millió forint, a télikert gyakran afölött. És az idő: ha a kézi ajánlatkészítés napi egy órát vesz el egy értékesítőtől, az 20 munkanappal havi 20 óra, amit valódi értékesítéssel tölthetne (szemléltető példa). A csomagok a gyártó igényeiben különböznek, a vevői élmény mindegyikben teljes.',
+    sub: 'Becslésünk szerint egy pergola-, veranda- vagy télikertprojekt jellemzően 3–6 millió forint, a télikert gyakran afölött. És az idő: ha a kézi ajánlatkészítés napi egy órát vesz el egy értékesítőtől, az 20 munkanappal havi 20 óra, amit valódi értékesítéssel tölthetne (szemléltető példa). A csomagok a gyártó igényeiben különböznek, a vevői élmény mindegyikben teljes.',
     billingAria: 'Fizetési ütem', monthly: 'Havi', annual: 'Éves', annualBadge: '−2 hónap',
     everyLabel: 'Minden csomagban:', everyAria: 'Minden csomagban benne van', badge: 'Legnépszerűbb',
     custom: 'Egyedi ajánlat', perMonth: '/ hó', customNote: 'A márkák és a viszonteladók számától függően',
@@ -148,7 +148,7 @@ const hu = {
     example: 'Példa',
     planPick: 'Csomag',
     faqPick: 'Kérdések',
-    hero: { sub: 'A vevő a weboldalán 3D-ben megtervezi a pergolát, azonnal látja az irányárat – Ön kész ajánlatkérést kap, a teljes tervvel.', laptopLabel: 'Laptop a Lamelix konfigurátorral a tető lépésnél, 5 648 000 Ft bruttó irányárral', stepLabel: 'Konfigurátor', stepNow: '3 / 7 · Tető', leadPing: 'Új felmérési kérelem', colorLabel: 'Szerkezet színe', angleLabel: 'Lamellaszög', scrollHint: 'Görgessen: kinyílnak a lamellák', louverLabel: 'Lamellás tető · a vevő oldalán', louver: ['Ön méretet, irányárat és ', 'kész tervet', ' kap.'] as Em },
+    hero: { sub: 'A vevő a weboldalán 3D-ben megtervezi a pergolát, azonnal látja az irányárat – Ön kész ajánlatkérést kap, a teljes tervvel.', laptopLabel: 'Laptop a Lamelix konfigurátorral a tető lépésnél, 5 648 000 Ft bruttó irányárral', stepLabel: 'Konfigurátor', stepNow: '3 / 7 · Tető', leadPing: 'Új felmérési kérelem', colorLabel: 'Szerkezet színe', angleLabel: 'Lamellaszög', scrollHint: 'Görgessen: kinyílnak a lamellák', louverLabel: 'A gyártó oldalán', louver: ['Ön méretet, irányárat és ', 'kész tervet', ' kap.'] as Em },
     statsLead: 'Ennyit kezel egyetlen konfigurátor a demóban, és a vevő mindegyikre azonnal irányárat lát:',
     steps: ['Típus', 'Méret', 'Tető', 'Oldalak', 'Szín', 'Komfort', 'Összegzés'],
     build: {
@@ -191,7 +191,7 @@ const en: PlatformCopy = {
     line1: 'Pergolas in 3D,', line2: 'in your branding,', line3: 'on your website.',
     lead: 'Lamelix is not just another piece of software in your business – it is a digital sales tool. On your website or in your showroom, the customer designs the pergola, veranda or conservatory in 3D, sees the guide price instantly and takes the finished design home. You receive the enquiry priced, with every detail – under your own brand and with your own prices.',
     ctaDemo: 'Request a demo', ctaLive: 'Try it live',
-    proof: ['In Hungarian and forints: from HUF 59,000 / month + VAT', 'The buyer takes the design home: PDF, QR code, AR', 'Live in 5–10 business days, no lock-in'],
+    proof: ['In Hungarian and forints: from HUF 59,000 / month (+ VAT, + one-off setup)', 'The buyer takes the design home: PDF, QR code, AR', 'Live in 5–10 business days, no lock-in'],
     imgAlt: 'The configurator: 3D terrace cover, dimensions and instant guide price including VAT',
     chipA: { label: 'Guide price incl. VAT', value: 'HUF 5,648,000', sub: 'installed, incl. 27% VAT' },
     chipB: { label: 'New lead · just now', name: 'Péter Kovács · Sárvár', detail: 'Aero 5.0 × 4.0 m · wall-mounted' },
@@ -245,7 +245,7 @@ const en: PlatformCopy = {
   },
   pricing: {
     eyebrow: '06 – Pricing', title: ['A few extra orders ', 'pay for', ' the year.'],
-    sub: 'A pergola, veranda or conservatory project typically costs HUF 3–6 million, conservatories often more. And time: if manual quoting takes one hour a day from a salesperson, that is 20 hours a month over 20 working days that could go into real selling (an illustrative example). The plans differ in what the manufacturer needs; the customer experience is complete in every one.',
+    sub: 'By our estimate, a pergola, veranda or conservatory project typically costs HUF 3–6 million, conservatories often more. And time: if manual quoting takes one hour a day from a salesperson, that is 20 hours a month over 20 working days that could go into real selling (an illustrative example). The plans differ in what the manufacturer needs; the customer experience is complete in every one.',
     billingAria: 'Billing period', monthly: 'Monthly', annual: 'Annual', annualBadge: '−2 months',
     everyLabel: 'In every plan:', everyAria: 'Included in every plan', badge: 'Most popular',
     custom: 'Custom quote', perMonth: '/ month', customNote: 'Depending on the number of brands and resellers',
@@ -321,7 +321,7 @@ const en: PlatformCopy = {
     example: 'Example',
     planPick: 'Plan',
     faqPick: 'Questions',
-    hero: { sub: 'Your buyer designs the pergola in 3D on your website and sees the guide price instantly – you receive a ready quote request with the full design.', laptopLabel: 'A laptop showing the Lamelix configurator at the roof step, with a gross guide price of HUF 5,648,000', stepLabel: 'Configurator', stepNow: '3 / 7 · Roof', leadPing: 'New survey request', colorLabel: 'Frame colour', angleLabel: 'Louvre angle', scrollHint: 'Scroll: the louvres open', louverLabel: 'Louvred roof · on the buyer’s side', louver: ['You get dimensions, a guide price and ', 'a finished design', '.'] as Em },
+    hero: { sub: 'Your buyer designs the pergola in 3D on your website and sees the guide price instantly – you receive a ready quote request with the full design.', laptopLabel: 'A laptop showing the Lamelix configurator at the roof step, with a gross guide price of HUF 5,648,000', stepLabel: 'Configurator', stepNow: '3 / 7 · Roof', leadPing: 'New survey request', colorLabel: 'Frame colour', angleLabel: 'Louvre angle', scrollHint: 'Scroll: the louvres open', louverLabel: 'On the manufacturer’s side', louver: ['You get dimensions, a guide price and ', 'a finished design', '.'] as Em },
     statsLead: 'This much a single configurator handles in the demo, and the buyer sees a guide price for every option instantly:',
     steps: ['Type', 'Size', 'Roof', 'Sides', 'Colour', 'Comfort', 'Summary'],
     build: {

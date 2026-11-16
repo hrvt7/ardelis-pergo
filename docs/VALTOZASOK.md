@@ -1,5 +1,13 @@
 # Változások
 
+## 4.72 – Nyitóoldal: a 2. kritikus kör javításai
+
+- **Hiba: a „Hét lépés” címkéje („A vevő szemével”) a cím sorai közé csúszott;** most a cím fölött áll.
+- A redőny zárt tetején a címke „A gyártó oldalán” (eddig „a vevő oldalán” – nem volt egyértelmű, kinek szól az „Ön”).
+- A héró ár-lapján „Példa” jelölés (a lead-lapon már volt); az első érvben ott az egyszeri bevezetés is („59 000 Ft/hó-tól (+ áfa, + egyszeri bevezetés)”); az árak bevezetőjében a projektérték „becslésünk szerint”.
+- Palettán belüli megtérülés-kalkulátor (ink sáv, Vanilla eredmény, nincs neonzöld), kis „β” címke a nagy fekete pötty helyett, fehér demóűrlap jól látható mezőkkel, olvashatóbb inaktív funkciócímek; mobilon az élő demó gombjai nem ütköznek.
+- Tesztek: `landingAudit.test.ts` (+1 őr).
+
 ## 4.71 – Nyitóoldal: a független kritikus-audit hibáinak javítása
 
 - **Hiba: a demókérő űrlap és a GYIK kétszer szerepelt** az oldalon (kétszeres `id="demo"`); most egyszer.

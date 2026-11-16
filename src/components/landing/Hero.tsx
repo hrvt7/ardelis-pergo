@@ -213,7 +213,7 @@ export default function Hero({ demoPath }: { demoPath: string }) {
         <div className="lx-device" ref={device}>
           <Laptop label={v.laptopLabel} ref={laptop} />
           <div className="lx-chip lx-chip-price" data-depth="1.6">
-            <span className="lx-float-label">{h.chipA.label}</span>
+            <span className="lx-float-label">{h.chipA.label}<em className="lx-example">{c.v2.example}</em></span>
             <strong><Odometer text={formatMoney(price, lang)} label={h.chipA.label} /></strong>
             <small>{h.chipA.sub}</small>
           </div>

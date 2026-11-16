@@ -81,4 +81,13 @@ describe('nyitóoldal-audit javításai (4.71)', () => {
     expect(why).toMatch(/key="huf"[\s\S]*M12 14v8M18 14v8/)
     expect(why).not.toMatch(/key="home"|key="days"/)
   })
+
+  it('2. kör: a „Hét lépés” címkéje a cím fölött, a redőny a gyártóhoz szól, a becslések jelölve', () => {
+    expect(css).toMatch(/\.lx-build-head \.lx-eyebrow \{ grid-column: 1 \/ -1; position: static; transform: none;/)
+    expect(hu.v2.hero.louverLabel).toBe('A gyártó oldalán')
+    expect(hu.pricing.sub).toMatch(/^Becslésünk szerint/)
+    expect(hu.hero.proof[0]).toMatch(/egyszeri bevezetés/)
+    expect(read('src/components/landing/Hero.tsx')).toMatch(/\{h\.chipA\.label\}<em className="lx-example">/)
+    expect(css).toMatch(/\.lx-page \.roi-bar\.is-gain i \{ background: linear-gradient\(90deg, #212121, #3A3C41\)/)
+  })
 })

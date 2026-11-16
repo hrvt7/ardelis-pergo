@@ -515,7 +515,7 @@
 }
 /* alacsony asztali képernyőn a 3 érv látszik, a laptop kisebb és lejjebb ül */
 @media (max-height: 820px) and (min-width: 1081px) {
-  .lx-sky { --dw: min(720px, 44vw, 64svh); }
+  .lx-sky { --dw: min(720px, 42vw, 58svh); }
   .lx-sky-side .lx-proof { margin-top: 14px; }
 }
 @media (max-width: 760px) {
@@ -629,3 +629,31 @@
 @media (max-width: 760px) { .lx-page .lx-scrap span { font-size: 13px; } }
 
 .lx-page .sx-card { overflow: visible; padding-bottom: 4px; }
+
+/* „Hét lépés” fejléc: a címke a cím fölött áll, nem csúszik a cím sorai közé */
+@media (min-width: 761px) {
+  .lx-build-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 30px; }
+  .lx-build-head .lx-eyebrow { grid-column: 1 / -1; position: static; transform: none; margin: 0 0 10px; }
+  .lx-page .lx-build-sticky { padding-top: 104px; }
+}
+
+/* ── 2. kör (4.72) ── */
+/* megtérülés: palettán belüli színek (ink sáv, Vanilla nyereség, nincs neonzöld) */
+.lx-page .roi-bar.is-gain i { background: linear-gradient(90deg, #212121, #3A3C41); box-shadow: none; }
+.lx-page .roi-net.is-pos { background: var(--lx-vanilla); }
+.lx-page .roi-net.is-pos b { color: var(--lx-ink); }
+.lx-page .pf-every li svg, .lx-plan-features svg { color: var(--lx-ink); }
+/* béta-jel: kicsi, szöveges címke a nagy fekete pötty helyett */
+.lx-page .pf-demo-beta b { width: auto; height: auto; padding: 2px 8px; border-radius: 999px; background: var(--lx-green); color: var(--lx-ink); font-size: 12.5px; }
+.lx-page .pf-pricing-beta { justify-content: flex-start; }
+/* űrlap: fehér lap, Ghost mezők, látható szegély */
+.lx-page .pf-demo-form { background: #fff; border-color: var(--lx-line); }
+.lx-page .pf-form input:not([type=checkbox]):not([type=radio]), .lx-page .pf-form select, .lx-page .pf-form textarea { background: var(--lx-ghost); border-color: #C9CBD1; }
+.lx-page .pf-form input:focus, .lx-page .pf-form select:focus, .lx-page .pf-form textarea:focus { border-color: var(--lx-ink); box-shadow: 0 0 0 3px rgba(33,33,33,.12); }
+/* funkció-lista: az inaktív címek is olvashatók */
+.lx-tour-text strong { color: #4A4C52; }
+/* élő demó mobilon: a „Megnyitás külön oldalon” felül, nem ütközik a kipróbálás gombbal */
+@media (max-width: 760px) {
+  .lx-page .pf-sim-open { top: 12px; bottom: auto; }
+  .lx-page .pf-sim.is-active .pf-sim-open { display: none; }
+}
