@@ -3148,3 +3148,60 @@ body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 @media (display-mode: standalone) and (min-width: 821px), (display-mode: fullscreen) and (min-width: 821px) {
   .controls-panel, .price-panel { margin-bottom: env(safe-area-inset-bottom, 0px); }
 }
+
+/* Húzható panelszél (asztal + fekvő telefon): a panel szélessége a --panel-w / --side-w változóból jön. */
+.panel-resizer { display: none; }
+@media (min-width: 821px) and (not ((orientation: landscape) and (max-height: 520px) and (pointer: coarse))) and (not ((orientation: portrait) and (max-width: 1100px))) {
+  .layout-a .panel-resizer { position: absolute; z-index: 12; top: 0; bottom: 0; right: calc(var(--panel-w) - 7px); width: 14px; display: grid; place-items: center; cursor: col-resize; touch-action: none; outline: none; }
+  .layout-a.style-glass .panel-resizer { top: var(--gutter); bottom: var(--gutter); right: calc(var(--panel-w) + var(--gutter) - 7px); }
+  .layout-a .panel-resizer span { width: 4px; height: 44px; border-radius: 4px; background: rgba(255,255,255,.18); opacity: 0; transition: opacity .2s, background .2s; }
+  .layout-a .panel-resizer:hover span, .layout-a .panel-resizer:focus-visible span, .layout-a .panel-resizer:active span { opacity: 1; background: var(--accent-primary); }
+}
+
+/* Fekvő telefon: oldalpanel húzható szélességgel, tömörebb fejléc, lépéssáv és jelenet-feliratok (nem csúsznak egymásra). */
+@media (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .layout-a { --side-w: 336px; }
+  .layout-a .viewer-panel { right: calc(var(--side-w) + env(safe-area-inset-right)); }
+  .layout-a .controls-panel, .layout-a .controls-panel.sheet-half, .layout-a .controls-panel.sheet-full { width: calc(var(--side-w) + env(safe-area-inset-right)); }
+  .layout-a .mobile-price-bar { width: calc(var(--side-w) + env(safe-area-inset-right)); padding-right: calc(12px + env(safe-area-inset-right)); }
+  .layout-a .panel-resizer { position: absolute; z-index: 30; top: 0; bottom: 0; right: calc(var(--side-w) + env(safe-area-inset-right) - 11px); width: 22px; display: grid; place-items: center; touch-action: none; outline: none; }
+  .layout-a .panel-resizer span { width: 5px; height: 40px; border-radius: 5px; background: rgba(255,255,255,.32); box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+  .layout-a .panel-resizer:active span, .layout-a .panel-resizer:focus-visible span { background: var(--accent-primary); }
+
+  .layout-a .app-header { min-height: 40px; height: 40px; padding-right: calc(10px + env(safe-area-inset-right)); }
+  :root { --header-height: 40px; }
+  .layout-a .header-actions button, .layout-a .history-actions button { width: 34px; min-width: 34px; height: 34px; min-height: 34px; padding: 0; }
+  .layout-a .header-actions button svg, .layout-a .history-actions button svg { width: 16px; height: 16px; }
+  .layout-a .viewer-heading > span { display: none; }
+
+  .layout-a .viewer-heading { left: calc(12px + env(safe-area-inset-left)); max-width: calc(100% - 200px); }
+  .layout-a .viewer-heading h1 { font-size: 17px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .layout-a .viewer-heading p { display: none; }
+  .layout-a .weather-toolbar { gap: 6px; }
+  .layout-a .weather-toolbar > .quick-toggle { display: none; }
+  .layout-a .weather-toolbar button, .layout-a .weather-toolbar .camera-menu-toggle { width: 34px; height: 34px; min-height: 34px; }
+  .tools-item.is-mobile-only { display: flex; }
+  .layout-a .viewer-footer { display: none; }
+
+  .layout-a .control-tabs { justify-content: flex-start; overflow-x: auto; scrollbar-width: none; gap: 4px; padding: 4px 6px; }
+  .layout-a .control-tabs::-webkit-scrollbar { display: none; }
+  .layout-a .control-tabs button { flex: none; min-height: 30px; min-width: 30px; padding: 0 4px; font-size: 13px; }
+  .layout-a .control-tabs button.active { padding-right: 12px; }
+  .layout-a .panel-content { padding: 8px 12px 14px; }
+  .layout-a .step-heading { margin-bottom: 8px; }
+  .layout-a .step-heading h2 { font-size: 18px; }
+  .layout-a .step-heading .eyebrow, .layout-a .step-kicker { font-size: 10px; letter-spacing: .12em; }
+  .layout-a .mobile-price-bar strong { font-size: 18px; }
+  .layout-a .mobile-price-bar button { min-height: 36px; padding: 0 14px; font-size: 14px; }
+}
+
+/* Kis álló telefon (≤ 380 px, pl. iPhone SE, kis Androidok): tömörebb jelenetfelirat, lépéssáv és ársáv. */
+@media (max-width: 380px) and (orientation: portrait) {
+  .layout-a .viewer-heading > span { display: none; }
+  .layout-a .viewer-heading h1 { font-size: 22px; }
+  .layout-a .viewer-heading p { font-size: 12px; }
+  .layout-a .control-tabs { gap: 4px; }
+  .layout-a .control-tabs button { min-width: 32px; min-height: 32px; font-size: 13px; }
+  .layout-a .mobile-price-bar strong { font-size: 20px; }
+  .layout-a .mobile-price-bar button { padding: 0 14px; font-size: 14px; }
+}

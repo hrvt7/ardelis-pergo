@@ -1,5 +1,17 @@
 # Változások
 
+## 4.49 – Húzható panelszél, fekvő telefonos nézet rendbetétele
+
+- **Húzható panelszél:** a beállítópanel bal szélén lévő fogantyúval a panel szélessége állítható, asztali gépen és elforgatott (fekvő) telefonon egyaránt; billentyűzettel (← →) is. Dupla kattintás visszaállítja az alapot. A választott szélesség böngészőnként, elrendezésenként külön megmarad. A 3D nézetnek mindig marad hely: fekvő telefonon legalább 40%, asztalon legalább 50%.
+- **Hiba: fekvő telefonon a feliratok egymásra csúsztak.** A modell neve rácsúszott a jelenet gombjaira, a lépéssávból kilógott a 7. lépés, a panel túl keskeny és zsúfolt volt. Most fekvő telefonon:
+  - a jelenet szélén csak 3 gomb marad (nézet, napszak, Eszközök), a többi felirattal az Eszközök menüben;
+  - a modell neve rövidítve fér el, az alcím és a léptékjelzés rejtve;
+  - a 7 lépés kifér, és a sáv görgethető is;
+  - a panel alapszélessége a képernyő 42%-a (300–380 px), figyelembe veszi a notch melletti biztonsági sávot;
+  - a fejléc és a gombok tömörebbek.
+- **Kis álló telefonok (≤ 380 px):** tömörebb jelenetfelirat, lépéssáv és ársáv.
+- Tesztek: `panelResize.test.ts` (alapszélesség, tartomány, tárolás elrendezésenként, üveges nézeteltolás a beállított szélességgel, fekvő telefonos szabályok).
+
 ## 4.48 – Német PDF, ajánlatoldal és e-mailek; a szerver a gyártó nyelvén beszél
 
 - **Szerver a gyártó nyelvén:** a nyelvfüggő szövegtárak (tetők, oldalak, színek, építmények stb.) mostantól a hozzáféréskor, az aktuális nyelven jönnek létre (`localized()`, nyelvenként egyszer). A szerver kérésenként a gyártó nyelvén számol és ír (`withLocale(tenant.locale)`), utána visszaáll magyarra, így egy osztrák kérés nem szivárog át egy magyar gyártóhoz.

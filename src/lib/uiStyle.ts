@@ -25,8 +25,8 @@ export function panelWidthFor(viewportWidth: number) {
  * Üveges stílusnál a 3D vászon a teljes szélességet kapja, a panel fölötte lebeg. Hogy a pergola a szabadon látható
  * rész közepén maradjon, a nézetet a panel felével (+ térközök) balra toljuk: ez a vászonszélesség aránya.
  */
-export function glassViewShiftX(viewportWidth: number, canvasWidth: number, gutter = 12) {
-  const panel = panelWidthFor(viewportWidth)
+export function glassViewShiftX(viewportWidth: number, canvasWidth: number, gutter = 12, panelWidth?: number) {
+  const panel = panelWidth && viewportWidth > 820 ? panelWidth : panelWidthFor(viewportWidth)
   if (!panel || canvasWidth <= 0) return 0
   return (panel + gutter * 2) / 2 / canvasWidth
 }

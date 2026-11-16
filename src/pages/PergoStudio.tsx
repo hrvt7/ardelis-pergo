@@ -1,5 +1,5 @@
 import { SCENE_READY_EVENT, sceneEvent, stepEvent } from '@/lib/funnelEvents'
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Armchair, Cog, Box, Footprints, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Layers, Maximize2, Rotate3d, Scan, ShieldCheck, SunMedium, View, Wallet, WandSparkles, X } from 'lucide-react'
 import { Link } from 'react-router'
 import ConfiguratorControls, { SceneSettingsPanel } from '@/components/ConfiguratorControls'
@@ -54,6 +54,8 @@ const ArDialog = lazy(() => import('@/components/ArDialog'))
 const SunStudyPanel = lazy(() => import('@/components/SunStudyPanel'))
 import MechanismPanel from '@/components/MechanismPanel'
 import { LANDSCAPE_PHONE_QUERY, SHEET_LAYOUT_QUERY } from '@/lib/viewport'
+import { clampPanelWidth, defaultPanelWidth, PANEL_WIDTH_KEY, panelWidthRange, readStoredWidths, writeStoredWidths, type PanelLayout } from '@/lib/panelResize'
+import PanelResizer from '@/components/studio/PanelResizer'
 import { localized, tr } from '../i18n/locale'
 const BudgetDialog = lazy(() => import('@/components/BudgetDialog'))
 const MoodPanel = lazy(() => import('@/components/MoodPanel'))
@@ -365,7 +367,22 @@ export default function PergoStudio() {
   useEffect(() => { try { if (new URLSearchParams(window.location.search).has('style')) localStorage.setItem(UI_STYLE_KEY, uiStyle) } catch { /* privát mód */ } }, [uiStyle])
   const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth)
   useEffect(() => { const update = () => setViewportWidth(window.innerWidth); window.addEventListener('resize', update); return () => window.removeEventListener('resize', update) }, [])
-  const viewShiftX = uiStyle === 'glass' && !isNarrow ? glassViewShiftX(viewportWidth, viewportWidth) : 0
+  // Húzással állítható panelszélesség (asztalon és fekvő telefonon); álló telefonon alsó lap van, ott nincs.
+  const panelLayout: PanelLayout | null = landscapePhone ? 'landscape-phone' : isNarrow ? null : 'desktop'
+  const [storedWidths, setStoredWidths] = useState(() => { try { return readStoredWidths(localStorage.getItem(PANEL_WIDTH_KEY)) } catch { return {} } })
+  const panelWidth = panelLayout ? clampPanelWidth(storedWidths[panelLayout] ?? defaultPanelWidth(panelLayout, viewportWidth), panelLayout, viewportWidth) : 0
+  const panelRange = panelLayout ? panelWidthRange(panelLayout, viewportWidth) : { min: 0, max: 0 }
+  const setPanelWidth = useCallback((width: number | null) => {
+    if (!panelLayout) return
+    setStoredWidths((current) => {
+      const next = { ...current }
+      if (width === null) delete next[panelLayout]
+      else next[panelLayout] = clampPanelWidth(width, panelLayout, window.innerWidth)
+      try { localStorage.setItem(PANEL_WIDTH_KEY, writeStoredWidths(next)) } catch { /* privát mód */ }
+      return next
+    })
+  }, [panelLayout])
+  const viewShiftX = uiStyle === 'glass' && !isNarrow ? glassViewShiftX(viewportWidth, viewportWidth, 12, panelWidth) : 0
   // Bejárás: első személyű nézet emberi szemmagasságban; a konfiguráció és a jelenet ugyanaz.
   const [walking, setWalking] = useState(false)
   const enterWalk = useCallback(() => {
@@ -513,7 +530,7 @@ export default function PergoStudio() {
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`)
   }
   return (
-    <div className={`app-shell layout-a ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''}`}>
+    <div className={`app-shell layout-a ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''}`} style={panelLayout ? ({ '--panel-w': `${panelWidth}px`, '--side-w': `${panelWidth}px` } as CSSProperties) : undefined}>
       <StudioHeader onHome={() => (modularMode ? modular.setView('perspective') : setView('perspective'))} canUndo={modularMode ? modular.canUndo : history.current.past.length > 0} canRedo={modularMode ? modular.canRedo : history.current.future.length > 0} onUndo={modularMode ? modular.undo : undo} onRedo={modularMode ? modular.redo : redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setModal('info')} onReset={() => (modularMode ? (window.confirm('Visszaállítod a modulházat az alapkonfigurációra?') && modular.reset()) : setModal('reset'))} />
 
       <main className="studio-shell" id="top">
@@ -557,6 +574,7 @@ export default function PergoStudio() {
           <div className="viewer-footer"><span>{scene.photoMode ? tr('HELYI FOTÓS ELŐNÉZET', 'LOKALE FOTOVORSCHAU') : tr('1 egység = 1 méter', '1 Einheit = 1 Meter')}</span><span>{modularMode ? `bruttó ${modular.model.grossArea.toFixed(1).replace('.', ',')} m² · nettó ${modular.model.netArea.toFixed(1).replace('.', ',')} m²` : `${price.area.toFixed(1).replace('.', ',')} m²`}</span>{tenant.platformCredit !== false && <a className="platform-credit" href="/" target="_blank" rel="noopener" title={tr('3D konfigurátor: Lamelix', '3D-Konfigurator: Lamelix')}><LamelixLogo variant="symbol" tone="onDark" height={11} title={null} />Lamelix</a>}</div>
         </section>
 
+        {panelLayout && !presentation && !walking && <PanelResizer width={panelWidth} min={panelRange.min} max={panelRange.max} onChange={setPanelWidth} onReset={() => setPanelWidth(null)} />}
         {modularMode && modularChoice ? <>
           {modular.controls({ typePicker: <BuildingPicker config={config} prices={prices} onChange={exitModular} modular={modularChoice} />, footer: <PanelPrice gross={modular.price.totalGross} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} />, mobileOpen: sheetView !== 'peek', onMobileToggle: () => setSheet(sheetView === 'peek' ? 'full' : 'peek') })}
           {modular.pricePanel({ detailsOpen, onToggle: () => setDetailsOpen((open) => !open) })}
