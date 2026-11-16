@@ -9,6 +9,7 @@ import { LEAD_STATUSES, useLeads, type LeadRow } from '@/lib/adminLeads'
 import { demoEvents, demoLeads, demoIncoming } from '@/lib/adminDemo'
 import { CommandPalette, EmbedPanel, PALETTE_ICONS, Toasts, useToasts, type ChecklistItem, type PaletteCommand } from '@/components/admin/adminKit'
 import '@/admin-premium.css'
+import '@/admin-workspace.css'
 import { hasPrivacyUrl } from '@/tenants/privacy'
 import { useQuotes } from '@/lib/quotes'
 import { useStats } from '@/lib/adminStats'
@@ -85,7 +86,7 @@ function AdminForTenant({ base }: { base: Tenant }) {
   }
 
   if (!token) {
-    return <main className="admin-page admin-light"><form className="admin-card admin-login" onSubmit={login}>
+    return <main className="admin-page admin-ws"><form className="admin-card admin-login" onSubmit={login}>
       <span className="brand-mark">{base.brand.name.slice(0, 1)}</span>
       <div><span className="admin-eyebrow">{base.brand.name} · gyártói admin</span>
       <h1>Üdv újra!</h1><p className="admin-hint">Add meg a jelszót a belépéshez.</p></div>
@@ -93,11 +94,11 @@ function AdminForTenant({ base }: { base: Tenant }) {
       {loginError && <p className="admin-message is-error" role="alert">{loginError}</p>}
       <button className="admin-save" type="submit">Belépés</button>
       <p className="admin-forgot">Elfelejtette a jelszót? Írjon a <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Admin jelszó – ${base.brand.name}`)}`}>{SUPPORT_EMAIL}</a> címre, és új jelszót küldünk.</p>
-      <a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><span>Működteti:</span><LamelixLogo height={18} title={null} tone="onLight" /></a>
+      <a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><span>Működteti:</span><LamelixLogo height={18} title={null} tone="onDark" /></a>
     </form></main>
   }
 
-  if (overrides === undefined) return <main className="admin-page admin-light"><p className="admin-card" role="status">Betöltés…</p></main>
+  if (overrides === undefined) return <main className="admin-page admin-ws"><p className="admin-card" role="status">Betöltés…</p></main>
 
   return <AdminShell base={base} token={token} overrides={overrides} onExpired={logout} onLogout={logout}>
     <AdminEditor base={base} initial={overrides} storage={storage} saving={saving} message={message}
@@ -217,21 +218,21 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
   const quotes = demo
     ? { all: [], create: async () => ({ ok: false as const, error: 'Demó módban az ajánlat nem küldhető ki.' }), withdraw: async () => false }
     : { all: quoteApi.quotes ?? [], create: quoteApi.create, withdraw: quoteApi.withdraw }
-  return <main className="admin-page admin-light">
+  return <main className="admin-page admin-ws">
     <div className="admin-layout">
       <aside className="admin-side">
         <div className="admin-brand"><span className="brand-mark">{base.brand.name.slice(0, 1)}</span><div><strong>{base.brand.name}{base.brand.suffix && <small> {base.brand.suffix}</small>}</strong><span>Gyártói admin</span></div></div>
         <nav className="admin-nav" aria-label="Admin részek">
           {TABS.map(([key, label]) => <button type="button" key={key} className={tab === key ? 'is-on' : ''} onClick={() => choose(key)} aria-current={tab === key ? 'page' : undefined}>{TAB_INFO[key].icon}<span>{label}</span>{key === 'leads' && fresh > 0 && <em>{fresh}</em>}</button>)}
         </nav>
-        <div className="admin-side-foot"><Link to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor megnyitása</Link><button type="button" onClick={onLogout}><LogOut size={15} />Kilépés</button><a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><LamelixLogo height={16} title={null} tone="onLight" /></a></div>
+        <div className="admin-side-foot"><Link to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor megnyitása</Link><button type="button" onClick={onLogout}><LogOut size={15} />Kilépés</button><a className="admin-powered" href="/" target="_blank" rel="noopener" aria-label="Lamelix — a platform oldala"><LamelixLogo height={16} title={null} tone="onDark" /></a></div>
       </aside>
       <section className="admin-main">
         {demo && <div className="demo-ribbon" role="status"><span><b>Demó adatok</b> · kitalált érdeklődők, a módosítások nem mentődnek.</span><button type="button" onClick={() => setDemoPref(false)}>Kikapcsolás</button></div>}
         {!demo && base.demo === true && realEmpty && <div className="demo-ribbon is-soft"><span>Még nincs valódi érdeklődő.</span><button type="button" onClick={() => setDemoPref(true)}>Demó adatok megtekintése</button></div>}
         <header className="admin-top"><div><h1>{title}</h1><p>{TAB_INFO[tab].subtitle}</p></div><div className="admin-top-actions"><button type="button" className="palette-btn" onClick={() => setPaletteOpen(true)} aria-label="Keresés – gyorskereső megnyitása (Ctrl K)"><Search size={14} /><span>Keresés</span><kbd>Ctrl K</kbd></button><Link className="btn" to={`/k/${base.id}`} target="_blank" rel="noopener"><ExternalLink size={15} />Konfigurátor</Link></div></header>
         {(tab === 'overview' || tab === 'leads') && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
-        {tab === 'overview' && leads && <div key="overview" className="tab-fade">{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} onOpenLead={openLead} checklist={demo ? undefined : checklist} /></div>}
+        {tab === 'overview' && leads && <div key="overview" className="tab-fade">{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} onOpenLead={openLead} onUpdate={update} checklist={demo ? undefined : checklist} /></div>}
         {tab === 'leads' && leads && <div key="leads" className="tab-fade"><AdminLeads tenant={effective} leads={leads} error={error} onReload={() => void real.reload()} onUpdate={update} quotes={quotes} openRef={openRef} onOpenRef={setOpenRef} /></div>}
         {tab === 'embed' && <div key="embed" className="tab-fade"><EmbedPanel tenantId={base.id} onCopied={markEmbed} /></div>}
         <div hidden={tab !== 'settings'}>{children}</div>

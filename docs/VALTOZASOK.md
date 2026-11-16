@@ -1,5 +1,13 @@
 # Változások
 
+## 4.73 – Gyártói admin: sötét „munkaterület” dizájn
+
+- **Új megjelenés** Ádám referenciája alapján (sötét CRM-felület): fekete alap, nagy, lekerekített kártyák, fülszerű sarokkivágás kerek gombokkal, pill-szűrők, kerek ikongombos oldalsáv, Urbanist betű. A kiemelő szín a márka Vanilla-ja (#EFF0A3), egy CSS-változóban (`--ws-accent`) cserélhető.
+- **Áttekintés – munkaterület:** nagy számok (nyitott / megnyert / elveszett érdeklődő, nyitott érték); **„Új érdeklődők”** kártyasor (monogram, település · tető · méret, forrás- és viselkedési chipek, érdeklődés 5 pöttyel a lead-pontszámból, szűrők: Mind / Forró / Új / Ma); **„Mai teendők”** kártyasor kiemelt első kártyával (első hívás, utánkövetés, ajánlat nyomon követése; lejárt jelzés; a státusz a kártyán módosítható, egy koppintásos hívás és e-mail). Alatta a meglévő mutatók és grafikonok az új stílusban.
+- Minden adat valódi: fotó helyett monogram (a vevőkről nem tárolunk képet), a pöttyök a meglévő lead-pontozásból, a chipek csak a valóban megtörtént jelekből (PDF, AR, megosztás, visszatérés). Videóhívás és naptár nincs a termékben, ezért nem is látszik.
+- Érdeklődők (tábla, kanban), részletes panel, beágyazás, beállítások és a belépés ugyanabban a sötét rendszerben.
+- Tesztek: `adminWorkspace.test.ts` (pöttyök, chipek, teendők, felület), `lightReadability.test.ts` frissítve.
+
 ## 4.72 – Nyitóoldal: a 2. kritikus kör javításai
 
 - **Hiba: a „Hét lépés” címkéje („A vevő szemével”) a cím sorai közé csúszott;** most a cím fölött áll.

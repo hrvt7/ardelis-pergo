@@ -42,9 +42,10 @@ describe('admin – ugyanaz a világos, pasztell rendszer', () => {
     expect(block).toMatch(/\.admin-light \.btn\.primary,\.admin-light \.admin-save\{background:#212121;color:#FFFFFF\}/)
     expect(contrast('#5C5E64', '#ECECEF')).toBeGreaterThanOrEqual(4.5)
   })
-  it('a világos oldalsávon a Lamelix logó sötét változata látszik', () => {
+  it('az admin 4.73 óta a sötét munkaterület-témát használja (Ádám kérése): a sötét lapokon a logó világos változata látszik', () => {
     const page = readFileSync('src/pages/AdminPage.tsx', 'utf8')
-    expect(page.match(/<LamelixLogo[^>]*tone="onLight"/g)?.length).toBe(2)
+    expect(page.match(/<LamelixLogo[^>]*tone="onDark"/g)?.length).toBe(2)
+    expect(page).not.toMatch(/admin-light/)
   })
 })
 
