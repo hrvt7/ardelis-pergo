@@ -4,6 +4,8 @@
 type Row = Record<string, unknown>
 
 const UNIQUE: Record<string, string[][]> = { installations: [['public_token'], ['tenant_id', 'lead_id']] }
+/** Az SQL alapértékei (supabase/*.sql), hogy a beszúrt sor ugyanolyan legyen, mint élesben. */
+const DEFAULTS: Record<string, Row> = { installations: { status: 'active' }, service_requests: { status: 'new', photo_paths: [], ai_suggestion: null }, leads: { status: 'new' } }
 const CASCADE: Record<string, [string, string][]> = { installations: [['service_requests', 'installation_id'], ['installation_events', 'installation_id']] }
 
 export interface FakeStore {
@@ -84,7 +86,7 @@ export function createFakeStore(seed: Record<string, Row[]> = {}): FakeStore {
           if (keys.some((key) => item[key] === null || item[key] === undefined)) continue
           if (tables[table].some((row) => keys.every((key) => row[key] === item[key]))) return reply({ code: '23505', message: 'duplicate key' }, 409)
         }
-        const row = { id: nextId++, created_at: new Date().toISOString(), ...item }
+        const row = { id: nextId++, created_at: new Date().toISOString(), ...DEFAULTS[table], ...item }
         tables[table].push(row)
         created.push(row)
       }

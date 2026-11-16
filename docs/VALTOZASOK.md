@@ -1,5 +1,12 @@
 # Változások
 
+## 4.80 – Telepítések 3/6: tulajdonosi oldal (/t/:token)
+
+- **Tulajdonosi oldal bejelentkezés nélkül:** a titkos linkkel a tulajdonos látja a terméket forgatható 3D-ben (a rögzítéskor befagyasztott konfigurációból, nem szerkeszthető), a garanciát csoportonként lejárati dátummal és állapottal, a komponenslistát, a műszaki adatokat és a gyártó elérhetőségét, a gyártó arculatával és nyelvén.
+- **Adatvédelem:** a válaszban nincs személyes adat (név, cím, telefon, e-mail), belső megjegyzés, ár, lead-azonosító, és a token sem jön vissza. Érvénytelen formátumú tokennél adatbázis-hívás sincs; IP-nként percenként 60 megnyitás.
+- **Nem indexelt, nem mért:** `noindex` meta és `X-Robots-Tag` fejléc, `Disallow: /t/` a robots.txt-ben, nincs a sitemapben, a szolgáltatásmunkás nem tárolja. A token nem kerül a webanalitikába, a naplóba és az `og:url`-be (`src/lib/privatePath.ts`; az ajánlatoldal tokenjére is érvényes).
+- Tesztek: `installationPublic.test.ts` (érvénytelen/ismeretlen/archivált token, személyes adat hiánya, befagyasztás a gyártó későbbi átnevezése után, visszaélés-fék, redakció, robots/SW/sitemap).
+
 ## 4.79 – Telepítések 2/6: rögzítés az adminban
 
 - **Új állapot: „Felszerelve”** a „Megnyert” után (táblázat, kanban, szűrők, havi riport). A mutatókban megnyertnek számít.

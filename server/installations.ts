@@ -4,12 +4,13 @@
 // - Megőrzési idő: a napi cron (api/followup) a gyártónként beállított idő után törli a telepítéseket.
 // Minden lekérdezés a bejelentkezett gyártó tenant_id-jára szűr.
 import { z } from 'zod'
-import { authorize, json, resolveTenant, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
+import { authorize, json, loadOverrides, resolveTenant, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
+import { parseOverrides, publicOverrides, type TenantOverrides } from '../src/tenants/overrides'
 import { describeConfig } from './lead'
 import { parseConfig, roofLabels, tenantPrice } from '../src/tenants/rules'
 import { withLocale } from '../src/i18n/locale'
 import { formatNumber } from '../src/lib/pricing'
-import { buildSnapshot, DEFAULT_WARRANTY_MONTHS, newInstallationToken, snapshotHash, type InstallationSnapshot, type WarrantyMonths } from '../src/lib/installations'
+import { buildSnapshot, DEFAULT_WARRANTY_MONTHS, INSTALLATION_TOKEN_RE, newInstallationToken, snapshotHash, warrantyState, type InstallationSnapshot, type WarrantyMonths } from '../src/lib/installations'
 import type { Tenant } from '../src/tenants/types'
 
 export const DEFAULT_RETENTION_MONTHS = 120
@@ -194,4 +195,74 @@ export async function purgeExpiredInstallations(env: AdminEnv, now = new Date(),
     }
   }
   return { deleted, failed }
+}
+
+// ── Tulajdonosi oldal (/t/:token) ───────────────────────────────────────────
+// Bejelentkezés nélkül, a titkos tokennel. A válaszban NINCS személyes adat (név, cím, telefon, e-mail),
+// belső megjegyzés, ár vagy lead-azonosító; a token sem kerül vissza.
+
+const PUBLIC_WINDOW_MS = 60_000
+const PUBLIC_MAX = 60
+const publicHits = new Map<string, number[]>()
+/** Tesztekhez: a nyilvános végpontok visszaélés-fékjének törlése. */
+export function resetInstallationRateLimit() { publicHits.clear() }
+export function rateLimited(request: Request, bucket: string, max: number, windowMs: number, now = Date.now()) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown'
+  const key = `${bucket}:${ip}`
+  const hits = (publicHits.get(key) ?? []).filter((time) => now - time < windowMs)
+  if (hits.length >= max) return true
+  publicHits.set(key, [...hits, now])
+  if (publicHits.size > 5000) for (const [entry, times] of publicHits) if (!times.some((time) => now - time < windowMs)) publicHits.delete(entry)
+  return false
+}
+
+const privateJson = (status: number, body: unknown) => json(status, body, { 'X-Robots-Tag': 'noindex, nofollow, noarchive', 'Referrer-Policy': 'no-referrer' })
+
+/** A token alapján az aktív telepítés (vagy null). Érvénytelen formátumnál adatbázis-hívás sincs. */
+export async function installationByToken(env: AdminEnv, token: string): Promise<InstallationRow | null> {
+  if (!INSTALLATION_TOKEN_RE.test(token)) return null
+  const [row] = await select<InstallationRow>(env, 'installations', `public_token=eq.${encodeURIComponent(token)}&status=eq.active&select=${INSTALL_COLUMNS}&limit=1`)
+  return row ?? null
+}
+
+export function publicInstallation(row: InstallationRow, tenant: Tenant, overrides: TenantOverrides | null, now = new Date()) {
+  const snapshot = row.config_snapshot
+  return {
+    tenantId: tenant.id,
+    overrides,
+    brand: { name: tenant.brand.name, legalName: tenant.brand.legalName, logoUrl: tenant.brand.logoUrl ?? null, phone: tenant.brand.phone ?? null, email: tenant.brand.email ?? null, website: tenant.brand.website ?? null, privacyUrl: tenant.brand.privacyUrl ?? null },
+    product: row.product_type,
+    headline: snapshot.headline,
+    spec: snapshot.spec.filter(([label]) => !/ár|preis/i.test(label)),
+    config: snapshot.config,
+    shareCode: snapshot.shareCode,
+    installedAt: row.installed_at,
+    schemaVersion: row.schema_version,
+    components: snapshot.components.map((component) => {
+      const months = row.warranty[component.group] ?? 0
+      return { ...component, months, ...warrantyState(row.installed_at, months, now) }
+    }),
+  }
+}
+export type PublicInstallation = ReturnType<typeof publicInstallation>
+
+/** GET /api/installation?t=… — a tulajdonosi oldal adatai. */
+export async function handleInstallation(request: Request, env: AdminEnv, now = new Date()): Promise<Response> {
+  if (request.method !== 'GET') return privateJson(405, { ok: false, error: 'Nem engedélyezett metódus.' })
+  if (rateLimited(request, 'view', PUBLIC_MAX, PUBLIC_WINDOW_MS, now.getTime())) return privateJson(429, { ok: false, error: 'Túl sok kérés. Próbáld újra egy perc múlva.' })
+  const token = new URL(request.url).searchParams.get('t') ?? ''
+  if (!INSTALLATION_TOKEN_RE.test(token)) return privateJson(404, { ok: false, error: 'A link érvénytelen vagy megszűnt.' })
+  if (!storeConfigured(env)) return privateJson(503, { ok: false, error: 'A szolgáltatás most nem érhető el.' })
+  try {
+    const row = await installationByToken(env, token)
+    if (!row) return privateJson(404, { ok: false, error: 'A link érvénytelen vagy megszűnt.' })
+    const tenant = await resolveTenant(env, row.tenant_id)
+    if (!tenant) return privateJson(404, { ok: false, error: 'A link érvénytelen vagy megszűnt.' })
+    const stored = await loadOverrides(env, tenant.id)
+    const checked = stored ? parseOverrides(stored) : null
+    return privateJson(200, { ok: true, installation: publicInstallation(row, tenant, checked?.ok ? publicOverrides(checked.data) : null, now) })
+  } catch (error) {
+    console.error('[installations] Tulajdonosi oldal hiba', error)
+    return privateJson(502, { ok: false, error: 'A szolgáltatás most nem érhető el. Próbáld újra később.' })
+  }
 }

@@ -33,10 +33,10 @@ export function isOfflineAsset(pathname: string) {
 
 /**
  * Személyes adatot mutató oldalak: soha nem szolgáljuk ki őket gyorsítótárból, és nem is tároljuk őket.
- * Gyártói admin (/k/<id>/admin), ajánlat-megtekintő (/ajanlat/<token>), belépés.
+ * Gyártói admin (/k/<id>/admin), ajánlat-megtekintő (/ajanlat/<token>), tulajdonosi oldal (/t/<token>), belépés.
  */
 export function isPrivatePage(pathname: string) {
-  return /^\/k\/[^/]+\/admin(\/|$)/.test(pathname) || /^\/ajanlat(\/|$)/.test(pathname) || /^\/(belepes|login|admin)(\/|$)/.test(pathname)
+  return /^\/k\/[^/]+\/admin(\/|$)/.test(pathname) || /^\/(ajanlat|t)(\/|$)/.test(pathname) || /^\/(belepes|login|admin)(\/|$)/.test(pathname)
 }
 
 /** Ezeket a fájlokat a böngésző frissességgel kell, hogy kapja (frissítés-felismerés, manifest). */

@@ -7,6 +7,7 @@ const TenantStudio = lazy(() => import('@/pages/TenantStudio'))
 const Login = lazy(() => import('@/pages/Login'))
 const AdminPage = lazy(() => import('@/pages/AdminPage'))
 const QuotePage = lazy(() => import('@/pages/QuotePage'))
+const InstallationPage = lazy(() => import('@/pages/InstallationPage'))
 const Home = lazy(() => import('@/pages/Home'))
 const Privacy = lazy(() => import('@/pages/Privacy'))
 
@@ -31,6 +32,7 @@ export default function App() {
     <Route path="/studio/pergola" element={<Redirect to="/konfigurator" />} />
     <Route path="/k/demo" element={<Redirect to="/konfigurator" />} />
     <Route path="/ajanlat/:token" element={<Suspense fallback={null}><QuotePage /></Suspense>} />
+    <Route path="/t/:token" element={<Suspense fallback={null}><InstallationPage /></Suspense>} />
     <Route path="/k/:tenantId/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
     <Route path="/k/:tenantId" element={<Suspense fallback={null}><TenantStudio mode="standalone" /></Suspense>} />
     <Route path="/k/:tenantId/:product" element={<Suspense fallback={null}><TenantStudio mode="standalone" /></Suspense>} />

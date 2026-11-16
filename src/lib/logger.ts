@@ -4,6 +4,8 @@
 //
 // Most alapból csak a konzolra ír. Ha később hibakövetés kell (pl. Sentry vagy
 // saját végpont), a VITE_CLIENT_LOG_ENDPOINT környezeti változóval kapcsolható be.
+import { redactPrivatePath } from './privatePath'
+
 type Level = 'info' | 'warn' | 'error'
 
 const ENDPOINT: string | undefined = import.meta.env.VITE_CLIENT_LOG_ENDPOINT || undefined
@@ -11,7 +13,7 @@ const ENDPOINT: string | undefined = import.meta.env.VITE_CLIENT_LOG_ENDPOINT ||
 function send(level: Level, msg: string, ctx?: Record<string, unknown>) {
   if (!ENDPOINT || level === 'info') return
   try {
-    const body = JSON.stringify([{ level, msg, ctx, url: window.location.pathname, at: new Date().toISOString() }])
+    const body = JSON.stringify([{ level, msg, ctx, url: redactPrivatePath(window.location.pathname), at: new Date().toISOString() }])
     if (navigator.sendBeacon) navigator.sendBeacon(ENDPOINT, new Blob([body], { type: 'application/json' }))
     else void fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(() => {})
   } catch {

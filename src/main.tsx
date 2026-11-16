@@ -38,6 +38,7 @@ import { introPlaying } from '@/lib/introGate'
 import { INTRO_DONE_EVENT } from '@/lib/introSplash'
 // Vercel Web Analytics: csak ha a projektben be van kapcsolva és VITE_VERCEL_ANALYTICS=1 (különben a szkript 404-et adna).
 import { Analytics } from '@vercel/analytics/react'
+import { redactPrivatePath } from '@/lib/privatePath'
 
 // Telepíthető webapp: a SW csak éles buildben, https-en (helyi próbához localhoston) és nem az előnézeti buildben.
 captureInstallPrompt()
@@ -51,7 +52,7 @@ const mount = () => createRoot(document.getElementById('root')!).render(
       // Előnézeti (artifact) build: az oldal nem a domain gyökerén fut, ezért belső útválasztás.
       // A kezdő nézet a ?route= paraméterrel választható (alapból a konfigurátor).
       ? <MemoryRouter initialEntries={[`${new URLSearchParams(window.location.search).get('route') ?? '/konfigurator'}${window.location.search}`]}><App /></MemoryRouter>
-      : <BrowserRouter><App /><SwUpdateBanner />{import.meta.env.VITE_VERCEL_ANALYTICS === '1' && <Analytics />}</BrowserRouter>}
+      : <BrowserRouter><App /><SwUpdateBanner />{import.meta.env.VITE_VERCEL_ANALYTICS === '1' && <Analytics beforeSend={(event) => ({ ...event, url: redactPrivatePath(event.url) })} />}</BrowserRouter>}
   </StrictMode>,
 )
 if (introPlaying()) window.addEventListener(INTRO_DONE_EVENT, mount, { once: true })

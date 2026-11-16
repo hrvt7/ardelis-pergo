@@ -54,7 +54,7 @@ export function usePageSeo(pathname: string, options: { noindex?: boolean; title
     setMeta('property', 'og:type', 'website')
     setMeta('property', 'og:title', page.title)
     setMeta('property', 'og:description', page.description)
-    setMeta('property', 'og:url', canonical || window.location.href)
+    setMeta('property', 'og:url', canonical || (noindex ? `${origin}${page.path}` : window.location.href))
     setMeta('property', 'og:image', socialImage)
     setMeta('property', 'og:image:width', '1200')
     setMeta('property', 'og:image:height', '630')

@@ -6,7 +6,7 @@ import { handleDemoRequest } from './demoRequest'
 import { handleAdminQuotes, handleQuote } from './quotes'
 import { handleAdminStats, handleTrack } from './analytics'
 import { handleFollowUp } from './followup'
-import { handleAdminInstallations } from './installations'
+import { handleAdminInstallations, handleInstallation } from './installations'
 import { handleMonthlyReport } from './monthlyReport'
 import { handleAdminLeads, handleAdminLogin, handleAdminSettings, handleTenantRequest } from './tenantAdmin'
 
@@ -19,6 +19,7 @@ app.on(['GET', 'PUT'], '/api/admin-settings', (c) => handleAdminSettings(c.req.r
 app.on(['GET', 'PATCH'], '/api/admin-leads', (c) => handleAdminLeads(c.req.raw, process.env))
 app.on(['GET', 'POST'], '/api/quote', (c) => handleQuote(c.req.raw, process.env))
 app.on(['GET', 'POST', 'PATCH'], '/api/admin-quotes', (c) => handleAdminQuotes(c.req.raw, process.env))
+app.get('/api/installation', (c) => handleInstallation(c.req.raw, process.env))
 app.on(['GET', 'POST', 'DELETE'], '/api/admin-installations', (c) => handleAdminInstallations(c.req.raw, process.env))
 app.post('/api/track', (c) => handleTrack(c.req.raw, process.env))
 app.get('/api/admin-stats', (c) => handleAdminStats(c.req.raw, process.env))
