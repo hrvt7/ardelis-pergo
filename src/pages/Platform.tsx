@@ -169,13 +169,6 @@ function PlatformPage() {
       gsap.ticker.add(ticker)
       gsap.ticker.lagSmoothing(0)
 
-      // Soremelés: a cím sorai maszk mögül felúsznak (a cím végig látszik, LCP), a többi utánuk.
-      gsap.timeline({ defaults: { ease: 'power4.out' } })
-        .fromTo('.lx-line > span', { yPercent: 70 }, { yPercent: 0, duration: 1.1, stagger: 0.09 }, 0.05)
-        .fromTo('.lx-rise', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.08 }, 0.4)
-        .fromTo('.lx-stage', { opacity: 0, y: 40, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 1.3 }, 0.15)
-        .fromTo('.lx-float', { opacity: 0, y: 26, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, stagger: 0.12, ease: 'back.out(1.5)', clearProps: 'opacity,scale' }, 0.8)
-
       // Belépő elemek a szakaszokban.
       gsap.utils.toArray<HTMLElement>('[data-pf-reveal]', element).forEach((section) => {
         gsap.fromTo(section.querySelectorAll('[data-pf-item]'), { opacity: 0, y: 46 }, { opacity: 1, y: 0, duration: 1, stagger: 0.09, ease: 'power3.out', clearProps: 'transform', scrollTrigger: { trigger: section, start: 'top 80%', once: true } })
@@ -220,13 +213,13 @@ function PlatformPage() {
     <main id="top">
       <Hero demoPath={DEMO_PATH} />
 
+      <BuildSequence />
+
       <Suspense fallback={null}>
         <CountingStats items={statItems} />
       </Suspense>
 
       <ProblemCollage />
-
-      <BuildSequence />
 
       <WhyStrip />
 

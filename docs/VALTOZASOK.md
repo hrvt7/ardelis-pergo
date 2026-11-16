@@ -1,5 +1,14 @@
 # Változások
 
+## 4.65 – Héró „Felhők felett”: kéz a telefonnal, betűnkénti cím, ráközelítés a képernyőre
+
+- **Új héró.** Pasztell ég három réteg felhővel (mélységi parallax egérre és görgetésre), középen kódból rajzolt, tollrajz-hatású kéz a telefonnal; a képernyőn a valódi mobil konfigurátor (3/7 Tető lépés). Mellette lebegő lapok: valódi irányár gördülő számokkal, lépéssáv, beérkező kérelem („Példa” jelöléssel).
+- **Kinetikus cím.** A cím betűnként úszik fel; asztali gépen a kurzor közelében a betűk elvékonyodnak (változó Urbanist-súly). Képernyőolvasó a teljes címet egyben kapja.
+- **Ráközelítés görgetésre.** Görgetéskor a telefon kiegyenesedik és ráközelít a képernyőre, a felhők szétnyílnak; innen közvetlenül a „Hét lépés” képsorozat jön (a sorrendben a statisztika és a kollázs elé került). Telefonon külön elrendezés, ugyanazzal a hatással; mozgáscsökkentésnél nincs zoom és betű-animáció.
+- **Hiba: a „Hét lépés” kockái élesen hiányoztak.** A `.gitignore` `build/` szabálya a `public/assets/landing/build/` 80 képkockáját is kizárta, ezért élesen 404 volt; most bekerülnek a repóba.
+- A héró már nem tölti a 3D-s HeroLouvre-t, így könnyebb az első betöltés.
+- Tesztek: `heroSky.test.ts` (képek, betűbontás, zoom-geometria, mozgáscsökkentés, sorrend, mobil elrendezés, gitignore), `landingV2.test.ts` frissítve.
+
 ## 4.64 – Helyes kapcsolati e-mail
 
 - **Javítás: kapcsolati e-mail.** A cím mindenhol a helyes `hrvthadam.7@icloud.com` (nyitóoldal, GYIK, adatkezelési tájékoztató, admin „elfelejtett jelszó”, demókérés-hiba visszaesés, strukturált adatok); az elírt régi cím megszűnt.

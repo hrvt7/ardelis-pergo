@@ -46,7 +46,7 @@ describe('nyitóoldal v2 – „az asztalon a termék”', () => {
     expect(read('src/components/PergolaScene.tsx')).toMatch(/const override = import\.meta\.env\.DEV \?/)
   })
   it('mozgáscsökkentésnél a lépéssáv, a tábla és a jelenetek végállapotban állnak', () => {
-    expect(read('src/components/landing/Hero.tsx')).toMatch(/prefers-reduced-motion: reduce\)'\)\.matches \? 6 : 5/)
+    expect(read('src/components/landing/Hero.tsx')).toMatch(/prefers-reduced-motion: reduce\)'\)\.matches \? 6 : 4/)
     expect(read('src/components/landing/AdminBoard.tsx')).toMatch(/prefers-reduced-motion: reduce\)'\)\.matches \? 3 : 0/)
     expect(read('src/landing.css')).toMatch(/\.pf-reduced \.lx-feature \*/)
   })

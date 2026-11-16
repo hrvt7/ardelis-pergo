@@ -40,3 +40,6 @@ build/
 # Test coverage
 coverage/
 .nyc_output/
+
+# a „Hét lépés” képsorozat kockái (a fenti build/ szabály ne nyelje el)
+!public/assets/landing/build/
