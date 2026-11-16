@@ -146,7 +146,7 @@ const hu = {
     example: 'Példa',
     planPick: 'Csomag',
     faqPick: 'Kérdések',
-    hero: { sub: 'A vevő a weboldalán 3D-ben megtervezi a pergolát, azonnal látja az irányárat – Ön kész ajánlatkérést kap, a teljes tervvel.', handLabel: 'Kéz egy telefonnal, a képernyőn a Lamelix konfigurátor a tető lépésnél, 5 648 000 Ft bruttó irányárral', stepLabel: 'Konfigurátor', stepNow: '3 / 7 · Tető', leadPing: 'Új felmérési kérelem', colorLabel: 'Szerkezet színe', angleLabel: 'Lamellaszög', scrollHint: 'Görgessen: kinyílnak a lamellák', louverLabel: 'Lamellás tető · a vevő oldalán', louver: ['Hét lépés a vevőnek, ', 'kész ajánlatkérés', ' Önnek.'] as Em },
+    hero: { sub: 'A vevő a weboldalán 3D-ben megtervezi a pergolát, azonnal látja az irányárat – Ön kész ajánlatkérést kap, a teljes tervvel.', laptopLabel: 'Laptop a Lamelix konfigurátorral a tető lépésnél, 5 648 000 Ft bruttó irányárral', stepLabel: 'Konfigurátor', stepNow: '3 / 7 · Tető', leadPing: 'Új felmérési kérelem', colorLabel: 'Szerkezet színe', angleLabel: 'Lamellaszög', scrollHint: 'Görgessen: kinyílnak a lamellák', louverLabel: 'Lamellás tető · a vevő oldalán', louver: ['Hét lépés a vevőnek, ', 'kész ajánlatkérés', ' Önnek.'] as Em },
     steps: ['Típus', 'Méret', 'Tető', 'Oldalak', 'Szín', 'Komfort', 'Összegzés'],
     build: {
       eyebrow: 'A vevő szemével', title: ['Hét lépés, és ', 'összeáll', ' a pergola.'] as Em,
@@ -316,7 +316,7 @@ const en: PlatformCopy = {
     example: 'Example',
     planPick: 'Plan',
     faqPick: 'Questions',
-    hero: { sub: 'Your buyer designs the pergola in 3D on your website and sees the guide price instantly – you receive a ready quote request with the full design.', handLabel: 'A hand holding a phone showing the Lamelix configurator at the roof step, with a gross guide price of HUF 5,648,000', stepLabel: 'Configurator', stepNow: '3 / 7 · Roof', leadPing: 'New survey request', colorLabel: 'Frame colour', angleLabel: 'Louvre angle', scrollHint: 'Scroll: the louvres open', louverLabel: 'Louvred roof · on the buyer’s side', louver: ['Seven steps for the buyer, ', 'a ready quote request', ' for you.'] as Em },
+    hero: { sub: 'Your buyer designs the pergola in 3D on your website and sees the guide price instantly – you receive a ready quote request with the full design.', laptopLabel: 'A laptop showing the Lamelix configurator at the roof step, with a gross guide price of HUF 5,648,000', stepLabel: 'Configurator', stepNow: '3 / 7 · Roof', leadPing: 'New survey request', colorLabel: 'Frame colour', angleLabel: 'Louvre angle', scrollHint: 'Scroll: the louvres open', louverLabel: 'Louvred roof · on the buyer’s side', louver: ['Seven steps for the buyer, ', 'a ready quote request', ' for you.'] as Em },
     steps: ['Type', 'Size', 'Roof', 'Sides', 'Colour', 'Comfort', 'Summary'],
     build: {
       eyebrow: 'Through the buyer’s eyes', title: ['Seven steps, and the pergola ', 'comes together', '.'] as Em,

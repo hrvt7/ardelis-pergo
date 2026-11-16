@@ -434,8 +434,8 @@
 .lx-faq-chips button { min-height: 44px; }
 @media (max-width: 760px) { .lx-final-band .lx-actions .lx-btn { flex: 1 1 100%; } }
 
-/* ============ Héró „Felhők felett” (2026-11-16): ég, felhőrétegek, vonalas kéz a valódi konfigurátorral ============ */
-.lx-sky { --dw: min(540px, 40vw); position: relative; z-index: 1; height: 170vh; }
+/* ============ Héró „Felhők felett” (2026-11-16): ég, felhőrétegek, lebegő laptop a valódi konfigurátorral ============ */
+.lx-sky { --dw: min(720px, 48vw, 78svh); position: relative; z-index: 1; height: 170vh; }
 /* a „Hét lépés” a héró utolsó képernyője alá csúszik: a zárt lamellák mögött cserélődik a kép */
 .lx-sky + .lx-build { margin-top: -100svh; }
 .lx-sky-sticky { position: sticky; top: 0; height: 100svh; padding: 12px; background: var(--lx-bg); }
@@ -443,7 +443,7 @@
 .lx-cloud { position: absolute; left: 50%; width: max(1700px, 130vw); height: auto; max-width: none; pointer-events: none; user-select: none; }
 .lx-cloud-back { bottom: 26%; z-index: 0; opacity: .9; transform: translateX(-50%); }
 .lx-cloud-mid { bottom: 6%; z-index: 1; transform: translateX(-46%); }
-.lx-cloud-front { bottom: -14%; z-index: 4; transform: translateX(-54%); }
+.lx-cloud-front { bottom: -27%; z-index: 4; transform: translateX(-54%); }
 .lx-cloud, .lx-sky-copy, .lx-sky-side, .lx-chip { will-change: transform, opacity; }
 /* a telefon saját rétegen: álló helyzetben egyszer rajzolódik ki (tinta-szűrővel), mozgás közben csak a GPU tolja;
    amikor a görgetés megáll, a réteg feloldódik, hogy nagyítva is éles legyen */
@@ -465,49 +465,70 @@
 .lx-sky-side .lx-proof { color: #3A3C41; }
 .lx-sky-side .lx-btn-line { background: rgba(255,255,255,.86); }
 
-.lx-device { position: absolute; z-index: 3; left: calc(50% - var(--dw) / 2 + 2vw); bottom: -22%; width: var(--dw); aspect-ratio: 620 / 760; animation: lx-rise-device 1s var(--lx-ease) .1s both; }
+.lx-device { position: absolute; z-index: 3; left: calc(50% - var(--dw) / 2 + 9vw); bottom: -3%; width: var(--dw); animation: lx-rise-device 1s var(--lx-ease) .1s both; }
 @keyframes lx-rise-device { from { translate: 0 18%; opacity: 0; } }
-.lx-hand { display: block; width: 100%; height: auto; overflow: visible; }
-.lx-hand-ink { filter: url(#lx-ink); }
+/* laptop: grafit keret, ezüst alap, a kijelzőn a valódi konfigurátor */
+.lx-laptop { position: relative; transform: perspective(1800px) rotateX(7deg) rotateY(-9deg); transform-origin: 50% 100%; animation: lx-hover 7s ease-in-out 1.2s infinite alternate; }
+@keyframes lx-hover { to { translate: 0 -10px; } }
+.lx-lid { position: relative; padding: 1.9% 1.9% 3%; border-radius: 3.4% / 5.2%; background: linear-gradient(160deg, #34353A 0%, #1B1C1F 40%, #0F1012 100%); box-shadow: inset 0 0 0 1.5px #4A4B50, inset 0 0 0 3px #111214, 0 50px 90px -40px rgba(38,58,92,.6); }
+.lx-cam { position: absolute; left: 50%; top: .75%; width: .7%; aspect-ratio: 1; border-radius: 50%; translate: -50% 0; background: radial-gradient(circle at 40% 40%, #4C5866, #121418 70%); }
+.lx-screen { display: block; width: 100%; height: auto; border-radius: .9% / 1.4%; background: #ECECEF; }
+.lx-glare { position: absolute; inset: 1.9% 1.9% 3%; border-radius: .9% / 1.4%; background: linear-gradient(115deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 32%); pointer-events: none; }
+.lx-base { position: relative; width: 114%; margin: -.2% 0 0 -7%; padding-top: 2.6%; border-radius: 2px 2px 46% 46% / 2px 2px 100% 100%; background: linear-gradient(180deg, #F1F2F5 0%, #D5D7DC 38%, #A9ACB3 100%); box-shadow: inset 0 1px 0 #fff, 0 26px 40px -18px rgba(38,58,92,.55); }
+.lx-notch { position: absolute; left: 50%; top: 0; width: 15%; height: 42%; translate: -50% 0; border-radius: 0 0 10px 10px; background: linear-gradient(180deg, #B9BCC2, #CDD0D5); }
 .lx-chip { position: absolute; z-index: 4; padding: 13px 15px; border-radius: 20px; background: #fff; box-shadow: 0 1px 2px rgba(33,33,33,.06), 0 24px 44px -24px rgba(40,60,90,.45);  animation: lx-chip-in .9s var(--lx-ease) both; }
 @keyframes lx-chip-in { from { opacity: 0; translate: 0 24px; scale: .94; } }
-.lx-chip-price { left: -40%; top: 24%; min-width: 214px; animation-delay: .55s; }
+.lx-chip-price { left: -22%; top: 20%; min-width: 214px; animation-delay: .55s; }
 .lx-chip-price strong { display: block; margin: 5px 0 2px; font-size: 28px; font-weight: 400; letter-spacing: -.03em; }
 .lx-chip-price small { color: var(--lx-muted); font-size: 12.5px; }
-.lx-chip-steps { left: -30%; top: 50%; animation-delay: .7s; }
+.lx-chip-steps { left: -14%; top: 64%; animation-delay: .7s; }
 .lx-chip-steps ol { display: flex; gap: 5px; margin: 9px 0 0; padding: 0; list-style: none; }
 .lx-chip-steps li { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 3px; border-radius: 999px; transition: background .4s var(--lx-ease); }
 .lx-chip-steps li b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--lx-ghost); font-size: 11px; }
 .lx-chip-steps li.is-done b { background: var(--lx-green); }
 .lx-chip-steps li.is-on { padding: 0 11px 0 3px; background: var(--lx-ink); color: #fff; font-size: 12.5px; font-weight: 650; }
 .lx-chip-steps li.is-on b { background: var(--lx-vanilla); color: var(--lx-ink); }
-.lx-chip-lead { right: -44%; top: 14%; display: flex; align-items: center; gap: 11px; width: 286px; animation-delay: .85s; }
+.lx-chip-lead { right: -16%; top: 30%; display: flex; align-items: center; gap: 11px; width: 286px; animation-delay: .85s; }
 .lx-chip-lead { translate: 0 10px; transition: translate .6s var(--lx-ease); }
 .lx-chip-lead > * { opacity: .5; transition: opacity .6s; }
 .lx-chip-lead.is-in { translate: 0 0; }
 .lx-chip-lead.is-in > * { opacity: 1; }
 .lx-chip-lead strong { display: block; margin-top: 3px; font-size: 14.5px; }
 .lx-chip-lead small { color: var(--lx-muted); font-size: 12.5px; }
-.pf-reduced .lx-ch, .pf-reduced .lx-device, .pf-reduced .lx-chip, .pf-reduced .lx-kline.is-em { animation: none; }
+.pf-reduced .lx-ch, .pf-reduced .lx-device, .pf-reduced .lx-laptop, .pf-reduced .lx-chip, .pf-reduced .lx-kline.is-em { animation: none; }
 .pf-reduced .lx-kline.is-em { background-size: 100% 36%; }
 
 @media (max-width: 1080px) {
-  .lx-sky { --dw: min(480px, 62vw); }
-  .lx-sky-panel { grid-template-columns: 1fr; gap: 14px; }
+  .lx-sky { --dw: min(560px, 56vw); }
+  .lx-sky-panel { grid-template-columns: 1fr; gap: 14px; align-content: start; }
+  .lx-sky-copy, .lx-sky-side { max-width: 46vw; }
   .lx-sky-side { justify-self: start; padding-top: 0; }
-  .lx-device { bottom: -30%; }
+  .lx-device { left: auto; right: -6vw; bottom: -10%; }
+  .lx-chip-steps, .lx-chip-lead { display: none; }
+  .lx-chip-price { left: auto; right: 10%; top: -26%; }
+}
+@media (max-width: 1080px) and (min-width: 761px) and (orientation: portrait) {
+  .lx-sky { --dw: 84vw; }
+  .lx-sky-copy, .lx-sky-side { max-width: none; }
+  .lx-device { left: calc(50% - var(--dw) / 2); right: auto; bottom: 3%; }
+}
+@media (max-height: 820px) and (min-width: 761px) {
+  .lx-sky-side .lx-proof { display: none; }
 }
 @media (max-width: 760px) {
-  .lx-sky { --dw: 74vw; height: 160vh; }
+  .lx-sky { --dw: 94vw; height: 160vh; }
+  .lx-sky-copy, .lx-sky-side { max-width: none; }
+  .lx-device { right: auto; }
+  .lx-chip-lead { display: none; }
   .lx-sky-sticky { padding: 8px; }
   .lx-sky-panel { padding: 86px 18px 0; border-radius: 28px; align-content: start; }
   .lx-kinetic { font-size: clamp(40px, 11.6vw, 54px); }
   .lx-sky-side p { font-size: 15.5px; }
   .lx-sky-side .lx-proof { display: none; }
   .lx-sky-side .lx-actions .lx-btn { flex: 1 1 0; padding: 0 12px; font-size: 14.5px; }
-  .lx-device { left: calc(50% - var(--dw) / 2 + 6vw); bottom: -17%; }
+  .lx-device { left: calc(50% - var(--dw) / 2); bottom: 3%; }
   .lx-chip-steps, .lx-chip-lead { display: none; }
-  .lx-chip-price { left: -4%; top: 30%; min-width: 0; padding: 10px 12px; }
+  .lx-chip-price { left: auto; right: 2%; top: -26%; min-width: 0; padding: 10px 12px; }
   .lx-chip-price strong { font-size: 21px; }
   .lx-chip-price small { display: none; }
   .lx-cloud { width: 260vw; }

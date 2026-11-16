@@ -1,5 +1,12 @@
 # Változások
 
+## 4.69 – Héró: lebegő laptop a kézben tartott telefon rajza helyett
+
+- **Új főkép** (Ádám kérése): a vonalas kéz a telefonnal megszűnt. Helyette letisztult, kódból épített laptop lebeg a felhők felett (grafit keret, ezüst alap, finom lebegés), a kijelzőn a valódi asztali konfigurátor képe a Tető lépésnél (Aero tető, 5 648 000 Ft bruttó irányár). A laptop a kurzor felé dől, görgetéskor kissé előrebillen; körülötte maradnak a lebegő lapok.
+- Külön elrendezés asztali gépre, alacsony képernyőre (a pipás lista elrejtve), fekvő és álló tabletre, valamint telefonra.
+- Törölve: `HandPhone.tsx`, `handGeometry.ts`, `phone-screen.webp`.
+- Tesztek: `heroSky.test.ts` (laptop, valódi képernyőkép, mozgáscsökkentés).
+
 ## 4.68 – Héró-átvezetés: „Lamella-redőny” a ráközelítés helyett
 
 - **Új átvezetés a héró és a „Hét lépés” között** (Ádám választása): a ráközelítés megszűnt. A héró végén felülről sorban 12 lamella fordul be és záródik (90° → 0°), mint egy bezáródó lamellás tető; a zárt tetőn egy mondat áll („Hét lépés a vevőnek, kész ajánlatkérés Önnek.”). A „Hét lépés” szakasz elején a lamellák felülről sorban kinyílnak, és alattuk már az a szakasz áll (a szakasz a héró utolsó képernyője alá csúszik, a csere a zárt lamellák mögött történik).

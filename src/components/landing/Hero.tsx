@@ -1,6 +1,6 @@
 // Héró „Felhők felett” (Ádám választása, 2026-11-16): pasztell ég, három réteg felhő (kódból generált
-// fotószerű képek) mélységi parallaxszal, középen kódból rajzolt vonalas kéz a telefonnal, a képernyőn a VALÓDI
-// konfigurátor. A cím betűnként úszik fel, a kurzor közelében a betűk elvékonyodnak (változó Urbanist súly).
+// fotószerű képek) mélységi parallaxszal, középen lebegő laptop, a kijelzőn a VALÓDI asztali
+// konfigurátor (a korábbi kézben tartott telefon helyett). A cím betűnként úszik fel, a kurzor közelében a betűk elvékonyodnak (változó Urbanist súly).
 // Görgetéskor felülről sorban bezáródnak a lamellák (Lamella-redőny), a zárt tetőn egy mondat; a „Hét lépés”
 // szakasz elején kinyílnak, és alattuk már az a szakasz áll. Telefonon ugyanez, külön elrendezéssel.
 import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react'
@@ -11,7 +11,7 @@ import { formatMoney } from '@/lib/platformPricing'
 import { useCopy } from '@/i18n/useCopy'
 import { Em } from '@/i18n/Em'
 import Odometer from './Odometer'
-import HandPhone from './HandPhone'
+import Laptop from './Laptop'
 import { BUILD_PRICES } from './buildData'
 
 /** A redőny lamelláinak száma. */
@@ -31,6 +31,7 @@ export default function Hero({ demoPath }: { demoPath: string }) {
   const title = useRef<HTMLHeadingElement>(null)
   const device = useRef<HTMLDivElement>(null)
   const louvers = useRef<HTMLDivElement>(null)
+  const laptop = useRef<HTMLDivElement>(null)
   const [step, setStep] = useState(() => (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 6 : 4))
 
   // Az ár-lap és a lead a konfigurátor lépésein lépked (valódi árak); a végén megérkezik a kérelem.
@@ -41,7 +42,7 @@ export default function Hero({ demoPath }: { demoPath: string }) {
   }, [])
 
   // Mozgás: görgetés és kurzor egyetlen rAF-ben, közvetlenül a néhány mozgó elem transform/opacity értékével
-  // (nem CSS-változóval a gyökéren – az a kéz több száz SVG-elemét is újraszámoltatná).
+  // (nem CSS-változóval a gyökéren – az az egész részfa stílusát újraszámoltatná).
   // Átvezetés „Lamella-redőny” (Ádám választása, 2026-11-16): a héró végén felülről sorban bezáródnak a lamellák,
   // a zárt tetőn egy mondat áll; a „Hét lépés” szakasz elején a lamellák kinyílnak, alattuk már az a szakasz van.
   useEffect(() => {
@@ -49,7 +50,8 @@ export default function Hero({ demoPath }: { demoPath: string }) {
     const phone = device.current
     const heading = title.current
     const roof = louvers.current
-    if (!element || !phone || !heading || !roof) return
+    const screen = laptop.current
+    if (!element || !phone || !heading || !roof || !screen) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const fine = window.matchMedia('(pointer: fine)').matches && !reduced
     const q = <T extends Element>(selector: string) => element.querySelector<T>(selector)
@@ -106,6 +108,8 @@ export default function Hero({ demoPath }: { demoPath: string }) {
       if (mid) mid.style.transform = `translateX(-46%) translate3d(${(px * -26).toFixed(1)}px, ${(p * 20).toFixed(1)}px, 0)`
       if (front) front.style.transform = `translateX(-54%) translate3d(${(px * -48).toFixed(1)}px, ${(p * 6 * vh).toFixed(1)}px, 0)`
       phone.style.transform = `translate3d(${(px * 10).toFixed(1)}px, ${(py * 6 - p * 4 * vh).toFixed(1)}px, 0)`
+      // a laptop a kurzor felé dől (finoman), görgetéskor kissé előrebillen
+      screen.style.transform = `perspective(1800px) rotateX(${(7 - py * 3 + p * 6).toFixed(2)}deg) rotateY(${(-9 + px * 5).toFixed(2)}deg)`
       for (const { chip, d } of chips) chip.style.transform = `translate3d(${(px * d * 14).toFixed(1)}px, ${(py * d * 10 - p * d * 3 * vh).toFixed(1)}px, 0)`
 
       // lamellák: felülről sorban zárnak (90° → 0°), majd felülről sorban nyílnak (0° → −90°)
@@ -193,7 +197,7 @@ export default function Hero({ demoPath }: { demoPath: string }) {
         </div>
 
         <div className="lx-device" ref={device}>
-          <HandPhone label={v.handLabel} />
+          <Laptop label={v.laptopLabel} ref={laptop} />
           <div className="lx-chip lx-chip-price" data-depth="1.6">
             <span className="lx-float-label">{h.chipA.label}</span>
             <strong><Odometer text={formatMoney(price, lang)} label={h.chipA.label} /></strong>

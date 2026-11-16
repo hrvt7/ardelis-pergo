@@ -9,13 +9,22 @@ const css = read('src/landing.css')
 
 describe('héró „Felhők felett”', () => {
   it('a felhőrétegek és a telefon képernyője valódi, átlátszó webp képek', () => {
-    for (const name of ['clouds-back', 'clouds-mid', 'clouds-front', 'phone-screen']) {
+    for (const name of ['clouds-back', 'clouds-mid', 'clouds-front', 'laptop-screen', 'laptop-screen-960']) {
       const file = `public/assets/landing/${name}.webp`
       expect(existsSync(file), file).toBe(true)
       expect(statSync(file).size).toBeLessThan(400_000)
-      if (name !== 'phone-screen') expect(hero).toContain(`/assets/landing/${name}.webp`)
+      if (name.startsWith('clouds')) expect(hero).toContain(`/assets/landing/${name}.webp`)
     }
-    expect(read('src/components/landing/HandPhone.tsx')).toContain('/assets/landing/phone-screen.webp')
+    expect(read('src/components/landing/Laptop.tsx')).toContain('/assets/landing/laptop-screen.webp')
+  })
+
+  it('a kézben tartott telefon helyett lebegő laptop, a kijelzőn a valódi asztali konfigurátor', () => {
+    expect(existsSync('src/components/landing/HandPhone.tsx')).toBe(false)
+    expect(existsSync('public/assets/landing/phone-screen.webp')).toBe(false)
+    expect(hero).toMatch(/<Laptop label=\{v\.laptopLabel\} ref=\{laptop\} \/>/)
+    expect(hero).toMatch(/screen\.style\.transform = `perspective\(1800px\)/)
+    for (const lang of ['hu', 'en'] as const) expect(PLATFORM_COPY[lang].v2.hero.laptopLabel).toMatch(/5[ ,]648[ ,]000/)
+    expect(css).toMatch(/\.pf-reduced \.lx-laptop/)
   })
 
   it('a héró már nem tölti a 3D-s HeroLouvre-t (könnyebb első betöltés)', () => {
@@ -60,7 +69,7 @@ describe('héró „Felhők felett”', () => {
   })
 
   it('telefonon külön elrendezés van, nem marad el a hatás', () => {
-    expect(css).toMatch(/@media \(max-width: 760px\) \{\n {2}\.lx-sky \{ --dw: 74vw; height: 160vh; \}/)
+    expect(css).toMatch(/@media \(max-width: 760px\) \{\n {2}\.lx-sky \{ --dw: 94vw; height: 160vh; \}/)
   })
 
   it('a képsorozat kockáit a .gitignore nem zárja ki (különben élesen 404)', () => {
