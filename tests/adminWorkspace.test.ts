@@ -39,14 +39,40 @@ describe('munkaterület – valódi adatokból', () => {
     expect(tasks.find((task) => task.lead.ref === 'E')).toMatchObject({ title: 'Ajánlat nyomon követése', overdue: true })
   })
 
-  it('a felület: sötét munkaterület-téma, Vanilla kiemelő (egy változóban), kerek gombok a sarokkivágásban, fotó helyett monogram', () => {
+  it('a felület: sötét munkaterület-téma, Vanilla kiemelő, fordított sugarú kivágás maszk nélkül, fotó helyett monogram', () => {
     const css = readFileSync('src/admin-workspace.css', 'utf8')
     const ws = readFileSync('src/components/admin/Workspace.tsx', 'utf8')
     expect(css).toMatch(/--ws-accent: #EFF0A3/)
-    expect(css).toMatch(/mask: radial-gradient\(circle 33px at calc\(100% - 30px\) 30px/)
+    // A korábbi maszk elfedte a gombokat és „fekete foltot” hagyott: a kivágás most a felület színével festett fül.
+    expect(css).not.toMatch(/mask:/)
+    expect(css).toMatch(/\.ws-notch::before, \.ws-notch::after/)
     expect(ws).toMatch(/className="ws-avatar">\{initials\(lead\.customer_name\)\}/)
     expect(ws).not.toMatch(/<img/)
-    expect(ws).toMatch(/href=\{`tel:\$\{phone\}`\}/)
     expect(readFileSync('src/pages/AdminOverview.tsx', 'utf8')).toMatch(/<Workspace leads=\{leads\}/)
+  })
+
+  it('UX-kör: a teendők jönnek először, rácsban (nincs vízszintes görgetés), minden kártyán hívás; nincs ismétlődő KPI-sor', () => {
+    const ws = readFileSync('src/components/admin/Workspace.tsx', 'utf8')
+    const css = readFileSync('src/admin-workspace.css', 'utf8')
+    const overview = readFileSync('src/pages/AdminOverview.tsx', 'utf8')
+    expect(ws.indexOf('id="ws-tasks"')).toBeGreaterThan(0)
+    expect(ws.indexOf('id="ws-tasks"')).toBeLessThan(ws.indexOf('id="ws-new"'))
+    expect(ws).not.toMatch(/ws-track/)
+    expect(css).not.toMatch(/overflow-x: auto; padding: 4px 2px 12px/)
+    expect((ws.match(/href=\{tel\(lead\)\}/g) ?? []).length).toBe(2)
+    expect(overview).not.toMatch(/className="kpis"/)
+    expect(overview).not.toMatch(/Legfrissebb|Státuszok/)
+    expect(overview).toMatch(/<details className="card span-2 dash-more">/)
+  })
+
+  it('UX-kör: egy hangcsalád az állapotokra (nincs szivárvány-zöld/piros), és nincs fejlesztői szakszó a mentési hibában', async () => {
+    const { STATUS_COLORS } = await import('../src/lib/adminLeads')
+    const { TIER_COLORS } = await import('../src/lib/leadScore')
+    expect(STATUS_COLORS.new).toBe('#EFF0A3')
+    expect(Object.values({ ...STATUS_COLORS, ...TIER_COLORS })).not.toContain('#ff8a80')
+    expect(Object.values({ ...STATUS_COLORS, ...TIER_COLORS })).not.toContain('#59d499')
+    const page = readFileSync('src/pages/AdminPage.tsx', 'utf8')
+    expect(page).not.toMatch(/szerver tárhelye/)
+    expect(page).toMatch(/A mentés most nem működik/)
   })
 })

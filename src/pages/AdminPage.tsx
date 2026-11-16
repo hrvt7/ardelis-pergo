@@ -304,15 +304,15 @@ function AdminEditor({ base, initial, storage, saving, message, onSave }: { base
   }
 
   return <form className="admin-form" onSubmit={submit}>
-      {!storage && <p className="admin-message is-error" role="alert">A beállítások mentése most nem érhető el (a szerver tárhelye nincs bekapcsolva). A módosítások nem vesznek el, ha nyitva hagyja az oldalt; kérjük, jelezze a <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> címen.</p>}
+      {!storage && <p className="admin-message is-error" role="alert">A mentés most nem működik, ezért a módosítások nem tárolódnak. Amíg ezt az oldalt nyitva tartja, a beírt adatok megmaradnak. <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Admin mentés – ${base.brand.name}`)}`}>Írjon nekünk</a>, és bekapcsoljuk.</p>}
 
       <Section title="Cég és kapcsolat">
         {BRAND_FIELDS.map(([key, label, type]) => <label key={key}><span>{label}</span><input type={type} value={brand[key]} onChange={(event) => setBrand({ ...brand, [key]: event.target.value })} required={key === 'name' || key === 'legalName'} maxLength={300} /></label>)}
       </Section>
 
       <Section title="Érdeklődők fogadása">
-        <label className="admin-wide"><span>Lead e-mail címek (soronként egy)</span><textarea rows={3} value={recipients} onChange={(event) => setRecipients(event.target.value)} placeholder="ajanlat@ceg.hu" /></label>
-        <label><span>E-mail tárgy előtag</span><input value={subjectPrefix} onChange={(event) => setSubjectPrefix(event.target.value)} maxLength={80} /></label>
+        <label className="admin-wide"><span>Ide érkeznek az érdeklődők <small>(soronként egy e-mail-cím)</small></span><textarea rows={3} value={recipients} onChange={(event) => setRecipients(event.target.value)} placeholder="ajanlat@ceg.hu" /></label>
+        <label><span>Az értesítő e-mail tárgyának eleje</span><input value={subjectPrefix} onChange={(event) => setSubjectPrefix(event.target.value)} maxLength={80} /></label>
         <label className="admin-check admin-wide"><input type="checkbox" checked={followUp} onChange={(event) => setFollowUp(event.target.checked)} />Automatikus utánkövetés</label>
         <p className="admin-hint admin-wide">Bekapcsolva: 3 nappal a kérelem után a vevő egyetlen emlékeztető e-mailt kap a 3D-terve linkjével és „Időpontot kérek” gombbal, ha a lead még „Új” vagy „Kapcsolatba léptünk”. 7 nap után, ha a lead még mindig „Új”, nektek megy összesítő a válasz nélkül maradt érdeklődőkről. Naponta egyszer fut.</p>
         <label className="admin-check admin-wide"><input type="checkbox" checked={monthlyReport} onChange={(event) => setMonthlyReport(event.target.checked)} />Havi riport e-mailben</label>

@@ -1,5 +1,16 @@
 # Változások
 
+## 4.74 – Gyártói admin: UX-kritikus kör javításai
+
+- **Áttekintés átrendezve:** felül négy egyforma számkártya (nyitott érdeklődő, megnyert, nyerési arány, nyitott érték), utána **elsőként a Teendők** rácsban, vízszintes görgetés nélkül, a lejártak elöl, minden kártyán hívás- és e-mail-gomb; szűrők darabszámmal (Mind / Lejárt / Esedékes / Forró), legfeljebb 6 kártya + „Összes teendő”. Az „Új érdeklődők” tömör kártyákon (legfeljebb 3), hívásgombbal.
+- **Ismétlések törölve:** a második KPI-sor, a „Legfrissebb”, a „Státuszok” és a lábjegyzet. A konverzió, lépések, tetőtípusok és települések egy összecsukható „Látogatottság és statisztika” kártyába kerültek. A napi grafikon y-tengelyt kapott.
+- **Sarokkivágás maszk nélkül:** a kerek gombok fordított sugarú fülben ülnek (a felület színével festve), nem takarja őket semmi.
+- **Egy hangcsalád:** az állapot- és pontszámszínek Vanilla / pasztell kék / homok / zöld / szürke; a címkék semleges alapon színes pöttyel. Az érdeklődés pöttyei egyszínűek.
+- **Érdeklődők:** a táblában körvonalas hívásgomb, a kereső belső doboz nélkül, a kanban öt oszlopa elfér, a pontszám-címke saját sorban. Részletes panel: állapotgombok egy sorban, a telefonszám és az e-mail kattintható, Vanilla „Hívás”.
+- **Beállítások:** látható mezőhatár, nagyobb címkék, átnevezett mezők, ragadós Mentés; a mentési hiba szakszó nélkül.
+- **Mobil:** alcím nélküli fejléc, a ritka műveletek (CSV, Frissítés, Kanban) asztali gépen, görgethető szűrősávok, lebegő alsó navigáció egyetlen aktív jelzéssel.
+- Tesztek: `adminWorkspace.test.ts` (teendők elöl, rács, hívásgombok, nincs ismétlődő KPI-sor, nincs maszk, harmonizált színek, hibaüzenet).
+
 ## 4.73 – Gyártói admin: sötét „munkaterület” dizájn
 
 - **Új megjelenés** Ádám referenciája alapján (sötét CRM-felület): fekete alap, nagy, lekerekített kártyák, fülszerű sarokkivágás kerek gombokkal, pill-szűrők, kerek ikongombos oldalsáv, Urbanist betű. A kiemelő szín a márka Vanilla-ja (#EFF0A3), egy CSS-változóban (`--ws-accent`) cserélhető.

@@ -16,7 +16,8 @@ export interface LeadRow {
 }
 
 export const LEAD_STATUSES: [string, string][] = [['new', 'Új'], ['contacted', 'Kapcsolatba léptünk'], ['offered', 'Ajánlat kiment'], ['won', 'Megnyert'], ['lost', 'Elveszett']]
-export const STATUS_COLORS: Record<string, string> = { new: '#d8ff72', contacted: '#9fb3a6', offered: '#ffc457', won: '#59d499', lost: '#ff8a80' }
+// Egy hangcsalád (2026-11-16 UX-kör): Vanilla az új, pasztell kék/homok/zöld a folyamat, szürke az elveszett – nincs szivárvány.
+export const STATUS_COLORS: Record<string, string> = { new: '#EFF0A3', contacted: '#D8DFE9', offered: '#E9D9A6', won: '#CFDECA', lost: '#7C7E85' }
 
 export interface LeadStats {
   total: number

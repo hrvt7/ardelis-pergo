@@ -1,9 +1,9 @@
 import { useEffect, useId, useRef, useState, type PointerEvent } from 'react'
 import { getDisplayCurrency } from '@/lib/money'
-import { ArrowDownRight, ArrowUpRight, FileText } from 'lucide-react'
+import { FileText } from 'lucide-react'
 import { formatPrice } from '@/lib/pricing'
 import { ROOF_INFO } from '@/lib/roofs'
-import { computeLeadStats, computePipeline, initials, STATUS_COLORS, timeAgo, LEAD_STATUSES, type LeadRow } from '@/lib/adminLeads'
+import { computeLeadStats, computePipeline, STATUS_COLORS, type LeadRow } from '@/lib/adminLeads'
 import { computeFunnel, type EventRow } from '@/lib/adminStats'
 import { eventTotals, SCENE_SPEED, STEP_REACH } from '@/lib/statsFunnel'
 import type { RoofType } from '@/types/pergola'
@@ -12,7 +12,6 @@ import Workspace from '@/components/admin/Workspace'
 
 const compactHuf = (value: number) => (getDisplayCurrency() === 'HUF' && value >= 1_000_000 ? `${(value / 1_000_000).toLocaleString('hu-HU', { maximumFractionDigits: 1 })} M Ft` : formatPrice(value))
 const shortDate = (day: string) => new Date(`${day}T12:00:00`).toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' })
-const STATUS_LABEL = Object.fromEntries(LEAD_STATUSES) as Record<string, string>
 
 /**
  * Sima, monoton görbe a pontokon át (Fritsch–Carlson): nem lő túl a pontokon,
@@ -40,18 +39,6 @@ function smoothPath(points: [number, number][]) {
   return path
 }
 
-function Sparkline({ values }: { values: number[] }) {
-  const id = useId()
-  const max = Math.max(1, ...values)
-  const points = values.map((value, index): [number, number] => [(index / Math.max(1, values.length - 1)) * 100, 26 - (value / max) * 22])
-  const line = smoothPath(points)
-  return <svg className="kpi-spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
-    <defs><linearGradient id={id} x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="var(--accent-primary)" stopOpacity=".35" /><stop offset="1" stopColor="var(--accent-primary)" stopOpacity="0" /></linearGradient></defs>
-    <path d={`${line} L100,30 L0,30 Z`} fill={`url(#${id})`} /><path d={line} className="kpi-spark-line" vectorEffect="non-scaling-stroke" />
-  </svg>
-}
-
-/** Számfelfutás a KPI-értéken („12 480 Ft”, „37”, „4,2%”): az első számcsoport fut fel, a többi marad. */
 function CountValue({ value }: { value: string }) {
   const match = /^(\d[\d\s\u00a0]*)(.*)$/.exec(value)
   const target = match ? Number(match[1].replace(/[\s\u00a0]/g, '')) : NaN
@@ -69,25 +56,18 @@ function CountValue({ value }: { value: string }) {
   return <span aria-label={value}>{grouped ? shown.toLocaleString('hu-HU').replace(/\u00a0/g, ' ') : shown}{match[2]}</span>
 }
 
-function Kpi({ label, value, hint, delta, spark, ring }: { label: string; value: string; hint?: string; delta?: number | null; spark?: number[]; ring?: number | null }) {
-  return <div className="kpi" onPointerMove={(event) => { const box = event.currentTarget.getBoundingClientRect(); event.currentTarget.style.setProperty('--mx', `${event.clientX - box.left}px`); event.currentTarget.style.setProperty('--my', `${event.clientY - box.top}px`) }}>
-    <div className="kpi-head"><span>{label}</span>{delta != null && delta !== 0 && <em className={delta > 0 ? 'up' : 'down'}>{delta > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}{Math.abs(delta)}</em>}</div>
-    <strong><CountValue value={value} /></strong>
-    {hint && <small>{hint}</small>}
-    {spark && <Sparkline values={spark} />}
-    {ring != null && <svg className="kpi-ring" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" className="kpi-ring-track" /><circle cx="18" cy="18" r="15" className="kpi-ring-fill" strokeDasharray={`${ring * 94.2} 94.2`} transform="rotate(-90 18 18)" /></svg>}
-  </div>
-}
-
 function AreaChart({ daily }: { daily: { day: string; count: number }[] }) {
   const id = useId()
   const ref = useRef<SVGSVGElement>(null)
   const [hover, setHover] = useState<number | null>(null)
   const width = 900
   const height = 220
-  const max = Math.max(3, ...daily.map((item) => item.count))
-  const x = (index: number) => 8 + (index / Math.max(1, daily.length - 1)) * (width - 16)
-  const y = (count: number) => height - 14 - (count / max) * (height - 40)
+  // A tengely felső értéke 3 többszöröse, így mind a négy rácsvonal egész számot jelöl.
+  const max = Math.ceil(Math.max(3, ...daily.map((item) => item.count)) / 3) * 3
+  const left = 34
+  const x = (index: number) => left + (index / Math.max(1, daily.length - 1)) * (width - left - 8)
+  const base = height - 26
+  const y = (count: number) => base - (count / max) * (height - 40)
   const points = daily.map((item, index): [number, number] => [x(index), y(item.count)])
   const line = smoothPath(points)
   const onMove = (event: PointerEvent<SVGSVGElement>) => {
@@ -99,12 +79,12 @@ function AreaChart({ daily }: { daily: { day: string; count: number }[] }) {
   return <div className="area-wrap">
     <svg ref={ref} className="area" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Érdeklődők száma naponta" onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
       <defs><linearGradient id={id} x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="var(--accent-primary)" stopOpacity=".32" /><stop offset="1" stopColor="var(--accent-primary)" stopOpacity="0" /></linearGradient></defs>
-      {[0, 1, 2, 3].map((i) => <line key={i} x1="0" x2={width} y1={14 + (i * (height - 40)) / 3} y2={14 + (i * (height - 40)) / 3} className="area-grid" />)}
-      <path d={`${line} L${x(daily.length - 1)},${height - 14} L${x(0)},${height - 14} Z`} fill={`url(#${id})`} />
+      {[0, 1, 2, 3].map((i) => <g key={i}><line x1={left} x2={width} y1={14 + (i * (height - 40)) / 3} y2={14 + (i * (height - 40)) / 3} className="area-grid" /><text x={left - 10} y={18 + (i * (height - 40)) / 3} textAnchor="end" className="area-axis">{(max * (3 - i)) / 3}</text></g>)}
+      <path d={`${line} L${x(daily.length - 1)},${base} L${x(0)},${base} Z`} fill={`url(#${id})`} />
       <path d={line} className="area-line" />
-      {active && hover !== null && <g><line x1={x(hover)} x2={x(hover)} y1="8" y2={height - 14} className="area-cursor" /><circle cx={x(hover)} cy={y(active.count)} r="5" className="area-dot" /></g>}
-      <text x="8" y={height} className="area-axis">{shortDate(daily[0].day)}</text>
-      <text x={width / 2} y={height} textAnchor="middle" className="area-axis">{shortDate(daily[Math.floor(daily.length / 2)].day)}</text>
+      {active && hover !== null && <g><line x1={x(hover)} x2={x(hover)} y1="8" y2={base} className="area-cursor" /><circle cx={x(hover)} cy={y(active.count)} r="5" className="area-dot" /></g>}
+      <text x={left} y={height} className="area-axis">{shortDate(daily[0].day)}</text>
+      <text x={(left + width) / 2} y={height} textAnchor="middle" className="area-axis">{shortDate(daily[Math.floor(daily.length / 2)].day)}</text>
       <text x={width - 8} y={height} textAnchor="end" className="area-axis">{shortDate(daily[daily.length - 1].day)}</text>
     </svg>
     {active && hover !== null && <div className="area-tip" style={{ left: `${(x(hover) / width) * 100}%` }}><b>{active.count}</b> érdeklődő<small>{shortDate(active.day)}</small></div>}
@@ -165,42 +145,27 @@ export default function AdminOverview({ leads, events, onOpenLeads, onOpenLead, 
   const [now] = useState(() => Date.now())
   const stats = computeLeadStats(leads, now, range)
   const delta = stats.last7 - stats.prev7
-  const spark = stats.daily.slice(-14).map((item) => item.count)
-  const pipeline = computePipeline(leads)
   const setupOpen = checklist?.some((item) => !item.done)
 
   return <div className="dash">
     <Workspace leads={leads} onOpenLead={onOpenLead} onOpenLeads={onOpenLeads} onUpdate={onUpdate} />
-    <div className="kpis">
-      <Kpi label="Érdeklődők" value={String(stats.total)} hint={`${stats.last7} az elmúlt 7 napban`} delta={delta} spark={spark} />
-      <Kpi label="Átlagos irányár" value={compactHuf(stats.averageGross)} hint="bruttó, érdeklődőnként" />
-      <Kpi label="Várható bevétel" value={compactHuf(pipeline.forecast)} hint="súlyozott, becsült" />
-      <Kpi label="Nyerési arány" value={stats.winRate === null ? '—' : `${Math.round(stats.winRate * 100)}%`} hint="megnyert / lezárt" ring={stats.winRate} />
-    </div>
     <div className="dash-grid">
       {setupOpen && checklist && <div className="span-2"><Checklist items={checklist} /></div>}
       <PipelineCard leads={leads} />
       <section className="card span-2">
-        <header><h2>Érkező érdeklődők</h2><button type="button" className="ghost-link report-btn" onClick={() => window.print()}><FileText size={13} />Jelentés (PDF)</button><div className="seg" role="group" aria-label="Időszak">{RANGES.map((value) => <button type="button" key={value} className={range === value ? 'is-on' : ''} onClick={() => setRange(value)}>{value} nap</button>)}</div></header>
+        <header><h2>Érkező érdeklődők</h2><button type="button" className="ghost-link report-btn" onClick={() => window.print()}><FileText size={14} />Jelentés (PDF)</button><div className="seg" role="group" aria-label="Időszak">{RANGES.map((value) => <button type="button" key={value} className={range === value ? 'is-on' : ''} onClick={() => setRange(value)}>{value} nap</button>)}</div></header>
         {leads.length === 0 ? <p className="admin-hint empty-hint">Még nem érkezett érdeklődő. Amint valaki felmérést kér, itt jelenik meg a grafikon.</p> : <AreaChart daily={stats.daily} />}
+        <p className="admin-hint chart-note">{stats.last7} érdeklődő az elmúlt 7 napban{delta !== 0 ? ` (${delta > 0 ? '+' : ''}${delta} az előző héthez képest)` : ''} · átlagos irányár {compactHuf(stats.averageGross)}</p>
       </section>
-      <section className="card span-2"><header><h2>Eseményszámok és becsült konverzió</h2></header><FunnelCard events={events} recent={stats.last30} /></section>
-      <section className="card"><header><h2>Meddig jutnak a lépésekben?</h2></header><StepReach events={events} /></section>
-      <section className="card">
-        <header><h2>Státuszok</h2></header>
-        <div className="stackbar" role="img" aria-label="Érdeklődők megoszlása státusz szerint">{stats.total === 0 ? <i style={{ width: '100%' }} /> : stats.byStatus.filter((item) => item.count > 0).map((item) => <i key={item.key} style={{ width: `${(item.count / stats.total) * 100}%`, background: STATUS_COLORS[item.key] }} title={`${item.label}: ${item.count}`} />)}</div>
-        <ul className="legend">{stats.byStatus.map((item) => <li key={item.key}><i style={{ background: STATUS_COLORS[item.key] }} />{item.label}<strong>{item.count}</strong></li>)}</ul>
-      </section>
-      <section className="card"><header><h2>Népszerű tetőtípusok</h2></header><HBars items={stats.byRoof.map((item) => ({ key: ROOF_INFO[item.key as RoofType]?.name ?? item.key, count: item.count }))} empty="Nincs adat." /></section>
-      <section className="card"><header><h2>Települések</h2></header><HBars items={stats.byPlace} empty="Nincs adat." /></section>
-      <section className="card">
-        <header><h2>Legfrissebb</h2><button type="button" className="ghost-link" onClick={onOpenLeads}>Összes</button></header>
-        {leads.length === 0 ? <p className="admin-hint">Nincs még érdeklődő.</p> : <ul className="recent">{leads.slice(0, 5).map((lead) => <li key={lead.ref}>
-          <span className="avatar">{initials(lead.customer_name)}</span>
-          <div><strong>{lead.customer_name}</strong><small>{lead.city} · {timeAgo(lead.created_at, now)}</small></div>
-          <div className="recent-end"><strong>{compactHuf(lead.estimate_gross)}</strong><span className="pill" style={{ ['--pill' as string]: STATUS_COLORS[lead.status] }}>{STATUS_LABEL[lead.status] ?? lead.status}</span></div>
-        </li>)}</ul>}
-      </section>
+      <details className="card span-2 dash-more">
+        <summary><h2>Látogatottság és statisztika</h2><span>Konverzió, lépések, tetőtípusok, települések</span></summary>
+        <div className="dash-more-grid">
+          <section className="span-2"><h3>Eseményszámok és becsült konverzió</h3><FunnelCard events={events} recent={stats.last30} /></section>
+          <section><h3>Meddig jutnak a lépésekben?</h3><StepReach events={events} /></section>
+          <section><h3>Népszerű tetőtípusok</h3><HBars items={stats.byRoof.map((item) => ({ key: ROOF_INFO[item.key as RoofType]?.name ?? item.key, count: item.count }))} empty="Nincs adat." /></section>
+          <section><h3>Települések</h3><HBars items={stats.byPlace} empty="Nincs adat." /></section>
+        </div>
+      </details>
     </div>
   </div>
 }

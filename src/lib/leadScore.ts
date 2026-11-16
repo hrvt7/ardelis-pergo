@@ -33,7 +33,7 @@ export interface LeadScore {
 }
 
 export const TIER_LABELS: Record<LeadTier, string> = localized(() => ({ hot: tr('Forró', 'Heiß'), warm: tr('Meleg', 'Warm'), cold: tr('Hideg', 'Kalt') }))
-export const TIER_COLORS: Record<LeadTier, string> = { hot: '#ff8a65', warm: '#ffc457', cold: '#9fb3a6' }
+export const TIER_COLORS: Record<LeadTier, string> = { hot: '#EFF0A3', warm: '#D8DFE9', cold: '#9A9CA3' }
 
 export interface ScoreInput {
   estimate_gross: number

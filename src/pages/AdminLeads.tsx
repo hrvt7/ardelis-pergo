@@ -102,8 +102,8 @@ function Drawer({ lead, now, quotes, tenant, onClose, onUpdate }: { lead: LeadRo
         </div>
 
         <dl className="facts">
-          <div><dt>Telefon</dt><dd>{lead.phone}<CopyButton value={lead.phone} label="Telefonszám" /></dd></div>
-          <div><dt>E-mail</dt><dd>{lead.email}<CopyButton value={lead.email} label="E-mail-cím" /></dd></div>
+          <div><dt>Telefon</dt><dd><a href={`tel:${phone}`}>{lead.phone}</a><CopyButton value={lead.phone} label="Telefonszám" /></dd></div>
+          <div><dt>E-mail</dt><dd><a href={`mailto:${lead.email}`}>{lead.email}</a><CopyButton value={lead.email} label="E-mail-cím" /></dd></div>
           <div><dt>Hely</dt><dd>{[lead.postal_code, lead.city, lead.address].filter(Boolean).join(' ')}{lead.region ? ` · ${lead.region}` : ''}</dd></div>
           <div><dt>Tető</dt><dd>{roofName(lead)}{size ? ` · ${size}` : ''}</dd></div>
           <div><dt>Érkezett</dt><dd>{dateFormat.format(new Date(lead.created_at))}</dd></div>
@@ -179,8 +179,8 @@ export default function AdminLeads({ leads, error, onReload, onUpdate, quotes, o
       <label className="search"><Search size={15} /><input type="search" placeholder="Keresés: név, település, azonosító…" aria-label="Keresés" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
       <div className="seg view-seg" role="group" aria-label="Nézet"><button type="button" className={view === 'table' ? 'is-on' : ''} onClick={() => chooseView('table')}><List size={14} />Tábla</button><button type="button" className={view === 'board' ? 'is-on' : ''} onClick={() => chooseView('board')}><KanbanSquare size={14} />Kanban</button></div>
       <button type="button" className={`btn${hotFirst ? ' is-on' : ''}`} aria-pressed={hotFirst} title="Rendezés lead-pontszám szerint: a legkomolyabb érdeklődők elöl" onClick={toggleHot}><Flame size={15} />Forró elöl</button>
-      <button type="button" className="btn" onClick={exportCsv} disabled={shown.length === 0}><Download size={15} />CSV ({shown.length})</button>
-      <button type="button" className="btn ghost" onClick={onReload}>Frissítés</button>
+      <button type="button" className="btn hide-narrow" onClick={exportCsv} disabled={shown.length === 0}><Download size={15} />CSV ({shown.length})</button>
+      <button type="button" className="btn ghost hide-narrow" onClick={onReload}>Frissítés</button>
     </div>
     {view === 'table' && <div className="tabs" role="group" aria-label="Szűrés státusz szerint">
       <button type="button" className={filter === 'all' ? 'is-on' : ''} onClick={() => setFilter('all')}>Mind <b>{leads.length}</b></button>
