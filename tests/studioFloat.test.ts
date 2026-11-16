@@ -1,13 +1,19 @@
 // 4.76: lebegő konfigurátor-elrendezés – a panel balra lebeg, a jelenet-eszközök a jobb szélből kinövő fekete fülben.
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { floatPhoneShiftX, floatViewShiftX, TOOL_RAIL_WIDTH, usesFloatLayout } from '../src/lib/uiStyle'
+import { floatPhoneShiftX, floatViewShiftX, resolveUiStyle, TOOL_RAIL_WIDTH, UI_STYLE_KEY, usesFloatLayout } from '../src/lib/uiStyle'
 
 describe('lebegő konfigurátor-elrendezés', () => {
   it('csak a világos (alapértelmezett) stílusban kapcsol be', () => {
     expect(usesFloatLayout('light')).toBe(true)
     expect(usesFloatLayout('glass')).toBe(false)
     expect(usesFloatLayout('soft')).toBe(false)
+  })
+
+  it('a régi kulcson megjegyzett stílus nem írja felül az új alapértelmezést; a ?style= paraméter továbbra is választ', () => {
+    expect(UI_STYLE_KEY).not.toBe('lamelix-ui-style')
+    expect(resolveUiStyle('', null)).toBe('light')
+    expect(resolveUiStyle('?style=soft', null)).toBe('soft')
   })
 
   it('asztalon a pergola a panel és a fül közötti szabad rész közepére kerül (jobbra tolt nézet)', () => {

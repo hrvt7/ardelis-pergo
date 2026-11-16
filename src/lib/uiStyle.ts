@@ -2,7 +2,8 @@
 // a 3D kép fölött (4.26, kipróbálásra), „studio” = letisztult, modernebb változat semleges stúdió-jelenettel (4.53, kipróbálásra). A ?style= paraméter választ, és a böngésző megjegyzi.
 
 export type UiStyle = 'soft' | 'glass' | 'studio' | 'light'
-export const UI_STYLE_KEY = 'lamelix-ui-style'
+// 4.77: új kulcs – a korábban megjegyzett régi stílusválasztás (pl. ?style=soft) már nem írja felül az új, lebegő elrendezést.
+export const UI_STYLE_KEY = 'lamelix-ui-style-v2'
 /** Alapértelmezett felület: világos, pasztell „light” (4.55). A korábbi sötét: ?style=soft. */
 export const DEFAULT_UI_STYLE: UiStyle = 'light'
 

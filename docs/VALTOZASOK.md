@@ -1,5 +1,10 @@
 # Változások
 
+## 4.77 – Konfigurátor: a régi, megjegyzett stílus nem írja felül az új elrendezést
+
+- **Hiba:** aki korábban `?style=soft` (vagy más) címmel nyitotta meg a konfigurátort, annak a böngészője ezt megjegyezte, ezért frissítés után is a régi, sötét felületet látta az új lebegő elrendezés helyett. **Javítás:** új tárolókulcs (`lamelix-ui-style-v2`), így mindenki az alapértelmezett világos, lebegő elrendezést kapja; a `?style=` paraméter továbbra is választ, és azt megjegyzi.
+- Tesztek: `studioFloat.test.ts` (új kulcs, alapértelmezés, paraméteres választás).
+
 ## 4.76 – Konfigurátor: lebegő elrendezés és oldalsó eszközfül
 
 - **Új elrendezés** Ádám referenciái alapján (világos, alapértelmezett stílus): a 3D jelenet kitölti a munkafelületet, a lépéspanel balra lebeg fehér kártyán. A pergola a panel és az eszközfül közötti szabad rész közepére kerül (nézet-eltolás, `floatViewShiftX`).
