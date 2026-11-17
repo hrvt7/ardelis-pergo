@@ -2705,12 +2705,14 @@ function CameraController({ view, focus, viewShift, revealed, config, autoRotate
   useEffect(() => {
     const perspectiveCamera = camera as THREE.PerspectiveCamera
     // Üveges felületnél a panel a kép fölött lebeg: a nézet vízszintesen is eltolódik, hogy a pergola a szabad rész közepén legyen.
+    // A pillanatkép (PDF, ajánlat, megosztás) ebből tudja, mennyivel tolódott el a pergola, és középre vágja (4.90).
+    gl.domElement.dataset.viewShiftX = walk ? '0' : String(viewShiftX)
     if (walk) return
     if (viewShift > 0 || viewShiftX !== 0) perspectiveCamera.setViewOffset(size.width, size.height, Math.round(size.width * viewShiftX), Math.round(size.height * viewShift), size.width, size.height)
     else perspectiveCamera.clearViewOffset()
     perspectiveCamera.updateProjectionMatrix()
     invalidate()
-  }, [viewShift, viewShiftX, walk, size.width, size.height, camera, invalidate])
+  }, [viewShift, viewShiftX, walk, size.width, size.height, camera, gl, invalidate])
 
   // Egyszeri fókusz: a kiválasztott oldal elé fordul (enyhén oldalról és felülről, hogy a mélység is
   // látsszon), vagy bemutató körbeforgás. A felhasználó bármikor átveheti az irányítást.

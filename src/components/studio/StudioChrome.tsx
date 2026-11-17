@@ -72,7 +72,7 @@ export function StudioViewSettings({ view, productName, onChange }: { view: Stud
  * Jelenet-eszköztár (jobb felső sarok): napszak-váltó, a termék gyorsgombjai, „Eszközök” menü.
  * Az Eszközök menüben elöl a „Nézet és vizualizáció” és a termék saját eszközei, utána a közös Bemutató, PDF, Megosztás.
  */
-export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools = [], toolsBusy = false, presentation, onPresentation, onExport, onShare, leading, variant = 'bar' }: { /** „rail”: a képernyő jobb széléből kinövő fekete fül, benne minden eszköz ikonként (a pergola-stúdió lebegő elrendezése, 4.76). */ variant?: 'bar' | 'rail'; time: StudioTime; onTimeChange: (time: StudioTime) => void; viewPanel: ReactNode; /** Az eszközsor elejére kerülő elem (pl. kameranézet-menü). */ leading?: ReactNode; quick?: QuickToggle[]; tools?: ToolItem[]; toolsBusy?: boolean; presentation: boolean; onPresentation: () => void; onExport: () => void; onShare: () => void }) {
+export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools = [], toolsBusy = false, presentation, onPresentation, onExport, onShare, leading, variant = 'bar', onToolUse }: { /** A fülben választott eszköz azonosítója (a napszaké 'time') – a stúdió ezzel zárja a többi eszköz nyitva maradt paneljét. */ onToolUse?: (id: string) => void; /** „rail”: a képernyő jobb széléből kinövő fekete fül, benne minden eszköz ikonként (a pergola-stúdió lebegő elrendezése, 4.76). */ variant?: 'bar' | 'rail'; time: StudioTime; onTimeChange: (time: StudioTime) => void; viewPanel: ReactNode; /** Az eszközsor elejére kerülő elem (pl. kameranézet-menü). */ leading?: ReactNode; quick?: QuickToggle[]; tools?: ToolItem[]; toolsBusy?: boolean; presentation: boolean; onPresentation: () => void; onExport: () => void; onShare: () => void }) {
   const [toolsOpen, setToolsOpen] = useState(false)
   const [viewOpen, setViewOpen] = useState(false)
   useEffect(() => {
@@ -107,8 +107,8 @@ export function SceneToolbar({ time, onTimeChange, viewPanel, quick = [], tools 
       <nav className="tool-rail" aria-label={tr('Eszközök', 'Werkzeuge')}>
         <div className="tool-rail-scroll">
           {leading}
-          <button type="button" className={`rail-btn${time !== 'day' ? ' is-active' : ''}`} aria-label={`${tr('Napszak', 'Tageszeit')}: ${timeLabel}`} onClick={() => onTimeChange(nextTime[time])}><TimeIcon size={19} /><span className="rail-tip">{tr('Napszak', 'Tageszeit')}: {timeLabel}</span></button>
-          {groups.map((group, index) => group.length > 0 && <div key={index} className="rail-group">{group.map(({ id, icon: Icon, name, active, run }) => <button type="button" key={id} className={`rail-btn${active ? ' is-active' : ''}`} aria-label={name} aria-pressed={active === undefined ? undefined : Boolean(active)} onClick={() => { if (id !== 'view') setViewOpen(false); run() }}><Icon size={19} /><span className="rail-tip">{name}</span></button>)}</div>)}
+          <button type="button" className={`rail-btn${time !== 'day' ? ' is-active' : ''}`} aria-label={`${tr('Napszak', 'Tageszeit')}: ${timeLabel}`} onClick={() => { onToolUse?.('time'); onTimeChange(nextTime[time]) }}><TimeIcon size={19} /><span className="rail-tip">{tr('Napszak', 'Tageszeit')}: {timeLabel}</span></button>
+          {groups.map((group, index) => group.length > 0 && <div key={index} className="rail-group">{group.map(({ id, icon: Icon, name, active, run }) => <button type="button" key={id} className={`rail-btn${active ? ' is-active' : ''}`} aria-label={name} aria-pressed={active === undefined ? undefined : Boolean(active)} onClick={() => { if (id !== 'view') setViewOpen(false); onToolUse?.(id); run() }}><Icon size={19} /><span className="rail-tip">{name}</span></button>)}</div>)}
         </div>
       </nav>
       {viewPopover}

@@ -55,7 +55,7 @@ export default function MoodPanel({ config, scene, prices, onChange, onSceneChan
 
     {canHeat && (config.heaters > 0
       ? <button type="button" className={`mood-heat${scene.heatersOn ? ' is-on' : ''}`} aria-pressed={scene.heatersOn} onClick={() => onSceneChange({ heatersOn: !scene.heatersOn })}><Flame size={15} /><span><strong>Teraszfűtés {scene.heatersOn ? 'bekapcsolva' : 'kikapcsolva'}</strong><small>{config.heaters} db infrapanel</small></span></button>
-      : <button type="button" className="mood-add" onClick={() => onChange({ heaters: 1 })}><Plus size={14} /><span><strong>{tr('Hűvös estékre: teraszfűtés', 'Für kühle Abende: Terrassenheizung')}</strong><small>1 db infrapanel · +{formatPrice(heaterPrice)}</small></span></button>)}
+      : <button type="button" className="mood-add" onClick={() => onChange({ heaters: 1 })}><Plus size={14} /><span><strong>{tr('Hűvös estékre: teraszfűtés', 'Für kühle Abende: Terrassenheizung')}</strong><small>1 db infrapanel · +{formatPrice(heaterPrice)} {tr('bruttó', 'brutto')}</small></span></button>)}
 
     {(config.fans ?? 0) > 0 && <button type="button" className={`mood-heat mood-fan${scene.fanOn ? ' is-on' : ''}`} aria-pressed={scene.fanOn} onClick={() => onSceneChange({ fanOn: !scene.fanOn })}><Fan size={15} /><span><strong>Ventilátor {scene.fanOn ? 'bekapcsolva' : 'kikapcsolva'}</strong><small>{config.fans} db mennyezeti ventilátor</small></span></button>}
   </section>

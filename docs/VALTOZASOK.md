@@ -1,5 +1,12 @@
 # Változások
 
+## 4.90 – Konfigurátor: Esti hangulat panel, középre vágott képek, egységes infrapanel-ár (hibakeresés 2.)
+
+- **Hiba: az „Esti hangulat” panel nyitva maradt**, amikor a vevő másik eszközt választott a fülben: eltakarta a pergolát és a következő eszköz visszajelzését (az AR és a Fotóba helyezés emiatt látszólag nem csinált semmit). Most bármelyik másik eszköz választásakor bezárul; a Napszak gomb újra megnyitja.
+- **Hiba: a PDF-, ajánlat- és megosztókép jobbra csúszott** az alapstílusban (a lebegő elrendezés nézet-eltolása, 4.76 óta). A pillanatkép most az eltolás szerint vág, a pergola a képen középen van.
+- **Hiba: az infrapanelnek két ára látszott** (a Komfort lépésben nettó egységár „200 000 Ft / db”, az Esti hangulat panelen bruttó különbözet „+279 000 Ft”, jelölés nélkül). Most mindkét helyen ugyanaz a bruttó különbözet áll, „bruttó” jelöléssel.
+- Tesztek: `auditFixes.test.ts` (vágódoboz, panel bezárása, ár-egységesség).
+
 ## 4.89 – Admin: telefonos navigáció, Szerviz, kanban és állapotgombok (hibakeresés 1.)
 
 - **Hiba: telefonon a „Beállítások” lelógott** az alsó navigációról, mióta 6 fül van (Szerviz). Most csak az aktív fül írja ki a nevét (13 px, Vanilla alapon), a többi 44 px-es ikon; a nevük a képernyőolvasónak megmarad.

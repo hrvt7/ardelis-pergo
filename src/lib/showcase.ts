@@ -27,7 +27,30 @@ export function snapshotViewer(maxWidth = 1600): HTMLCanvasElement | null {
     context.fillRect(0, 0, copy.width, copy.height)
   }
   context.drawImage(canvas, 0, 0, copy.width, copy.height)
-  return copy
+  return centerCrop(copy, Number(canvas.dataset.viewShiftX ?? 0))
+}
+
+/**
+ * A lebegő elrendezésben a nézet oldalra tolódik (a panel mellett a szabad rész közepére). A képen nincs panel,
+ * ezért a pillanatképet úgy vágjuk, hogy a pergola ismét középen legyen: a vágás középpontja a nézet közepe.
+ */
+export function centerCropBox(width: number, shiftX: number) {
+  const shift = Number.isFinite(shiftX) ? Math.max(-0.4, Math.min(0.4, shiftX)) : 0
+  if (Math.abs(shift) < 0.002) return { sx: 0, sw: width }
+  const sw = Math.round(width * (1 - 2 * Math.abs(shift)))
+  const center = width / 2 - shift * width
+  const sx = Math.round(Math.max(0, Math.min(width - sw, center - sw / 2)))
+  return { sx, sw }
+}
+
+function centerCrop(source: HTMLCanvasElement, shiftX: number): HTMLCanvasElement {
+  const { sx, sw } = centerCropBox(source.width, shiftX)
+  if (sx === 0 && sw === source.width) return source
+  const out = document.createElement('canvas')
+  out.width = sw
+  out.height = source.height
+  out.getContext('2d')?.drawImage(source, sx, 0, sw, source.height, 0, 0, sw, source.height)
+  return out
 }
 
 /**
