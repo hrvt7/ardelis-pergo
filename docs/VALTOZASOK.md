@@ -1,5 +1,11 @@
 # Változások
 
+## 4.92 – Szerver: megőrzési törlés minden gyártónál, árrés nem látszik (hibakeresés 4.)
+
+- **Hiba: a megőrzési idő utáni automatikus törlés elakadhatott.** A napi futás mindig ugyanazt a 100 legrégebbi telepítést kérte le. Ha ezek egy hosszú megőrzésű gyártóé voltak, a többi gyártó lejárt telepítései (fotók, bejelentések) soha nem törlődtek, holott az adatkezelési oldal automatikus törlést ír. Most lapozva, id szerint halad végig, futásonként legfeljebb 100 törléssel és 20 mp időkerettel.
+- **Hiba: a viszonteladó árrés-százaléka bárki számára kiolvasható volt** a `/api/tenant?id=…&h=…` válaszból (a `?h=` értékek próbálgatásával). Most a szerver a már felszorzott árlistát küldi, az árrés a böngészőben 0. A vevő által látott ár változatlan; ezt teszt ellenőrzi.
+- Tesztek: `installationsAdmin.test.ts` (több gyártó, lapozás), `pricing-rules.test.ts` (árrés nem kerül ki, azonos ár).
+
 ## 4.91 – Admin: a teendők kora a státuszváltástól számít (hibakeresés 3.)
 
 - **Hiba: hamis „lejárt” teendők.** A „Teendők” kora eddig a lead beérkezésétől számított: egy 10 napos érdeklődő, akinek ma ment ki az ajánlat, azonnal „10 napja kiment · lejárt” lett (a demóban 18-ból 15 lejárt). Most a legutóbbi státuszváltástól számít; az „új” továbbra is a beérkezéstől.

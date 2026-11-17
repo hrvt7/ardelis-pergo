@@ -151,23 +151,35 @@ export async function handleAdminInstallations(request: Request, env: AdminEnv, 
 }
 
 /** Megőrzési idő lejárta: a napi cron hívja. A gyártónként beállított hónap a telepítés napjától számít. */
-export async function purgeExpiredInstallations(env: AdminEnv, now = new Date(), limit = 100): Promise<{ deleted: number; failed: number }> {
+/**
+ * Megőrzési idő utáni törlés (napi cron). 4.92: lapozva, id szerint halad végig a legalább 12 hónapos telepítéseken,
+ * így egy hosszú megőrzésű bérlő régi sorai nem zárják ki a többi bérlő lejárt adatait (eddig mindig ugyanazt a 100
+ * legrégebbi sort kérte le). Futásonként legfeljebb `limit` törlés és `budgetMs` idő, hogy a cron ne fusson ki.
+ */
+export async function purgeExpiredInstallations(env: AdminEnv, now = new Date(), limit = 100, budgetMs = 20_000): Promise<{ deleted: number; failed: number }> {
+  const started = Date.now()
   const minCutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 12, now.getUTCDate())).toISOString().slice(0, 10)
-  const candidates = await select<{ id: number; tenant_id: string; installed_at: string }>(env, 'installations', `installed_at=lt.${minCutoff}&select=id,tenant_id,installed_at&order=installed_at.asc&limit=${limit}`)
   const tenants = new Map<string, Tenant | undefined>()
   let deleted = 0
   let failed = 0
-  for (const row of candidates) {
-    if (!tenants.has(row.tenant_id)) tenants.set(row.tenant_id, await resolveTenant(env, row.tenant_id))
-    const owner = tenants.get(row.tenant_id)
-    const months = owner ? tenantRetentionMonths(owner) : DEFAULT_RETENTION_MONTHS
-    const cutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months, now.getUTCDate())).toISOString().slice(0, 10)
-    if (row.installed_at >= cutoff) continue
-    try {
-      if (await deleteInstallation(env, row.tenant_id, row.id)) deleted += 1
-    } catch (error) {
-      failed += 1
-      console.error('[installations] Megőrzési törlés sikertelen', row.id, error)
+  let lastId = 0
+  for (let page = 0; page < 50 && deleted + failed < limit && Date.now() - started < budgetMs; page += 1) {
+    const candidates = await select<{ id: number; tenant_id: string; installed_at: string }>(env, 'installations', `installed_at=lt.${minCutoff}&id=gt.${lastId}&select=id,tenant_id,installed_at&order=id.asc&limit=200`)
+    if (candidates.length === 0) break
+    lastId = candidates[candidates.length - 1].id
+    for (const row of candidates) {
+      if (deleted + failed >= limit || Date.now() - started >= budgetMs) break
+      if (!tenants.has(row.tenant_id)) tenants.set(row.tenant_id, await resolveTenant(env, row.tenant_id))
+      const owner = tenants.get(row.tenant_id)
+      const months = owner ? tenantRetentionMonths(owner) : DEFAULT_RETENTION_MONTHS
+      const cutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months, now.getUTCDate())).toISOString().slice(0, 10)
+      if (row.installed_at >= cutoff) continue
+      try {
+        if (await deleteInstallation(env, row.tenant_id, row.id)) deleted += 1
+      } catch (error) {
+        failed += 1
+        console.error('[installations] Megőrzési törlés sikertelen', row.id, error)
+      }
     }
   }
   return { deleted, failed }

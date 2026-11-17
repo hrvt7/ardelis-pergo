@@ -4,6 +4,7 @@
 import { z } from 'zod'
 import { getTenant } from '../src/tenants'
 import { applyOverrides, parseOverrides, publicOverrides } from '../src/tenants/overrides'
+import { dealerPrices } from '../src/tenants/pricingRules'
 import { priceSettingsSchema } from '../src/tenants/rules'
 import type { Tenant } from '../src/tenants/types'
 
@@ -102,7 +103,10 @@ export async function handleTenantRequest(request: Request, env: AdminEnv): Prom
   if (!base) return json(404, { ok: false, error: 'Ismeretlen konfigurátor.' })
   const stored = await loadOverrides(env, base.id)
   const parsed = stored ? parseOverrides(stored) : null
-  return json(200, { ok: true, overrides: parsed?.ok ? publicOverrides(parsed.data, new URL(request.url).searchParams.get('h') ?? undefined) : null })
+  if (!parsed?.ok) return json(200, { ok: true, overrides: null })
+  const effective = applyOverrides(base, parsed.data)
+  const scale = (marginPercent: number) => dealerPrices(effective.prices, marginPercent, effective.currency)
+  return json(200, { ok: true, overrides: publicOverrides(parsed.data, new URL(request.url).searchParams.get('h') ?? undefined, scale) })
 }
 
 const loginSchema = z.object({ tenantId: z.string().trim().min(1).max(64), password: z.string().max(200).default('') })

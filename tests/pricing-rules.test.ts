@@ -51,7 +51,7 @@ import { parseOverrides, publicOverrides } from '../src/tenants/overrides'
 import { applyRegionSurcharge, dealerPrices, discountFromPercent } from '../src/tenants/pricingRules'
 import { isAllowedWebhookUrl } from '../src/tenants/crm'
 import { calculatePrice } from '../src/lib/pricing'
-import { roofLabels } from '../src/tenants/rules'
+import { presetConfig, roofLabels } from '../src/tenants/rules'
 
 describe('árazási szabályok: számítás', () => {
   it('viszonteladói árrés: a pénzösszegek szorzódnak, az arányok (telepítés, ÁFA, színfelár) nem; az ármátrix is', () => {
@@ -135,6 +135,15 @@ describe('árazási szabályok és CRM: beállítások', () => {
     expect(anonymous.pricingRules?.regionSurcharges).toEqual({ Tirol: { net: 390 } })
     const graz = publicOverrides(parsed.data, 'graz')
     expect(graz.pricingRules?.dealers).toEqual([{ id: 'graz', name: 'Graz', marginPercent: 12 }])
+    // 4.92: a nyilvános végpont (szerver) a felszorzott árlistát küldi, az árrés-százalék 0 – nem olvasható ki.
+    const effective = applyOverrides(demoAtTenant, valid)
+    const shared = publicOverrides(parsed.data, 'graz', (margin) => dealerPrices(effective.prices, margin, effective.currency))
+    expect(shared.pricingRules?.dealers).toEqual([{ id: 'graz', name: 'Graz', marginPercent: 0 }])
+    expect(JSON.stringify(shared)).not.toMatch(/"marginPercent":12/)
+    const browser = applyOverrides(demoAtTenant, shared)
+    const server = applyOverrides(demoAtTenant, valid)
+    const config = presetConfig(server, {})
+    expect(tenantPrice(browser, config, undefined, { dealerId: 'graz' }).totalGross).toBe(tenantPrice(server, config, undefined, { dealerId: 'graz' }).totalGross)
     expect(JSON.stringify(graz)).not.toMatch(/graz@|Linz|hook\.eu1/)
   })
 

@@ -112,16 +112,23 @@ export function parseOverrides(input: unknown): { ok: true; data: TenantOverride
  * a viszonteladók e-mail címei, és a többi viszonteladó adata — egy viszonteladói link (`?h=`) csak a saját árrését kapja,
  * viszonteladó nélkül egyiket sem.
  */
-export function publicOverrides(overrides: TenantOverrides, dealerId?: string): TenantOverrides {
+export function publicOverrides(overrides: TenantOverrides, dealerId?: string, dealerScaledPrices?: (marginPercent: number) => PriceSettings): TenantOverrides {
   const { lead, installations, crm, pricingRules, ...rest } = overrides
   void lead; void installations; void crm
   if (!pricingRules) return rest
   const dealer = dealerId ? pricingRules.dealers?.find((item) => item.id === dealerId) : undefined
+  // 4.92: az árrés-százalék nem kerül a böngészőbe (eddig bárki kiolvashatta a `?h=` értékek próbálgatásával).
+  // A szerver a viszonteladói árrésszel már felszorzott árlistát küldi, a viszonteladó árrése a böngészőben 0.
+  const scaled = dealer && dealerScaledPrices ? dealerScaledPrices(dealer.marginPercent) : null
   return {
     ...rest,
+    ...(scaled ? {
+      prices: Object.fromEntries(Object.entries(scaled).filter(([key, value]) => typeof value === 'number' && EDITABLE_PRICE_KEYS.includes(key))),
+      ...(scaled.priceMatrix ? { priceMatrix: scaled.priceMatrix } : {}),
+    } : {}),
     pricingRules: {
       regionSurcharges: pricingRules.regionSurcharges,
-      dealers: dealer ? [{ id: dealer.id, name: dealer.name, marginPercent: dealer.marginPercent }] : [],
+      dealers: dealer ? [{ id: dealer.id, name: dealer.name, marginPercent: scaled ? 0 : dealer.marginPercent }] : [],
     },
   }
 }

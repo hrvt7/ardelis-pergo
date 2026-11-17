@@ -102,4 +102,17 @@ describe('telepítés — megőrzési idő', () => {
     expect(result).toEqual({ deleted: 1, failed: 0 })
     expect(store.tables.installations.map((row) => row.id)).toEqual([2, 3])
   })
+
+  it('4.92: egy hosszú megőrzésű gyártó régi sorai nem zárják ki a többi gyártó lejárt adatait', async () => {
+    const keep = Array.from({ length: 450 }, (_, index) => ({ id: index + 1, tenant_id: 'demo', installed_at: '2023-01-01' }))
+    const store = createFakeStore({
+      installations: [...keep, { id: 1000, tenant_id: 'demo-at', installed_at: '2023-06-01' }],
+      tenant_settings: [{ tenant_id: 'demo', data: { installations: { retentionMonths: 120 } } }, { tenant_id: 'demo-at', data: { installations: { retentionMonths: 24 } } }],
+    })
+    vi.stubGlobal('fetch', store.fetch)
+    const result = await purgeExpiredInstallations(env, new Date('2026-11-16T00:00:00Z'), 5)
+    expect(result).toEqual({ deleted: 1, failed: 0 })
+    expect(store.tables.installations.some((row) => row.id === 1000)).toBe(false)
+    expect(store.tables.installations).toHaveLength(450)
+  })
 })
