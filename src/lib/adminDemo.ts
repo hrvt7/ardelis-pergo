@@ -2,6 +2,8 @@
 // Az adatok determinisztikusak (rögzített mag), a dátumok a „mához” igazodnak. Soha nem kerülnek a szerverre.
 import type { LeadRow } from '@/lib/adminLeads'
 import type { EventRow } from '@/lib/adminStats'
+import type { AdminInstallation, AdminServiceRequest } from '@/lib/adminInstallations'
+import type { InstallationComponent } from '@/lib/installations'
 
 const DAY = 86_400_000
 const HOUR = 3_600_000
@@ -87,4 +89,68 @@ export function demoIncoming(now: number, step: number): LeadRow {
     estimate_gross: Math.round((width * depth * 395_000) / 1000) * 1000, config_url: '/konfigurator', status: 'new', source: 'konfigurator',
     created_at: new Date(now).toISOString(), config: { roof: 'louvered', width, depth }, owner_note: null,
   }
+}
+
+// ── Szerviz demó: felszerelt termékek és hibabejelentések a Szerviz fül bemutatásához ────────────────
+// Csak a Szerviz nézet és a hibastatisztika kapja meg (a Telepítések fül demóban üres marad, mert a
+// tulajdonosi link és a QR ott valódi szerveroldali rekordot igényelne).
+
+const DEMO_MODELS: [string, boolean][] = [['Aero', true], ['Aero', true], ['Aero', true], ['Glide', true], ['Velum', true], ['Lumen', false], ['Opal', false]]
+
+export function demoServiceInstallations(now: number): AdminInstallation[] {
+  const next = rng(7)
+  return Array.from({ length: 26 }, (_, index): AdminInstallation => {
+    const [model, motor] = DEMO_MODELS[index % DEMO_MODELS.length]
+    const width = [4, 4.5, 5, 6][Math.floor(next() * 4)]
+    const depth = [3, 3.5, 4][Math.floor(next() * 3)]
+    const components: InstallationComponent[] = [
+      { key: 'frame', label: 'Váz és oszlopok', group: 'structure' },
+      { key: 'roof', label: `Tető: ${model}`, group: 'structure' },
+      ...(motor ? [{ key: 'roof-drive', label: 'Tetőmozgató motor', group: 'electronics' as const }] : []),
+      ...(index % 3 !== 2 ? [{ key: 'side-front', label: 'Elülső oldal: ZIP screen', group: 'electronics' as const }] : []),
+      ...(index % 2 === 0 ? [{ key: 'led', label: 'Periméter LED', group: 'led' as const }] : []),
+      ...(index % 4 === 1 ? [{ key: 'sensors', label: 'Eső- és szélszenzor', group: 'electronics' as const }] : []),
+      { key: 'other', label: 'Egyéb / nem tudom', group: 'other' },
+    ]
+    const installed = new Date(now - (40 + index * 23) * DAY)
+    return {
+      id: 9000 + index, leadRef: null, token: `demo-${index}`, product: 'pergola',
+      installedAt: installed.toISOString().slice(0, 10), warranty: { structure: 60, electronics: 24, led: 24, other: 24 },
+      status: 'active', note: null, createdAt: installed.toISOString(), headline: `${model} · ${String(width).replace('.', ',')} × ${String(depth).replace('.', ',')} m`, components, price: null,
+    }
+  })
+}
+
+const DEMO_ISSUES: [number, string, string, Partial<AdminServiceRequest> & { closedDays?: number }][] = [
+  [0, 'roof-drive', 'A lamellák félúton megállnak, a motor zúg, de nem mozdul tovább.', { status: 'in_progress', assignee: 'Kiss Gábor', diagnosis: 'Végálláskapcsoló elállítódott.' }],
+  [7, 'roof-drive', 'Esőnél nem záródik automatikusan, kézzel kell bezárni.', { status: 'new' }],
+  [14, 'roof-drive', 'Nyitáskor kattogó hang, utána leáll.', { status: 'closed', assignee: 'Kiss Gábor', diagnosis: 'Motor kondenzátor hibás.', workDone: 'Motor cseréje.', partsUsed: 'Lineáris motor 1200 N', laborMinutes: 150, warrantyCase: true, costNet: 128000, outcome: 'fixed', closedDays: 6 }],
+  [0, 'roof-drive', 'Ismét megáll félúton, mint múlt hónapban.', { status: 'new', assignee: 'Kiss Gábor' }],
+  [3, 'side-front', 'A ZIP screen alja kiugrott a sínből szélben.', { status: 'closed', assignee: 'Tóth Bence', workDone: 'Szövet visszavezetése, sín beállítása.', laborMinutes: 60, warrantyCase: false, costNet: 24000, outcome: 'fixed', closedDays: 3 }],
+  [10, 'side-front', 'ZIP screen lassan megy le, néha megakad.', { status: 'in_progress', assignee: 'Tóth Bence' }],
+  [4, 'led', 'A LED-sor egyik szakasza nem világít.', { status: 'closed', assignee: 'Tóth Bence', diagnosis: 'Csatlakozó beázott.', workDone: 'Csatlakozó cseréje, tömítés.', partsUsed: 'LED csatlakozó', laborMinutes: 45, warrantyCase: true, costNet: 18000, outcome: 'fixed', closedDays: 9 }],
+  [12, 'led', 'Villog a világítás bekapcsoláskor.', { status: 'new' }],
+  [5, 'frame', 'Az oszlop talpánál vízfolt, mintha nem folyna el a víz.', { status: 'closed', assignee: 'Kiss Gábor', diagnosis: 'Lefolyó eltömődött levéltől.', workDone: 'Lefolyó tisztítása.', laborMinutes: 30, warrantyCase: false, costNet: 15000, outcome: 'no_fault', closedDays: 2 }],
+  [9, 'sensors', 'A szélszenzor nem csukja be a tetőt erős szélben.', { status: 'closed', assignee: 'Tóth Bence', diagnosis: 'Szenzor elemcseréje szükséges.', workDone: 'Elemcsere, párosítás.', laborMinutes: 40, warrantyCase: false, costNet: 12000, outcome: 'fixed', closedDays: 4 }],
+  [21, 'roof', 'Csepeg a víz két lamella között.', { status: 'in_progress', assignee: 'Kiss Gábor' }],
+  [17, 'roof-drive', 'Távirányítóra nem reagál a tető.', { status: 'closed', assignee: 'Kiss Gábor', workDone: 'Vevő újratanítása.', laborMinutes: 30, warrantyCase: true, costNet: 0, outcome: 'fixed', closedDays: 1 }],
+  [2, 'other', 'Nem tudom pontosan, de furcsa hang jön a tető felől éjszaka.', { status: 'new' }],
+  [24, 'roof-drive', 'A motor melegszik, többször leáll egymás után.', { status: 'in_progress', assignee: 'Tóth Bence', diagnosis: 'Túlterhelés gyanú, mérés folyamatban.' }],
+]
+
+export function demoServiceRequests(now: number): AdminServiceRequest[] {
+  return DEMO_ISSUES.map(([installation, component, description, extra], index): AdminServiceRequest => {
+    const age = (2 + index * 9) * DAY
+    const created = now - age
+    const { closedDays, ...rest } = extra
+    const status = rest.status ?? 'new'
+    // Határidő: két nyitott jegy már lejárt (a Késésben szűrő bemutatásához), a többi a következő napokra esik.
+    const due = status === 'closed' ? null : new Date(now + (index === 1 || index === 13 ? -3 : 3 + (index % 5)) * DAY).toISOString().slice(0, 10)
+    return {
+      id: 900 + index, installationId: 9000 + installation, component, description, status, createdAt: new Date(created).toISOString(), consentVersion: 'demo', photos: [],
+      assignee: null, dueDate: due, diagnosis: null, workDone: null, partsUsed: null, laborMinutes: null, warrantyCase: null, costNet: null, outcome: null,
+      closedAt: status === 'closed' && closedDays ? new Date(created + closedDays * DAY).toISOString() : null,
+      ...rest,
+    }
+  })
 }

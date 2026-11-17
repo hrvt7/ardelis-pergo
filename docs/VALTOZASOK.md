@@ -1,5 +1,15 @@
 # Változások
 
+## 4.99 – Szerviz: munkalap (felelős, határidő, javítás, költség) és hibastatisztika
+
+- **Munkalap minden hibabejelentéshez:** felelős (a korábban megadott nevekből választható), határidő, diagnózis, elvégzett munka, felhasznált alkatrész, munkaidő (perc), garanciális vagy fizetős, nettó költség, eredmény (megjavítva, ideiglenes, nem javítható, nem volt hiba). A szerver csak a ténylegesen változó mezőket menti. Az üres mező törlést jelent. A lezárás ideje automatikus, újranyitáskor törlődik.
+- **Szűrők:** „Késésben” (nyitott jegy lejárt határidővel, piros jelzés) és felelős szerint (köztük „Nincs felelős”).
+- **Hibastatisztika (új nézet a Szerviz fülön):** nyitott, késésben lévő és lezárt jegyek; a megoldási idő mediánja; hibák komponens és modell (tetőrendszer) szerint, a telepített darabszámhoz mért aránnyal; havi bejelentések (6 hónap); garanciális és fizetős költség, munkaidő, eredmények; visszatérő hibák (ugyanaz a termék és komponens legalább kétszer). Leíró kimutatás. 20 telepítés és 10 bejelentés alatt „kis minta” figyelmeztetést mutat, és kimondja, hogy az együttjárás nem bizonyít okot.
+- **Napló:** a munkalap módosítása `service_update` eseményként naplózódik, csak a mezők nevével (a tartalom nem kerül a naplóba). Az állapotváltás továbbra is `status_change`.
+- **Demó:** a demó adminban a Szerviz fül kitalált telepítésekkel és 14 bejelentéssel mutatja be a munkalapot és a statisztikát. A módosítások csak helyben élnek. A Telepítések fül demóban üres marad, mert a tulajdonosi link valódi rekordot igényel.
+- **Adatbázis:** `service_requests` új oszlopai (assignee, due_date, diagnosis, work_done, parts_used, labor_minutes, warranty_case, cost_net, outcome, closed_at, updated_at), részleges index a nyitott jegyek határidejére, az `installation_events` új eseménytípusa. Csak bővítés; élesítve a `service_requests_worksheet` migrációval, a `supabase/installations.sql` is frissült.
+- Tesztek: `serviceStats.test.ts` (késés, medián, komponens és modell szerinti arány, oldalzárások összevonása, visszatérő hiba, költségek, hónapok, kis minta, a demó adatok konzisztenciája), `serviceRequests.test.ts` (munkalap mentése, csak a változó mezők, napló tartalom nélkül, lezárási idő, érvénytelen értékek, idegen gyártó 404).
+
 ## 4.98 – Kisebb első stíluslap és könnyebb belépő animáció a nyitóoldalon
 
 - **Stíluslap szétválasztva:** a `src/base.css` a közös alap (Tailwind, színváltozók, alapstílusok, frissítési sáv), ezt minden oldal betölti. Az `index.css` (konfigurátor, admin, ajánlat, belépés, mintaoldal) csak a saját útvonalán töltődik. A nyitóoldal renderelést blokkoló stíluslapja tömörítve 137 KB → 41 KB.

@@ -146,6 +146,48 @@ describe('Szerviz nézet — admin', () => {
     expect(store.tables.installation_events.at(-1)).toMatchObject({ kind: 'status_change', actor: 'manufacturer', detail: { from: 'new', to: 'in_progress' } })
     expect((await handleAdminService(await admin('PATCH', '/api/admin-service', { id: own, status: 'kesz' }), env)).status).toBe(422)
   })
+  it('4.97: munkalap – felelős, határidő, javítás, költség mentése; csak a változó mezők; napló a mezők nevével', async () => {
+    const { store, token } = await setup()
+    await report({ t: token, component: 'roof-drive', description: 'A lamellák nem záródnak teljesen.', photos: [], consent: true })
+    const id = Number(store.tables.service_requests[0].id)
+    const patch = (body: Record<string, unknown>, tenant = 'demo') => admin('PATCH', '/api/admin-service', { id, ...body }, tenant).then((request) => handleAdminService(request, env, NOW))
+
+    const saved = await patch({ assignee: '  Kiss Gábor ', dueDate: '2026-11-20', diagnosis: 'Végálláskapcsoló', laborMinutes: 90, costNet: 45000, warrantyCase: true, outcome: 'fixed' })
+    expect(saved.status).toBe(200)
+    expect((await saved.json() as { request: Record<string, unknown> }).request).toMatchObject({ assignee: 'Kiss Gábor', dueDate: '2026-11-20', laborMinutes: 90, costNet: 45000, warrantyCase: true, outcome: 'fixed', status: 'new' })
+    expect(store.tables.service_requests[0]).toMatchObject({ assignee: 'Kiss Gábor', due_date: '2026-11-20', diagnosis: 'Végálláskapcsoló', labor_minutes: 90, cost_net: 45000, warranty_case: true, outcome: 'fixed', status: 'new' })
+    const update = store.tables.installation_events.at(-1)!
+    expect(update).toMatchObject({ kind: 'service_update', actor: 'manufacturer' })
+    expect((update.detail as { fields: string[] }).fields.sort()).toEqual(['assignee', 'costNet', 'diagnosis', 'dueDate', 'laborMinutes', 'outcome', 'warrantyCase'])
+    // A napló a tartalmat nem tárolja (csak a mezők nevét).
+    expect(JSON.stringify(update.detail)).not.toContain('Kiss')
+
+    // Ugyanaz újra: nincs írás, nincs új napló.
+    const events = store.tables.installation_events.length
+    expect((await patch({ assignee: 'Kiss Gábor' })).status).toBe(200)
+    expect(store.tables.installation_events).toHaveLength(events)
+    // Üres szöveg = törlés.
+    expect((await patch({ diagnosis: '' })).status).toBe(200)
+    expect(store.tables.service_requests[0].diagnosis).toBeNull()
+
+    // Lezárás: a lezárás ideje automatikus; újranyitáskor törlődik.
+    expect((await patch({ status: 'closed' })).status).toBe(200)
+    expect(store.tables.service_requests[0]).toMatchObject({ status: 'closed', closed_at: NOW.toISOString() })
+    expect(store.tables.installation_events.at(-1)).toMatchObject({ kind: 'status_change', detail: { from: 'new', to: 'closed' } })
+    expect((await patch({ status: 'in_progress' })).status).toBe(200)
+    expect(store.tables.service_requests[0].closed_at).toBeNull()
+  })
+  it('4.97: munkalap – érvénytelen értékek és idegen gyártó elutasítva', async () => {
+    const { store, token } = await setup()
+    await report({ t: token, component: 'frame', description: 'Rozsdafolt az oszlopon.', photos: [], consent: true })
+    const id = Number(store.tables.service_requests[0].id)
+    const patch = async (body: Record<string, unknown>, tenant = 'demo') => handleAdminService(await admin('PATCH', '/api/admin-service', { id, ...body }, tenant), env, NOW)
+    for (const body of [{ dueDate: '2026-13-45' }, { dueDate: 'holnap' }, { costNet: -1 }, { laborMinutes: 1.5 }, { outcome: 'kesz' }, { assignee: 'x'.repeat(81) }, { tenant_id: 'demo-at' }, { closedAt: '2020-01-01' }]) {
+      expect((await patch(body)).status, JSON.stringify(body)).toBe(422)
+    }
+    expect((await patch({ assignee: 'Idegen' }, 'demo-at')).status).toBe(404)
+    expect(store.tables.service_requests[0].assignee ?? null).toBeNull()
+  })
   it('a telepítés törlése a félbehagyott (be nem küldött) feltöltéseket is törli', async () => {
     const { store, token } = await setup()
     await upload(token, photo)

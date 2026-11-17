@@ -30,7 +30,7 @@ export async function select<T>(env: AdminEnv, table: string, query: string): Pr
   return response.json() as Promise<T[]>
 }
 
-export async function logEvent(env: AdminEnv, row: Pick<InstallationRow, 'id' | 'tenant_id'>, kind: 'created' | 'service_request' | 'status_change' | 'expansion_request', actor: 'manufacturer' | 'owner' | 'system', detail: Record<string, unknown> | null = null) {
+export async function logEvent(env: AdminEnv, row: Pick<InstallationRow, 'id' | 'tenant_id'>, kind: 'created' | 'service_request' | 'status_change' | 'expansion_request' | 'service_update', actor: 'manufacturer' | 'owner' | 'system', detail: Record<string, unknown> | null = null) {
   const response = await fetch(rest(env, 'installation_events'), {
     method: 'POST', headers: { ...storeHeaders(env), Prefer: 'return=minimal' },
     body: JSON.stringify({ installation_id: row.id, tenant_id: row.tenant_id, kind, actor, detail }), signal: timeout(),

@@ -54,7 +54,7 @@ create table if not exists public.installation_events (
   id bigint generated always as identity primary key,
   installation_id bigint not null references public.installations (id) on delete cascade,
   tenant_id text not null,
-  kind text not null check (kind in ('created', 'service_request', 'status_change', 'expansion_request')),
+  kind text not null check (kind in ('created', 'service_request', 'status_change', 'expansion_request', 'service_update')),
   actor text not null check (actor in ('manufacturer', 'owner', 'system')),
   detail jsonb,
   created_at timestamptz not null default now()
@@ -102,3 +102,22 @@ revoke update on public.installation_events from service_role;
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('service-photos', 'service-photos', false, 4194304, array['image/jpeg'])
 on conflict (id) do update set public = false, file_size_limit = 4194304, allowed_mime_types = array['image/jpeg'];
+
+-- 4.99: szervizjegy-munkalap (felelős, határidő, diagnózis, javítás, alkatrész, munkaidő, garancia, költség, eredmény)
+-- és a lezárás ideje a megoldási idő méréséhez. Csak bővítés: a meglévő sorok mezői üresek maradnak.
+alter table public.service_requests
+  add column if not exists assignee text check (char_length(assignee) <= 80),
+  add column if not exists due_date date,
+  add column if not exists diagnosis text check (char_length(diagnosis) <= 2000),
+  add column if not exists work_done text check (char_length(work_done) <= 2000),
+  add column if not exists parts_used text check (char_length(parts_used) <= 500),
+  add column if not exists labor_minutes integer check (labor_minutes between 0 and 10000),
+  add column if not exists warranty_case boolean,
+  add column if not exists cost_net integer check (cost_net between 0 and 100000000),
+  add column if not exists outcome text check (outcome in ('fixed', 'temporary', 'not_fixed', 'no_fault')),
+  add column if not exists closed_at timestamptz,
+  add column if not exists updated_at timestamptz;
+create index if not exists service_requests_tenant_open_due_idx on public.service_requests (tenant_id, due_date) where status <> 'closed';
+-- A naplóba a munkalap módosítása is bekerül (csak a mezők neve).
+alter table public.installation_events drop constraint if exists installation_events_kind_check;
+alter table public.installation_events add constraint installation_events_kind_check check (kind in ('created', 'service_request', 'status_change', 'expansion_request', 'service_update'));

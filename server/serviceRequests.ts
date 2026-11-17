@@ -5,7 +5,8 @@
 //   POST /api/service-request     { t, component, description, photos[≤4], consent: true } → bejelentés + napló + e-mail a gyártónak
 // Gyártó (admin token):
 //   GET   /api/admin-service       bejelentések a fotók 10 perces aláírt linkjeivel
-//   PATCH /api/admin-service       { id, status } → állapotváltás + napló
+//   PATCH /api/admin-service       { id, status?, assignee?, dueDate?, diagnosis?, workDone?, partsUsed?, laborMinutes?, warrantyCase?, costNet?, outcome? }
+//                                  → munkalap-mezők és állapot mentése + napló (a lezárás ideje automatikus)
 // A komponens csak a telepítés befagyasztott, zárt listájából választható. A tárolt fotóutat mindig a szerver képzi.
 import { z } from 'zod'
 import { authorize, json, resolveTenant, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
@@ -15,13 +16,14 @@ import { sanitizeJpeg } from './jpeg'
 import { PRIVACY_VERSION } from '../src/lib/privacyVersion'
 import { withLocale, tr } from '../src/i18n/locale'
 import type { Tenant } from '../src/tenants/types'
+import { SERVICE_OUTCOMES, SERVICE_STATUSES } from '../src/lib/serviceStats'
+import type { ServiceOutcome, ServiceStatus } from '../src/lib/serviceStats'
 
 export const MAX_PHOTO_BYTES = 4 * 1024 * 1024
 export const MAX_PHOTOS = 4
 export const SIGNED_URL_SECONDS = 600
 const PHOTO_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-export const SERVICE_STATUSES = ['new', 'in_progress', 'closed'] as const
-export type ServiceStatus = typeof SERVICE_STATUSES[number]
+export { SERVICE_STATUSES, type ServiceStatus }
 
 const rest = (env: AdminEnv, table: string) => `${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/${table}`
 const storage = (env: AdminEnv, path: string) => `${env.SUPABASE_URL!.replace(/\/$/, '')}/storage/v1/${path}`
@@ -153,7 +155,11 @@ export async function handleServiceRequest(request: Request, env: AdminEnv, now 
 }
 
 // ── Gyártó: Szerviz nézet ───────────────────────────────────────────────────
-interface ServiceRow { id: number; installation_id: number; tenant_id: string; component_key: string; description: string; photo_paths: string[]; status: ServiceStatus; consent_at: string; consent_version: string; created_at: string }
+interface ServiceRow {
+  id: number; installation_id: number; tenant_id: string; component_key: string; description: string; photo_paths: string[]; status: ServiceStatus; consent_at: string; consent_version: string; created_at: string
+  assignee: string | null; due_date: string | null; diagnosis: string | null; work_done: string | null; parts_used: string | null; labor_minutes: number | null; warranty_case: boolean | null; cost_net: number | null; outcome: ServiceOutcome | null; closed_at: string | null
+}
+const SERVICE_COLUMNS = 'id,installation_id,tenant_id,component_key,description,photo_paths,status,consent_at,consent_version,created_at,assignee,due_date,diagnosis,work_done,parts_used,labor_minutes,warranty_case,cost_net,outcome,closed_at'
 
 async function signPaths(env: AdminEnv, paths: string[]): Promise<Map<string, string>> {
   if (paths.length === 0) return new Map()
@@ -164,9 +170,32 @@ async function signPaths(env: AdminEnv, paths: string[]): Promise<Map<string, st
   return new Map(rows.filter((row) => row.signedURL).map((row) => [row.path, `${base}${row.signedURL!.startsWith('/') ? '' : '/'}${row.signedURL}`]))
 }
 
-const patchSchema = z.object({ id: z.number().int().positive(), status: z.enum(SERVICE_STATUSES) })
+// Üres szöveg = törlés (null). A dátum ÉÉÉÉ-HH-NN; a költség és a munkaidő nem negatív egész.
+const text = (max: number) => z.string().trim().max(max).transform((value) => value || null).nullable()
+const patchSchema = z.object({
+  id: z.number().int().positive(),
+  status: z.enum(SERVICE_STATUSES).optional(),
+  assignee: text(80).optional(),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => !Number.isNaN(Date.parse(`${value}T00:00:00Z`)), 'Érvénytelen dátum.').nullable().optional(),
+  diagnosis: text(2000).optional(),
+  workDone: text(2000).optional(),
+  partsUsed: text(500).optional(),
+  laborMinutes: z.number().int().min(0).max(10_000).nullable().optional(),
+  warrantyCase: z.boolean().nullable().optional(),
+  costNet: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  outcome: z.enum(SERVICE_OUTCOMES).nullable().optional(),
+}).strict()
 
-export async function handleAdminService(request: Request, env: AdminEnv): Promise<Response> {
+/** A munkalap mezői: API-név → oszlopnév. */
+const WORK_COLUMNS = { assignee: 'assignee', dueDate: 'due_date', diagnosis: 'diagnosis', workDone: 'work_done', partsUsed: 'parts_used', laborMinutes: 'labor_minutes', warrantyCase: 'warranty_case', costNet: 'cost_net', outcome: 'outcome' } as const
+
+export const serviceView = (row: ServiceRow, photos: string[]) => ({
+  id: row.id, installationId: row.installation_id, component: row.component_key, description: row.description, status: row.status, createdAt: row.created_at, consentVersion: row.consent_version, photos,
+  assignee: row.assignee ?? null, dueDate: row.due_date ?? null, diagnosis: row.diagnosis ?? null, workDone: row.work_done ?? null, partsUsed: row.parts_used ?? null,
+  laborMinutes: row.labor_minutes ?? null, warrantyCase: row.warranty_case ?? null, costNet: row.cost_net ?? null, outcome: row.outcome ?? null, closedAt: row.closed_at ?? null,
+})
+
+export async function handleAdminService(request: Request, env: AdminEnv, now = new Date()): Promise<Response> {
   if (request.method !== 'GET' && request.method !== 'PATCH') return json(405, { ok: false, error: 'Nem engedélyezett metódus.' })
   const auth = await authorize(request, env)
   if (auth instanceof Response) return auth
@@ -174,7 +203,7 @@ export async function handleAdminService(request: Request, env: AdminEnv): Promi
   const tenantId = encodeURIComponent(auth.tenant.id)
   try {
     if (request.method === 'GET') {
-      const response = await fetch(`${rest(env, 'service_requests')}?tenant_id=eq.${tenantId}&select=id,installation_id,tenant_id,component_key,description,photo_paths,status,consent_at,consent_version,created_at&order=created_at.desc&limit=200`, { headers: storeHeaders(env), signal: timeout() })
+      const response = await fetch(`${rest(env, 'service_requests')}?tenant_id=eq.${tenantId}&select=${SERVICE_COLUMNS}&order=created_at.desc&limit=500`, { headers: storeHeaders(env), signal: timeout() })
       if (!response.ok) throw new Error(`Supabase ${response.status}`)
       const rows = await response.json() as ServiceRow[]
       // Csak a saját tenant fotóútjai írhatók alá (kétszeres védelem a szűrő mellett).
@@ -183,19 +212,40 @@ export async function handleAdminService(request: Request, env: AdminEnv): Promi
       return json(200, {
         ok: true,
         expiresIn: SIGNED_URL_SECONDS,
-        requests: rows.map((row) => ({ id: row.id, installationId: row.installation_id, component: row.component_key, description: row.description, status: row.status, createdAt: row.created_at, consentVersion: row.consent_version, photos: (row.photo_paths ?? []).map((path) => signed.get(path)).filter(Boolean) })),
+        requests: rows.map((row) => serviceView(row, (row.photo_paths ?? []).map((path) => signed.get(path)).filter((url): url is string => Boolean(url)))),
       })
     }
     const parsed = patchSchema.safeParse(await request.json().catch(() => null))
     if (!parsed.success) return json(422, { ok: false, error: 'Érvénytelen módosítás.' })
-    const current = await fetch(`${rest(env, 'service_requests')}?id=eq.${parsed.data.id}&tenant_id=eq.${tenantId}&select=id,installation_id,status`, { headers: storeHeaders(env), signal: timeout() })
-    const [row] = current.ok ? await current.json() as { id: number; installation_id: number; status: ServiceStatus }[] : []
+    const { id, status, ...work } = parsed.data
+    const current = await fetch(`${rest(env, 'service_requests')}?id=eq.${id}&tenant_id=eq.${tenantId}&select=${SERVICE_COLUMNS}`, { headers: storeHeaders(env), signal: timeout() })
+    const [row] = current.ok ? await current.json() as ServiceRow[] : []
     if (!row) return json(404, { ok: false, error: 'A bejelentés nem található.' })
-    if (row.status === parsed.data.status) return json(200, { ok: true })
-    const response = await fetch(`${rest(env, 'service_requests')}?id=eq.${row.id}&tenant_id=eq.${tenantId}`, { method: 'PATCH', headers: { ...storeHeaders(env), Prefer: 'return=minimal' }, body: JSON.stringify({ status: parsed.data.status }), signal: timeout() })
+    // Csak a ténylegesen változó mezők mennek az adatbázisba és a naplóba.
+    const patch: Record<string, unknown> = {}
+    const changed: string[] = []
+    for (const [field, column] of Object.entries(WORK_COLUMNS) as [keyof typeof WORK_COLUMNS, string][]) {
+      if (!(field in work)) continue
+      const value = work[field] ?? null
+      if ((row[column as keyof ServiceRow] ?? null) === value) continue
+      patch[column] = value
+      changed.push(field)
+    }
+    const statusChanged = status !== undefined && status !== row.status
+    if (statusChanged) {
+      patch.status = status
+      // A lezárás ideje: lezáráskor most, újranyitáskor törlődik (a megoldási idő ebből számol).
+      patch.closed_at = status === 'closed' ? now.toISOString() : null
+    }
+    if (!Object.keys(patch).length) return json(200, { ok: true, request: serviceView(row, []) })
+    patch.updated_at = now.toISOString()
+    const response = await fetch(`${rest(env, 'service_requests')}?id=eq.${row.id}&tenant_id=eq.${tenantId}`, { method: 'PATCH', headers: { ...storeHeaders(env), Prefer: 'return=minimal' }, body: JSON.stringify(patch), signal: timeout() })
     if (!response.ok) throw new Error(`Supabase ${response.status}`)
-    await logEvent(env, { id: row.installation_id, tenant_id: auth.tenant.id }, 'status_change', 'manufacturer', { requestId: row.id, from: row.status, to: parsed.data.status })
-    return json(200, { ok: true })
+    const target = { id: row.installation_id, tenant_id: auth.tenant.id }
+    if (statusChanged) await logEvent(env, target, 'status_change', 'manufacturer', { requestId: row.id, from: row.status, to: status })
+    // A munkalapról csak a mezők neve kerül a naplóba (a tartalom a jegyen van).
+    if (changed.length) await logEvent(env, target, 'service_update', 'manufacturer', { requestId: row.id, fields: changed })
+    return json(200, { ok: true, request: serviceView({ ...row, ...patch } as ServiceRow, []) })
   } catch (error) {
     console.error('[service] Admin művelet sikertelen', auth.tenant.id, error)
     return json(502, { ok: false, error: 'A szerviz-bejelentések most nem érhetők el.' })

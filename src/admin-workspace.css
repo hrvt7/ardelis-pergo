@@ -508,3 +508,51 @@
   .admin-ws input[type="checkbox"], .admin-ws input[type="radio"] { width: 24px; height: 24px; }
   .admin-ws label:has(> input[type="checkbox"]) { min-height: 44px; display: flex; align-items: center; gap: 10px; }
 }
+
+/* 4.97 – Szerviz: munkalap, szűrők és hibastatisztika */
+.admin-ws .service-card.is-late { box-shadow: inset 0 0 0 1px #d9534f55; }
+.admin-ws .service .tabs button.is-alert b { background: #d9534f; color: #fff; }
+.admin-ws .service-who { display: inline-flex; align-items: center; gap: 6px; color: var(--ws-muted); }
+.admin-ws .service-who select { background: var(--ws-card-2); color: var(--ws-text); border: 1px solid var(--a-edge-hi); border-radius: 999px; padding: 8px 12px; min-height: 40px; font: inherit; max-width: 100%; }
+.admin-ws .service-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-ws .service-chips span { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: var(--ws-card-2); font-size: 13px; }
+.admin-ws .service-chips span.is-empty { color: var(--ws-muted); }
+.admin-ws .service-chips span.is-late { background: #d9534f; color: #fff; }
+.admin-ws .service-work { border-top: 1px solid var(--a-edge-hi); padding-top: 8px; }
+.admin-ws .service-work summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+.admin-ws .service-work form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding-top: 6px; }
+.admin-ws .service-work label { display: grid; gap: 4px; font-size: 13px; color: var(--ws-muted); min-width: 0; }
+.admin-ws .service-work .wide { grid-column: 1 / -1; }
+.admin-ws .service-work input, .admin-ws .service-work textarea, .admin-ws .service-work select { background: var(--ws-card-2); color: var(--ws-text); border: 1px solid var(--a-edge-hi); border-radius: 10px; padding: 8px 10px; min-height: 40px; font: inherit; width: 100%; box-sizing: border-box; }
+.admin-ws .service-work-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.admin-ws .service-work-actions small { color: var(--ws-muted); }
+.admin-ws .service-stats { display: grid; gap: 14px; min-width: 0; }
+.admin-ws .service-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.admin-ws .service-kpis .card { padding: 14px 16px; display: grid; gap: 4px; }
+.admin-ws .service-kpis small { color: var(--ws-muted); }
+.admin-ws .service-kpis strong { font-size: 26px; }
+.admin-ws .service-kpis .is-late strong { color: #d9534f; }
+.admin-ws .service-stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.admin-ws .service-stat { padding: 16px 18px; min-width: 0; overflow-x: auto; }
+.admin-ws .service-stat h3 { margin: 0 0 10px; font-size: 16px; }
+.admin-ws .service-stat table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.admin-ws .service-stat th { text-align: left; color: var(--ws-muted); font-weight: 500; padding: 4px 6px; }
+.admin-ws .service-stat td { padding: 6px; border-top: 1px solid var(--a-edge-hi); position: relative; }
+.admin-ws .service-stat td:not(:first-child), .admin-ws .service-stat th:not(:first-child) { text-align: right; white-space: nowrap; }
+.admin-ws .service-stat td .bar { position: absolute; left: 0; top: 4px; bottom: 4px; width: var(--w); background: rgba(216, 223, 233, .16); border-radius: 4px; z-index: -1; }
+.admin-ws .service-stat td:first-child { isolation: isolate; }
+.admin-ws .service-months { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; align-items: end; height: 140px; }
+.admin-ws .service-months div { display: grid; grid-template-rows: 1fr auto auto; height: 100%; text-align: center; gap: 2px; }
+.admin-ws .service-months span { align-self: end; height: var(--h); min-height: 2px; background: #CFDECA; border-radius: 6px 6px 2px 2px; }
+.admin-ws .service-months small { color: var(--ws-muted); }
+.admin-ws .service-dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; }
+.admin-ws .service-dl dt { color: var(--ws-muted); }
+.admin-ws .service-dl dd { margin: 0; text-align: right; font-weight: 600; }
+.admin-ws .service-dl .contents { display: contents; }
+.admin-ws .service-repeats { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.admin-ws .service-repeats li { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.admin-ws .service-repeats small { color: var(--ws-muted); width: 100%; }
+@media (max-width: 760px) {
+  .admin-ws .service-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-ws .service-stat-grid, .admin-ws .service-work form { grid-template-columns: minmax(0, 1fr); }
+}

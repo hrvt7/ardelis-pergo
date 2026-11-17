@@ -8,11 +8,11 @@ import AdminLeads from '@/pages/AdminLeads'
 import LamelixLogo from '@/components/LamelixLogo'
 import AdminOverview from '@/pages/AdminOverview'
 import AdminInstallations from '@/pages/AdminInstallations'
-import { useInstallations, useServiceRequests, type AdminInstallation } from '@/lib/adminInstallations'
+import { useInstallations, useServiceRequests, type AdminInstallation, type AdminServiceRequest, type ServicePatch } from '@/lib/adminInstallations'
 import AdminService from '@/pages/AdminService'
 import type { InstallationApi } from '@/components/admin/InstallationSection'
 import { LEAD_STATUSES, useLeads, type LeadRow } from '@/lib/adminLeads'
-import { demoEvents, demoLeads, demoIncoming } from '@/lib/adminDemo'
+import { demoEvents, demoLeads, demoIncoming, demoServiceInstallations, demoServiceRequests } from '@/lib/adminDemo'
 import { CommandPalette, EmbedPanel, PALETTE_ICONS, Toasts, useToasts, type ChecklistItem, type PaletteCommand } from '@/components/admin/adminKit'
 import '@/admin-premium.css'
 import '@/admin-workspace.css'
@@ -159,6 +159,15 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
   const demoStats = useMemo(() => demoEvents(demoClock), [demoClock])
   const installApi = useInstallations(token, onExpired, !demo)
   const serviceApi = useServiceRequests(token, onExpired, !demo)
+  // Szerviz demó: kitalált telepítések és bejelentések (csak a Szerviz fülön), helyben szerkeszthetők.
+  const demoServiceInstalls = useMemo(() => demoServiceInstallations(demoClock), [demoClock])
+  const [demoService, setDemoService] = useState<AdminServiceRequest[]>(() => demoServiceRequests(Date.now()))
+  const saveService = useCallback(async (id: number, patch: ServicePatch) => {
+    if (demo) { setDemoService((rows) => rows.map((row) => (row.id === id ? { ...row, ...patch, ...(patch.status ? { closedAt: patch.status === 'closed' ? new Date().toISOString() : null } : {}) } : row))); push('Mentve (demó)'); return true }
+    const ok = await serviceApi.save(id, patch)
+    if (ok) push(patch.status && Object.keys(patch).length === 1 ? 'Állapot mentve' : 'Munkalap mentve')
+    return ok
+  }, [demo, serviceApi, push])
   const leads = demo ? demoRows : real.leads
   const error = demo ? '' : real.error
   const events = demo ? demoStats : realEvents
@@ -244,7 +253,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
     return null
   }
   const fresh = leads?.filter((lead) => lead.status === 'new').length ?? 0
-  const openService = demo ? 0 : serviceApi.requests?.filter((item) => item.status === 'new').length ?? 0
+  const openService = (demo ? demoService : serviceApi.requests ?? []).filter((item) => item.status === 'new').length
   const title = TABS.find(([key]) => key === tab)![1]
   const quotes = demo
     ? { all: [], create: async () => ({ ok: false as const, error: 'Demó módban az ajánlat nem küldhető ki.' }), withdraw: async () => false }
@@ -265,7 +274,7 @@ function AdminShell({ base, token, overrides, onExpired, onLogout, children }: {
         {(tab === 'overview' || tab === 'leads') && leads === null && <p className="admin-hint" role="status">Betöltés…</p>}
         {tab === 'overview' && leads && <div key="overview" className="tab-fade">{error && <p className="admin-message is-error" role="alert">{error}</p>}<AdminOverview leads={leads} events={events} onOpenLeads={() => choose('leads')} onOpenLead={openLead} onUpdate={update} checklist={demo ? undefined : checklist} /></div>}
         {tab === 'leads' && leads && <div key="leads" className="tab-fade"><AdminLeads tenant={effective} leads={leads} error={error} onReload={() => void real.reload()} onUpdate={update} quotes={quotes} installations={installations} openRef={openRef} onOpenRef={setOpenRef} /></div>}
-        {tab === 'service' && <div key="service" className="tab-fade">{serviceApi.requests === null && !demo ? <p className="admin-hint" role="status">Betöltés…</p> : <AdminService requests={demo ? [] : serviceApi.requests ?? []} installations={installations.all} leads={leads ?? []} error={demo ? '' : serviceApi.error} loadedAt={serviceApi.loadedAt} onReload={() => { void serviceApi.reload(); void installApi.reload() }} onStatus={(id, status) => { void serviceApi.setStatus(id, status).then((ok) => ok && push('Állapot mentve')) }} onOpenInstallation={openInstallation} />}</div>}
+        {tab === 'service' && <div key="service" className="tab-fade">{serviceApi.requests === null && !demo ? <p className="admin-hint" role="status">Betöltés…</p> : <AdminService demo={demo} requests={demo ? demoService : serviceApi.requests ?? []} installations={demo ? demoServiceInstalls : installations.all} leads={leads ?? []} error={demo ? '' : serviceApi.error} loadedAt={demo ? 0 : serviceApi.loadedAt} onReload={() => { void serviceApi.reload(); void installApi.reload() }} onSave={saveService} onOpenInstallation={demo ? undefined : openInstallation} />}</div>}
         {tab === 'installations' && <div key="installations" className="tab-fade">{installApi.installations === null && !demo ? <p className="admin-hint" role="status">Betöltés…</p> : <AdminInstallations brand={{ name: effective.brand.name, logoUrl: effective.brand.logoUrl }} installations={installations.all} leads={leads ?? []} error={demo ? '' : installApi.error} selected={installId} onSelect={setInstallId} onDelete={deleteInstallation} demo={demo} />}</div>}
         {tab === 'embed' && <div key="embed" className="tab-fade"><EmbedPanel tenantId={base.id} onCopied={markEmbed} /></div>}
         <div hidden={tab !== 'settings'}>{children}</div>

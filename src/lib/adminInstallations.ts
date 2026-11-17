@@ -1,6 +1,7 @@
 // Admin: telepítések (digitális ikerpéldány) betöltése, rögzítése és törlése.
 import { useCallback, useEffect, useState } from 'react'
 import type { InstallationComponent, WarrantyMonths } from './installations'
+import type { ServiceStatus, ServiceWork } from './serviceStats'
 
 export interface AdminInstallation {
   id: number
@@ -65,8 +66,10 @@ export function useInstallations(token: string, onExpired: () => void, enabled =
   return { installations, error, reload: load, create, remove }
 }
 
-export interface AdminServiceRequest { id: number; installationId: number; component: string; description: string; status: 'new' | 'in_progress' | 'closed'; createdAt: string; consentVersion: string; photos: string[] }
+export interface AdminServiceRequest extends ServiceWork { id: number; installationId: number; component: string; description: string; status: ServiceStatus; createdAt: string; consentVersion: string; photos: string[] }
 export const SERVICE_STATUS_LABEL: Record<AdminServiceRequest['status'], string> = { new: 'Új', in_progress: 'Folyamatban', closed: 'Lezárva' }
+/** A munkalap módosítható mezői és az állapot (a szerver csak a változókat menti). */
+export type ServicePatch = Partial<Omit<ServiceWork, 'closedAt'>> & { status?: ServiceStatus }
 
 /** Szerviz-bejelentések; a fotólinkek 10 percig élnek, ezért a nézet újratöltéskor újakat kér. */
 export function useServiceRequests(token: string, onExpired: () => void, enabled = true) {
@@ -87,14 +90,18 @@ export function useServiceRequests(token: string, onExpired: () => void, enabled
   }, [token, onExpired, enabled])
   useEffect(() => { void load() }, [load])
 
-  const setStatus = useCallback(async (id: number, status: AdminServiceRequest['status']) => {
-    setRequests((current) => current?.map((item) => (item.id === id ? { ...item, status } : item)) ?? null)
+  const save = useCallback(async (id: number, patch: ServicePatch) => {
+    // Azonnal látszik; hibánál visszatölt a szerverről.
+    setRequests((current) => current?.map((item) => (item.id === id ? { ...item, ...patch, ...(patch.status ? { closedAt: patch.status === 'closed' ? (item.closedAt ?? new Date().toISOString()) : null } : {}) } : item)) ?? null)
     try {
-      const response = await fetch('/api/admin-service', { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status }) })
-      if (!response.ok) throw new Error('patch')
+      const response = await fetch('/api/admin-service', { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...patch }) })
+      if (response.status === 401) { onExpired(); return false }
+      const data = await response.json().catch(() => null) as { ok?: boolean; request?: AdminServiceRequest } | null
+      if (!response.ok || !data?.ok) throw new Error('patch')
+      if (data.request) setRequests((current) => current?.map((item) => (item.id === id ? { ...item, ...data.request, photos: item.photos } : item)) ?? null)
       return true
-    } catch { setError('Az állapot mentése nem sikerült.'); void load(); return false }
-  }, [token, load])
+    } catch { setError('A mentés nem sikerült.'); void load(); return false }
+  }, [token, load, onExpired])
 
-  return { requests, error, loadedAt, reload: load, setStatus }
+  return { requests, error, loadedAt, reload: load, save }
 }
