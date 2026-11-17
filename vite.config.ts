@@ -38,7 +38,7 @@ function prerenderedCopy(lang: "hu" | "en") {
 }
 
 /** Az index.html-ből oldalankénti, előre kitöltött fejlécű változat: a keresők és a közösségi előnézet-robotok JavaScript nélkül is a helyes címet látják. */
-function prerenderedHead(html: string, pathname: string, origin: string) {
+function prerenderedHead(html: string, pathname: string, origin: string, preloads: string[] = []) {
   const page = getSeoPage(pathname)
   const english = page.path === "/en"
   const platform = page.key === "platform"
@@ -53,6 +53,8 @@ function prerenderedHead(html: string, pathname: string, origin: string) {
     `<link rel="alternate" hreflang="hu-HU" href="${platform ? `${origin}/` : url}" />`,
     ...(platform ? [`<link rel="alternate" hreflang="en" href="${origin}/en" />`] : []),
     `<link rel="alternate" hreflang="x-default" href="${platform ? `${origin}/` : url}" />`,
+    // Nyitóoldal: a héró legnagyobb képe és címbetűje már a HTML-ből indul, nem csak a JavaScript lefutása után.
+    ...(platform ? preloads : []),
   ]
   const graph = buildStructuredData(page.path, origin)
   const ld = graph.length ? `<script type="application/ld+json" data-ardelis-jsonld="true">${JSON.stringify({ "@context": "https://schema.org", "@graph": graph }).replace(/</g, "\\u003c")}</script>` : ""
@@ -76,8 +78,13 @@ function staticSeo(siteUrl: string | undefined): Plugin {
       const indexFile = path.join(dist, "index.html")
       if (!fs.existsSync(indexFile)) return
       const template = fs.readFileSync(indexFile, "utf8")
+      const font = fs.readdirSync(path.join(dist, "assets")).find((file) => /^urbanist-latin-wght-normal-.*\.woff2$/.test(file))
+      const preloads = [
+        `<link rel="preload" as="image" href="/assets/landing/clouds-back.webp" fetchpriority="high" />`,
+        ...(font ? [`<link rel="preload" as="font" type="font/woff2" href="/assets/${font}" crossorigin />`] : []),
+      ]
       for (const pathname of SEO_SITEMAP_PATHS) {
-        const html = prerenderedHead(template, pathname, origin)
+        const html = prerenderedHead(template, pathname, origin, preloads)
         if (pathname === "/") fs.writeFileSync(indexFile, html)
         else { fs.mkdirSync(path.join(dist, pathname), { recursive: true }); fs.writeFileSync(path.join(dist, pathname, "index.html"), html) }
       }

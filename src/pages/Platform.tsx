@@ -28,6 +28,8 @@ import PlanSwitch from '@/components/landing/PlanSwitch'
 import FaqChat from '@/components/landing/FaqChat'
 import WhyStrip from '@/components/landing/WhyStrip'
 import { usePageSeo } from '@/lib/usePageSeo'
+import { LANDING_STAGES, useProgressiveStage } from '@/lib/progressiveStage'
+import { flushSync } from 'react-dom'
 import { hint } from '@/lib/fieldHint'
 import { formatMoney, PLANS, SETUP_FEE, type PlanId } from '@/lib/platformPricing'
 import { LangProvider, type Lang } from '@/i18n/lang'
@@ -129,6 +131,36 @@ function PlatformPage() {
   const [annual, setAnnual] = useState(false)
   const [plan, setPlan] = useState<PlanId | 'unsure'>('unsure')
   const [scrolled, setScrolled] = useState(false)
+  // Gyors indulás: először csak a héró és a „Hét lépés” épül fel, a többi szakasz üresjáratban, csoportonként.
+  const [stage, completeStages] = useProgressiveStage(LANDING_STAGES)
+  const ready = stage >= LANDING_STAGES
+  const lenisRef = useRef<Lenis | null>(null)
+
+  // Horgonylinkre kattintás, mielőtt minden szakasz felépült: előbb azonnal felépül minden, utána görget.
+  useEffect(() => {
+    if (ready) return
+    const onClick = (event: MouseEvent) => {
+      const link = (event.target as HTMLElement | null)?.closest<HTMLAnchorElement>('a[href^="#"]')
+      const hash = link?.getAttribute('href')
+      if (!link || !hash || hash === '#' || hash === '#top') return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      flushSync(completeStages)
+      const target = document.querySelector<HTMLElement>(hash)
+      if (!target) return
+      // A Lenis a régi (rövidebb) oldalhosszal számolna: előbb újramér, utána görget.
+      const lenis = lenisRef.current
+      // A frissen felépült szakaszok (lusta komponensek, képek) még tolhatják a célt: a végén utánaigazít.
+      const settle = (left: number) => () => {
+        if (left > 0 && Math.abs(target.getBoundingClientRect().top - 72) > 4) { lenis?.resize(); lenis?.scrollTo(target, { offset: -72, duration: 0.5, onComplete: settle(left - 1) }) }
+      }
+      if (lenis) { lenis.resize(); requestAnimationFrame(() => lenis.scrollTo(target, { offset: -72, onComplete: settle(3) })) }
+      else target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      history.replaceState(null, '', hash)
+    }
+    window.addEventListener('click', onClick, true)
+    return () => window.removeEventListener('click', onClick, true)
+  }, [ready, completeStages])
 
   const choosePlan = (id: PlanId) => {
     setPlan(id)
@@ -159,20 +191,33 @@ function PlatformPage() {
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     element.classList.add('is-in')
+    if (reduced) { element.classList.add('pf-reduced'); return () => window.removeEventListener('scroll', onScroll) }
+
+    const lenis = new Lenis({ lerp: 0.14, smoothWheel: true, anchors: { offset: -72 } })
+    lenisRef.current = lenis
+    lenis.on('scroll', ScrollTrigger.update)
+    const ticker = (time: number) => lenis.raf(time * 1000)
+    gsap.ticker.add(ticker)
+    gsap.ticker.lagSmoothing(0)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      gsap.ticker.remove(ticker)
+      lenis.destroy()
+      lenisRef.current = null
+    }
+  }, [])
+
+  // A belépő animációk és a képernyőn kívüli animációk szüneteltetése akkor indul, amikor minden szakasz felépült.
+  useLayoutEffect(() => {
+    const element = root.current
+    if (!element || !ready) return
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     // A képernyőn kívüli szakaszok végtelen CSS-animációi szünetelnek (kevesebb festés görgetés közben).
     const pauser = new IntersectionObserver((entries) => entries.forEach((entry) => entry.target.classList.toggle('lx-offscreen', !entry.isIntersecting)), { rootMargin: '200px 0px' })
     element.querySelectorAll('main > section, main > div').forEach((section) => pauser.observe(section))
-    if (reduced) { element.classList.add('pf-reduced'); return () => { window.removeEventListener('scroll', onScroll); pauser.disconnect() } }
+    if (reduced) return () => pauser.disconnect()
 
-    let lenis: Lenis | undefined
-    let ticker: ((time: number) => void) | undefined
     const context = gsap.context(() => {
-      lenis = new Lenis({ lerp: 0.14, smoothWheel: true, anchors: { offset: -72 } })
-      lenis.on('scroll', ScrollTrigger.update)
-      ticker = (time: number) => lenis?.raf(time * 1000)
-      gsap.ticker.add(ticker)
-      gsap.ticker.lagSmoothing(0)
-
       // Belépő elemek a szakaszokban.
       gsap.utils.toArray<HTMLElement>('[data-pf-reveal]', element).forEach((section) => {
         gsap.fromTo(section.querySelectorAll('[data-pf-item]'), { opacity: 0, y: 46 }, { opacity: 1, y: 0, duration: 1, stagger: 0.09, ease: 'power3.out', clearProps: 'transform', scrollTrigger: { trigger: section, start: 'top 80%', once: true } })
@@ -184,15 +229,14 @@ function PlatformPage() {
       // Lépések: a vonal kirajzolódik.
       gsap.fromTo('.sx-line i', { '--sx': 0 }, { '--sx': 1, ease: 'none', scrollTrigger: { trigger: '.sx', start: 'top 75%', end: 'bottom 65%', scrub: true } })
     }, element)
+    // Az oldal hossza megnőtt: a korábban létrehozott görgetési pontok újraszámolása.
+    ScrollTrigger.refresh()
 
     return () => {
-      window.removeEventListener('scroll', onScroll)
       pauser.disconnect()
-      if (ticker) gsap.ticker.remove(ticker)
-      lenis?.destroy()
       context.revert()
     }
-  }, [])
+  }, [ready])
 
   const n = c.nav
   const pr = c.pricing
@@ -220,6 +264,7 @@ function PlatformPage() {
 
       <BuildSequence />
 
+      {stage >= 1 && <>
       <Suspense fallback={null}>
         <p className="lx-stats-lead">{c.v2.statsLead}</p>
         <CountingStats items={statItems} />
@@ -240,6 +285,9 @@ function PlatformPage() {
         <a className="lx-btn lx-btn-ink lx-section-cta" href="#demo" data-track="ajanlatkeres">{n.requestDemo} <ArrowRight size={18} /></a>
       </section>
 
+      </>}
+
+      {stage >= 2 && <>
       <section className="pf-section lx-feature-section" id="funkciok" aria-labelledby="funkciok-title" data-pf-reveal>
         <div className="pf-head pf-head-row" data-pf-item>
           <div><p className="lx-eyebrow">{c.features.eyebrow}</p><h2 id="funkciok-title"><Em parts={c.features.title} /></h2></div>
@@ -252,6 +300,9 @@ function PlatformPage() {
 
       <ProductPassport />
 
+      </>}
+
+      {stage >= 3 && <>
       <section className="pf-section pf-live" id="mukodes-elo" aria-labelledby="live-title" data-pf-reveal>
         <div className="pf-head pf-head-row" data-pf-item>
           <div><p className="lx-eyebrow">{c.live.eyebrow}</p><h2 id="live-title"><Em parts={c.live.title} /></h2></div>
@@ -286,6 +337,9 @@ function PlatformPage() {
         <p className="pf-demo-beta pf-pricing-beta" data-pf-item><b>β</b>{c.demo.beta}</p>
       </section>
 
+      </>}
+
+      {stage >= 4 && <>
       <section className="pf-section pf-demo" id="demo" aria-labelledby="demo-title" data-pf-reveal>
         <div className="pf-demo-copy" data-pf-item>
           <p className="lx-eyebrow">{c.demo.eyebrow}</p>
@@ -303,15 +357,18 @@ function PlatformPage() {
       </section>
 
       <FinalCta demoPath={DEMO_PATH} />
+      </>}
+
+      {!ready && <div className="lx-stage-spacer" aria-hidden="true" />}
     </main>
 
-    <Suspense fallback={<footer className="pf-footer">
+    {ready && <Suspense fallback={<footer className="pf-footer">
       <a className="pf-brand" href="#top" aria-label={n.brandAria}><LamelixLogo className="pf-logo" height={28} title={null} tone="onLight" /></a>
       <p>{c.footer.text}</p>
       <nav aria-label={n.footerAria}><Link to={DEMO_PATH}>{n.liveDemo}</Link>{c.footer.sample && <Link to="/minta">{c.footer.sample}</Link>}<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a><Link to="/belepes">{n.login}</Link></nav>
       <small>© {new Date().getFullYear()} Lamelix</small>
     </footer>}>
       <BigFooter company="LAMELIX" columns={footerColumns} brand={<LamelixLogo className="pf-logo" height={26} title={null} tone="onLight" />} copyright={<>© {new Date().getFullYear()} Lamelix · {c.footer.text}</>} />
-    </Suspense>
+    </Suspense>}
   </div>
 }

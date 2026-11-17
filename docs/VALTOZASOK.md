@@ -1,5 +1,12 @@
 # Változások
 
+## 4.97 – Gyorsabb mobil indulás a nyitóoldalon
+
+- **Mi változott:** a nyitóoldal először csak a hérót és a „Hét lépés” szakaszt építi fel, a többi szakasz az első megjelenés után, üresjáratban, négy csoportban, megszakítható rendereléssel kerül az oldalra. A böngésző így nem fagy le induláskor egyetlen hosszú feladattal. Ha a látogató horgonylinkkel érkezik (pl. `/#arak`), vagy korán kattint a menüre, azonnal minden felépül, és a görgetés a célra igazít.
+- **Előtöltés:** a nyitóoldal HTML-je a héró nagy felhőképét és az Urbanist betűt már a JavaScript előtt kéri.
+- **Mérés (Lighthouse, helyi éles build, mobil profil):** teljesítmény 37 → 70–75, blokkolási idő 4 510 → 280–480 ms, legnagyobb tartalom 6,3 → 4,1–4,2 s, elrendezés-ugrás 0. Asztali: 68 → 99. A végső oldal képre azonos az előzővel.
+- Tesztek: `progressiveStage.test.ts` (kezdő szakasz horgonnyal, csoportos felépítés, korai horgonykattintás, előtöltés).
+
 ## 4.96 – Ütközésvizsgálat a mozgó elemekre, kimerevíthető jelenet
 
 - **Közös kinematika (`src/lib/mechanics.ts`):** a nyíló és a tolóajtó minden helyzete egyetlen fázisból (0 = zárva, 1 = nyitva) számolódik. A 3D jelenet ebből mozgatja a szárnyat, az ütközésteszt pedig ugyanezt söpri végig. Az oldalszakaszok helye és hossza (osztóprofil, középoszlop) is innen jön.

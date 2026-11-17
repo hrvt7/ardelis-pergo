@@ -772,3 +772,6 @@
   .lx-page label:has(> input[type="checkbox"]) { min-height: 44px; }
   .lx-page .pf-footer a, .lx-page .qa-contact a { display: inline-flex; align-items: center; min-height: 44px; }
 }
+
+/* Fokozatos felépítés: amíg a lenti szakaszok épülnek, a hely foglalt, így a görgetősáv és a görgetési pontok nem ugranak. */
+.lx-stage-spacer { height: 600svh; }

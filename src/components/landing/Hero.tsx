@@ -192,7 +192,7 @@ export default function Hero({ demoPath }: { demoPath: string }) {
   return <section className="lx-sky" ref={root} aria-labelledby="pf-title">
     <div className="lx-sky-sticky">
       <div className="lx-sky-panel">
-        <img className="lx-cloud lx-cloud-back" src={assetUrl('/assets/landing/clouds-back.webp')} alt="" aria-hidden="true" width={2000} height={700} decoding="async" />
+        <img className="lx-cloud lx-cloud-back" src={assetUrl('/assets/landing/clouds-back.webp')} alt="" aria-hidden="true" width={2000} height={700} decoding="async" fetchPriority="high" />
         <img className="lx-cloud lx-cloud-mid" src={assetUrl('/assets/landing/clouds-mid.webp')} alt="" aria-hidden="true" width={2000} height={700} decoding="async" />
 
         <div className="lx-sky-copy">
