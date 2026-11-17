@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --ssr src/entry-prerender.ts --outDir dist-ssr && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "check": "tsc -b",

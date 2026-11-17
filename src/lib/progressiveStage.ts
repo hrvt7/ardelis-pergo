@@ -24,7 +24,7 @@ export function scheduleIdle(run: () => void, timeout = 180): () => void {
 }
 
 export function useProgressiveStage(max: number): [number, () => void] {
-  const [stage, setStage] = useState(() => (typeof window === 'undefined' ? max : initialStage(window.location.hash, max)))
+  const [stage, setStage] = useState(() => (typeof window === 'undefined' ? 0 : initialStage(window.location.hash, max)))
   useEffect(() => {
     if (stage >= max) return
     // Az első lépés csak az első festés után indul (két rAF), hogy a héró azonnal megjelenjen.

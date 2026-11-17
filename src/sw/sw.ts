@@ -97,7 +97,8 @@ async function networkFirst(request: Request) {
     const first = await Promise.race([network, timeout])
     if (first) return first
   } catch { /* offline: tárolt oldal */ }
-  const cached = (await cache.match(key)) ?? (await cache.match('/index.html'))
+  // Tartalék: az előrenderelt tartalom nélküli alkalmazás-héj (app.html); régebbi buildnél az index.html.
+  const cached = (await cache.match(key)) ?? (await cache.match('/app.html')) ?? (await cache.match('/index.html'))
   if (cached) return cached
   return network
 }
@@ -105,7 +106,7 @@ async function networkFirst(request: Request) {
 sw.addEventListener('install', (event) => {
   // Az alkalmazás héja (index.html + a JS/CSS csomagok) azonnal tárba kerül, hogy a második indítás hálózat nélkül is menjen.
   // A betűk és a jelenet-eszközök használat közben, illetve az „Offline letöltés” gombbal töltődnek le.
-  const shell = MANIFEST.build.filter((file) => file.url === '/index.html' || /\.(js|css)$/.test(file.url))
+  const shell = MANIFEST.build.filter((file) => file.url === '/index.html' || file.url === '/app.html' || /\.(js|css)$/.test(file.url))
   // Ha a héj nem töltődött le teljesen, a telepítés elbukik (a böngésző később újrapróbálja), így nem marad félkész offline állapot.
   event.waitUntil(precache(shell, 4, 'no-cache').then((progress) => { if (progress.failed) throw new Error(`${progress.failed} fájl nem töltődött le`) }))
 })

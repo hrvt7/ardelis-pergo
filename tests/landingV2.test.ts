@@ -46,7 +46,10 @@ describe('nyitóoldal v2 – „az asztalon a termék”', () => {
     expect(read('src/components/PergolaScene.tsx')).toMatch(/const override = import\.meta\.env\.DEV \?/)
   })
   it('mozgáscsökkentésnél a lépéssáv, a tábla és a jelenetek végállapotban állnak', () => {
-    expect(read('src/components/landing/Hero.tsx')).toMatch(/prefers-reduced-motion: reduce\)'\)\.matches \? 6 : 4/)
+    // A héró a 6. lépésen áll csökkentett mozgásnál (előrenderelve 4, a böngésző beállítása a hidratálás után érvényesül).
+    const hero = read('src/components/landing/Hero.tsx')
+    expect(hero).toMatch(/useSyncExternalStore\(noSubscribe, \(\) => window\.matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches, \(\) => false\)/)
+    expect(hero).toContain('const step = reducedMotion ? 6 : ticking')
     expect(read('src/components/landing/AdminBoard.tsx')).toMatch(/prefers-reduced-motion: reduce\)'\)\.matches \? 3 : 0/)
     expect(read('src/landing.css')).toMatch(/\.pf-reduced \.lx-feature \*/)
   })

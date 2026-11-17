@@ -16,7 +16,7 @@
   "rewrites": [
     {
       "source": "/((?!api/|assets/|vendor/).*)",
-      "destination": "/index.html"
+      "destination": "/app.html"
     }
   ],
   "headers": [

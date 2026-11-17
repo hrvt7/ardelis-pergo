@@ -1,5 +1,15 @@
 # Változások
 
+## 5.02 – Előrenderelt nyitóoldal: a héró kész HTML-ként érkezik
+
+- **Mi változott:** a build első lépése (`vite build --ssr src/entry-prerender.ts`) a nyitóoldal első képernyőjét – fejléc, héró, „Hét lépés” – kész HTML-ként írja a `dist/index.html`-be és a `dist/en/index.html`-be. A böngésző ezt nem rajzolja újra, hanem hidratálja (`src/main.tsx`), így a látogató a JavaScript letöltése előtt is a valódi oldalt látja. A lenti szakaszok továbbra is a böngészőben, fokozatosan épülnek fel.
+- **JavaScript az első kirajzolás után:** az előrenderelt oldalon az alkalmazás csomagja az első kirajzolást követő képkockában indul, így a stíluslap, a betű és a héró képe kapja az első sávszélességet.
+- **Tartalék-oldal:** a többi útvonal (konfigurátor, admin, ajánlat stb.) és az offline mód az előrenderelt tartalom nélküli `app.html`-t kapja (`vercel.json` átirányítás, service worker). Horgonnyal érkezve (`/#arak`) az oldal a korábbi módon, tisztán renderel, és a célra görget.
+- **Héró, csökkentett mozgás:** a kezdő lépés mindig 4 (ezt rendereli a szerver is); csökkentett mozgásnál a hidratálás után a 6. lépés áll – a látható végállapot ugyanaz, mint eddig.
+- **Ellenőrzés:** hidratálási hiba nincs (magyar, angol, asztali, mobil, csökkentett mozgás); a nyitóoldal 14 görgetési helyzete és 10 további oldal képre azonos az előző éles verzióval; JavaScript nélkül is megjelenik a fejléc és a héró.
+- **Mérés (Lighthouse mobil, helyi éles build, 5 futás):** teljesítmény 69–81 → 75–83, első tartalom 2,5 → 1,9 s, legnagyobb tartalom 3,7 s (változatlan), elrendezés-ugrás 0. Valódi böngészőben mérve a héró ~0,3 s alatt kirajzolódik (korábban a JavaScript lefutása után).
+- Tesztek: `ssrPrerender.test.ts` (előrenderelt tartalom HU/EN, hidratálási feltétel, build-lépés, tartalék-oldal); `landingV2.test.ts` frissítve a csökkentett mozgás új megoldására.
+
 ## 5.01 – „Új verzió elérhető”: felülről beugró, animált kártya
 
 - **A frissítés-jelzés már nem alul ugrik fel** (ott a telefonon rálógott a kalkulációs sávra): felülről, a fejléc alá érkezik egy rugós beugró animációval, lélegző ikon-gyűrűvel és egyszeri fényvillanással a „Frissítés” gombon. Tableten és asztalon a 3D nézet fölött, jobbra áll, így a bal oldali panelt és lépéssávot sem takarja. Világos és sötét felülethez is igazodik; csökkentett mozgás beállításnál csak elhalványul.

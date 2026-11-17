@@ -3,6 +3,7 @@ import path from "path"
 import react from "@vitejs/plugin-react"
 import { defineConfig, loadEnv, type Plugin } from "vite"
 import fs from "node:fs"
+import { pathToFileURL } from "node:url"
 import { createHash } from "node:crypto"
 import { build as esbuild } from "esbuild"
 import { buildOfflineManifest, type ManifestInputFile } from "./src/lib/offlineManifest"
@@ -68,11 +69,28 @@ function prerenderedHead(html: string, pathname: string, origin: string, preload
     .replace(/<noscript>[\s\S]*?<\/noscript>/, page.key === "platform" ? "$&" : `<noscript><h1>${esc(page.title)}</h1><p>${esc(page.description)}</p><p><a href="/">Lamelix – 3D konfigurátor gyártóknak</a></p></noscript>`)
 }
 
+/** Előrenderelt oldalon az alkalmazás JavaScriptje az első kirajzolás UTÁN indul: a kész HTML, a stíluslap, a betű és a
+ * héró képe kapja az első sávszélességet, a JS (és a vele párhuzamosan előtöltött React-csomag) az első kirajzolás utáni
+ * képkockában indul, és ezután hidratál. Ha a minta nem található (más Vite-kimenet), a HTML változatlan marad. */
+function deferAppScript(html: string) {
+  const entry = /<script type="module" crossorigin src="([^"]+)"><\/script>\s*/.exec(html)
+  if (!entry) return html
+  const preloads = [...html.matchAll(/<link rel="modulepreload" crossorigin href="([^"]+)">\s*/g)]
+  let out = html.replace(entry[0], "")
+  for (const link of preloads) out = out.replace(link[0], "")
+  const urls = JSON.stringify(preloads.map((link) => link[1]))
+  const loader = `<script>(function(){function go(){${urls}.forEach(function(h){var l=document.createElement("link");l.rel="modulepreload";l.crossOrigin="";l.href=h;document.head.appendChild(l)});var s=document.createElement("script");s.type="module";s.crossOrigin="";s.src=${JSON.stringify(entry[1])};document.head.appendChild(s)}function later(){requestAnimationFrame(function(){setTimeout(go,0)})}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",later);else later()})()</script>`
+  return out.replace("</body>", `${loader}\n  </body>`)
+}
+
 function staticSeo(siteUrl: string | undefined): Plugin {
+  let ssrBuild = false
   return {
     name: "static-seo",
     apply: "build",
-    closeBundle() {
+    configResolved(config) { ssrBuild = Boolean(config.build.ssr) },
+    async closeBundle() {
+      if (ssrBuild) return
       const origin = (siteUrl || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : DEFAULT_SITE)).replace(/\/$/, "")
       const dist = path.resolve(__dirname, "dist")
       const indexFile = path.join(dist, "index.html")
@@ -83,8 +101,19 @@ function staticSeo(siteUrl: string | undefined): Plugin {
         `<link rel="preload" as="image" href="/assets/landing/clouds-back.webp" fetchpriority="high" />`,
         ...(font ? [`<link rel="preload" as="font" type="font/woff2" href="/assets/${font}" crossorigin />`] : []),
       ]
+      // A nyitóoldal első képernyője kész HTML-ként (src/entry-prerender.ts, az `npm run build` első lépése építi).
+      // Ha az előrenderelő csomag hiányzik (pl. sima `vite build`), az oldal a korábbi módon, csak böngészőben épül fel.
+      const ssrEntry = path.resolve(__dirname, "dist-ssr/entry-prerender.js")
+      const prerender = fs.existsSync(ssrEntry) ? ((await import(pathToFileURL(ssrEntry).href)) as { render: (url: string) => string }).render : undefined
       for (const pathname of SEO_SITEMAP_PATHS) {
-        const html = prerenderedHead(template, pathname, origin, preloads)
+        let html = prerenderedHead(template, pathname, origin, preloads)
+        if (pathname === "/") {
+          // Az egyoldalas alkalmazás tartalék-oldala (minden más útvonal, offline is) előrenderelt tartalom nélkül marad.
+          fs.writeFileSync(path.join(dist, "app.html"), html)
+        }
+        if (prerender && (pathname === "/" || pathname === "/en")) {
+          html = deferAppScript(html.replace(/<div id="root">(<div class="prerender-copy"[\s\S]*?<\/div>)<\/div>/, (_m, copy: string) => `${copy}<div id="root" data-ssr="${pathname}">${prerender(pathname)}</div>`))
+        }
         if (pathname === "/") fs.writeFileSync(indexFile, html)
         else { fs.mkdirSync(path.join(dist, pathname), { recursive: true }); fs.writeFileSync(path.join(dist, pathname, "index.html"), html) }
       }
@@ -147,6 +176,9 @@ function offlineSw(mode: string): Plugin {
         // A Vite a csak CSS-t tartalmazó csomagok üres JS-darabját a generateBundle után eltávolítja: csak a ténylegesen kiírt fájlok kerülnek a listába
         // (különben a SW telepítése 404-en bukna).
         const written = buildFiles.filter((file) => fs.existsSync(path.join(outDir, file.url)))
+        // Az egyoldalas alkalmazás tartalék-oldala (static-seo írja): offline erre esik vissza a SW a nem tárolt útvonalakon.
+        const appShell = path.join(outDir, "app.html")
+        if (fs.existsSync(appShell)) { const data = fs.readFileSync(appShell); written.push({ url: "/app.html", size: data.byteLength, hash: sha(data) }) }
         const manifest = buildOfflineManifest({ buildFiles: written, publicFiles: [...walkPublic(publicDir, "assets"), ...walkPublic(publicDir, "vendor")], indexHash: sha(index), indexSize: index.byteLength })
         fs.writeFileSync(path.join(outDir, "offline-manifest.json"), JSON.stringify(manifest))
         await esbuild({
@@ -183,9 +215,11 @@ function introInline(): Plugin {
   }
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, isSsrBuild }) => {
   const env = loadEnv(mode, __dirname, "")
   return {
+    // Az előrenderelő csomag (vite build --ssr) csak a nyitóoldal HTML-jéhez kell: a public mappát nem másolja.
+    ...(isSsrBuild ? { publicDir: false as const } : {}),
     plugins: [
       // Helyi /api/lead — élesben a Vercel függvény (api/lead.ts) szolgálja ki.
       devServer({ entry: "server/dev.ts", exclude: [/^\/(?!api\/).*$/] }),

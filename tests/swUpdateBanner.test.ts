@@ -16,7 +16,7 @@ describe('„Új verzió elérhető” kártya', () => {
     expect(rule).toMatch(/animation: update-pop-in/)
     expect(css).toMatch(/@keyframes update-pop-in/)
     expect(css).toMatch(/\.update-pop\.is-leaving \{ animation: update-pop-out/)
-    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\n  \.update-pop \{ animation: update-pop-fade/)
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\n {2}\.update-pop \{ animation: update-pop-fade/)
   })
   it('csak a nyitó animáció után jelenik meg, és csak gombnyomásra frissít', () => {
     const source = read('src/components/SwUpdateBanner.tsx')

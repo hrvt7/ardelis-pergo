@@ -3,7 +3,7 @@
 // konfigurátor (a korábbi kézben tartott telefon helyett). A cím betűnként úszik fel, a kurzor közelében a betűk elvékonyodnak (változó Urbanist súly).
 // Görgetéskor felülről sorban bezáródnak a lamellák (Lamella-redőny), a zárt tetőn egy mondat; a „Hét lépés”
 // szakasz elején kinyílnak, és alattuk már az a szakasz áll. Telefonon ugyanez, külön elrendezéssel.
-import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { ArrowRight, ArrowUpRight, Check, Mail } from 'lucide-react'
 import { assetUrl } from '@/lib/assetUrl'
@@ -23,6 +23,8 @@ function Letters({ text, from }: { text: string; from: number }) {
   return <>{text.split(' ').map((word, w, all) => <Fragment key={w}><span className="lx-word">{[...word].map((ch, c) => <span className="lx-ch" key={c} style={{ '--i': index++ } as CSSProperties}>{ch}</span>)}</span>{w < all.length - 1 ? ' ' : null}</Fragment>)}</>
 }
 
+const noSubscribe = () => () => {}
+
 export default function Hero({ demoPath }: { demoPath: string }) {
   const { lang, c } = useCopy()
   const h = c.hero
@@ -32,7 +34,11 @@ export default function Hero({ demoPath }: { demoPath: string }) {
   const device = useRef<HTMLDivElement>(null)
   const louvers = useRef<HTMLDivElement>(null)
   const laptop = useRef<HTMLDivElement>(null)
-  const [step, setStep] = useState(() => (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 6 : 4))
+  // Kezdőérték mindig 4 (a HTML-be előrenderelt változat is ezt mutatja); csökkentett mozgásnál a 6. lépés áll
+  // (a hidratálás a szerveri értékkel indul, utána a böngésző beállítása szerint).
+  const [ticking, setStep] = useState(4)
+  const reducedMotion = useSyncExternalStore(noSubscribe, () => window.matchMedia('(prefers-reduced-motion: reduce)').matches, () => false)
+  const step = reducedMotion ? 6 : ticking
 
   // Az ár-lap és a lead a konfigurátor lépésein lépked (valódi árak); a végén megérkezik a kérelem.
   useEffect(() => {
