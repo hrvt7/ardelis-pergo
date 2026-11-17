@@ -80,6 +80,19 @@ export async function sendWebhook(crm: CrmSettings, payload: WebhookPayload, fet
 }
 
 /** Esemény küldése, ha a gyártó bekapcsolta (és kérte ezt az eseményt). Soha nem dob hibát; az eredményt naplózza. */
+/** Vercel Edge futási környezet: `waitUntil` a válasz után is befejezi a háttérmunkát. Helyben és tesztben hiányzik. */
+export interface BackgroundContext { waitUntil?: (promise: Promise<unknown>) => void }
+
+/**
+ * 4.93: a CRM-webhook ne tartsa vissza a vevő és a gyártó válaszát (5 s időkorlát + újrapróbálás = akár 10 s pörgés).
+ * Ha van `waitUntil`, a kézbesítés a válasz után fut le; ha nincs (helyi fejlesztés, teszt), megvárjuk.
+ */
+export async function queueWebhook(context: BackgroundContext | undefined, ...args: Parameters<typeof deliverWebhook>): Promise<void> {
+  const delivery = deliverWebhook(...args).catch((error) => { console.error('[webhook] Kézbesítés megszakadt', error); return null })
+  if (context?.waitUntil) context.waitUntil(delivery)
+  else await delivery
+}
+
 export async function deliverWebhook(tenant: Tenant, event: WebhookEvent, data: Record<string, unknown>, fetchImpl: typeof fetch = fetch): Promise<WebhookResult | null> {
   if (!webhookEnabled(tenant.crm, event)) return null
   const result = await sendWebhook(tenant.crm!, webhookPayload(tenant, event, data), fetchImpl)
@@ -104,6 +117,8 @@ export interface LeadEventInput {
   source: string
   dealerId?: string
   customer: { name: string; email: string; phone: string; postalCode?: string; city: string; region: string; address?: string; notes?: string }
+  /** Bővítési kérés meglévő telepítéshez: a CRM-be a bővítés becsült különbözete megy (mint az adminba és az e-mailbe). */
+  expansion?: { installationId: number; originalRef: string | null; added: string[]; deltaNet: number; deltaGross: number }
   headline: string
   configUrl: string
   pageUrl?: string
@@ -126,7 +141,12 @@ export function leadEventData(lead: LeadEventInput): Record<string, unknown> {
       address: lead.customer.address || null, notes: lead.customer.notes || null,
     },
     configuration: { headline: lead.headline, url: lead.configUrl, pageUrl: lead.pageUrl ?? null, spec: lead.spec.map(([label, value]) => ({ label, value })) },
-    price: priceData(lead.tenant, lead.price),
+    price: lead.expansion
+      ? { currency: lead.tenant.currency, net: lead.expansion.deltaNet, vat: lead.expansion.deltaGross - lead.expansion.deltaNet, gross: lead.expansion.deltaGross, estimate: true, lines: [] }
+      : priceData(lead.tenant, lead.price),
+    expansion: lead.expansion
+      ? { installationId: lead.expansion.installationId, originalRef: lead.expansion.originalRef, added: lead.expansion.added, fullConfigurationPrice: priceData(lead.tenant, lead.price) }
+      : null,
   }
 }
 

@@ -29,7 +29,7 @@ import { scoreLead, TIER_LABELS } from '../src/lib/leadScore'
 import { bookingLink } from '../src/lib/booking'
 import type { PergolaConfig, PriceBreakdown, SideKey } from '../src/types/pergola'
 import { DEALER_ID_PATTERN, findDealer, type Dealer } from '../src/tenants/pricingRules'
-import { deliverWebhook, leadEventData } from './webhook'
+import { leadEventData, queueWebhook, type BackgroundContext } from './webhook'
 import { installationByToken, logEvent } from './installationStore'
 import { clampExpansion, expansionAdditions, installationComponents } from '../src/lib/installations'
 
@@ -294,7 +294,7 @@ async function storeLead(env: LeadEnv, record: LeadRecord, withEngagement = true
   }
 }
 
-export async function handleLeadRequest(request: Request, env: LeadEnv): Promise<Response> {
+export async function handleLeadRequest(request: Request, env: LeadEnv, context?: BackgroundContext): Promise<Response> {
   if (request.method !== 'POST') return json(405, { ok: false, error: 'Csak POST kérés engedélyezett.' })
 
   const length = Number(request.headers.get('content-length') ?? 0)
@@ -407,7 +407,7 @@ export async function handleLeadRequest(request: Request, env: LeadEnv): Promise
       replyTo: input.customer.email,
     }) : Promise.resolve('skipped'),
     // CRM-webhook (ha a gyártó bekapcsolta). Hibája nem akasztja meg a leadet.
-    deliverWebhook(tenant, 'lead.created', leadEventData({ ref, tenant, createdAt: now, product: input.product, source: input.source, dealerId: dealer?.id, customer: input.customer, headline, configUrl, pageUrl: input.pageUrl, spec, price })),
+    queueWebhook(context, tenant, 'lead.created', leadEventData({ ref, tenant, createdAt: now, product: input.product, source: record.expansion ? 'expansion' : input.source, dealerId: dealer?.id, customer: input.customer, expansion: record.expansion, headline, configUrl, pageUrl: input.pageUrl, spec, price })),
   ])
   const [stored, emailed] = results
   if (expansion && stored.status === 'fulfilled' && canStore) await logEvent(env, expansion.row, 'expansion_request', 'owner', { leadRef: ref, added: expansion.added })

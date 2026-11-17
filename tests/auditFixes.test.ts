@@ -55,3 +55,25 @@ describe('hibakeresés 2026-11-17 – teendők kora', () => {
     expect(readFileSync('supabase/leads.sql', 'utf8')).toMatch(/add column if not exists status_changed_at timestamptz/)
   })
 })
+
+describe('hibakeresés 2026-11-17 – CRM-webhook', () => {
+  it('#9 bővítésnél a különbözet és a „expansion” forrás megy ki; waitUntil mellett a kézbesítés nem tartja vissza a választ', async () => {
+    const { leadEventData, queueWebhook } = await import('../server/webhook')
+    const { demoTenant } = await import('../src/tenants/demo')
+    const price = { totalNet: 1000, vatNet: 270, totalGross: 1270, installationNet: 0, lines: [] } as never
+    const data = leadEventData({ ref: 'R', tenant: demoTenant, createdAt: new Date(0), product: 'pergola', source: 'expansion', customer: { name: 'A', email: 'a@b.hu', phone: '1', city: 'X', region: 'Y' }, expansion: { installationId: 7, originalRef: 'O', added: ['LED'], deltaNet: 100, deltaGross: 127 }, headline: 'h', configUrl: 'u', spec: [], price })
+    expect(data.source).toBe('expansion')
+    expect(data.price).toMatchObject({ net: 100, gross: 127, estimate: true })
+    expect((data.expansion as { fullConfigurationPrice: { gross: number } }).fullConfigurationPrice.gross).toBe(1270)
+    const scheduled: Promise<unknown>[] = []
+    const tenant = { ...demoTenant, crm: { webhookUrl: 'https://hook.example.com/in', secret: 'k'.repeat(32) } }
+    let delivered = false
+    const slow = (() => new Promise<Response>((resolve) => setTimeout(() => { delivered = true; resolve(new Response('ok')) }, 60))) as unknown as typeof fetch
+    await queueWebhook({ waitUntil: (promise) => scheduled.push(promise) }, tenant as never, 'lead.created', data, slow)
+    // a hívó (a válasz) már továbbment, a kézbesítés még fut
+    expect(delivered).toBe(false)
+    expect(scheduled).toHaveLength(1)
+    await scheduled[0]
+    expect(delivered).toBe(true)
+  })
+})

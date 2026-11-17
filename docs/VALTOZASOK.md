@@ -1,5 +1,11 @@
 # Változások
 
+## 4.93 – CRM-webhook: bővítésnél a különbözet, és nem lassítja a választ (hibakeresés 5.)
+
+- **Hiba: bővítési kérésnél a CRM-be a teljes új konfiguráció ára ment** (pl. 30,9 ezer € egy 900 €-s LED-bővítésre), az adminban és az e-mailben viszont a különbözet. Most a `lead.created` esemény a bővítés becsült különbözetét küldi (`price.estimate: true`), `source: "expansion"`-nel, és külön `expansion` blokkban a telepítés azonosítóját, a hozzáadott tételeket és a teljes konfiguráció árát.
+- **Hiba: a webhook kézbesítése visszatartotta a választ** (5 mp időkorlát + újrapróbálás): ha a fogadó lassú volt, a vevő a felmérés-kérésnél, a gyártó az ajánlat küldésénél akár 10 mp-ig várt. Élesben (Vercel Edge `waitUntil`) a kézbesítés most a válasz után fut le; helyben és tesztben továbbra is megvárjuk.
+- Tesztek: `auditFixes.test.ts` (bővítési adat, háttérben kézbesítés).
+
 ## 4.92 – Szerver: megőrzési törlés minden gyártónál, árrés nem látszik (hibakeresés 4.)
 
 - **Hiba: a megőrzési idő utáni automatikus törlés elakadhatott.** A napi futás mindig ugyanazt a 100 legrégebbi telepítést kérte le. Ha ezek egy hosszú megőrzésű gyártóé voltak, a többi gyártó lejárt telepítései (fotók, bejelentések) soha nem törlődtek, holott az adatkezelési oldal automatikus törlést ír. Most lapozva, id szerint halad végig, futásonként legfeljebb 100 törléssel és 20 mp időkerettel.

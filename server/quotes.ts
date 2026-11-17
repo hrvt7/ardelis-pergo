@@ -14,7 +14,7 @@ import { INTL_LOCALE, withLocale } from '../src/i18n/locale'
 import { describeConfig, escapeHtml, oneLine, sendEmail, siteOrigin } from './lead'
 import { authorize, json, patchLeadStatus, resolveTenant, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
 import { discountFromPercent } from '../src/tenants/pricingRules'
-import { deliverWebhook, quoteEventData } from './webhook'
+import { queueWebhook, quoteEventData, type BackgroundContext } from './webhook'
 
 export type QuoteStatus = 'sent' | 'accepted' | 'declined' | 'superseded' | 'withdrawn'
 
@@ -213,7 +213,7 @@ const LEAD_FIELDS = 'ref,customer_name,email,phone,address,postal_code,city,regi
 const LEAD_FIELDS_WITH_DEALER = `${LEAD_FIELDS},dealer_id`
 
 /** POST/GET/PATCH /api/admin-quotes — gyártói ajánlatkezelés (a belépési tokennel). */
-export async function handleAdminQuotes(request: Request, env: AdminEnv): Promise<Response> {
+export async function handleAdminQuotes(request: Request, env: AdminEnv, context?: BackgroundContext): Promise<Response> {
   if (!['GET', 'POST', 'PATCH'].includes(request.method)) return json(405, { ok: false, error: 'Nem engedélyezett metódus.' })
   const auth = await authorize(request, env)
   if (auth instanceof Response) return auth
@@ -325,7 +325,7 @@ export async function handleAdminQuotes(request: Request, env: AdminEnv): Promis
 <p style="font-size:12px;color:#62727a">Az oldalon áttekintheted a részleteket, és online el is fogadhatod az ajánlatot.</p>${contact ? `<p style="font-size:12px;color:#62727a">${contact}</p>` : ''}`),
       })
     }
-    await deliverWebhook(tenant, 'quote.sent', quoteEvent(tenant, created, url))
+    await queueWebhook(context, tenant, 'quote.sent', quoteEvent(tenant, created, url))
     return json(200, { ok: true, quote: adminView(created, origin), emailed, superseded: previous ? quoteLabel(previous) : null, configUrl: `${origin}/k/${tenant.id}#${shareHash(config)}` })
   } catch (error) {
     console.error('[quote] Ajánlatkezelés sikertelen', tenant.id, error)
@@ -346,7 +346,7 @@ function limited(request: Request, now: number) {
 }
 
 /** GET /api/quote?t=… → megtekintés (számlálással); POST → elfogadás / elutasítás. A titkos link a hitelesítés. */
-export async function handleQuote(request: Request, env: AdminEnv): Promise<Response> {
+export async function handleQuote(request: Request, env: AdminEnv, context?: BackgroundContext): Promise<Response> {
   if (request.method !== 'GET' && request.method !== 'POST') return json(405, { ok: false, error: 'Nem engedélyezett metódus.' })
   if (!storeConfigured(env)) return json(503, { ok: false, error: 'Az ajánlat most nem érhető el.' })
   const now = Date.now()
@@ -417,7 +417,7 @@ export async function handleQuote(request: Request, env: AdminEnv): Promise<Resp
             : mailShell(tenant, 'Köszönjük, elfogadtad az ajánlatot!', `<p>Kedves ${escapeHtml(row.customer_name)}!</p><p>Az <strong>${escapeHtml(label)}</strong> számú ajánlatot elfogadtad (${escapeHtml(formatMoney(row.total_gross, tenant.currency))}, bruttó). A foglaló összege <strong>${escapeHtml(formatMoney(row.deposit_gross, tenant.currency))}</strong> (${row.deposit_percent}%).</p>${pay}<p>Hamarosan jelentkezünk a kivitelezés részleteivel.</p>${contact ? `<p style="font-size:12px;color:#62727a">${contact}</p>` : ''}`),
         }),
       ])
-      await deliverWebhook(tenant, 'quote.accepted', quoteEvent(tenant, { ...row, status: 'accepted', accepted_at: nowIso, signer_name: input.name }))
+      await queueWebhook(context, tenant, 'quote.accepted', quoteEvent(tenant, { ...row, status: 'accepted', accepted_at: nowIso, signer_name: input.name }))
       return json(200, { ok: true, status: 'accepted', acceptedAt: nowIso })
     }
 
@@ -427,7 +427,7 @@ export async function handleQuote(request: Request, env: AdminEnv): Promise<Resp
       to: recipients, replyTo: row.customer_email, subject: oneLine(`${say(tenant, 'Elutasítva', 'Abgelehnt')}: ${label} – ${row.customer_name}`),
       html: mailShell(tenant, say(tenant, `${row.customer_name} elutasította az ajánlatot`, `${row.customer_name} hat das Angebot abgelehnt`), `<p><strong>${escapeHtml(label)}</strong> · ${escapeHtml(formatMoney(row.total_gross, tenant.currency))}</p>${input.reason ? `<p>${say(tenant, 'Indok', 'Grund')}: ${escapeHtml(input.reason)}</p>` : ''}<p style="font-size:12px;color:#62727a">Telefon: ${escapeHtml(row.customer_phone ?? '')} · E-mail: ${escapeHtml(row.customer_email)}</p>`),
     })
-    await deliverWebhook(tenant, 'quote.declined', quoteEvent(tenant, { ...row, status: 'declined', declined_at: nowIso, decline_reason: input.reason || null }))
+    await queueWebhook(context, tenant, 'quote.declined', quoteEvent(tenant, { ...row, status: 'declined', declined_at: nowIso, decline_reason: input.reason || null }))
     return json(200, { ok: true, status: 'declined' })
   } catch (error) {
     console.error('[quote] Ajánlat kezelése sikertelen', error)
