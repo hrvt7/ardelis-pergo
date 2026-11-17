@@ -170,6 +170,26 @@ const hu = {
       card: { name: 'Kovács Péter', place: 'Sárvár · Aero 5,0 × 4,0 m', price: '5 648 000 Ft', call: 'Hívás' },
       demoNote: 'Demóadatok, kitalált érdeklődőkkel.',
     },
+    passport: {
+      eyebrow: 'A telepítés után', title: ['Az eladás után is ', 'Önnél marad', ' a vevő.'] as Em,
+      sub: 'Felszerelés után egy kattintással digitális termékkönyvet rögzít: a terv, a komponensek és az akkori ár befagy, a tulajdonos pedig QR-kódot kap a termékre. Onnan nézi a garanciát, jelent hibát és kér bővítést – Önnél, nem a versenytársnál.',
+      steps: [
+        { title: 'QR-matrica a termékre', text: 'Nyomtatható PDF a logójával. Beolvasva a tulajdonosi oldal nyílik meg, bejelentkezés nélkül.' },
+        { title: 'Garancia komponensenként', text: 'Szerkezet, motor és elektronika, LED: mindegyiknél a lejárat napja. A feltételeket az Ön szerződése adja.' },
+        { title: 'Hibabejelentés fotóval', text: 'A vevő a saját termékének alkatrészlistájából választ, és legfeljebb 4 fotót csatol. A képekről a helyadat lekerül, Ön e-mailt kap, a bejelentés a Szerviz fülre érkezik.' },
+        { title: 'Bővítés: új megrendelés', text: 'Oldalfal, árnyékoló, fűtés, LED: a konfigurátor a felszerelt változatból indul, a szerkezet zárolt. Új érdeklődőként érkezik, a bővítés becsült árával.' },
+      ],
+      phone: {
+        brand: 'Minta Pergola Kft.', label: 'Digitális termékkönyv', product: 'Aero · 5,0 × 4,0 m', installed: 'Telepítve: 2025. március 10.',
+        scan: 'Olvasd be a telefonod kamerájával',
+        warranty: [['Szerkezet', '2030. márc. 10.', true], ['Motor és elektronika', '2027. márc. 10.', true], ['LED-világítás', '2026. márc. 10.', false]] as [string, string, boolean][],
+        valid: 'érvényes', expired: 'lejárt',
+        reportTitle: 'Hibabejelentés', reportPart: 'Tetőmozgató motor', reportText: 'Zárásnál zúg a motor…', photos: 'fotó, helyadat nélkül', send: 'Bejelentés küldése',
+        expandTitle: 'Bővítés', expandLocked: 'Méret, tető, szín: zárolt', expandAdd: ['Oldalfal: ZIP screen', 'Infra fűtés (2 db)'], expandPrice: 'A bővítés becsült ára', expandValue: '1 240 000 Ft',
+      },
+      honest: 'A rendszer nem azonosít alkatrészt és nem rendel automatikusan: a bejelentés a vevő leírásával és fotóival érkezik, a döntés az Öné.',
+      demoNote: 'Demóadatok; a képernyők a valódi tulajdonosi oldal egyszerűsített rajzai.',
+    },
   },
 }
 
@@ -342,6 +362,26 @@ const en: PlatformCopy = {
       columns: ['New', 'Contacted', 'Quote sent', 'Won'],
       card: { name: 'Péter Kovács', place: 'Sárvár · Aero 5.0 × 4.0 m', price: 'HUF 5,648,000', call: 'Call' },
       demoNote: 'Demo data with fictional leads.',
+    },
+    passport: {
+      eyebrow: 'After installation', title: ['The buyer stays ', 'with you', ' after the sale.'] as Em,
+      sub: 'After installation you record a digital product passport in one click: the design, the components and the price at that time are frozen, and the owner gets a QR code on the product. From there they check the warranty, report a fault and request an extension – from you, not from a competitor.',
+      steps: [
+        { title: 'QR sticker on the product', text: 'A printable PDF with your logo. Scanning it opens the owner page, no login needed.' },
+        { title: 'Warranty per component', text: 'Structure, motor and electronics, LED: each with its expiry date. The terms come from your contract.' },
+        { title: 'Fault report with photos', text: 'The owner picks from the parts list of their own product and attaches up to 4 photos. Location data is removed, you get an e-mail, and the report lands in the Service tab.' },
+        { title: 'Extension: a new order', text: 'Side wall, shading, heating, LED: the configurator starts from the installed version with the structure locked. It arrives as a new lead with the estimated price of the extension.' },
+      ],
+      phone: {
+        brand: 'Sample Pergola Ltd.', label: 'Digital product passport', product: 'Aero · 5.0 × 4.0 m', installed: 'Installed: 10 March 2025',
+        scan: 'Scan with your phone camera',
+        warranty: [['Structure', '10 Mar 2030', true], ['Motor and electronics', '10 Mar 2027', true], ['LED lighting', '10 Mar 2026', false]] as [string, string, boolean][],
+        valid: 'valid', expired: 'expired',
+        reportTitle: 'Fault report', reportPart: 'Roof drive motor', reportText: 'The motor hums when closing…', photos: 'photos, no location data', send: 'Send report',
+        expandTitle: 'Extension', expandLocked: 'Size, roof, colour: locked', expandAdd: ['Side wall: ZIP screen', 'Infrared heater (2 pcs)'], expandPrice: 'Estimated price of the extension', expandValue: 'HUF 1,240,000',
+      },
+      honest: 'The system does not identify parts and does not order automatically: the report arrives with the owner’s description and photos, and the decision is yours.',
+      demoNote: 'Demo data; the screens are simplified drawings of the real owner page.',
     },
   },
 }

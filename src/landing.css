@@ -657,3 +657,87 @@
   .lx-page .pf-sim-open { top: 12px; bottom: auto; }
   .lx-page .pf-sim.is-active .pf-sim-open { display: none; }
 }
+
+/* ── Digitális termékkönyv (telepítés után): fehér lap, kódból rajzolt telefon + QR-matrica ── */
+.lx-passport { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: 'head stage' 'copy stage'; column-gap: clamp(28px, 4vw, 64px); row-gap: 0; align-items: center; max-width: 1280px; margin: 40px auto; padding: clamp(32px, 5vw, 64px); border-radius: 44px; background: var(--lx-card); box-shadow: var(--lx-shadow); scroll-margin-top: 96px; }
+.lx-passport h2 { margin: 0; font-size: clamp(32px, 3.8vw, 56px); }
+.lx-passport-head { grid-area: head; align-self: end; }
+.lx-passport-copy { grid-area: copy; align-self: start; }
+.lx-passport-stage { grid-area: stage; }
+.lx-passport-steps { display: grid; gap: 8px; margin: 28px 0 0; padding: 0; list-style: none; }
+.lx-passport-steps button { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; align-items: start; width: 100%; padding: 14px 16px; border: 0; border-radius: 20px; background: transparent; color: var(--lx-ink); font: inherit; text-align: left; cursor: pointer; transition: background .3s var(--lx-ease), box-shadow .3s var(--lx-ease); }
+.lx-passport-steps button:hover { background: var(--lx-ghost); }
+.lx-passport-steps button.is-on { background: var(--lx-ghost); box-shadow: inset 0 0 0 1px var(--lx-line); }
+.lx-passport-steps button:focus-visible { outline: 3px solid var(--lx-ink); outline-offset: 2px; }
+.lx-passport-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 14px; background: var(--lx-ghost); transition: background .3s var(--lx-ease); }
+.lx-passport-steps button.is-on .lx-passport-icon { background: var(--lx-vanilla); }
+.lx-passport-steps button.is-on small { color: #3f4146; }
+.lx-passport-steps strong { display: block; font-size: 16.5px; font-weight: 650; letter-spacing: -.01em; }
+.lx-passport-steps small { display: block; margin-top: 4px; color: var(--lx-muted); transition: color .3s var(--lx-ease); font-size: 14.5px; line-height: 1.55; }
+.lx-passport-honest { margin: 20px 0 6px; padding: 12px 16px; border-left: 3px solid var(--lx-vanilla); color: var(--lx-muted); font-size: 14px; line-height: 1.55; }
+.lx-passport-note { color: var(--lx-muted); font-size: 12.5px; }
+
+.lx-passport-stage { position: relative; display: grid; place-items: center; min-height: 600px; border-radius: 32px; background: radial-gradient(120% 90% at 70% 20%, var(--lx-blue), transparent 60%), radial-gradient(90% 80% at 10% 90%, var(--lx-green), transparent 62%), var(--lx-ghost); overflow: hidden; }
+.lx-phone { position: relative; z-index: 2; display: flex; flex-direction: column; width: 290px; height: 580px; padding: 12px; overflow: hidden; border-radius: 44px; background: #121214; box-shadow: 0 40px 80px -40px rgba(33,33,33,.6), inset 0 0 0 2px #2c2c30; transform: translateX(28px); }
+.lx-phone::before { content: ''; position: absolute; top: 20px; left: 50%; width: 82px; height: 22px; border-radius: 999px; background: #121214; transform: translateX(-50%); z-index: 3; }
+.lx-phone > div { background: #ECECEF; }
+.lx-phone-bar { display: grid; gap: 2px; padding: 46px 18px 8px; border-radius: 34px 34px 0 0; font-size: 11px; color: var(--lx-muted); }
+.lx-phone-bar b { color: var(--lx-ink); font-size: 13px; }
+.lx-phone-hero { display: grid; gap: 4px; margin: 0; padding: 10px 18px 14px; }
+.lx-phone-hero span { color: var(--lx-muted); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; }
+.lx-phone-hero strong { font-size: 21px; font-weight: 500; letter-spacing: -.02em; }
+.lx-phone-screens { position: relative; flex: 1; min-height: 0; border-radius: 0 0 34px 34px; }
+.lx-screen { position: absolute; inset: 0 12px 14px; display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 22px; background: #fff; opacity: 0; transform: translateY(14px); transition: opacity .5s var(--lx-ease), transform .6s var(--lx-ease); pointer-events: none; }
+.lx-passport-stage[data-step="0"] [data-screen="0"], .lx-passport-stage[data-step="1"] [data-screen="1"], .lx-passport-stage[data-step="2"] [data-screen="2"], .lx-passport-stage[data-step="3"] [data-screen="3"] { opacity: 1; transform: none; }
+.lx-screen > small { color: var(--lx-muted); font-size: 12px; text-align: center; }
+.lx-scan { position: relative; width: 170px; margin: 30px auto 6px; color: var(--lx-ink); }
+.lx-scan svg { display: block; width: 100%; height: auto; }
+.lx-scan i { position: absolute; left: -8px; right: -8px; top: 0; height: 3px; border-radius: 3px; background: #8BCF96; box-shadow: 0 0 18px 4px rgba(139,207,150,.55); animation: lx-scanline 2.2s ease-in-out infinite alternate; }
+@keyframes lx-scanline { from { top: 2%; } to { top: 96%; } }
+.lx-w { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 2px 8px; align-items: center; padding: 11px 12px; border-radius: 14px; background: var(--lx-ghost); font-size: 12.5px; }
+.lx-w svg { color: #2F7D4A; grid-row: span 2; }
+.lx-w b { font-weight: 650; }
+.lx-w span { color: var(--lx-muted); font-size: 11.5px; }
+.lx-w.is-off svg, .lx-w.is-off b { color: #8A8C92; }
+.lx-screen-title { font-size: 15px; font-weight: 650; }
+.lx-field { padding: 10px 12px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--lx-line); font-size: 12.5px; }
+.lx-field-text { min-height: 56px; color: var(--lx-muted); }
+.lx-photos { display: grid; grid-template-columns: 54px 54px 1fr; gap: 8px; align-items: center; }
+.lx-photos i { aspect-ratio: 1; border-radius: 12px; background: linear-gradient(140deg, #a9b8b3, #6d7c78 60%, #3d4744); }
+.lx-photos i + i { background: linear-gradient(200deg, #c9c3b3, #8f8a7c 55%, #4b4840); }
+.lx-photos span { display: inline-flex; align-items: center; gap: 6px; color: var(--lx-muted); font-size: 11px; line-height: 1.3; }
+.lx-send { margin-top: auto; padding: 11px; border-radius: 999px; background: var(--lx-ink); color: #fff; font-size: 12.5px; font-weight: 650; text-align: center; }
+.lx-locked { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 6px 10px; border-radius: 999px; background: var(--lx-ghost); color: var(--lx-muted); font-size: 11.5px; }
+.lx-added { display: flex; align-items: center; gap: 8px; padding: 11px 12px; border-radius: 14px; background: rgba(207,222,202,.55); font-size: 12.5px; font-weight: 600; }
+.lx-delta { display: grid; gap: 2px; margin-top: auto; padding: 12px 14px; border-radius: 16px; background: var(--lx-vanilla); }
+.lx-delta small { font-size: 11px; color: #4d4e3a; }
+.lx-delta strong { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+
+.lx-sticker { position: absolute; z-index: 3; left: clamp(14px, 6%, 48px); bottom: 54px; display: grid; justify-items: center; gap: 4px; width: 150px; padding: 14px 12px 12px; border-radius: 18px; background: #fff; color: var(--lx-ink); box-shadow: 0 24px 50px -24px rgba(33,33,33,.55); text-align: center; transform: rotate(-6deg); transition: transform .6s var(--lx-ease), box-shadow .6s var(--lx-ease); }
+.lx-sticker b { font-size: 11.5px; }
+.lx-sticker span { font-size: 10.5px; font-weight: 650; }
+.lx-sticker svg { width: 104px; height: 104px; margin: 4px 0; }
+.lx-sticker small { color: var(--lx-muted); font-size: 9px; line-height: 1.3; }
+.lx-passport-stage[data-step="0"] .lx-sticker { transform: rotate(-2deg) scale(1.08); box-shadow: 0 0 0 3px var(--lx-vanilla), 0 30px 60px -24px rgba(33,33,33,.6); }
+
+@media (max-width: 1080px) {
+  .lx-passport { grid-template-columns: 1fr; grid-template-areas: 'head' 'stage' 'copy'; row-gap: 24px; margin-inline: 14px; }
+  .lx-passport-stage { min-height: 560px; }
+}
+@media (max-width: 760px) {
+  .lx-passport { padding: 28px 18px; border-radius: 32px; }
+  .lx-passport-stage { min-height: 520px; border-radius: 24px; }
+  .lx-phone { width: 236px; height: 500px; transform: translateX(34px); }
+  .lx-phone-hero strong { font-size: 18px; }
+  .lx-scan { width: 140px; margin-top: 20px; }
+  .lx-sticker { width: 104px; left: 8px; bottom: 18px; padding: 10px 8px; }
+  .lx-sticker b { font-size: 10px; }
+  .lx-sticker span { font-size: 9px; }
+  .lx-sticker svg { width: 76px; height: 76px; }
+  .lx-passport-steps { margin-top: 0; }
+  .lx-sticker small { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lx-screen, .lx-sticker, .lx-passport-steps button { transition: none; }
+  .lx-scan i { animation: none; top: 50%; }
+}

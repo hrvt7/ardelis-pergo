@@ -1,5 +1,12 @@
 # Változások
 
+## 4.86 – Nyitóoldal: „Digitális termékkönyv” szakasz
+
+- **Új szakasz a gyártói nyitóoldalon (`/` és `/en`), az admin-tábla után:** „Az eladás után is Önnél marad a vevő.” Négy lépés (QR-matrica, garancia komponensenként, hibabejelentés fotóval, bővítés), mellette kódból rajzolt telefon a tulajdonosi oldal egyszerűsített képernyőivel és egy QR-matricával. A lépések kattinthatók; amíg a szakasz látszik és a látogató nem választott, maguktól lépnek (csökkentett mozgásnál nem). A minta-QR valódi, beolvasható kód, a szakaszra mutat. Mobilon: cím → telefon → lépések.
+- **Csak amit a kód tud:** legfeljebb 4 fotó, helyadat eltávolítása, zárolt szerkezet a bővítésnél, becsült bővítési ár; kimondva, hogy a rendszer nem azonosít alkatrészt és nem rendel automatikusan; a garancia feltételeit a gyártó szerződése adja. Demóadatok, jelölve.
+- `llms.txt`: a leírás kiegészült a digitális termékkönyvvel.
+- Tesztek: `productPassport.test.ts` (HU/EN szerkezet, tiltott ígéretek hiánya, a 4 fotós korlát a kódból, elhelyezés). Böngészőben ellenőrizve asztali, tablet és mobil nézetben, magyarul és angolul; vízszintes túlcsordulás nincs, a QR visszaolvasható.
+
 ## 4.85 – Telepítések 6/6: nyomtatható QR-matrica
 
 - **QR-matrica a termékre:** a telepítés részleteinél letölthető PDF (80 × 100 mm, nyomtatáshoz) és PNG (1000 × 1250 px). Rajta a gyártó logója (ha PNG/JPEG és a böngésző letöltheti; különben a gyártó neve), „Digitális termékkönyv”, a QR-kód a tulajdonosi oldalra (Q szintű hibajavítással), a termék neve és a weboldal címe. A token szövegként nem kerül a matricára, csak a QR-kódba.

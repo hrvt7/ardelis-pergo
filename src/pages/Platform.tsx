@@ -21,6 +21,7 @@ import ProblemCollage from '@/components/landing/ProblemCollage'
 import BuildSequence from '@/components/landing/BuildSequence'
 import FeatureScenes from '@/components/landing/FeatureScenes'
 import AdminBoard from '@/components/landing/AdminBoard'
+import ProductPassport from '@/components/landing/ProductPassport'
 import FinalCta from '@/components/landing/FinalCta'
 import InkDefs from '@/components/landing/InkDefs'
 import PlanSwitch from '@/components/landing/PlanSwitch'
@@ -248,6 +249,8 @@ function PlatformPage() {
       </section>
 
       <AdminBoard />
+
+      <ProductPassport />
 
       <section className="pf-section pf-live" id="mukodes-elo" aria-labelledby="live-title" data-pf-reveal>
         <div className="pf-head pf-head-row" data-pf-item>
