@@ -53,6 +53,8 @@ export function demoLeads(now: number): LeadRow[] {
       // Automatikus utánkövetés: a 3 napnál régebbi, nyitott érdeklődők már kaptak emlékeztetőt; az egy hétnél régebbi „Új” leadekről jelzés is ment.
       followup_sent_at: age > 3 * DAY && ['new', 'contacted'].includes(status) ? new Date(now - age + 3 * DAY).toISOString() : null,
       reminder_sent_at: age > 7 * DAY && status === 'new' ? new Date(now - age + 7 * DAY).toISOString() : null,
+      // Státuszváltás valószerű időpontja: a beérkezés után, a kor 20–80%-ánál (a „Teendők” kora ebből számol).
+      status_changed_at: status === 'new' ? null : new Date(now - age * (0.2 + 0.6 * next())).toISOString(),
     }
   })
 }

@@ -34,12 +34,16 @@ export interface Task { lead: LeadRow; title: string; why: string; overdue: bool
  * ajánlat 5 nap után → nyomon követés. Lejárt, ha a határidő után még 2 napja nem mozdult.
  */
 export function todayTasks(leads: LeadRow[], now: number): Task[] {
-  const age = (lead: LeadRow) => (now - new Date(lead.created_at).getTime()) / DAY
+  // Az „új” a beérkezéstől számít; a többi a legutóbbi státuszváltástól (4.91). Régi soroknál, ahol ez még nincs
+  // rögzítve, nem tudjuk, mióta áll az érdeklődő ebben az állapotban: ilyenkor nem jelöljük lejártnak, és nem állítunk
+  // konkrét napszámot („X napja kiment”), mert az a beérkezés napja lenne.
+  const since = (iso: string) => (now - new Date(iso).getTime()) / DAY
   return leads.flatMap((lead): Task[] => {
-    const days = age(lead)
-    if (lead.status === 'new') return [{ lead, title: 'Első hívás', why: days < 1 ? 'Ma érkezett' : `${Math.floor(days)} napja vár`, overdue: days >= 2, weight: 3 + days }]
-    if (lead.status === 'contacted' && days > 3) return [{ lead, title: 'Utánkövetés', why: 'Még nincs ajánlat', overdue: days > 5, weight: 2 }]
-    if (lead.status === 'offered' && days > 5) return [{ lead, title: 'Ajánlat követése', why: `${Math.floor(days)} napja kiment`, overdue: days > 7, weight: 2.5 }]
+    if (lead.status === 'new') { const days = since(lead.created_at); return [{ lead, title: 'Első hívás', why: days < 1 ? 'Ma érkezett' : `${Math.floor(days)} napja vár`, overdue: days >= 2, weight: 3 + days }] }
+    const changed = lead.status_changed_at ? since(lead.status_changed_at) : null
+    const days = changed ?? since(lead.created_at)
+    if (lead.status === 'contacted' && days > 3) return [{ lead, title: 'Utánkövetés', why: changed === null ? 'Még nincs ajánlat' : `${Math.floor(changed)} napja hívtuk, még nincs ajánlat`, overdue: changed !== null && changed > 5, weight: 2 }]
+    if (lead.status === 'offered' && days > 5) return [{ lead, title: 'Ajánlat követése', why: changed === null ? 'Ajánlat kiment, válasz még nincs' : `${Math.floor(changed)} napja kiment`, overdue: changed !== null && changed > 7, weight: 2.5 }]
     return []
   }).sort((a, b) => b.weight - a.weight)
 }

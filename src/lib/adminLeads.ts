@@ -11,6 +11,8 @@ export interface LeadRow {
   /** Automatikus utánkövetés: mikor ment ki a vevői emlékeztető, illetve a gyártói jelzés. */
   followup_sent_at?: string | null
   reminder_sent_at?: string | null
+  /** Legutóbbi státuszváltás ideje (4.91); régi soroknál hiányzik. */
+  status_changed_at?: string | null
   /** Termékcsalád (src/products); régi leadeknél hiányzik = pergola. */
   product?: string | null
 }

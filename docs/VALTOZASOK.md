@@ -1,5 +1,13 @@
 # Változások
 
+## 4.91 – Admin: a teendők kora a státuszváltástól számít (hibakeresés 3.)
+
+- **Hiba: hamis „lejárt” teendők.** A „Teendők” kora eddig a lead beérkezésétől számított: egy 10 napos érdeklődő, akinek ma ment ki az ajánlat, azonnal „10 napja kiment · lejárt” lett (a demóban 18-ból 15 lejárt). Most a legutóbbi státuszváltástól számít; az „új” továbbra is a beérkezéstől.
+- **Új oszlop: `leads.status_changed_at`** (supabase/leads.sql, az éles adatbázison migrálva). Minden státuszírás kitölti: admin (lista, kanban, panel), ajánlat kiküldése, ajánlat elfogadása, telepítés rögzítése. Ha egy gyártó adatbázisában még nincs meg, a szerver nélküle ír és olvas.
+- Régi soroknál, ahol a váltás ideje nem ismert, a teendő megjelenik, de nem jelöljük lejártnak, és nem írunk kitalált napszámot.
+- **Hiba: az ajánlat elfogadása visszaállíthatta a „Felszerelve” állapotot „Megnyert”-re**; javítva. A telepítésnél a lead-állapot írásának sikertelensége most naplózódik.
+- Tesztek: `adminWorkspace.test.ts`, `auditFixes.test.ts`.
+
 ## 4.90 – Konfigurátor: Esti hangulat panel, középre vágott képek, egységes infrapanel-ár (hibakeresés 2.)
 
 - **Hiba: az „Esti hangulat” panel nyitva maradt**, amikor a vevő másik eszközt választott a fülben: eltakarta a pergolát és a következő eszköz visszajelzését (az AR és a Fotóba helyezés emiatt látszólag nem csinált semmit). Most bármelyik másik eszköz választásakor bezárul; a Napszak gomb újra megnyitja.

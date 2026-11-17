@@ -12,7 +12,7 @@ import type { PergolaConfig, PriceBreakdown } from '../src/types/pergola'
 import { permitNotes } from '../src/lib/buildings'
 import { INTL_LOCALE, withLocale } from '../src/i18n/locale'
 import { describeConfig, escapeHtml, oneLine, sendEmail, siteOrigin } from './lead'
-import { authorize, json, resolveTenant, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
+import { authorize, json, patchLeadStatus, resolveTenant, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
 import { discountFromPercent } from '../src/tenants/pricingRules'
 import { deliverWebhook, quoteEventData } from './webhook'
 
@@ -304,9 +304,7 @@ export async function handleAdminQuotes(request: Request, env: AdminEnv): Promis
 
     // A korábbi függő változat felülíródik, az érdeklődő státusza „ajánlatot kapott”.
     if (previous) await patchQuote(env, previous.id, { status: 'superseded' }, 'sent').catch((error) => console.error('[quote] Régi változat lezárása sikertelen', error))
-    await fetch(`${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/leads?ref=eq.${encodeURIComponent(lead.ref)}&tenant_id=eq.${tenantId}&status=in.(new,contacted)`, {
-      method: 'PATCH', headers: { ...storeHeaders(env), Prefer: 'return=minimal' }, body: JSON.stringify({ status: 'offered' }), signal: timeout(),
-    }).catch(() => undefined)
+    await patchLeadStatus(env, `ref=eq.${encodeURIComponent(lead.ref)}&tenant_id=eq.${tenantId}&status=in.(new,contacted)`, 'offered').catch(() => undefined)
 
     const url = `${origin}/ajanlat/${created.token}`
     let emailed = false
@@ -404,9 +402,8 @@ export async function handleQuote(request: Request, env: AdminEnv): Promise<Resp
       const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || ''
       const updated = await patchQuote(env, row.id, { status: 'accepted', accepted_at: nowIso, signer_name: input.name, signer_ip: ip || null, signer_agent: agent || null }, 'sent')
       if (updated.length === 0) return json(409, { ok: false, error: 'Az ajánlat állapota közben megváltozott. Töltsd újra az oldalt.' })
-      await fetch(`${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/leads?ref=eq.${encodeURIComponent(row.lead_ref)}&tenant_id=eq.${encodeURIComponent(row.tenant_id)}`, {
-        method: 'PATCH', headers: { ...storeHeaders(env), Prefer: 'return=minimal' }, body: JSON.stringify({ status: 'won' }), signal: timeout(),
-      }).catch(() => undefined)
+      // A már felszerelt érdeklődő nem lép vissza „Megnyert”-re (pl. egy később elfogadott új ajánlatváltozattól).
+      await patchLeadStatus(env, `ref=eq.${encodeURIComponent(row.lead_ref)}&tenant_id=eq.${encodeURIComponent(row.tenant_id)}&status=neq.installed`, 'won').catch(() => undefined)
       const pay = row.payment_info ? `<p style="white-space:pre-line">${escapeHtml(row.payment_info)}</p>` : ''
       await Promise.all([
         notify(env, tenant, {

@@ -34,3 +34,24 @@ describe('hibakeresés 2026-11-17 – konfigurátor', () => {
     expect(mood).toMatch(/\+\{formatPrice\(heaterPrice\)\} \{tr\('bruttó'/)
   })
 })
+
+describe('hibakeresés 2026-11-17 – teendők kora', () => {
+  it('#6 a státusz írása időbélyeggel megy, régi adatbázisnál nélküle; a felszerelt lead nem lép vissza Megnyert-re', async () => {
+    const { patchLeadStatus } = await import('../server/tenantAdmin')
+    const calls: string[] = []
+    const original = globalThis.fetch
+    globalThis.fetch = (async (_url: string, init: RequestInit) => {
+      calls.push(String(init.body))
+      return calls.length === 1 ? new Response('column "status_changed_at" does not exist', { status: 400 }) : new Response(null, { status: 204 })
+    }) as typeof fetch
+    try {
+      const response = await patchLeadStatus({ SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'k' } as never, 'ref=eq.A', 'offered')
+      expect(response.status).toBe(204)
+      expect(JSON.parse(calls[0])).toMatchObject({ status: 'offered' })
+      expect(JSON.parse(calls[0]).status_changed_at).toBeTruthy()
+      expect(JSON.parse(calls[1])).toEqual({ status: 'offered' })
+    } finally { globalThis.fetch = original }
+    expect(readFileSync('server/quotes.ts', 'utf8')).toMatch(/status=neq\.installed`, 'won'\)/)
+    expect(readFileSync('supabase/leads.sql', 'utf8')).toMatch(/add column if not exists status_changed_at timestamptz/)
+  })
+})

@@ -5,7 +5,7 @@
 // Minden lekérdezés a bejelentkezett gyártó tenant_id-jára szűr.
 import { z } from 'zod'
 import { INSTALL_COLUMNS, installationByToken, logEvent, rest, select, storage, timeout, type InstallationRow } from './installationStore'
-import { authorize, json, loadOverrides, resolveTenant, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
+import { authorize, json, loadOverrides, patchLeadStatus, resolveTenant, storeConfigured, storeHeaders, type AdminEnv } from './tenantAdmin'
 import { parseOverrides, publicOverrides, type TenantOverrides } from '../src/tenants/overrides'
 import { describeConfig } from './lead'
 import { parseConfig, roofLabels, tenantPrice } from '../src/tenants/rules'
@@ -139,7 +139,8 @@ export async function handleAdminInstallations(request: Request, env: AdminEnv, 
     const [row] = await response.json() as InstallationRow[]
     await logEvent(env, row, 'created', 'manufacturer', { leadRef: lead.ref })
     if (lead.status !== 'installed') {
-      await fetch(`${rest(env, 'leads')}?id=eq.${lead.id}&tenant_id=eq.${tenantId}`, { method: 'PATCH', headers: { ...storeHeaders(env), Prefer: 'return=minimal' }, body: JSON.stringify({ status: 'installed' }), signal: timeout() })
+      await patchLeadStatus(env, `id=eq.${lead.id}&tenant_id=eq.${tenantId}`, 'installed')
+        .then((response) => { if (!response.ok) console.error('[installations] Lead állapot frissítése sikertelen', lead.ref, response.status) })
         .catch((error) => console.error('[installations] Lead állapot frissítése sikertelen', lead.ref, error))
     }
     return json(201, { ok: true, installation: adminView(row) })

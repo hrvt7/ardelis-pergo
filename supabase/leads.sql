@@ -45,3 +45,7 @@ alter table public.leads add column if not exists product text not null default 
 -- 4.79: viszonteladói link (…?h=graz) — a lead a viszonteladó azonosítóját viszi (árrés, másolat e-mail, CRM).
 -- Nem kötelező: ha az oszlop hiányzik, a lead nélküle mentődik (server/lead.ts), az ajánlat nélküle olvas (server/quotes.ts).
 alter table public.leads add column if not exists dealer_id text;
+
+-- 4.91: a legutóbbi státuszváltás ideje – a gyártói „Teendők” kora ebből számít (nem a lead létrehozásából).
+-- Nem kötelező: ha hiányzik, a szerver nélküle ír és olvas (server/tenantAdmin.ts: patchLeadStatus).
+alter table public.leads add column if not exists status_changed_at timestamptz;

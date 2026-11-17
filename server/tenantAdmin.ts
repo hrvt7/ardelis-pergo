@@ -183,6 +183,20 @@ const LEAD_COLUMNS = 'ref,customer_name,email,phone,postal_code,city,region,addr
 const statusSchema = z.object({ ref: z.string().trim().min(3).max(60), status: z.enum(LEAD_STATUSES).optional(), ownerNote: z.string().max(2000).optional() })
   .refine((value) => value.status !== undefined || value.ownerNote !== undefined, { message: 'Nincs módosítandó adat.' })
 
+/**
+ * Lead-státusz írása az időbélyeggel együtt (4.91): a „Teendők” kora a legutóbbi státuszváltástól számít, nem a lead
+ * létrehozásától. Ha a gyártó adatbázisában még nincs `status_changed_at` oszlop (supabase/leads.sql), nélküle ír.
+ * `filter` a PostgREST szűrő (pl. `ref=eq.X&tenant_id=eq.Y`). Visszaadja a válasz állapotát; hálózati hibánál dob.
+ */
+export async function patchLeadStatus(env: AdminEnv, filter: string, status: string, extra: Record<string, unknown> = {}): Promise<Response> {
+  const url = `${env.SUPABASE_URL!.replace(/\/$/, '')}/rest/v1/leads?${filter}`
+  const send = (body: Record<string, unknown>) => fetch(url, { method: 'PATCH', headers: { ...storeHeaders(env), Prefer: 'return=minimal' }, body: JSON.stringify(body), signal: AbortSignal.timeout(5000) })
+  const response = await send({ ...extra, status, status_changed_at: new Date().toISOString() })
+  if (response.status !== 400) return response
+  const detail = await response.clone().text().catch(() => '')
+  return /status_changed_at/.test(detail) ? send({ ...extra, status }) : response
+}
+
 /** GET /api/admin-leads → a gyártó érdeklődői (legfrissebb elöl); PATCH { ref, status } → státusz módosítása. Csak a saját tenant. */
 export async function handleAdminLeads(request: Request, env: AdminEnv): Promise<Response> {
   if (request.method !== 'GET' && request.method !== 'PATCH') return json(405, { ok: false, error: 'Nem engedélyezett metódus.' })
@@ -195,7 +209,9 @@ export async function handleAdminLeads(request: Request, env: AdminEnv): Promise
   try {
     if (request.method === 'GET') {
       const list = (columns: string) => fetch(`${base}?tenant_id=eq.${tenantId}&select=${columns}&order=created_at.desc&limit=200`, { headers: storeHeaders(env), signal: AbortSignal.timeout(5000) })
-      let response = await list(`${LEAD_COLUMNS},engagement,followup_sent_at,reminder_sent_at,product`)
+      let response = await list(`${LEAD_COLUMNS},engagement,followup_sent_at,reminder_sent_at,product,status_changed_at`)
+      // Régebbi adatbázis: az időbélyeg-oszlop nélkül próbáljuk (a többi újabb oszloppal).
+      if (response.status === 400) response = await list(`${LEAD_COLUMNS},engagement,followup_sent_at,reminder_sent_at,product`)
       // Ha a gyártó adatbázisában még nincsenek az újabb oszlopok (supabase/leads.sql), a lista nélkülük is jöjjön le.
       if (response.status === 400) response = await list(LEAD_COLUMNS)
       if (!response.ok) throw new Error(`Supabase ${response.status}`)
@@ -203,12 +219,11 @@ export async function handleAdminLeads(request: Request, env: AdminEnv): Promise
     }
     const parsed = statusSchema.safeParse(await request.json().catch(() => null))
     if (!parsed.success) return json(422, { ok: false, error: 'Érvénytelen módosítás.' })
-    const response = await fetch(`${base}?ref=eq.${encodeURIComponent(parsed.data.ref)}&tenant_id=eq.${tenantId}`, {
-      method: 'PATCH',
-      headers: { ...storeHeaders(env), Prefer: 'return=minimal' },
-      body: JSON.stringify({ ...(parsed.data.status !== undefined && { status: parsed.data.status }), ...(parsed.data.ownerNote !== undefined && { owner_note: parsed.data.ownerNote.trim() || null }) }),
-      signal: AbortSignal.timeout(5000),
-    })
+    const filter = `ref=eq.${encodeURIComponent(parsed.data.ref)}&tenant_id=eq.${tenantId}`
+    const note = parsed.data.ownerNote !== undefined ? { owner_note: parsed.data.ownerNote.trim() || null } : {}
+    const response = parsed.data.status !== undefined
+      ? await patchLeadStatus(env, filter, parsed.data.status, note)
+      : await fetch(`${base}?${filter}`, { method: 'PATCH', headers: { ...storeHeaders(env), Prefer: 'return=minimal' }, body: JSON.stringify(note), signal: AbortSignal.timeout(5000) })
     if (!response.ok) throw new Error(`Supabase ${response.status}`)
     return json(200, { ok: true })
   } catch (error) {

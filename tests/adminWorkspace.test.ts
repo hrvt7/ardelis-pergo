@@ -30,10 +30,16 @@ describe('munkaterület – valódi adatokból', () => {
       lead({ ref: 'B', status: 'new', created_at: new Date(NOW - 2 * 3600_000).toISOString() }),
       lead({ ref: 'C', status: 'contacted', created_at: new Date(NOW - 4 * DAY).toISOString() }),
       lead({ ref: 'D', status: 'contacted', created_at: new Date(NOW - 1 * DAY).toISOString() }),
-      lead({ ref: 'E', status: 'offered', created_at: new Date(NOW - 8 * DAY).toISOString() }),
+      lead({ ref: 'E', status: 'offered', created_at: new Date(NOW - 12 * DAY).toISOString(), status_changed_at: new Date(NOW - 8 * DAY).toISOString() }),
+      // 4.91: 10 napos lead, ma ment ki az ajánlat → még nincs teendő (eddig azonnal „lejárt” volt)
+      lead({ ref: 'G', status: 'offered', created_at: new Date(NOW - 10 * DAY).toISOString(), status_changed_at: new Date(NOW - 3600_000).toISOString() }),
+      // régi sor időbélyeg nélkül: van teendő, de nem jelöljük lejártnak és nem írunk kitalált napszámot
+      lead({ ref: 'H', status: 'offered', created_at: new Date(NOW - 20 * DAY).toISOString() }),
       lead({ ref: 'F', status: 'won', created_at: new Date(NOW - 9 * DAY).toISOString() }),
     ], NOW)
-    expect(tasks.map((task) => task.lead.ref)).toEqual(['A', 'B', 'E', 'C'])
+    expect(tasks.map((task) => task.lead.ref)).toEqual(['A', 'B', 'E', 'H', 'C'])
+    expect(tasks.find((task) => task.lead.ref === 'H')).toMatchObject({ overdue: false, why: 'Ajánlat kiment, válasz még nincs' })
+    expect(tasks.find((task) => task.lead.ref === 'E')?.why).toBe('8 napja kiment')
     expect(tasks.find((task) => task.lead.ref === 'A')).toMatchObject({ title: 'Első hívás', overdue: true })
     expect(tasks.find((task) => task.lead.ref === 'B')).toMatchObject({ why: 'Ma érkezett', overdue: false })
     expect(tasks.find((task) => task.lead.ref === 'E')).toMatchObject({ title: 'Ajánlat követése', overdue: true })
