@@ -34,6 +34,7 @@ import type { FurnitureSet } from '@/types/pergola'
 import { kelvinToHex } from '@/lib/color'
 import { glassPanels } from '@/lib/glass'
 import { WOOD_HEXES } from '@/lib/colors'
+import { METALLIC_HEXES, powderCoatSpec } from '@/lib/powderCoat'
 import { getHouseAsset, HOUSE_RAW } from '@/lib/houseAsset'
 import { gardenLayout, getHouseLayout, wingFootprints, WING_DEPTH } from '@/lib/sceneLayout'
 import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
@@ -313,20 +314,18 @@ function getCoat(color: string, roughness: number, detail: MaterialDetail): THRE
   let material = coatCache.get(key)
   if (!material) {
     const wood = WOOD_HEXES.has(color)
+    const spec = powderCoatSpec(detail, roughness, METALLIC_HEXES.has(color))
     // Gyengébb eszközön (low/medium) sima Standard anyag: gyorsabb shader-fordítás, kisebb GPU-terhelés.
     if (detail === 'basic') material = wood
       ? new THREE.MeshStandardMaterial({ color: lightenForWood(color), map: getWoodTexture(), metalness: 0.02, roughness: 0.6, envMapIntensity: 0.7 })
-      : new THREE.MeshStandardMaterial({ color, metalness: 0.3, roughness, roughnessMap: getPowderCoatTexture(), envMapIntensity: 0.9 })
+      : new THREE.MeshStandardMaterial({ color, metalness: spec.metalness, roughness: spec.roughness, roughnessMap: getPowderCoatTexture(), envMapIntensity: spec.envMapIntensity })
     else if (wood) material = new THREE.MeshPhysicalMaterial({ color: lightenForWood(color), map: getWoodTexture(), metalness: 0.02, roughness: 0.6, clearcoat: 0.12, clearcoatRoughness: 0.5, envMapIntensity: 0.7 })
-    // Festett (porszórt) alumínium: fémes alap, vékony lakkréteg és finom szemcse — az éleken éles, valódi csillanás.
-    else {
-      const ultra = detail === 'ultra'
-      material = new THREE.MeshPhysicalMaterial({
-        color, metalness: ultra ? 0.62 : 0.5, roughness: Math.max(0.26, roughness * (ultra ? 0.82 : 0.9)), roughnessMap: getPowderCoatTexture(),
-        normalMap: getGrainNormal(), normalScale: new THREE.Vector2(ultra ? 0.22 : 0.14, ultra ? 0.22 : 0.14),
-        clearcoat: ultra ? 0.3 : 0.22, clearcoatRoughness: 0.24, specularIntensity: 1, envMapIntensity: ultra ? 1.1 : 1,
-      })
-    }
+    // Festett (porszórt) alumínium: matt, finomstruktúrás festékréteg finom szemcsével; a metál színek fémesek (lib/powderCoat.ts).
+    else material = new THREE.MeshPhysicalMaterial({
+      color, metalness: spec.metalness, roughness: spec.roughness, roughnessMap: getPowderCoatTexture(),
+      normalMap: getGrainNormal(), normalScale: new THREE.Vector2(spec.grain, spec.grain),
+      clearcoat: spec.clearcoat, clearcoatRoughness: spec.clearcoatRoughness, specularIntensity: 1, envMapIntensity: spec.envMapIntensity,
+    })
     coatCache.set(key, material)
   }
   return material

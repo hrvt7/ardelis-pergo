@@ -1,5 +1,13 @@
 # Változások
 
+## 5.03 – Matt porszórt bevonat a 3D-ben: a sötét színek a valódi árnyalatukban
+
+- **Mi változott:** a pergola (és minden porszórt alumínium elem) bevonata a 3D-ben matt, finomstruktúrás festékként viselkedik: alacsony fémesség, tompa csillanás, vékony lakk. Korábban félig fémes volt, ezért az antracit (RAL 7016, 7021) kékesfeketének látszott, és az égbolt tükröződött rajta; most szürkének látszik, az oldalak árnyalása olvasható.
+- **Metál színek:** a DB 701–703 és a RAL 9006/9007 megtartja a korábbi fémes, lakkozott megjelenést; a fa hatású és a corten felület nem változott.
+- **Egy helyen hangolható:** az értékek a `src/lib/powderCoat.ts`-ben vannak (három minőségi szint, matt és metál).
+- **Ellenőrzés:** előnézeti telepítésen, a demó konfigurátor stúdió nézetében RAL 7016 és RAL 9016 színnel (a fehér nem ég ki). Más környezetben (terasz, kert, éjszaka) és mobilon nem néztem meg.
+- Tesztek: `powderCoat.test.ts` (matt és metál értéktartomány, metál színkészlet, a jelenet a közös leírást használja).
+
 ## 5.02 – Előrenderelt nyitóoldal: a héró kész HTML-ként érkezik
 
 - **Mi változott:** a build első lépése (`vite build --ssr src/entry-prerender.ts`) a nyitóoldal első képernyőjét – fejléc, héró, „Hét lépés” – kész HTML-ként írja a `dist/index.html`-be és a `dist/en/index.html`-be. A böngésző ezt nem rajzolja újra, hanem hidratálja (`src/main.tsx`), így a látogató a JavaScript letöltése előtt is a valódi oldalt látja. A lenti szakaszok továbbra is a böngészőben, fokozatosan épülnek fel.
