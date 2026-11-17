@@ -1,5 +1,12 @@
 # Változások
 
+## 4.87 – Új nyitó animáció: „Zsalu” (9 mp)
+
+- **A nyitó animáció lecserélve** a „Lamelix logó – Zsalu” videóra (9:16, 9 mp, 3D: zsalulamellák → összeálló „L” → lamellák, tükröződő padló). Minden úton ez fut: videó, hardveres dekóder (tiltott automatikus lejátszásnál), animált kép, és a zárókocka állóképe; a nyitókép háttérszíne az új videóhoz igazítva.
+- Méret: videó 0,83 MB (720×1280, jó minőség), animált tartalék 0,25 MB. `scripts/intro-assets.sh` mostantól a minőséget is fogadja (`CRF=…`).
+- Tesztek: `introSplash.test.ts` (216 képkocka, 9 mp, az index a videóhoz tartozik), `tests/e2e/intro.cjs`: zöld; a dekóderes út Chrome-ban és a Safari motorjában is végigfut (9,2–9,7 mp).
+- Nem ellenőrzött: valódi iPhone-on és iPaden.
+
 ## 4.86 – Nyitóoldal: „Digitális termékkönyv” szakasz
 
 - **Új szakasz a gyártói nyitóoldalon (`/` és `/en`), az admin-tábla után:** „Az eladás után is Önnél marad a vevő.” Négy lépés (QR-matrica, garancia komponensenként, hibabejelentés fotóval, bővítés), mellette kódból rajzolt telefon a tulajdonosi oldal egyszerűsített képernyőivel és egy QR-matricával. A lépések kattinthatók; amíg a szakasz látszik és a látogató nem választott, maguktól lépnek (csökkentett mozgásnál nem). A minta-QR valódi, beolvasható kód, a szakaszra mutat. Mobilon: cím → telefon → lépések.

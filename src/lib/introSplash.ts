@@ -1,4 +1,4 @@
-// Nyitó animáció (Lamelix logó – lamellafal, 9:16, 10 mp) a telepített webapp indításakor, mobilon és tableten, amíg a háttérben
+// Nyitó animáció (Lamelix logó – zsalu, 9:16, 9 mp) a telepített webapp indításakor, mobilon és tableten, amíg a háttérben
 // betölt a 3D konfigurátor. Tiszta döntési modul: a src/intro/boot.ts használja (a build az index.html-be ágyazza),
 // a tests/introSplash.test.ts ellenőrzi.
 import { isAppPath } from './swRoutes'
@@ -19,7 +19,7 @@ export const INTRO_INDEX_SRC = '/assets/intro/lamelix-intro.json'
 /** A logó + „lamelix” felirat zárókockája állóképként (a tartalék animáció végén és betöltése alatt ez áll). */
 export const INTRO_LOGO_SRC = '/assets/intro/lamelix-intro-logo.webp'
 /** Az animáció hossza (a videóé is): a tartalék képnél ennyi után vált a logós állóképre (a WebKit újraindítaná). */
-export const INTRO_DURATION_MS = 10000
+export const INTRO_DURATION_MS = 9000
 /** A munkameneten belül csak egyszer (pl. a „Frissítés” utáni újratöltésnél már nem). */
 export const INTRO_SESSION_KEY = 'lamelix-intro-played'
 /**
@@ -67,7 +67,7 @@ export function shouldPlayIntro(env: IntroEnvironment): boolean {
   return env.standalone && env.touch
 }
 
-/** Végső biztosíték: ha a lejátszás elakad (megszakadt hálózat), ennyi után mindenképp eltűnik (10 mp-es animáció + a 3D felépítése + tartalék). */
+/** Végső biztosíték: ha a lejátszás elakad (megszakadt hálózat), ennyi után mindenképp eltűnik (9 mp-es animáció + a 3D felépítése + tartalék). */
 export const INTRO_HARD_CAP_MS = 30000
 
 export interface IntroState {

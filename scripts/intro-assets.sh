@@ -11,8 +11,8 @@ set -euo pipefail
 src="${1:?forrásvideó kell}"
 out="$(cd "$(dirname "$0")/.." && pwd)/public/assets/intro"
 mkdir -p "$out"
-ffmpeg -v error -y -i "$src" -an -vf "scale=720:1280:flags=lanczos,format=yuv420p" -c:v libx264 -preset veryfast -crf 20 -profile:v high -level 4.0 -movflags +faststart "$out/lamelix-intro.mp4"
-ffmpeg -v error -y -i "$out/lamelix-intro.mp4" -vf "format=yuv420p" -c:v libsvtav1 -preset 6 -crf 32 -g 48 -f avif -loop 1 "$out/lamelix-intro.avif" 2>/dev/null
+ffmpeg -v error -y -i "$src" -an -vf "scale=720:1280:flags=lanczos,format=yuv420p" -c:v libx264 -preset veryfast -crf "${CRF:-20}" -profile:v high -level 4.0 -movflags +faststart "$out/lamelix-intro.mp4"
+ffmpeg -v error -y -i "$out/lamelix-intro.mp4" -vf "format=yuv420p" -c:v libsvtav1 -preset 6 -crf "${AVIF_CRF:-32}" -g 48 -f avif -loop 1 "$out/lamelix-intro.avif" 2>/dev/null
 ffmpeg -v error -y -sseof -0.05 -i "$out/lamelix-intro.mp4" -frames:v 1 -c:v libwebp -quality 88 "$out/lamelix-intro-logo.webp"
 python3 - "$out/lamelix-intro.mp4" "$out/lamelix-intro.json" <<'EOF'
 import base64, json, struct, subprocess, sys
