@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { handleAdminInstallations, resetInstallationRateLimit } from '../server/installations'
 import { hasMetadata, sanitizeJpeg } from '../server/jpeg'
-import { handleAdminService, handleServicePhoto, handleServiceRequest } from '../server/serviceRequests'
+import { handleAdminService, handleServicePhoto, handleServiceRequest, MAX_PHOTOS_PER_INSTALLATION } from '../server/serviceRequests'
 import { signToken } from '../server/tenantAdmin'
 import { PRIVACY_VERSION } from '../src/lib/privacyVersion'
 import { fitWithin } from '../src/lib/photoPrep'
@@ -31,6 +31,17 @@ beforeEach(() => resetInstallationRateLimit())
 afterEach(() => vi.unstubAllGlobals())
 
 describe('JPEG metaadat-eltávolítás', () => {
+  it('4.94: az első kép után fűzött második kép (MPF, saját EXIF/GPS-szel) is lekerül', () => {
+    const appended = new Uint8Array([...photo, ...photo]) as Uint8Array<ArrayBuffer>
+    expect(hasMetadata(appended)).toBe(true)
+    const clean = sanitizeJpeg(appended)
+    expect(clean.ok).toBe(true)
+    if (!clean.ok) return
+    expect(hasMetadata(clean.bytes)).toBe(false)
+    for (const secret of ['Exif', 'TestCam', '2026:11:16']) expect(latin(clean.bytes)).not.toContain(secret)
+    expect(clean.bytes.length).toBe((sanitizeJpeg(photo) as { bytes: Uint8Array }).bytes.length)
+  })
+
   it('valódi fotóból eltávolítja az EXIF-et (GPS, eszköz) és a megjegyzést; a képadat változatlan', () => {
     expect(hasMetadata(photo)).toBe(true)
     expect(latin(photo)).toContain('TestCam')
@@ -142,5 +153,16 @@ describe('Szerviz nézet — admin', () => {
     const id = store.tables.installations[0].id
     expect((await handleAdminInstallations(await admin('DELETE', `/api/admin-installations?id=${id}`), { ...env, ADMIN_PASSWORD_DEMO: 'x' }, NOW)).status).toBe(200)
     expect(store.storage.size).toBe(0)
+  })
+})
+
+describe('4.94: telepítésenkénti fotókorlát', () => {
+  it('a korlát elérése után nem fogad több fotót ugyanahhoz a telepítéshez', async () => {
+    const { store, token } = await setup()
+    const id = store.tables.installations[0].id
+    for (let index = 0; index < MAX_PHOTOS_PER_INSTALLATION; index += 1) store.storage.set(`service-photos/demo/${id}/x${index}.jpg`, new Uint8Array([1]))
+    const response = await upload(token, photo, '9.9.9.9')
+    expect(response.status).toBe(429)
+    expect([...store.storage.keys()].filter((key) => key.startsWith(`service-photos/demo/${id}/`))).toHaveLength(MAX_PHOTOS_PER_INSTALLATION)
   })
 })

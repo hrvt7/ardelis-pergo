@@ -1,5 +1,12 @@
 # Változások
 
+## 4.94 – Szervizfotók: hozzáfűzött képek metaadata és telepítésenkénti korlát (hibakeresés 6.)
+
+- **Hiba: a szerveroldali metaadat-szűrés az első kép után hozzáfűzött képeket (iPhone/Samsung MPF, gain map) bájtra átengedte**, a saját EXIF/GPS-adatukkal együtt (ha egy kliens kihagyja a böngészős újrakódolást). Most a képadat az első valódi záró jelölőnél véget ér, ami utána jön, lekerül; a progresszív képek szkennjei közti APPn/COM szegmensek is lekerülnek. Az ellenőrző (`hasMetadata`) a teljes fájlban keres EXIF-fejlécet.
+- **Hiba: a szervizfotó-feltöltésnek nem volt telepítésenkénti felső korlátja** (csak IP-nkénti), egy kiszivárgott QR-linkkel a tárhely korlátlanul tölthető volt. Most egy termékhez legfeljebb 60 fotó tárolható; afölött barátságos hibaüzenet.
+- Nyitva: a bejelentéshez végül nem csatolt fotók automatikus takarítása (most a telepítés törlésekor törlődnek).
+- Tesztek: `serviceRequests.test.ts` (hozzáfűzött kép, fotókorlát).
+
 ## 4.93 – CRM-webhook: bővítésnél a különbözet, és nem lassítja a választ (hibakeresés 5.)
 
 - **Hiba: bővítési kérésnél a CRM-be a teljes új konfiguráció ára ment** (pl. 30,9 ezer € egy 900 €-s LED-bővítésre), az adminban és az e-mailben viszont a különbözet. Most a `lead.created` esemény a bővítés becsült különbözetét küldi (`price.estimate: true`), `source: "expansion"`-nel, és külön `expansion` blokkban a telepítés azonosítóját, a hozzáadott tételeket és a teljes konfiguráció árát.

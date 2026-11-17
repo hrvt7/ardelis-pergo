@@ -31,6 +31,16 @@ const privateJson = (status: number, body: unknown) => json(status, body, { 'X-R
 /** A fotó tárolási útja: gyártó / telepítés / véletlen azonosító. A tulajdonos csak az azonosítót látja. */
 export const photoPath = (row: Pick<InstallationRow, 'tenant_id' | 'id'>, photoId: string) => `${row.tenant_id}/${row.id}/${photoId}.jpg`
 
+/** Egy telepítéshez tárolható fotók száma (a bejelentésekhez csatolt és a még nem csatolt képek együtt). */
+export const MAX_PHOTOS_PER_INSTALLATION = 60
+
+async function storedPhotoCount(env: AdminEnv, row: Pick<InstallationRow, 'tenant_id' | 'id'>) {
+  const response = await fetch(storage(env, `object/list/${PHOTO_BUCKET}`), { method: 'POST', headers: { ...storeHeaders(env), 'Content-Type': 'application/json' }, body: JSON.stringify({ prefix: `${row.tenant_id}/${row.id}/`, limit: MAX_PHOTOS_PER_INSTALLATION + 1 }), signal: timeout() })
+  if (!response.ok) return 0
+  const items = await response.json().catch(() => []) as unknown[]
+  return Array.isArray(items) ? items.length : 0
+}
+
 // ── Tulajdonos: fotó ────────────────────────────────────────────────────────
 export async function handleServicePhoto(request: Request, env: AdminEnv, now = new Date()): Promise<Response> {
   if (request.method !== 'POST') return privateJson(405, { ok: false, error: 'Csak POST kérés engedélyezett.' })
@@ -45,6 +55,8 @@ export async function handleServicePhoto(request: Request, env: AdminEnv, now = 
     if (body.length > MAX_PHOTO_BYTES) return privateJson(413, { ok: false, error: 'A kép túl nagy (legfeljebb 4 MB).' })
     const clean = sanitizeJpeg(body)
     if (!clean.ok) return privateJson(415, { ok: false, error: 'Csak JPEG kép tölthető fel.' })
+    // 4.94: telepítésenkénti felső korlát – egy kiszivárgott QR-link sem töltheti meg korlátlanul a tárhelyet.
+    if (await storedPhotoCount(env, row) >= MAX_PHOTOS_PER_INSTALLATION) return privateJson(429, { ok: false, error: 'Ehhez a termékhez már sok fotó érkezett. Küldd el a bejelentést a meglévő képekkel, vagy keresd a gyártót.' })
     const id = crypto.randomUUID()
     const upload = await fetch(storage(env, `object/${PHOTO_BUCKET}/${photoPath(row, id)}`), {
       method: 'POST', headers: { ...storeHeaders(env), 'Content-Type': 'image/jpeg', 'x-upsert': 'false', 'Cache-Control': 'private, max-age=0' }, body: clean.bytes, signal: timeout(15000),
