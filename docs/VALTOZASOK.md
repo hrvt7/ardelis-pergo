@@ -1,5 +1,12 @@
 # Változások
 
+## 5.01 – „Új verzió elérhető”: felülről beugró, animált kártya
+
+- **A frissítés-jelzés már nem alul ugrik fel** (ott a telefonon rálógott a kalkulációs sávra): felülről, a fejléc alá érkezik egy rugós beugró animációval, lélegző ikon-gyűrűvel és egyszeri fényvillanással a „Frissítés” gombon. Tableten és asztalon a 3D nézet fölött, jobbra áll, így a bal oldali panelt és lépéssávot sem takarja. Világos és sötét felülethez is igazodik; csökkentett mozgás beállításnál csak elhalványul.
+- A nyitó animáció után jelenik meg (nem a betöltés pillanatában), a „Frissítés” gomb forgó ikonnal jelzi az újratöltést, az X-re felfelé kicsúszva eltűnik. A futó munkamenetet továbbra sem szakítja meg magától; a konfiguráció a böngészőben megmarad.
+- Tesztek: `swUpdateBanner.test.ts` (felül, animációval, csak a nyitó animáció után és csak gombnyomásra), `cssSplit.test.ts`; böngészős próba (`tests/e2e/offline.cjs`, az új oldalsó eszközsorhoz igazítva): a jelzés a képernyő felső felében, frissítés után a régi tár törlődik – mind zöld. Képernyőképen ellenőrizve telefonon (iPhone 14 Pro méret) és tableten.
+- Nem ellenőrzött: valódi iPhone-on és iPaden.
+
 ## 5.00 – Javítás: a mintaoldal betűi és a stílus-sorrend az alkalmazás-oldalakon
 
 - **Hiba:** a 4.98 után a mintaoldalon (`/minta`) a fejléc és a címek betűje megváltozott, mert az alkalmazás közös stíluslapja (`index.css`) az oldal saját stíluslapja *után* töltődött, és felülírta.

@@ -22,7 +22,7 @@ describe('kisebb első stíluslap a nyitóoldalon (4.98)', () => {
     const base = read('src/base.css')
     expect(base).toMatch(/@tailwind base;/)
     expect(base).toMatch(/:root \{/)
-    expect(base).toMatch(/\.sw-update/)
+    expect(base).toMatch(/\.update-pop \{/)
     expect(read('src/index.css')).not.toMatch(/@tailwind/)
   })
 

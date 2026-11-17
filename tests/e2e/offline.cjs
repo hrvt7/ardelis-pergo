@@ -13,8 +13,10 @@ const issues = []; const log = (...a) => console.log(...a);
 const ok = (cond, what) => { if (cond) log('  ✓', what); else { issues.push(what); log('  ✗', what) } };
 const sceneReady = (p) => p.waitForSelector('.scene-canvas-wrap[data-scene-ready="true"]', { timeout: 120000 });
 const openView = async (p) => {
-  await p.locator('.tools-toggle').click();
-  await p.locator('.tools-item:visible', { hasText: 'Nézet és vizualizáció' }).first().click();
+  // Oldalsó eszközsor (új elrendezés) vagy az „Eszközök” menü (régi elrendezés).
+  const rail = p.locator('.tool-rail button[aria-label="Nézet és vizualizáció"]');
+  if (await rail.count()) await rail.first().click();
+  else { await p.locator('.tools-toggle').click(); await p.locator('.tools-item:visible', { hasText: 'Nézet és vizualizáció' }).first().click(); }
   await p.waitForSelector('.view-popover[aria-label="Nézet és vizualizáció"]');
 };
 const cacheNames = (p) => p.evaluate(() => caches.keys());
@@ -73,9 +75,12 @@ const cacheNames = (p) => p.evaluate(() => caches.keys());
     fs.writeFileSync(SW_FILE, original.split(`version:"${version}"`).join('version:"e2enext"'));
     await p.goto(`${BASE}/konfigurator`); await sceneReady(p);
     await p.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r && r.update()));
-    await p.waitForSelector('.sw-update', { timeout: 60000 });
+    await p.waitForSelector('.update-pop', { timeout: 60000 });
+    await p.waitForTimeout(900); await p.screenshot({ path: '/tmp/update-pop-tablet.png' });
+    const pop = await p.evaluate(() => { const r = document.querySelector('.update-pop').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, vh: innerHeight } });
+    ok(pop.bottom < pop.vh / 2, `a jelzés felül jelenik meg (y ${Math.round(pop.top)}–${Math.round(pop.bottom)} / ${pop.vh}), nem takarja a lenti sávot`);
     ok(true, '„Új verzió elérhető” jelzés megjelent (a futó munkamenet nem töltött újra magától)');
-    await Promise.all([p.waitForEvent('load', { timeout: 60000 }), p.locator('.sw-update button', { hasText: 'Frissítés' }).click()]);
+    await Promise.all([p.waitForEvent('load', { timeout: 60000 }), p.locator('.update-pop-go').click()]);
     await p.waitForFunction((old) => caches.keys().then((k) => !k.includes(old) && k.includes('lamelix-build-e2enext')), oldBuild, { timeout: 60000 }).catch(() => undefined);
     const after = await cacheNames(p); log('   tárak:', after.join(', '));
     ok(!after.includes(oldBuild) && after.includes('lamelix-build-e2enext'), 'a régi build-tár törlődött, az új létrejött');
