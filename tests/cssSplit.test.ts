@@ -9,12 +9,13 @@ describe('kisebb első stíluslap a nyitóoldalon (4.98)', () => {
     const main = read('src/main.tsx')
     expect(main).toContain("import './base.css'")
     expect(main).not.toMatch(/import ['"]\.\/index\.css['"]/)
-    for (const page of APP_PAGES) {
-      const src = read(`src/pages/${page}.tsx`)
-      expect(src, page).toContain("import '@/index.css'")
-      expect(src, page).toContain("import '@/appFonts'")
-    }
-    expect(read('src/App.tsx')).toContain("const NotFound = lazy(() => import('@/pages/NotFound'))")
+    const app = read('src/App.tsx')
+    const styles = read('src/appStyles.ts')
+    expect(styles).toContain("import '@/index.css'")
+    expect(styles).toContain("import '@/appFonts'")
+    // Az alkalmazás-stílus mindig az oldal előtt töltődik (kaszkád-sorrend), minden alkalmazás-oldalnál.
+    expect(app).toContain("const withAppStyles = <T,>(load: () => Promise<T>) => () => import('@/appStyles').then(load)")
+    for (const page of APP_PAGES) expect(app, page).toContain(`lazy(withAppStyles(() => import('@/pages/${page}')))`)
   })
 
   it('a Tailwind és az alapstílus egyszer, a base.css-ben van; az index.css-ből kikerült', () => {

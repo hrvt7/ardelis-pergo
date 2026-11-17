@@ -1,5 +1,3 @@
-import '@/index.css'
-import '@/appFonts'
 // Vevői ajánlatoldal: /ajanlat/:token — a titkos link a hitelesítés. Megtekintés, elfogadás (név + nyilatkozat), elutasítás.
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router'

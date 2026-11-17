@@ -2,14 +2,16 @@ import { lazy, Suspense } from 'react'
 import Platform from '@/pages/Platform'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
 // A konfigurátor (three.js), a belépő és az admin csak a saját útvonalán töltődik; a nyitóoldal nem tölti elő őket.
-const TenantStudio = lazy(() => import('@/pages/TenantStudio'))
-const Login = lazy(() => import('@/pages/Login'))
-const AdminPage = lazy(() => import('@/pages/AdminPage'))
-const QuotePage = lazy(() => import('@/pages/QuotePage'))
-const InstallationPage = lazy(() => import('@/pages/InstallationPage'))
-const Home = lazy(() => import('@/pages/Home'))
-const Privacy = lazy(() => import('@/pages/Privacy'))
-const NotFound = lazy(() => import('@/pages/NotFound'))
+// Előbb mindig a közös alkalmazás-stílus (src/appStyles.ts), utána az oldal: így az oldal saját CSS-e marad később a kaszkádban.
+const withAppStyles = <T,>(load: () => Promise<T>) => () => import('@/appStyles').then(load)
+const TenantStudio = lazy(withAppStyles(() => import('@/pages/TenantStudio')))
+const Login = lazy(withAppStyles(() => import('@/pages/Login')))
+const AdminPage = lazy(withAppStyles(() => import('@/pages/AdminPage')))
+const QuotePage = lazy(withAppStyles(() => import('@/pages/QuotePage')))
+const InstallationPage = lazy(withAppStyles(() => import('@/pages/InstallationPage')))
+const Home = lazy(withAppStyles(() => import('@/pages/Home')))
+const Privacy = lazy(withAppStyles(() => import('@/pages/Privacy')))
+const NotFound = lazy(withAppStyles(() => import('@/pages/NotFound')))
 
 /** Átirányítás, ami megtartja a lekérdezést és a #hash-t (megosztott konfigurációs linkek). */
 function Redirect({ to }: { to: string }) {

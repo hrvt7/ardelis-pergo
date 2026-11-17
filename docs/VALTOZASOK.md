@@ -1,5 +1,12 @@
 # Változások
 
+## 5.00 – Javítás: a mintaoldal betűi és a stílus-sorrend az alkalmazás-oldalakon
+
+- **Hiba:** a 4.98 után a mintaoldalon (`/minta`) a fejléc és a címek betűje megváltozott, mert az alkalmazás közös stíluslapja (`index.css`) az oldal saját stíluslapja *után* töltődött, és felülírta.
+- **Javítás:** az `App.tsx` minden alkalmazás-oldal előtt előbb a közös stílust (`src/appStyles.ts`: `index.css` + alkalmazás-betűk) tölti be, utána az oldalt; így a sorrend ugyanaz, mint a szétválasztás előtt.
+- **Ellenőrzés:** az előző (4.97) és az új build helyben, képpontra összevetve: mintaoldal, adatkezelés, belépés, admin, 404, ajánlat- és tulajdonosi oldal 11–11 görgetési helyzetben asztali és mobil méreten, valamint a konfigurátor felülete – eltérés nincs.
+- Tesztek: `cssSplit.test.ts` (az alkalmazás-stílus minden alkalmazás-oldal előtt töltődik).
+
 ## 4.99 – Szerviz: munkalap (felelős, határidő, javítás, költség) és hibastatisztika
 
 - **Munkalap minden hibabejelentéshez:** felelős (a korábban megadott nevekből választható), határidő, diagnózis, elvégzett munka, felhasznált alkatrész, munkaidő (perc), garanciális vagy fizetős, nettó költség, eredmény (megjavítva, ideiglenes, nem javítható, nem volt hiba). A szerver csak a ténylegesen változó mezőket menti. Az üres mező törlést jelent. A lezárás ideje automatikus, újranyitáskor törlődik.

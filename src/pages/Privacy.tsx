@@ -1,5 +1,3 @@
-import '@/index.css'
-import '@/appFonts'
 import { Link } from 'react-router'
 import LamelixLogo from '@/components/LamelixLogo'
 import { PRIVACY_VERSION } from '@/lib/privacyVersion'

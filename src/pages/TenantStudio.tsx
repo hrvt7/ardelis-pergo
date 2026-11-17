@@ -1,5 +1,3 @@
-import '@/index.css'
-import '@/appFonts'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router'
 import NotFound from '@/pages/NotFound'

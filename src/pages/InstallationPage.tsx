@@ -1,5 +1,3 @@
-import '@/index.css'
-import '@/appFonts'
 // Tulajdonosi oldal: /t/:token — a felszerelt termék digitális ikerpéldánya, bejelentkezés nélkül.
 // A titkos link a hitelesítés. Személyes adatot nem mutat; a 3D a rögzítéskor befagyasztott konfigurációból készül.
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'

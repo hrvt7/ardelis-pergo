@@ -1,5 +1,3 @@
-import '@/index.css'
-import '@/appFonts'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { priceInputStep, setDisplayCurrency, unitLabel } from '@/lib/money'
 import { Code2, ExternalLink, LayoutDashboard, LifeBuoy, LogOut, Search, SlidersHorizontal, Users, Wrench } from 'lucide-react'
