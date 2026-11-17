@@ -1,5 +1,13 @@
 # Változások
 
+## 4.89 – Admin: telefonos navigáció, Szerviz, kanban és állapotgombok (hibakeresés 1.)
+
+- **Hiba: telefonon a „Beállítások” lelógott** az alsó navigációról, mióta 6 fül van (Szerviz). Most csak az aktív fül írja ki a nevét (13 px, Vanilla alapon), a többi 44 px-es ikon; a nevük a képernyőolvasónak megmarad.
+- **Hiba: a Szerviz oldal telefonon szélesebb volt a képernyőnél** (levágott szöveg, szűrők, üres állapot): a görgethető szűrősor kitolta az oszlopot. Javítva, minden fül tartalma a képernyőn belül marad.
+- **Kanban:** a jobb szél elhalványul, jelezve, hogy oldalra további oszlopok (Felszerelve, Elveszett) vannak.
+- **Részletes panel:** az állapotgombok két oszlopban, a „Kapcsolatba léptünk” felirat teljesen olvasható.
+- Tesztek: `adminWorkspace.test.ts`.
+
 ## 4.88 – Konfigurátor mobilon és telepített webappként: tisztább alsó lap, rövidebb fül
 
 - **Telepített webapp (kezdőképernyő):** a munkafelület magassága levonja az állapotsort is. Eddig a jelenet a képernyő alá lógott: a felhúzott lap a fejlécre csúszott, az eszközfül majdnem rálógott az alsó lapra. A fül alja az alsó biztonsági sávval is számol.

@@ -469,3 +469,26 @@
 .admin-ws .sticker-box { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
 .admin-ws .sticker-box img { border-radius: 12px; background: #fff; padding: 6px; }
 .admin-ws .sticker-box > div { flex: 1 1 240px; display: grid; gap: 10px; }
+
+/* ── 4.89 (hibakeresés 2026-11-17) ───────────────────────────────────────── */
+/* Szerviz (és minden fül) telefonon: a tartalom nem lehet szélesebb a képernyőnél – a vízszintesen görgethető
+   szűrősor min-content szélessége eddig kitolta az egész oszlopot. */
+.admin-ws .tab-fade, .admin-ws .service, .admin-ws .installs { min-width: 0; max-width: 100%; }
+.admin-ws .service { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.admin-ws .service .toolbar { min-width: 0; flex-wrap: wrap; }
+.admin-ws .service .tabs { min-width: 0; max-width: 100%; }
+/* Kanban: jelzés, hogy oldalra görgethető (halványuló jobb szél, amíg van még oszlop) */
+.admin-ws .board { -webkit-mask: linear-gradient(90deg, #000 calc(100% - 56px), transparent); mask: linear-gradient(90deg, #000 calc(100% - 56px), transparent); padding-right: 56px; }
+/* Részletes panel: az állapotgombok két oszlopban, a teljes felirat olvasható */
+.admin-ws .status-chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.admin-ws .status-chips button { white-space: normal; text-overflow: clip; line-height: 1.2; min-height: 44px; padding: 6px 10px; }
+@media (max-width: 860px) {
+  /* Alsó navigáció: 6 fül is elfér – csak az aktív fül írja ki a nevét (13 px), a többi 44 px-es ikon, felirattal az akadálymentes névben */
+  .admin-ws .admin-nav { display: flex; gap: 2px; }
+  .admin-ws .admin-nav button { flex: 1 1 0; min-width: 44px; min-height: 52px; padding: 0; gap: 0; }
+  .admin-ws .admin-nav button:not(.is-on) > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .admin-ws .admin-nav button.is-on { flex: 0 0 auto; flex-direction: row; gap: 6px; padding: 0 14px 0 4px; font-size: 13px; font-weight: 600; border-radius: 999px; background: var(--ws-accent); color: var(--ws-ink); }
+  .admin-ws .admin-nav button.is-on svg { background: transparent; color: var(--ws-ink); padding: 8px; }
+  .admin-ws .admin-nav em { font-size: 11px; }
+  .admin-ws .admin-nav button.is-on em { position: static; order: 3; margin-left: 2px; background: var(--ws-ink); color: var(--ws-accent); }
+}

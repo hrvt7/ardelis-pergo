@@ -44,7 +44,7 @@ describe('munkaterület – valódi adatokból', () => {
     const ws = readFileSync('src/components/admin/Workspace.tsx', 'utf8')
     expect(css).toMatch(/--ws-accent: #EFF0A3/)
     // A korábbi maszk elfedte a gombokat és „fekete foltot” hagyott: a kivágás most a felület színével festett fül.
-    expect(css).not.toMatch(/mask:/)
+    expect(css).not.toMatch(/\.ws-card[^}]*mask:/)
     expect(css).toMatch(/\.ws-notch::before, \.ws-notch::after/)
     expect(ws).toMatch(/className="ws-avatar">\{initials\(lead\.customer_name\)\}/)
     expect(ws).not.toMatch(/<img/)
@@ -87,5 +87,13 @@ describe('munkaterület – valódi adatokból', () => {
     expect((leads.match(/<LeadInterest lead=\{lead\} \/>/g) ?? []).length).toBeGreaterThanOrEqual(2)
     expect(leads).not.toMatch(/bc-moves/)
     expect(css).toMatch(/grid-auto-columns: minmax\(272px, 1fr\)/)
+  })
+
+  it('4.89: telefonon 6 fül is elfér (csak az aktív felirata látszik), a Szerviz nem szélesebb a képernyőnél, a kanban jelzi a további oszlopokat, az állapotgombok nem vágódnak', () => {
+    const css = readFileSync('src/admin-workspace.css', 'utf8')
+    expect(css).toMatch(/\.admin-nav button:not\(\.is-on\) > span \{ position: absolute; width: 1px;/)
+    expect(css).toMatch(/\.admin-ws \.service \{ display: grid; grid-template-columns: minmax\(0, 1fr\)/)
+    expect(css).toMatch(/\.admin-ws \.board \{ -webkit-mask: linear-gradient\(90deg/)
+    expect(css).toMatch(/\.admin-ws \.status-chips \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/)
   })
 })
