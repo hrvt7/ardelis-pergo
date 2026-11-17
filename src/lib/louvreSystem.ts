@@ -7,6 +7,7 @@
 //   hajtókarját egyszerre forgatja (paralelogramma). Motorhossz csapszegtől csapszegig ~732 (zárva) → ~913 (nyitva),
 //   a lamellák 0…110°±5°-ig nyílnak. A hajtókar sugara (115 mm) és szöge rajzról mérve, ±5 mm.
 // A modul tiszta függvényekből áll (nincs three.js), hogy a 3D jelenet és az áttekintő panel ugyanazt számolja.
+import { frozenSeconds } from './sceneClock'
 
 export const LOUVRE = {
   /** a lamella szélessége és vastagsága (m) */
@@ -70,6 +71,38 @@ export function louvreProfile(arcSteps = 12): [number, number][] {
   arc(41, 18, 18, 180, 270, s)
   // tükrözés: a nyelv (u = 0) kerül elöl (+x); a tükrözés megfordítja a körüljárást, ezért a pontsor is fordul
   return mm.map(([u, v]) => [-(u - 112) / 1000, (v - 20) / 1000] as [number, number]).reverse()
+}
+
+/**
+ * A lamella keresztmetszete adott nyitási szögnél, a tengely helyén (z, y). Ugyanaz a forgatás, mint a
+ * 3D-ben (LouvreRoof: −szög az x tengely körül): a nyelv (+z) nyitáskor felfelé emelkedik.
+ */
+export function louvreSection(angleDeg: number, axleZ: number, axleY: number, arcSteps = 12): [number, number][] {
+  const a = (angleDeg * Math.PI) / 180
+  const c = Math.cos(a)
+  const s = Math.sin(a)
+  return louvreProfile(arcSteps).map(([z, y]) => [axleZ + z * c - y * s, axleY + y * c + z * s])
+}
+
+/** A lamella legtávolabbi pontja a tengelytől (m): a forgás burkolóköre. */
+export const LOUVRE_REACH = Math.max(...louvreProfile(24).map(([z, y]) => Math.hypot(z, y)))
+
+/** A záró profilok keresztmetszete (z, y), ahogy a 3D rajzolja: 22 mm vastag, a tengely felett 6 mm-rel. */
+export function louvreSealBoxes(layout: LouvreLayout, depth: number, beam: number): { front: [number, number, number, number] | null; back: [number, number, number, number] | null } {
+  const innerHalf = (depth - beam) / 2
+  // A fix profil a forgó lamella burkolókörén kívül kezdődik (+3 mm hézag): kis szögnél a nyelv és a csatorna
+  // különben belefordulna (a 4.96 előtt a zárt él vonalában kezdődött, és 0–5° között 1–3 mm-t belelógott).
+  const reach = LOUVRE_REACH + 0.003
+  const front0 = layout.z[layout.z.length - 1] + reach
+  const back0 = layout.z[0] - reach
+  const frontSeal = Math.max(0, innerHalf - front0)
+  const backSeal = Math.max(0, back0 + innerHalf)
+  const y0 = layout.axleY + 0.006 - 0.011
+  const y1 = layout.axleY + 0.006 + 0.011
+  return {
+    front: frontSeal > 0.004 ? [innerHalf - frontSeal, innerHalf, y0, y1] : null,
+    back: backSeal > 0.004 ? [-innerHalf, -innerHalf + backSeal, y0, y1] : null,
+  }
 }
 
 export interface ModuleLayout {
@@ -179,11 +212,11 @@ export function demoAngle(seconds: number): { angle: number; phase: 'closed' | '
   return { angle: LOUVRE.maxAngle * (1 - smooth((t - closedHold - open - openHold) / DEMO_CYCLE.close)), phase: 'closing' }
 }
 
-/** a bemutató órája: a jelenet és a panel ugyanabból az indulási időpontból számol */
+/** a bemutató órája: a jelenet és a panel ugyanabból az indulási időpontból számol. `?freeze=` mellett a bemutató ideje maga a kimerevített idő. */
 let demoStart = 0
 let frozenAt: number | null = null
 export const startDemoClock = () => { demoStart = performance.now(); frozenAt = null }
-export const demoSeconds = () => frozenAt ?? (performance.now() - demoStart) / 1000
+export const demoSeconds = () => frozenSeconds() ?? frozenAt ?? (performance.now() - demoStart) / 1000
 /** szünet: a jelenet és a panel ugyanazon az állásnál áll meg, folytatáskor onnan megy tovább */
 export const pauseDemo = (paused: boolean) => {
   if (paused && frozenAt === null) frozenAt = (performance.now() - demoStart) / 1000

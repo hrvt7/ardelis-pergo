@@ -1,5 +1,15 @@
 # Változások
 
+## 4.96 – Ütközésvizsgálat a mozgó elemekre, kimerevíthető jelenet
+
+- **Közös kinematika (`src/lib/mechanics.ts`):** a nyíló és a tolóajtó minden helyzete egyetlen fázisból (0 = zárva, 1 = nyitva) számolódik. A 3D jelenet ebből mozgatja a szárnyat, az ütközésteszt pedig ugyanezt söpri végig. Az oldalszakaszok helye és hossza (osztóprofil, középoszlop) is innen jön.
+- **Ajtók ütközésvizsgálata (`src/lib/clearance.ts`):** a szárny teljes útját ellenőrzi a dézsák, ültetőládák, kerti lámpák, bútorok, a ház, a házszárnyak, az oszlopok és a többi oldalfal ellen. A vizsgálat ~6000 konfigurációt fed le: minden rögzítés, méret, oldal, egész és fél oldal, tükrözés, háztípus, modulos pergola, télikert és stúdió. A régi dézsahelyet (a 3.61-ben javított hibát) azonnal megtalálja.
+- **Hiba: a tolószárny a sarokoszlopba csúszott.** A belső oldalon futott, az oszlopok viszont a falsíktól befelé állnak, ezért kis falszakaszon kb. 10 cm-t belecsúszott az oszlopba. Mostantól a fix tábla külső oldalán fut.
+- **Hiba: a szélső lamellák belefordultak a záró profilba.** 0–5° között 1–3 mm-t lógtak bele. A záró profil most a lamella forgási burkolókörén kívül kezdődik, 3 mm hézaggal.
+- **Lamellák ütközésvizsgálata:** 0 és 110° között fokonként ellenőrzi, hogy a szomszédos lamellák, a záró profilok és a gerendák keresztmetszete nem metszi egymást. Ezt az SB 400 valós profiljával, 11 mélységnél vizsgálja.
+- **Időtől determinisztikus jelenet (`src/lib/sceneClock.ts`):** a `?freeze=<másodperc>` URL-paraméter kimerevíti a jelenetet. A Működés-bemutató az adott pillanat állását mutatja, a szél és a részecskék ebből a fix időből számolnak, az átmenetek (ajtó, kamera, csillapítás) azonnal a célállásba ugranak. Ugyanaz az URL mindig ugyanazt a képet adja, ez vizuális regressziós képekhez használható. Az ajtó mozgása is időalapú lett, a képkockaszámtól már nem függ.
+- Tesztek: `doorClearance.test.ts` (kinematika, önellenőrzés, teljes konfigurációs rács), `louvreClearance.test.ts` (szomszédos lamellák, záró profil, gerenda), `sceneClock.test.ts` (freeze paraméter, determinisztikus bemutató).
+
 ## 4.95 – Reszponzív átnézés: telefon, tablet, laptop, monitor
 
 - **Mérés:** 26 képernyőméreten (telefon 9:16 és fekvő, tablet 4:3, 16:10, 3:2, laptop, 1080p–3440 px monitor) gépi ellenőrzés: vízszintes kilógás, levágott szöveg, 12 px alatti betű, 44 px alatti érintési célpont, egymásra lógó szöveg.

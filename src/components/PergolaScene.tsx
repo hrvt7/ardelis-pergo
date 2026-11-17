@@ -39,7 +39,8 @@ import { gardenLayout, getHouseLayout, wingFootprints, WING_DEPTH } from '@/lib/
 import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
 import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
-import { doorLeafWidth, sideSegments } from '@/lib/sides'
+import { doorKinematics, doorProgress, doorSwingAngle, INWARD, MULLION, sideSegmentPlacements, slidingLeafX, slidingLeafZ } from '@/lib/mechanics'
+import { sceneTime, stillMotion } from '@/lib/sceneClock'
 import { carportBays, hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
 import { ModularCameraRig, ModularDimensions, ModularGroundExtras, ModularHouseModel, type ModularView } from '@/components/ModularHouseScene'
 import type { ModularHouseConfig } from '@/products/modularHouse'
@@ -64,7 +65,7 @@ const ShadeProbe = lazy(() => import('@/components/ShadeProbe'))
 // ?effects=0 → utófeldolgozás kikapcsolva (hibakereséshez, gyenge géphez).
 const EFFECTS_DISABLED = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('effects') === '0'
 
-const REDUCED = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const REDUCED = stillMotion(typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
 // ?cam=x,y,z,tx,ty,tz → rögzített kameraállás (marketing-állóképekhez, vizuális teszthez).
 const CAM_OVERRIDE = (() => {
   if (typeof window === 'undefined') return null
@@ -548,7 +549,7 @@ function ZipScreen({ length, height, open, color, wind }: { length: number; heig
     if (fabric.current) { fabric.current.scale.y = fraction; fabric.current.position.y = height - 0.28 - visibleHeight / 2 }
     if (bar.current) bar.current.position.y = height - 0.28 - visibleHeight
     if (roll.current) { const radius = 0.55 + current.current / 100 * 0.65; roll.current.scale.set(radius, 1, radius); roll.current.rotation.x = current.current * 0.12 }
-    if (group.current) group.current.rotation.z = wind ? Math.sin(clock.elapsedTime * 1.6) * 0.0025 * fraction : 0
+    if (group.current) group.current.rotation.z = wind ? Math.sin(sceneTime(clock.elapsedTime) * 1.6) * 0.0025 * fraction : 0
     if (Math.abs(previous - current.current) > 0.001 || Math.abs(current.current - open) > 0.02) { refreshShadows(gl); invalidate() }
     else if (wind && clock.elapsedTime - lastWindUpdate.current >= 1 / 30) { lastWindUpdate.current = clock.elapsedTime; invalidate() }
   })
@@ -644,37 +645,37 @@ function getSpillTexture() {
 }
 
 /**
- * Üvegfal ajtóval: fix táblák és egy ajtószárny a fal végén. Mindkét típus a tér belseje felé mozog (oldalanként számolt irány).
- * Nyíló: a szárny a fix tábla felőli zsanér körül ~86°-ot fordul; toló: a szárny a fix tábla mögé csúszik a falszakaszon belül.
+ * Üvegfal ajtóval: fix táblák és egy ajtószárny a fal végén (oldalanként számolt irány).
+ * Nyíló: a szárny a fix tábla felőli zsanér körül ~86°-ot kifelé fordul; toló: a szárny a fix tábla külső oldalán, a falszakaszon belül csúszik.
  * A nyitást a `scene.doorOpen` vezérli (kattintásra vált), a mozgás csillapított.
  */
 function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow, inward, mirror = false }: { length: number; height: number; color: string; sliding: boolean; opened: boolean; onToggle: () => void; look: { tint: string; opacity: number }; glow: number; inward: 1 | -1; mirror?: boolean }) {
   const usableHeight = height - 0.27
-  // Toló: a szárny legfeljebb a fal fele, hogy a fix tábla előtt végig elférjen. Nyíló: kb. 0,95 m-es szárny.
-  const leafWidth = doorLeafWidth(sliding ? 'doorSliding' : 'door', length)
-  const fixedLength = Math.max(0, length - leafWidth)
+  // A méretek és a mozgás a közös kinematikából (src/lib/mechanics.ts) jönnek: ugyanezt söpri végig az ütközésteszt.
+  const kinematics = doorKinematics(sliding ? 'doorSliding' : 'door', length)
+  const { leafWidth, fixedLength, slide, hingeX } = kinematics
   const fixedCount = fixedLength > 0.3 ? Math.max(1, Math.round(fixedLength / 1.5)) : 0
   const paneWidth = fixedCount ? fixedLength / fixedCount : 0
   const leaf = useRef<THREE.Group>(null)
   const spill = useRef<THREE.MeshBasicMaterial>(null)
-  const progress = useRef(opened ? 1 : 0)
+  // Időalapú mozgás: a fázis csak az indulás pillanatától függ (képkockaszámtól nem), így kimerevíthető.
+  const motion = useRef({ from: opened ? 1 : 0, to: opened ? 1 : 0, start: 0, progress: opened ? 1 : 0 })
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
-  // A tolószárny csak a fix tábla mögé (a falszakaszon belül) csúszik, soha nem lóg ki a keretből.
-  const slide = Math.max(0, Math.min(leafWidth * 0.96, fixedLength - 0.04))
-  // Nyíló ajtó: a zsanér a fix tábla felőli oldalon van, a szabad él a sarok felé esik. Az ajtó kifelé nyílik (kültéri teraszajtóknál ez a szokásos), így nem fut bele a berendezésbe és nem csapódik az oldalfalhoz.
-  const hingeX = length / 2 - leafWidth + 0.01
   const leafHeight = usableHeight - 0.02
-  useFrame((_, delta) => {
+  useFrame(() => {
+    const m = motion.current
+    const now = performance.now() / 1000
     const target = opened ? 1 : 0
-    const moving = Math.abs(progress.current - target) > 0.002
-    if (moving) progress.current = REDUCED ? target : THREE.MathUtils.damp(progress.current, target, 4.5, delta)
-    else progress.current = target
+    if (m.to !== target) { m.from = m.progress; m.to = target; m.start = now }
+    const next = doorProgress(m, now, REDUCED)
+    const moving = Math.abs(next - m.progress) > 1e-4 || Math.abs(next - target) > 1e-4
+    m.progress = next
     if (leaf.current) {
-      if (sliding) leaf.current.position.x = length / 2 - leafWidth / 2 - slide * progress.current
-      else leaf.current.rotation.y = inward * progress.current * 1.5
+      if (sliding) leaf.current.position.x = slidingLeafX(kinematics, next)
+      else leaf.current.rotation.y = doorSwingAngle(inward, next)
     }
-    if (spill.current) spill.current.opacity = progress.current * glow
+    if (spill.current) spill.current.opacity = next * glow
     if (moving) { refreshShadows(gl); invalidate() }
   })
   const handleX = sliding ? -leafWidth / 2 + 0.06 : leafWidth / 2 - 0.09
@@ -695,7 +696,7 @@ function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow
     {Array.from({ length: fixedCount }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 0.5), leafCenterY, 0]} renderOrder={2}><boxGeometry args={[paneWidth - 0.012, usableHeight - 0.04, 0.01]} /><LookGlass look={look} /></mesh>)}
     {Array.from({ length: Math.max(0, fixedCount - 1) }, (_, index) => <mesh key={index} position={[-length / 2 + paneWidth * (index + 1), leafCenterY, 0]}><boxGeometry args={[0.008, usableHeight - 0.06, 0.016]} /><meshStandardMaterial color={solidHex(color)} metalness={0.5} roughness={0.4} /></mesh>)}
     {sliding
-      ? <group ref={leaf} name="door-leaf" position={[length / 2 - leafWidth / 2, leafCenterY, inward * 0.045]}>{leafBody}</group>
+      ? <group ref={leaf} name="door-leaf" position={[slidingLeafX(kinematics, 0), leafCenterY, slidingLeafZ(inward)]}>{leafBody}</group>
       : <group position={[hingeX, leafCenterY, 0]}><group ref={leaf} name="door-leaf"><group position={[(leafWidth - 0.02) / 2, 0, 0]}>{leafBody}</group></group></group>}
     {/* Nyitott ajtónál meleg fényfolt a belső padlón (a belső tér „kinyílik"). */}
     <mesh position={[length / 2 - leafWidth / 2, 0.05, spillZ]} rotation={[-Math.PI / 2, 0, inward > 0 ? Math.PI : 0]} renderOrder={1}><planeGeometry args={[leafWidth + 0.7, 1.9]} /><meshBasicMaterial ref={spill} map={getSpillTexture()} color="#ffe3b8" transparent opacity={0} depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} /></mesh>
@@ -704,7 +705,7 @@ function DoorWall({ length, height, color, sliding, opened, onToggle, look, glow
     <Beam args={[length, 0.06, 0.08]} position={[0, height - 0.14, 0]} color={color} radius={0.006} />
     <Beam args={[0.04, usableHeight, 0.06]} position={[-length / 2 + 0.02, leafCenterY, 0]} color={color} radius={0.005} />
     <Beam args={[0.04, usableHeight, 0.06]} position={[length / 2 - 0.02, leafCenterY, 0]} color={color} radius={0.005} />
-    {sliding && <Beam args={[leafWidth + slide, 0.025, 0.1]} position={[length / 2 - (leafWidth + slide) / 2, 0.11, inward * 0.045]} color={color} radius={0.004} />}
+    {sliding && <Beam args={[leafWidth + slide, 0.025, 0.1]} position={[length / 2 - (leafWidth + slide) / 2, 0.11, slidingLeafZ(inward)]} color={color} radius={0.004} />}
   </group>
 }
 
@@ -727,10 +728,6 @@ function SlatWall({ length, height, color, wood }: { length: number; height: num
   </group>
 }
 
-/** Félbe osztott oldal közepén függőleges osztóprofil (ahol nincs középoszlop). */
-const MULLION = 0.06
-/** Az oldalfal helyi z tengelyének a tér belseje felé mutató előjele (az oldalak forgatása miatt oldalanként más). */
-const INWARD: Record<SideKey, 1 | -1> = { front: -1, back: 1, left: 1, right: -1 }
 
 function SideSegmentWall({ type, length, height, color, config, scene, onSceneChange, label, inward, mirror = false }: { inward: 1 | -1; mirror?: boolean; type: SideType; length: number; height: number; color: string; config: PergolaConfig; scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void; label: boolean }) {
   if (type === 'zip') return <ZipScreen length={length} height={height} open={config.screenOpen} color={color} wind={scene.wind} />
@@ -805,7 +802,7 @@ function AirStream({ run }: { run: 'cool' | 'heat' }) {
   useFrame(({ clock }) => {
     const m = mesh.current
     if (!m) return
-    const t = clock.elapsedTime
+    const t = sceneTime(clock.elapsedTime)
     seeds.forEach((seed, index) => {
       const life = REDUCED ? seed.phase : (t * seed.speed * 0.5 + seed.phase) % 1
       const dist = life * 1.5
@@ -898,7 +895,7 @@ function FloorGlow({ width, depth, run }: { width: number; depth: number; run: S
     if (!m) return
     const goal = run === 'heat' ? 1 : 0
     level.current = REDUCED ? goal : THREE.MathUtils.damp(level.current, goal, 2.2, Math.min(delta, 0.05))
-    const pulse = REDUCED ? 0 : Math.sin(clock.elapsedTime * 1.4) * 0.025
+    const pulse = REDUCED ? 0 : Math.sin(sceneTime(clock.elapsedTime) * 1.4) * 0.025
     m.opacity = level.current * (0.15 + pulse)
     if (Math.abs(level.current - goal) > 0.002) invalidate()
     else if (goal && !REDUCED) tick()
@@ -987,18 +984,16 @@ function SidePlacement({ side, config, scene, color, onSelect, onSceneChange, la
   const isHorizontal = side === 'front' || side === 'back'
   const length = isHorizontal ? width : depth
   const position: [number, number, number] = side === 'front' ? [0, 0, depth / 2] : side === 'back' ? [0, 0, -depth / 2] : side === 'left' ? [-width / 2, 0, 0] : [width / 2, 0, 0]
-  const segments = sideSegments(config, side)
+  // A szakaszok helye és hossza a közös számításból (src/lib/mechanics.ts): az ajtó ütközésvizsgálata is ezt használja.
+  const placements = sideSegmentPlacements(config, side)
+  const segments = placements.map((placement) => placement.segment)
   const split = segments.length > 1
   // Elöl 6 m felett középoszlop áll: ott a fél-mezők az oszlophoz futnak, nincs külön osztóprofil.
   const midPost = side === 'front' && hasCenterPost(config)
-  const gap = split ? (midPost ? 0.09 : MULLION / 2 + 0.005) : 0
   const allOpen = segments.every((segment) => segment.type === 'none')
   return <group position={position} rotation={[0, isHorizontal ? 0 : Math.PI / 2, 0]} onClick={(event) => { if (allOpen) { event.stopPropagation(); onSelect?.(side) } }}>
-    {segments.map((segment, index) => {
+    {placements.map(({ segment, center: x, length: segmentLength }, index) => {
       if (segment.type === 'none') return config.building === 'conservatory' ? <group key={`${index}-open`} position={[((segment.from + segment.to) / 2) * length, 0, 0]}><OpenSideHint length={length * (segment.to - segment.from)} height={height} /></group> : null
-      const center = ((segment.from + segment.to) / 2) * length
-      const segmentLength = length * (segment.to - segment.from) - gap
-      const x = split ? center + Math.sign(center) * (gap / 2) : center
       // Mozgatható elemtípusonként csak az első kap feliratot (két egyforma félnél ne duplázódjon).
       const key = segment.type === 'glassFramed' ? 'glass' : segment.type
       const label = !labelled.has(key)
@@ -2178,7 +2173,7 @@ function Tree({ position, scale = 1, wind, bare = false }: { position: [number, 
   const group = useRef<THREE.Group>(null)
   const lastUpdate = useRef(0)
   const invalidate = useThree((state) => state.invalidate)
-  useFrame(({ clock }) => { if (group.current) { group.current.rotation.z = wind ? Math.sin(clock.elapsedTime * 0.65 + position[0]) * 0.004 : 0; if (wind && clock.elapsedTime - lastUpdate.current >= 1 / 30) { lastUpdate.current = clock.elapsedTime; invalidate() } } })
+  useFrame(({ clock }) => { if (group.current) { group.current.rotation.z = wind ? Math.sin(sceneTime(clock.elapsedTime) * 0.65 + position[0]) * 0.004 : 0; if (wind && clock.elapsedTime - lastUpdate.current >= 1 / 30) { lastUpdate.current = clock.elapsedTime; invalidate() } } })
   return <group ref={group}><RealisticAsset url={TREE_MODEL} position={position} height={4.8 * scale} rotation={position[0] * 0.43} shadows={false} bare={bare} /></group>
 }
 
@@ -2379,7 +2374,7 @@ function Rain({ config, quality }: { config: PergolaConfig; quality: QualitySett
       }
       attribute.needsUpdate = true
     }
-    if (splashes.current) splashes.current.children.forEach((child, index) => { const phase = (clock.elapsedTime * 1.9 + index * 0.17) % 1; child.scale.setScalar(0.25 + phase * 1.8); const material = (child as THREE.Mesh).material as THREE.MeshBasicMaterial; material.opacity = (1 - phase) * 0.36 })
+    if (splashes.current) splashes.current.children.forEach((child, index) => { const phase = (sceneTime(clock.elapsedTime) * 1.9 + index * 0.17) % 1; child.scale.setScalar(0.25 + phase * 1.8); const material = (child as THREE.Mesh).material as THREE.MeshBasicMaterial; material.opacity = (1 - phase) * 0.36 })
     invalidate()
   })
   return <group name="rain">

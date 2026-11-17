@@ -4,11 +4,12 @@
 // és a lamellák a gyári 0–110° tartományban járnak (a panel ugyanabból az órából számol).
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
+import { stillMotion } from '@/lib/sceneClock'
 import { Html, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
-import { crankPin, demoAngle, demoSeconds, DRIVE, drivePlan, LOUVRE, louvreLayout, louvreProfile } from '@/lib/louvreSystem'
+import { crankPin, demoAngle, demoSeconds, DRIVE, drivePlan, LOUVRE, louvreLayout, louvreProfile, louvreSealBoxes } from '@/lib/louvreSystem'
 
-const REDUCED = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const REDUCED = stillMotion(typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
 const ACCENT = new THREE.Color('#c9ef4f')
 const STEEL = new THREE.Color('#9aa1a6')
 
@@ -200,10 +201,10 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
   })
 
   // a lamellasor és a gerenda közti rést elöl-hátul fix záróprofil fedi
-  const front0 = layout.z[n - 1] + 0.112
-  const back0 = layout.z[0] - 0.1038
-  const frontSeal = Math.max(0, innerHalf - front0)
-  const backSeal = Math.max(0, back0 + innerHalf)
+  // a záró profilok helye a közös számításból (louvreSealBoxes): az ütközésteszt ugyanezt ellenőrzi
+  const seals = louvreSealBoxes(layout, depth, beam)
+  const frontSeal = seals.front ? seals.front[1] - seals.front[0] : 0
+  const backSeal = seals.back ? seals.back[1] - seals.back[0] : 0
   const coverLen = depth - beam - 0.04
   const motorBody = useMemo(() => new THREE.CylinderGeometry(0.024, 0.024, DRIVE.body, 20).rotateX(Math.PI / 2).translate(0, 0, DRIVE.body / 2), [])
   const motorCap = useMemo(() => new THREE.CylinderGeometry(0.027, 0.027, 0.03, 20).rotateX(Math.PI / 2), [])
@@ -221,8 +222,8 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
     {layout.modules.slice(1).map((mod, j) => <mesh key={`d${j}`} material={frameMaterial} position={[mod.x - (mod.inner + beam) / 2, height, 0]} castShadow receiveShadow><boxGeometry args={[beam, beamHeight, depth - beam]} /></mesh>)}
     {layout.modules.map((mod, j) => <group key={j}>
       {/* záróprofilok a lamellasor két végén */}
-      {frontSeal > 0.004 && <mesh material={roofMaterial} position={[mod.x, layout.axleY + 0.006, innerHalf - frontSeal / 2]} castShadow receiveShadow><boxGeometry args={[mod.length, 0.022, frontSeal]} /></mesh>}
-      {backSeal > 0.004 && <mesh material={roofMaterial} position={[mod.x, layout.axleY + 0.006, -innerHalf + backSeal / 2]} castShadow receiveShadow><boxGeometry args={[mod.length, 0.022, backSeal]} /></mesh>}
+      {seals.front && <mesh material={roofMaterial} position={[mod.x, layout.axleY + 0.006, innerHalf - frontSeal / 2]} castShadow receiveShadow><boxGeometry args={[mod.length, 0.022, frontSeal]} /></mesh>}
+      {seals.back && <mesh material={roofMaterial} position={[mod.x, layout.axleY + 0.006, -innerHalf + backSeal / 2]} castShadow receiveShadow><boxGeometry args={[mod.length, 0.022, backSeal]} /></mesh>}
       {/* hosszanti ereszek a gerendák belső síkján, a gerenda aljával egy szintben (91,6 × 75, elöl 58 magas) */}
       {gutters && [-1, 1].map((side) => <group key={`g${side}`} position={[mod.x + side * (mod.inner / 2), height - beamHeight / 2, 0]}>
         <mesh material={frameMaterial} position={[-side * 0.0458, 0.0015, 0]} receiveShadow><boxGeometry args={[0.0916, 0.003, depth - beam]} /></mesh>
