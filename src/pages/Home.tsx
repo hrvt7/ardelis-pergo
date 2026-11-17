@@ -1,3 +1,5 @@
+import '@/index.css'
+import '@/appFonts'
 import { lazy, Suspense, useLayoutEffect, useRef, useState } from 'react'
 import { assetUrl } from '@/lib/assetUrl'
 import { ArrowDown, ArrowRight, ArrowUpRight, Armchair, Check, FileText, Home as HomeIcon, MoveRight, Ruler, Share2, SunMedium, Wallet } from 'lucide-react'

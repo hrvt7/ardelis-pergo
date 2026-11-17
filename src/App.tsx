@@ -1,7 +1,6 @@
 import { lazy, Suspense } from 'react'
 import Platform from '@/pages/Platform'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
-import NotFound from '@/pages/NotFound'
 // A konfigurátor (three.js), a belépő és az admin csak a saját útvonalán töltődik; a nyitóoldal nem tölti elő őket.
 const TenantStudio = lazy(() => import('@/pages/TenantStudio'))
 const Login = lazy(() => import('@/pages/Login'))
@@ -10,6 +9,7 @@ const QuotePage = lazy(() => import('@/pages/QuotePage'))
 const InstallationPage = lazy(() => import('@/pages/InstallationPage'))
 const Home = lazy(() => import('@/pages/Home'))
 const Privacy = lazy(() => import('@/pages/Privacy'))
+const NotFound = lazy(() => import('@/pages/NotFound'))
 
 /** Átirányítás, ami megtartja a lekérdezést és a #hash-t (megosztott konfigurációs linkek). */
 function Redirect({ to }: { to: string }) {
@@ -48,6 +48,6 @@ export default function App() {
     <Route path="/login" element={<Redirect to="/belepes" />} />
     <Route path="/admin" element={<Redirect to="/belepes" />} />
     {['/partnerek', '/keresett'].map((path) => <Route key={path} path={path} element={<Navigate to="/" replace />} />)}
-    <Route path="*" element={<NotFound />} />
+    <Route path="*" element={<Suspense fallback={null}><NotFound /></Suspense>} />
   </Routes>
 }

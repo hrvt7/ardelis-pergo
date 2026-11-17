@@ -1,3 +1,5 @@
+import '@/index.css'
+import '@/appFonts'
 // Gyártói belépés a nyitóoldalról: a gyártói azonosító megadása után a saját adminfelület belépője nyílik meg
 // (/k/<azonosító>/admin). A jelszót ott kéri a meglévő admin; itt semmilyen adat nem kerül tárolásra.
 import { useState, type FormEvent } from 'react'

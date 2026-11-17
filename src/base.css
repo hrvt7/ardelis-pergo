@@ -1,0 +1,382 @@
+/* Közös alap minden oldalnak (a nyitóoldal is ezt kapja): Tailwind, színváltozók, alapstílusok, frissítési sáv.
+ * Az index.css a konfigurátor, az admin és a többi alkalmazás-oldal stílusa; csak a saját útvonalukon töltődik,
+ * így a nyitóoldal nem vár egy 600 KB-os stíluslapra. Az itteni szabályok az index.css-ben is megvannak
+ * (ugyanabban a sorrendben), így az alkalmazás-oldalak változatlanok. Generálva: a nyitóoldalon ténylegesen illeszkedő index.css-szabályokból. */
+/* A betűk saját tárhelyről (src/main.tsx, @fontsource): nincs külső Google Fonts kérés a renderelés útjában. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink-1000: oklch(12% .012 155); --ink-950: oklch(16% .014 155); --ink-900: oklch(20% .014 155); --ink-800: oklch(29% .015 155);
+  --stone-500: oklch(66% .025 85); --stone-300: oklch(81% .018 85); --stone-100: oklch(94% .012 85);
+  --lime-500: oklch(91% .19 118); --lime-400: oklch(95% .17 118); --lime-950: oklch(29% .045 125);
+  --surface-app: var(--ink-1000); --surface-panel: rgba(18,23,22,.97); --surface-raised: rgba(44,51,48,.82); --surface-border: rgba(228,233,218,.14);
+  --text-primary: var(--stone-100); --text-secondary: oklch(76% .015 90); --text-soft: var(--stone-300); --accent-primary: var(--lime-500); --accent-hover: var(--lime-400); --accent-subtle: rgba(210,255,108,.1);
+  --radius-xs: 4px; --radius-sm: 7px; --radius-md: 9px; --radius-lg: 13px; --radius-xl: 18px; --radius-pill: 999px;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.18); --shadow-md: 0 12px 32px -12px rgba(0,0,0,.45); --shadow-lg: 0 24px 70px rgba(0,0,0,.28);
+  --component-radius: var(--radius-md);
+  --text-2xs: 10.5px; --text-xs: 11.5px; --text-sm: 12.5px; --text-md: 13.5px; --text-base: 14.5px; --text-lg: 15.5px; --component-transition: 190ms ease-out; --header-height: 64px;
+  --font-ui: 'Plus Jakarta Sans', sans-serif; --font-display: var(--font-ui);
+  font-family: var(--font-ui); color: var(--text-primary); background: var(--surface-app); font-synthesis: none; text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+* { box-sizing: border-box; }
+html { min-width: 320px; background: var(--surface-app); scroll-behavior: smooth; overflow-x: hidden; }
+body { margin: 0; min-width: 320px; min-height: 100dvh; background: var(--surface-app); color: var(--text-primary); font-size: 18px; line-height: 1.55; overflow: hidden; }
+button, input, select, textarea { font: inherit; }
+button, summary, a, label { -webkit-tap-highlight-color: transparent; }
+button { color: inherit; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .38; }
+button, a, input, summary, select { outline: none; }
+button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible, select:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 3px; }
+button { transition: background-color var(--component-transition), color var(--component-transition), border-color var(--component-transition), opacity var(--component-transition), transform var(--component-transition); }
+button:active:not(:disabled) { transform: scale(.975); }
+a { color: inherit; } svg { flex-shrink: 0; }
+::selection { background: var(--accent-primary); color: var(--ink-1000); }
+::-webkit-scrollbar { width: 5px; height: 5px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(220,230,215,.2); border-radius: var(--radius-sm); }
+/* Asztalon az árpanel görgethető; a PDF/Megosztás sáv a panel aljára tapad, hogy alacsony képernyőn se csússzon ki a látómezőből. */
+/* Táblagép-szélesség: a két panel között szűk a jelenet, a cím az eszköztár alá kerül, hogy ne ütközzenek. */
+@media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse), (orientation: portrait) and (max-width: 1100px) {
+  :root { --header-height: 56px; --sheet-half: min(50%, 470px); }
+  @media (max-height: 760px) and (orientation: portrait) {
+    :root { --sheet-half: min(66%, 520px); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* ARDELIS multi-product studio */
+/* Közepes szélességen a kamera-eszköztár a link alá nyúlna: feljebb kerül, a panel mellé. */
+
+/* Marketing and shared public chrome */
+
+/* Request tracking */
+
+/* Authenticated workspace entry */
+
+/* Partner and admin workspace */
+
+
+/* ARDELIS PERGO — editorial launch experience */
+
+/* Scroll-scrubbed architectural light study */
+
+/* AR-indító gomb: ugyanaz a gombstílus, kiemelt színnel, hogy észrevehető legyen. */
+
+/* ── Árnyékelemzés ─────────────────────────────────────────────── */
+
+/* „Működés” bemutató: élő hajtásvázlat és mérőszámok (MechanismPanel) */
+
+/* ── Bútorcsomag (méret lépés) ─────────────────────────────────── */
+
+/* ── Költségkeret ──────────────────────────────────────────────── */
+
+/* ── Esti hangulat ─────────────────────────────────────────────── */
+
+/* ── Összecsukható árpanel (asztali nézet) ─────────────────────── */
+
+/* ── Tetőválasztó ──────────────────────────────────────────────── */
+
+/* ── Tanácsadó ─────────────────────────────────────────────────────────── */
+
+/* ── Energia és üzemeltetés ───────────────────────────────────────────── */
+
+/* ── Tél ───────────────────────────────────────────────────────────────── */
+/* Keskeny telefonon a gyorsgombok függőleges sávba kerülnek, hogy a címmel ne ütközzenek. */
+
+/* ---------- Oldalzárás: 8 típus, félbe osztás (v3.10) ---------- */
+
+/* ---------- Komfort: RGB LED, ventilátor, okosotthon ---------- */
+
+/* ---------- Színválasztó (v3.11) ---------- */
+/* A kép doboza = a kirajzolt kép (nincs letterbox), így a koppintás helye pontosan megfeleltethető. */
+
+/* ---------- Változás-jelző (v3.12) ---------- */
+
+/* ---------- Bemutató összegzés, ár-összetétel, összehasonlítás, üdvözlés (v3.12) ---------- */
+/* A PDF az elsődleges gomb; alatta a képmegosztás visszafogottabb, hogy ne két egyforma kiemelt gomb legyen egymás alatt. */
+
+/* ── A házad: homlokzat és nyílászárók (v3.13) ───────────────────────── */
+
+/* ── Motoros tetőárnyékoló (v3.14) ─────────────────────────────────────── */
+
+/* ── Szín lépés: Pergola / A házad fülek (v3.15) ───────────────────────── */
+
+/* ── Felépítés-tisztítás (v3.16) ───────────────────────────────────────── */
+/* Asztali nézetben az árpanel mindig látszik: ott ne legyen kétszer a keret-tervező, az üzemeltetés és az ár-összetétel. */
+
+/* 3D tartalék: méretarányos rajz a poszter alatt */
+
+/* Összegzés: mindig elérhető fő műveletek (felmérés, PDF, WhatsApp) */
+
+/* Gyártói admin — modern, sötét "command center": üveg oldalsáv, hajszálvékony élek, lime akcentus (a konfigurátor tokenjeivel, Plus Jakarta Sans) */
+
+/* gombok */
+
+/* belépés */
+
+/* kártyák, KPI-k */
+
+/* területgrafikon */
+
+/* tölcsér */
+
+/* státusz, listák, sávok */
+
+/* érdeklődők */
+
+/* részletek panel */
+/* lead-pontozás: forró / meleg / hideg */
+
+/* beállítások űrlap */
+
+/* Ármátrix-szerkesztő (admin → Beállítások) */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Gyártói admin — mobil UX (lead lista, részletek, űrlap) */
+@media (max-width:860px){
+}
+/* KPI: a sparkline ne takarja a feliratot */
+
+/* Fotóba helyezés */
+
+/* AR párbeszéd */
+/* Diszkrét platform-jelzés a gyártói konfigurátorban (white-label: kikapcsolható) */
+
+/* Lamelix logó a konfigurátor fejlécében, a betöltőben és a mintaoldalon (a .brand svg 28 px-es szabályát felülírja) */
+
+/* Telefon fekvő (landscape) nézetben: bal oldalt a 3D, jobb oldalt a vezérlők és az ár. */
+@media (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  :root { --header-height: 44px; }
+}
+
+/* „Nézet” lebegő panel (jelenet és vizualizáció) — a 3D-nézet fölött, háttér nélkül, hogy a változás közben látszódjon */
+/* Eszközök menü: a szakértői eszközök névvel, egy helyen. */
+
+/* ───────── Animációk (3.40): tanácsadó, összegzés, ajánlatkérés visszaigazolása, lépésváltás ───────── */
+
+/* Tanácsadó: kérdésenként sorban érkező kártyák, folyamatosan töltődő sáv, a javaslat „felépül” */
+
+/* 1. lépés: a „Nem tudod, hol kezdd?” kártya halkan csillan */
+
+/* Lépésváltás: a cím és a tartalom egymás után csúszik be */
+
+/* Összegzés: a kép, a tények és az ár-összetétel sorban érkezik, a sáv kitöltődik */
+
+/* Ajánlatkérés elküldve: a kör és a pipa kirajzolódik, a közepéből apró szikrák szállnak szét */
+
+/* 3.41 Betöltő: felépülő pergola */
+
+/* 3.41 Lépésváltás iránya + ár-delta jelzés */
+
+/* 3.41 Extrák: bekapcsoláskor az ikon „felvillan”, a kártya pulzál */
+
+/* 3.41 Tetőválasztó és színválasztó */
+
+/* 3.41 Tételes kalkuláció, PDF-gomb, ajánlatkérő űrlap */
+
+/* 3.42 Teljes képernyő + biztonságos sávok (kamera-kivágás fekvő tájolásban) */
+body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+
+/* 3.43 Tetőburkolat-választó */
+
+/* ── 3.45 Számozott online ajánlat ─────────────────────────────────────────── */
+
+/* ── 3.46 Ajánlatoldal animációk ───────────────────────────────────────────── */
+
+/* ── 3.46 Admin: üres állapot, új érdeklődő jelzés ─────────────────────────── */
+
+/* ===== 3.48 Veranda és télikert ===== */
+/* ── Termékváltó a kalkulátor fejlécében (a választó oldalra visz; a kalkulátorban nincs más család) ── */
+
+/* ── Termékválasztó oldal (/konfigurator/termekek): minden család külön kalkulátor ── */
+
+/* ── „Hamarosan” termékoldal (/konfigurator/<család>) ── */
+
+/* ===== 3.49 Veranda/télikert: további animációk ===== */
+/* Klíma működése (segédkapcsoló) */
+
+/* Ártétel-kiemelés a tételes kalkulációban */
+
+/* Kiinduló csomag kiválasztva */
+
+/* Ajánlatoldal: építmény-sorok és hatósági doboz */
+
+/* Rajz (3D nélküli tartalék): az ajtó nyitási íve kirajzolódik */
+
+/* 3.51 – üvegtető: füstös burkolat, szöveges link */
+
+/* A kerítés- és garázskapu-stúdió a pergola stúdió eszköztár- és címelrendezését használja (közös StudioChrome). */
+/* A fejléc termékváltója ne örökölje a projektcímke betűközét, és ne törjön sorokra. */
+/* Az üzenetsávok a két panel közötti szabad sávban maradnak, nem futnak a panelek alá. */
+
+/* ── Prémium mikro-interakciók (3.97) ───────────────────────────────────────────────────────────
+   Ikonok, amelyek „szándékkal mozdulnak” (itshover), fényvonal a fő gombon, élő pont lüktetése,
+   kinetikus számváltás a jelenet címében, emelkedő kártyák fényes kerettel (GlassCard). */
+
+/* Mobil: a katalógus-stúdió (kerítés) lapja felnyitva valóban kinyílik; a nyitott lap alatt nem látszik át az „Üdv újra” sáv. */
+@media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse), (orientation: portrait) and (max-width: 1100px) {
+}
+
+/* ── Jelentéses ikonmozgás, fényes fő gombok, kiemelt csomag (4.04) ───────────────────────────── */
+
+/* ── Termékválasztó: valódi 3D-kép, csillogó helykitöltő, „hogyan működik” sáv (4.04) ─────────── */
+
+/* ==========================================================================
+   4.22 – Pergola stúdió, „A” elrendezés (UI/UX kutatás alapján, docs/VALTOZASOK.md)
+   Grafit-lime színvilág, Inter + Manrope, 3D bal oldalt (~70%), egy jobb oldali panel
+   az élő árral és a lépésgombokkal; a részletes kalkuláció kérésre nyílik.
+   Csak a .layout-a (pergola/carport stúdió) alatt hat; a többi oldal változatlan.
+   ========================================================================== */
+
+/* Tipográfia: címek Manrope, minden szám igazított (tabuláris). */
+
+/* Mezők: 16 px betű (iOS nem nagyít rá), 44 px magasság, 3:1 kontrasztú szegély. */
+
+/* Kijelölt állapot: nem csak szín – vastagabb akcentus-keret és sötét zöld alap. */
+
+/* Panel-lábléc: élő ár + Részletek, alatta Vissza / Következő. */
+
+@media (min-width: 821px) and (not ((orientation: landscape) and (max-height: 520px) and (pointer: coarse))) and (not ((orientation: portrait) and (max-width: 1100px))) {
+}
+
+/* Telefon és álló tablet: a lépésjelző a csukott lapon is látszik, az alsó sáv a következő lépésre visz. */
+@media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse), (orientation: portrait) and (max-width: 1100px) {
+}
+/* „Mit építesz” kártyák: a nem választott típus csak fejsor (név, rövid leírás, felár); a kiválasztott a teljes leírással. */
+/* A díszítő „valós idejű” címke a 3D közepén zajt adott; a fejléc és a jelenet önmagáért beszél. */
+
+/* ==========================================================================
+   4.23 – „Soft dark” stílus (Ádám referenciája): mélyfekete alap, nagy sugarú
+   lebegő kártyák térközzel, pill-alakú gombok és fülek, neon-lime fő akció,
+   fehér pill a másodlagos kijelöléshez, vékony nagy számok. Elrendezés és betű marad.
+   ========================================================================== */
+
+/* Lebegő kártyák térközzel. */
+
+/* Lépésfülek: pill-sáv, az aktív lépés lime pill a nevével, a többi számozott kör. */
+
+/* Kártyák: tömör, lekerekített felületek; kijelölés lime kerettel. */
+
+/* Szegmentált választók: pill-sáv, a kijelölt elem fehér pill sötét szöveggel. */
+
+/* Mezők és csúszka. */
+
+/* Gombok: pill. Fő akció lime, másodlagos körvonalas, „Részletek” is pill. */
+
+/* Nagy, vékony árszám. */
+
+/* Lebegő eszközök a 3D-n: kör alakú ikongombok és pill-sáv. */
+
+/* Részletek panel: belső kártyák. */
+
+/* Mobil: lebegő lap és alsó sáv a referencia szerint. */
+
+/* 4.24 – Kameranézet-menü az eszközsorban (az alsó, középső nézetsáv helyett). */
+
+/* 4.25 – Bejárás (első személyű nézet): diszkrét kezelőfelület a 3D kép fölött. */
+
+/* ==========================================================================
+   4.26 – Üveges („glass”) felületi változat, kipróbálásra: ?style=glass
+   A 3D kép a teljes szélességet kapja, a panelek elmosott, áttetsző üvegként lebegnek fölötte.
+   Betű: Outfit. A panel sötétítése (72%) a legvilágosabb háttér fölött is AA kontrasztot ad (számolt).
+   ========================================================================== */
+
+/* Üvegpanelek: a beállítópanel, a részletek, az eszközsor, a menük. */
+
+/* Asztali nézet: a 3D kitölti a teret, a panel fölötte lebeg (a kép a panel felével balra tolva, lásd uiStyle.ts). */
+/* Mobil: lebegő üveglap és üveges alsó sáv. */
+/* Ha a böngésző nem tud elmosni, a panel tömör sötét marad (olvasható). */
+/* Ajánlatkérő űrlap: folyó szövegű hozzájárulás (nem flex, mert a link és a pont külön oszlopba esett), mezőnkénti hibák. */
+/* Összegzés: a fő út (kép, adatok, ár, felmérés) felül; a másodlagos eszközök két összecsukható blokkban. */
+/* Mobil lépéssáv: 7 lépés nem fér ki egy sorba, ezért vízszintesen görgethető (az aktív lépés a látható részre ugrik). */
+/* Az összegzés képe telefonon álló formátumú: a modell a kép felső harmadában van, oda igazítjuk a kivágást. */
+/* A 3D jelenet feletti feliratok világos égen is olvashatók maradjanak (sötét, áttetsző alátét). */
+/* Telefonon kevesebb felirat nélküli ikon a jelenet szélén: a gyors kapcsolók az Eszközök menüben, felirattal. */
+
+/* ==========================================================================
+   4.32 – Oldalarányok: álló tablet (3:4, 10:16, 7:10) alsó lappal, alacsony
+   fekvő kijelző (4:3, 16:9 laptop, 768 px magas) tömörebb panellel.
+   A lekérdezések a src/lib/viewport.ts-ben is szerepelnek (viewport.test.ts).
+   ========================================================================== */
+/* Álló tablet: nagyobb félig nyitott lap, a 3D így is a kép felét kapja. */
+@media (orientation: portrait) and (min-width: 600px) and (max-width: 1100px) {
+  :root { --sheet-half: min(46%, 600px); }
+}
+/* Keskeny oldalpaneles nézet (4:3 fekvő tablet, kis laptop): a jelenet címe az eszköztár alá kerül, nem ütköznek. */
+/* Alacsony fekvő kijelző (≤ 820 px magas: 1024 × 768, 1133 × 744, 1366 × 768): tömörebb fejrész és ársáv,
+   hogy a lépés tartalmának több hely jusson. */
+/* Kézzel választott, az eszköznek ajánlottnál magasabb 3D-minőség: figyelmeztetés a választó alatt. */
+
+/* Bemutató eszköz: offline letöltés állapota és telepítési tipp (Nézet panel). */
+
+/* Új verzió jelzése (service worker): nem tölt újra magától, a felhasználó dönt. */
+.sw-update { position: fixed; z-index: 95; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 24px); padding: 10px 10px 10px 16px; border: 1px solid rgba(216,255,114,.45); border-radius: var(--radius-lg, 14px); background: rgba(14,20,18,.97); color: #e8ece2; font: 500 14px/1.35 var(--font-ui, system-ui), system-ui, sans-serif; box-shadow: 0 18px 40px rgba(0,0,0,.4); }
+.sw-update button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 10px; background: #d8ff72; color: #0e110d; font-weight: 700; white-space: nowrap; }
+.sw-update button.sw-update-later { background: transparent; color: #b8c2b4; padding: 0 8px; }
+
+/* Kezdőképernyőről (telepített appként) indítva: a fejléc és az alsó sávok a biztonságos területen belül maradnak
+   (notch, állapotsor, iPad home-sáv). Böngészőben a betétek 0-k, így ott nincs változás. */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  .sw-update { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* Húzható panelszél (asztal + fekvő telefon): a panel szélessége a --panel-w / --side-w változóból jön. */
+
+/* Fekvő telefon: oldalpanel húzható szélességgel, tömörebb fejléc, lépéssáv és jelenet-feliratok (nem csúsznak egymásra). */
+@media (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  :root { --header-height: 40px; }
+}
+
+/* Kis álló telefon (≤ 380 px, pl. iPhone SE, kis Androidok): tömörebb jelenetfelirat, lépéssáv és ársáv. */
+
+/* Ár + „Tovább” sor a beállítópanelen belül (telefon, álló tablet, fekvő telefon): nincs külön, mindig látható alsó sáv,
+   a 3D nézet a képernyő aljáig ér; összecsukott panelnél csak a fogantyú-sor és ez az egy sor látszik. */
+/* Színminta neve: két sorban kiírva (nem „Antracitszü…”), hogy a vevő név szerint is megtalálja. */
+
+/* ============ Stúdió stílus (?style=studio, kipróbálásra) — letisztult, modernebb felület ============
+   Kevesebb címke és keret, a lime csak a fő gombon és az aktív lépésen; egy áttetsző eszközsor a jeleneten;
+   a 3D-ben semleges, hajlított stúdióháttér (PergolaScene: Cyclorama). */
+/* 1) Kicker-feliratok és technikai címkék nélkül: egyetlen hierarchia (lépés címe → lehetőségek). */
+/* 2) A lime visszafogva: kiválasztott kártyák semleges gyűrűvel, nem lime kerettel és háttérrel. */
+/* 3) Egy áttetsző eszközsor a jeleneten a sok kerek gomb helyett; az aktív gomb fehér, nem lime. */
+/* 4) Tipográfia: egy betűcsalád, nagy, táblázatos ár. */
+
+/* ============ Világos, pasztell felület („light”, alapértelmezett 4.55-től; a sötét: ?style=soft) ============
+   Urbanist betű, fehér kártyák nagy lekerekítéssel világosszürke alapon, fekete „pill” gombok, kerek nyíl-gombok,
+   pasztell kiemelések: Alice Blue #D8DFE9, Honeydew #CFDECA, Vanilla #EFF0A3, Eerie Black #212121, Ghost White #F6F5FA. */
+/* Fejléc gombjai: fehér kör, vékony árnyék; a szöveges gombok fehér pillek. */
+/* 3D nézet keret: nagy lekerekítés, a háttér világos stúdió. */
+/* Eszközsor: egy fehér pill, az aktív gomb fekete kör fehér ikonnal. */
+/* Beállítópanel: Ghost White kártya nagy sarkokkal, a lépések pill-sávban. */
+/* Kártyák (tető, épülettípus, opciók): fehér, nagy sarok, árnyék; a kiválasztott Vanilla háttér + fekete gyűrű. */
+/* Gombok: elsődleges = fekete pill fehér szöveggel; másodlagos = körvonalas pill. */
+/* Ár-dokk: fehér kártya, nagy könnyű számjegyek. */
+/* Mezők, csúszkák, szegmensek. */
+/* Világos felület: a Lamelix logó sötét változata (a világos fehér jel eltűnne a világos alapon). */
+/* Szín lépés: „Pergola / A házad” választó és a terv neve mező világosan. */
+/* Világos felület: betöltés közben is világos (fehér kártya, világos poszter), nem sötét olívzöld. */
+/* A „Pergola / A házad” választó (szín lépés): fehér pill, a kiválasztott Vanilla. */
+/* Szín lépés felső „Pergola / A házad” választója (color-tabs): fehér pill, a kiválasztott Vanilla fekete gyűrűvel. */
+
+/* ============ Világos felület: olvashatósági kör (4.59) ============
+   Minden lebegő felület (menük, panelek, párbeszédablakok, értesítések) fehér kártya sötét szöveggel; a body.ui-light
+   osztály a body-ba portált ablakokat (fotós színmintavétel) is lefedi. A 3D-jelenet címkéi szándékosan sötétek maradnak. */
+:is(.layout-a.style-light, body.ui-light) .view-popover, :is(.layout-a.style-light, body.ui-light) .modal-dialog, :is(.layout-a.style-light, body.ui-light) .sun-panel, :is(.layout-a.style-light, body.ui-light) .mood-panel, :is(.layout-a.style-light, body.ui-light) .winter-panel, :is(.layout-a.style-light, body.ui-light) .hotspot-card, :is(.layout-a.style-light, body.ui-light) .camera-menu-list,
+:is(.layout-a.style-light, body.ui-light) .toast, :is(.layout-a.style-light, body.ui-light) .welcome-back, :is(.layout-a.style-light, body.ui-light) .sw-update, :is(.layout-a.style-light, body.ui-light) .automation-status, :is(.layout-a.style-light, body.ui-light) .presentation-note, :is(.layout-a.style-light, body.ui-light) .pov-note, :is(.layout-a.style-light, body.ui-light) .walk-note,
+:is(.layout-a.style-light, body.ui-light) .walk-hint, :is(.layout-a.style-light, body.ui-light) .walk-badge, :is(.layout-a.style-light, body.ui-light) .fs-hint, :is(.layout-a.style-light, body.ui-light) .camera-toolbar, :is(.layout-a.style-light, body.ui-light) .area-tip, :is(.layout-a.style-light, body.ui-light) .change-pill, :is(.layout-a.style-light, body.ui-light) .glass-panel.price-panel {
+  background: #fff; color: var(--l-ink); border: 1px solid var(--l-line); box-shadow: var(--shadow-lg); backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+:is(.layout-a.style-light, body.ui-light) select option { background: #fff; color: var(--l-ink); }
+:is(.layout-a.style-light, body.ui-light) ::placeholder { color: #7A7C82; }
+
+/* Világos felület: a sötét téma neon-lime kiemelései helyett fekete gyűrű és Vanilla kijelölés. */
+:is(.layout-a.style-light, body.ui-light) .side-motion-control, :is(.layout-a.style-light, body.ui-light) .upload-button, :is(.layout-a.style-light, body.ui-light) .automation-status, :is(.layout-a.style-light, body.ui-light) .pov-note, :is(.layout-a.style-light, body.ui-light) .sun-panel, :is(.layout-a.style-light, body.ui-light) .sun-play, :is(.layout-a.style-light, body.ui-light) .sun-compass, :is(.layout-a.style-light, body.ui-light) .mech-cta, :is(.layout-a.style-light, body.ui-light) .furniture-suggest, :is(.layout-a.style-light, body.ui-light) .budget-trigger, :is(.layout-a.style-light, body.ui-light) .advisor-hero, :is(.layout-a.style-light, body.ui-light) .energy-band.is-below, :is(.layout-a.style-light, body.ui-light) .color-photo-button, :is(.layout-a.style-light, body.ui-light) .photo-color-drop, :is(.layout-a.style-light, body.ui-light) .change-pill, :is(.layout-a.style-light, body.ui-light) .welcome-back, :is(.layout-a.style-light, body.ui-light) .house-match, :is(.layout-a.style-light, body.ui-light) .house-match.is-matched, :is(.layout-a.style-light, body.ui-light) .fs-hint, :is(.layout-a.style-light, body.ui-light) .install-tip, :is(.layout-a.style-light, body.ui-light) .sw-update, :is(.layout-a.style-light, body.ui-light) .control-tabs button.complete .step-dot, :is(.layout-a.style-light, body.ui-light) .color-chip.selected, :is(.layout-a.style-light, body.ui-light) .house-swatches > .selected { border-color: rgba(33,33,33,.2); }
+:is(.layout-a.style-light, body.ui-light) .advisor-icon, :is(.layout-a.style-light, body.ui-light) .advisor-progress i.done, :is(.layout-a.style-light, body.ui-light) .advisor-reasons li > svg, :is(.layout-a.style-light, body.ui-light) .furniture-card.selected .furniture-card-icon, :is(.layout-a.style-light, body.ui-light) .mech-label, :is(.layout-a.style-light, body.ui-light) .sw-update button, :is(.layout-a.style-light, body.ui-light) .preset-list button.is-featured, :is(.layout-a.style-light, body.ui-light) .mix-structure { background: var(--l-ink); color: #fff; }
+
+/* Bővítés a tulajdonosi oldalról (4.84): felső sáv a 3D felett és a felmérési űrlap ármegjegyzése. */
+
+/* 4.95 – reszponzív átnézés (2026-11-17): minden felületen legalább 12,5–13 px szöveg, érintős eszközön 44 px-es célok */

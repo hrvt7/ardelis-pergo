@@ -1,5 +1,14 @@
 # Változások
 
+## 4.98 – Kisebb első stíluslap és könnyebb belépő animáció a nyitóoldalon
+
+- **Stíluslap szétválasztva:** a `src/base.css` a közös alap (Tailwind, színváltozók, alapstílusok, frissítési sáv), ezt minden oldal betölti. Az `index.css` (konfigurátor, admin, ajánlat, belépés, mintaoldal) csak a saját útvonalán töltődik. A nyitóoldal renderelést blokkoló stíluslapja tömörítve 137 KB → 41 KB.
+- **Betűk:** a nyitóoldal csak a ténylegesen használt betűket tölti (Plus Jakarta Sans, Urbanist, Geist 700); az Inter, Manrope, Outfit, Poppins és Cormorant az `src/appFonts.ts`-ben, az alkalmazás-oldalakon. Betűfájlt többé nem ágyaz a build base64-ként a CSS-be.
+- **Belépő animáció:** a szakaszok elemeinek beúszása CSS-átmenettel és egyetlen IntersectionObserverrel fut (ugyanaz a mozgás: 1 s, 46 px, 90 ms lépcső), nem elemenkénti GSAP-tweennel; a felépüléskor így kevesebb a hosszú feladat. A „Hét lépés” vonala továbbra is GSAP-pal rajzolódik.
+- **Ellenőrzés:** 10 oldal (nyitóoldal HU/EN, belépés, mintaoldal, adatkezelés, 404, ajánlat, tulajdonosi oldal, admin, konfigurátor) asztali és mobil képernyőképe, a nyitóoldal hat szakasza animáció után, valamint a nyitóoldalról a konfigurátorba és a belépésre navigálás képre azonos az előző éles verzióval (eltérés csak a betöltési pillanatban és a mozgó elemeknél).
+- **Mérés (Lighthouse mobil, ugyanazon a gépen, 5–5 futás):** teljesítmény 64–69 → 69–81, első tartalom 2,9 → 2,5 s, legnagyobb tartalom 4,2 → 3,7 s, elrendezés-ugrás 0. Akadálymentesség, bevált gyakorlatok, SEO: 100.
+- Tesztek: `cssSplit.test.ts` (alap- és alkalmazás-stílus, betűk, beágyazás tiltása, CSS-es belépő animáció).
+
 ## 4.97 – Gyorsabb mobil indulás a nyitóoldalon
 
 - **Mi változott:** a nyitóoldal először csak a hérót és a „Hét lépés” szakaszt építi fel, a többi szakasz az első megjelenés után, üresjáratban, négy csoportban, megszakítható rendereléssel kerül az oldalra. A böngésző így nem fagy le induláskor egyetlen hosszú feladattal. Ha a látogató horgonylinkkel érkezik (pl. `/#arak`), vagy korán kattint a menüre, azonnal minden felépül, és a görgetés a célra igazít.

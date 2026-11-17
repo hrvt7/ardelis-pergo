@@ -208,6 +208,9 @@ export default defineConfig(({ mode }) => {
       outDir: path.resolve(__dirname, "dist"),
       emptyOutDir: true,
       chunkSizeWarningLimit: 1800,
+      // Betűfájlt soha nem ágyazunk be base64-ként a CSS-be: az a renderelést blokkoló stíluslapot hízlalná
+      // (a régi woff tartalék-formátumot a modern böngésző le sem tölti).
+      assetsInlineLimit: (file: string) => (/\.(woff2?|ttf|otf)$/.test(file) ? false : undefined),
       rollupOptions: {
         output: {
           // A 3D-motor külön, hosszan gyorsítótárazható csomagba kerül.

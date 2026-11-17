@@ -5,31 +5,16 @@ import "@/lib/previewShim";
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, MemoryRouter } from 'react-router'
-// Saját tárhelyű betűk (ugyanazok, mint korábban a Google Fontsról), a latin és latin-ext alkészlettel.
+// Saját tárhelyű betűk. Itt csak a nyitóoldalon is használt betűk vannak (Plus Jakarta Sans, Urbanist, Geist 700);
+// a konfigurátor, az admin és a mintaoldal többi betűje a src/appFonts.ts-ben, a saját útvonalukon töltődik.
 import '@fontsource/plus-jakarta-sans/400.css'
 import '@fontsource/plus-jakarta-sans/500.css'
 import '@fontsource/plus-jakarta-sans/600.css'
 import '@fontsource/plus-jakarta-sans/700.css'
 import '@fontsource/plus-jakarta-sans/800.css'
-import '@fontsource/geist/400.css'
-import '@fontsource/geist/500.css'
-import '@fontsource/geist/600.css'
 import '@fontsource/geist/700.css'
-import '@fontsource/cormorant-garamond/400.css'
-import '@fontsource/cormorant-garamond/500.css'
-import '@fontsource/cormorant-garamond/400-italic.css'
-import '@fontsource/cormorant-garamond/500-italic.css'
-// A konfigurátor felülete: Inter (szöveg, igazított számok) + Manrope (címek), változtatható súlyú, latin-ext alkészlettel (ő, ű).
-import '@fontsource-variable/inter/index.css'
-import '@fontsource-variable/manrope/index.css'
-// Üveges felületi változat (?style=glass): Outfit.
-import '@fontsource-variable/outfit/index.css'
 import '@fontsource-variable/urbanist/index.css'
-// Gyártói admin (világos felület): Poppins.
-import '@fontsource/poppins/400.css'
-import '@fontsource/poppins/500.css'
-import '@fontsource/poppins/600.css'
-import './index.css'
+import './base.css'
 import App from './App.tsx'
 import SwUpdateBanner from '@/components/SwUpdateBanner'
 import { registerServiceWorker } from '@/lib/swClient'

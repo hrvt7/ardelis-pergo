@@ -217,22 +217,40 @@ function PlatformPage() {
     element.querySelectorAll('main > section, main > div').forEach((section) => pauser.observe(section))
     if (reduced) return () => pauser.disconnect()
 
+    // Belépő elemek és kiemelő filc: CSS-átmenet + egyetlen IntersectionObserver (nem GSAP-tween elemenként).
+    // Ugyanaz a mozgás, mint korábban (1 s, 46 px emelkedés, 90 ms lépcső, power3.out), de a felépüléskor nincs
+    // több tucat tween- és görgetési pont létrehozása, ami gyenge telefonon hosszú feladat volt.
+    const vh = window.innerHeight
+    const reveal = new IntersectionObserver((entries) => entries.forEach((entry) => {
+      if (!entry.isIntersecting) return
+      const target = entry.target as HTMLElement
+      reveal.unobserve(target)
+      if (target.tagName === 'EM') { target.classList.add('is-drawn'); return }
+      target.classList.add('is-revealed')
+      // A beúszás végén az élesítő osztály lekerül, így az elemek saját (pl. hover) átmenetei visszaállnak.
+      const items = target.querySelectorAll('[data-pf-item]').length
+      window.setTimeout(() => target.classList.remove('pf-reveal-armed', 'is-revealed'), 1100 + items * 90)
+    }), { rootMargin: '0px 0px -20% 0px' })
+    element.querySelectorAll<HTMLElement>('[data-pf-reveal]').forEach((section) => {
+      if (section.getBoundingClientRect().top < vh * 0.8) return // már elhaladt vagy látszik: nincs mit beúsztatni
+      section.querySelectorAll<HTMLElement>('[data-pf-item]').forEach((item, index) => item.style.setProperty('--pf-i', String(index)))
+      section.classList.add('pf-reveal-armed')
+      reveal.observe(section)
+    })
+    element.querySelectorAll<HTMLElement>('h2 em').forEach((em) => {
+      if (em.getBoundingClientRect().top < vh * 0.85) em.classList.add('is-drawn')
+      else reveal.observe(em)
+    })
     const context = gsap.context(() => {
-      // Belépő elemek a szakaszokban.
-      gsap.utils.toArray<HTMLElement>('[data-pf-reveal]', element).forEach((section) => {
-        gsap.fromTo(section.querySelectorAll('[data-pf-item]'), { opacity: 0, y: 46 }, { opacity: 1, y: 0, duration: 1, stagger: 0.09, ease: 'power3.out', clearProps: 'transform', scrollTrigger: { trigger: section, start: 'top 80%', once: true } })
-      })
-      // Kiemelő filc: a szakaszcímek kiemelt szava alá a Vanilla sáv behúzódik, amikor a cím beér.
-      gsap.utils.toArray<HTMLElement>('h2 em', element).forEach((em) => {
-        ScrollTrigger.create({ trigger: em, start: 'top 85%', once: true, onEnter: () => em.classList.add('is-drawn') })
-      })
       // Lépések: a vonal kirajzolódik.
       gsap.fromTo('.sx-line i', { '--sx': 0 }, { '--sx': 1, ease: 'none', scrollTrigger: { trigger: '.sx', start: 'top 75%', end: 'bottom 65%', scrub: true } })
     }, element)
-    // Az oldal hossza megnőtt: a korábban létrehozott görgetési pontok újraszámolása.
-    ScrollTrigger.refresh()
+    // Az oldal hossza megnőtt: a korábban létrehozott görgetési pontok újraszámolása (külön képkockában).
+    const refresh = requestAnimationFrame(() => ScrollTrigger.refresh())
 
     return () => {
+      cancelAnimationFrame(refresh)
+      reveal.disconnect()
       pauser.disconnect()
       context.revert()
     }

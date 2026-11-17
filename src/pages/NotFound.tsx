@@ -1,3 +1,5 @@
+import '@/index.css'
+import '@/appFonts'
 import { ArrowUpRight } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import LamelixLogo from '@/components/LamelixLogo'
