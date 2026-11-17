@@ -38,4 +38,12 @@ describe('lebegő konfigurátor-elrendezés', () => {
     // asztalon a panel balra lebeg
     expect(css).toMatch(/\.layout-float \.controls-panel \{ left: 28px; right: auto;/)
   })
+
+  it('mobil és telepített webapp: nincs alcím-címke, összecsukott lapon nincs „Beállítások” sor, a munkafelület levonja az állapotsort', () => {
+    const css = readFileSync('src/studio-float.css', 'utf8')
+    expect(css).toMatch(/\.layout-float \.viewer-heading p \{ display: none; \}/)
+    expect(css).toMatch(/sheet-peek \.sheet-toggle > span:not\(\.sheet-handle\)/)
+    expect(css).toMatch(/display-mode: standalone\) and \(max-width: 1100px\)[\s\S]*env\(safe-area-inset-top/)
+    expect(css).toMatch(/bottom: calc\(176px \+ env\(safe-area-inset-bottom/)
+  })
 })

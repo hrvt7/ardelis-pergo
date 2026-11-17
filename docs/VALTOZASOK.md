@@ -1,5 +1,12 @@
 # Változások
 
+## 4.88 – Konfigurátor mobilon és telepített webappként: tisztább alsó lap, rövidebb fül
+
+- **Telepített webapp (kezdőképernyő):** a munkafelület magassága levonja az állapotsort is. Eddig a jelenet a képernyő alá lógott: a felhúzott lap a fejlécre csúszott, az eszközfül majdnem rálógott az alsó lapra. A fül alja az alsó biztonsági sávval is számol.
+- **Alsó lap (összecsukva):** nincs „Beállítások” sor, csak a húzócsík, a lépések (1–7), az irányár és a Tovább gomb. A húzócsíkra koppintva vagy húzva nyílik.
+- **Fejléc:** a „motoros lamellás · 4,0 m mély” címke kikerült, a típus és a szélesség marad.
+- Tesztek: `studioFloat.test.ts`.
+
 ## 4.87 – Új nyitó animáció: „Zsalu” (9 mp)
 
 - **A nyitó animáció lecserélve** a „Lamelix logó – Zsalu” videóra (9:16, 9 mp, 3D: zsalulamellák → összeálló „L” → lamellák, tükröződő padló). Minden úton ez fut: videó, hardveres dekóder (tiltott automatikus lejátszásnál), animált kép, és a zárókocka állóképe; a nyitókép háttérszíne az új videóhoz igazítva.

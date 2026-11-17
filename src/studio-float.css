@@ -55,7 +55,7 @@
 /* ── Telefon és álló tablet: a fül kisebb, a felhúzott lap mögé bújik ─────── */
 @media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse), (orientation: portrait) and (max-width: 1100px) {
   .layout-float { --rail-w: 52px; --rail-r: 18px; --rb: 38px; }
-  .layout-float .tool-rail { top: 92px; bottom: 210px; transform: none; display: flex; padding: 8px 0 8px 8px; border-radius: 28px 0 0 28px; }
+  .layout-float .tool-rail { top: 92px; bottom: calc(176px + env(safe-area-inset-bottom, 0px)); transform: none; display: flex; padding: 8px 0 8px 8px; border-radius: 28px 0 0 28px; }
   .layout-float .tool-rail-scroll { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding-right: 8px; -webkit-mask: linear-gradient(transparent, #000 14px, #000 calc(100% - 14px), transparent); mask: linear-gradient(transparent, #000 14px, #000 calc(100% - 14px), transparent); padding-block: 6px; }
   .layout-float .tool-rail-scroll::-webkit-scrollbar { display: none; }
   .layout-float .rail-tip, .layout-float .tool-rail .camera-menu-toggle > span { display: none; }
@@ -63,5 +63,20 @@
   .layout-float .viewer-heading { right: calc(var(--rail-w) + 12px); }
   .layout-float .view-popover, .layout-float .sun-panel-slot { right: calc(var(--rail-w) + 10px); }
   .studio-shell:has(.controls-panel.sheet-half) .tool-rail, .studio-shell:has(.controls-panel.sheet-full) .tool-rail, .studio-shell:has(.controls-panel.is-dragging) .tool-rail { opacity: 0; pointer-events: none; }
+}
+/* Ádám, 2026-11-17: a fejléc alatti „motoros lamellás · 4,0 m mély” címke felesleges – csak a típus és a méret marad. */
+.layout-float .viewer-heading p { display: none; }
+
+/* Mobil: összecsukott lapon nincs „Beállítások” sor, csak a húzócsík, a lépések, az irányár és a Tovább gomb.
+   A húzócsík továbbra is gomb: koppintásra vagy húzásra nyílik a lap. */
+@media (max-width: 820px), (orientation: portrait) and (max-width: 1100px) {
+  .layout-float .controls-panel.sheet-peek .sheet-toggle { min-height: 26px; padding: 0; border-bottom: 0; }
+  .layout-float .controls-panel.sheet-peek .sheet-toggle > span:not(.sheet-handle), .layout-float .controls-panel.sheet-peek .sheet-toggle > svg { display: none; }
+  .layout-float .controls-panel.sheet-peek .sheet-handle { margin: 9px auto 9px; width: 44px; height: 5px; }
+}
+/* Telepített webapp (kezdőképernyő): a fejléc az állapotsor alá tolódik, ezért a munkafelület ennyivel rövidebb –
+   különben a jelenet a képernyő alá lóg, a felhúzott lap a fejlécre csúszik, a fül pedig rálóg a lapra. */
+@media (display-mode: standalone) and (max-width: 1100px), (display-mode: fullscreen) and (max-width: 1100px) {
+  .layout-a.bar-in-panel.layout-float .studio-shell, .layout-a.layout-float .studio-shell { height: calc(100dvh - var(--header-height) - env(safe-area-inset-top, 0px)); }
 }
 @media (prefers-reduced-motion: reduce) { .layout-float .rail-tip, .layout-float .rail-btn { transition: none; } }
