@@ -492,3 +492,19 @@
   .admin-ws .admin-nav em { font-size: 11px; }
   .admin-ws .admin-nav button.is-on em { position: static; order: 3; margin-left: 2px; background: var(--ws-ink); color: var(--ws-accent); }
 }
+
+/* ── 4.95 reszponzív átnézés: olvasható apró szövegek, érintős eszközön 44 px-es célok ─────────────── */
+.admin-ws .admin-brand small, .admin-ws .admin-brand span:not(.brand-mark) { font-size: 13px; }
+.admin-ws .admin-eyebrow { font-size: 12.5px; }
+.admin-ws .palette-btn kbd { font-size: 12px; }
+.admin-ws small.muted, .admin-ws .admin-form label > span small, .admin-ws .admin-form small { font-size: 13px; }
+.admin-ws .ws-status > span { min-height: 44px; }
+.admin-ws .ws-status select { min-height: 42px; }
+@media (pointer: coarse) {
+  .admin-ws .btn, .admin-ws .palette-btn, .admin-ws .icon-btn, .admin-ws .demo-ribbon button, .admin-ws .ws-more-link,
+  .admin-ws .admin-side-foot a, .admin-ws .admin-side-foot button, .admin-ws .admin-powered { min-height: 44px; }
+  .admin-ws .icon-btn { min-width: 44px; }
+  .admin-ws .drawer .facts dd a { display: inline-flex; align-items: center; min-height: 44px; }
+  .admin-ws input[type="checkbox"], .admin-ws input[type="radio"] { width: 24px; height: 24px; }
+  .admin-ws label:has(> input[type="checkbox"]) { min-height: 44px; display: flex; align-items: center; gap: 10px; }
+}

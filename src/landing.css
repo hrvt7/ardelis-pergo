@@ -741,3 +741,34 @@
   .lx-screen, .lx-sticker, .lx-passport-steps button { transition: none; }
   .lx-scan i { animation: none; top: 50%; }
 }
+
+/* ── 4.95 reszponzív átnézés ─────────────────────────────────────────────────────────────────────────── */
+/* Fekvő telefon és alacsony ablak (≤ 560 px magas, de széles): a „Hét lépés” képsorozat két oszlopban marad,
+   de csak a kép, az aktuális lépés és az irányár fér ki – eddig a lépéslista a következő szakasz szövegére lógott. */
+@media (max-height: 560px) and (min-width: 700px) {
+  .lx-build-sticky { grid-template-columns: minmax(0, 1.25fr) minmax(220px, .75fr); grid-template-rows: auto minmax(0, 1fr) auto; row-gap: 8px; column-gap: 22px; padding: 76px max(16px, 3vw) 12px; }
+  .lx-build-head { margin-bottom: 2px; }
+  .lx-build-head .lx-eyebrow { position: static; transform: none; margin-bottom: 4px; }
+  .lx-build-head h2 { font-size: clamp(22px, 3.1vw, 30px); }
+  .lx-build-head .lx-sub { display: none; }
+  .lx-build-stage { grid-row: 2 / 4; align-self: stretch; height: 100%; aspect-ratio: auto; border-radius: 20px; }
+  .lx-build-steps { align-content: end; overflow: visible; }
+  .lx-build-steps li:not(.is-on) { display: none; }
+  .lx-build-steps li.is-on { transform: none; }
+  .lx-build-steps li.is-on strong { max-height: none; font-size: 14px; }
+  .lx-build-price { margin-top: 8px; padding: 12px 14px; }
+  .lx-build-price strong { font-size: 22px; }
+}
+/* A fejléc apró címkéje olvasható méretű. */
+.lx-page .pf-brand small { font-size: 12.5px; }
+/* Csomagválasztó fülek: az ár nem törik szét keskeny képernyőn. */
+.lx-plan-tabs button small { white-space: nowrap; }
+@media (max-width: 400px) { .lx-plan-tabs button { padding: 0 6px; font-size: 13px; } .lx-plan-tabs button small { font-size: 11.5px; } }
+/* Érintős eszközön minden kattintható elem legalább 44 px magas (fejléc, demó-gombok, csúszkák, jelölőnégyzet). */
+@media (pointer: coarse) {
+  .lx-page .pf-brand, .lx-page .pf-link-quiet, .lx-page .pf-sim-open, .lx-page .pf-sim-fs, .lx-plan-tabs button, .lx-page .roi-plan button { min-height: 44px; display: inline-flex; align-items: center; }
+  .lx-page input[type="range"] { min-height: 44px; }
+  .lx-page input[type="checkbox"] { width: 24px; height: 24px; }
+  .lx-page label:has(> input[type="checkbox"]) { min-height: 44px; }
+  .lx-page .pf-footer a, .lx-page .qa-contact a { display: inline-flex; align-items: center; min-height: 44px; }
+}

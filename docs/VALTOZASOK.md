@@ -1,5 +1,14 @@
 # Változások
 
+## 4.95 – Reszponzív átnézés: telefon, tablet, laptop, monitor
+
+- **Mérés:** 26 képernyőméreten (telefon 9:16 és fekvő, tablet 4:3, 16:10, 3:2, laptop, 1080p–3440 px monitor) gépi ellenőrzés: vízszintes kilógás, levágott szöveg, 12 px alatti betű, 44 px alatti érintési célpont, egymásra lógó szöveg.
+- **Hiba: nyitóoldal, fekvő telefon** – a „Hét lépés” képsorozat asztali elrendezése nem fért ki 390–412 px magas képernyőn, a lépéslista a következő szakasz szövegére lógott. Alacsony ablakon most csak a kép, az aktuális lépés és az irányár látszik.
+- **Hiba: konfigurátor, 360 px széles telefon** – a 7. lépés kilógott a lépéscsíkról; most mind a 7 kifér. A betöltő kártya nem csúszik a fekete eszközfül alá.
+- **Érintés:** telefonon és tableten 44 px-es célpontok az eszközfülön, a nézetválasztón, a fejléc gombjain, az admin gombjain, állapotválasztóján és jelölőnégyzetein, az ajánlatoldal elfogadó jelölőjén, a nyitóoldal fejlécén, demógombjain, csúszkáin és a tulajdonosi oldal adatkezelési linkjén.
+- **Olvashatóság:** 11 px alatti címkék (admin márkanév és szemöldökcímek, ajánlat táblafejléc, „Bruttó irányár”, „gyártóknak”) 12–13 px-re nőttek; a csomagválasztó ára nem törik szét keskeny képernyőn.
+- Tesztek: `responsive.test.ts` (alacsony elrendezés, 44 px-es célpontok, 7 lépés 360 px-en, tulajdonosi link).
+
 ## 4.94 – Szervizfotók: hozzáfűzött képek metaadata és telepítésenkénti korlát (hibakeresés 6.)
 
 - **Hiba: a szerveroldali metaadat-szűrés az első kép után hozzáfűzött képeket (iPhone/Samsung MPF, gain map) bájtra átengedte**, a saját EXIF/GPS-adatukkal együtt (ha egy kliens kihagyja a böngészős újrakódolást). Most a képadat az első valódi záró jelölőnél véget ér, ami utána jön, lekerül; a progresszív képek szkennjei közti APPn/COM szegmensek is lekerülnek. Az ellenőrző (`hasMetadata`) a teljes fájlban keres EXIF-fejlécet.

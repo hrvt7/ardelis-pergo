@@ -42,7 +42,7 @@
 .owner-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .owner-foot { max-width: 820px; margin: 18px auto 0; display: grid; gap: 6px; text-align: center; color: var(--o-muted); font-size: 13px; }
 .owner-foot p { margin: 0; }
-.owner-foot a { color: inherit; }
+.owner-foot a { color: inherit; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }
 @media (max-width: 560px) {
   .owner-spec { grid-template-columns: minmax(0, 1fr); }
   .owner-warranty li { grid-template-columns: 22px minmax(0, 1fr); }
