@@ -665,3 +665,8 @@
 .rb-summary-legacy .real-lead-form input[aria-invalid='true'] { border-color: #b42318; box-shadow: 0 0 0 1px #b42318; }
 /* A környezet-kapcsoló sínje halkabb (ne nézzen ki görgetősávnak). */
 .rb-corner-groove { stroke: rgba(21, 23, 26, .055); }
+/* Ikon nélküli kapcsolósor (Megjelenítés, Kamera panel): a szöveg kitölti a sort, a kapcsoló mindig a jobb szélen,
+   így a kapcsolók egymás alatt egy oszlopban állnak. */
+.rb-option.rb-switch-row:not(:has(.rb-switch-icon)), .rb-option.rb-stepper-row:not(:has(.rb-switch-icon)) { grid-template-columns: minmax(0, 1fr) auto; }
+.rb-option.rb-switch-row .rb-metal { justify-self: end; }
+.rb-option.rb-switch-row .rb-switch-text { justify-self: stretch; }

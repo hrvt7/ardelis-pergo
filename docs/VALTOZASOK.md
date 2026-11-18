@@ -1,5 +1,10 @@
 # Változások
 
+## 5.39 – Kapcsolósorok: a kapcsolók egy oszlopban
+
+- **Hiba:** a bal oldali eszköztár Megjelenítés és Kamera paneljén a kapcsolók közvetlenül a szöveg után álltak, így soronként máshol (a szöveg hosszától függően). Az ikon nélküli kapcsolósorokban most a szöveg kitölti a sort, és a kapcsoló mindig a jobb szélen áll, egymás alatt egy oszlopban, asztalon és telefonon is.
+- Tesztek: `eveningBugfixes.test.ts` (kapcsolósor elrendezése).
+
 ## 5.38 – Hibajavítások: árnyék környezetváltáskor, ajánlatkérő űrlap
 
 - **Hiba: a kikapcsolt ház árnyéka a padlón maradt.** Az árnyéktérkép csak kérésre frissül; a ház, az ösvénylámpák és a növények eltűnésekor nem kérte senki. Most a környezet, a ház kinézete, a bútor, a rögzítés és a méret változásakor azonnal és a később betöltődő részek után is (0,12 / 0,6 / 1,5 s) újrarajzolódik.
