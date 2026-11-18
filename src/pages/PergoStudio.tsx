@@ -619,7 +619,9 @@ export default function PergoStudio() {
     // Az űrlaphoz görget, és az első üres mezőre áll, hogy azonnal kitölthető legyen.
     window.setTimeout(() => {
       const section = document.querySelector<HTMLElement>('.rb-stepcard .lead-section')
-      section?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+      // Csak a lépés tartalma görög (a kártya fejléce és lábléce a helyén marad).
+      const body = section?.closest<HTMLElement>('.rb-stepcard-body')
+      if (section && body) body.scrollTo({ top: section.offsetTop - body.offsetTop - 8, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
       const field = [...(section?.querySelectorAll<HTMLInputElement>('input:not([type=checkbox]):not([tabindex="-1"])') ?? [])].find((input) => !input.value)
       window.setTimeout(() => field?.focus({ preventScroll: true }), 450)
     }, 350)

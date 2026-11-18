@@ -3098,6 +3098,17 @@ function SceneContent({ cyclorama = false, cycloramaTone = 'neutral', config, sc
   const shownNight = shownKey.endsWith('|true')
   const lighting = { ...target, night: shownNight, hdr: shownKey.slice(0, shownKey.lastIndexOf('|')) }
   const studio = scene.ground === 'studio'
+  // Az árnyéktérkép csak kérésre frissül (autoUpdate = false). Környezetváltáskor (ház, kert, stúdió, ház kinézete)
+  // eltűnnek vagy megjelennek árnyékvető tárgyak: azonnal és a késleltetve betöltődő részek után is újra kell rajzolni,
+  // különben a kikapcsolt ház, ösvénylámpák és növények árnyéka a stúdió padlón marad.
+  const sceneGl = useThree((state) => state.gl)
+  const sceneInvalidate = useThree((state) => state.invalidate)
+  useEffect(() => {
+    const redraw = () => { refreshShadows(sceneGl); sceneInvalidate() }
+    redraw()
+    const timers = [120, 600, 1500].map((ms) => window.setTimeout(redraw, ms))
+    return () => timers.forEach((timer) => window.clearTimeout(timer))
+  }, [sceneGl, sceneInvalidate, scene.ground, scene.houseStyle, scene.wallFinish, scene.furniture, config.mount, config.width, config.depth])
   // Az árnyékkamera a pergolára és a közvetlen környezetére illeszkedik: ugyanazon a felbontáson élesebb árnyék.
   const shadowExtent = modular ? Math.max(8.5, lighting.shadowExtent) : scene.sunStudy || scene.photoMode ? lighting.shadowExtent : Math.min(lighting.shadowExtent, Math.max(7, Math.max(config.width, config.depth) / 2 + 4.5))
   const houseLook = useMemo<HouseLook>(() => ({ houseStyle: scene.houseStyle ?? 'classic', wallFinish: scene.wallFinish, wallColor: scene.wallColor, windowColor: scene.windowColor }), [scene.houseStyle, scene.wallFinish, scene.wallColor, scene.windowColor])

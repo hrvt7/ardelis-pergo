@@ -1,5 +1,14 @@
 # Változások
 
+## 5.38 – Hibajavítások: árnyék környezetváltáskor, ajánlatkérő űrlap
+
+- **Hiba: a kikapcsolt ház árnyéka a padlón maradt.** Az árnyéktérkép csak kérésre frissül; a ház, az ösvénylámpák és a növények eltűnésekor nem kérte senki. Most a környezet, a ház kinézete, a bútor, a rögzítés és a méret változásakor azonnal és a később betöltődő részek után is (0,12 / 0,6 / 1,5 s) újrarajzolódik.
+- **Hiba: az „Ajánlatot kérek” kigörgette a kártya fejlécét.** Az űrlaphoz görgetés az egész kártyát elmozdította (a cím eltűnt, a lábléc feljebb csúszott). Most csak a lépés tartalma görög; a kártya nem görgethető konténer.
+- **Hiba: olvashatatlan hozzájárulás-hiba.** A hozzájárulás szövege és a hibaüzenet a régi, sötét felülethez írt halvány rózsaszínnel, apró betűvel jelent meg. Most 14 px, sötét szöveg, a hiba sötétpiros.
+- A környezet-kapcsoló sínje halkabb, nem hasonlít görgetősávra.
+- Ellenőrzés: új böngészős végigjárás asztalon és telefonon (minden lépés minden gombja, számmezők szélső értékekkel): nincs JS-hiba, nincs NaN, nincs üres 3D-elem.
+- Tesztek: `eveningBugfixes.test.ts`.
+
 ## 5.37 – Tető és oldalak: egy fő döntés, renderelt képekkel, csoportosítva
 
 - **Kiválasztott = domináns:** a tető- és az oldalzárás-lépésen a kiválasztott opció nagy kártya, a saját 3D-nkből renderelt képpel, lime bal sávval, a nevével, egy sor előnnyel (tetőnél árnyék és eső). Választáskor az új kártya beúszik.

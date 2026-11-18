@@ -652,3 +652,16 @@
 .rb-choice-hero-text { align-content: center; padding: 14px 40px 14px 14px; }
 .rb-choice-hero .rb-option-check { top: 10px; right: 10px; }
 .rb-choice-hero-text .rb-roof-props { display: grid; gap: 2px; }
+
+/* ── Hibajavítások (2026-11-18 este) ─────────────────────────────────────────────────────────────────────────────
+   A kártya nem görgethető konténer (overflow: clip): az űrlaphoz görgetés / hibás mező fókusza csak a lépés tartalmát
+   görgeti, a fejléc és a lábléc a helyén marad. */
+.rb-stepcard { overflow: clip; }
+/* Világos panelen olvasható hozzájárulás és hibaszöveg (a régi, sötét felülethez írt halvány rózsaszín helyett). */
+.rb-summary-legacy .consent-row > span { font-size: 14px; line-height: 1.45; color: rgba(21, 23, 26, .82); }
+.rb-summary-legacy .consent-row.is-invalid > span { color: #8a1c12; }
+.rb-summary-legacy .consent-row.is-invalid input { outline: 2px solid #b42318; outline-offset: 2px; }
+.rb-summary-legacy .real-lead-form .field-error { color: #b42318; font-size: 13px; font-weight: 600; }
+.rb-summary-legacy .real-lead-form input[aria-invalid='true'] { border-color: #b42318; box-shadow: 0 0 0 1px #b42318; }
+/* A környezet-kapcsoló sínje halkabb (ne nézzen ki görgetősávnak). */
+.rb-corner-groove { stroke: rgba(21, 23, 26, .055); }
