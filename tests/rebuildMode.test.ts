@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isRebuildMode, moduleVisible, REBUILD_MODULES, REBUILT_MODULES, type RebuildModule } from '../src/lib/rebuildMode'
+import { isLegacyUi, isNewUi, isRebuildMode, moduleVisible, REBUILD_MODULES, REBUILT_MODULES, type RebuildModule } from '../src/lib/rebuildMode'
 
 describe('újraépítési mód', () => {
   it('csak a pontos paraméterre kapcsol be', () => {
@@ -23,5 +23,14 @@ describe('újraépítési mód', () => {
     const rebuilt = new Set<RebuildModule>(['M01'])
     expect(moduleVisible('M01', true, rebuilt)).toBe(true)
     expect(moduleVisible('M02', true, rebuilt)).toBe(false)
+  })
+
+  it('M19: az új felület az éles alapértelmezés, csak ?mod=regi hozza vissza a régit', () => {
+    expect(isNewUi('')).toBe(true)
+    expect(isNewUi('?mod=ujraepites')).toBe(true)
+    expect(isNewUi('?embed=1')).toBe(true)
+    expect(isNewUi('?mod=regi')).toBe(false)
+    expect(isLegacyUi('?style=glass&mod=regi')).toBe(true)
+    expect(isLegacyUi('?mod=ujraepites')).toBe(false)
   })
 })

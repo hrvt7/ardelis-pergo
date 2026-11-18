@@ -46,7 +46,7 @@ import { buildWalkArea } from '@/lib/walkArea'
 import { floatPhoneShiftX, floatViewShiftX, glassViewShiftX, resolveUiStyle, studioInitialTime, UI_STYLE_KEY, usesCyclorama, usesFloatLayout, type UiStyle } from '@/lib/uiStyle'
 import { cameraViewsFor } from '@/lib/cameraViews'
 import { mobileBarAction } from '@/lib/configSteps'
-import { currentRebuildMode, moduleVisible } from '@/lib/rebuildMode'
+import { currentNewUi, currentRebuildMode, moduleVisible } from '@/lib/rebuildMode'
 import StepCard from '@/components/rebuild/StepCard'
 import StepDock from '@/components/rebuild/StepDock'
 import StepBar from '@/components/rebuild/StepBar'
@@ -113,18 +113,21 @@ function loadSaved(tenant: Tenant): SavedConfiguration[] {
 export default function PergoStudio() {
   const { tenant, labels: ROOF_LABELS, admin, embed, homeHref, product } = useTenant()
   usePageSeo(product === 'carport' ? '/konfigurator/carport' : '/konfigurator', { noindex: embed || !tenant.demo, title: tenant.demo ? undefined : `${tenant.brand.name} · ${product === 'carport' ? 'Carport' : 'Pergola'} ${tr('konfigurátor', 'Konfigurator')}` })
-  // Újraépítési mód (`?mod=ujraepites`, docs/rebuild): csak a 3D, a gyártó alaptervéből; nem ír a böngészőbe és nem mér.
-  const [rebuild] = useState(currentRebuildMode)
+  // Új felület (M19): élesben ez az alapértelmezés, `?mod=regi` a régi felület (tartalék). Az admin árszerkesztő
+  // előnézete a régi felületen marad, mert az árlista-szerkesztő ott van.
+  // `?mod=ujraepites` előnézet (sandbox): ugyanaz az új felület a gyártó alaptervéből, de nem ír a böngészőbe és nem mér.
+  const [rebuild] = useState(() => currentNewUi() && !admin)
+  const [sandbox] = useState(currentRebuildMode)
   const [rebuildSheetOpen, setRebuildSheetOpen] = useState(false)
   // Bővítés a tulajdonosi oldalról: a felszerelt termékből indul, a meglévő szerkezet zárolt (csak hozzáadni lehet).
   const [expansion] = useState(() => (product === 'pergola' && !rebuild ? readExpansion(tenant.id) : null))
   const expansionBase = useMemo(() => (expansion ? normalizeConfig(tenant, expansion.config) : null), [expansion, tenant])
-  const [config, setConfig] = useState<PergolaConfig>(() => expansionBase ?? (rebuild ? normalizeConfig(tenant, productDefaultConfig(tenant, product)) : loadInitialConfig(tenant, product)))
+  const [config, setConfig] = useState<PergolaConfig>(() => expansionBase ?? (sandbox ? normalizeConfig(tenant, productDefaultConfig(tenant, product)) : loadInitialConfig(tenant, product)))
   // Visszatérő látogató: ha piszkozatból (nem linkből) indultunk, és az nem az alapterv, felajánljuk a folytatást.
   const [welcomeBack, setWelcomeBack] = useState(() => !rebuild && !expansion && !window.location.hash && JSON.stringify(config) !== JSON.stringify(normalizeConfig(tenant, productDefaultConfig(tenant, product))) && hasStoredDraft(tenant, product))
   const projectKey = `pergo-project-name:${tenant.id}`
   const [projectName, setProjectName] = useState(() => { try { return localStorage.getItem(projectKey) ?? '' } catch { return '' } })
-  useEffect(() => { if (rebuild) return; try { localStorage.setItem(projectKey, projectName) } catch { /* privát mód */ } }, [rebuild, projectKey, projectName])
+  useEffect(() => { if (sandbox) return; try { localStorage.setItem(projectKey, projectName) } catch { /* privát mód */ } }, [sandbox, projectKey, projectName])
   const [prices, setPrices] = useState<PriceSettings>(() => loadPrices(tenant, admin))
   // A ház kinézete (homlokzat, nyílászárók) a böngészőben megmarad: a vásárló háza nem változik két látogatás között.
   const [scene, setScene] = useState<SceneSettings>(() => {
@@ -134,7 +137,7 @@ export default function PergoStudio() {
     // Újraépítési mód: a 3D-feliratok és a műszaki jelölések kikapcsolva (a modulok hozzák vissza).
     return rebuild ? { ...initial, labels: false, showHotspots: false } : initial
   })
-  useEffect(() => { if (!rebuild) saveHouseLook(tenant.id, scene) }, [rebuild, tenant.id, scene.houseStyle, scene.wallFinish, scene.wallColor, scene.windowColor]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!sandbox) saveHouseLook(tenant.id, scene) }, [sandbox, tenant.id, scene.houseStyle, scene.wallFinish, scene.wallColor, scene.windowColor]) // eslint-disable-line react-hooks/exhaustive-deps
   // Modulház: ugyanazon a felületen, a „Mit építesz?” választóból; a középső modell, a lépések és az ár a modulházé.
   // A `#h=` megosztó link modulház nézetben nyit; egyébként a legutóbbi választás marad meg (gyártónként).
   const modularKey = `lamelix-studio-kind:${tenant.id}`
@@ -224,13 +227,13 @@ export default function PergoStudio() {
   const openEnergy = energySupported ? () => setModal('energy') : undefined
 
   // A bővítés nem írja felül a látogató saját piszkozatát.
-  useEffect(() => { if (!expansion && !rebuild) persistConfig(tenant, config, product) }, [tenant, config, product, expansion, rebuild])
+  useEffect(() => { if (!expansion && !sandbox) persistConfig(tenant, config, product) }, [tenant, config, product, expansion, sandbox])
   // Névtelen konverziómérés: megnyitás és az első érdemi módosítás (csak vásárlói nézetben; újraépítési módban sem).
-  const silent = admin || rebuild
+  const silent = admin || sandbox
   const firstConfig = useRef(config)
   useEffect(() => { if (!silent) { track(tenant.id, 'open'); startEngagement(tenant.id) } }, [tenant.id, silent])
   // A lead-pontozáshoz: melyik lépéseket járta be (csak a böngészőben gyűlik, a kérelemmel megy ki).
-  useEffect(() => { if (!rebuild) noteStep(tenant.id, step) }, [rebuild, tenant.id, step])
+  useEffect(() => { if (!sandbox) noteStep(tenant.id, step) }, [sandbox, tenant.id, step])
   useEffect(() => { if (!silent && config !== firstConfig.current) track(tenant.id, 'configure') }, [tenant.id, silent, config])
   // Lépésenkénti lemorzsolódás és betöltési idő mérése (névtelen, munkamenetenként egyszer; audit: mérőszámok).
   useEffect(() => { const name = stepEvent(step); if (!silent && name) track(tenant.id, name) }, [tenant.id, silent, step])
@@ -243,15 +246,15 @@ export default function PergoStudio() {
   // Ha az oldal megosztott linkkel nyílt, a címsor linkje kövesse a módosításokat — különben
   // frissítéskor a régi link felülírná a vásárló közben végzett változtatásait.
   useEffect(() => {
-    if (rebuild || !/^#(c|k)=/.test(window.location.hash)) return
+    if (sandbox || !/^#(c|k)=/.test(window.location.hash)) return
     const timer = window.setTimeout(() => {
       const next = `#${shareHash(config)}`
       if (window.location.hash !== next) window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}${next}`)
     }, 400)
     return () => window.clearTimeout(timer)
-  }, [config, rebuild])
+  }, [config, sandbox])
   useEffect(() => { if (admin) persistPrices(tenant, prices) }, [tenant, admin, prices])
-  useEffect(() => { if (rebuild) return; try { localStorage.setItem(savedKey(tenant), JSON.stringify(saved)) } catch { /* privát mód */ } }, [rebuild, tenant, saved])
+  useEffect(() => { if (sandbox) return; try { localStorage.setItem(savedKey(tenant), JSON.stringify(saved)) } catch { /* privát mód */ } }, [sandbox, tenant, saved])
   useEffect(() => {
     if (!toast) return
     const timer = window.setTimeout(() => setToast(''), 3600)

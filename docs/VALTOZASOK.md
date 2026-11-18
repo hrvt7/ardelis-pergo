@@ -1,5 +1,14 @@
 # Változások
 
+## 5.28 – Élesítés (M19): az új konfigurátor-felület lett az alapértelmezés
+
+- **Ádám döntése (2026-11-18):** a `/konfigurator` (pergola és carport) paraméter nélkül az új felületet mutatja: teljes képernyős 3D, jobb oldali folyékony üveg lépéskártya, alsó lépéssáv, bal oldali Nézet és Környezet sín, becsült ársáv és ajánlatkérés minden lépésből. Telefonon alulról nyíló lap.
+- Élesben az új felület is ment és mér: a vázlat a böngészőben marad, a megosztott link (`#c=`) betöltődik, a lépés- és eseménymérés (admin statisztika) fut.
+- **Tartalék:** a régi felület a kódban marad, és `?mod=regi` paraméterrel elérhető. Az admin árszerkesztő előnézete a régi felületen marad (ott van az árlista-szerkesztő).
+- `?mod=ujraepites`: előnézet, ugyanaz az új felület, de nem ír a böngészőbe és nem mér.
+- Az új felületen még nincs: visszavonás/újra, AR, fotóba helyezés, bejárás, modulház, tanácsadó és keretösszeg párbeszéd (M04, M16–M18 később); ezek most a `?mod=regi` alatt érhetők el.
+- Tesztek: `rebuildMode.test.ts` (alapértelmezés és tartalék).
+
 ## 5.27 – Forgólamellás pergola: Aluprof MB-OpenSky 140 gyári profilokból
 
 - **Új váz és tető:** a forgólamellás pergola az SB 400 helyett az Aluprof MB-OpenSky 140 gyári DWG-metszeteiből épül: oszlop K440137X (140 × 140), gerenda K440141X + K440142X takaró (140 × 255, kétkamrás), eresz K440138X a lamellavégek alatt, lamella K440565X (223 × 43,6). Osztás 200 mm, tengely 58 mm-rel a gerenda teteje alatt, a lamellasor középre igazítva, legalább 150 mm-re a gerendától; 5 m feletti mezőben dupla gerendán toldva.

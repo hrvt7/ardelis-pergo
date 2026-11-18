@@ -38,7 +38,7 @@
 | M16 | Bemutató eszközök | NEM INDULT | – | |
 | M17 | Döntéstámogatók | NEM INDULT | – | |
 | M18 | Különleges módok | NEM INDULT | – | |
-| M19 | Élesítés és takarítás | NEM INDULT | – | |
+| M19 | Élesítés és takarítás | ÉLESÍTVE (új felület alapértelmezés, `?mod=regi` tartalék; takarítás később) | 2026-11-18 | Ádám döntése |
 
 ## Nyitott döntések (Ádám)
 
