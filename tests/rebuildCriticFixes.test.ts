@@ -103,7 +103,8 @@ describe('kritikus kör, 3. forduló', () => {
   it('a kalkulációs lapon az összeg és a gomb rögzítve, a tételek bruttóban', () => {
     const bar = read('src/components/rebuild/PriceBar.tsx')
     expect(bar).toContain('className="rb-price-sum"')
-    expect(bar).toContain('formatPrice(line.amountNet * vatFactor)')
+    expect(bar).toContain('formatPrice(gross(line.amountNet))')
+    expect(bar).toContain('Math.round((net * vatFactor) / 1000) * 1000')
     expect(bar.indexOf('rb-price-sum')).toBeGreaterThan(bar.indexOf('</div>\n        {/* Az összeg'))
   })
   it('az összegzésen egy küldés gomb: a lábléc „Ajánlatot kérek” küldi az űrlapot', () => {

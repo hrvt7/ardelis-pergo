@@ -1,5 +1,10 @@
 # Változások
 
+## 5.33 – Kalkulációs lap: bruttó tételek ezresre kerekítve
+
+- **Hiba:** a tételes kalkuláció bruttó sorai forintra pontosan jelentek meg (pl. 4 191 230 Ft), miközben a végösszeg ezresre kerekített. Most minden tétel ezresre kerekítve látszik, ahogy a végösszeg.
+- Tesztek: `rebuildCriticFixes.test.ts` (kerekítés).
+
 ## 5.32 – Új konfigurátor: harmadik kritikus kör, lime vezérlők vissza
 
 - **Lime vezérlők:** a kapcsolók, a csúszkák és a lamellaszög íve újra lime színű (Ádám döntése); a „kiválasztva” jel továbbra is a sötét keret és pipa.

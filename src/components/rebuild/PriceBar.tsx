@@ -32,6 +32,8 @@ export default function PriceBar({ price, compact, onRequest }: { price: PriceBr
   }, [open])
   const months = tenant.installmentMonths
   const vatFactor = price.totalNet > 0 ? price.totalGross / price.totalNet : 1
+  // Bruttó tétel ezresre kerekítve, mint a végösszeg.
+  const gross = (net: number) => Math.round((net * vatFactor) / 1000) * 1000
 
   const host = open ? document.querySelector('.rebuild-shell') ?? document.body : null
   const details = open && host ? createPortal(<div ref={sheet} className={`rb-price-sheet${compact ? ' is-compact' : ''}`}>
@@ -41,8 +43,8 @@ export default function PriceBar({ price, compact, onRequest }: { price: PriceBr
         <div className="rb-price-details-scroll">
           <p className="rb-price-basis">{tr('Bruttó tételek, ÁFA-val. A lépésekben látott felár ennél kicsit több: a szerelés arányos részét is tartalmazza.', 'Bruttopositionen inkl. USt. Die Aufpreise in den Schritten sind etwas höher: sie enthalten den anteiligen Montagepreis.')}</p>
           <ul>
-            {price.lines.map((line) => <li key={line.id}><span>{line.label}<small>{line.detail}</small></span><b>{formatPrice(line.amountNet * vatFactor)}</b></li>)}
-            {price.installationNet > 0 && <li><span>{tr('Szerelés', 'Montage')}</span><b>{formatPrice(price.installationNet * vatFactor)}</b></li>}
+            {price.lines.map((line) => <li key={line.id}><span>{line.label}<small>{line.detail}</small></span><b>{formatPrice(gross(line.amountNet))}</b></li>)}
+            {price.installationNet > 0 && <li><span>{tr('Szerelés', 'Montage')}</span><b>{formatPrice(gross(price.installationNet))}</b></li>}
           </ul>
           {months > 0 && <p className="rb-price-monthly">{tr(`${months} havi részre bontva`, `Auf ${months} Monate verteilt`)} <b>{formatPrice(price.totalGross / months)} / {tr('hó', 'Monat')}</b><small>{tr('Az ár egyenlő részekre osztva; nem hitel- vagy finanszírozási ajánlat.', 'Preis in gleiche Teile geteilt; kein Kredit- oder Finanzierungsangebot.')}</small></p>}
         </div>
