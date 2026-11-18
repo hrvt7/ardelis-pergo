@@ -13,7 +13,7 @@ const VIEW_ICONS: Record<CameraView, LucideIcon> = { perspective: Eye, interior:
 const timeOf = (dayTime: number): SceneSettings['time'] => (dayTime >= 20 || dayTime < 7 ? 'night' : dayTime >= 17 ? 'sunset' : 'day')
 
 /**
- * Nézet és Környezet eszköztár (D8, Ádám 03-as mintája): a bal szélhez olvadó sötét sín négy ikonnal; mindegyik
+ * Nézet és Környezet eszköztár (D8): a bal szélen lebegő folyékony üveg sín négy ikonnal (a jobb oldali kártyával egy anyagból); mindegyik
  * a mellette nyíló üvegpanelt nyitja, egy témával: Kamera, Napszak, Környezet, Megjelenítés.
  * A beállítások csak a látványt változtatják, az árat nem.
  */
@@ -75,11 +75,9 @@ export default function SceneRail({ config, scene, view, compact, tucked = false
   return (
     <div className={`rb-rail${compact ? ' is-compact' : ''}${tucked ? ' is-tucked' : ''}`} ref={root}>
       {tucked && <button type="button" className="rb-rail-tab" aria-label={tr('Nézet és környezet megnyitása', 'Ansicht und Umgebung öffnen')} onClick={onUntuck}><ChevronRight size={16} /></button>}
-      <nav className="rb-rail-bar" aria-label={tr('Nézet és környezet', 'Ansicht und Umgebung')}>
-        <svg className="rb-rail-fillet is-top" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M 0 0 L 0 16 L 16 16 A 16 16 0 0 1 0 0 Z" /></svg>
+      <LiquidGlass as="nav" className="rb-rail-bar" radius={24} bezel={12} blur={12} aria-label={tr('Nézet és környezet', 'Ansicht und Umgebung')}>
         {tools.map(({ id, icon: Icon, label }) => <button type="button" key={id} className={open === id ? 'is-open' : ''} aria-expanded={open === id} aria-label={label} title={label} onClick={() => setOpen((current) => (current === id ? null : id))}><Icon size={20} strokeWidth={1.6} /><span>{label}</span></button>)}
-        <svg className="rb-rail-fillet is-bottom" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M 0 16 L 0 0 L 16 0 A 16 16 0 0 0 0 16 Z" /></svg>
-      </nav>
+      </LiquidGlass>
       {open && <LiquidGlass as="section" className="rb-rail-panel" radius={24} bezel={14} aria-label={panels[open].title}>
         <header><h3>{panels[open].title}</h3><button type="button" aria-label={tr('Bezárás', 'Schließen')} onClick={() => setOpen(null)}><X size={16} /></button></header>
         <div className="rb-rail-body">{panels[open].body}</div>

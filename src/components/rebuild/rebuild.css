@@ -309,17 +309,13 @@
 .rb-badge { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--rb-accent); color: #10120f; font-style: normal; font-size: 10.5px; font-weight: 700; vertical-align: 2px; }
 
 /* Nézet és Környezet eszköztár: a bal szélhez olvadó sín + mellette nyíló üvegpanel */
-.rb-rail { position: absolute; z-index: 27; left: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 12px; }
-.rb-rail-bar { position: relative; display: grid; gap: 4px; padding: 10px 8px 10px 6px; border-radius: 0 22px 22px 0; background: var(--rb-bar); box-shadow: 10px 0 30px rgba(10, 12, 14, .22); }
-.rb-rail-bar button { display: grid; justify-items: center; gap: 3px; width: 64px; padding: 9px 2px; border: 0; border-radius: 16px; background: transparent; color: rgba(255, 255, 255, .62); font: inherit; cursor: pointer; transition: background .2s, color .2s; }
+.rb-rail { position: absolute; z-index: 27; left: var(--rb-gap); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 12px; }
+.rb-rail-bar { display: grid; gap: 4px; padding: 8px; }
+.rb-rail-bar button { display: grid; justify-items: center; gap: 3px; width: 64px; padding: 9px 2px; border: 0; border-radius: 16px; background: transparent; color: rgba(21, 23, 26, .6); font: inherit; cursor: pointer; transition: background .2s, color .2s; }
 .rb-rail-bar button span { font-size: 10px; font-weight: 600; }
-.rb-rail-bar button:hover { color: #fff; background: rgba(255, 255, 255, .07); }
-.rb-rail-bar button.is-open { color: #10120f; background: var(--rb-accent); }
-.rb-rail-bar button:focus-visible { outline: 2px solid var(--rb-accent); outline-offset: 1px; }
-.rb-rail-fillet { position: absolute; left: 0; }
-.rb-rail-fillet path { fill: var(--rb-bar); }
-.rb-rail-fillet.is-top { top: -16px; }
-.rb-rail-fillet.is-bottom { bottom: -16px; }
+.rb-rail-bar button:hover { color: var(--rb-ink); background: rgba(255, 255, 255, .45); }
+.rb-rail-bar button.is-open { color: #10120f; background: var(--rb-accent); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 4px 14px color-mix(in oklab, var(--rb-accent) 40%, transparent); }
+.rb-rail-bar button:focus-visible { outline: 2px solid var(--rb-ink); outline-offset: 1px; }
 .rb-rail-panel { width: 340px; max-height: min(78vh, 680px); display: flex; flex-direction: column; overflow: hidden; }
 .rb-rail-panel header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 6px 20px; }
 .rb-rail-panel h3 { margin: 0; font-size: 17px; font-weight: 650; }
@@ -333,31 +329,28 @@
 .rb-select { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 16px; background: rgba(255, 255, 255, .45); font-size: 13.5px; font-weight: 600; }
 .rb-select select { border: 0; background: transparent; font: inherit; color: var(--rb-ink); }
 /* Telefon: a sín kisebb, a panel a sín fölött, teljes szélességben */
-.rb-rail.is-compact { top: 150px; transform: none; }
-.rb-rail.is-compact .rb-rail-bar button { width: 52px; padding: 8px 2px; }
+.rb-rail.is-compact { left: 8px; top: 150px; transform: none; }
+.rb-rail.is-compact .rb-rail-bar { padding: 6px; }
+.rb-rail.is-compact .rb-rail-bar button { width: 48px; padding: 8px 2px; }
 .rb-rail.is-compact .rb-rail-bar button span { display: none; }
 .rb-rail.is-compact .rb-rail-panel { position: fixed; left: 10px; right: 10px; top: 132px; width: auto; max-height: calc(100dvh - 260px); }
 /* Telefon, nyitott lap: a sín a bal szél mögé húzódik (nem lóg a lapra), csak egy fül marad; a fül becsukja a lapot. */
 .rb-rail.is-compact { transition: transform .38s var(--rb-ease); }
-.rb-rail.is-compact.is-tucked { transform: translateX(-100%); }
+.rb-rail.is-compact.is-tucked { transform: translateX(calc(-100% - 10px)); }
 .rb-rail.is-compact.is-tucked .rb-rail-panel { display: none; }
-.rb-rail-tab { position: absolute; left: 100%; top: 0; display: grid; place-items: center; width: 22px; height: 56px; padding: 0; border: 0; border-radius: 0 14px 14px 0; background: var(--rb-bar); color: rgba(255, 255, 255, .8); cursor: pointer; box-shadow: 6px 0 16px rgba(10, 12, 14, .2); }
+.rb-rail-tab { position: absolute; left: calc(100% + 10px); top: 0; display: grid; place-items: center; width: 22px; height: 56px; padding: 0; border: 0; border-radius: 0 14px 14px 0; background: rgba(250, 250, 247, .82); color: var(--rb-ink); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); cursor: pointer; box-shadow: 6px 0 16px rgba(10, 12, 14, .16); }
 @media (prefers-reduced-motion: reduce) { .rb-rail.is-compact { transition: none; } }
 
 /* Lépéssáv asztalon/tableten: a bal sín testvére, az alsó szélhez olvadva, a szabad jelenetrész közepén */
-.rb-stepbar { position: absolute; z-index: 26; bottom: 0; left: calc((100% - var(--rb-card-w) - var(--rb-gap)) / 2); transform: translateX(-50%); padding: 8px 8px 10px; border-radius: 22px 22px 0 0; background: var(--rb-bar); box-shadow: 0 -10px 30px rgba(10, 12, 14, .22); }
+.rb-stepbar { position: absolute; z-index: 26; bottom: var(--rb-gap); left: calc((100% - var(--rb-card-w) - var(--rb-gap)) / 2); transform: translateX(-50%); padding: 8px; }
 .rb-stepbar ol { position: relative; display: grid; grid-template-columns: repeat(var(--rb-count), 68px); margin: 0; padding: 0; list-style: none; }
 .rb-stepbar li { position: relative; z-index: 1; }
-.rb-stepbar button { position: relative; display: grid; justify-items: center; gap: 4px; width: 100%; padding: 9px 2px 8px; border: 0; border-radius: 16px; background: transparent; color: rgba(255, 255, 255, .62); font: inherit; cursor: pointer; transition: color .25s; }
+.rb-stepbar button { position: relative; display: grid; justify-items: center; gap: 4px; width: 100%; padding: 9px 2px 8px; border: 0; border-radius: 16px; background: transparent; color: rgba(21, 23, 26, .58); font: inherit; cursor: pointer; transition: color .25s; }
 .rb-stepbar button span { font-size: 10.5px; font-weight: 600; white-space: nowrap; }
-.rb-stepbar button:hover { color: #fff; }
-.rb-stepbar button.is-done { color: rgba(255, 255, 255, .86); }
-.rb-stepbar button.is-done::after { content: ''; position: absolute; top: 6px; right: 14px; width: 5px; height: 5px; border-radius: 50%; background: var(--rb-accent); }
+.rb-stepbar button:hover { color: var(--rb-ink); }
+.rb-stepbar button.is-done { color: rgba(21, 23, 26, .82); }
+.rb-stepbar button.is-done::after { content: ''; position: absolute; top: 6px; right: 14px; width: 5px; height: 5px; border-radius: 50%; background: color-mix(in oklab, var(--rb-accent) 80%, #4f6b00); }
 .rb-stepbar button.is-current { color: #10120f; }
-.rb-stepbar button:focus-visible { outline: 2px solid var(--rb-accent); outline-offset: 1px; }
+.rb-stepbar button:focus-visible { outline: 2px solid var(--rb-ink); outline-offset: 1px; }
 .rb-stepbar-pill { position: absolute; z-index: 0; top: 0; bottom: 0; left: 0; width: calc(100% / var(--rb-count)); border-radius: 16px; background: var(--rb-accent); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 4px 14px color-mix(in oklab, var(--rb-accent) 40%, transparent); transition: transform var(--rb-move) var(--rb-ease); will-change: transform; }
-.rb-stepbar-fillet { position: absolute; bottom: 0; }
-.rb-stepbar-fillet path { fill: var(--rb-bar); }
-.rb-stepbar-fillet.is-left { left: -16px; }
-.rb-stepbar-fillet.is-right { right: -16px; }
 @media (prefers-reduced-motion: reduce) { .rb-stepbar-pill { transition: none; } }

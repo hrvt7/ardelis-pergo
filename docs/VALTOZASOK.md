@@ -1,5 +1,11 @@
 # Változások
 
+## 5.26 – Újraépítési mód: a bal sín és az alsó lépéssáv is folyékony üveg
+
+- **Egységes anyag (Ádám kérése):** a bal oldali Nézet és Környezet sín és az asztali alsó lépéssáv a sötét, szélhez tapadó stílus helyett ugyanabból a folyékony üvegből van, mint a jobb oldali lépéskártya: lebegnek a széltől, sötét ikonok és feliratok, az aktív elem lime. Chromiumban valódi peremtörés, máshol matt üveg.
+- Telefonon a sín is üveg; kinyitott lapnál ugyanúgy a szél mögé húzódik, a fül világos üveg lett.
+- Csak `?mod=ujraepites` alatt; az éles konfigurátor nem változott.
+
 ## 5.25 – Újraépítési mód: asztalon és tableten a lépések alul, a bal sín stílusában
 
 - **Lépéssáv (Ádám kérése):** asztali és tablet nézetben a 7 lépés kikerült a kártyáról, és alulra került egy sötét sávba, amely a bal oldali Nézet és Környezet sín testvére: az alsó szélhez olvad, egy sorban ikon és rövid név (Termék, Méret, Tető, Oldalak, Szín, Komfort, Összegzés). Az aktuális lépést lime pirula jelöli, amely átcsúszik; a kész lépéseket kis lime pont jelzi. A sáv a kártya nélküli jelenetrész közepén áll, kb. 75 px magas.
