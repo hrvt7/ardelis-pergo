@@ -1,5 +1,6 @@
 // Oldalzárás-választó (8 típus, félbe osztás) és a komfort-opciók (RGB LED, ventilátor,
 // okosotthon) felülete. Az árkülönbség mindig a teljes bruttó irányár változása.
+import type { ReactNode } from 'react'
 import { DoorOpen, Fan, House, Layers3, Minus, Move, Palette, Plus, Power, SplitSquareHorizontal, Square } from 'lucide-react'
 import { formatPrice, formatNumber } from '@/lib/pricing'
 import { signedPrice } from '@/lib/money'
@@ -33,7 +34,10 @@ export function SideIcon({ type }: { type: SideType }) {
 }
 
 /** Oldal beállítása: egész oldal vagy két fél, típuskártyák árkülönbséggel. */
-export function SideSettings({ side, sideName, config, scene, prices, half, onHalfChange, onChange, onSceneChange }: {
+/** Az oldaltípus-választó helyére tehető saját megjelenítés (az újraépített felület íves választója). */
+export type SideTypePicker = (props: { types: SideType[]; current: SideType; label: string; delta: (type: SideType) => number; select: (type: SideType) => void }) => ReactNode
+
+export function SideSettings({ side, sideName, config, scene, prices, half, onHalfChange, onChange, onSceneChange, typePicker }: {
   side: SideKey
   sideName: string
   config: PergolaConfig
@@ -43,6 +47,8 @@ export function SideSettings({ side, sideName, config, scene, prices, half, onHa
   onHalfChange: (half: 0 | 1) => void
   onChange: (patch: Partial<PergolaConfig>) => void
   onSceneChange: (patch: Partial<SceneSettings>) => void
+  /** ha meg van adva, ez jelenik meg a típuskártyák helyett (a logika ugyanaz) */
+  typePicker?: SideTypePicker
 }) {
   const { tenant } = useTenant()
   const types: SideType[] = ['none', ...tenant.sides].filter((type) => config.building !== 'conservatory' || CONSERVATORY_SIDE_TYPES.includes(type as SideType)) as SideType[]
@@ -87,7 +93,7 @@ export function SideSettings({ side, sideName, config, scene, prices, half, onHa
       </div>
       <p className="split-note">{midPost ? tr('A két fél a középoszlopnál találkozik, külön osztóprofil nem kell.', 'Die Hälften treffen sich am Mittelsteher, ein eigenes Teilungsprofil ist nicht nötig.') : tr(`A két fél között függőleges osztóprofil fut (${formatPrice(prices.splitProfileNet)} + telepítés).`, `Zwischen den Hälften läuft ein senkrechtes Teilungsprofil (${formatPrice(prices.splitProfileNet)} + Montage).`)}</p>
     </>}
-    <div className="side-type-grid" role="radiogroup" aria-label={split ? `${HALF_NAMES[side][activeHalf]}: ${tr('típusa', 'Typ')}` : `${sideName}: ${tr('típusa', 'Typ')}`}>
+    {typePicker ? typePicker({ types, current, label: split ? `${HALF_NAMES[side][activeHalf]}: ${tr('típusa', 'Typ')}` : `${sideName}: ${tr('típusa', 'Typ')}`, delta, select: (type) => onChange(patchFor(type)) }) : <div className="side-type-grid" role="radiogroup" aria-label={split ? `${HALF_NAMES[side][activeHalf]}: ${tr('típusa', 'Typ')}` : `${sideName}: ${tr('típusa', 'Typ')}`}>
       {types.map((type) => {
         const info = SIDE_INFO[type]
         const selected = current === type
@@ -97,7 +103,7 @@ export function SideSettings({ side, sideName, config, scene, prices, half, onHa
           <em>{selected ? tr('Kiválasztva', 'Ausgewählt') : signed(delta(type))}</em>
         </button>
       })}
-    </div>
+    </div>}
     {hasType('glass', 'glassFramed') && <button type="button" className="side-motion-control" aria-pressed={scene.glassOpen} onClick={() => onSceneChange({ glassOpen: !scene.glassOpen })}><Move size={17} /><span>{scene.glassOpen ? tr('Tolóüveg bezárása', 'Glasschiebewand schließen') : tr('Tolóüveg eltolása', 'Glasschiebewand öffnen')}</span></button>}
     {hasType('door', 'doorSliding') && <button type="button" className="side-motion-control door-toggle" aria-pressed={scene.doorOpen} onClick={() => onSceneChange({ doorOpen: !scene.doorOpen })}><DoorOpen size={17} /><span>{scene.doorOpen ? tr('Ajtó bezárása', 'Tür schließen') : tr('Ajtó kinyitása', 'Tür öffnen')}</span></button>}
     {hasType('louver') && <button type="button" className="side-motion-control" aria-pressed={scene.wallLouverOpen} onClick={() => onSceneChange({ wallLouverOpen: !scene.wallLouverOpen })}><Layers3 size={17} /><span>{scene.wallLouverOpen ? tr('Oldallamellák zárása', 'Seitenlamellen schließen') : tr('Oldallamellák döntése', 'Seitenlamellen kippen')}</span></button>}

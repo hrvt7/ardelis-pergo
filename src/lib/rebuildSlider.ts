@@ -34,3 +34,9 @@ export function arcAngle(dx: number, dy: number, max = 90): number {
   if (degrees < 0) return degrees < -90 ? max : 0
   return Math.min(max, Math.max(0, degrees))
 }
+
+/** Az íves választó: az elem vízszintes eltolása a középtől mért függőleges távolság szerint (kör íve). */
+export function arcOffset(dy: number, radius = 300): number {
+  const y = Math.min(Math.abs(dy), radius)
+  return radius - Math.sqrt(radius * radius - y * y)
+}

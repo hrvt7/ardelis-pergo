@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { arcAngle, parseCentimetres, parsePlain, sliderFraction } from '../src/lib/rebuildSlider'
+import { arcAngle, arcOffset, parseCentimetres, parsePlain, sliderFraction } from '../src/lib/rebuildSlider'
 
 describe('folyékony csúszka', () => {
   it('a sávon elfoglalt hely', () => {
@@ -37,5 +37,15 @@ describe('egyéb mértékegységek és az íves csúszka', () => {
     expect(arcAngle(10, 5)).toBe(0)
     expect(arcAngle(-10, -1)).toBe(90)
     expect(arcAngle(-10, 3)).toBe(90)
+  })
+})
+
+describe('íves választó', () => {
+  it('középen nincs eltolás, távolodva az ív kifelé hajlik, szimmetrikusan', () => {
+    expect(arcOffset(0)).toBe(0)
+    expect(arcOffset(64)).toBeGreaterThan(0)
+    expect(arcOffset(128)).toBeGreaterThan(arcOffset(64))
+    expect(arcOffset(-90)).toBeCloseTo(arcOffset(90))
+    expect(arcOffset(1000, 300)).toBe(300)
   })
 })

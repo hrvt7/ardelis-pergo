@@ -1,5 +1,11 @@
 # Változások
 
+## 5.17 – Újraépítési mód: íves oldaltípus-választó
+
+- **Íves választó (Ádám mintája):** az Oldalak lépésben a 10 oldaltípus egy íven sorakozik; középen a kiválasztott (név kiemelve, rövid leírás, lime keretes ikon), a többin a felár. Görgővel, húzással, kattintással és nyilakkal is választható; elengedéskor a legközelebbire pattan. Két félre osztott oldalnál a kiválasztott félre vonatkozik.
+- A meglévő oldalbeállító (`SideSettings`) opcionális `typePicker` helyet kapott a típuslista helyett; a logika (félbe osztás, felár, választás) változatlan, az éles felület a régi kártyákat mutatja.
+- Tesztek: `rebuildSlider.test.ts` (az ív alakja).
+
 ## 5.16 – Újraépítési mód: 4. lépés – Oldalak (M08)
 
 - **Oldalválasztó felülnézet:** a négy oldal a tető körül (hátsó, bal, jobb, elülső), mindegyiken a jelenlegi elem neve; a ház falai sötéten, nem választhatók; a kiválasztott lime. A 3D modellen is rá lehet kattintani egy oldalra (telefonon ilyenkor kinyílik a lap).
