@@ -1,5 +1,13 @@
 # Változások
 
+## 5.27 – Forgólamellás pergola: Aluprof MB-OpenSky 140 gyári profilokból
+
+- **Új váz és tető:** a forgólamellás pergola az SB 400 helyett az Aluprof MB-OpenSky 140 gyári DWG-metszeteiből épül: oszlop K440137X (140 × 140), gerenda K440141X + K440142X takaró (140 × 255, kétkamrás), eresz K440138X a lamellavégek alatt, lamella K440565X (223 × 43,6). Osztás 200 mm, tengely 58 mm-rel a gerenda teteje alatt, a lamellasor középre igazítva, legalább 150 mm-re a gerendától; 5 m feletti mezőben dupla gerendán toldva.
+- **Műszaki jelölések:** a kártyák OS140-adatokat mutatnak (cikkszámok, darabszám, mérethatárok 5,0 × 6,98 × 3,0 m). Terhelést és motoradatot nem állítanak (a források ellentmondanak / nincs adat). Feltételezés: 8 mm lamellavég-hézag (becsült).
+- **Működés panel:** a gyári lamellametszet forog; a hajtás rejtett, az SB 400 lineáris motoros leírása kikerült.
+- A ZIP-roló és a toló üvegfal 3D-modellje még az általános (nem gyári) kivitel.
+- Tesztek: `os140.test.ts` (profilméretek, 5 × 6 m-en 28 db 4705 mm-es lamella, tengelytáv a gerendától, mezőosztás, mérethatárok, kártyaszövegek).
+
 ## 5.26 – Újraépítési mód: a bal sín és az alsó lépéssáv is folyékony üveg
 
 - **Egységes anyag (Ádám kérése):** a bal oldali Nézet és Környezet sín és az asztali alsó lépéssáv a sötét, szélhez tapadó stílus helyett ugyanabból a folyékony üvegből van, mint a jobb oldali lépéskártya: lebegnek a széltől, sötét ikonok és feliratok, az aktív elem lime. Chromiumban valódi peremtörés, máshol matt üveg.

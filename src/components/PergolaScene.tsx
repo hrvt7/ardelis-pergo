@@ -53,10 +53,9 @@ import { getSpecCode } from '@/lib/specification'
 import { effectiveGlazing, isGlazedRoof, isMovableRoof, roofRise } from '@/lib/roofs'
 import { deckBounds } from '@/lib/deck'
 import { SolarPanels } from '@/components/SceneExtras'
-import LouvreRoof from '@/components/LouvreRoof'
+import { Os140Beams, Os140Posts, Os140Roof } from '@/components/Os140Pergola'
 import WalkController from '@/components/WalkController'
-import { SB400, sb400Post } from '@/lib/sb400'
-import { SB400_SOURCE, sb400Details, type Sb400DetailId } from '@/lib/sb400Details'
+import { OS140_SOURCE, os140Details, type Os140DetailId } from '@/lib/os140Details'
 import Car from '@/components/models/Car'
 import { currentViewportKind, overviewFov, sheetDistanceScale, sofaFov, usesSheetLayout } from '@/lib/viewport'
 import { localized, tr } from '../i18n/locale'
@@ -475,16 +474,6 @@ function Bolt({ position }: { position: [number, number, number] }) {
 function DetailedPost({ position, height, color }: { position: [number, number]; height: number; color: string }) {
   const [x, z] = position
   return <group position={[x, 0, z]}><Beam args={[0.16, height, 0.16]} position={[0, height / 2, 0]} color={color} /><mesh position={[0, height / 2, 0.081]}><boxGeometry args={[0.018, height - 0.16, 0.003]} /><meshStandardMaterial color="#141a1c" metalness={0.42} roughness={0.5} /></mesh><mesh position={[0.081, height / 2, 0]}><boxGeometry args={[0.003, height - 0.16, 0.018]} /><meshStandardMaterial color="#141a1c" metalness={0.42} roughness={0.5} /></mesh><RoundedBox args={[0.176, 0.028, 0.176]} position={[0, height - 0.035, 0]} radius={0.006} smoothness={3}><PowderCoat color={color} /></RoundedBox><mesh position={[0, 0.008, 0]}><boxGeometry args={[0.285, 0.012, 0.285]} /><meshStandardMaterial color="#111617" roughness={0.94} /></mesh><Beam args={[0.3, 0.035, 0.3]} position={[0, 0.022, 0]} color={color} radius={0.008} /><Beam args={[0.2, 0.055, 0.2]} position={[0, 0.06, 0]} color={color} radius={0.006} />{[[-0.105, -0.105], [0.105, -0.105], [-0.105, 0.105], [0.105, 0.105]].map(([bx, bz]) => <Bolt key={`${bx}-${bz}`} position={[bx, 0.048, bz]} />)}</group>
-}
-
-/** SB 400 gyári oszlop: 85 × 150 profil, befelé nyúló 8 mm-es talplemez horgonycsavarokkal (sb400.ts) */
-function Sb400PostModel({ at, width, depth, height, color }: { at: [number, number]; width: number; depth: number; height: number; color: string }) {
-  const post = sb400Post(at, width, depth)
-  return <group>
-    <Beam args={[SB400.postW, height - SB400.footT, SB400.postD]} position={[post.x, SB400.footT + (height - SB400.footT) / 2, post.z]} color={color} radius={0.003} />
-    <mesh position={[post.footX, SB400.footT / 2, post.footZ]} castShadow receiveShadow><boxGeometry args={[post.footW, SB400.footT, post.footD]} /><PowderCoat color={color} /></mesh>
-    {post.anchors.map(([bx, bz]) => <group key={`${bx}-${bz}`} scale={0.62}><Bolt position={[bx / 0.62, (SB400.footT + 0.006) / 0.62, bz / 0.62]} /></group>)}
-  </group>
 }
 
 function WallAttachment({ config, color }: { config: PergolaConfig; color: string }) {
@@ -1158,16 +1147,16 @@ function Hotspots({ config, posts }: { config: PergolaConfig; posts: [number, nu
     // Forgólamellás tető: a kártyák a gyári adatlap adatait mutatják, a jelölés azon az alkatrészen ül, amiről szól.
     const driveSide = isWallSide(config.mount, 'right') && !isWallSide(config.mount, 'left') ? -1 : 1
     const anchor = post ?? drain
-    const place: Record<Sb400DetailId, [number, number, number] | null> = {
+    const place: Record<Os140DetailId, [number, number, number] | null> = {
       louvre: [bayCenter(config, 0) - bayWidth(config) * 0.15, height + 0.1, 0],
       drive: [driveSide * (width / 2), height + 0.2, depth * 0.12],
       frame: [-driveSide * width * 0.22, height, depth / 2],
       post: anchor ? [anchor[0], 0.2, anchor[1]] : null,
       water: [-driveSide * (width / 2 - 0.09), height - 0.09, -depth * 0.2],
-      load: [driveSide * width * 0.2, height + 0.12, -depth * 0.28],
+      limits: [driveSide * width * 0.2, height + 0.12, -depth * 0.28],
       led: [-driveSide * (width / 2 - 0.2), height - 0.15, depth / 2 - 0.12],
     }
-    points = sb400Details(config).flatMap((detail) => { const position = place[detail.id]; return position ? [{ ...detail, position, source: SB400_SOURCE }] : [] })
+    points = os140Details(config).flatMap((detail) => { const position = place[detail.id]; return position ? [{ ...detail, position, source: OS140_SOURCE }] : [] })
     if (config.sensors) points.push({ id: 'sensor', position: [-width / 2 + 0.2, height + 0.35, -depth / 2 + 0.2], ...HOTSPOTS.sensor })
   } else {
     const generic: { id: keyof typeof HOTSPOTS; position: [number, number, number] }[] = [
@@ -1397,14 +1386,13 @@ function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'nig
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
   const geometry = useAerofoilGeometry(width)
-  const { materialDetail, louvreSegments } = useQuality()
-  // Forgólamellás tető: valós profil és látható hajtás (LouvreRoof). A hajtás azon az oldalon fut, amerre a Részlet-nézet néz.
+  const { materialDetail } = useQuality()
+  // Forgólamellás tető: Aluprof MB-OpenSky 140 a gyári profilokból (Os140Pergola), rejtett hajtással.
   const realLouvres = roof === 'louvered'
-  const driveSide: 1 | -1 = isWallSide(mount, 'right') && !isWallSide(mount, 'left') ? -1 : 1
   const mechanism = realLouvres && !!scene.mechanism
-  // A forgólamellás tető váza az SB 400 gyári profiljaiból áll (gerenda 85 × 212); a többi tető az általános vázat kapja.
-  const beamW = realLouvres ? SB400.strutW : 0.19
-  const beamH = realLouvres ? SB400.strutH : 0.23
+  // A többi tető az általános vázat kapja (a forgólamellásé az Os140Beams).
+  const beamW = 0.19
+  const beamH = 0.23
   const postPositions = getPostPositions(config)
   const pitch = config.pitch ?? 0
   const rise = roofRise(config)
@@ -1435,7 +1423,7 @@ function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'nig
     }
   })
   const x = scene.exploded
-  return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{postPositions.map(([x, z], index) => realLouvres ? <Sb400PostModel key={index} at={[x, z]} width={width} depth={depth} height={(z < 0 ? height + rise : height) - SB400.strutH / 2} color={color} /> : <DetailedPost key={index} position={[x, z]} height={z < 0 ? height + rise : height} color={color} />)}{x && postPositions[0] && <Html position={[postPositions[0][0], height / 2, postPositions[0][1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">Oszlopok</span></Html>}<ExplodePart ex={ex} dy={0.55} label={tr('Gerendák', 'Träger')} labelAt={[width / 2 - 0.2, height + 0.3, depth / 2]} show={x}><StructuralBeam args={[realLouvres ? width - beamW : width + 0.1, beamH, beamW]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[realLouvres ? width - beamW : width + 0.1, beamH, beamW]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[beamW, beamH, realLouvres ? depth + beamW : depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[beamW, beamH, realLouvres ? depth + beamW : depth]} position={[width / 2, height, 0]} color={color} />{bayBoundaries(config).map((x) => <StructuralBeam key={x} args={[beamW, beamH, depth]} position={[x, height, 0]} color={color} />)}</ExplodePart>
+  return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{realLouvres ? <Os140Posts posts={postPositions} width={width} depth={depth} height={height} material={getCoat(color, 0.4, materialDetail)} /> : postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={z < 0 ? height + rise : height} color={color} />)}{x && postPositions[0] && <Html position={[postPositions[0][0], height / 2, postPositions[0][1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">Oszlopok</span></Html>}<ExplodePart ex={ex} dy={0.55} label={tr('Gerendák', 'Träger')} labelAt={[width / 2 - 0.2, height + 0.3, depth / 2]} show={x}>{realLouvres ? <Os140Beams width={width} depth={depth} height={height} bays={bayBoundaries(config)} material={getCoat(color, 0.4, materialDetail)} /> : <><StructuralBeam args={[width + 0.1, beamH, beamW]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, beamH, beamW]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[beamW, beamH, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[beamW, beamH, depth]} position={[width / 2, height, 0]} color={color} />{bayBoundaries(config).map((x) => <StructuralBeam key={x} args={[beamW, beamH, depth]} position={[x, height, 0]} color={color} />)}</>}</ExplodePart>
     <ExplodePart ex={ex} dy={1.0} label={tr('Vízelvezetés', 'Entwässerung')} labelAt={[-width / 2 + 0.4, height + 0.3, depth / 2]} show={x && !realLouvres}>
     {!realLouvres && tilt(<>
     <GutterChannel length={width - 0.18} position={[0, height + 0.04, depth / 2 - 0.105]} color={color} />
@@ -1455,7 +1443,7 @@ function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'nig
     <RoofSwap roofKey={roof} settled={settled} height={height}>{tilt(<>
     {roof === 'retractable' && <LouverBlades key={louverCount} geometry={geometry} width={width} depth={depth} height={height} count={louverCount} retractable angle={effectiveAngle} color={roofColor} />}
     {/* Modulos kivitelnél mezőnként külön lamellasor a közös gerendák között; a hajtás címkéi csak a hajtásoldali mezőn. */}
-    {realLouvres && Array.from({ length: moduleCount(config) }, (_, index) => <group key={index} position={[bayCenter(config, index), 0, 0]}><LouvreRoof width={bayWidth(config)} depth={depth} height={height} beam={SB400.strutW} beamHeight={SB400.strutH} endGap={SB400.endGap} fall={SB400.fall} gutters angle={effectiveAngle} driveSide={driveSide} mechanism={mechanism} reveal={rainShow > 0} slow={rainShow === 2} rain={scene.rain} roofMaterial={getCoat(roofColor, 0.38, materialDetail)} frameMaterial={getCoat(color, 0.4, materialDetail)} segments={louvreSegments} showLabels={!x && scene.labels !== false && index === (driveSide === 1 ? moduleCount(config) - 1 : 0)} /></group>)}
+    {realLouvres && Array.from({ length: moduleCount(config) }, (_, index) => <group key={index} position={[bayCenter(config, index), 0, 0]}><Os140Roof width={bayWidth(config)} depth={depth} height={height} angle={effectiveAngle} mechanism={mechanism} slow={rainShow === 2} rain={scene.rain} roofMaterial={getCoat(roofColor, 0.38, materialDetail)} /></group>)}
     {roof === 'fixed' && <group><mesh position={[0, height + 0.14, 0]} castShadow receiveShadow><boxGeometry args={[width - 0.12, 0.09, depth - 0.12]} /><PowderCoat color={roofColor} /></mesh>{Array.from({ length: fixedSeamCount }, (_, index) => { const z = -depth / 2 + (index + 1) * depth / (fixedSeamCount + 1); return <Beam key={index} args={[width - 0.16, 0.018, 0.025]} position={[0, height + 0.192, z]} color={roofColor} radius={0.003} /> })}</group>}
     {isGlazedRoof(roof) && <GlazedRoof width={width} depth={depth} height={height} color={roofColor} kind={roof === 'glass' ? 'glass' : 'polycarbonate'} glazing={effectiveGlazing(config) ?? 'clear'} />}
     {isGlazedRoof(roof) && config.roofShade && <RoofShadeModel width={width} depth={depth} height={height} kind={config.roofShade} fabric={findShadeFabric(config.shadeFabric).hex} color={color} out={scene.shadeOut} night={night} onToggle={() => onSceneChange({ shadeOut: scene.shadeOut > 50 ? 0 : 100 })} />}
