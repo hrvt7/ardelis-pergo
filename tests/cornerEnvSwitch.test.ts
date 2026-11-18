@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { CORNER_TRACK } from '@/lib/cornerTrack'
+import { CORNER_TRACK, SLIDE_MS } from '@/lib/cornerTrack'
 
 const read = (f: string) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8')
 const css = read('src/components/rebuild/rebuild.css')
@@ -15,7 +15,13 @@ describe('környezet-kapcsoló a kártya sarkában', () => {
   it('kapcsoló szerepű, a háttér és a családi ház között vált, a korábbi környezetet visszaadja', () => {
     const src = read('src/components/rebuild/CornerEnvSwitch.tsx')
     expect(src).toContain('role="switch" aria-checked={on}')
-    expect(src).toContain("if (on) { setLast(ground); onChange('studio') } else onChange(last)")
+    expect(src).toContain("onChange(next ? last : 'studio')")
+  })
+  it('a környezet akkor vált, amikor a gomb megérkezik (a csúszás és a CSS-átmenet ideje azonos)', () => {
+    const src = read('src/components/rebuild/CornerEnvSwitch.tsx')
+    expect(src).toContain('reduce ? 0 : SLIDE_MS')
+    expect(SLIDE_MS).toBe(520)
+    expect(css).toContain('transition: offset-distance .52s var(--rb-ease)')
   })
   it('asztalon a lépéskártyán ül, telefonon nem (ott az eszköztár Környezet panelje marad)', () => {
     expect(read('src/components/rebuild/StepCard.tsx')).toContain('{!compact && corner}')

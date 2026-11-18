@@ -1,5 +1,10 @@
 # Változások
 
+## 5.36 – Környezet-kapcsoló: a kép a csúszkával együtt vált
+
+- **Hiba:** a környezet (családi ház) azonnal megjelent, a kapcsoló gombja csak utána, megakadva indult el, mert a ház betöltése lefoglalta a böngészőt. Most a gomb azonnal végigcsúszik a sínen (0,52 s), és a környezet akkor vált, amikor megérkezik. Csökkentett mozgás beállításnál azonnal vált.
+- Tesztek: `cornerEnvSwitch.test.ts` (a váltás ideje megegyezik a csúszáséval).
+
 ## 5.35 – Tolóüveg: sima, nyugodt nyitás és zárás
 
 - **Hiba (Ádám jelezte):** a toló üvegfal szárnyai nyitáskor/záráskor szinte egy pillanat alatt „becsapódtak”. Ok: a 3D csak igény szerint rajzol, így a kattintás utáni első képkocka a legutóbbi rajzolás óta eltelt teljes időt kapta, és a gyors exponenciális csillapítás ebben az egy lépésben majdnem végig is ért.

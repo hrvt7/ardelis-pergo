@@ -606,13 +606,13 @@
 .rb-corner-switch { position: absolute; z-index: 3; top: 0; right: 0; width: 80px; height: 80px; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .rb-corner-switch > svg { position: absolute; inset: 0; width: 80px; height: 80px; overflow: visible; }
 .rb-corner-groove { fill: none; stroke: rgba(21, 23, 26, .1); stroke-width: 20; stroke-linecap: round; }
-.rb-corner-fill { fill: none; stroke: color-mix(in oklab, var(--rb-accent) 85%, #fff); stroke-width: 20; stroke-linecap: round; stroke-dasharray: 0 100; opacity: 0; transition: stroke-dasharray .7s var(--rb-ease), opacity .3s; filter: drop-shadow(0 0 6px color-mix(in oklab, var(--rb-accent) 70%, transparent)); }
+.rb-corner-fill { fill: none; stroke: color-mix(in oklab, var(--rb-accent) 85%, #fff); stroke-width: 20; stroke-linecap: round; stroke-dasharray: 0 100; opacity: 0; transition: stroke-dasharray .52s var(--rb-ease), opacity .25s; filter: drop-shadow(0 0 6px color-mix(in oklab, var(--rb-accent) 70%, transparent)); }
 .rb-corner-switch.is-on .rb-corner-fill { stroke-dasharray: 100 100; opacity: 1; }
 .rb-corner-knob { position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 30px; height: 20px; border-radius: 999px; color: var(--rb-ink);
   background: linear-gradient(180deg, #fff, #eceae4); box-shadow: inset 0 1px 0 #fff, inset 0 -1px 2px rgba(0, 0, 0, .08), 0 4px 10px rgba(18, 22, 26, .22), 0 1px 2px rgba(18, 22, 26, .2);
-  offset-path: path('M16 14 H52 A14 14 0 0 1 66 28 V64'); offset-distance: 0%; offset-rotate: auto; transition: offset-distance .7s var(--rb-ease); }
+  offset-path: path('M16 14 H52 A14 14 0 0 1 66 28 V64'); offset-distance: 0%; offset-rotate: auto; transition: offset-distance .52s var(--rb-ease); will-change: offset-distance; }
 .rb-corner-switch.is-on .rb-corner-knob { offset-distance: 100%; }
-.rb-corner-knob svg { transform: rotate(0deg); transition: transform .7s var(--rb-ease); }
+.rb-corner-knob svg { transform: rotate(0deg); transition: transform .52s var(--rb-ease); }
 .rb-corner-switch.is-on .rb-corner-knob svg { transform: rotate(-90deg); }
 .rb-corner-switch:focus-visible { outline: none; }
 .rb-corner-switch:focus-visible .rb-corner-groove { stroke: rgba(21, 23, 26, .28); }
