@@ -1,5 +1,10 @@
 # Változások
 
+## 5.04 – Újraépítési dokumentáció: audit, funkcióleltár, függőségi térkép, terv
+
+- **Csak dokumentáció, kódmódosítás nélkül.** Új mappa: `docs/rebuild/` – `FULL_AUDIT.md`, `FEATURE_INVENTORY.md` (129 kezelőfelületi funkció 16 modulban, fájllal, 3D-kapcsolattal, függőséggel), `DEPENDENCY_MAP.md`, `REBUILD_ROADMAP.md` (M00–M19, sorrend a függőségek szerint), `PROGRESS_TRACKER.md`.
+- A konfigurátor lecsupaszítása (M00) a jóváhagyás után az `?mod=ujraepites` kapcsoló mögé kerül; az éles felület nem változik.
+
 ## 5.03 – Matt porszórt bevonat a 3D-ben: a sötét színek a valódi árnyalatukban
 
 - **Mi változott:** a pergola (és minden porszórt alumínium elem) bevonata a 3D-ben matt, finomstruktúrás festékként viselkedik: alacsony fémesség, tompa csillanás, vékony lakk. Korábban félig fémes volt, ezért az antracit (RAL 7016, 7021) kékesfeketének látszott, és az égbolt tükröződött rajta; most szürkének látszik, az oldalak árnyalása olvasható.
