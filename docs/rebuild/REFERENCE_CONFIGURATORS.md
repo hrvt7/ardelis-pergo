@@ -92,7 +92,13 @@ Jelenlegi Lamelix-lépések (`src/lib/configSteps.ts`): Típus → Méret → Te
 6. **Fő gomb:** „Tovább: [következő lépés]” (ez már megvan, `mobileBarAction`). Az ajánlatkérés minden lépésből elérhető másodlagos gombként (Polestar-minta), nem csak a végén.
 7. **Összegzés:** BMW „Fertig”-minta: teljes ár, megosztható link, PDF, ajánlatkérés/felmérés egy panelen.
 
-## 5. Döntési kérdések Ádámnak (a modulok építése előtt)
+## 5. Döntések (2026-11-18, Ádám)
+
+- **Ársáv:** felül jobbra.
+- **Ármód:** becsült teljes ár alapból, „becsült” felirattal; a gyártó kapcsolhat „-tól” vagy rejtett árra.
+- **Ajánlatkérés:** minden lépésből, másodlagos gombként.
+
+### Az eredeti kérdések
 
 1. Az ársáv helye: felül jobbra a lépéssáv mellett, vagy bal alul külön?
 2. Alapértelmezett ármód új gyártónál: pontos ár, „-tól” ár vagy rejtett ár?

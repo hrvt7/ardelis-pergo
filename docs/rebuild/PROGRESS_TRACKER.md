@@ -47,6 +47,9 @@
 | D1 | M00: az üres panelkeret maradjon, vagy a 3D töltse ki a képernyőt? | – (ízlés kérdése) | **2026-11-18: a 3D az egész képernyőt kitölti.** A kalkuláció és a többi panel később lebegő, Apple-stílusú üvegablakként épül (alap: a meglévő `?style=glass` réteg, `src/lib/uiStyle.ts`). Referencia: a 2026-11-15-i UI/UX kutatás (Porsche, Polestar, Apple, Tylko, ALUX, Renson, Weinor). |
 | D2 | M00: a 3D-n belüli kattintások (oldal kijelölése, üveg/ajtó nyitása) kikapcsolva? | Igen, az M08 hozza vissza | |
 | D3 | M00: kiinduló terv a gyártó alapterve, vagy a böngésző utolsó terve? | Gyártói alapterv | |
+| D4 | Ársáv helye | Felül jobbra | **2026-11-18: felül jobbra**, a lépéssáv mellett, mindig látható lebegő üvegelem. |
+| D5 | Alapértelmezett ármód új gyártónál | Becsült teljes ár | **2026-11-18: becsült teljes ár** „becsült” felirattal; a gyártó átkapcsolhatja „-tól” árra vagy rejtett árra. |
+| D6 | Ajánlatkérés helye | Minden lépésből | **2026-11-18: minden lépésből** elérhető másodlagos gombként; a fő gomb marad a „Tovább”. |
 
 ## Ismert hibák (a konfigurátorban, a 2026-11-17-i auditból)
 
@@ -69,4 +72,5 @@ Nyitottak; a hozzájuk tartozó modul visszaépítésekor javítandók, ha Ádá
 |---|---|
 | 2026-11-18 | Ádám jóváhagyta: újraépítés modulonként, az A megoldással (`?mod=ujraepites`, az éles felület érintetlen). |
 | 2026-11-18 | D1 eldőlt: teljes képernyős 3D, a panelek lebegő üvegablakként jönnek vissza. |
+| 2026-11-18 | D4–D6 eldőlt a referencia-kutatás alapján (`REFERENCE_CONFIGURATORS.md`): ársáv felül jobbra, becsült ár alapból (kapcsolható), ajánlatkérés minden lépésből. |
 | 2026-11-18 | Elkészült az audit, a leltár, a függőségi térkép és a terv (`docs/rebuild/`), kódmódosítás nélkül. |
