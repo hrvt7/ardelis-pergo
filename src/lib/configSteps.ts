@@ -37,6 +37,7 @@ export const ISSUE_STEP: Record<string, ConfigStep> = {
   'roof-heat': 'roof', 'cons-pitch': 'roof', 'carport-pitch': 'roof',
   'short-door': 'sides', 'cons-open': 'sides', 'cons-door': 'sides', 'veranda-open': 'sides', 'veranda-access': 'sides',
   'cons-foundation': 'extras', 'cons-climate': 'extras',
+  'os140-depth': 'mount', 'os140-height': 'mount', 'zip-split': 'sides', 'openslide-size': 'sides',
 }
 
 export function issuesForStep(step: ConfigStep): string[] {

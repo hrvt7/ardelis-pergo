@@ -3,6 +3,8 @@
 // Tiszta TypeScript — böngészőben és szerveren is fut.
 import { isWallSide } from './mount'
 import { closedSegments } from './sides'
+import { OS140 } from './os140'
+import { openSlidePlan, SIDE_POST_INSET, zipPlan } from './os140Sides'
 import type { BuildingType, ClimateType, PergolaConfig, PriceSettings, RoofType, SideKey, SideType, WallGlazing } from '../types/pergola'
 import { localized, tr } from '../i18n/locale'
 
@@ -100,6 +102,31 @@ export function availableBuildings(roofs: RoofType[], sides: SideType[]): Buildi
   return result
 }
 
+/**
+ * Forgólamellás pergola (Aluprof MB-OpenSky 140): a gyári mérethatárok (mintaprojekt) és az oldalzárások gyári
+ * szabályai (SkyRoll ZIP SRS90E, MB-OpenSlide szárnytáblázat). Csak jelez; a méretet nem írja át.
+ */
+export function os140Issues(config: PergolaConfig): BuildingIssue[] {
+  const issues: BuildingIssue[] = []
+  const f = (value: number) => value.toFixed(2).replace('.', ',')
+  const outerDepth = config.depth + OS140.beamW
+  const totalHeight = config.height + OS140.beamH / 2
+  if (outerDepth > OS140.maxLength + 1e-6) issues.push({ id: 'os140-depth', level: 'warn', text: tr(`A ${f(outerDepth)} m-es kinyúlás több, mint amit az MB-OpenSky 140 egy mezőben enged (${f(OS140.maxLength)} m).`, `Die Ausladung von ${f(outerDepth)} m übersteigt das Maximum des MB-OpenSky 140 pro Feld (${f(OS140.maxLength)} m).`) })
+  if (totalHeight > OS140.maxHeight + 1e-6) issues.push({ id: 'os140-height', level: 'warn', text: tr(`A szerkezet ${f(totalHeight)} m magas; az MB-OpenSky 140 legfeljebb ${f(OS140.maxHeight)} m.`, `Die Konstruktion ist ${f(totalHeight)} m hoch; das MB-OpenSky 140 erlaubt höchstens ${f(OS140.maxHeight)} m.`) })
+  const beamBottom = config.height - OS140.beamH / 2
+  const segments = closedSegments(config)
+  if (segments.some((segment) => segment.type === 'zip' && zipPlan(segment.length - 2 * SIDE_POST_INSET, beamBottom).screens > 1)) issues.push({ id: 'zip-split', level: 'info', text: tr('Egy ZIP-screen legfeljebb 5 m széles és 16 m² lehet: a hosszabb oldalon két screen kerül egymás mellé, köztük dupla vezetősínnel.', 'Ein ZIP-Screen darf höchstens 5 m breit und 16 m² groß sein: An der längeren Seite sitzen zwei Screens nebeneinander, dazwischen eine Doppelführung.') })
+  const slide = segments.filter((segment) => segment.type === 'glass' || segment.type === 'glassFramed').flatMap((segment) => openSlidePlan(segment.length - 2 * SIDE_POST_INSET, beamBottom).issues)
+  if (slide.length) issues.push({ id: 'openslide-size', level: 'info', text: tr(`Toló üvegfal (MB-OpenSlide): ${slide[0]}`, `Glasschiebewand (MB-OpenSlide): ${slide[0]}`) })
+  return issues
+}
+
+/**
+ * A választóban felkínált típusok: a carport nem szerepel (2026-11-18 döntés), csak ha a terv már carport
+ * (régi link), hogy onnan át lehessen váltani.
+ */
+export const pickerBuildings = (available: BuildingType[], current: BuildingType) => available.filter((type) => type !== 'carport' || current === 'carport')
+
 /** Üvegfal-felület m² (a felárhoz): az üveg- és ajtós szegmensek hossza × oldalmagasság. */
 export function glassWallArea(config: Pick<PergolaConfig, 'sides' | 'split' | 'mount' | 'width' | 'depth' | 'height'>) {
   return closedSegments(config).filter((segment) => GLASS_WALL_TYPES.includes(segment.type)).reduce((sum, segment) => sum + segment.length * config.height, 0)
@@ -124,6 +151,7 @@ export function buildingIssues(config: PergolaConfig): BuildingIssue[] {
     if (!config.pitch && (config.roof === 'glass' || config.roof === 'polycarbonate')) issues.push({ id: 'carport-pitch', level: 'info', text: tr('Üveg- és polikarbonát tetőnél pár fokos dőlés javasolt a vízelfolyáshoz.', 'Bei Glas- und Polycarbonatdächern wird ein paar Grad Neigung für den Wasserablauf empfohlen.') })
     return issues
   }
+  if (!config.building && config.roof === 'louvered') return os140Issues(config)
   if (!isClosedBuilding(config.building)) return []
   const issues: BuildingIssue[] = []
   const sides = (['front', 'back', 'left', 'right'] as const)
@@ -205,7 +233,9 @@ const SIDE_ORDER: SideKey[] = ['front', 'left', 'right', 'back']
  */
 export function buildingPatch(config: PergolaConfig, building: BuildingType, roofs: RoofType[], sides: SideType[]): Partial<PergolaConfig> {
   // Vissza pergolára: a zárt építmény előtti oldalak (pl. zip-árnyékoló) visszakerülnek, nem marad üvegfal.
-  if (building === 'pergola') return { building: undefined, wallGlazing: undefined, climate: undefined, foundation: undefined, ...(config.openSides ? { sides: { ...config.openSides } } : {}), openSides: undefined }
+  // A tető is visszaáll a lamellásra (MB-OpenSky 140), ha a gyártó kínálja: carportnál/verandánál a fix vagy üvegtető
+  // különben pergolán is megmaradt volna (5.30 előtt így ragadt be a fix tető).
+  if (building === 'pergola') return { building: undefined, ...(config.building && roofs.includes('louvered') ? { roof: 'louvered' as RoofType } : {}), wallGlazing: undefined, climate: undefined, foundation: undefined, ...(config.openSides ? { sides: { ...config.openSides } } : {}), openSides: undefined }
   const allowed = BUILDING_ROOFS[building].filter((roof) => roofs.includes(roof))
   const roof = allowed.includes(config.roof) ? config.roof : (allowed[0] ?? config.roof)
   // Carport: fix tető, minden nyitott oldal nyitva marad (az oldalzárás kézzel visszatehető), nincs üvegezés/klíma/alap.

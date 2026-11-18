@@ -5,7 +5,7 @@ import { technicalDrawing } from '../src/lib/drawing'
 import { glazingOptions } from '../src/lib/roofs'
 import { doorLeafWidth } from '../src/lib/sides'
 import { DEFAULT_USAGE, estimateEnergy } from '../src/lib/energy'
-import { availableBuildings, buildingIssues, buildingPatch, buildingSpecRows, doorCount, effectiveWallGlazing, glassWallArea, permitNotes } from '../src/lib/buildings'
+import { availableBuildings, pickerBuildings, buildingIssues, buildingPatch, buildingSpecRows, doorCount, effectiveWallGlazing, glassWallArea, permitNotes } from '../src/lib/buildings'
 import { calculatePrice } from '../src/lib/pricing'
 import { compactToJson, configToCompact } from '../src/lib/shareCode'
 import { createTextSummary, getBom, getSpecCode } from '../src/lib/specification'
@@ -24,6 +24,9 @@ describe('épülettípusok', () => {
     expect(availableBuildings(roofs, ['zip', 'glass'])).toEqual(['pergola', 'veranda', 'carport'])
     expect(availableBuildings(['louvered'], demoTenant.sides)).toEqual(['pergola'])
     expect(availableBuildings(['louvered', 'fixed'], ['zip'])).toEqual(['pergola', 'carport'])
+    // a választó a carportot nem kínálja, csak ha a terv már az (régi link)
+    expect(pickerBuildings(['pergola', 'veranda', 'carport'], 'pergola')).toEqual(['pergola', 'veranda'])
+    expect(pickerBuildings(['pergola', 'carport'], 'carport')).toEqual(['pergola', 'carport'])
   })
 
   it('télikert: üvegtető, lezárt oldalak, egy ajtó, dőlés, alap és klíma alapból', () => {
@@ -134,6 +137,8 @@ describe('télikert árazás', () => {
     // vissza pergolára: a zip visszakerül
     const back = normalizeConfig(demoTenant, { ...carport, ...buildingPatch(carport, 'pergola', roofs, demoTenant.sides) })
     expect(back.sides).toEqual(withZip.sides)
+    // …és a tető is visszaáll lamellásra (MB-OpenSky 140), nem marad fix tető a pergolán
+    expect(back.roof).toBe('louvered')
   })
 
   it('veranda: a zip-árnyékolós oldal is üvegfal lesz; pergolára visszaváltva a zip visszakerül', () => {
