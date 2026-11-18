@@ -24,24 +24,6 @@ export function neighbourStep(step: ConfigStep, direction: 1 | -1): ConfigStep |
   return REBUILD_STEPS[rebuildStepIndex(step) + direction]?.id ?? null
 }
 
-/** A felső dokk alakja: a kártya felső széléhez lágy, homorú ívvel „olvadó” sáv, alul lekerekítve. */
-export function dockPath(width: number, height: number, fillet: number, radius: number): string {
-  const f = fillet
-  const w = width
-  const h = height
-  return [
-    `M ${-f} 0`,
-    `L ${w + f} 0`,
-    `A ${f} ${f} 0 0 0 ${w} ${f}`,
-    `L ${w} ${h - radius}`,
-    `Q ${w} ${h} ${w - radius} ${h}`,
-    `L ${radius} ${h}`,
-    `Q 0 ${h} 0 ${h - radius}`,
-    `L 0 ${f}`,
-    `A ${f} ${f} 0 0 0 ${-f} 0`,
-    'Z',
-  ].join(' ')
-}
 
 /** A terasz eleje felé mutató égtájak (fok, É = 0, K = 90, D = 180, Ny = 270). */
 export const FACINGS: { id: string; label: string; degrees: number }[] = localized(() => ([

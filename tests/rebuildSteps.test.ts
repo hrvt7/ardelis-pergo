@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { STEPS } from '../src/lib/configSteps'
 import { sunPosition } from '../src/lib/lightBalance'
 import { sunVectorInScene } from '../src/lib/sun'
-import { dockPath, FACINGS, neighbourStep, sunDirectionForFacing, REBUILD_STEPS, rebuildStepIndex } from '../src/lib/rebuildSteps'
+import { FACINGS, neighbourStep, sunDirectionForFacing, REBUILD_STEPS, rebuildStepIndex } from '../src/lib/rebuildSteps'
 
 describe('újraépített lépések', () => {
   it('ugyanaz a 7 lépés, ugyanabban a sorrendben, mint a meglévő logikában', () => {
@@ -20,11 +20,7 @@ describe('újraépített lépések', () => {
 })
 
 describe('lépéssáv a kártya tetején', () => {
-  it('a felső dokk zárt alakzat, a két homorú átmenettel a kártya széléhez', () => {
-    const path = dockPath(340, 84, 18, 24)
-    expect(path).toMatch(/^M -18 0 L 358 0 A 18 18 0 0 0 340 18/)
-    expect(path).toContain('A 18 18 0 0 0 -18 0')
-    expect(path.endsWith('Z')).toBe(true)
+  it('a rövid nevek elférnek', () => {
     expect(REBUILD_STEPS.every((step) => step.short.length <= 9)).toBe(true)
   })
 })

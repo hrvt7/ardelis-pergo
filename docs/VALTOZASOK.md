@@ -1,5 +1,11 @@
 # Változások
 
+## 5.24 – Újraépítési mód: új lépéssáv (folyékony üveg pirula, lime kijelölés)
+
+- **Lépéssáv (Ádám mintája alapján):** a kártya tetején a 7 lépés egy világos, folyékony üveg hatású pirulában ül; az aktuális lépés egy kiemelkedő, enyhén lime árnyalatú üveggombban van, amely lépésváltáskor egyetlen GPU-áttűnéssel csúszik át. A kész lépések alatt kis lime pont jelzi a haladást. Telefonon ugyanez a lap tetején.
+- A korábbi gyűrűs dokk (homorú kártyaszél-alak) kikerült; a `dockPath` segédfüggvény és a hozzá tartozó teszt törölve, mert csak ez használta.
+- Csak `?mod=ujraepites` alatt látszik; az éles konfigurátor nem változott.
+
 ## 5.23 – Újraépítési mód: telefonon a nézet-sín nem lóg a lapra
 
 - **Hiba (Ádám jelezte):** telefonon kinyitott lépéslapnál a bal szélső Nézet és Környezet sín rálógott a lapra (lépéssáv, címsor).

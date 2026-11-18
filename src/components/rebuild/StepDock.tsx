@@ -1,50 +1,25 @@
-import { useLayoutEffect, useRef, useState } from 'react'
 import type { ConfigStep } from '@/types/pergola'
-import { dockPath, REBUILD_STEPS, rebuildStepIndex } from '@/lib/rebuildSteps'
+import { REBUILD_STEPS, rebuildStepIndex } from '@/lib/rebuildSteps'
 import { tr } from '@/i18n/locale'
 import StepIcon from './StepIcons'
 
-const HEIGHT = 84
-const FILLET = 18
-const RADIUS = 24
-const RING = 2 * Math.PI * 17
-
 /**
- * Lépéssáv a lépéskártya tetején (Ádám 03-as mintája): a kártya felső széléhez homorú ívvel olvadó sötét dokk,
- * lépésenként gyűrű + ikon + rövid név. A gyűrű mutatja a haladást: a kész lépéseké tele, az aktuálisé kiemelt,
- * a hátralévőké üres; lépésváltáskor a gyűrűk simán töltődnek / ürülnek.
+ * Lépéssáv a lépéskártya tetején (Ádám mintája): világos, folyékony üveg „pirula”, rajta a hét lépés ikonja;
+ * az aktuális lépés egy kiemelkedő, enyhén lime üveggombban ül, amely lépésváltáskor átcsúszik
+ * (egyetlen GPU-áttűnés). A kész lépések alatt kis lime pont jelzi a haladást.
  */
 export default function StepDock({ step, onStep }: { step: ConfigStep; onStep: (step: ConfigStep) => void }) {
-  const wrap = useRef<HTMLDivElement>(null)
-  const [width, setWidth] = useState(0)
   const index = rebuildStepIndex(step)
-
-  useLayoutEffect(() => {
-    const element = wrap.current
-    if (!element) return
-    const update = () => setWidth(Math.round(element.getBoundingClientRect().width))
-    update()
-    const observer = new ResizeObserver(update)
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [])
-
+  const count = REBUILD_STEPS.length
   return (
-    <nav className="rb-dock" ref={wrap} aria-label={tr('Konfigurálás lépései', 'Konfigurationsschritte')} style={{ height: HEIGHT }}>
-      {width > 0 && <svg className="rb-dock-shape" width={width + FILLET * 2} height={HEIGHT} viewBox={`${-FILLET} 0 ${width + FILLET * 2} ${HEIGHT}`} aria-hidden="true"><path d={dockPath(width, HEIGHT, FILLET, RADIUS)} /></svg>}
+    <nav className="rb-dock" aria-label={tr('Konfigurálás lépései', 'Konfigurationsschritte')} style={{ ['--rb-count' as string]: count }}>
+      <span className="rb-dock-slot" aria-hidden="true" style={{ transform: `translate3d(${index * 100}%, 0, 0)` }}><span className="rb-dock-knob" /></span>
       <ol>
-        {REBUILD_STEPS.map((item, i) => {
-          const state = i < index ? 'is-done' : i === index ? 'is-current' : 'is-next'
-          return <li key={item.id}>
-            <button type="button" className={state} aria-current={i === index ? 'step' : undefined} aria-label={`${i + 1}. ${item.label}`} title={item.label} onClick={() => onStep(item.id)}>
-              <span className="rb-dock-ring">
-                <svg className="rb-dock-progress" width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle className="rb-dock-track" cx="20" cy="20" r="17" /><circle className="rb-dock-fill" cx="20" cy="20" r="17" strokeDasharray={RING} strokeDashoffset={i <= index ? 0 : RING} /></svg>
-                <StepIcon step={item.id} size={18} />
-              </span>
-              <span className="rb-dock-name">{item.short}</span>
-            </button>
-          </li>
-        })}
+        {REBUILD_STEPS.map((item, i) => <li key={item.id}>
+          <button type="button" className={i < index ? 'is-done' : i === index ? 'is-current' : 'is-next'} aria-current={i === index ? 'step' : undefined} aria-label={`${i + 1}. ${item.label}`} title={item.label} onClick={() => onStep(item.id)}>
+            <StepIcon step={item.id} size={21} />
+          </button>
+        </li>)}
       </ol>
     </nav>
   )
