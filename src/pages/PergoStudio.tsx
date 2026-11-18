@@ -587,6 +587,8 @@ export default function PergoStudio() {
   )
   // Újraépítési mód (M00): csak a teljes képernyős 3D. Forgatás, nagyítás, mozgatás működik; a 3D-n belüli
   // kattintások (oldal kijelölése, ajtó- és üvegnyitás) kikapcsolva, a felületi elemek a modulokkal jönnek vissza.
+  // Újraépítési mód: a Hely és méret lépésben a 3D méretcímkéi automatikusan látszanak (kilépéskor visszaáll).
+  const rebuildScene = useMemo(() => (rebuild && step === 'mount' && !scene.showDimensions ? { ...scene, showDimensions: true } : scene), [rebuild, step, scene])
   if (rebuild) {
     const frame = moduleVisible('M01', true)
     // Asztalon a pergola a kártya nélküli rész közepére kerül; telefonon a lap fölé.
@@ -596,9 +598,9 @@ export default function PergoStudio() {
       <div className="app-shell rebuild-shell">
         <main className="rebuild-stage" id="top">
           <section className="viewer-panel" aria-label={tr('3D előnézet', '3D-Vorschau')}>
-            <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={scene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSceneChange={ignoreSceneChange} /></IntroSceneGate>
+            <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={rebuildScene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSceneChange={ignoreSceneChange} /></IntroSceneGate>
           </section>
-          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={<StepDock step={step} onStep={goStep} />}>{step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : <p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
+          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={<StepDock step={step} onStep={goStep} />}>{step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : <p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
         </main>
         {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
       </div>

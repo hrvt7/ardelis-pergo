@@ -126,3 +126,7 @@
 
 /* A meglévő komponensek (berendezés, szabályfigyelmeztetés) a világos üvegen */
 .lx-step .furniture-picker, .lx-step .building-issues { color: var(--lx-ink); }
+.lx-area { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 14px; border-radius: 14px; background: rgba(21, 23, 26, .06); font-size: 13px; color: rgba(21, 23, 26, .65); }
+.lx-area strong { font-size: 17px; font-weight: 700; color: var(--lx-ink); font-variant-numeric: tabular-nums; }
+.lx-facing-label { display: inline-flex; align-items: center; gap: 7px; }
+.lx-footnote { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 12px; color: rgba(21, 23, 26, .55); }

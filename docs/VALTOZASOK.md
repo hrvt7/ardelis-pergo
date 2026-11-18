@@ -1,5 +1,13 @@
 # Változások
 
+## 5.13 – Újraépítési mód: Hely és méret kiegészítve (méretcímkék, alapterület, tájolás)
+
+- **Méretcímkék:** a Hely és méret lépésben a 3D-ben automatikusan látszik a szélesség, a mélység és a magasság cm-ben; a lépésből kilépve visszaáll a korábbi beállítás.
+- **Alapterület** (m²) élőben a csúszkák alatt, az árszámítás területéből.
+- **Tájolás:** „Merre néz a terasz eleje?” (É, K, D, Ny) – a meglévő napirány- és tájolás-beállítást állítja együtt, így a 3D napjárása és árnyékai, valamint az árnyékelemzés is ehhez igazodik.
+- Megjegyzés a lépés alján: „A pontos méretet a helyszíni felmérés véglegesíti.”
+- Tesztek: `rebuildSteps.test.ts` (a tájolás → napív-elforgatás, és hogy a jelenet napja ugyanarról az oldalról süt, mint a valós nap).
+
 ## 5.12 – Újraépítési mód: 2. lépés – Hely és méret (M02–M03)
 
 - **Rögzítés:** 2 oszlopos rács felülnézeti rajzokkal (ház falai, pergolakeret, oszlopok), a gyártó által kínált módokkal; a kiválasztott leírása alatta.

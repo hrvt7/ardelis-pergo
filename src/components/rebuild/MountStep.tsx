@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Columns3, Sparkles } from 'lucide-react'
+import { Check, ChevronDown, Columns3, Compass, Info, Sparkles } from 'lucide-react'
 import type { PergolaConfig, PriceSettings, SceneSettings } from '@/types/pergola'
 import { MOUNT_DESCRIPTIONS, MOUNT_LABELS, MOUNT_TYPES } from '@/lib/mount'
 import { bayWidth, moduleCount, modulesLabel } from '@/lib/modules'
@@ -10,11 +10,12 @@ import { BuildingIssues } from '@/components/BuildingControls'
 import FurniturePicker from '@/components/FurniturePicker'
 import { FURNITURE_SETS } from '@/lib/furniture'
 import { tr } from '@/i18n/locale'
+import { FACINGS, sunDirectionForFacing } from '@/lib/rebuildSteps'
 import LiquidSlider from './LiquidSlider'
 import MountPlan from './MountPlan'
 
 /** 2. lépés – Hely és méret (docs/rebuild/STEP_ARCHITECTURE.md): rögzítés, méretek, modulok, javaslat, berendezés. */
-export default function MountStep({ config, scene, prices, onChange, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
+export default function MountStep({ config, scene, prices, area, onChange, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; /** alapterület m²-ben (az árszámításból) */ area: number; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
   const { tenant } = useTenant()
   const { limits } = tenant
   const modules = moduleCount(config)
@@ -43,6 +44,7 @@ export default function MountStep({ config, scene, prices, onChange, onSceneChan
       <LiquidSlider label={modules > 1 ? tr('Szélesség modulonként', 'Breite je Modul') : tr('Szélesség', 'Breite')} value={bayWidth(config)} min={limits.width[0]} max={limits.width[1]} onChange={(bay) => onChange({ width: Math.round(bay * modules * 100) / 100 })} />
       <LiquidSlider label={tr('Mélység', 'Tiefe')} value={config.depth} min={limits.depth[0]} max={limits.depth[1]} onChange={(depth) => onChange({ depth })} />
       <LiquidSlider label={tr('Oszlopmagasság', 'Steherhöhe')} value={config.height} min={limits.height[0]} max={limits.height[1]} onChange={(height) => onChange({ height })} />
+      <div className="lx-area" aria-live="polite"><span>{tr('Alapterület', 'Grundfläche')}</span><strong>{formatNumber(area, 1)} m²</strong></div>
       {maxModules > 1 && <div className="lx-modules">
         <span>{tr('Modulok száma', 'Anzahl Module')}</span>
         <div className="lx-segmented" role="radiogroup" aria-label={tr('Modulok száma', 'Anzahl Module')}>
@@ -55,9 +57,22 @@ export default function MountStep({ config, scene, prices, onChange, onSceneChan
       <BuildingIssues config={config} onFix={onChange} only={issuesForStep('mount')} />
     </section>
 
+    <section className="lx-section">
+      <h3>{tr('Tájolás', 'Ausrichtung')}</h3>
+      <div className="lx-modules">
+        <span className="lx-facing-label"><Compass size={17} />{tr('Merre néz a terasz eleje?', 'Wohin zeigt die Terrasse?')}</span>
+        <div className="lx-segmented" role="radiogroup" aria-label={tr('A terasz tájolása', 'Ausrichtung der Terrasse')}>
+          {FACINGS.map((item) => { const active = Math.round(scene.facing) % 360 === item.degrees; return <button type="button" role="radio" aria-checked={active} key={item.id} className={active ? 'is-selected' : ''} onClick={() => onSceneChange({ facing: item.degrees, sunDirection: sunDirectionForFacing(item.degrees) })}>{item.label}</button> })}
+        </div>
+      </div>
+      <p className="lx-note">{tr('A napjárás és az árnyékok ehhez igazodnak a 3D-ben.', 'Sonnenverlauf und Schatten richten sich in 3D danach.')}</p>
+    </section>
+
     {!carport && <details className="lx-section lx-disclosure">
       <summary><span><strong>{tr('Mire használod?', 'Wofür nutzen Sie es?')}</strong><small>{scene.furniture === 'none' ? tr('Bútor és helyigény-ellenőrzés', 'Möbel und Platzprüfung') : FURNITURE_SETS[scene.furniture].label}</small></span><ChevronDown size={18} /></summary>
       <FurniturePicker config={config} scene={scene} prices={prices} onChange={onChange} onSceneChange={onSceneChange} />
     </details>}
+
+    <p className="lx-footnote"><Info size={14} />{tr('A pontos méretet a helyszíni felmérés véglegesíti.', 'Die genauen Maße legt das Aufmaß vor Ort fest.')}</p>
   </div>
 }

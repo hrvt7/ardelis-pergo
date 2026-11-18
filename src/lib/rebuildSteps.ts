@@ -42,3 +42,19 @@ export function dockPath(width: number, height: number, fillet: number, radius: 
     'Z',
   ].join(' ')
 }
+
+/** A terasz eleje felé mutató égtájak (fok, É = 0, K = 90, D = 180, Ny = 270). */
+export const FACINGS: { id: string; label: string; degrees: number }[] = localized(() => ([
+  { id: 'N', label: tr('É', 'N'), degrees: 0 },
+  { id: 'E', label: tr('K', 'O'), degrees: 90 },
+  { id: 'S', label: tr('D', 'S'), degrees: 180 },
+  { id: 'W', label: tr('Ny', 'W'), degrees: 270 },
+]))
+
+/**
+ * A jelenet napívének elforgatása (`sunDirection`) a terasz tájolásából: alaphelyzetben (0°) a délre néző
+ * teraszé (`lightBalance.sunPosition`), és ugyanabba az irányba forog, mint a valós napállás (`sun.sunVectorInScene`).
+ */
+export function sunDirectionForFacing(facing: number): number {
+  return (((facing - 180) % 360) + 360) % 360
+}

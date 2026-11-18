@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { STEPS } from '../src/lib/configSteps'
-import { dockPath, neighbourStep, REBUILD_STEPS, rebuildStepIndex } from '../src/lib/rebuildSteps'
+import { sunPosition } from '../src/lib/lightBalance'
+import { sunVectorInScene } from '../src/lib/sun'
+import { dockPath, FACINGS, neighbourStep, sunDirectionForFacing, REBUILD_STEPS, rebuildStepIndex } from '../src/lib/rebuildSteps'
 
 describe('újraépített lépések', () => {
   it('ugyanaz a 7 lépés, ugyanabban a sorrendben, mint a meglévő logikában', () => {
@@ -24,5 +26,24 @@ describe('lépéssáv a kártya tetején', () => {
     expect(path).toContain('A 18 18 0 0 0 -18 0')
     expect(path.endsWith('Z')).toBe(true)
     expect(REBUILD_STEPS.every((step) => step.short.length <= 9)).toBe(true)
+  })
+})
+
+describe('tájolás', () => {
+  it('a délre néző terasz az alaphelyzet; a többi égtáj elforgatja a napívet', () => {
+    expect(sunDirectionForFacing(180)).toBe(0)
+    expect(sunDirectionForFacing(0)).toBe(180)
+    expect(sunDirectionForFacing(90)).toBe(270)
+    expect(sunDirectionForFacing(270)).toBe(90)
+    expect(FACINGS.map((item) => item.degrees)).toEqual([0, 90, 180, 270])
+  })
+
+  it('a jelenet napja minden tájolásnál ugyanarról az oldalról süt, mint a valós nap (dél, 12 óra)', () => {
+    for (const facing of [0, 90, 180, 270]) {
+      const [x, , z] = sunPosition(13, sunDirectionForFacing(facing))
+      const [rx, , rz] = sunVectorInScene({ azimuth: 180, elevation: 40 } as never, facing)
+      // Egy irányba mutatnak (pozitív skalárszorzat a vízszintes síkon).
+      expect(x * rx + z * rz).toBeGreaterThan(0)
+    }
   })
 })
