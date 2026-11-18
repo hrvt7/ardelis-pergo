@@ -19,6 +19,7 @@ import { isClosedBuilding } from '@/lib/buildings'
 import { createTextSummary, getBom, getDeliveryEstimate, getSpecCode } from '@/lib/specification'
 import type { PergolaConfig, PriceBreakdown, PriceSettings, SavedConfiguration } from '@/types/pergola'
 import { tr } from '../i18n/locale'
+import { priceDisplayOf } from '@/lib/priceDisplay'
 
 interface Props {
   onBudget?: () => void
@@ -49,6 +50,8 @@ interface Props {
 export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, onExport, exporting = false, onFix, projectName, onProjectName, house, shareUrl, variant }: Props) {
   const rebuild = variant === 'rebuild'
   const { tenant, labels: ROOF_LABELS } = useTenant()
+  // Az új felületen a gyártói ármód (M05) itt is érvényes: ár nélküli módban a változat-összevetés és a megosztott szöveg sem ír árat.
+  const hidePrice = rebuild && priceDisplayOf(tenant) === 'hidden'
   const [thumbnail, setThumbnail] = useState('')
   const bom = getBom(config)
   const [sharing, setSharing] = useState(false)
@@ -77,8 +80,8 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
         brand: tenant.brand.name,
         title,
         facts: [`${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} m · ${ROOF_LABELS[config.roof]}`, colorSummary(tenant, config), MOUNT_LABELS[config.mount]],
-        price: formatPrice(price.totalGross),
-        priceNote: tr('bruttó irányár, telepítéssel', 'Richtpreis brutto, inkl. Montage'),
+        price: hidePrice ? '' : formatPrice(price.totalGross),
+        priceNote: hidePrice ? '' : tr('bruttó irányár, telepítéssel', 'Richtpreis brutto, inkl. Montage'),
         footer: window.location.host,
         qrUrl: shareUrl,
         accent: getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim() || '#d8ff72',
@@ -96,7 +99,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
     try {
       const title = `${ROOF_LABELS[config.roof]} · ${formatNumber(config.width, 2)} × ${formatNumber(config.depth, 2)} m`
       const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim() || '#d8ff72'
-      const { blob, extension } = await recordTurntable({ brand: tenant.brand.name, title, price: formatPrice(price.totalGross), accent }, (progress) => setRecording(progress))
+      const { blob, extension } = await recordTurntable({ brand: tenant.brand.name, title, price: hidePrice ? '' : formatPrice(price.totalGross), accent }, (progress) => setRecording(progress))
       const result = await shareOrDownload(blob, `${(projectName.trim() || 'pergola').replace(/[^\p{L}\p{N}]+/gu, '-').toLowerCase()}-video.${extension}`, projectName.trim() || title)
       if (result === 'downloaded') onNotify(extension === 'mp4' ? tr('A videó letöltve — küldd el a családnak.', 'Video heruntergeladen — schicken Sie es der Familie.') : tr('A videó letöltve (WebM). Ha a telefon nem játssza le, küldd a terv linkjét.', 'Video heruntergeladen (WebM). Wenn das Handy es nicht abspielt, senden Sie den Link zum Entwurf.'))
       noteEngagement(tenant.id, 'share')
@@ -108,7 +111,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
     catch { onNotify(tr('A másolás nem sikerült ebben a böngészőben.', 'Kopieren ist in diesem Browser nicht möglich.')) }
   }
   const advice = getAdvice(config)
-  const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${projectName.trim() || 'Pergola tervem'} – ${formatPrice(price.totalGross)} bruttó irányár\n${shareUrl ?? window.location.href}`)}`
+  const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${projectName.trim() || 'Pergola tervem'}${hidePrice ? '' : ` – ${formatPrice(price.totalGross)} bruttó irányár`}\n${shareUrl ?? window.location.href}`)}`
   return (
     <div className="summary-panel summary-animated">
       {advice.length > 0 && <ul className="advice-list" aria-label={tr('Szakértői megjegyzések', 'Hinweise vom Fachmann')}>{advice.map((item) => <li key={item.id} className={item.level}>{item.text}<IssueFixButton config={config} issueId={item.id} onFix={onFix} /></li>)}</ul>}
@@ -134,7 +137,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
         <button type="button" className="showroom-share" onClick={share} disabled={sharing}>{sharing ? <LoaderCircle size={17} className="spin" /> : <Share2 size={17} />}<span><strong>{tr('Kép küldése a családnak', 'Bild an die Familie senden')}</strong><small>{tr('Márkázott kép a tervvel és az árral · WhatsApp, Messenger, e-mail', 'Bild mit Entwurf und Preis · WhatsApp, Messenger, E-Mail')}</small></span></button>
         {canRecord && <button type="button" className="showroom-share is-video" onClick={() => void video()} disabled={recording !== null}>{recording !== null ? <LoaderCircle size={17} className="spin" /> : <Clapperboard size={17} />}<span><strong>{recording !== null ? tr(`Videó készül… ${Math.round(recording * 100)}%`, `Video wird erstellt… ${Math.round(recording * 100)} %`) : tr('Videó a tervről', 'Video vom Entwurf')}</strong><small>{recording !== null ? tr('Ne zárd be az oldalt, a kamera körbejárja a tervet', 'Seite nicht schließen, die Kamera umrundet den Entwurf') : tr('Kb. 10 mp-es körbejárás, WhatsAppon is küldhető', 'Ca. 10 s Rundgang, auch per WhatsApp versendbar')}</small></span></button>}
       <div className="summary-actions"><button type="button" onClick={copy}><Clipboard size={15} />{tr('Szöveg másolása', 'Text kopieren')}</button><a className="summary-action-link" href={whatsapp} target="_blank" rel="noopener noreferrer"><MessageCircle size={15} />WhatsApp</a></div>
-      <section className="summary-section"><div className="summary-section-title"><GitCompareArrows size={17} /><h3>{tr('Két változat összehasonlítása', 'Zwei Varianten vergleichen')}</h3></div><div className="summary-actions is-variants"><button type="button" onClick={() => onSave('A')}><Save size={15} />{tr('Mentés „A” változatként', 'Als Variante „A“ speichern')}</button><button type="button" onClick={() => onSave('B')}><Save size={15} />{tr('Mentés „B” változatként', 'Als Variante „B“ speichern')}</button></div>{saved.length < 2 ? <p className="empty-copy">{tr('Mentsd el a mostani tervet „A” változatként, módosíts rajta, majd mentsd „B”-ként: a kettő itt jelenik meg egymás mellett, árral.', 'Speichern Sie den aktuellen Entwurf als Variante „A“, ändern Sie ihn und speichern Sie als „B“: beide erscheinen hier nebeneinander, mit Preis.')}</p> : <>{saved[0].image && saved[1].image && <CompareSlider a={saved[0].image} b={saved[1].image} />}<div className="comparison-grid">{saved.slice(0, 2).map((item, index) => { const savedPrice = calculatePrice(item.config, prices, ROOF_LABELS, getDisplayCurrency()); return <div key={item.id}><span>Konfiguráció {index === 0 ? 'A' : 'B'}</span><strong>{formatNumber(item.config.width)} × {formatNumber(item.config.depth)} m</strong><small>{ROOF_LABELS[item.config.roof]}<br />{formatNumber(savedPrice.area)} m² · {(['front', 'back', 'left', 'right'] as const).filter((side) => sideSegments(item.config, side).some((segment) => segment.type !== 'none')).length} zárt oldal</small><b>{formatPrice(savedPrice.totalGross)}</b><button type="button" onClick={() => onLoad(item.config)}>{tr('Betöltés', 'Laden')}<ArrowRight size={13} /></button></div>})}</div></>}</section>
+      <section className="summary-section"><div className="summary-section-title"><GitCompareArrows size={17} /><h3>{tr('Két változat összehasonlítása', 'Zwei Varianten vergleichen')}</h3></div><div className="summary-actions is-variants"><button type="button" onClick={() => onSave('A')}><Save size={15} />{tr('Mentés „A” változatként', 'Als Variante „A“ speichern')}</button><button type="button" onClick={() => onSave('B')}><Save size={15} />{tr('Mentés „B” változatként', 'Als Variante „B“ speichern')}</button></div>{saved.length < 2 ? <p className="empty-copy">{tr('Mentsd el a mostani tervet „A” változatként, módosíts rajta, majd mentsd „B”-ként: a kettő itt jelenik meg egymás mellett, árral.', 'Speichern Sie den aktuellen Entwurf als Variante „A“, ändern Sie ihn und speichern Sie als „B“: beide erscheinen hier nebeneinander, mit Preis.')}</p> : <>{saved[0].image && saved[1].image && <CompareSlider a={saved[0].image} b={saved[1].image} />}<div className="comparison-grid">{saved.slice(0, 2).map((item, index) => { const savedPrice = calculatePrice(item.config, prices, ROOF_LABELS, getDisplayCurrency()); return <div key={item.id}><span>Konfiguráció {index === 0 ? 'A' : 'B'}</span><strong>{formatNumber(item.config.width)} × {formatNumber(item.config.depth)} m</strong><small>{ROOF_LABELS[item.config.roof]}<br />{formatNumber(savedPrice.area)} m² · {(['front', 'back', 'left', 'right'] as const).filter((side) => sideSegments(item.config, side).some((segment) => segment.type !== 'none')).length} zárt oldal</small>{!hidePrice && <b>{formatPrice(savedPrice.totalGross)}</b>}<button type="button" onClick={() => onLoad(item.config)}>{tr('Betöltés', 'Laden')}<ArrowRight size={13} /></button></div>})}</div></>}</section>
       </div></details>
       <details className="summary-more"><summary><Wallet size={16} /><span><strong>{tr('Költségek és specifikáció', 'Kosten und Spezifikation')}</strong><small>{tr('Árbontás, keretösszeg, üzemeltetés, anyaglista', 'Preisaufschlüsselung, Budget, Betrieb, Materialliste')}</small></span><ChevronRight size={15} className="summary-more-chevron" /></summary><div className="summary-more-body">
         <PriceMix price={price} />

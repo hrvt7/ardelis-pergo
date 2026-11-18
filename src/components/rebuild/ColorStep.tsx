@@ -8,12 +8,14 @@ import { tenantPrice } from '@/tenants/rules'
 import { useTenant } from '@/tenants/TenantContext'
 import { WindowMatch } from '@/components/HouseLook'
 import { tr } from '@/i18n/locale'
+import { usePriceDisplay } from './usePriceDisplay'
 
 /** Világos-e a szín (a kéttónusú kivitel kiinduló kontrasztjához). */
 const isLight = (hex: string) => { const n = parseInt(hex.slice(1), 16); return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 > 0.5 }
 
 /** 5. lépés – Szín (Ádám: 5–6 gyakori szín + egyedi RAL kód, kéttónusú kivitel); további: ablakhoz igazítás. */
 export default function ColorStep({ config, scene, prices, onChange }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void }) {
+  const { prices: showPrices } = usePriceDisplay()
   const { tenant } = useTenant()
   const twoToneAvailable = Boolean(tenant.twoTone && supportsTwoTone(config.roof))
   const twoTone = twoToneAvailable && Boolean(config.roofColor)
@@ -72,7 +74,7 @@ export default function ColorStep({ config, scene, prices, onChange }: { config:
             {isOn && <span className="rb-option-check"><Check size={12} strokeWidth={3} /></span>}<span className="rb-swatch-ball" style={{ ['--rb-swatch' as string]: item.hex }} />
             <strong>{item.name}</strong>
             <small>{item.detail}</small>
-            <em>{delta === 0 ? (item.standard ? tr('felár nélkül', 'ohne Aufpreis') : tr('azonos ár', 'gleicher Preis')) : `${delta > 0 ? '+' : '−'}${formatPrice(Math.abs(delta))}`}</em>
+            {showPrices && <em>{delta === 0 ? (item.standard ? tr('felár nélkül', 'ohne Aufpreis') : tr('azonos ár', 'gleicher Preis')) : `${delta > 0 ? '+' : '−'}${formatPrice(Math.abs(delta))}`}</em>}
           </button>
         })}
       </div>

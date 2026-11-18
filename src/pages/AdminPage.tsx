@@ -31,6 +31,7 @@ import { pointsToRows, validateMatrixRows } from '@/lib/priceMatrixEdit'
 import { DEFAULT_WARRANTY_MONTHS, WARRANTY_GROUPS, warrantyGroupLabel, type WarrantyMonths } from '@/lib/installations'
 import { CrmEditor, PricingRulesEditor } from '@/components/admin/SalesRules'
 import { crmDraftFrom, crmFromDraft, pricingDraftFrom, pricingRulesFromDraft } from '@/lib/salesRulesDraft'
+import { PRICE_DISPLAYS, PRICE_DISPLAY_LABELS, priceDisplayOf, type PriceDisplay } from '@/lib/priceDisplay'
 
 const RATE_FIELDS = [['customColorRate', 'Egyedi RAL felár'], ['woodColorRate', 'Fa hatású bevonat felára'], ['installationRate', 'Telepítési arány'], ['vatRate', 'ÁFA kulcs']] as const
 const EXTRA_FIELDS = [['led', 'LED-világítás'], ['speakers', 'Hangrendszer'], ['sensors', 'Szenzorcsomag'], ['solar', 'Napelemes tető'], ['rgb', 'RGB LED'], ['fans', 'Mennyezeti ventilátor'], ['smartHome', 'Okosotthon'], ['roofShade', 'Tetőárnyékoló']] as const
@@ -307,6 +308,7 @@ function AdminEditor({ base, token, initial, storage, saving, message, onSave }:
   const [formError, setFormError] = useState('')
   const [warranty, setWarranty] = useState<WarrantyMonths>(() => ({ ...DEFAULT_WARRANTY_MONTHS, ...effective.installations?.warranty }))
   const [retentionMonths, setRetentionMonths] = useState(effective.installations?.retentionMonths ?? 120)
+  const [priceDisplay, setPriceDisplay] = useState<PriceDisplay>(() => priceDisplayOf(effective))
 
   const toggle = <T,>(list: T[], item: T, on: boolean) => (on ? [...list.filter((entry) => entry !== item), item] : list.filter((entry) => entry !== item))
 
@@ -342,6 +344,7 @@ function AdminEditor({ base, token, initial, storage, saving, message, onSave }:
       roofNames: Object.fromEntries(ROOF_TYPES.map((roof) => [roof, { name: roofNames[roof].name.trim(), short: roofNames[roof].short.trim() }])) as TenantOverrides['roofNames'],
       limits: { width: [limits.widthMin, limits.widthMax], depth: [limits.depthMin, limits.depthMax], height: [limits.heightMin, limits.heightMax], maxHeaters: limits.maxHeaters },
       installations: { warranty, retentionMonths },
+      priceDisplay,
       // Az árazási szabályok és a CRM is a teljes beállítás része: nélkülük egy mentés törölné őket.
       ...((rules) => (rules ? { pricingRules: rules } : {}))(pricingRulesFromDraft(pricing)),
       ...((settings) => (settings ? { crm: settings } : {}))(crmFromDraft(crm)),
@@ -372,6 +375,11 @@ function AdminEditor({ base, token, initial, storage, saving, message, onSave }:
         {WARRANTY_GROUPS.map((group) => <label key={group}><span>{warrantyGroupLabel(group)} <small>hónap</small></span><input type="number" min="0" max="240" step="1" value={warranty[group]} onChange={(event) => setWarranty({ ...warranty, [group]: Math.min(240, Math.max(0, Math.round(Number(event.target.value) || 0))) })} /></label>)}
         <label><span>Megőrzési idő <small>hónap</small></span><input type="number" min="12" max="360" step="1" value={retentionMonths} onChange={(event) => setRetentionMonths(Math.min(360, Math.max(12, Math.round(Number(event.target.value) || 12))))} /></label>
         <p className="admin-hint admin-wide">A megőrzési idő a telepítés napjától számít; lejártakor a telepítés a hibabejelentésekkel és fotókkal együtt automatikusan törlődik (naponta egyszer fut).</p>
+      </Section>
+
+      <Section title="Ár a konfigurátorban">
+        <p className="admin-hint admin-wide">Mit lásson a vevő az árból? A beérkező érdeklődőnél ti mindig a teljes, tételes becslést kapjátok.</p>
+        {PRICE_DISPLAYS.map((mode) => <label className="admin-check admin-wide" key={mode}><input type="radio" name="priceDisplay" value={mode} checked={priceDisplay === mode} onChange={() => setPriceDisplay(mode)} /><span><strong>{PRICE_DISPLAY_LABELS[mode].title}</strong> <small>{PRICE_DISPLAY_LABELS[mode].hint}</small></span></label>)}
       </Section>
 
       <Section title="Tetőrendszerek (nettó Ft/m² alapár)">

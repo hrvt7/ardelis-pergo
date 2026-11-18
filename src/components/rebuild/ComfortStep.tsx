@@ -1,4 +1,4 @@
-import { CloudRain, Fan, Gauge, House, LampCeiling, Minus, Palette, Plus, Power, Speaker } from 'lucide-react'
+import { ChevronRight, CloudRain, Fan, Gauge, House, LampCeiling, Minus, Palette, Plus, Power, Speaker } from 'lucide-react'
 import type { PergolaConfig, PriceSettings, SceneSettings } from '@/types/pergola'
 import { formatPrice } from '@/lib/pricing'
 import { signedPrice } from '@/lib/money'
@@ -12,9 +12,11 @@ import { RGB_SWATCHES, smartHomeTargets } from '@/lib/comfort'
 import { FAN_MIN_HEIGHT } from '@/lib/fans'
 import { tr } from '@/i18n/locale'
 import MetalSwitch from './MetalSwitch'
+import { usePriceDisplay } from './usePriceDisplay'
 
 /** 6. lépés – Komfort (STEP_ARCHITECTURE.md): világítás, hő és légmozgás, vezérlés; télikertnél klíma és alap. */
-export default function ComfortStep({ config, scene, prices, energyCost, onChange, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; /** becsült éves áramköltség (ha számolható) */ energyCost: number | null; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
+export default function ComfortStep({ config, scene, prices, energyCost, onChange, onSceneChange, onEnergy }: { /** Üzemeltetési költség részletei (M17) */ onEnergy?: () => void; config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; /** becsült éves áramköltség (ha számolható) */ energyCost: number | null; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
+  const { prices: showPrices } = usePriceDisplay()
   const { tenant } = useTenant()
   const { limits } = tenant
   const carport = config.building === 'carport'
@@ -25,7 +27,7 @@ export default function ComfortStep({ config, scene, prices, energyCost, onChang
   const heaterPrice = tenantPrice(tenant, { ...config, heaters: config.heaters + 1 }, prices).totalGross - base
   // Minden opció ára ugyanúgy: a teljes becsült bruttó ár változása (mint a tető- és oldalkártyákon), „+X Ft” alakban.
   const gross = (patch: Partial<PergolaConfig>) => tenantPrice(tenant, { ...config, ...patch }, prices).totalGross
-  const cost = (on: Partial<PergolaConfig>, off: Partial<PergolaConfig>) => signedPrice(gross(on) - gross(off))
+  const cost = (on: Partial<PergolaConfig>, off: Partial<PergolaConfig>) => (showPrices ? signedPrice(gross(on) - gross(off)) : undefined)
   const fanPrice = gross({ fans: fans + 1 }) - gross({ fans: fans || undefined })
 
   return <div className="rb-step rb-step-comfort">
@@ -52,7 +54,7 @@ export default function ComfortStep({ config, scene, prices, energyCost, onChang
     {!carport && <section className="rb-section">
       <h3>{tr('Hő és légmozgás', 'Wärme und Luftbewegung')}</h3>
       {limits.maxHeaters > 0 && <div className="rb-option rb-stepper-row">
-        <span className="rb-switch-text"><strong>{tr('Infravörös teraszfűtés', 'Infrarot-Terrassenheizung')}</strong><small>{tr('Hűvös estékre', 'Für kühle Abende')}</small><em>{signedPrice(heaterPrice)} / {tr('db', 'Stk.')}</em></span>
+        <span className="rb-switch-text"><strong>{tr('Infravörös teraszfűtés', 'Infrarot-Terrassenheizung')}</strong><small>{tr('Hűvös estékre', 'Für kühle Abende')}</small>{showPrices && <em>{signedPrice(heaterPrice)} / {tr('db', 'Stk.')}</em>}</span>
         <span className="rb-stepper">
           <button type="button" aria-label={tr('Fűtőpanel csökkentése', 'Heizstrahler verringern')} disabled={config.heaters === 0} onClick={() => onChange({ heaters: Math.max(0, config.heaters - 1) })}><Minus size={15} /></button>
           <b aria-live="polite">{config.heaters} {tr('db', 'Stk.')}</b>
@@ -60,7 +62,7 @@ export default function ComfortStep({ config, scene, prices, energyCost, onChang
         </span>
       </div>}
       {tenant.extras.fans && <div className="rb-option rb-stepper-row">
-        <span className="rb-switch-text"><strong>{tr('Mennyezeti ventilátor', 'Deckenventilator')}</strong><small>{tr('Kültéri DC motor, Ø132 cm', 'Outdoor-DC-Motor, Ø 132 cm')}</small><em>{signedPrice(fanPrice)} / {tr('db', 'Stk.')}</em></span>
+        <span className="rb-switch-text"><strong>{tr('Mennyezeti ventilátor', 'Deckenventilator')}</strong><small>{tr('Kültéri DC motor, Ø132 cm', 'Outdoor-DC-Motor, Ø 132 cm')}</small>{showPrices && <em>{signedPrice(fanPrice)} / {tr('db', 'Stk.')}</em>}</span>
         <span className="rb-stepper">
           <button type="button" aria-label={tr('Ventilátor csökkentése', 'Ventilator verringern')} disabled={fans === 0} onClick={() => onChange({ fans: fans > 1 ? fans - 1 : undefined })}><Minus size={15} /></button>
           <b aria-live="polite">{fans} {tr('db', 'Stk.')}</b>
@@ -78,6 +80,12 @@ export default function ComfortStep({ config, scene, prices, energyCost, onChang
       {tenant.extras.smartHome && <MetalSwitch label={tr('Okosotthon-vezérlés', 'Smart-Home-Steuerung')} description={`${targets.length ? `${tr('Egy appból', 'Per App')}: ${targets.join(' · ')}` : tr('A később hozzáadott elektromos opciókat is kezeli', 'Steuert auch später hinzugefügte elektrische Optionen')}${tr(' — időzítés, jelenetek, Google / Alexa / Siri', ' — Zeitpläne, Szenen, Google / Alexa / Siri')}`} icon={House} price={cost({ smartHome: true }, { smartHome: undefined })} checked={Boolean(config.smartHome)} onChange={(on) => onChange({ smartHome: on ? true : undefined })} />}
     </section>}
 
-    {energyCost !== null && <div className="rb-callout"><Gauge size={18} /><p><strong>{tr('Becsült üzemeltetés', 'Geschätzter Betrieb')} ≈ {formatPrice(energyCost)} / {tr('év', 'Jahr')}</strong>{tr('Áramköltség a lakossági tarifával, átlagos használatot feltételezve.', 'Stromkosten mit Haushaltstarif bei durchschnittlicher Nutzung.')}</p></div>}
+    {energyCost !== null && (onEnergy
+      ? <button type="button" className="rb-helper" onClick={onEnergy}>
+        <span className="rb-helper-icon"><Gauge size={18} strokeWidth={1.7} /></span>
+        <span className="rb-helper-text"><strong>{tr('Becsült üzemeltetés', 'Geschätzter Betrieb')} ≈ {formatPrice(energyCost)} / {tr('év', 'Jahr')}</strong><small>{tr('Áramköltség a lakossági tarifával · saját használattal számolható', 'Stromkosten mit Haushaltstarif · mit eigener Nutzung berechenbar')}</small></span>
+        <ChevronRight size={16} aria-hidden="true" />
+      </button>
+      : <div className="rb-callout"><Gauge size={18} /><p><strong>{tr('Becsült üzemeltetés', 'Geschätzter Betrieb')} ≈ {formatPrice(energyCost)} / {tr('év', 'Jahr')}</strong>{tr('Áramköltség a lakossági tarifával, átlagos használatot feltételezve.', 'Stromkosten mit Haushaltstarif bei durchschnittlicher Nutzung.')}</p></div>)}
   </div>
 }

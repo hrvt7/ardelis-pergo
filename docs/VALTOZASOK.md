@@ -1,5 +1,12 @@
 # Változások
 
+## 5.40 – Új felület: visszavonás, Bemutató panel, döntéstámogatók, gyártónkénti ármód
+
+- **Visszavonás, újra, alaphelyzet (M04):** kis üvegsáv a jelenet sarkában (asztalon bal felül, telefonon és tableten jobb felül). Ugyanaz a történet, mint a Ctrl+Z / Ctrl+Y; az alaphelyzet megerősítést kér.
+- **Bemutató (M16):** a bal sín ötödik ikonja. Egy helyen: árnyékelemzés, fotóba helyezés, AR, bejárás, eső, működés-bemutató (lamellás tetőnél) és ügyfél-bemutató. Az aktív élményt pont jelzi a sínen, a panelből ki is kapcsolható. Az árnyékelemzés és a működés-bemutató panelje a sín mellett nyílik, a fotós vezérlősáv a jelenet alján; bejárásnál és ügyfél-bemutatónál a panelek eltűnnek (alul kis kilépő sáv, ESC). Telefonon az élmény indításakor a lépéslap összecsukódik.
+- **Döntéstámogatók (M17):** Tanácsadó (4 kérdés) az 1. lépésben; költségkeret-tervező a tételes kalkulációban és az összegzésben; az üzemeltetési költség a Komfort lépésben megnyitható részletekkel.
+- **Gyártónkénti ármód (M05):** új admin-beállítás „Ár a konfigurátorban”: becsült teljes ár (alapértelmezés), irányár „-tól” (lefelé kerekítve: Ft 50 000-re, EUR 100-ra; tételek nélkül), vagy ár nélkül (nincs felár, csomagár, összeg, PDF-összeg; „Egyedi ajánlat a helyszíni felmérés után”). Érvényes az új felületen, a PDF-összefoglalóban, a vevői visszaigazoló és emlékeztető e-mailben; a gyártó a leadben mindig a teljes becslést kapja. A régi felület (`?mod=regi`) nem követi az ármódot.
+- Tesztek: `rebuildTools.test.ts`, `priceDisplay.test.ts` (kerekítés, admin-séma, PDF, vevői e-mailek), `rebuildMode.test.ts`.
 ## 5.39 – Kapcsolósorok: a kapcsolók egy oszlopban
 
 - **Hiba:** a bal oldali eszköztár Megjelenítés és Kamera paneljén a kapcsolók közvetlenül a szöveg után álltak, így soronként máshol (a szöveg hosszától függően). Az ikon nélküli kapcsolósorokban most a szöveg kitölti a sort, és a kapcsoló mindig a jobb szélen áll, egymás alatt egy oszlopban, asztalon és telefonon is.

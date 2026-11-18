@@ -1,14 +1,15 @@
 import type { ReactNode } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Wallet } from 'lucide-react'
 import type { ConfigStep, PergolaConfig, PriceBreakdown } from '@/types/pergola'
 import { summaryRows } from '@/lib/rebuildSummary'
-import { formatPrice } from '@/lib/pricing'
 import { useTenant } from '@/tenants/TenantContext'
 import { tr } from '@/i18n/locale'
 import StepIcon from './StepIcons'
+import { usePriceDisplay } from './usePriceDisplay'
 
 /** 7. lépés – Összegzés: mit választottál (lépésenként módosítható), becsült ár, és a meglévő összegző panel (felmérési űrlap, megosztás, változatok). */
-export default function SummaryStep({ config, price, onStep, children }: { config: PergolaConfig; price: PriceBreakdown; onStep: (step: ConfigStep) => void; children: ReactNode }) {
+export default function SummaryStep({ config, price, onStep, onBudget, children }: { config: PergolaConfig; price: PriceBreakdown; onStep: (step: ConfigStep) => void; /** Költségkeret-tervező (M17) */ onBudget?: () => void; children: ReactNode }) {
+  const { mode: priceMode, prices: showPrices, total: priceText } = usePriceDisplay()
   const { tenant } = useTenant()
   return <div className="rb-step rb-step-summary">
     <section className="rb-section">
@@ -22,7 +23,12 @@ export default function SummaryStep({ config, price, onStep, children }: { confi
           </button>
         </li>)}
       </ul>
-      <div className="rb-summary-total"><span>{tr('Becsült bruttó ár', 'Geschätzter Bruttopreis')}<small>{tr('szereléssel, ÁFA-val', 'inkl. Montage und USt.')}</small></span><strong>{formatPrice(price.totalGross)}</strong></div>
+      {showPrices && <div className="rb-summary-total"><span>{priceMode === 'from' ? tr('Irányár, bruttó', 'Richtpreis, brutto') : tr('Becsült bruttó ár', 'Geschätzter Bruttopreis')}<small>{tr('szereléssel, ÁFA-val', 'inkl. Montage und USt.')}</small></span><strong>{priceText(price.totalGross)}</strong></div>}
+      {onBudget && showPrices && <button type="button" className="rb-helper is-flat" onClick={onBudget}>
+        <span className="rb-helper-icon"><Wallet size={17} strokeWidth={1.7} /></span>
+        <span className="rb-helper-text"><strong>{tr('Keretösszeghez igazítanád?', 'An ein Budget anpassen?')}</strong><small>{tr('Költségkeret-tervező: mi fér bele, és mit érdemes cserélni', 'Budgetplaner: was hineinpasst und was sich zu tauschen lohnt')}</small></span>
+        <ChevronRight size={16} aria-hidden="true" />
+      </button>}
     </section>
     <section className="rb-section rb-legacy rb-summary-legacy">{children}</section>
   </div>

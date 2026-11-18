@@ -43,7 +43,7 @@ describe('kritikus kör javításai – új konfigurátor (5.28)', () => {
     const comfort = read('src/components/rebuild/ComfortStep.tsx')
     expect(comfort).not.toMatch(/\/ fm/)
     expect(comfort).not.toContain("'db, bruttó'")
-    expect(comfort).toContain('const cost = (on: Partial<PergolaConfig>, off: Partial<PergolaConfig>) => signedPrice(gross(on) - gross(off))')
+    expect(comfort).toContain('const cost = (on: Partial<PergolaConfig>, off: Partial<PergolaConfig>) => (showPrices ? signedPrice(gross(on) - gross(off)) : undefined)')
   })
 
   it('egy „kiválasztva” jel: sötét pipa; a lime nem jelöl jelvényt, árat, kész-pontot', () => {

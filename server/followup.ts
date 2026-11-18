@@ -19,6 +19,7 @@ import { bookingLink } from '../src/lib/booking'
 import { json, resolveTenant, storeConfigured, storeHeaders } from './tenantAdmin'
 import { purgeExpiredInstallations } from './installations'
 import { tr, withLocale } from '../src/i18n/locale'
+import { priceDisplayOf } from '../src/lib/priceDisplay'
 
 const DAY = 86_400_000
 /** Vevői emlékeztető: ennyi nap után… */
@@ -94,7 +95,7 @@ function customerFollowUpHtmlIn(tenant: Tenant, lead: FollowUpLead, env: LeadEnv
 <p style="font-size:12px;letter-spacing:1px;color:#62727a;margin:0 0 8px">${escapeHtml(tenant.brand.name.toUpperCase())} · ${escapeHtml(lead.ref)}</p>
 <h1 style="font-size:20px;margin:0 0 12px">${tr('A pergolaterved még vár rád', 'Ihr Pergola-Entwurf wartet auf Sie')}</h1>
 <p>${tr(`Kedves ${escapeHtml(lead.customer_name)}!`, `Guten Tag ${escapeHtml(lead.customer_name)},`)}</p>
-<p>${tr(`Néhány napja felmérést kértél a(z) ${escapeHtml(tenant.brand.name)} csapatától egy ${escapeHtml(formatMoney(lead.estimate_gross, tenant.currency))} bruttó irányárú pergolára (${escapeHtml(lead.city)}). A 3D-terved bármikor megnyitható és továbbformálható:`, `vor einigen Tagen haben Sie bei ${escapeHtml(tenant.brand.name)} ein Aufmaß für eine Pergola mit einem Richtpreis von ${escapeHtml(formatMoney(lead.estimate_gross, tenant.currency))} brutto angefragt (${escapeHtml(lead.city)}). Ihren 3D-Entwurf können Sie jederzeit öffnen und weiter anpassen:`)}</p>
+<p>${(priceDisplayOf(tenant) === 'estimate' ? tr(`Néhány napja felmérést kértél a(z) ${escapeHtml(tenant.brand.name)} csapatától egy ${escapeHtml(formatMoney(lead.estimate_gross, tenant.currency))} bruttó irányárú pergolára (${escapeHtml(lead.city)}). A 3D-terved bármikor megnyitható és továbbformálható:`, `vor einigen Tagen haben Sie bei ${escapeHtml(tenant.brand.name)} ein Aufmaß für eine Pergola mit einem Richtpreis von ${escapeHtml(formatMoney(lead.estimate_gross, tenant.currency))} brutto angefragt (${escapeHtml(lead.city)}). Ihren 3D-Entwurf können Sie jederzeit öffnen und weiter anpassen:`) : tr(`Néhány napja felmérést kértél a(z) ${escapeHtml(tenant.brand.name)} csapatától egy pergolára (${escapeHtml(lead.city)}). A 3D-terved bármikor megnyitható és továbbformálható:`, `vor einigen Tagen haben Sie bei ${escapeHtml(tenant.brand.name)} ein Aufmaß für eine Pergola angefragt (${escapeHtml(lead.city)}). Ihren 3D-Entwurf können Sie jederzeit öffnen und weiter anpassen:`))}</p>
 <p><a href="${escapeHtml(lead.config_url)}" style="color:#007fae">${tr('A konfigurációm megnyitása →', 'Meine Konfiguration öffnen →')}</a></p>
 <p>${tr('Ha szeretnéd, egyeztessünk egy helyszíni felmérési időpontot – ez kötelezettség nélküli, és ekkor készül a pontos árajánlat.', 'Wenn Sie möchten, vereinbaren wir einen Aufmaß-Termin vor Ort – unverbindlich, dabei entsteht das genaue Angebot.')}</p>
 <p style="margin:20px 0">${booking ? button(booking, tr('Időpontot foglalok', 'Termin buchen')) : to ? button(`mailto:${to}?subject=${subject}&body=${body}`, tr('Időpontot kérek', 'Termin anfragen')) : ''}${tenant.brand.phone ? ` <a href="tel:${escapeHtml(tel(tenant.brand.phone))}" style="display:inline-block;color:#007fae;font-weight:600;padding:12px 8px">${tr('Inkább hívlak', 'Lieber anrufen')}: ${escapeHtml(tenant.brand.phone)}</a>` : ''}</p>

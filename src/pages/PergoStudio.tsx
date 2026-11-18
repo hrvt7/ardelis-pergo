@@ -2,7 +2,7 @@ import '@/studio-float.css'
 import { SCENE_READY_EVENT, sceneEvent, stepEvent } from '@/lib/funnelEvents'
 import IntroSceneGate from '@/components/IntroSceneGate'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { Armchair, CalendarClock, Cog, Box, Footprints, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Layers, Maximize2, Rotate3d, Scan, ShieldCheck, SunMedium, View, Wallet, WandSparkles, X } from 'lucide-react'
+import { Armchair, CalendarClock, Cog, Presentation, Box, Footprints, ImagePlus, Check, ChevronRight, CloudRain, Gauge, Image, Layers, Maximize2, Rotate3d, Scan, ShieldCheck, SunMedium, View, Wallet, WandSparkles, X } from 'lucide-react'
 import { Link } from 'react-router'
 import ConfiguratorControls, { SceneSettingsPanel } from '@/components/ConfiguratorControls'
 import { InfoDialog, PriceSettingsDialog, ResetDialog } from '@/components/Dialogs'
@@ -57,7 +57,8 @@ import ColorStep from '@/components/rebuild/ColorStep'
 import ComfortStep from '@/components/rebuild/ComfortStep'
 import SummaryStep from '@/components/rebuild/SummaryStep'
 import ProductStep from '@/components/rebuild/ProductStep'
-import SceneRail from '@/components/rebuild/SceneRail'
+import SceneRail, { type ShowcaseItem } from '@/components/rebuild/SceneRail'
+import HistoryBar from '@/components/rebuild/HistoryBar'
 import PriceBar from '@/components/rebuild/PriceBar'
 import CornerEnvSwitch from '@/components/rebuild/CornerEnvSwitch'
 import '@/components/rebuild/rebuild.css'
@@ -78,6 +79,7 @@ import { LANDSCAPE_PHONE_QUERY, SHEET_LAYOUT_QUERY } from '@/lib/viewport'
 import { clampPanelWidth, defaultPanelWidth, PANEL_WIDTH_KEY, panelWidthRange, readStoredWidths, writeStoredWidths, type PanelLayout } from '@/lib/panelResize'
 import PanelResizer from '@/components/studio/PanelResizer'
 import { localized, tr } from '../i18n/locale'
+import { priceDisplayOf } from '@/lib/priceDisplay'
 const BudgetDialog = lazy(() => import('@/components/BudgetDialog'))
 const MoodPanel = lazy(() => import('@/components/MoodPanel'))
 const AdvisorDialog = lazy(() => import('@/components/AdvisorDialog'))
@@ -627,24 +629,57 @@ export default function PergoStudio() {
     }, 350)
   }, [goStep, step])
   const rebuildScene = useMemo(() => (rebuild && step === 'mount' && !scene.showDimensions ? { ...scene, showDimensions: true } : scene), [rebuild, step, scene])
+  // Közös párbeszédek (régi és új felület): keretösszeg, tanácsadó, energia, fotóválasztó, AR, alaphelyzet.
+  const studioDialogs = <>
+    {modal === 'budget' && <Suspense fallback={null}><BudgetDialog config={config} prices={prices} furniture={scene.furniture} currentGross={price.totalGross} onApply={(next) => { updateConfig(next); setModal(null); setToast(tr('A terv a keretösszegedhez igazítva. Visszavonás: ↶', 'Der Entwurf wurde an Ihr Budget angepasst. Rückgängig: ↶')) }} onClose={() => setModal(null)} /></Suspense>}
+    {modal === 'advisor' && <Suspense fallback={null}><AdvisorDialog prices={prices} onApply={applyAdvice} onClose={() => setModal(null)} /></Suspense>}
+    {modal === 'energy' && energySupported && <Suspense fallback={null}><EnergyDialog config={config} prices={prices} usage={energyUsage} onUsageChange={setEnergyUsage} onConfigChange={updateConfig} onClose={() => setModal(null)} /></Suspense>}
+    <input ref={photoInput} className="visually-hidden-input" type="file" accept={PHOTO_ACCEPT} tabIndex={-1} aria-hidden="true" onChange={(event) => { const file = event.target.files?.[0]; if (file) handlePhoto(file); event.target.value = '' }} />
+    {modal === 'ar' && <Suspense fallback={null}><ArDialog shareUrl={buildArUrl(config)} onClose={() => setModal(null)} onPhoto={() => { if (scene.photoUrl) updateScene({ photoMode: true, sunStudy: false }); else openPhotoPicker() }} /></Suspense>}
+    {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(productDefaultConfig(tenant, product)); setScene((current) => ({ ...DEFAULT_SCENE, houseStyle: current.houseStyle, wallFinish: current.wallFinish, wallColor: current.wallColor, windowColor: current.windowColor })); setView('perspective'); setStep('size'); setToast(tr('Az alapkonfiguráció visszaállt.', 'Die Grundkonfiguration wurde wiederhergestellt.')) }} onClose={() => setModal(null)} />}
+  </>
   if (rebuild) {
     const frame = moduleVisible('M01', true)
     const clicks = moduleVisible('M08', true)
     // Asztalon a pergola a kártya nélküli rész közepére kerül; telefonon a lap fölé.
     // A pergola a bal sín és a kártya közötti szabad rész közepére kerül (a méretcímkék ne bújjanak a sín alá).
-    const rebuildShiftX = frame && !isNarrow && viewportWidth > 0 ? (400 + 40 - 120) / 2 / viewportWidth : 0
-    const rebuildShiftY = frame && isNarrow ? (rebuildSheetOpen ? 0.3 : 0.05) : 0
+    const rebuildShiftX = frame && !isNarrow && !presentation && !walking && viewportWidth > 0 ? (400 + 40 - 120) / 2 / viewportWidth : 0
+    const rebuildShiftY = frame && isNarrow && !presentation && !walking ? (rebuildSheetOpen ? 0.3 : 0.05) : 0
+    // M16: a bemutató eszközök a bal sín ötödik paneljéből; teljes képernyős élménynél (bejárás, ügyfél-bemutató) a panelek eltűnnek.
+    const immersive = walking || presentation
+    const calmSheet = () => { if (isNarrow) setRebuildSheetOpen(false) }
+    const rainGuard = scene.rain && config.sensors && isMovableRoof(config.roof)
+    const showcase: ShowcaseItem[] = [
+      { id: 'sun', icon: CalendarClock, name: tr('Árnyékelemzés', 'Schattenanalyse'), note: tr('Valós napállás a saját helyszíneden, dátum és óra szerint', 'Realer Sonnenstand an Ihrem Standort, nach Datum und Uhrzeit'), active: scene.sunStudy, run: () => { if (!scene.sunStudy) calmSheet(); toggleSunStudy() } },
+      { id: 'photo', icon: scene.photoUrl ? Image : ImagePlus, name: tr('Fotóba helyezés', 'Ins Foto setzen'), note: scene.photoUrl ? tr('A terv a saját teraszod fotóján; a kép nem hagyja el az eszközödet', 'Der Entwurf auf dem Foto Ihrer Terrasse; das Bild verlässt Ihr Gerät nicht') : tr('Töltsd fel a teraszod fotóját, és helyezd rá a tervet', 'Laden Sie ein Foto Ihrer Terrasse hoch und setzen Sie den Entwurf hinein'), active: scene.photoMode, run: () => { if (scene.photoMode) { updateScene({ photoMode: false }); return } calmSheet(); if (scene.photoUrl) updateScene({ photoMode: true, sunStudy: false, mechanism: false }); else openPhotoPicker() } },
+      ...(arHidden ? [] : [{ id: 'ar', icon: Rotate3d, name: tr('AR – valós méretben', 'AR – in Originalgröße'), note: arPath === 'desktop' ? tr('Nézd meg a kertedben telefonon, QR-kóddal', 'Im eigenen Garten ansehen – am Handy per QR-Code') : tr('Nézd meg valós méretben a saját kertedben', 'In Originalgröße im eigenen Garten ansehen'), active: false, run: () => { if (!admin) { track(tenant.id, 'ar'); noteEngagement(tenant.id, 'ar') } if (embed) window.open(buildArUrl(config), '_blank', 'noopener'); else setModal('ar') } }]),
+      { id: 'walk', icon: Footprints, name: tr('Bejárás', 'Rundgang'), note: tr('Első személyű nézet, emberi szemmagasságból', 'Ich-Perspektive auf Augenhöhe'), active: walking, run: () => { if (walking) exitWalk(); else { setRebuildSheetOpen(false); enterWalk() } } },
+      { id: 'rain', icon: CloudRain, name: tr('Eső', 'Regen'), note: config.sensors && isMovableRoof(config.roof) ? tr('Az esőérzékelő automatikusan zárja a tetőt', 'Der Regensensor schließt das Dach automatisch') : tr('Így véd a tető esőben', 'So schützt das Dach bei Regen'), active: scene.rain, run: () => updateScene({ rain: !scene.rain }) },
+      ...(config.roof === 'louvered' ? [{ id: 'mechanism', icon: Cog, name: tr('Működés-bemutató', 'Funktionsvorführung'), note: tr('A lamellahajtás mozgásban, valós gyári adatokkal', 'Der Lamellenantrieb in Bewegung, mit realen Herstellerdaten'), active: mechanismOn, run: () => { if (!scene.mechanism) calmSheet(); updateScene({ mechanism: !scene.mechanism, sunStudy: false, photoMode: false, exploded: false }) } }] : []),
+      { id: 'present', icon: Presentation, name: tr('Ügyfél-bemutató', 'Kundenpräsentation'), note: tr('Csak a 3D, panelek nélkül · ESC a kilépés', 'Nur 3D, ohne Bedienfelder · ESC zum Beenden'), active: presentation, run: () => setPresentation(!presentation) },
+    ]
+    const toolPanel = scene.sunStudy && !scene.photoMode
+      ? <SunStudyPanel scene={scene} shade={shade} onChange={updateScene} onClose={toggleSunStudy} />
+      : mechanismOn ? <MechanismPanel config={config} onClose={() => updateScene({ mechanism: false })} /> : null
     return (
-      <div className="app-shell rebuild-shell">
+      <div className={`app-shell rebuild-shell${priceDisplayOf(tenant) === 'hidden' ? ' rb-no-prices' : ''}`}>
         <main className="rebuild-stage" id="top">
-          <section className="viewer-panel" aria-label={tr('3D előnézet', '3D-Vorschau')}>
+          <section className={`viewer-panel${scene.photoMode ? ' photo-preview' : ''}`} aria-label={tr('3D előnézet', '3D-Vorschau')}>
+            {scene.photoMode && scene.photoUrl && <img className="photo-backdrop" src={scene.photoUrl} alt={tr('A feltöltött teraszfotó háttere', 'Hintergrund aus dem hochgeladenen Terrassenfoto')} />}
             <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={rebuildScene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSideSelect={clicks ? rebuildSideSelect : undefined} onSceneChange={clicks ? updateScene : ignoreSceneChange} /></IntroSceneGate>
+            {walking && <WalkOverlay onExit={exitWalk} touch={coarsePointer || isNarrow} roofBlocked={walkRoofBlocked} />}
           </section>
-          {moduleVisible('M13', true) && <SceneRail config={config} scene={scene} view={view} compact={isNarrow} tucked={isNarrow && rebuildSheetOpen && viewportWidth < 700} onUntuck={() => setRebuildSheetOpen(false)} onView={setView} onSceneChange={updateScene} onChange={updateConfig} />}
-          {frame && !isNarrow && <StepBar step={step} onStep={goStep} />}
-          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} onRequest={moduleVisible('M15', true) ? requestQuote : undefined} bar={isNarrow ? <StepDock step={step} onStep={goStep} /> : undefined} corner={<CornerEnvSwitch ground={scene.ground} onChange={(ground) => updateScene({ ground })} />} price={moduleVisible('M05', true) ? <PriceBar price={price} compact={isNarrow} onRequest={moduleVisible('M15', true) && step !== 'summary' ? requestQuote : undefined} /> : undefined}>{step === 'size' && moduleVisible('M12', true) ? <ProductStep config={config} prices={prices} onChange={updateConfig} onPreset={replaceConfig} /> : step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'roof' && moduleVisible('M06', true) ? <RoofStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'sides' && moduleVisible('M08', true) ? <SidesStep config={config} scene={scene} prices={prices} selected={selectedSide} onSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'color' && moduleVisible('M09', true) ? <ColorStep config={config} scene={scene} prices={prices} onChange={updateConfig} /> : step === 'extras' && moduleVisible('M11', true) ? <ComfortStep config={config} scene={scene} prices={prices} energyCost={energyCost} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'summary' && moduleVisible('M14', true) ? <SummaryStep config={config} price={price} onStep={goStep}>{rebuildSummary}</SummaryStep> : <p className="rb-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
+          {!immersive && <HistoryBar compact={isNarrow} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} onUndo={undo} onRedo={redo} onReset={() => setModal('reset')} />}
+          {rainGuard && !immersive && <div className="automation-status rb-automation" role="status"><ShieldCheck size={16} /><span><strong>{tr('Esőautomata aktív', 'Regenautomatik aktiv')}</strong>{config.roof === 'retractable' ? tr('A tolótető biztonságos, zárt pozícióban.', 'Das Schiebedach ist sicher geschlossen.') : tr('A tetőlamellák biztonságos, zárt pozícióban.', 'Die Dachlamellen sind sicher geschlossen.')}</span></div>}
+          {toolPanel && !immersive && <Suspense fallback={null}><div className={`rb-tool-slot${isNarrow ? ' is-compact' : ''}`}>{toolPanel}</div></Suspense>}
+          {scene.photoMode && !immersive && <div className="rb-photo-slot"><PhotoBar placement={{ photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt, photoLens: scene.photoLens }} coarse={isNarrow || window.matchMedia('(pointer: coarse)').matches} onChange={(next) => updateScene(next)} onReset={() => updateScene({ ...DEFAULT_PLACEMENT })} onReplace={openPhotoPicker} onDelete={deleteUserPhoto} onDone={() => updateScene({ photoMode: false })} /></div>}
+          {presentation && <div className="rb-present-note" role="status"><span>{tr('Ügyfél-bemutató', 'Kundenpräsentation')}</span><strong>{config.width.toFixed(1).replace('.', ',')} × {config.depth.toFixed(1).replace('.', ',')} m · {ROOF_LABELS[config.roof].split(' · ')[0]}</strong><button type="button" onClick={() => setPresentation(false)}>{tr('Kilépés', 'Beenden')}<kbd>ESC</kbd></button></div>}
+          {!immersive && moduleVisible('M13', true) && <SceneRail showcase={showcase} config={config} scene={scene} view={view} compact={isNarrow} tucked={isNarrow && rebuildSheetOpen && viewportWidth < 700} onUntuck={() => setRebuildSheetOpen(false)} onView={setView} onSceneChange={updateScene} onChange={updateConfig} />}
+          {frame && !isNarrow && !immersive && <StepBar step={step} onStep={goStep} />}
+          {frame && !immersive && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} onRequest={moduleVisible('M15', true) ? requestQuote : undefined} bar={isNarrow ? <StepDock step={step} onStep={goStep} /> : undefined} corner={<CornerEnvSwitch ground={scene.ground} onChange={(ground) => updateScene({ ground })} />} price={moduleVisible('M05', true) ? <PriceBar price={price} compact={isNarrow} onRequest={moduleVisible('M15', true) && step !== 'summary' ? requestQuote : undefined} onBudget={() => setModal('budget')} /> : undefined}>{step === 'size' && moduleVisible('M12', true) ? <ProductStep config={config} prices={prices} onChange={updateConfig} onPreset={replaceConfig} onAdvisor={() => setModal('advisor')} /> : step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'roof' && moduleVisible('M06', true) ? <RoofStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'sides' && moduleVisible('M08', true) ? <SidesStep config={config} scene={scene} prices={prices} selected={selectedSide} onSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'color' && moduleVisible('M09', true) ? <ColorStep config={config} scene={scene} prices={prices} onChange={updateConfig} /> : step === 'extras' && moduleVisible('M11', true) ? <ComfortStep config={config} scene={scene} prices={prices} energyCost={energyCost} onChange={updateConfig} onSceneChange={updateScene} onEnergy={openEnergy} /> : step === 'summary' && moduleVisible('M14', true) ? <SummaryStep config={config} price={price} onStep={goStep} onBudget={() => setModal('budget')}>{rebuildSummary}</SummaryStep> : <p className="rb-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
         </main>
         {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
+        {studioDialogs}
       </div>
     )
   }
@@ -709,12 +744,7 @@ export default function PergoStudio() {
       {toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
       {modal === 'prices' && admin && <PriceSettingsDialog prices={prices} onChange={setPrices} onReset={() => { setPrices(tenant.prices); setToast(tr('A gyártói árlista visszaállt.', 'Die Herstellerpreisliste wurde wiederhergestellt.')) }} onClose={() => setModal(null)} />}
       {modal === 'info' && <InfoDialog onClose={() => setModal(null)} />}
-      {modal === 'budget' && <Suspense fallback={null}><BudgetDialog config={config} prices={prices} furniture={scene.furniture} currentGross={price.totalGross} onApply={(next) => { updateConfig(next); setModal(null); setToast(tr('A terv a keretösszegedhez igazítva. Visszavonás: ↶', 'Der Entwurf wurde an Ihr Budget angepasst. Rückgängig: ↶')) }} onClose={() => setModal(null)} /></Suspense>}
-      {modal === 'advisor' && <Suspense fallback={null}><AdvisorDialog prices={prices} onApply={applyAdvice} onClose={() => setModal(null)} /></Suspense>}
-      {modal === 'energy' && energySupported && <Suspense fallback={null}><EnergyDialog config={config} prices={prices} usage={energyUsage} onUsageChange={setEnergyUsage} onConfigChange={updateConfig} onClose={() => setModal(null)} /></Suspense>}
-      <input ref={photoInput} className="visually-hidden-input" type="file" accept={PHOTO_ACCEPT} tabIndex={-1} aria-hidden="true" onChange={(event) => { const file = event.target.files?.[0]; if (file) handlePhoto(file); event.target.value = '' }} />
-      {modal === 'ar' && <Suspense fallback={null}><ArDialog shareUrl={buildArUrl(config)} onClose={() => setModal(null)} onPhoto={() => { if (scene.photoUrl) updateScene({ photoMode: true, sunStudy: false }); else openPhotoPicker() }} /></Suspense>}
-      {modal === 'reset' && <ResetDialog onConfirm={() => { replaceConfig(productDefaultConfig(tenant, product)); setScene((current) => ({ ...DEFAULT_SCENE, houseStyle: current.houseStyle, wallFinish: current.wallFinish, wallColor: current.wallColor, windowColor: current.windowColor })); setView('perspective'); setStep('size'); setToast(tr('Az alapkonfiguráció visszaállt.', 'Die Grundkonfiguration wurde wiederhergestellt.')) }} onClose={() => setModal(null)} />}
+      {studioDialogs}
       {homeHref && <nav aria-label={tr('Vissza a kezdőlapra', 'Zurück zur Startseite')}>{homeHref.startsWith('/') ? <Link className="studio-home-link" to={homeHref}>{tr('Kezdőlap', 'Startseite')}</Link> : <a className="studio-home-link" href={homeHref} target="_top" rel="noreferrer">{tr('Kezdőlap', 'Startseite')}</a>}</nav>}
     </div>
   )

@@ -11,6 +11,7 @@ import { isBookingUrl } from '../lib/booking'
 import { normalizeConfig, priceSettingsSchema } from './rules'
 import { DEALER_ID_PATTERN } from './pricingRules'
 import { isAllowedWebhookUrl, WEBHOOK_EVENTS } from './crm'
+import { PRICE_DISPLAYS } from '../lib/priceDisplay'
 import type { Tenant, TenantRoof } from './types'
 import type { PriceSettings, RoofType, SideType } from '../types/pergola'
 
@@ -79,6 +80,8 @@ export const tenantOverridesSchema = z.object({
       email: email.optional(),
     })).max(200).refine((dealers) => new Set(dealers.map((dealer) => dealer.id)).size === dealers.length, 'Két viszonteladónak nem lehet azonos azonosítója.').optional(),
   }).optional(),
+  /** Ár megjelenítése a vevő felé (M05): becsült teljes ár / irányár „-tól” / ár nélkül. */
+  priceDisplay: z.enum(PRICE_DISPLAYS).optional(),
   /** CRM-webhook (csak a szerver és az admin látja; a böngészőbe nem kerül). */
   crm: z.object({
     webhookUrl: text(500).refine((value) => value === '' || isAllowedWebhookUrl(value), 'Csak nyilvános https:// cím adható meg.'),
@@ -181,6 +184,7 @@ export function applyOverrides(base: Tenant, overrides: unknown): Tenant {
       monthlyReport: o.lead?.monthlyReport ?? base.lead.monthlyReport ?? true,
     },
     installations: { ...base.installations, ...o.installations },
+    priceDisplay: o.priceDisplay ?? base.priceDisplay,
   }
   // Az alapértelmezett konfiguráció is feleljen meg a (szűkített) kínálatnak.
   return { ...tenant, defaultConfig: normalizeConfig(tenant, base.defaultConfig) }

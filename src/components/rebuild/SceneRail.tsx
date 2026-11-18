@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Armchair, Box, ChevronRight, Eye, House, Maximize2, Moon, Scan, Sun, Sunset, Video, X, type LucideIcon } from 'lucide-react'
+import { Armchair, Box, ChevronRight, Eye, House, Maximize2, Moon, Presentation, Scan, Sun, Sunset, Video, X, type LucideIcon } from 'lucide-react'
 import type { CameraView, PergolaConfig, QualityLevel, SceneSettings } from '@/types/pergola'
 import { cameraViewsFor } from '@/lib/cameraViews'
 import HouseLook from '@/components/HouseLook'
@@ -8,16 +8,20 @@ import LiquidGlass from './LiquidGlass'
 import LiquidSlider from './LiquidSlider'
 import MetalSwitch from './MetalSwitch'
 
-type Panel = 'camera' | 'time' | 'environment' | 'display'
+type Panel = 'camera' | 'time' | 'environment' | 'display' | 'showcase'
+
+/** Bemutató eszköz (M16): elindítja vagy leállítja az élményt; a panel ezután bezárul, hogy a jelenet látsszon. */
+export interface ShowcaseItem { id: string; icon: LucideIcon; name: string; note: string; active: boolean; run: () => void }
 const VIEW_ICONS: Record<CameraView, LucideIcon> = { perspective: Eye, interior: Maximize2, top: Box, detail: Scan, sofa: Armchair, front: Eye }
 const timeOf = (dayTime: number): SceneSettings['time'] => (dayTime >= 20 || dayTime < 7 ? 'night' : dayTime >= 17 ? 'sunset' : 'day')
 
 /**
  * Nézet és Környezet eszköztár (D8): a bal szélen lebegő folyékony üveg sín négy ikonnal (a jobb oldali kártyával egy anyagból); mindegyik
  * a mellette nyíló üvegpanelt nyitja, egy témával: Kamera, Napszak, Környezet, Megjelenítés.
- * A beállítások csak a látványt változtatják, az árat nem.
+ * A beállítások csak a látványt változtatják, az árat nem. Ötödik ikon (M16): Bemutató – árnyékelemzés, fotóba helyezés, AR, bejárás, eső,
+ * működés-bemutató és ügyfél-bemutató egy helyen.
  */
-export default function SceneRail({ config, scene, view, compact, tucked = false, onUntuck, onView, onSceneChange, onChange }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; compact: boolean; /** telefonon nyitott lapnál a sín a szél mögé húzódik, csak egy fül látszik */ tucked?: boolean; onUntuck?: () => void; onView: (view: CameraView) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onChange: (patch: Partial<PergolaConfig>) => void }) {
+export default function SceneRail({ config, scene, view, compact, tucked = false, onUntuck, onView, onSceneChange, onChange, showcase = [] }: { /** Bemutató eszközök (M16); üresen az ikon sem látszik */ showcase?: ShowcaseItem[]; config: PergolaConfig; scene: SceneSettings; view: CameraView; compact: boolean; /** telefonon nyitott lapnál a sín a szél mögé húzódik, csak egy fül látszik */ tucked?: boolean; onUntuck?: () => void; onView: (view: CameraView) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onChange: (patch: Partial<PergolaConfig>) => void }) {
   const [open, setOpen] = useState<Panel | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const carport = config.building === 'carport'
@@ -36,7 +40,9 @@ export default function SceneRail({ config, scene, view, compact, tucked = false
     { id: 'time', icon: Sun, label: tr('Napszak', 'Tageszeit') },
     { id: 'environment', icon: House, label: tr('Környezet', 'Umgebung') },
     { id: 'display', icon: Scan, label: tr('Megjelenítés', 'Anzeige') },
+    ...(showcase.length ? [{ id: 'showcase' as const, icon: Presentation, label: tr('Bemutató', 'Vorführung') }] : []),
   ]
+  const showcaseOn = showcase.some((item) => item.active)
   const setDayTime = (dayTime: number) => onSceneChange({ dayTime, time: timeOf(dayTime) })
   const thing = carport ? tr('a carport', 'Carport') : tr('a pergola', 'Pergola')
 
@@ -70,13 +76,25 @@ export default function SceneRail({ config, scene, view, compact, tucked = false
       <MetalSwitch label={tr('Robbantott nézet', 'Explosionsansicht')} description={tr('A szerkezet elemei szétválasztva', 'Die Bauteile auseinandergezogen')} checked={Boolean(scene.exploded)} onChange={(exploded) => onSceneChange({ exploded })} />
       <label className="rb-select"><span>{tr('3D minőség', '3D-Qualität')}</span><select value={scene.quality} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">{tr('Automatikus', 'Automatisch')}</option><option value="ultra">Ultra</option><option value="high">{tr('Magas', 'Hoch')}</option><option value="medium">{tr('Közepes', 'Mittel')}</option><option value="low">{tr('Alacsony', 'Niedrig')}</option></select></label>
     </> },
+    showcase: { title: tr('Bemutató', 'Vorführung'), body: <>
+      <ul className="rb-showcase">
+        {showcase.map(({ id, icon: Icon, name, note, active, run }) => <li key={id}>
+          <button type="button" className={`rb-showcase-item${active ? ' is-active' : ''}`} aria-pressed={active} onClick={() => { run(); setOpen(null) }}>
+            <span className="rb-showcase-icon"><Icon size={19} strokeWidth={1.7} /></span>
+            <span className="rb-showcase-text"><strong>{name}</strong><small>{note}</small></span>
+            <span className="rb-showcase-state">{active ? tr('Kikapcsolás', 'Beenden') : <ChevronRight size={15} />}</span>
+          </button>
+        </li>)}
+      </ul>
+      <p className="rb-note">{tr('Csak látvány: az árat nem módosítja.', 'Nur Optik: ändert den Preis nicht.')}</p>
+    </> }
   }
 
   return (
     <div className={`rb-rail${compact ? ' is-compact' : ''}${tucked ? ' is-tucked' : ''}`} ref={root}>
       {tucked && <button type="button" className="rb-rail-tab" aria-label={tr('Nézet és környezet megnyitása', 'Ansicht und Umgebung öffnen')} onClick={onUntuck}><ChevronRight size={16} /></button>}
       <LiquidGlass as="nav" className="rb-rail-bar" radius={24} bezel={12} blur={12} aria-label={tr('Nézet és környezet', 'Ansicht und Umgebung')}>
-        {tools.map(({ id, icon: Icon, label }) => <button type="button" key={id} className={open === id ? 'is-open' : ''} aria-expanded={open === id} aria-label={label} title={label} onClick={() => setOpen((current) => (current === id ? null : id))}><Icon size={20} strokeWidth={1.6} /><span>{label}</span></button>)}
+        {tools.map(({ id, icon: Icon, label }) => <button type="button" key={id} className={`${open === id ? 'is-open' : ''}${id === 'showcase' && showcaseOn ? ' has-active' : ''}`} aria-expanded={open === id} aria-label={label} title={label} onClick={() => setOpen((current) => (current === id ? null : id))}><Icon size={20} strokeWidth={1.6} /><span>{label}</span></button>)}
       </LiquidGlass>
       {open && <LiquidGlass as="section" className="rb-rail-panel" radius={24} bezel={14} aria-label={panels[open].title}>
         <header><h3>{panels[open].title}</h3><button type="button" aria-label={tr('Bezárás', 'Schließen')} onClick={() => setOpen(null)}><X size={16} /></button></header>

@@ -14,6 +14,7 @@ import { SIDE_INFO, sideSegments, HALF_NAMES } from './sides'
 import { colorLabel, colorSummary, frameColorInfo, roofColorInfo, roofPartName, type ColorInfo } from './colors'
 import type { Tenant } from '../tenants/types'
 import { lamelixSvg } from './lamelixBrand'
+import { fromPrice, priceDisplayOf } from './priceDisplay'
 import type { PergolaConfig, PriceBreakdown, RoofType, SideKey, SideType } from '../types/pergola'
 import { intlLocale, localized, tr } from '../i18n/locale'
 
@@ -90,6 +91,7 @@ export function sheetDrawing(config: PergolaConfig, tenant: Tenant, date = new D
 }
 
 export function buildPdfDefinition({ config, price, tenant, image, imageAspect = 16 / 10, shareUrl, date = new Date(), energyUsage = DEFAULT_USAGE, projectName, house }: PdfInput): TDocumentDefinitions {
+  const priceMode = priceDisplayOf(tenant)
   const brand = tenant.brand.name
   const brandLine = [brand, tenant.brand.suffix].filter(Boolean).join(' ')
   const code = getSpecCode(config)
@@ -159,10 +161,19 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
         body: [[
           {
             stack: [
-              eyebrow(tr('Bruttó irányár, telepítéssel', 'Richtpreis brutto, inkl. Montage'), '#b9c9bf'),
-              { text: formatPrice(price.totalGross), font: 'ManropeHeavy', fontSize: 30, color: '#ffffff', margin: [0, 6, 0, 4] },
-              { text: tr(`Nettó ${formatPrice(price.totalNet)} + ${Math.round(tenant.prices.vatRate * 100)}% ÁFA`, `Netto ${formatPrice(price.totalNet)} + ${Math.round(tenant.prices.vatRate * 100)} % USt.`), fontSize: 8.5, color: '#cfdcd4', fontFeatures: ['tnum'] },
-              ...(tenant.installmentMonths > 0 ? [{ text: [{ text: formatPrice(price.totalGross / tenant.installmentMonths), font: 'ManropeSemi', color: LIME }, { text: tr(` / hó · ${tenant.installmentMonths} egyenlő részre osztva (példa, nem hitelajánlat)`, ` / Monat · in ${tenant.installmentMonths} gleichen Raten (Beispiel, kein Kreditangebot)`), color: '#cfdcd4' }], fontSize: 8.5, margin: [0, 3, 0, 0] } as Content] : []),
+              // Gyártói ármód (M05): „-tól” irányárnál csak a kerekített összeg, ár nélküli módban egyáltalán nincs összeg.
+              ...((priceMode === 'hidden' ? [
+                eyebrow(tr('Ár', 'Preis'), '#b9c9bf'),
+                { text: tr('Egyedi ajánlat a helyszíni felmérés után', 'Individuelles Angebot nach dem Aufmaß vor Ort'), font: 'ManropeHeavy', fontSize: 17, color: '#ffffff', margin: [0, 6, 0, 4] } as Content,
+              ] : priceMode === 'from' ? [
+                eyebrow(tr('Bruttó irányár, telepítéssel', 'Richtpreis brutto, inkl. Montage'), '#b9c9bf'),
+                { text: tr(`${formatPrice(fromPrice(price.totalGross, tenant.currency))}-tól`, `ab ${formatPrice(fromPrice(price.totalGross, tenant.currency))}`), font: 'ManropeHeavy', fontSize: 30, color: '#ffffff', margin: [0, 6, 0, 4] } as Content,
+              ] : [
+                eyebrow(tr('Bruttó irányár, telepítéssel', 'Richtpreis brutto, inkl. Montage'), '#b9c9bf'),
+                { text: formatPrice(price.totalGross), font: 'ManropeHeavy', fontSize: 30, color: '#ffffff', margin: [0, 6, 0, 4] },
+                { text: tr(`Nettó ${formatPrice(price.totalNet)} + ${Math.round(tenant.prices.vatRate * 100)}% ÁFA`, `Netto ${formatPrice(price.totalNet)} + ${Math.round(tenant.prices.vatRate * 100)} % USt.`), fontSize: 8.5, color: '#cfdcd4', fontFeatures: ['tnum'] },
+                ...(tenant.installmentMonths > 0 ? [{ text: [{ text: formatPrice(price.totalGross / tenant.installmentMonths), font: 'ManropeSemi', color: LIME }, { text: tr(` / hó · ${tenant.installmentMonths} egyenlő részre osztva (példa, nem hitelajánlat)`, ` / Monat · in ${tenant.installmentMonths} gleichen Raten (Beispiel, kein Kreditangebot)`), color: '#cfdcd4' }], fontSize: 8.5, margin: [0, 3, 0, 0] } as Content] : []),
+              ]) as Content[]),
             ],
             fillColor: ACCENT, margin: [16, 16, 8, 16], border: [false, false, false, false],
           },
@@ -294,9 +305,14 @@ export function buildPdfDefinition({ config, price, tenant, image, imageAspect =
     ],
   })
   const closing: Content[] = [
-    sectionHead(denseDetails ? '03' : '04', tr('Árkalkuláció', 'Preiskalkulation'), tr('nettó egységárak, gyártói árlista', 'Netto-Einheitspreise, Herstellerpreisliste')),
-    hairTable(priceRows, ['*', 110], densePrice ? 3 : 3.8),
-    totals,
+    ...(priceMode === 'estimate' ? [
+      sectionHead(denseDetails ? '03' : '04', tr('Árkalkuláció', 'Preiskalkulation'), tr('nettó egységárak, gyártói árlista', 'Netto-Einheitspreise, Herstellerpreisliste')),
+      hairTable(priceRows, ['*', 110], densePrice ? 3 : 3.8),
+      totals,
+    ] : [
+      sectionHead(denseDetails ? '03' : '04', tr('Ár', 'Preis')),
+      { text: tr('A végleges, tételes árat a helyszíni felmérés után, írásos ajánlatban küldjük el.', 'Den verbindlichen, detaillierten Preis senden wir nach dem Aufmaß vor Ort als schriftliches Angebot.'), fontSize: 9, color: BODY, lineHeight: 1.4 } as Content,
+    ]),
     ...(energyCostSupported(tenant.currency) && (energy.hasElectrics || solarEstimate) ? [{
       margin: [0, 14, 0, 0],
       table: {

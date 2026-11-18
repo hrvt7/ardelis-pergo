@@ -23,8 +23,8 @@
 | M01 | Panelkeret és lépésnavigáció | KÉSZ | D8 | Gyűrűs lépéssáv a lépéskártya tetején (asztal) / a lap tetején (telefon), folyékony üveg kártya (5.07–5.11) |
 | M02 | Elhelyezés | KÉSZ | D9 | A 2. lépésben (Hely és méret), 5.12 |
 | M03 | Méretek és modulok | KÉSZ | D9 | A 2. lépésben (Hely és méret), 5.12 |
-| M04 | Visszavonás, újra, alaphelyzet | NEM INDULT | – | |
-| M05 | Élő ár és kalkuláció | KÉSZ, JÓVÁHAGYÁSRA VÁR | D4, D5 | Ársáv felül jobbra + Részletek (5.14); hátra: gyártónkénti ármód-kapcsoló (új admin-beállítás) |
+| M04 | Visszavonás, újra, alaphelyzet | KÉSZ | 2026-11-18 | Üvegsáv a jelenet sarkában, az alaphelyzet megerősítéssel |
+| M05 | Élő ár és kalkuláció | KÉSZ | D4, D5 | Ársor + gyártónkénti ármód az adminban (becsült / „-tól” / ár nélkül) |
 | M06 | Tetőrendszer és tetőmozgatás | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 3. lépésben (Tető), 5.15 |
 | M07 | Tetőelemek | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 3. lépésben (Tető), 5.15 |
 | M08 | Oldalzárások | KÉSZ, JÓVÁHAGYÁSRA VÁR | D2, D7 | A 4. lépésben (Oldalak) + 3D-kattintások vissza, 5.16 |
@@ -35,8 +35,8 @@
 | M13 | Nézet és jelenet-beállítások | KÉSZ, JÓVÁHAGYÁSRA VÁR | D8 | Bal szélső sín: Kamera, Napszak, Környezet, Megjelenítés (5.22) |
 | M14 | Összegzés, mentés, megosztás, export | KÉSZ, JÓVÁHAGYÁSRA VÁR | D6 | A 7. lépésben: „A terved” sorok Módosítással + a meglévő összegző panel (5.20) |
 | M15 | Ajánlatkérés | KÉSZ, JÓVÁHAGYÁSRA VÁR | D6 | Felmérési űrlap az összegzésben; „Ajánlatot kérek” minden lépésből (D6) (5.20) |
-| M16 | Bemutató eszközök | NEM INDULT | – | |
-| M17 | Döntéstámogatók | NEM INDULT | – | |
+| M16 | Bemutató eszközök | KÉSZ | 2026-11-18 | Bal sín „Bemutató” panel: árnyék, fotó, AR, bejárás, eső, működés, ügyfél-bemutató |
+| M17 | Döntéstámogatók | KÉSZ | 2026-11-18 | Tanácsadó (1. lépés), keretösszeg (ár, összegzés), üzemeltetés (Komfort) |
 | M18 | Különleges módok | NEM INDULT | – | |
 | M19 | Élesítés és takarítás | ÉLESÍTVE (új felület alapértelmezés, `?mod=regi` tartalék; takarítás később) | 2026-11-18 | Ádám döntése |
 

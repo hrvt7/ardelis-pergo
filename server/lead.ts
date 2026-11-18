@@ -9,6 +9,7 @@
 // 3. elmenti Supabase-be (ha be van állítva), e-mailt küld a gyártónak és
 //    visszaigazolást az ügyfélnek (Resenddel, ha be van állítva).
 import { formatMoney } from '../src/lib/money'
+import { fromPrice, priceDisplayOf } from '../src/lib/priceDisplay'
 import { roofShadeSummary } from '../src/lib/roofShade'
 import { z } from 'zod'
 import { isWallSide, MOUNT_LABELS, wallLabel } from '../src/lib/mount'
@@ -226,7 +227,7 @@ function customerEmailHtmlIn(record: LeadRecord) {
 <p>${tr(`Kedves ${escapeHtml(input.customer.name)}!`, `Guten Tag ${escapeHtml(input.customer.name)},`)}</p>
 <p>${tr(`A(z) ${escapeHtml(tenant.brand.name)} munkatársa hamarosan felveszi veled a kapcsolatot a helyszíni felmérés egyeztetéséhez.`, `ein Mitarbeiter von ${escapeHtml(tenant.brand.name)} meldet sich in Kürze bei Ihnen, um das Aufmaß vor Ort zu vereinbaren.`)}</p>
 <p style="margin:16px 0 4px"><strong>${escapeHtml(record.headline)}</strong></p>
-<p style="margin:0 0 16px">${record.expansion ? `${tr('A bővítés becsült bruttó ára', 'Geschätzter Bruttopreis der Erweiterung')}: <strong>${escapeHtml(formatMoney(record.expansion.deltaGross, tenant.currency))}</strong> (${escapeHtml(record.expansion.added.join(', '))})` : `${tr('Bruttó irányár', 'Richtpreis brutto')}: <strong>${escapeHtml(formatMoney(price.totalGross, tenant.currency))}</strong> ${tr('(telepítéssel)', '(inkl. Montage)')}`}</p>
+<p style="margin:0 0 16px">${record.expansion ? `${tr('A bővítés becsült bruttó ára', 'Geschätzter Bruttopreis der Erweiterung')}: <strong>${escapeHtml(formatMoney(record.expansion.deltaGross, tenant.currency))}</strong> (${escapeHtml(record.expansion.added.join(', '))})` : (priceDisplayOf(tenant) === 'hidden' ? tr('A végleges árat a helyszíni felmérés után, írásos ajánlatban küldjük.', 'Den Endpreis senden wir nach dem Aufmaß vor Ort als schriftliches Angebot.') : `${tr('Bruttó irányár', 'Richtpreis brutto')}: <strong>${escapeHtml(priceDisplayOf(tenant) === 'from' ? tr(`${formatMoney(fromPrice(price.totalGross, tenant.currency), tenant.currency)}-tól`, `ab ${formatMoney(fromPrice(price.totalGross, tenant.currency), tenant.currency)}`) : formatMoney(price.totalGross, tenant.currency))}</strong> ${tr('(telepítéssel)', '(inkl. Montage)')}`)}</p>
 <p><a href="${escapeHtml(record.configUrl)}" style="color:#007fae">${tr('A konfigurációd megnyitása →', 'Ihre Konfiguration öffnen →')}</a></p>
 ${booking ? `<p style="margin:20px 0"><a href="${escapeHtml(booking)}" style="display:inline-block;background:#007fae;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px">${tr('Felmérési időpont foglalása →', 'Aufmaß-Termin buchen →')}</a></p>` : ''}
 <p style="font-size:12px;color:#62727a">${tr('Az irányár tájékoztató jellegű, nem minősül árajánlatnak. A végleges ár helyszíni felmérés után készül.', 'Der Richtpreis ist unverbindlich und kein Angebot. Der Endpreis wird nach dem Aufmaß vor Ort erstellt.')}</p>

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronUp, Info, X } from 'lucide-react'
+import { ChevronRight, ChevronUp, Info, Wallet, X } from 'lucide-react'
 import type { PriceBreakdown } from '@/types/pergola'
 import { formatPrice } from '@/lib/pricing'
 import { useTenant } from '@/tenants/TenantContext'
 import { AnimatedPrice, PriceDeltaPop } from '@/components/PricePanel'
 import { tr } from '@/i18n/locale'
 import LiquidGlass from './LiquidGlass'
+import { usePriceDisplay } from './usePriceDisplay'
 
 /**
  * Ársor (M05, D4–D6) a lépéskártya alján, a lépésgombok fölött (Polestar-minta: ár + gombok egy tömbben, nincs
@@ -14,8 +15,9 @@ import LiquidGlass from './LiquidGlass'
  * kalkuláció nyílik –, jobb oldalt az „Ajánlatot kérek” bármelyik lépésből.
  * A tételes kalkuláció a kártyán kívül, a jelenet fölött nyílik (a kártya üvegrétege nem vágja le).
  */
-export default function PriceBar({ price, compact, onRequest }: { price: PriceBreakdown; compact: boolean; /** „Ajánlatot kérek” (D6): az összegzés űrlapjához visz */ onRequest?: () => void }) {
+export default function PriceBar({ price, compact, onRequest, onBudget }: { price: PriceBreakdown; compact: boolean; /** „Ajánlatot kérek” (D6): az összegzés űrlapjához visz */ onRequest?: () => void; /** Költségkeret-tervező (M17) */ onBudget?: () => void }) {
   const { tenant } = useTenant()
+  const { mode, total: priceText } = usePriceDisplay()
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
@@ -46,6 +48,11 @@ export default function PriceBar({ price, compact, onRequest }: { price: PriceBr
             {price.lines.map((line) => <li key={line.id}><span>{line.label}<small>{line.detail}</small></span><b>{formatPrice(gross(line.amountNet))}</b></li>)}
             {price.installationNet > 0 && <li><span>{tr('Szerelés', 'Montage')}</span><b>{formatPrice(gross(price.installationNet))}</b></li>}
           </ul>
+          {onBudget && <button type="button" className="rb-helper is-flat" onClick={() => { setOpen(false); onBudget() }}>
+            <span className="rb-helper-icon"><Wallet size={17} strokeWidth={1.7} /></span>
+            <span className="rb-helper-text"><strong>{tr('Van keretösszeged?', 'Haben Sie ein Budget?')}</strong><small>{tr('Költségkeret-tervező: megmutatjuk, mi fér bele', 'Budgetplaner: wir zeigen, was hineinpasst')}</small></span>
+            <ChevronRight size={16} aria-hidden="true" />
+          </button>}
           {months > 0 && <p className="rb-price-monthly">{tr(`${months} havi részre bontva`, `Auf ${months} Monate verteilt`)} <b>{formatPrice(price.totalGross / months)} / {tr('hó', 'Monat')}</b><small>{tr('Az ár egyenlő részekre osztva; nem hitel- vagy finanszírozási ajánlat.', 'Preis in gleiche Teile geteilt; kein Kredit- oder Finanzierungsangebot.')}</small></p>}
         </div>
         {/* Az összeg és a fő gomb mindig látszik; csak a tételek görögnek. */}
@@ -58,6 +65,18 @@ export default function PriceBar({ price, compact, onRequest }: { price: PriceBr
       </div>
     </LiquidGlass>
   </div>, host) : null
+
+  // Gyártói ármód (M05): „-tól” irányárnál és ár nélkül nincs tételes kalkuláció, az ajánlatkérés mindig látszik.
+  if (mode !== 'estimate') return (
+    <div className={`rb-price is-${mode}${compact ? ' is-compact' : ''}`} ref={root}>
+      <div className="rb-price-main is-static">
+        <span className="rb-price-label">{mode === 'from' ? tr('Irányár, bruttó', 'Richtpreis, brutto') : tr('Ár', 'Preis')}</span>
+        <strong>{mode === 'from' ? priceText(price.totalGross) : tr('Egyedi ajánlat', 'Individuelles Angebot')}</strong>
+        {mode === 'hidden' && <small className="rb-price-sub">{tr('a helyszíni felmérés után', 'nach dem Aufmaß vor Ort')}</small>}
+      </div>
+      {onRequest && <button type="button" className="rb-price-request" onClick={onRequest}>{tr('Ajánlatot kérek', 'Angebot anfragen')}</button>}
+    </div>
+  )
 
   return (
     <div className={`rb-price${compact ? ' is-compact' : ''}${open ? ' is-open' : ''}`} ref={root}>

@@ -14,7 +14,7 @@ describe('asztali lépéssáv', () => {
     expect(bar).toContain('translate3d(${index * 100}%, 0, 0)')
   })
   it('asztalon/tableten alul a sáv, telefonon a lap tetején marad a dokk', () => {
-    expect(studio).toContain('{frame && !isNarrow && <StepBar step={step} onStep={goStep} />}')
+    expect(studio).toContain('{frame && !isNarrow && !immersive && <StepBar step={step} onStep={goStep} />}')
     expect(studio).toContain('bar={isNarrow ? <StepDock step={step} onStep={goStep} /> : undefined}')
   })
 })

@@ -14,9 +14,11 @@ import ChoiceStack from './ChoiceStack'
 import { tr } from '@/i18n/locale'
 import LiquidSlider from './LiquidSlider'
 import LouvreArc from './LouvreArc'
+import { usePriceDisplay } from './usePriceDisplay'
 
 /** 3. lépés – Tető (docs/rebuild/STEP_ARCHITECTURE.md): rendszer, burkolat, mozgatás, dőlés; további: árnyékoló, napelem. */
 export default function RoofStep({ config, scene, prices, onChange, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
+  const { prices: showPrices } = usePriceDisplay()
   const { tenant } = useTenant()
   const current = tenantPrice(tenant, config, prices).totalGross
   const roofs = enabledRoofs(tenant).filter((roof) => !isClosedBuilding(config.building) || BUILDING_ROOFS[config.building].includes(roof))
@@ -44,7 +46,7 @@ export default function RoofStep({ config, scene, prices, onChange, onSceneChang
           const extra = key ? prices[key] : 0
           const active = glazing === id
           return <button type="button" key={id} className={`rb-option rb-glazing${active ? ' is-selected' : ''}`} aria-pressed={active} onClick={() => onChange({ glazing: id === defaultGlazing(config.roof) ? undefined : id })}>
-            <strong>{g.label}</strong><small>{tr('Fény', 'Licht')} {g.light} · {tr('hő', 'Wärme')} {g.solar}</small><em>{extra > 0 ? `+${formatPrice(extra)} / m²` : tr('Alapkivitel', 'Standard')}</em>
+            <strong>{g.label}</strong><small>{tr('Fény', 'Licht')} {g.light} · {tr('hő', 'Wärme')} {g.solar}</small><em>{extra > 0 ? (showPrices ? `+${formatPrice(extra)} / m²` : tr('Felár', 'Aufpreis')) : tr('Alapkivitel', 'Standard')}</em>
             {active && <span className="rb-option-check"><Check size={12} strokeWidth={3} /></span>}
           </button>
         })}

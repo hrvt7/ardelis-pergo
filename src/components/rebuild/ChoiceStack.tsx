@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Check } from 'lucide-react'
 import { signedPrice } from '@/lib/money'
 import { tr } from '@/i18n/locale'
+import { usePriceDisplay } from './usePriceDisplay'
 
 export interface ChoiceItem<T extends string> {
   id: T
@@ -22,6 +23,7 @@ export interface ChoiceItem<T extends string> {
  * és a nagy kártyán nyílik ki a részlete. A felár a többi soron halk; a változást a lábléc ára mutatja.
  */
 export default function ChoiceStack<T extends string>({ items, current, delta, onSelect, label, groups }: { items: ChoiceItem<T>[]; current: T; delta: (id: T) => number; onSelect: (id: T) => void; label: string; groups: string[] }) {
+  const { prices: showPrices } = usePriceDisplay()
   const selected = items.find((item) => item.id === current) ?? items[0]
   const rest = items.filter((item) => item.id !== selected.id)
   return <div className="rb-choice" role="radiogroup" aria-label={label}>
@@ -44,7 +46,7 @@ export default function ChoiceStack<T extends string>({ items, current, delta, o
           {rows.map((item) => <button type="button" role="radio" aria-checked="false" key={item.id} className="rb-choice-row" onClick={() => onSelect(item.id)}>
             <img src={item.thumb} alt="" width={72} height={48} loading="lazy" decoding="async" />
             <span className="rb-choice-row-text"><strong>{item.title}</strong><small>{item.line}</small></span>
-            <em>{signedPrice(delta(item.id))}</em>
+            {showPrices && <em>{signedPrice(delta(item.id))}</em>}
           </button>)}
         </div>
       })}
