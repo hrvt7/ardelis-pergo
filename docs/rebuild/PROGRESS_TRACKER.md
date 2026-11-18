@@ -44,7 +44,7 @@
 
 | # | Kérdés | Javaslat | Válasz |
 |---|---|---|---|
-| D1 | M00: az üres panelkeret maradjon, vagy a 3D töltse ki a képernyőt? | – (ízlés kérdése) | |
+| D1 | M00: az üres panelkeret maradjon, vagy a 3D töltse ki a képernyőt? | – (ízlés kérdése) | **2026-11-18: a 3D az egész képernyőt kitölti.** A kalkuláció és a többi panel később lebegő, Apple-stílusú üvegablakként épül (alap: a meglévő `?style=glass` réteg, `src/lib/uiStyle.ts`). Referencia: a 2026-11-15-i UI/UX kutatás (Porsche, Polestar, Apple, Tylko, ALUX, Renson, Weinor). |
 | D2 | M00: a 3D-n belüli kattintások (oldal kijelölése, üveg/ajtó nyitása) kikapcsolva? | Igen, az M08 hozza vissza | |
 | D3 | M00: kiinduló terv a gyártó alapterve, vagy a böngésző utolsó terve? | Gyártói alapterv | |
 
@@ -68,4 +68,5 @@ Nyitottak; a hozzájuk tartozó modul visszaépítésekor javítandók, ha Ádá
 | Dátum | Esemény |
 |---|---|
 | 2026-11-18 | Ádám jóváhagyta: újraépítés modulonként, az A megoldással (`?mod=ujraepites`, az éles felület érintetlen). |
+| 2026-11-18 | D1 eldőlt: teljes képernyős 3D, a panelek lebegő üvegablakként jönnek vissza. |
 | 2026-11-18 | Elkészült az audit, a leltár, a függőségi térkép és a terv (`docs/rebuild/`), kódmódosítás nélkül. |
