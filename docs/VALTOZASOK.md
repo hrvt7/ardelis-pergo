@@ -1,5 +1,12 @@
 # Változások
 
+## 5.10 – Újraépítési mód: lépéssáv a kártya tetején, gyűrűs dokkban
+
+- **Lépéssáv (Ádám döntése, a 03-as minta stílusában):** asztalon a lépéskártya tetején egy sötét dokk, amely homorú ívvel olvad a kártya felső széléhez. Lépésenként gyűrű + saját ikon + rövid név (Termék, Méret, Tető, Oldalak, Szín, Komfort, Összegzés). A gyűrű a haladást mutatja: a kész lépéseké tele (halványabb), az aktuálisé kiemelt fénnyel, a hátralévőké üres; lépésváltáskor a gyűrűk simán töltődnek.
+- A függőleges sín és az alsó elhelyezés kikerült; telefonon a bemélyedéses sáv alul marad.
+- A lépéskártya 400 px széles lett (a hét név kényelmesen elfér).
+- Tesztek: `rebuildSteps.test.ts` (a dokk alakja, a rövid nevek hossza).
+
 ## 5.09 – Újraépítési mód: függőleges lépéssín a kártya jobb szélén
 
 - **Lépéssín (Ádám rajza és a 03-as minta szerint):** asztalon a lépések a lépéskártya jobb szélére tapadó sötét sínen, lágy átmenettel a kártya széléhez; az aktív lépés köre a sín bal oldali bemélyedéséből lóg ki, és ugyanazzal a GPU-áttűnéssel úszik. A kártya tartalma helyet hagy a sínnek, így jól elkülönül.

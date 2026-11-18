@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { STEPS } from '../src/lib/configSteps'
-import { clampNotch, notchPad, NOTCH_COMPACT, NOTCH_DESKTOP, neighbourStep, notchPath, REBUILD_STEPS, rebuildStepIndex, slotCenter } from '../src/lib/rebuildSteps'
+import { clampNotch, dockPath, notchPad, NOTCH_COMPACT, NOTCH_DESKTOP, neighbourStep, notchPath, REBUILD_STEPS, rebuildStepIndex, slotCenter } from '../src/lib/rebuildSteps'
 
 describe('újraépített lépések', () => {
   it('ugyanaz a 7 lépés, ugyanabban a sorrendben, mint a meglévő logikában', () => {
@@ -60,5 +60,13 @@ describe('bemélyedéses lépéssáv', () => {
     // A bemélyedés íve a bal széltől `dip` távolságra, a 200 ± notch magasságok között fut.
     expect(path).toContain(`A ${NOTCH_COMPACT.notch} ${NOTCH_COMPACT.notch} 0 0 1 ${NOTCH_COMPACT.dip} ${200 + NOTCH_COMPACT.notch}`)
     expect(path).toContain(`M 0 ${NOTCH_COMPACT.corner}`)
+  })
+
+  it('a felső dokk zárt alakzat, a két homorú átmenettel a kártya széléhez', () => {
+    const path = dockPath(340, 84, 18, 24)
+    expect(path).toMatch(/^M -18 0 L 358 0 A 18 18 0 0 0 340 18/)
+    expect(path).toContain('A 18 18 0 0 0 -18 0')
+    expect(path.endsWith('Z')).toBe(true)
+    expect(REBUILD_STEPS.every((step) => step.short.length <= 9)).toBe(true)
   })
 })

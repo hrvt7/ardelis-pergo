@@ -49,6 +49,7 @@ import { mobileBarAction } from '@/lib/configSteps'
 import { currentRebuildMode, moduleVisible } from '@/lib/rebuildMode'
 import StepNotchBar from '@/components/rebuild/StepNotchBar'
 import StepCard from '@/components/rebuild/StepCard'
+import StepDock from '@/components/rebuild/StepDock'
 import '@/components/rebuild/rebuild.css'
 import { clearExpansion, LOCKED_STEPS, readExpansion } from '@/lib/expansion'
 import { clampExpansion } from '@/lib/installations'
@@ -106,9 +107,6 @@ export default function PergoStudio() {
   // Újraépítési mód (`?mod=ujraepites`, docs/rebuild): csak a 3D, a gyártó alaptervéből; nem ír a böngészőbe és nem mér.
   const [rebuild] = useState(currentRebuildMode)
   const [rebuildSheetOpen, setRebuildSheetOpen] = useState(false)
-  // Asztali lépéssáv helye (Ádám döntéséig mind kipróbálható): alapból függőleges sín a kártya jobb szélén;
-  // `?sav=kartya` = vízszintesen a kártya tetején, `?sav=lent` = alul középen.
-  const [rebuildBar] = useState<'rail' | 'card' | 'bottom'>(() => { try { const value = new URLSearchParams(window.location.search).get('sav'); return value === 'lent' ? 'bottom' : value === 'kartya' ? 'card' : 'rail' } catch { return 'rail' } })
   // Bővítés a tulajdonosi oldalról: a felszerelt termékből indul, a meglévő szerkezet zárolt (csak hozzáadni lehet).
   const [expansion] = useState(() => (product === 'pergola' && !rebuild ? readExpansion(tenant.id) : null))
   const expansionBase = useMemo(() => (expansion ? normalizeConfig(tenant, expansion.config) : null), [expansion, tenant])
@@ -592,7 +590,7 @@ export default function PergoStudio() {
   if (rebuild) {
     const frame = moduleVisible('M01', true)
     // Asztalon a pergola a kártya nélküli rész közepére kerül; telefonon a lap fölé.
-    const rebuildShiftX = frame && !isNarrow && viewportWidth > 0 ? (380 + 40) / 2 / viewportWidth : 0
+    const rebuildShiftX = frame && !isNarrow && viewportWidth > 0 ? (400 + 40) / 2 / viewportWidth : 0
     const rebuildShiftY = frame && isNarrow ? (rebuildSheetOpen ? 0.24 : 0.1) : 0
     return (
       <div className="app-shell rebuild-shell">
@@ -600,8 +598,8 @@ export default function PergoStudio() {
           <section className="viewer-panel" aria-label={tr('3D előnézet', '3D-Vorschau')}>
             <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={scene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSceneChange={ignoreSceneChange} /></IntroSceneGate>
           </section>
-          {frame && (isNarrow || rebuildBar === 'bottom') && <StepNotchBar step={step} compact={isNarrow} placement="bottom" onStep={goStep} />}
-          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={!isNarrow && rebuildBar !== 'bottom' ? <StepNotchBar step={step} compact={false} placement={rebuildBar} onStep={goStep} /> : undefined} railed={!isNarrow && rebuildBar === 'rail'}><p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p></StepCard>}
+          {frame && isNarrow && <StepNotchBar step={step} compact onStep={goStep} />}
+          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={isNarrow ? undefined : <StepDock step={step} onStep={goStep} />}><p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p></StepCard>}
         </main>
         {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
       </div>
