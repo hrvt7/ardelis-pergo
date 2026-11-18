@@ -1,27 +1,9 @@
 /* Újraépített konfigurátor (`?mod=ujraepites`): lebegő elemek a teljes képernyős 3D fölött. */
 .rebuild-shell { --lx-card-w: 400px; --lx-gap: 20px; --lx-ink: #15171a; --lx-bar: rgba(21, 22, 25, .92); --lx-accent: #C4F03C; font-family: inherit; }
 
-/* Lépéssáv bemélyedéssel */
+/* Lépéssáv: közös mozgás */
 .rebuild-shell { --lx-ease: cubic-bezier(.62, 0, .3, 1); --lx-move: .62s; }
-.lx-stepbar { position: absolute; z-index: 30; top: 18px; left: calc((100% - var(--lx-card-w) - var(--lx-gap)) / 2); transform: translateX(-50%); width: min(480px, calc(100% - var(--lx-card-w) - var(--lx-gap) * 3)); }
-.lx-stepbar-track { position: relative; width: 100%; }
-.lx-stepbar-clip { position: absolute; inset: 0; overflow: hidden; border-radius: var(--lx-r); box-shadow: 0 14px 30px rgba(10, 12, 14, .24); }
-.lx-stepbar-strip { position: absolute; top: 0; left: 0; will-change: transform; }
-.lx-stepbar-strip path { fill: var(--lx-bar); }
-.lx-stepbar ol { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; }
-.lx-stepbar li { position: absolute; top: 0; bottom: 0; transform: translateX(-50%); display: grid; place-items: center; padding-top: 4px; }
-.lx-stepbar li button { width: 42px; height: 42px; display: grid; place-items: center; border: 0; border-radius: 14px; background: transparent; color: rgba(255, 255, 255, .62); cursor: pointer; transition: color .25s, background .25s, opacity .3s, transform .3s var(--lx-ease); }
-.lx-stepbar li button:hover { color: #fff; background: rgba(255, 255, 255, .07); transform: translateY(-1px); }
-.lx-stepbar li button:focus-visible { outline: 2px solid var(--lx-accent); outline-offset: 1px; }
-.lx-stepbar li button.is-current { opacity: 0; transform: scale(.6); }
-.lx-stepbar-knob { position: absolute; top: 0; left: 0; z-index: 1; display: grid; place-items: center; border-radius: 50%; pointer-events: none; color: #10120f; background: radial-gradient(120% 90% at 30% 18%, color-mix(in oklab, var(--lx-accent) 62%, #fff) 0%, var(--lx-accent) 48%, color-mix(in oklab, var(--lx-accent) 80%, #000) 100%); box-shadow: inset 0 1.5px 1px rgba(255, 255, 255, .8), inset 0 -4px 9px rgba(0, 0, 0, .16), 0 10px 22px rgba(0, 0, 0, .3), 0 0 0 1px rgba(255, 255, 255, .12); will-change: transform; }
-.lx-stepbar-knob-icon { display: grid; place-items: center; animation: lx-icon-in .42s var(--lx-ease) both; }
-.lx-stepbar-label { position: absolute; left: 0; bottom: 7px; z-index: 1; pointer-events: none; font-size: 10.5px; font-weight: 650; letter-spacing: .04em; color: rgba(255, 255, 255, .92); white-space: nowrap; will-change: transform; }
-.lx-stepbar-label > span { display: block; animation: lx-label-in .45s var(--lx-ease) both; }
-.lx-stepbar.is-ready .lx-stepbar-strip, .lx-stepbar.is-ready .lx-stepbar-knob, .lx-stepbar.is-ready .lx-stepbar-label { transition: transform var(--lx-move) var(--lx-ease); }
-.lx-stepbar.is-ready .lx-stepbar-label { transition-duration: calc(var(--lx-move) + .05s); }
 @keyframes lx-icon-in { from { opacity: 0; transform: scale(.55) rotate(-18deg); } to { opacity: 1; transform: none; } }
-@keyframes lx-label-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 /* Lépéssáv a kártya tetején (03-as minta): a kártya felső széléhez olvadó dokk, gyűrűs lépésekkel */
 .lx-dock { position: relative; z-index: 2; margin: 0 16px; flex: none; }
 .lx-dock-shape { position: absolute; top: 0; left: -18px; pointer-events: none; overflow: visible; filter: drop-shadow(0 10px 18px rgba(10, 12, 14, .18)); }
@@ -43,7 +25,6 @@
 .lx-dock button:focus-visible .lx-dock-ring { outline: 2px solid var(--lx-accent); outline-offset: 2px; }
 .lx-dock-name { font-size: 9.5px; font-weight: 600; letter-spacing: -.005em; white-space: nowrap; transition: color .3s; }
 .lx-stepcard.has-dock .lx-stepcard-head { padding-top: 22px; }
-.lx-stepbar.is-compact { position: fixed; top: auto; bottom: max(12px, env(safe-area-inset-bottom)); left: 12px; right: 12px; width: auto; transform: none; }
 
 /* Folyékony üveg (közös) */
 .lx-glass { position: relative; isolation: isolate; color: var(--lx-ink); background: linear-gradient(155deg, rgba(255, 255, 255, .46), rgba(255, 255, 255, .16) 55%, rgba(255, 255, 255, .24)); border: 1px solid rgba(255, 255, 255, .55); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), inset 0 -1px 0 rgba(255, 255, 255, .25), inset 0 0 30px rgba(255, 255, 255, .1), 0 24px 60px rgba(18, 22, 26, .22); }
@@ -66,20 +47,20 @@
 .lx-btn-primary:hover { background: #24272b; }
 .lx-btn-next { font-weight: 500; opacity: .72; }
 
-/* Telefon: alulról felhúzható lap a lépéssáv fölött */
-.lx-stepcard.is-sheet { top: auto; left: 10px; right: 10px; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 58px + 22px); width: auto; height: 158px; position: fixed; transition: height .38s cubic-bezier(.2, .8, .2, 1); }
-.lx-stepcard.is-sheet.is-open { height: min(58dvh, 520px); }
-.lx-stepcard.is-sheet .lx-stepcard-head { padding: 4px 20px 0; }
+/* Telefon: alulról felhúzható lap; tetején a gyűrűs lépéssáv. Összecsukva csak a Vissza / Tovább látszik. */
+.lx-stepcard.is-sheet { position: fixed; top: auto; left: 10px; right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); width: auto; height: 96px; transition: height .38s cubic-bezier(.2, .8, .2, 1); }
+.lx-stepcard.is-sheet.is-open { height: min(70dvh, 600px); }
+.lx-stepcard.is-sheet:not(.is-open) .lx-dock, .lx-stepcard.is-sheet:not(.is-open) .lx-stepcard-head, .lx-stepcard.is-sheet:not(.is-open) .lx-stepcard-body { display: none; }
+.lx-stepcard.is-sheet .lx-dock { margin: 0 12px; }
+.lx-stepcard.is-sheet .lx-stepcard-head { padding: 2px 20px 0; }
 .lx-stepcard.is-sheet .lx-stepcard-head h2 { font-size: 20px; margin-top: 4px; }
 .lx-stepcard.is-sheet .lx-stepcard-body { padding: 12px 20px; }
-.lx-stepcard.is-sheet:not(.is-open) .lx-stepcard-body { visibility: hidden; padding-block: 0; }
-.lx-stepcard.is-sheet .lx-stepcard-nav { padding: 8px 12px 12px; }
-.lx-stepcard.is-sheet .lx-btn-next { display: none; }
-.lx-sheet-handle { display: grid; place-items: center; width: 100%; height: 22px; padding: 0; border: 0; background: transparent; cursor: grab; touch-action: none; }
+.lx-stepcard.is-sheet .lx-stepcard-nav { margin-top: auto; padding: 4px 12px 12px; }
+.lx-sheet-handle { display: grid; place-items: center; flex: none; width: 100%; height: 22px; padding: 0; border: 0; background: transparent; cursor: grab; touch-action: none; }
 .lx-sheet-handle i { width: 38px; height: 5px; border-radius: 3px; background: rgba(21, 23, 26, .28); }
 
 /* Értesítés (A12) */
 .rebuild-shell .toast { z-index: 40; }
 
 @media (prefers-reduced-motion: reduce) { .lx-dock-fill, .lx-dock-ring { transition: none; } }
-@media (prefers-reduced-motion: reduce) { .lx-stepcard.is-sheet, .lx-stepbar.is-ready .lx-stepbar-strip, .lx-stepbar.is-ready .lx-stepbar-knob, .lx-stepbar.is-ready .lx-stepbar-label { transition: none; } .lx-stepbar-knob-icon, .lx-stepbar-label > span { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lx-stepcard.is-sheet { transition: none; } .lx-dock button.is-current .lx-dock-ring > svg + svg { animation: none; } }

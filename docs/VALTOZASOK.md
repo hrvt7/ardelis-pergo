@@ -1,5 +1,11 @@
 # Változások
 
+## 5.11 – Újraépítési mód: telefonon is a lap tetején a lépéssáv, összecsukva csak Vissza / Tovább
+
+- **Telefon:** a gyűrűs lépéssáv a felhúzható lap tetejére került (mint asztalon a kártya tetején); az alsó bemélyedéses sáv megszűnt.
+- **Összecsukott lap:** csak a fogantyú és a Vissza / Tovább: következő lépés gomb látszik (96 px), így a 3D szinte a teljes képernyőt kapja. Kinyitva: lépéssáv, kérdés, beállítások.
+- A már nem használt bemélyedéses sáv kódja és tesztjei kikerültek.
+
 ## 5.10 – Újraépítési mód: lépéssáv a kártya tetején, gyűrűs dokkban
 
 - **Lépéssáv (Ádám döntése, a 03-as minta stílusában):** asztalon a lépéskártya tetején egy sötét dokk, amely homorú ívvel olvad a kártya felső széléhez. Lépésenként gyűrű + saját ikon + rövid név (Termék, Méret, Tető, Oldalak, Szín, Komfort, Összegzés). A gyűrű a haladást mutatja: a kész lépéseké tele (halványabb), az aktuálisé kiemelt fénnyel, a hátralévőké üres; lépésváltáskor a gyűrűk simán töltődnek.

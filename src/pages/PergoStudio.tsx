@@ -47,7 +47,6 @@ import { floatPhoneShiftX, floatViewShiftX, glassViewShiftX, resolveUiStyle, stu
 import { cameraViewsFor } from '@/lib/cameraViews'
 import { mobileBarAction } from '@/lib/configSteps'
 import { currentRebuildMode, moduleVisible } from '@/lib/rebuildMode'
-import StepNotchBar from '@/components/rebuild/StepNotchBar'
 import StepCard from '@/components/rebuild/StepCard'
 import StepDock from '@/components/rebuild/StepDock'
 import '@/components/rebuild/rebuild.css'
@@ -591,15 +590,14 @@ export default function PergoStudio() {
     const frame = moduleVisible('M01', true)
     // Asztalon a pergola a kártya nélküli rész közepére kerül; telefonon a lap fölé.
     const rebuildShiftX = frame && !isNarrow && viewportWidth > 0 ? (400 + 40) / 2 / viewportWidth : 0
-    const rebuildShiftY = frame && isNarrow ? (rebuildSheetOpen ? 0.24 : 0.1) : 0
+    const rebuildShiftY = frame && isNarrow ? (rebuildSheetOpen ? 0.3 : 0.05) : 0
     return (
       <div className="app-shell rebuild-shell">
         <main className="rebuild-stage" id="top">
           <section className="viewer-panel" aria-label={tr('3D előnézet', '3D-Vorschau')}>
             <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={scene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSceneChange={ignoreSceneChange} /></IntroSceneGate>
           </section>
-          {frame && isNarrow && <StepNotchBar step={step} compact onStep={goStep} />}
-          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={isNarrow ? undefined : <StepDock step={step} onStep={goStep} />}><p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p></StepCard>}
+          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={<StepDock step={step} onStep={goStep} />}><p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p></StepCard>}
         </main>
         {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
       </div>

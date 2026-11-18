@@ -20,7 +20,7 @@
 | Kód | Modul | Állapot | Ádám döntése | Megjegyzés |
 |---|---|---|---|---|
 | M00 | Lecsupaszítás | KÉSZ | D1–D3 | `?mod=ujraepites`: teljes képernyős 3D, a gyártó alaptervéből, mérés és böngészőírás nélkül, 3D-kattintások ki (5.06) |
-| M01 | Panelkeret és lépésnavigáció | KÉSZ, JÓVÁHAGYÁSRA VÁR | D8 | Bemélyedéses lépéssáv + folyékony üveg lépéskártya, telefonon felhúzható lap (5.07) |
+| M01 | Panelkeret és lépésnavigáció | KÉSZ | D8 | Gyűrűs lépéssáv a lépéskártya tetején (asztal) / a lap tetején (telefon), folyékony üveg kártya (5.07–5.11) |
 | M02 | Elhelyezés | NEM INDULT | – | |
 | M03 | Méretek és modulok | NEM INDULT | – | |
 | M04 | Visszavonás, újra, alaphelyzet | NEM INDULT | – | |
@@ -48,7 +48,7 @@
 | D2 | M00: a 3D-n belüli kattintások (oldal kijelölése, üveg/ajtó nyitása) kikapcsolva? | Igen, az M08 hozza vissza | **2026-11-18: igen** (Ádám: „csináld így, kezdjük”) |
 | D3 | M00: kiinduló terv a gyártó alapterve, vagy a böngésző utolsó terve? | Gyártói alapterv | **2026-11-18: gyártói alapterv** |
 | D7 | Lépés-architektúra (`STEP_ARCHITECTURE.md`) | 7 lépés; ház és környezet az eszköztárba; bútor a 2. lépésbe | **2026-11-18: jóváhagyva a javaslat szerint.** A modulok sorrendje ehhez igazodik (M01 = lebegő lépéssáv és üvegpanel). |
-| D8 | M01 megjelenés (`UI_INSPIRATION.md`) | – | **2026-11-18:** asztalon a lépéssáv a kártya tetején, a 03-as minta stílusában (gyűrűs dokk, a kártya széléhez olvadva); telefonon bemélyedéses sáv alul (01-es minta); kártya folyékony üvegből; az eszköztár a bal szélre tapad (M13/M16). Panelszélesség-húzás nincs (fix kártya). |
+| D8 | M01 megjelenés (`UI_INSPIRATION.md`) | – | **2026-11-18:** asztalon a lépéssáv a kártya tetején, a 03-as minta stílusában (gyűrűs dokk, a kártya széléhez olvadva); telefonon ugyanez a felhúzható lap tetején, összecsukva csak Vissza / Tovább; kártya folyékony üvegből; az eszköztár a bal szélre tapad (M13/M16). Panelszélesség-húzás nincs (fix kártya). |
 | D4 | Ársáv helye | Felül jobbra | **2026-11-18: felül jobbra**, a lépéssáv mellett, mindig látható lebegő üvegelem. |
 | D5 | Alapértelmezett ármód új gyártónál | Becsült teljes ár | **2026-11-18: becsült teljes ár** „becsült” felirattal; a gyártó átkapcsolhatja „-tól” árra vagy rejtett árra. |
 | D6 | Ajánlatkérés helye | Minden lépésből | **2026-11-18: minden lépésből** elérhető másodlagos gombként; a fő gomb marad a „Tovább”. |
