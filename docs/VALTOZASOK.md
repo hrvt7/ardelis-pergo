@@ -1,5 +1,9 @@
 # Változások
 
+## 5.05 – Referencia-konfigurátorok kalkulátorfelépítése (kutatás)
+
+- **Kutatás:** `docs/rebuild/REFERENCE_CONFIGURATORS.md` – BMW, Porsche, Polestar, Renson, Brustor és SaleSqueze kalkulátorfelépítése (lépések, árkijelzés, csomagok, összegzés, lezárás), képernyőképekkel (`docs/rebuild/ref/`) és javaslattal a lebegő üvegpanelekhez. Kódváltozás nincs.
+
 ## 5.04 – Újraépítési dokumentáció: audit, funkcióleltár, függőségi térkép, terv
 
 - **Csak dokumentáció, kódmódosítás nélkül.** Új mappa: `docs/rebuild/` – `FULL_AUDIT.md`, `FEATURE_INVENTORY.md` (129 kezelőfelületi funkció 16 modulban, fájllal, 3D-kapcsolattal, függőséggel), `DEPENDENCY_MAP.md`, `REBUILD_ROADMAP.md` (M00–M19, sorrend a függőségek szerint), `PROGRESS_TRACKER.md`.
