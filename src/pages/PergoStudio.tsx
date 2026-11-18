@@ -46,6 +46,7 @@ import { buildWalkArea } from '@/lib/walkArea'
 import { floatPhoneShiftX, floatViewShiftX, glassViewShiftX, resolveUiStyle, studioInitialTime, UI_STYLE_KEY, usesCyclorama, usesFloatLayout, type UiStyle } from '@/lib/uiStyle'
 import { cameraViewsFor } from '@/lib/cameraViews'
 import { mobileBarAction } from '@/lib/configSteps'
+import { currentRebuildMode } from '@/lib/rebuildMode'
 import { clearExpansion, LOCKED_STEPS, readExpansion } from '@/lib/expansion'
 import { clampExpansion } from '@/lib/installations'
 import { DEFAULT_USAGE, energyCostSupported, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
@@ -53,6 +54,8 @@ import type { FurnitureSet } from '@/types/pergola'
 
 const timeForSun = (elevation: number): SceneSettings['time'] => (elevation < -4 ? 'night' : elevation < 12 ? 'sunset' : 'day')
 const timeForClock = (hour: number): SceneSettings['time'] => (hour >= 20 || hour < 7 ? 'night' : hour >= 17 ? 'sunset' : 'day')
+/** Újraépítési mód: a 3D-n belüli kattintások nem módosítják a jelenetet (az oldalak modulja hozza vissza). */
+const ignoreSceneChange = () => {}
 
 const ArDialog = lazy(() => import('@/components/ArDialog'))
 const SunStudyPanel = lazy(() => import('@/components/SunStudyPanel'))
@@ -97,33 +100,37 @@ function loadSaved(tenant: Tenant): SavedConfiguration[] {
 export default function PergoStudio() {
   const { tenant, labels: ROOF_LABELS, admin, embed, homeHref, product } = useTenant()
   usePageSeo(product === 'carport' ? '/konfigurator/carport' : '/konfigurator', { noindex: embed || !tenant.demo, title: tenant.demo ? undefined : `${tenant.brand.name} · ${product === 'carport' ? 'Carport' : 'Pergola'} ${tr('konfigurátor', 'Konfigurator')}` })
+  // Újraépítési mód (`?mod=ujraepites`, docs/rebuild): csak a 3D, a gyártó alaptervéből; nem ír a böngészőbe és nem mér.
+  const [rebuild] = useState(currentRebuildMode)
   // Bővítés a tulajdonosi oldalról: a felszerelt termékből indul, a meglévő szerkezet zárolt (csak hozzáadni lehet).
-  const [expansion] = useState(() => (product === 'pergola' ? readExpansion(tenant.id) : null))
+  const [expansion] = useState(() => (product === 'pergola' && !rebuild ? readExpansion(tenant.id) : null))
   const expansionBase = useMemo(() => (expansion ? normalizeConfig(tenant, expansion.config) : null), [expansion, tenant])
-  const [config, setConfig] = useState<PergolaConfig>(() => expansionBase ?? loadInitialConfig(tenant, product))
+  const [config, setConfig] = useState<PergolaConfig>(() => expansionBase ?? (rebuild ? normalizeConfig(tenant, productDefaultConfig(tenant, product)) : loadInitialConfig(tenant, product)))
   // Visszatérő látogató: ha piszkozatból (nem linkből) indultunk, és az nem az alapterv, felajánljuk a folytatást.
-  const [welcomeBack, setWelcomeBack] = useState(() => !expansion && !window.location.hash && JSON.stringify(config) !== JSON.stringify(normalizeConfig(tenant, productDefaultConfig(tenant, product))) && hasStoredDraft(tenant, product))
+  const [welcomeBack, setWelcomeBack] = useState(() => !rebuild && !expansion && !window.location.hash && JSON.stringify(config) !== JSON.stringify(normalizeConfig(tenant, productDefaultConfig(tenant, product))) && hasStoredDraft(tenant, product))
   const projectKey = `pergo-project-name:${tenant.id}`
   const [projectName, setProjectName] = useState(() => { try { return localStorage.getItem(projectKey) ?? '' } catch { return '' } })
-  useEffect(() => { try { localStorage.setItem(projectKey, projectName) } catch { /* privát mód */ } }, [projectKey, projectName])
+  useEffect(() => { if (rebuild) return; try { localStorage.setItem(projectKey, projectName) } catch { /* privát mód */ } }, [rebuild, projectKey, projectName])
   const [prices, setPrices] = useState<PriceSettings>(() => loadPrices(tenant, admin))
   // A ház kinézete (homlokzat, nyílászárók) a böngészőben megmarad: a vásárló háza nem változik két látogatás között.
   const [scene, setScene] = useState<SceneSettings>(() => {
     let style: UiStyle = 'soft'
     try { style = resolveUiStyle(window.location.search, localStorage.getItem(UI_STYLE_KEY)) } catch { style = resolveUiStyle(window.location.search, null) }
-    return { ...DEFAULT_SCENE, ...(studioInitialTime(style) ?? {}), ...loadHouseLook(tenant.id) }
+    const initial = { ...DEFAULT_SCENE, ...(studioInitialTime(style) ?? {}), ...loadHouseLook(tenant.id) }
+    // Újraépítési mód: a 3D-feliratok és a műszaki jelölések kikapcsolva (a modulok hozzák vissza).
+    return rebuild ? { ...initial, labels: false, showHotspots: false } : initial
   })
-  useEffect(() => { saveHouseLook(tenant.id, scene) }, [tenant.id, scene.houseStyle, scene.wallFinish, scene.wallColor, scene.windowColor]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!rebuild) saveHouseLook(tenant.id, scene) }, [rebuild, tenant.id, scene.houseStyle, scene.wallFinish, scene.wallColor, scene.windowColor]) // eslint-disable-line react-hooks/exhaustive-deps
   // Modulház: ugyanazon a felületen, a „Mit építesz?” választóból; a középső modell, a lépések és az ár a modulházé.
   // A `#h=` megosztó link modulház nézetben nyit; egyébként a legutóbbi választás marad meg (gyártónként).
   const modularKey = `lamelix-studio-kind:${tenant.id}`
   const modularOffered = product === 'pergola' && offersModularHouse(tenant)
   const [modularMode, setModularMode] = useState(() => {
-    if (!modularOffered || expansion) return false
+    if (!modularOffered || expansion || rebuild) return false
     if (window.location.hash) return window.location.hash.startsWith('#h=')
     try { return localStorage.getItem(modularKey) === 'modular' } catch { return false }
   })
-  useEffect(() => { if (modularOffered) { try { localStorage.setItem(modularKey, modularMode ? 'modular' : 'frame') } catch { /* privát mód */ } } }, [modularKey, modularMode, modularOffered])
+  useEffect(() => { if (modularOffered && !rebuild) { try { localStorage.setItem(modularKey, modularMode ? 'modular' : 'frame') } catch { /* privát mód */ } } }, [rebuild, modularKey, modularMode, modularOffered])
   const [step, setStep] = useState<ConfigStep>(expansion ? 'sides' : 'size')
   const stepRef = useRef(step)
   useEffect(() => { stepRef.current = step }, [step])
@@ -134,7 +141,7 @@ export default function PergoStudio() {
   const [view, setView] = useState<CameraView>('perspective')
   const [modal, setModal] = useState<'prices' | 'info' | 'reset' | 'ar' | 'budget' | 'advisor' | 'energy' | null>(() => {
     // ?ar=1 (a QR-kódból érkezve) érintőképernyőn azonnal az AR-ablakot nyitja.
-    try { return new URLSearchParams(window.location.search).get('ar') === '1' && window.matchMedia('(pointer: coarse)').matches ? 'ar' : null } catch { return null }
+    try { return !rebuild && new URLSearchParams(window.location.search).get('ar') === '1' && window.matchMedia('(pointer: coarse)').matches ? 'ar' : null } catch { return null }
   })
   const [toast, setToast] = useState('')
   // Modulház: ugyanaz a vászon és panel, csak a modell, a lépések és az ár cserélődik (nincs újratöltés).
@@ -145,7 +152,7 @@ export default function PergoStudio() {
   const coarsePointer = useMemo(() => { try { return window.matchMedia('(pointer: coarse)').matches } catch { return false } }, [])
   // Az asztali tipp új (jobb gombos mozgatás): saját kulccsal, hogy aki a régit már látta, ezt egyszer még megkapja.
   const hintKey = coarsePointer ? 'pergo-rotate-hint' : 'pergo-rotate-hint-desktop-2'
-  const [rotateHint, setRotateHint] = useState(() => { try { return localStorage.getItem(hintKey) !== '1' } catch { return false } })
+  const [rotateHint, setRotateHint] = useState(() => { if (rebuild) return false; try { return localStorage.getItem(hintKey) !== '1' } catch { return false } })
   useEffect(() => {
     if (!rotateHint) return
     const done = () => { setRotateHint(false); try { localStorage.setItem(hintKey, '1') } catch { /* privát mód */ } }
@@ -203,33 +210,34 @@ export default function PergoStudio() {
   const openEnergy = energySupported ? () => setModal('energy') : undefined
 
   // A bővítés nem írja felül a látogató saját piszkozatát.
-  useEffect(() => { if (!expansion) persistConfig(tenant, config, product) }, [tenant, config, product, expansion])
-  // Névtelen konverziómérés: megnyitás és az első érdemi módosítás (csak vásárlói nézetben).
+  useEffect(() => { if (!expansion && !rebuild) persistConfig(tenant, config, product) }, [tenant, config, product, expansion, rebuild])
+  // Névtelen konverziómérés: megnyitás és az első érdemi módosítás (csak vásárlói nézetben; újraépítési módban sem).
+  const silent = admin || rebuild
   const firstConfig = useRef(config)
-  useEffect(() => { if (!admin) { track(tenant.id, 'open'); startEngagement(tenant.id) } }, [tenant.id, admin])
+  useEffect(() => { if (!silent) { track(tenant.id, 'open'); startEngagement(tenant.id) } }, [tenant.id, silent])
   // A lead-pontozáshoz: melyik lépéseket járta be (csak a böngészőben gyűlik, a kérelemmel megy ki).
-  useEffect(() => { noteStep(tenant.id, step) }, [tenant.id, step])
-  useEffect(() => { if (!admin && config !== firstConfig.current) track(tenant.id, 'configure') }, [tenant.id, admin, config])
+  useEffect(() => { if (!rebuild) noteStep(tenant.id, step) }, [rebuild, tenant.id, step])
+  useEffect(() => { if (!silent && config !== firstConfig.current) track(tenant.id, 'configure') }, [tenant.id, silent, config])
   // Lépésenkénti lemorzsolódás és betöltési idő mérése (névtelen, munkamenetenként egyszer; audit: mérőszámok).
-  useEffect(() => { const name = stepEvent(step); if (!admin && name) track(tenant.id, name) }, [tenant.id, admin, step])
+  useEffect(() => { const name = stepEvent(step); if (!silent && name) track(tenant.id, name) }, [tenant.id, silent, step])
   useEffect(() => {
-    if (admin) return
+    if (silent) return
     const onReady = (event: Event) => track(tenant.id, sceneEvent(Number((event as CustomEvent<number>).detail) || 0))
     window.addEventListener(SCENE_READY_EVENT, onReady)
     return () => window.removeEventListener(SCENE_READY_EVENT, onReady)
-  }, [tenant.id, admin])
+  }, [tenant.id, silent])
   // Ha az oldal megosztott linkkel nyílt, a címsor linkje kövesse a módosításokat — különben
   // frissítéskor a régi link felülírná a vásárló közben végzett változtatásait.
   useEffect(() => {
-    if (!/^#(c|k)=/.test(window.location.hash)) return
+    if (rebuild || !/^#(c|k)=/.test(window.location.hash)) return
     const timer = window.setTimeout(() => {
       const next = `#${shareHash(config)}`
       if (window.location.hash !== next) window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}${next}`)
     }, 400)
     return () => window.clearTimeout(timer)
-  }, [config])
+  }, [config, rebuild])
   useEffect(() => { if (admin) persistPrices(tenant, prices) }, [tenant, admin, prices])
-  useEffect(() => { try { localStorage.setItem(savedKey(tenant), JSON.stringify(saved)) } catch { /* privát mód */ } }, [tenant, saved])
+  useEffect(() => { if (rebuild) return; try { localStorage.setItem(savedKey(tenant), JSON.stringify(saved)) } catch { /* privát mód */ } }, [rebuild, tenant, saved])
   useEffect(() => {
     if (!toast) return
     const timer = window.setTimeout(() => setToast(''), 3600)
@@ -249,9 +257,9 @@ export default function PergoStudio() {
   }, [tenant.id])
   // Az elhelyezés mentése (PDF-hez és következő megnyitáshoz).
   useEffect(() => {
-    if (!scene.photoUrl) return
+    if (!scene.photoUrl || rebuild) return
     savePlacement(tenant.id, { photoX: scene.photoX, photoY: scene.photoY, photoScale: scene.photoScale, photoRotation: scene.photoRotation, photoTilt: scene.photoTilt, photoLens: scene.photoLens })
-  }, [tenant.id, scene.photoUrl, scene.photoX, scene.photoY, scene.photoScale, scene.photoRotation, scene.photoTilt, scene.photoLens])
+  }, [rebuild, tenant.id, scene.photoUrl, scene.photoX, scene.photoY, scene.photoScale, scene.photoRotation, scene.photoTilt, scene.photoLens])
 
   const focusSide = useCallback((side: SideKey) => setFocus({ id: ++focusSeq.current, kind: 'side', side }), [])
   /** Vissza az áttekintő nézetbe — akkor is, ha a kamera épp egy oldalra fókuszált. */
@@ -572,6 +580,18 @@ export default function PergoStudio() {
         window.setTimeout(() => document.querySelector('.lead-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 260)
       }}>{modularMode ? (modular.step === 'summary' ? tr('Tovább tervezés', 'Weiter planen') : tr('Összegzés', 'Übersicht')) : mobileBarAction(step).label}<ChevronRight size={16} /></button></div>
   )
+  // Újraépítési mód (M00): csak a teljes képernyős 3D. Forgatás, nagyítás, mozgatás működik; a 3D-n belüli
+  // kattintások (oldal kijelölése, ajtó- és üvegnyitás) kikapcsolva, a felületi elemek a modulokkal jönnek vissza.
+  if (rebuild) return (
+    <div className="app-shell rebuild-shell">
+      <main className="rebuild-stage" id="top">
+        <section className="viewer-panel" aria-label={tr('3D előnézet', '3D-Vorschau')}>
+          <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={scene} view={view} focus={focus} onSceneChange={ignoreSceneChange} /></IntroSceneGate>
+        </section>
+      </main>
+    </div>
+  )
+
   return (
     <div className={`app-shell layout-a ${modularMode ? '' : 'bar-in-panel'} ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''} ${uiStyle === 'studio' ? 'style-studio' : ''} ${uiStyle === 'light' ? 'style-light' : ''} ${floatLayout ? 'layout-float' : ''}`} style={panelLayout ? ({ '--panel-w': `${panelWidth}px`, '--side-w': `${panelWidth}px` } as CSSProperties) : undefined}>
       <StudioHeader onHome={() => (modularMode ? modular.setView('perspective') : setView('perspective'))} canUndo={modularMode ? modular.canUndo : history.current.past.length > 0} canRedo={modularMode ? modular.canRedo : history.current.future.length > 0} onUndo={modularMode ? modular.undo : undo} onRedo={modularMode ? modular.redo : redo} presentation={presentation} onPresentation={() => setPresentation(!presentation)} onInfo={() => setModal('info')} onReset={() => (modularMode ? (window.confirm('Visszaállítod a modulházat az alapkonfigurációra?') && modular.reset()) : setModal('reset'))} />

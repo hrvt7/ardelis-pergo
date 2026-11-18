@@ -7,19 +7,19 @@
 | Fázis | Állapot | Dátum |
 |---|---|---|
 | 1. Teljes technikai audit (`FULL_AUDIT.md`) | JÓVÁHAGYÁSRA VÁR | 2026-11-18 |
-| 2. Funkcióleltár (`FEATURE_INVENTORY.md`, 129 funkció) | JÓVÁHAGYÁSRA VÁR | 2026-11-18 |
-| 3. Függőségi térkép (`DEPENDENCY_MAP.md`) | JÓVÁHAGYÁSRA VÁR | 2026-11-18 |
-| 4. Újraépítési terv (`REBUILD_ROADMAP.md`, M00–M19) | JÓVÁHAGYÁSRA VÁR | 2026-11-18 |
+| 2. Funkcióleltár (`FEATURE_INVENTORY.md`, 129 funkció) | JÓVÁHAGYVA | 2026-11-18 |
+| 3. Függőségi térkép (`DEPENDENCY_MAP.md`) | JÓVÁHAGYVA | 2026-11-18 |
+| 4. Újraépítési terv (`REBUILD_ROADMAP.md`, M00–M19) + lépés-architektúra (`STEP_ARCHITECTURE.md`) | JÓVÁHAGYVA | 2026-11-18 |
 | 5. Dokumentáció a repóban (`docs/rebuild/`) | KÉSZ | 2026-11-18 |
-| 6. Visszaállítási pont | NEM INDULT (az M00 első lépése) | – |
-| 7. Lecsupaszítás (M00) | DÖNTÉSRE VÁR (3 kérdés, lásd lent) | – |
-| 8. A 3D önálló tesztje | NEM INDULT | – |
+| 6. Visszaállítási pont | KÉSZ: `rebuild-alap-2026-11-18` ág a `25f586c` commiton (git tagot a proxy nem enged pusholni, ezért ág) | 2026-11-18 |
+| 7. Lecsupaszítás (M00) | KÉSZ, JÓVÁHAGYÁSRA VÁR | 2026-11-18 |
+| 8. A 3D önálló tesztje | KÉSZ (lásd napló) | 2026-11-18 |
 
 ## Modulok
 
 | Kód | Modul | Állapot | Ádám döntése | Megjegyzés |
 |---|---|---|---|---|
-| M00 | Lecsupaszítás | DÖNTÉSRE VÁR | – | Hely: `?mod=ujraepites` (A megoldás, jóváhagyva 2026-11-18) |
+| M00 | Lecsupaszítás | KÉSZ, JÓVÁHAGYÁSRA VÁR | D1–D3 | `?mod=ujraepites`: teljes képernyős 3D, a gyártó alaptervéből, mérés és böngészőírás nélkül, 3D-kattintások ki (5.06) |
 | M01 | Panelkeret és lépésnavigáció | NEM INDULT | – | |
 | M02 | Elhelyezés | NEM INDULT | – | |
 | M03 | Méretek és modulok | NEM INDULT | – | |
@@ -45,8 +45,9 @@
 | # | Kérdés | Javaslat | Válasz |
 |---|---|---|---|
 | D1 | M00: az üres panelkeret maradjon, vagy a 3D töltse ki a képernyőt? | – (ízlés kérdése) | **2026-11-18: a 3D az egész képernyőt kitölti.** A kalkuláció és a többi panel később lebegő, Apple-stílusú üvegablakként épül (alap: a meglévő `?style=glass` réteg, `src/lib/uiStyle.ts`). Referencia: a 2026-11-15-i UI/UX kutatás (Porsche, Polestar, Apple, Tylko, ALUX, Renson, Weinor). |
-| D2 | M00: a 3D-n belüli kattintások (oldal kijelölése, üveg/ajtó nyitása) kikapcsolva? | Igen, az M08 hozza vissza | |
-| D3 | M00: kiinduló terv a gyártó alapterve, vagy a böngésző utolsó terve? | Gyártói alapterv | |
+| D2 | M00: a 3D-n belüli kattintások (oldal kijelölése, üveg/ajtó nyitása) kikapcsolva? | Igen, az M08 hozza vissza | **2026-11-18: igen** (Ádám: „csináld így, kezdjük”) |
+| D3 | M00: kiinduló terv a gyártó alapterve, vagy a böngésző utolsó terve? | Gyártói alapterv | **2026-11-18: gyártói alapterv** |
+| D7 | Lépés-architektúra (`STEP_ARCHITECTURE.md`) | 7 lépés; ház és környezet az eszköztárba; bútor a 2. lépésbe | **2026-11-18: jóváhagyva a javaslat szerint.** A modulok sorrendje ehhez igazodik (M01 = lebegő lépéssáv és üvegpanel). |
 | D4 | Ársáv helye | Felül jobbra | **2026-11-18: felül jobbra**, a lépéssáv mellett, mindig látható lebegő üvegelem. |
 | D5 | Alapértelmezett ármód új gyártónál | Becsült teljes ár | **2026-11-18: becsült teljes ár** „becsült” felirattal; a gyártó átkapcsolhatja „-tól” árra vagy rejtett árra. |
 | D6 | Ajánlatkérés helye | Minden lépésből | **2026-11-18: minden lépésből** elérhető másodlagos gombként; a fő gomb marad a „Tovább”. |
@@ -73,4 +74,5 @@ Nyitottak; a hozzájuk tartozó modul visszaépítésekor javítandók, ha Ádá
 | 2026-11-18 | Ádám jóváhagyta: újraépítés modulonként, az A megoldással (`?mod=ujraepites`, az éles felület érintetlen). |
 | 2026-11-18 | D1 eldőlt: teljes képernyős 3D, a panelek lebegő üvegablakként jönnek vissza. |
 | 2026-11-18 | D4–D6 eldőlt a referencia-kutatás alapján (`REFERENCE_CONFIGURATORS.md`): ársáv felül jobbra, becsült ár alapból (kapcsolható), ajánlatkérés minden lépésből. |
+| 2026-11-18 | M00 kész (5.06): `src/lib/rebuildMode.ts` + `tests/rebuildMode.test.ts`; ellenőrizve 1440×900 és 390×844 méreten: csak a 3D látszik (a vászon kitölti a képernyőt, egyetlen gomb sincs), a húzás forgat, nincs `/api/track` kérés, a böngészőben mentett piszkozat érintetlen, a hash nem íródik. Az éles `/konfigurator` képe pixelre azonos a módosítás előttivel (asztalon 176 px élsimítási eltérés a Tanácsadó kártya ikonján, mobilon 0). |
 | 2026-11-18 | Elkészült az audit, a leltár, a függőségi térkép és a terv (`docs/rebuild/`), kódmódosítás nélkül. |

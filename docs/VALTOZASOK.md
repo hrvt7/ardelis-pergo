@@ -1,5 +1,12 @@
 # Változások
 
+## 5.06 – Újraépítési mód: csak a 3D (M00)
+
+- **Újraépítési mód:** a `/konfigurator?mod=ujraepites` címen a 3D kitölti a teljes képernyőt, minden felületi elem nélkül. A terv mindig a gyártó alaptervéből indul; a mód nem ír a böngészőbe (piszkozat, ház, változatok), nem mér, nem nyit AR-t, nem írja a címsort. A 3D forgatható, nagyítható, mozgatható; a 3D-n belüli kattintások (oldal kijelölése, ajtó- és üvegnyitás), a feliratok és a műszaki jelölések kikapcsolva – a modulok hozzák vissza őket.
+- Az éles felület (paraméter nélkül) nem változott; egy funkció sem törlődött.
+- Visszaállítási pont: `rebuild-alap-2026-11-18` ág.
+- Tesztek: `rebuildMode.test.ts` (paraméter felismerése, modulregiszter: élesben minden látszik, újraépítési módban még semmi).
+
 ## 5.05 – Referencia-konfigurátorok kalkulátorfelépítése (kutatás)
 
 - **Kutatás:** `docs/rebuild/REFERENCE_CONFIGURATORS.md` – BMW, Porsche, Polestar, Renson, Brustor és SaleSqueze kalkulátorfelépítése (lépések, árkijelzés, csomagok, összegzés, lezárás), képernyőképekkel (`docs/rebuild/ref/`) és javaslattal a lebegő üvegpanelekhez. Kódváltozás nincs.

@@ -44,7 +44,7 @@ A háttérfunkciók (I05 árszámítás, I07 viszonteladói ár, I09 szerverolda
 ### M00 – Lecsupaszítás: újraépítési mód, csak a 3D
 
 **Feladatok**
-1. Visszaállítási pont: `git tag rebuild-alap-2026-11-18` a mostani `main`-re, push a tagre. A munkakönyvtár tiszta-e (ellenőrzés).
+1. Visszaállítási pont: `rebuild-alap-2026-11-18` (a proxy a tag pusht elutasítja, ezért ág lett, `25f586c`). A munkakönyvtár tiszta-e (ellenőrzés).
 2. `src/lib/rebuildMode.ts`: az újraépítési mód felismerése (`?mod=ujraepites`), és egy modulregiszter (`M01…M18 → látható-e`). Élesben (paraméter nélkül) minden a mai módon jelenik meg, a regiszter nem hat.
 3. `PergoStudio`: újraépítési módban:
    - a konfiguráció a gyártó alaptervéből indul (nem a böngésző piszkozatából vagy linkből), és **nem írja felül** a mentett piszkozatot;

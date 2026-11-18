@@ -1,0 +1,27 @@
+import { describe, expect, it } from 'vitest'
+import { isRebuildMode, moduleVisible, REBUILD_MODULES, REBUILT_MODULES, type RebuildModule } from '../src/lib/rebuildMode'
+
+describe('újraépítési mód', () => {
+  it('csak a pontos paraméterre kapcsol be', () => {
+    expect(isRebuildMode('?mod=ujraepites')).toBe(true)
+    expect(isRebuildMode('?style=glass&mod=ujraepites&freeze=2')).toBe(true)
+    expect(isRebuildMode('')).toBe(false)
+    expect(isRebuildMode('?mod=other')).toBe(false)
+    expect(isRebuildMode('?ujraepites')).toBe(false)
+  })
+
+  it('paraméter nélkül minden modul látszik (az éles felület változatlan)', () => {
+    for (const module of REBUILD_MODULES) expect(moduleVisible(module, false)).toBe(true)
+  })
+
+  it('az M00 után újraépítési módban egyik modul sem látszik', () => {
+    expect(REBUILT_MODULES.size).toBe(0)
+    for (const module of REBUILD_MODULES) expect(moduleVisible(module, true)).toBe(false)
+  })
+
+  it('a visszaépített modul újraépítési módban is látszik', () => {
+    const rebuilt = new Set<RebuildModule>(['M01'])
+    expect(moduleVisible('M01', true, rebuilt)).toBe(true)
+    expect(moduleVisible('M02', true, rebuilt)).toBe(false)
+  })
+})
