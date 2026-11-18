@@ -9,7 +9,7 @@ import LiquidGlass from './LiquidGlass'
  * A lépés lebegő üvegkártyája. Asztalon jobbra lebeg; telefonon alulról felhúzható lap (két állás).
  * A lépés tartalma (`children`) a modulokkal érkezik.
  */
-export default function StepCard({ step, compact, open, onOpenChange, onStep, bar, children }: { step: ConfigStep; compact: boolean; open: boolean; onOpenChange: (open: boolean) => void; onStep: (step: ConfigStep) => void; /** a kártya tetejére tapadó lépéssáv (asztalon) */ bar?: ReactNode; children?: ReactNode }) {
+export default function StepCard({ step, compact, open, onOpenChange, onStep, bar, onRequest, children }: { step: ConfigStep; compact: boolean; open: boolean; onOpenChange: (open: boolean) => void; onStep: (step: ConfigStep) => void; /** a kártya tetejére tapadó lépéssáv (asztalon) */ bar?: ReactNode; /** az utolsó lépésen a fő gomb: felmérés/ajánlat kérése */ onRequest?: () => void; children?: ReactNode }) {
   const index = rebuildStepIndex(step)
   const current = REBUILD_STEPS[index]
   const prev = neighbourStep(step, -1)
@@ -31,6 +31,7 @@ export default function StepCard({ step, compact, open, onOpenChange, onStep, ba
       <div className="rb-stepcard-body">{children}</div>
       <footer className="rb-stepcard-nav">
         <button type="button" className="rb-btn-ghost" disabled={!prev} onClick={() => prev && onStep(prev)}><ArrowLeft size={16} />{tr('Vissza', 'Zurück')}</button>
+        {!next && onRequest && <button type="button" className="rb-btn-primary" onClick={onRequest}>{tr('Felmérést kérek', 'Aufmaß anfragen')}<ArrowRight size={16} /></button>}
         {next && <button type="button" className="rb-btn-primary" onClick={() => onStep(next)}><span>{tr('Tovább', 'Weiter')}<span className="rb-btn-next">: {nextLabel}</span></span><ArrowRight size={16} /></button>}
       </footer>
     </LiquidGlass>

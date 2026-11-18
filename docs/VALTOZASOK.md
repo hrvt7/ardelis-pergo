@@ -1,5 +1,13 @@
 # Változások
 
+## 5.20 – Újraépítési mód: 7. lépés – Összegzés és ajánlatkérés (M14–M15)
+
+- **„A terved”:** lépésenként egy sor a lényeggel (termék; rögzítés és méretek; tető, üveg, dőlés; zárt oldalak; szín, kéttónusúnál mindkettő; kiegészítők), mindegyiken „Módosítás” → vissza a lépésre (BMW/Porsche-minta). Alatta a becsült bruttó ár.
+- Utána a meglévő összegző panel: látványkép és név, szakértői megjegyzések, **felmérési űrlap** (hozzájárulással, a meglévő beküldéssel), megosztás és mentés (PDF, kép, videó, WhatsApp), két változat összehasonlítása, specifikáció.
+- **„Ajánlatot kérek” minden lépésből (D6):** az ársáv alatt (asztalon és telefonon is); az összegzés felmérési űrlapjához visz. Az utolsó lépésen a fő gomb „Felmérést kérek”.
+- A keretösszeg-tervező és az üzemeltetési párbeszédablak gombja itt még nincs (felugró ablakok: a döntéstámogatók moduljával jönnek).
+- Tesztek: `rebuildSummary.test.ts` (a sorok és hogy a választásokat tükrözik).
+
 ## 5.19 – Újraépítési mód: kéttónusú szín és 6. lépés – Komfort (M11)
 
 - **Kéttónusú kivitel (Ádám kérésére vissza):** a Szín lépésben Egyszínű / Kéttónusú kapcsoló (ha a gyártó kínálja és a tető támogatja); kéttónusúnál Váz, oszlopok és Lamellák / Tető kártya, a gyakori színek és az egyedi RAL kód a kijelölt részre vonatkoznak. Bekapcsoláskor a meglévő kontrasztszabály szerint indul (sötét vázhoz fehér, világoshoz antracit).

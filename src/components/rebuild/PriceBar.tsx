@@ -11,7 +11,7 @@ import LiquidGlass from './LiquidGlass'
  * Ársáv (M05, D4–D5): mindig látható, felül jobbra lebegő üvegelem a becsült bruttó árral és a változás
  * jelzésével; a „Részletek” alatta nyitja a tételes kalkulációt (nettó, szerelés, ÁFA, bruttó).
  */
-export default function PriceBar({ price, compact }: { price: PriceBreakdown; compact: boolean }) {
+export default function PriceBar({ price, compact, onRequest }: { price: PriceBreakdown; compact: boolean; /** „Ajánlatot kérek” (D6): az összegzés felmérési űrlapjához visz, bármelyik lépésből */ onRequest?: () => void }) {
   const { tenant } = useTenant()
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
@@ -36,6 +36,7 @@ export default function PriceBar({ price, compact }: { price: PriceBreakdown; co
           <span className="rb-price-more">{tr('Részletek', 'Details')}<ChevronDown size={15} /></span>
         </button>
       </LiquidGlass>
+      {onRequest && <button type="button" className="rb-price-request" onClick={onRequest}>{tr('Ajánlatot kérek', 'Angebot anfragen')}</button>}
       {open && <LiquidGlass className="rb-price-details" radius={22} bezel={12} strength={22}>
         <div id="rb-price-details" role="region" aria-label={tr('Tételes kalkuláció', 'Detaillierte Kalkulation')}>
           <ul>

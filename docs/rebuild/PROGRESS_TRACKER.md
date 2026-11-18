@@ -33,8 +33,8 @@
 | M11 | Komfort és vezérlés | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 6. lépésben (Komfort), fém kapcsolókkal (5.19) |
 | M12 | Építménytípus | NEM INDULT | – | |
 | M13 | Nézet és jelenet-beállítások | NEM INDULT | – | |
-| M14 | Összegzés, mentés, megosztás, export | NEM INDULT | – | |
-| M15 | Ajánlatkérés | NEM INDULT | – | |
+| M14 | Összegzés, mentés, megosztás, export | KÉSZ, JÓVÁHAGYÁSRA VÁR | D6 | A 7. lépésben: „A terved” sorok Módosítással + a meglévő összegző panel (5.20) |
+| M15 | Ajánlatkérés | KÉSZ, JÓVÁHAGYÁSRA VÁR | D6 | Felmérési űrlap az összegzésben; „Ajánlatot kérek” minden lépésből (D6) (5.20) |
 | M16 | Bemutató eszközök | NEM INDULT | – | |
 | M17 | Döntéstámogatók | NEM INDULT | – | |
 | M18 | Különleges módok | NEM INDULT | – | |

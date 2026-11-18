@@ -288,3 +288,24 @@
 .rb-rgb button.is-selected { box-shadow: 0 0 0 2px var(--rb-ink), 0 2px 6px rgba(18, 22, 26, .2); }
 .rb-ghost-action { display: inline-flex; align-items: center; gap: 8px; justify-self: start; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(21, 23, 26, .14); background: rgba(255, 255, 255, .5); color: var(--rb-ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .rb-ghost-action[aria-pressed=true] { background: var(--rb-ink); color: #fff; }
+
+/* 7. lépés: összegzés */
+.rb-summary { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.rb-summary button { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, .6); background: rgba(255, 255, 255, .4); color: var(--rb-ink); font: inherit; text-align: left; cursor: pointer; transition: background .2s; }
+.rb-summary button:hover { background: rgba(255, 255, 255, .65); }
+.rb-summary-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: rgba(21, 23, 26, .07); }
+.rb-summary-text { display: grid; gap: 1px; min-width: 0; }
+.rb-summary-text small { font-size: 11px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; color: rgba(21, 23, 26, .5); }
+.rb-summary-text strong { font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.rb-summary-edit { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 650; color: rgba(21, 23, 26, .6); }
+.rb-summary-total { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; padding: 14px 16px; border-radius: 18px; background: var(--rb-ink); color: #fff; }
+.rb-summary-total span { display: grid; font-size: 13px; font-weight: 600; }
+.rb-summary-total small { font-size: 11px; font-weight: 500; color: rgba(255, 255, 255, .6); }
+.rb-summary-total strong { font-size: 22px; font-weight: 750; color: var(--rb-accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* A meglévő összegző panel a világos üvegen: a saját kártyakeretei nélkül */
+.rb-summary-legacy .summary-panel { padding: 0; background: none; }
+/* Ajánlatkérő gomb az ársávban */
+.rb-price-request { justify-self: stretch; height: 40px; border: 0; border-radius: 999px; background: var(--rb-ink); color: #fff; font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer; box-shadow: 0 8px 20px rgba(10, 12, 14, .25); }
+.rb-price-request:hover { background: #24272b; }
+
+.rb-price.is-compact .rb-price-request { height: 32px; font-size: 12.5px; justify-self: end; padding: 0 16px; }

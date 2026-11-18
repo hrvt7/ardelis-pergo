@@ -54,6 +54,7 @@ import RoofStep from '@/components/rebuild/RoofStep'
 import SidesStep from '@/components/rebuild/SidesStep'
 import ColorStep from '@/components/rebuild/ColorStep'
 import ComfortStep from '@/components/rebuild/ComfortStep'
+import SummaryStep from '@/components/rebuild/SummaryStep'
 import PriceBar from '@/components/rebuild/PriceBar'
 import '@/components/rebuild/rebuild.css'
 import { clearExpansion, LOCKED_STEPS, readExpansion } from '@/lib/expansion'
@@ -595,6 +596,14 @@ export default function PergoStudio() {
   // Újraépítési mód: a Hely és méret lépésben a 3D méretcímkéi automatikusan látszanak (kilépéskor visszaáll).
   // M08: a 3D-n belüli kattintások (oldal kijelölése, ajtó- és üvegnyitás) visszakapcsolva; telefonon a lap kinyílik.
   const rebuildSideSelect = useCallback((side: SideKey | 'roof') => { handleSideSelect(side); setRebuildSheetOpen(true) }, [handleSideSelect])
+  // Összegzés az újraépített felületen: a meglévő panel, a felugró ablakot nyitó gombok nélkül (azok a modulokkal jönnek).
+  const rebuildSummary = <SummaryPanel onFix={updateConfig} shareUrl={createShareUrl(config)} config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} energyCost={energyCost} onExport={handleExport} exporting={exporting} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} />
+  // „Ajánlatot kérek” (D6): bármelyik lépésből az összegzés felmérési űrlapjához.
+  const requestQuote = useCallback(() => {
+    goStep('summary')
+    setRebuildSheetOpen(true)
+    window.setTimeout(() => document.querySelector('.rb-stepcard .lead-section')?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }), 350)
+  }, [goStep])
   const rebuildScene = useMemo(() => (rebuild && step === 'mount' && !scene.showDimensions ? { ...scene, showDimensions: true } : scene), [rebuild, step, scene])
   if (rebuild) {
     const frame = moduleVisible('M01', true)
@@ -608,8 +617,8 @@ export default function PergoStudio() {
           <section className="viewer-panel" aria-label={tr('3D előnézet', '3D-Vorschau')}>
             <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={rebuildScene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSideSelect={clicks ? rebuildSideSelect : undefined} onSceneChange={clicks ? updateScene : ignoreSceneChange} /></IntroSceneGate>
           </section>
-          {moduleVisible('M05', true) && <PriceBar price={price} compact={isNarrow} />}
-          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={<StepDock step={step} onStep={goStep} />}>{step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'roof' && moduleVisible('M06', true) ? <RoofStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'sides' && moduleVisible('M08', true) ? <SidesStep config={config} scene={scene} prices={prices} selected={selectedSide} onSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'color' && moduleVisible('M09', true) ? <ColorStep config={config} scene={scene} prices={prices} onChange={updateConfig} /> : step === 'extras' && moduleVisible('M11', true) ? <ComfortStep config={config} scene={scene} prices={prices} energyCost={energyCost} onChange={updateConfig} onSceneChange={updateScene} /> : <p className="rb-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
+          {moduleVisible('M05', true) && <PriceBar price={price} compact={isNarrow} onRequest={moduleVisible('M15', true) ? requestQuote : undefined} />}
+          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} onRequest={moduleVisible('M15', true) ? requestQuote : undefined} bar={<StepDock step={step} onStep={goStep} />}>{step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'roof' && moduleVisible('M06', true) ? <RoofStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'sides' && moduleVisible('M08', true) ? <SidesStep config={config} scene={scene} prices={prices} selected={selectedSide} onSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'color' && moduleVisible('M09', true) ? <ColorStep config={config} scene={scene} prices={prices} onChange={updateConfig} /> : step === 'extras' && moduleVisible('M11', true) ? <ComfortStep config={config} scene={scene} prices={prices} energyCost={energyCost} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'summary' && moduleVisible('M14', true) ? <SummaryStep config={config} price={price} onStep={goStep}>{rebuildSummary}</SummaryStep> : <p className="rb-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
         </main>
         {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
       </div>
