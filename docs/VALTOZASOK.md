@@ -1,5 +1,14 @@
 # Változások
 
+## 5.32 – Új konfigurátor: harmadik kritikus kör, lime vezérlők vissza
+
+- **Lime vezérlők:** a kapcsolók, a csúszkák és a lamellaszög íve újra lime színű (Ádám döntése); a „kiválasztva” jel továbbra is a sötét keret és pipa.
+- **Tételes kalkuláció:** a tételek bruttó áron szerepelnek; a becsült bruttó összeg és az „Ajánlatot kérek” gomb a lap alján rögzítve, csak a tételek görögnek (360 px-es telefonon sem takarja semmi az összeget). A havi bontás mindig a „nem hitel- vagy finanszírozási ajánlat” mondattal együtt látszik. Asztalon a lap a lépéskártya fölött nyílik, nem takarja a lépéssávot.
+- **Összegzés:** egy küldés gomb: a lábléc „Ajánlatot kérek” gombja elküldi az űrlapot, ha a kötelező mezők ki vannak töltve, különben az első üres mezőre visz. Az ár itt is a láblécben van, egyszer.
+- **Asztali lábléc:** egy fő gomb (Tovább); az „Ajánlatot kérek” aláhúzott szöveglink.
+- **Tablet és telefon:** az eszköztár mindig a jelenet tetején, nem lóg rá a lépéslapra; érintőn minden beviteli mező legalább 44 px magas; a hozzájárulás és a bevezető szöveg 14 px; a kiválasztott csomag pipája nem takarja az árat; a görgetett tartalom a fejléc alatt is elhalványul.
+- Tesztek: `rebuildCriticFixes.test.ts` (rögzített összeg, egy küldés gomb, eszköztár helye, lime vezérlők).
+
 ## 5.31 – MB-OpenSky 140: ZIP-screen és toló üvegfal gyári adatokból; carport ki a választóból
 
 - **Hiba: pergolán beragadt a fix tető.** Carportra (vagy verandára) váltás után vissza pergolára a tető fix maradt, így nem az MB-OpenSky 140 lamellás tető jelent meg. Mostantól pergolára váltva a tető visszaáll lamellásra, ha a gyártó kínálja.

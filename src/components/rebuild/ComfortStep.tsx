@@ -68,7 +68,7 @@ export default function ComfortStep({ config, scene, prices, energyCost, onChang
         </span>
       </div>}
       {fans > 0 && config.height < FAN_MIN_HEIGHT && <div className="rb-callout is-warning"><Fan size={18} /><p><strong>{tr('Alacsony belmagasság', 'Geringe Raumhöhe')}</strong>{tr(`${String(FAN_MIN_HEIGHT).replace('.', ',')} m oszlopmagasság alatt a lapátok 2,1 m alá kerülhetnek. Felméréskor ellenőrizzük, vagy válassz magasabb oszlopot.`, `Unter ${String(FAN_MIN_HEIGHT).replace('.', ',')} m Steherhöhe können die Flügel unter 2,1 m liegen. Wir prüfen das beim Aufmaß, oder wählen Sie höhere Steher.`)}</p></div>}
-      {fans > 0 && <button type="button" className="rb-ghost-action" aria-pressed={!!scene.fanOn} onClick={() => onSceneChange({ fanOn: !scene.fanOn })}><Power size={15} />{scene.fanOn ? tr('Ventilátor kikapcsolása', 'Ventilator ausschalten') : tr('Ventilátor bekapcsolása a 3D-ben', 'Ventilator in 3D einschalten')}</button>}
+      {fans > 0 && <button type="button" className="rb-ghost-action" aria-pressed={!!scene.fanOn} onClick={() => onSceneChange({ fanOn: !scene.fanOn })}><Power size={15} />{scene.fanOn ? tr('Ventilátor kikapcsolása', 'Ventilator ausschalten') : tr('Ventilátor bekapcsolása a 3D‑ben', 'Ventilator in 3D einschalten')}</button>}
     </section>}
 
     {!carport && <section className="rb-section">

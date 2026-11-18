@@ -33,11 +33,11 @@ export default function StepCard({ step, compact, open, onOpenChange, onStep, ba
       </header>
       <div className="rb-stepcard-body" ref={body}>{children}</div>
       <footer className="rb-stepcard-foot">
-        {next && !compact && price}
+        {!compact && price}
         <div className="rb-stepcard-nav">
           <button type="button" className="rb-btn-ghost" disabled={!prev} onClick={() => prev && onStep(prev)} aria-label={tr('Vissza', 'Zurück')}><ArrowLeft size={16} /><span className="rb-btn-back-text">{tr('Vissza', 'Zurück')}</span></button>
           {/* Telefonon az ár a gombsor közepén: egy sor, több hely a lépésnek. */}
-          {next && compact && price}
+          {compact && price}
           {!next && onRequest && <button type="button" className="rb-btn-primary" onClick={onRequest}>{tr('Ajánlatot kérek', 'Angebot anfragen')}<ArrowRight size={16} /></button>}
           {next && <button type="button" className="rb-btn-primary" onClick={() => onStep(next)}><span>{tr('Tovább', 'Weiter')}<span className="rb-btn-next">: {nextLabel}</span></span><ArrowRight size={16} /></button>}
         </div>

@@ -63,10 +63,10 @@ export default function SceneRail({ config, scene, view, compact, tucked = false
       <p className="rb-note">{tr('Csak látvány: az árat nem módosítja.', 'Nur Optik: ändert den Preis nicht.')}</p>
     </> },
     display: { title: tr('Megjelenítés', 'Anzeige'), body: <>
-      <MetalSwitch label={tr('Méretcímkék', 'Maßangaben')} description={tr('Méretek centiméterben a 3D-ben', 'Maße in Zentimetern in 3D')} checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
+      <MetalSwitch label={tr('Méretcímkék', 'Maßangaben')} description={tr('Méretek centiméterben a 3D‑ben', 'Maße in Zentimetern in 3D')} checked={scene.showDimensions} onChange={(showDimensions) => onSceneChange({ showDimensions })} />
       <MetalSwitch label={tr('180 cm-es figura', '180-cm-Figur')} description={tr('A méretek érzékeltetéséhez', 'Zur Veranschaulichung der Größe')} checked={Boolean(scene.showPerson)} onChange={(showPerson) => onSceneChange({ showPerson })} />
       <MetalSwitch label={tr('Műszaki jelölések', 'Technische Markierungen')} description={tr('Részletek a 3D modellen', 'Details am 3D-Modell')} checked={Boolean(scene.showHotspots)} onChange={(showHotspots) => onSceneChange({ showHotspots })} />
-      <MetalSwitch label={tr('Feliratok a 3D-ben', 'Beschriftungen in 3D')} description={tr('Kattintási tippek', 'Klick-Tipps')} checked={scene.labels !== false} onChange={(labels) => onSceneChange({ labels })} />
+      <MetalSwitch label={tr('Feliratok a 3D‑ben', 'Beschriftungen in 3D')} description={tr('Kattintási tippek', 'Klick-Tipps')} checked={scene.labels !== false} onChange={(labels) => onSceneChange({ labels })} />
       <MetalSwitch label={tr('Robbantott nézet', 'Explosionsansicht')} description={tr('A szerkezet elemei szétválasztva', 'Die Bauteile auseinandergezogen')} checked={Boolean(scene.exploded)} onChange={(exploded) => onSceneChange({ exploded })} />
       <label className="rb-select"><span>{tr('3D minőség', '3D-Qualität')}</span><select value={scene.quality} onChange={(event) => onSceneChange({ quality: event.target.value as QualityLevel })}><option value="auto">{tr('Automatikus', 'Automatisch')}</option><option value="ultra">Ultra</option><option value="high">{tr('Magas', 'Hoch')}</option><option value="medium">{tr('Közepes', 'Mittel')}</option><option value="low">{tr('Alacsony', 'Niedrig')}</option></select></label>
     </> },

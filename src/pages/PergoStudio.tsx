@@ -607,6 +607,12 @@ export default function PergoStudio() {
   const rebuildSummary = <SummaryPanel onFix={updateConfig} shareUrl={createShareUrl(config)} config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} energyCost={energyCost} onExport={handleExport} exporting={exporting} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} variant="rebuild" />
   // „Ajánlatot kérek” (D6): bármelyik lépésből az összegzés felmérési űrlapjához.
   const requestQuote = useCallback(() => {
+    // Az összegzésen ez az egyetlen küldés gomb: ha minden kötelező mező ki van töltve, elküldi az űrlapot.
+    const form = document.querySelector<HTMLFormElement>('.rb-stepcard .lead-section form')
+    if (step === 'summary' && form) {
+      const empty = [...form.querySelectorAll<HTMLInputElement>('input[required]:not([type=checkbox]):not([tabindex="-1"])')].find((input) => !input.value)
+      if (!empty) { form.requestSubmit(); return }
+    }
     goStep('summary')
     setRebuildSheetOpen(true)
     // Az űrlaphoz görget, és az első üres mezőre áll, hogy azonnal kitölthető legyen.
@@ -616,7 +622,7 @@ export default function PergoStudio() {
       const field = [...(section?.querySelectorAll<HTMLInputElement>('input:not([type=checkbox]):not([tabindex="-1"])') ?? [])].find((input) => !input.value)
       window.setTimeout(() => field?.focus({ preventScroll: true }), 450)
     }, 350)
-  }, [goStep])
+  }, [goStep, step])
   const rebuildScene = useMemo(() => (rebuild && step === 'mount' && !scene.showDimensions ? { ...scene, showDimensions: true } : scene), [rebuild, step, scene])
   if (rebuild) {
     const frame = moduleVisible('M01', true)
@@ -633,7 +639,7 @@ export default function PergoStudio() {
           </section>
           {moduleVisible('M13', true) && <SceneRail config={config} scene={scene} view={view} compact={isNarrow} tucked={isNarrow && rebuildSheetOpen && viewportWidth < 700} onUntuck={() => setRebuildSheetOpen(false)} onView={setView} onSceneChange={updateScene} onChange={updateConfig} />}
           {frame && !isNarrow && <StepBar step={step} onStep={goStep} />}
-          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} onRequest={moduleVisible('M15', true) ? requestQuote : undefined} bar={isNarrow ? <StepDock step={step} onStep={goStep} /> : undefined} price={moduleVisible('M05', true) ? <PriceBar price={price} compact={isNarrow} onRequest={moduleVisible('M15', true) ? requestQuote : undefined} /> : undefined}>{step === 'size' && moduleVisible('M12', true) ? <ProductStep config={config} prices={prices} onChange={updateConfig} onPreset={replaceConfig} /> : step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'roof' && moduleVisible('M06', true) ? <RoofStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'sides' && moduleVisible('M08', true) ? <SidesStep config={config} scene={scene} prices={prices} selected={selectedSide} onSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'color' && moduleVisible('M09', true) ? <ColorStep config={config} scene={scene} prices={prices} onChange={updateConfig} /> : step === 'extras' && moduleVisible('M11', true) ? <ComfortStep config={config} scene={scene} prices={prices} energyCost={energyCost} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'summary' && moduleVisible('M14', true) ? <SummaryStep config={config} price={price} onStep={goStep}>{rebuildSummary}</SummaryStep> : <p className="rb-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
+          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} onRequest={moduleVisible('M15', true) ? requestQuote : undefined} bar={isNarrow ? <StepDock step={step} onStep={goStep} /> : undefined} price={moduleVisible('M05', true) ? <PriceBar price={price} compact={isNarrow} onRequest={moduleVisible('M15', true) && step !== 'summary' ? requestQuote : undefined} /> : undefined}>{step === 'size' && moduleVisible('M12', true) ? <ProductStep config={config} prices={prices} onChange={updateConfig} onPreset={replaceConfig} /> : step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'roof' && moduleVisible('M06', true) ? <RoofStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'sides' && moduleVisible('M08', true) ? <SidesStep config={config} scene={scene} prices={prices} selected={selectedSide} onSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'color' && moduleVisible('M09', true) ? <ColorStep config={config} scene={scene} prices={prices} onChange={updateConfig} /> : step === 'extras' && moduleVisible('M11', true) ? <ComfortStep config={config} scene={scene} prices={prices} energyCost={energyCost} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'summary' && moduleVisible('M14', true) ? <SummaryStep config={config} price={price} onStep={goStep}>{rebuildSummary}</SummaryStep> : <p className="rb-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
         </main>
         {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
       </div>

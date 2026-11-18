@@ -65,7 +65,7 @@ export default function MountStep({ config, scene, prices, area, onChange, onSce
           {FACINGS.map((item) => { const active = Math.round(scene.facing) % 360 === item.degrees; return <button type="button" role="radio" aria-checked={active} key={item.id} className={active ? 'is-selected' : ''} onClick={() => onSceneChange({ facing: item.degrees, sunDirection: sunDirectionForFacing(item.degrees) })}>{item.label}</button> })}
         </div>
       </div>
-      <p className="rb-note">{tr('A napjárás és az árnyékok ehhez igazodnak a 3D-ben.', 'Sonnenverlauf und Schatten richten sich in 3D danach.')}</p>
+      <p className="rb-note">{tr('A napjárás és az árnyékok ehhez igazodnak a 3D‑ben.', 'Sonnenverlauf und Schatten richten sich in 3D danach.')}</p>
     </section>
 
     {!carport && <details className="rb-section rb-disclosure">

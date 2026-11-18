@@ -31,6 +31,7 @@ export default function PriceBar({ price, compact, onRequest }: { price: PriceBr
     return () => { window.removeEventListener('pointerdown', close); window.removeEventListener('keydown', close) }
   }, [open])
   const months = tenant.installmentMonths
+  const vatFactor = price.totalNet > 0 ? price.totalGross / price.totalNet : 1
 
   const host = open ? document.querySelector('.rebuild-shell') ?? document.body : null
   const details = open && host ? createPortal(<div ref={sheet} className={`rb-price-sheet${compact ? ' is-compact' : ''}`}>
@@ -38,19 +39,19 @@ export default function PriceBar({ price, compact, onRequest }: { price: PriceBr
       <div id="rb-price-details" role="dialog" aria-label={tr('Tételes kalkuláció', 'Detaillierte Kalkulation')}>
         <header className="rb-price-details-head"><strong>{tr('Tételes kalkuláció', 'Detaillierte Kalkulation')}</strong><button type="button" aria-label={tr('Bezárás', 'Schließen')} onClick={() => setOpen(false)}><X size={16} /></button></header>
         <div className="rb-price-details-scroll">
-          <p className="rb-price-basis">{tr('Tételek nettó áron, a szerelés külön sorban. A lépésekben látott felárak a teljes becsült bruttó ár változását mutatják (szereléssel, ÁFA-val).', 'Positionen netto, Montage separat. Die Aufpreise in den Schritten zeigen die Änderung des geschätzten Bruttopreises (inkl. Montage und USt.).')}</p>
+          <p className="rb-price-basis">{tr('Bruttó tételek, ÁFA-val. A lépésekben látott felár ennél kicsit több: a szerelés arányos részét is tartalmazza.', 'Bruttopositionen inkl. USt. Die Aufpreise in den Schritten sind etwas höher: sie enthalten den anteiligen Montagepreis.')}</p>
           <ul>
-            {price.lines.map((line) => <li key={line.id}><span>{line.label}<small>{line.detail}</small></span><b>{formatPrice(line.amountNet)}</b></li>)}
-            {price.installationNet > 0 && <li><span>{tr('Szerelés', 'Montage')}</span><b>{formatPrice(price.installationNet)}</b></li>}
+            {price.lines.map((line) => <li key={line.id}><span>{line.label}<small>{line.detail}</small></span><b>{formatPrice(line.amountNet * vatFactor)}</b></li>)}
+            {price.installationNet > 0 && <li><span>{tr('Szerelés', 'Montage')}</span><b>{formatPrice(price.installationNet * vatFactor)}</b></li>}
           </ul>
-          <dl>
-            <div><dt>{tr('Nettó', 'Netto')}</dt><dd>{formatPrice(price.totalNet)}</dd></div>
-            <div><dt>{tr('ÁFA', 'USt.')}</dt><dd>{formatPrice(price.vatNet)}</dd></div>
-            <div className="is-total"><dt>{tr('Becsült bruttó ár', 'Geschätzter Bruttopreis')}</dt><dd>{formatPrice(price.totalGross)}</dd></div>
-          </dl>
           {months > 0 && <p className="rb-price-monthly">{tr(`${months} havi részre bontva`, `Auf ${months} Monate verteilt`)} <b>{formatPrice(price.totalGross / months)} / {tr('hó', 'Monat')}</b><small>{tr('Az ár egyenlő részekre osztva; nem hitel- vagy finanszírozási ajánlat.', 'Preis in gleiche Teile geteilt; kein Kredit- oder Finanzierungsangebot.')}</small></p>}
         </div>
-        {compact && onRequest && <button type="button" className="rb-price-sheet-request" onClick={() => { setOpen(false); onRequest() }}>{tr('Ajánlatot kérek', 'Angebot anfragen')}</button>}
+        {/* Az összeg és a fő gomb mindig látszik; csak a tételek görögnek. */}
+        <dl className="rb-price-sum">
+          <div className="is-total"><dt>{tr('Becsült bruttó ár', 'Geschätzter Bruttopreis')}</dt><dd>{formatPrice(price.totalGross)}</dd></div>
+          <div><dt>{tr('ebből ÁFA', 'davon USt.')}</dt><dd>{formatPrice(price.vatNet)}</dd></div>
+        </dl>
+        {onRequest && <button type="button" className="rb-price-sheet-request" onClick={() => { setOpen(false); onRequest() }}>{tr('Ajánlatot kérek', 'Angebot anfragen')}</button>}
         <p className="rb-price-note"><Info size={14} />{tr('Tájékoztató, becsült ár, nem ajánlattétel. A végleges ár helyszíni felmérést és műszaki jóváhagyást igényel.', 'Unverbindlicher Schätzpreis, kein Angebot. Der Endpreis erfordert ein Aufmaß vor Ort und eine technische Freigabe.')}</p>
       </div>
     </LiquidGlass>
@@ -63,7 +64,7 @@ export default function PriceBar({ price, compact, onRequest }: { price: PriceBr
         <strong data-value={price.totalGross}><AnimatedPrice value={price.totalGross} /><ChevronUp size={16} className="rb-price-chevron" aria-hidden="true" /></strong>
         <PriceDeltaPop value={price.totalGross} />
       </button>
-      {/* Telefonon a sor szűk: ott az „Ajánlatot kérek” a kinyíló kalkuláció alján van. */}
+      {/* Telefonon a sor szűk: ott az „Ajánlatot kérek” a kinyíló kalkuláció alján van; asztalon csendes szöveglink, a fő gomb a Tovább. */}
       {onRequest && !compact && <button type="button" className="rb-price-request" onClick={onRequest}>{tr('Ajánlatot kérek', 'Angebot anfragen')}</button>}
       {details}
     </div>
