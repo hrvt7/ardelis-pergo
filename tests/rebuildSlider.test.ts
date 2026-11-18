@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseCentimetres, sliderFraction } from '../src/lib/rebuildSlider'
+import { arcAngle, parseCentimetres, parsePlain, sliderFraction } from '../src/lib/rebuildSlider'
 
 describe('folyékony csúszka', () => {
   it('a sávon elfoglalt hely', () => {
@@ -19,5 +19,23 @@ describe('folyékony csúszka', () => {
     expect(parseCentimetres('387,5', 2, 7, 0.05)).toBe(3.9)
     expect(parseCentimetres('', 2, 7, 0.05)).toBeNull()
     expect(parseCentimetres('abc', 2, 7, 0.05)).toBeNull()
+  })
+})
+
+describe('egyéb mértékegységek és az íves csúszka', () => {
+  it('fok és százalék beírása', () => {
+    expect(parsePlain('12', 0, 15, 1)).toBe(12)
+    expect(parsePlain('20', 0, 15, 1)).toBe(15)
+    expect(parsePlain('7,6', 0, 15, 1)).toBe(8)
+    expect(parsePlain('x', 0, 100, 1)).toBeNull()
+  })
+
+  it('a mutató helyéből a lamellaszög (0° vízszintes, 90° függőleges)', () => {
+    expect(arcAngle(10, 0)).toBe(0)
+    expect(arcAngle(0, -10)).toBe(90)
+    expect(Math.round(arcAngle(10, -10))).toBe(45)
+    expect(arcAngle(10, 5)).toBe(0)
+    expect(arcAngle(-10, -1)).toBe(90)
+    expect(arcAngle(-10, 3)).toBe(90)
   })
 })

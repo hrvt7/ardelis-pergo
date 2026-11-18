@@ -18,20 +18,20 @@ export default function StepCard({ step, compact, open, onOpenChange, onStep, ba
   const drag = useRef<{ y: number; id: number } | null>(null)
 
   return (
-    <LiquidGlass as="aside" className={`lx-stepcard${bar ? ' has-dock' : ''}${compact ? ' is-sheet' : ''}${compact && open ? ' is-open' : ''}`} radius={compact ? 26 : 28} bezel={compact ? 14 : 18} blur={compact ? 6 : 14} aria-label={current.label}>
+    <LiquidGlass as="aside" className={`rb-stepcard${bar ? ' has-dock' : ''}${compact ? ' is-sheet' : ''}${compact && open ? ' is-open' : ''}`} radius={compact ? 26 : 28} bezel={compact ? 14 : 18} blur={compact ? 6 : 14} aria-label={current.label}>
       {bar}
-      {compact && <button type="button" className="lx-sheet-handle" aria-expanded={open} aria-label={open ? tr('Lap lecsukása', 'Blatt einklappen') : tr('Lap kinyitása', 'Blatt ausklappen')}
+      {compact && <button type="button" className="rb-sheet-handle" aria-expanded={open} aria-label={open ? tr('Lap lecsukása', 'Blatt einklappen') : tr('Lap kinyitása', 'Blatt ausklappen')}
         onClick={() => onOpenChange(!open)}
         onPointerDown={(event) => { drag.current = { y: event.clientY, id: event.pointerId } }}
         onPointerUp={(event) => { const start = drag.current; drag.current = null; if (!start) return; const dy = event.clientY - start.y; if (dy < -24 && !open) { event.preventDefault(); onOpenChange(true) } else if (dy > 24 && open) { event.preventDefault(); onOpenChange(false) } }}><i /></button>}
-      <header className="lx-stepcard-head">
-        <span className="lx-stepcard-count">{index + 1} / {REBUILD_STEPS.length} · {current.label}</span>
+      <header className="rb-stepcard-head">
+        <span className="rb-stepcard-count">{index + 1} / {REBUILD_STEPS.length} · {current.label}</span>
         <h2>{current.question}</h2>
       </header>
-      <div className="lx-stepcard-body">{children}</div>
-      <footer className="lx-stepcard-nav">
-        <button type="button" className="lx-btn-ghost" disabled={!prev} onClick={() => prev && onStep(prev)}><ArrowLeft size={16} />{tr('Vissza', 'Zurück')}</button>
-        {next && <button type="button" className="lx-btn-primary" onClick={() => onStep(next)}><span>{tr('Tovább', 'Weiter')}<span className="lx-btn-next">: {nextLabel}</span></span><ArrowRight size={16} /></button>}
+      <div className="rb-stepcard-body">{children}</div>
+      <footer className="rb-stepcard-nav">
+        <button type="button" className="rb-btn-ghost" disabled={!prev} onClick={() => prev && onStep(prev)}><ArrowLeft size={16} />{tr('Vissza', 'Zurück')}</button>
+        {next && <button type="button" className="rb-btn-primary" onClick={() => onStep(next)}><span>{tr('Tovább', 'Weiter')}<span className="rb-btn-next">: {nextLabel}</span></span><ArrowRight size={16} /></button>}
       </footer>
     </LiquidGlass>
   )

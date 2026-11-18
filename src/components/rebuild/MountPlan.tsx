@@ -7,7 +7,7 @@ export default function MountPlan({ mount }: { mount: MountType }) {
   if (!walls.has('back')) posts.push([16, 14], [56, 14])
   if (!walls.has('left')) posts.push([16, 44])
   if (!walls.has('right')) posts.push([56, 44])
-  return <svg viewBox="0 0 72 56" width="58" height="45" aria-hidden="true" className="lx-mount-plan">
+  return <svg viewBox="0 0 72 56" width="58" height="45" aria-hidden="true" className="rb-mount-plan">
     {walls.has('back') && <rect x="4" y="5" width="64" height="5" rx="1.5" className="wall" />}
     {walls.has('left') && <rect x="4" y="5" width="5" height="47" rx="1.5" className="wall" />}
     {walls.has('right') && <rect x="63" y="5" width="5" height="47" rx="1.5" className="wall" />}

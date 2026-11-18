@@ -1,13 +1,13 @@
 import { useId, useLayoutEffect, useRef, useState } from 'react'
-import { parseCentimetres, sliderFraction } from '@/lib/rebuildSlider'
+import { parseCentimetres, parsePlain, sliderFraction } from '@/lib/rebuildSlider'
 import { tr } from '@/i18n/locale'
 
 /**
  * Folyékony üveg csúszka (Ádám mintája): vékony sáv lime kitöltéssel, a fogantyú átlátszó üveglencse, amely
  * kissé felnagyítja az alatta futó sávot. Alatta valódi `input range` van (billentyű, képernyőolvasó, érintés).
- * Értékek méterben; a mező centiméterben.
+ * `cm`: az érték méterben, a mező centiméterben; `°` és `%`: az érték maga.
  */
-export default function LiquidSlider({ label, value, min, max, step = 0.05, onChange }: { label: string; value: number; min: number; max: number; step?: number; onChange: (value: number) => void }) {
+export default function LiquidSlider({ label, value, min, max, step = 0.05, unit = 'cm', onChange }: { label: string; value: number; min: number; max: number; step?: number; unit?: 'cm' | '°' | '%'; onChange: (value: number) => void }) {
   const id = useId()
   const rail = useRef<HTMLDivElement>(null)
   const [railWidth, setRailWidth] = useState(300)
@@ -20,28 +20,31 @@ export default function LiquidSlider({ label, value, min, max, step = 0.05, onCh
     observer.observe(element)
     return () => observer.disconnect()
   }, [])
-  const cm = Math.round(value * 100)
-  const [draft, setDraft] = useState(String(cm))
-  const [synced, setSynced] = useState(cm)
-  if (synced !== cm) { setSynced(cm); setDraft(String(cm)) }
+  // A kijelzett (és a csúszkán futó) egész érték: cm-nél centiméter, egyébként maga az érték.
+  const factor = unit === 'cm' ? 100 : 1
+  const shown = Math.round(value * factor)
+  const [draft, setDraft] = useState(String(shown))
+  const [synced, setSynced] = useState(shown)
+  if (synced !== shown) { setSynced(shown); setDraft(String(shown)) }
   const fraction = sliderFraction(value, min, max)
-  const commit = () => { const next = parseCentimetres(draft, min, max, step); if (next === null) { setDraft(String(cm)); return } setDraft(String(Math.round(next * 100))); if (next !== value) onChange(next) }
+  const commit = () => { const next = unit === 'cm' ? parseCentimetres(draft, min, max, step) : parsePlain(draft, min, max, step); if (next === null) { setDraft(String(shown)); return } setDraft(String(Math.round(next * factor))); if (next !== value) onChange(next) }
+  const unitWord = unit === 'cm' ? tr('centiméterben', 'in Zentimetern') : unit === '%' ? tr('százalékban', 'in Prozent') : tr('fokban', 'in Grad')
 
   return (
-    <div className="lx-slider" style={{ ['--lx-f' as string]: fraction }}>
-      <div className="lx-slider-head">
+    <div className="rb-slider" style={{ ['--rb-f' as string]: fraction }}>
+      <div className="rb-slider-head">
         <label htmlFor={id}>{label}</label>
-        <span className="lx-slider-value">
-          <input aria-label={`${label} ${tr('centiméterben', 'in Zentimetern')}`} inputMode="numeric" value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={commit} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur() }} />
-          <span>cm</span>
+        <span className="rb-slider-value">
+          <input aria-label={`${label} ${unitWord}`} inputMode="numeric" value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={commit} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur() }} />
+          <span>{unit}</span>
         </span>
       </div>
-      <div className="lx-slider-rail" ref={rail} style={{ ['--lx-rail-w' as string]: `${railWidth}px` }}>
-        <div className="lx-slider-track"><i /></div>
-        <div className="lx-slider-knob" aria-hidden="true"><div className="lx-slider-lens"><div className="lx-slider-track"><i /></div></div></div>
-        <input id={id} type="range" min={Math.round(min * 100)} max={Math.round(max * 100)} step={Math.round(step * 100)} value={cm} onChange={(event) => onChange(Math.round(Number(event.target.value)) / 100)} aria-valuetext={`${cm} cm`} />
+      <div className="rb-slider-rail" ref={rail} style={{ ['--rb-rail-w' as string]: `${railWidth}px` }}>
+        <div className="rb-slider-track"><i /></div>
+        <div className="rb-slider-knob" aria-hidden="true"><div className="rb-slider-lens"><div className="rb-slider-track"><i /></div></div></div>
+        <input id={id} type="range" min={Math.round(min * factor)} max={Math.round(max * factor)} step={Math.max(1, Math.round(step * factor))} value={shown} onChange={(event) => onChange(Math.round(Number(event.target.value)) / factor)} aria-valuetext={`${shown} ${unit}`} />
       </div>
-      <div className="lx-slider-limits"><span>{Math.round(min * 100)} cm</span><span>{Math.round(max * 100)} cm</span></div>
+      <div className="rb-slider-limits"><span>{Math.round(min * factor)} {unit}</span><span>{Math.round(max * factor)} {unit}</span></div>
     </div>
   )
 }

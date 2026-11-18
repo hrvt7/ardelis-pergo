@@ -20,7 +20,7 @@ interface Props {
 /** Folyékony üveg felület: Chromiumban valódi peremtörés, máshol matt üveg (ugyanaz a kinézet, törés nélkül). */
 export default function LiquidGlass({ className = '', radius, bezel = 18, strength = 34, blur = 14, style, children, as: Tag = 'div', ...aria }: Props) {
   const ref = useRef<HTMLElement | null>(null)
-  const id = `lx-glass-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`
+  const id = `rb-glass-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`
   const [refract] = useState(supportsLiquidRefraction)
   const [size, setSize] = useState<{ w: number; h: number } | null>(null)
   const [map, setMap] = useState('')
@@ -52,8 +52,8 @@ export default function LiquidGlass({ className = '', radius, bezel = 18, streng
   const active = refract && map && size
   const backdrop = active ? `url(#${id}) blur(${blur}px) saturate(165%) brightness(1.03)` : `blur(${blur + 8}px) saturate(165%) brightness(1.03)`
   return (
-    <Tag ref={(node: HTMLElement | null) => { ref.current = node }} className={`lx-glass ${active ? 'is-refracting' : ''} ${className}`} style={{ ...style, borderRadius: radius, backdropFilter: backdrop, WebkitBackdropFilter: backdrop }} {...aria}>
-      {active && <svg className="lx-glass-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <Tag ref={(node: HTMLElement | null) => { ref.current = node }} className={`rb-glass ${active ? 'is-refracting' : ''} ${className}`} style={{ ...style, borderRadius: radius, backdropFilter: backdrop, WebkitBackdropFilter: backdrop }} {...aria}>
+      {active && <svg className="rb-glass-defs" width="0" height="0" aria-hidden="true" focusable="false">
         <filter id={id} x="0" y="0" width={size.w} height={size.h} filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
           <feImage href={map} x="0" y="0" width={size.w} height={size.h} preserveAspectRatio="none" result="map" />
           <feDisplacementMap in="SourceGraphic" in2="map" scale={strength} xChannelSelector="R" yChannelSelector="G" />

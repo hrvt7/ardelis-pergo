@@ -1,5 +1,16 @@
 # Változások
 
+## 5.15 – Újraépítési mód: 3. lépés – Tető (M06–M07)
+
+- **Tetőrendszer:** a gyártó által kínált tetők (zárt építménynél csak a megengedettek) egy oszlopban: ikon, név, rövid leírás, árnyék és eső, és a felár / megtakarítás a jelenlegi tervhez képest.
+- **Üveg / polikarbonát típusa** (ha a tető ilyen): 2 oszlopos kártyák fény- és hőértékkel (tájékoztató) és m²-enkénti felárral.
+- **Próbáld ki: lamellaszög** íves üveggombbal (Ádám videós mintája): a gomb negyedkörön fut 0° és 90° között, a forgásponton a lamella metszete együtt fordul; húzással, kattintással és billentyűvel (nyilak, PageUp/Down, Home/End) is állítható. Eltolható tetőnél „Tetőnyitás %” csúszka. Jelölve: bemutató, az árat nem befolyásolja.
+- **Dőlés:** folyékony csúszka fokban, a hátsó él emelkedésének magyarázatával; a lépés szabályfigyelmeztetései.
+- **További beállítások** (lenyitható): tetőárnyékoló és napelemes tető a meglévő komponensekkel.
+- A csúszka már fokot és százalékot is kezel (nem csak cm-t).
+- **Hiba:** az újraépített felület osztálynevei (`lx-`) ütköztek a nyitóoldal azonos előtagú stílusaival (a tetőkártyák szövege eltűnt); minden új osztály `rb-` előtagot kapott.
+- Tesztek: `rebuildSlider.test.ts` (fok/százalék beírás, az íves csúszka szögszámítása), `rebuildMode.test.ts`.
+
 ## 5.14 – Újraépítési mód: ársáv (M05)
 
 - **Ársáv (D4–D5):** felül jobbra, a lépéskártya mellett lebegő üvegelem: „Becsült ár – bruttó, szereléssel”, animált összeg, változásnál rövid „+/− összeg” jelzés. Telefonon kis ár-pirula a képernyő tetején.

@@ -106,7 +106,7 @@ function AdvisorCard({ onOpen }: { onOpen: () => void }) {
 }
 
 /** Napelemes tető kapcsoló: fix tetőnél be/ki, más tetőnél egy kattintással fix tetőre vált. */
-function SolarToggle({ config, prices, onChange }: { config: PergolaConfig; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void }) {
+export function SolarToggle({ config, prices, onChange }: { config: PergolaConfig; prices: PriceSettings; onChange: (patch: Partial<PergolaConfig>) => void }) {
   const { tenant } = useTenant()
   if (!tenant.extras.solar || !tenant.roofs.fixed) return null
   const solar = estimateSolar(config, null)
@@ -232,7 +232,7 @@ function RoofPicker({ config, prices, onChange }: { config: PergolaConfig; price
   </div>
 }
 
-function RoofIcon({ roof }: { roof: RoofType }) {
+export function RoofIcon({ roof }: { roof: RoofType }) {
   const common = { width: 28, height: 20, viewBox: '0 0 28 20', 'aria-hidden': true, className: 'roof-icon' } as const
   if (roof === 'louvered' || roof === 'retractable') return <svg {...common}>{[3, 8, 13, 18, 23].map((x, i) => <rect key={x} x={roof === 'retractable' && i > 2 ? x - 6 + i : x} y="5" width="3.2" height="10" rx="1" transform={`rotate(-25 ${x + 1.6} 10)`} />)}</svg>
   if (roof === 'fabric') return <svg {...common}><path d="M2 7 Q6 13 10 7 Q14 13 18 7 Q22 13 26 7" fill="none" strokeWidth="2" /></svg>

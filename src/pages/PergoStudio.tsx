@@ -50,6 +50,7 @@ import { currentRebuildMode, moduleVisible } from '@/lib/rebuildMode'
 import StepCard from '@/components/rebuild/StepCard'
 import StepDock from '@/components/rebuild/StepDock'
 import MountStep from '@/components/rebuild/MountStep'
+import RoofStep from '@/components/rebuild/RoofStep'
 import PriceBar from '@/components/rebuild/PriceBar'
 import '@/components/rebuild/rebuild.css'
 import { clearExpansion, LOCKED_STEPS, readExpansion } from '@/lib/expansion'
@@ -602,7 +603,7 @@ export default function PergoStudio() {
             <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={rebuildScene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSceneChange={ignoreSceneChange} /></IntroSceneGate>
           </section>
           {moduleVisible('M05', true) && <PriceBar price={price} compact={isNarrow} />}
-          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={<StepDock step={step} onStep={goStep} />}>{step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : <p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
+          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={<StepDock step={step} onStep={goStep} />}>{step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'roof' && moduleVisible('M06', true) ? <RoofStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : <p className="rb-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
         </main>
         {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
       </div>

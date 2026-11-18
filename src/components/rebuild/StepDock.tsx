@@ -30,18 +30,18 @@ export default function StepDock({ step, onStep }: { step: ConfigStep; onStep: (
   }, [])
 
   return (
-    <nav className="lx-dock" ref={wrap} aria-label={tr('Konfigurálás lépései', 'Konfigurationsschritte')} style={{ height: HEIGHT }}>
-      {width > 0 && <svg className="lx-dock-shape" width={width + FILLET * 2} height={HEIGHT} viewBox={`${-FILLET} 0 ${width + FILLET * 2} ${HEIGHT}`} aria-hidden="true"><path d={dockPath(width, HEIGHT, FILLET, RADIUS)} /></svg>}
+    <nav className="rb-dock" ref={wrap} aria-label={tr('Konfigurálás lépései', 'Konfigurationsschritte')} style={{ height: HEIGHT }}>
+      {width > 0 && <svg className="rb-dock-shape" width={width + FILLET * 2} height={HEIGHT} viewBox={`${-FILLET} 0 ${width + FILLET * 2} ${HEIGHT}`} aria-hidden="true"><path d={dockPath(width, HEIGHT, FILLET, RADIUS)} /></svg>}
       <ol>
         {REBUILD_STEPS.map((item, i) => {
           const state = i < index ? 'is-done' : i === index ? 'is-current' : 'is-next'
           return <li key={item.id}>
             <button type="button" className={state} aria-current={i === index ? 'step' : undefined} aria-label={`${i + 1}. ${item.label}`} title={item.label} onClick={() => onStep(item.id)}>
-              <span className="lx-dock-ring">
-                <svg className="lx-dock-progress" width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle className="lx-dock-track" cx="20" cy="20" r="17" /><circle className="lx-dock-fill" cx="20" cy="20" r="17" strokeDasharray={RING} strokeDashoffset={i <= index ? 0 : RING} /></svg>
+              <span className="rb-dock-ring">
+                <svg className="rb-dock-progress" width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle className="rb-dock-track" cx="20" cy="20" r="17" /><circle className="rb-dock-fill" cx="20" cy="20" r="17" strokeDasharray={RING} strokeDashoffset={i <= index ? 0 : RING} /></svg>
                 <StepIcon step={item.id} size={18} />
               </span>
-              <span className="lx-dock-name">{item.short}</span>
+              <span className="rb-dock-name">{item.short}</span>
             </button>
           </li>
         })}
