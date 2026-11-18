@@ -49,7 +49,7 @@ export default function ColorStep({ config, scene, prices, onChange }: { config:
 
     {twoToneAvailable && <section className="rb-section">
       <div className="rb-modules">
-        <span>{tr('Kéttónusú kivitel', 'Zweifarbig')}</span>
+        <span>{tr('Kivitel', 'Ausführung')}</span>
         <div className="rb-segmented" role="radiogroup" aria-label={tr('Színkialakítás', 'Farbgestaltung')}>
           <button type="button" role="radio" aria-checked={!twoTone} className={!twoTone ? 'is-selected' : ''} onClick={() => setTwoTone(false)}>{tr('Egyszínű', 'Einfarbig')}</button>
           <button type="button" role="radio" aria-checked={twoTone} className={twoTone ? 'is-selected' : ''} onClick={() => setTwoTone(true)}>{tr('Kéttónusú', 'Zweifarbig')}</button>

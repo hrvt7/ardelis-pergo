@@ -37,6 +37,8 @@ interface Props {
   /** A vásárló házának leírása (a 3D beállításból) — a kérelemhez és a PDF-hez. */
   house?: string
   shareUrl?: string
+  /** Az új konfigurátor összegzése: ott a terv sorai és az ár a lépés saját részei, ezért a kép-, ár- és tényblokk nem ismétlődik. */
+  variant?: 'rebuild'
   /** PDF-összefoglaló letöltése (ugyanaz, mint az árpanelen; itt is elérhető, mert az árpanel összecsukható). */
   onExport?: () => void
   exporting?: boolean
@@ -44,7 +46,8 @@ interface Props {
   onFix?: (patch: Partial<PergolaConfig>) => void
 }
 
-export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, onExport, exporting = false, onFix, projectName, onProjectName, house, shareUrl }: Props) {
+export default function SummaryPanel({ config, price, prices, saved, onSave, onLoad, onNotify, onBudget, energyCost, onEnergy, onExport, exporting = false, onFix, projectName, onProjectName, house, shareUrl, variant }: Props) {
+  const rebuild = variant === 'rebuild'
   const { tenant, labels: ROOF_LABELS } = useTenant()
   const [thumbnail, setThumbnail] = useState('')
   const bom = getBom(config)
@@ -109,22 +112,22 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
   return (
     <div className="summary-panel summary-animated">
       {advice.length > 0 && <ul className="advice-list" aria-label={tr('Szakértői megjegyzések', 'Hinweise vom Fachmann')}>{advice.map((item) => <li key={item.id} className={item.level}>{item.text}<IssueFixButton config={config} issueId={item.id} onFix={onFix} /></li>)}</ul>}
-      <section className="showroom">
-        <div className="showroom-image">
+      <section className={`showroom${rebuild ? ' is-name-only' : ''}`}>
+        {!rebuild && <div className="showroom-image">
           {thumbnail ? <img src={thumbnail} onLoad={(event) => event.currentTarget.classList.toggle('is-portrait', event.currentTarget.naturalHeight > event.currentTarget.naturalWidth)} alt={tr(`A konfigurált ${config.building === 'conservatory' ? 'télikert' : config.building === 'veranda' ? 'veranda' : config.building === 'carport' ? 'carport' : 'pergola'} képe`, `Bild ${config.building === 'conservatory' ? 'des konfigurierten Wintergartens' : config.building === 'veranda' ? 'der konfigurierten Veranda' : config.building === 'carport' ? 'des konfigurierten Carports' : 'der konfigurierten Pergola'}`)} /> : <div className="showroom-skeleton"><LoaderCircle size={22} className="spin" /><span>{tr('A kép a körbeforgás közben elkészül…', 'Das Bild wird während der Drehung erstellt…')}</span></div>}
           <button type="button" className="showroom-refresh" onClick={capture} title={tr('Új kép a mostani nézetből', 'Neues Bild aus der aktuellen Ansicht')}><Camera size={15} /><span>{tr('Új kép', 'Neues Bild')}</span></button>
-        </div>
+        </div>}
         <label className="showroom-name"><PencilLine size={15} /><input value={projectName} maxLength={48} placeholder={tr('Adj nevet a tervnek, pl. Kovácsék terasza', 'Benennen Sie den Entwurf, z. B. Terrasse Familie Huber')} onChange={(event) => onProjectName(event.target.value)} aria-label={tr('A terv neve', 'Name des Entwurfs')} /></label>
-        <div className="showroom-facts">
+        {!rebuild && <div className="showroom-facts">
           <span>{ROOF_LABELS[config.roof]}</span>
           <h3>{formatNumber(config.width, 2)} × {formatNumber(config.depth, 2)} m</h3>
           <p>{formatNumber(price.area)} m² · {MOUNT_LABELS[config.mount]} · {colorSummary(tenant, config)}</p>
           <strong>{formatPrice(price.totalGross)}</strong><small>{tr('bruttó irányár, telepítéssel', 'Richtpreis brutto, inkl. Montage')}</small>
-        </div>
+        </div>}
       </section>
       {isClosedBuilding(config.building) && <section className="summary-section building-summary"><BuildingIssues config={config} onFix={onFix} /><PermitNotice building={config.building} /></section>}
 
-      <section className="summary-section lead-section"><div className="summary-section-title"><PackageCheck size={17} /><h3>{tr('Kérj helyszíni felmérést', 'Aufmaß vor Ort anfragen')}</h3></div><LeadForm productFamily="pergola" config={config} estimateNet={price.totalNet} estimateGross={price.totalGross} house={house} /></section>
+      <section className="summary-section lead-section"><div className="summary-section-title"><PackageCheck size={17} /><h3>{rebuild ? tr('Ajánlatkérés', 'Angebotsanfrage') : tr('Kérj helyszíni felmérést', 'Aufmaß vor Ort anfragen')}</h3></div>{rebuild && <p className="lead-intro">{tr('A végleges árhoz a gyártó helyszíni felmérést végez.', 'Für den Endpreis nimmt der Hersteller ein Aufmaß vor Ort.')}</p>}<LeadForm productFamily="pergola" config={config} estimateNet={price.totalNet} estimateGross={price.totalGross} house={house} submitLabel={rebuild ? tr('Ajánlatot kérek', 'Angebot anfragen') : undefined} /></section>
 
       <details className="summary-more"><summary><Share2 size={16} /><span><strong>{tr('Megosztás és mentés', 'Teilen und speichern')}</strong><small>{tr('PDF, kép, videó, WhatsApp, két változat összehasonlítása', 'PDF, Bild, Video, WhatsApp, Vergleich zweier Varianten')}</small></span><ChevronRight size={15} className="summary-more-chevron" /></summary><div className="summary-more-body">
         {onExport && <button type="button" className="showroom-share is-pdf" onClick={onExport} disabled={exporting}>{exporting ? <LoaderCircle size={17} className="spin" /> : <FileDown size={17} />}<span><strong>{exporting ? tr('PDF készül…', 'PDF wird erstellt…') : tr('PDF összefoglaló letöltése', 'PDF-Zusammenfassung herunterladen')}</strong><small>{tr('Méretek, anyaglista, irányár és a 3D-link egy dokumentumban', 'Maße, Materialliste, Richtpreis und 3D-Link in einem Dokument')}</small></span></button>}
@@ -139,7 +142,7 @@ export default function SummaryPanel({ config, price, prices, saved, onSave, onL
       {onEnergy && energyCost ? <button type="button" className="energy-trigger is-summary" onClick={onEnergy}><Gauge size={15} /><span><strong>Üzemeltetés ≈ {formatPrice(energyCost)} / év</strong><small>{tr('Áramköltség valós tarifával · részletek', 'Stromkosten mit realem Tarif · Details')}</small></span><ChevronRight size={14} /></button> : null}
       <section className="summary-section"><div className="summary-section-title"><Code2 size={17} /><h3>{tr('Specifikáció', 'Spezifikation')}</h3></div><div className="spec-code"><span>{tr('Konfigurációs kód', 'Konfigurationscode')}</span><strong>{getSpecCode(config)}</strong></div><dl className="bom-list">{bom.map((line) => <div key={line.label}><dt>{line.label}</dt><dd>{line.value}</dd></div>)}</dl><p className="bom-note">{tr('Tájékoztató anyaglista: szabályalapú becslés, nem gyártási dokumentáció. A végleges méreteket és darabszámokat a felmérés után a gyártó határozza meg.', 'Unverbindliche Materialliste: regelbasierte Schätzung, keine Fertigungsunterlage. Endgültige Maße und Stückzahlen legt der Hersteller nach dem Aufmaß fest.')}</p><div className="delivery-estimate"><Clock3 size={18} /><span><strong>{tr('Tájékoztató átfutási idő', 'Unverbindliche Lieferzeit')}</strong>{getDeliveryEstimate(config)}</span></div></section>
       </div></details>
-      <div className="summary-footnote"><Check size={14} />{tr(`A piszkozat ebben a böngészőben marad; az elküldött felmérési kérelmet a csatolt konfigurációval együtt közvetlenül ${tenant.brand.name} kapja meg.`, `Der Entwurf bleibt in diesem Browser; die gesendete Aufmaß-Anfrage erhält ${tenant.brand.name} direkt, samt beigefügter Konfiguration.`)}</div>
+      {!rebuild && <div className="summary-footnote"><Check size={14} />{tr(`A piszkozat ebben a böngészőben marad; az elküldött felmérési kérelmet a csatolt konfigurációval együtt közvetlenül ${tenant.brand.name} kapja meg.`, `Der Entwurf bleibt in diesem Browser; die gesendete Aufmaß-Anfrage erhält ${tenant.brand.name} direkt, samt beigefügter Konfiguration.`)}</div>}
     </div>
   )
 }

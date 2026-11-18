@@ -22,7 +22,7 @@ export default function SummaryStep({ config, price, onStep, children }: { confi
           </button>
         </li>)}
       </ul>
-      <div className="rb-summary-total"><span>{tr('Becsült bruttó ár', 'Geschätzter Bruttopreis')}<small>{tr('szereléssel, ÁFA-val · tételesen az ársávban', 'inkl. Montage und USt. · Details in der Preisleiste')}</small></span><strong>{formatPrice(price.totalGross)}</strong></div>
+      <div className="rb-summary-total"><span>{tr('Becsült bruttó ár', 'Geschätzter Bruttopreis')}<small>{tr('szereléssel, ÁFA-val', 'inkl. Montage und USt.')}</small></span><strong>{formatPrice(price.totalGross)}</strong></div>
     </section>
     <section className="rb-section rb-legacy rb-summary-legacy">{children}</section>
   </div>

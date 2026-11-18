@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { ConfigStep } from '@/types/pergola'
 import { neighbourStep, REBUILD_STEPS, rebuildStepIndex } from '@/lib/rebuildSteps'
@@ -16,6 +16,9 @@ export default function StepCard({ step, compact, open, onOpenChange, onStep, ba
   const next = neighbourStep(step, 1)
   const nextLabel = next ? REBUILD_STEPS[rebuildStepIndex(next)].label : ''
   const drag = useRef<{ y: number; id: number } | null>(null)
+  const body = useRef<HTMLDivElement>(null)
+  // Lépésváltáskor a lépés tetejéről indul (a kérdés és a fő döntés legyen az első, amit lát).
+  useEffect(() => { if (body.current) body.current.scrollTop = 0 }, [step])
 
   return (
     <LiquidGlass as="aside" className={`rb-stepcard${bar ? ' has-dock' : ''}${compact ? ' is-sheet' : ''}${compact && open ? ' is-open' : ''}`} radius={compact ? 26 : 28} bezel={compact ? 14 : 18} blur={compact ? 6 : 14} aria-label={current.label}>
@@ -28,10 +31,11 @@ export default function StepCard({ step, compact, open, onOpenChange, onStep, ba
         <span className="rb-stepcard-count">{index + 1} / {REBUILD_STEPS.length} · {current.label}</span>
         <h2>{current.question}</h2>
       </header>
-      <div className="rb-stepcard-body">{children}</div>
+      <div className="rb-stepcard-body" ref={body}>{children}</div>
       <footer className="rb-stepcard-nav">
         <button type="button" className="rb-btn-ghost" disabled={!prev} onClick={() => prev && onStep(prev)}><ArrowLeft size={16} />{tr('Vissza', 'Zurück')}</button>
-        {!next && onRequest && <button type="button" className="rb-btn-primary" onClick={onRequest}>{tr('Felmérést kérek', 'Aufmaß anfragen')}<ArrowRight size={16} /></button>}
+        {/* Az utolsó lépésen az űrlap saját „Ajánlatot kérek” gombja az egyetlen fő gomb; itt csak odagörget, ha nem látszik. */}
+        {!next && onRequest && <button type="button" className="rb-btn-ghost rb-btn-jump" onClick={onRequest}>{tr('Az űrlaphoz', 'Zum Formular')}<ArrowRight size={16} /></button>}
         {next && <button type="button" className="rb-btn-primary" onClick={() => onStep(next)}><span>{tr('Tovább', 'Weiter')}<span className="rb-btn-next">: {nextLabel}</span></span><ArrowRight size={16} /></button>}
       </footer>
     </LiquidGlass>

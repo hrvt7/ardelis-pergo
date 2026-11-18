@@ -118,7 +118,8 @@ export default function PergoStudio() {
   // `?mod=ujraepites` előnézet (sandbox): ugyanaz az új felület a gyártó alaptervéből, de nem ír a böngészőbe és nem mér.
   const [rebuild] = useState(() => currentNewUi() && !admin)
   const [sandbox] = useState(currentRebuildMode)
-  const [rebuildSheetOpen, setRebuildSheetOpen] = useState(false)
+  // Telefonon a lépéslap alapból nyitva: a kérdés és az első opciók mindig látszanak (kritikus kör, 2026-11-18).
+  const [rebuildSheetOpen, setRebuildSheetOpen] = useState(true)
   // Bővítés a tulajdonosi oldalról: a felszerelt termékből indul, a meglévő szerkezet zárolt (csak hozzáadni lehet).
   const [expansion] = useState(() => (product === 'pergola' && !rebuild ? readExpansion(tenant.id) : null))
   const expansionBase = useMemo(() => (expansion ? normalizeConfig(tenant, expansion.config) : null), [expansion, tenant])
@@ -603,7 +604,7 @@ export default function PergoStudio() {
   // M08: a 3D-n belüli kattintások (oldal kijelölése, ajtó- és üvegnyitás) visszakapcsolva; telefonon a lap kinyílik.
   const rebuildSideSelect = useCallback((side: SideKey | 'roof') => { handleSideSelect(side); setRebuildSheetOpen(true) }, [handleSideSelect])
   // Összegzés az újraépített felületen: a meglévő panel, a felugró ablakot nyitó gombok nélkül (azok a modulokkal jönnek).
-  const rebuildSummary = <SummaryPanel onFix={updateConfig} shareUrl={createShareUrl(config)} config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} energyCost={energyCost} onExport={handleExport} exporting={exporting} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} />
+  const rebuildSummary = <SummaryPanel onFix={updateConfig} shareUrl={createShareUrl(config)} config={config} price={price} prices={prices} saved={saved} onSave={saveSlot} onLoad={replaceConfig} onNotify={setToast} energyCost={energyCost} onExport={handleExport} exporting={exporting} projectName={projectName} onProjectName={setProjectName} house={houseSummary(scene)} variant="rebuild" />
   // „Ajánlatot kérek” (D6): bármelyik lépésből az összegzés felmérési űrlapjához.
   const requestQuote = useCallback(() => {
     goStep('summary')
@@ -625,7 +626,8 @@ export default function PergoStudio() {
           </section>
           {moduleVisible('M13', true) && <SceneRail config={config} scene={scene} view={view} compact={isNarrow} tucked={isNarrow && rebuildSheetOpen} onUntuck={() => setRebuildSheetOpen(false)} onView={setView} onSceneChange={updateScene} onChange={updateConfig} />}
           {frame && !isNarrow && <StepBar step={step} onStep={goStep} />}
-          {moduleVisible('M05', true) && <PriceBar price={price} compact={isNarrow} onRequest={moduleVisible('M15', true) ? requestQuote : undefined} />}
+          {/* Az összegzésen az ár és az ajánlatkérés a lépés saját része: ott a lebegő ársáv nem ismétli. */}
+          {moduleVisible('M05', true) && step !== 'summary' && <PriceBar price={price} compact={isNarrow} onRequest={moduleVisible('M15', true) ? requestQuote : undefined} />}
           {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} onRequest={moduleVisible('M15', true) ? requestQuote : undefined} bar={isNarrow ? <StepDock step={step} onStep={goStep} /> : undefined}>{step === 'size' && moduleVisible('M12', true) ? <ProductStep config={config} prices={prices} onChange={updateConfig} onPreset={replaceConfig} /> : step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'roof' && moduleVisible('M06', true) ? <RoofStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'sides' && moduleVisible('M08', true) ? <SidesStep config={config} scene={scene} prices={prices} selected={selectedSide} onSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'color' && moduleVisible('M09', true) ? <ColorStep config={config} scene={scene} prices={prices} onChange={updateConfig} /> : step === 'extras' && moduleVisible('M11', true) ? <ComfortStep config={config} scene={scene} prices={prices} energyCost={energyCost} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'summary' && moduleVisible('M14', true) ? <SummaryStep config={config} price={price} onStep={goStep}>{rebuildSummary}</SummaryStep> : <p className="rb-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
         </main>
         {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}

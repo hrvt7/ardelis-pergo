@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, Info } from 'lucide-react'
+import { ChevronDown, Info, X } from 'lucide-react'
 import type { PriceBreakdown } from '@/types/pergola'
 import { formatPrice } from '@/lib/pricing'
 import { useTenant } from '@/tenants/TenantContext'
@@ -39,6 +39,7 @@ export default function PriceBar({ price, compact, onRequest }: { price: PriceBr
       {onRequest && <button type="button" className="rb-price-request" onClick={onRequest}>{tr('Ajánlatot kérek', 'Angebot anfragen')}</button>}
       {open && <LiquidGlass className="rb-price-details" radius={22} bezel={12} strength={22}>
         <div id="rb-price-details" role="region" aria-label={tr('Tételes kalkuláció', 'Detaillierte Kalkulation')}>
+          <header className="rb-price-details-head"><strong>{tr('Tételes kalkuláció', 'Detaillierte Kalkulation')}</strong><button type="button" aria-label={tr('Bezárás', 'Schließen')} onClick={() => setOpen(false)}><X size={16} /></button></header>
           <ul>
             {price.lines.map((line) => <li key={line.id}><span>{line.label}<small>{line.detail}</small></span><b>{formatPrice(line.amountNet)}</b></li>)}
             {price.installationNet > 0 && <li><span>{tr('Szerelés', 'Montage')}</span><b>{formatPrice(price.installationNet)}</b></li>}

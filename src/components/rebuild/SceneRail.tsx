@@ -53,7 +53,7 @@ export default function SceneRail({ config, scene, view, compact, tucked = false
         {([[13, tr('Nappal', 'Tag'), Sun, 'day'], [18, tr('Aranyóra', 'Goldene Stunde'), Sunset, 'sunset'], [22, tr('Éjszaka', 'Nacht'), Moon, 'night']] as const).map(([hour, label, Icon, id]) => <button type="button" role="radio" aria-checked={scene.time === id} key={id} className={`rb-option rb-view${scene.time === id ? ' is-selected' : ''}`} onClick={() => setDayTime(hour)}><Icon size={18} strokeWidth={1.6} /><strong>{label}</strong></button>)}
       </div>
       <LiquidSlider label={tr('Időpont', 'Uhrzeit')} unit="h" step={1} value={Math.round(scene.dayTime)} min={6} max={23} onChange={setDayTime} />
-      <p className="rb-note">{tr('A terasz tájolását a Hely és méret lépésben adhatod meg.', 'Die Ausrichtung der Terrasse stellen Sie im Schritt Ort und Größe ein.')}</p>
+      <p className="rb-note">{tr('A terasz tájolását a Méret lépésben adhatod meg.', 'Die Ausrichtung der Terrasse stellen Sie im Schritt Größe ein.')}</p>
     </> },
     environment: { title: tr('Környezet', 'Umgebung'), body: <>
       <div className="rb-view-grid is-two" role="radiogroup" aria-label={tr('Háttér', 'Hintergrund')}>

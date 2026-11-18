@@ -22,6 +22,8 @@ interface Props {
   estimateGross?: number
   /** A vásárló házának leírása a 3D beállításból (pl. „Vakolt homlokzat (fehér) · antracit nyílászárók”). */
   house?: string
+  /** A beküldő gomb felirata (alapból „Felmérési kérelem elküldése”; az új konfigurátorban „Ajánlatot kérek”). */
+  submitLabel?: string
 }
 
 type LeadResponse = { ok: true; ref: string } | { ok: false; error: string; field?: string }
@@ -38,7 +40,7 @@ const FIELD_NAMES: Record<string, string> = localized(() => ({
   'customer.notes': tr('a megjegyzést', 'die Anmerkung'),
 }))
 
-export default function LeadForm({ productFamily, config, house }: Props) {
+export default function LeadForm({ productFamily, config, house, submitLabel }: Props) {
   const { tenant, embed, product, dealer } = useTenant()
   const hasRegionRules = productFamily === 'pergola' && Object.keys(tenant.pricingRules?.regionSurcharges ?? {}).length > 0
   // Regionális felárnál nincs előre kiválasztott régió: a vevő maga választ (a rossz alapérték csendben rossz árat adna).
@@ -178,7 +180,7 @@ export default function LeadForm({ productFamily, config, house }: Props) {
     <label className={`consent-row${fieldErrors.consent ? ' is-invalid' : ''}`}><input type="checkbox" name="consent" checked={consent} onChange={(event) => { setConsent(event.target.checked); clearField('consent') }} aria-invalid={fieldErrors.consent ? true : undefined} aria-describedby={fieldErrors.consent ? 'lead-err-consent' : undefined} /><span><ShieldCheck size={15} aria-hidden="true" />{tr(`Hozzájárulok, hogy a felmérési kérelem egyeztetéséhez ${tenant.brand.legalName} kezelje a megadott adataimat.`, `Ich willige ein, dass ${tenant.brand.legalName} meine angegebenen Daten zur Abstimmung der Aufmaß-Anfrage verarbeitet.`)}{tenant.brand.privacyUrl && <> <a href={tenant.brand.privacyUrl} target="_blank" rel="noreferrer">{tr('Adatkezelési tájékoztató', 'Datenschutzerklärung')}</a>.</>} {tr('A kérelem nem minősül megrendelésnek.', 'Die Anfrage ist keine Bestellung.')}</span></label>
     {fieldError('consent')}
     {error && <p className="form-error" role="alert">{error}</p>}
-    <button className={`lead-submit${pending ? ' is-pending' : ''}`} type="submit" disabled={pending} aria-disabled={pending || undefined}>{pending ? tr('Küldés…', 'Wird gesendet…') : tr('Felmérési kérelem elküldése', 'Aufmaß-Anfrage senden')}{pending ? <span className="lead-spinner" aria-hidden="true" /> : <ArrowRight size={16} />}</button>
-    <small className="privacy-note"><LockKeyhole size={13} />{tr('A fotós helyi előnézet képe nem kerül feltöltésre. Az űrlap csak a fenti, általad megadott adatokat küldi.', 'Das Bild der lokalen Fotovorschau wird nicht hochgeladen. Das Formular sendet nur die oben von Ihnen eingegebenen Daten.')}</small>
+    <button className={`lead-submit${pending ? ' is-pending' : ''}`} type="submit" disabled={pending} aria-disabled={pending || undefined}>{pending ? tr('Küldés…', 'Wird gesendet…') : submitLabel ?? tr('Felmérési kérelem elküldése', 'Aufmaß-Anfrage senden')}{pending ? <span className="lead-spinner" aria-hidden="true" /> : <ArrowRight size={16} />}</button>
+    <small className="privacy-note"><LockKeyhole size={13} />{tr('Az űrlap csak a fenti, általad megadott adatokat küldi; a saját fotód nem töltődik fel.', 'Das Formular sendet nur die oben von Ihnen eingegebenen Daten; Ihr eigenes Foto wird nicht hochgeladen.')}</small>
   </form>
 }

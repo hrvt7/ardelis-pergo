@@ -1,5 +1,18 @@
 # Változások
 
+## 5.29 – Új konfigurátor: a kritikus kör hibáinak javítása
+
+- **Telefon és álló tablet:** a lépéslap alapból nyitva (kérdés, lépéssáv, első opciók); összecsukva is látszik a lépéssáv és a kérdés. A fogantyú érintési felülete legalább 44 px; tableten a lap legfeljebb 680 px széles.
+- **Összegzés:** egy szó, egy gomb – az űrlap „Ajánlatot kérek” gombja; a lebegő ársáv és az ismétlődő ár eltűnt erről a lépésről, az üres képhely és a tényblokk nem jelenik meg, a tervnév normál mező, az önmagyarázó lábjegyzet kikerült. Az alsó sávban „Az űrlaphoz” csak odagörget.
+- **Panel:** lépésváltáskor a tetejéről indul; a görgetett tartalom a széleken elhalványul (nincs kemény vágás).
+- **Oldalak:** az íves választó helyett teljes kontrasztú lista – ikon, név, leírás és felár minden soron; a ház felőli oldal vékony sraffozással.
+- **Egy „kiválasztva” jel:** világos lap, sötét keret, sötét pipa (típus, tető, oldal, szín, csomag). A lime csak az aktív lépést és a bekapcsolt állapotot jelzi; a jelvény, az összegző ár és a kész-pontok semlegesek.
+- **1. lépés:** tömör típuskártyák (leírás és címkék csak a kiválasztottnál); a csomagoknál is árkülönbség látszik, az aktív csomag pipát kap.
+- **Szöveg és ár:** egy lépésnév mindenhol („Méret”); a 6. lépés kérdése „Mi kerüljön még bele?”; a komfortopciók ára egységesen a teljes becsült ár változása („+X Ft”, fűtésnél és ventilátornál „/ db”), „fm” nélkül.
+- **Ársáv:** a részletek a gomb alatt lebegnek (a gomb nem szélesedik), saját bezáró gombbal; telefonon is látszik a „bruttó, szereléssel”.
+- **Olvashatóság és érintés:** legkisebb szöveg 12 px, lépésnevek és felárak 13 px; érintős eszközön minden vezérlő legalább 44 px; 1600 px fölött nagyobb kártya és betű.
+- Tesztek: `rebuildCriticFixes.test.ts`.
+
 ## 5.28 – Élesítés (M19): az új konfigurátor-felület lett az alapértelmezés
 
 - **Ádám döntése (2026-11-18):** a `/konfigurator` (pergola és carport) paraméter nélkül az új felületet mutatja: teljes képernyős 3D, jobb oldali folyékony üveg lépéskártya, alsó lépéssáv, bal oldali Nézet és Környezet sín, becsült ársáv és ajánlatkérés minden lépésből. Telefonon alulról nyíló lap.
