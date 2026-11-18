@@ -1,5 +1,11 @@
 # Változások
 
+## 5.21 – Újraépítési mód: 1. lépés – Termék (M12)
+
+- **Hiba (Ádám jelezte):** az 1. lépés üres maradt („a következő modulokkal érkeznek”), mert az építménytípus modulja (M12) még nem volt visszaépítve.
+- **Termék lépés:** a meglévő építménytípus-választó (pergola, veranda, télikert, carport, felárral és jellemzőkkel), alatta „Kiindulás egy kattintással”: a gyártó kiinduló csomagjai az adott típushoz, mindegyiken a teljes becsült ár („kb.”) és a „Legnépszerűbb” jelölés.
+- A modulház és a Tanácsadó itt még nincs (külön motor, illetve felugró ablak – a különleges módok és a döntéstámogatók moduljával jönnek).
+
 ## 5.20 – Újraépítési mód: 7. lépés – Összegzés és ajánlatkérés (M14–M15)
 
 - **„A terved”:** lépésenként egy sor a lényeggel (termék; rögzítés és méretek; tető, üveg, dőlés; zárt oldalak; szín, kéttónusúnál mindkettő; kiegészítők), mindegyiken „Módosítás” → vissza a lépésre (BMW/Porsche-minta). Alatta a becsült bruttó ár.

@@ -1,5 +1,5 @@
 /* Újraépített konfigurátor (`?mod=ujraepites`): lebegő elemek a teljes képernyős 3D fölött. */
-.rebuild-shell { --accent-selected: color-mix(in oklab, #C4F03C 45%, #fff); --l-vanilla: color-mix(in oklab, #C4F03C 45%, #fff); --rb-card-w: 400px; --rb-gap: 20px; --rb-ink: #15171a; --rb-bar: rgba(21, 22, 25, .92); --rb-accent: #C4F03C; font-family: inherit; }
+.rebuild-shell { --accent-selected: color-mix(in oklab, #C4F03C 45%, #fff); --l-vanilla: color-mix(in oklab, #C4F03C 45%, #fff); --accent-subtle: color-mix(in oklab, #C4F03C 35%, #fff); --rb-card-w: 400px; --rb-gap: 20px; --rb-ink: #15171a; --rb-bar: rgba(21, 22, 25, .92); --rb-accent: #C4F03C; font-family: inherit; }
 
 /* Lépéssáv: közös mozgás */
 .rebuild-shell { --rb-ease: cubic-bezier(.62, 0, .3, 1); --rb-move: .62s; }
@@ -309,3 +309,9 @@
 .rb-price-request:hover { background: #24272b; }
 
 .rb-price.is-compact .rb-price-request { height: 32px; font-size: 12.5px; justify-self: end; padding: 0 16px; }
+
+/* 1. lépés: termék */
+.rb-presets { display: grid; gap: 8px; }
+.rb-option.rb-preset { grid-template-columns: 1fr auto; justify-items: start; align-items: center; gap: 12px; padding: 12px 14px; text-align: left; }
+.rb-option.rb-preset.is-featured { border-color: color-mix(in oklab, var(--rb-accent) 70%, #fff); }
+.rb-badge { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--rb-accent); color: #10120f; font-style: normal; font-size: 10.5px; font-weight: 700; vertical-align: 2px; }

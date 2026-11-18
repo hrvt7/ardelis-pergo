@@ -31,7 +31,7 @@
 | M09 | Szerkezet- és tetőszín | KÉSZ, JÓVÁHAGYÁSRA VÁR | D11 | 6 gyakori szín + egyedi RAL kód (5.18); kéttónusú vissza; a katalógus és a fotós szín nincs a lépésben |
 | M10 | Ház és környezet | NEM INDULT | – | |
 | M11 | Komfort és vezérlés | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 6. lépésben (Komfort), fém kapcsolókkal (5.19) |
-| M12 | Építménytípus | NEM INDULT | – | |
+| M12 | Építménytípus | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | Az 1. lépésben (Termék) + kiinduló csomagok (5.21); modulház és Tanácsadó később |
 | M13 | Nézet és jelenet-beállítások | NEM INDULT | – | |
 | M14 | Összegzés, mentés, megosztás, export | KÉSZ, JÓVÁHAGYÁSRA VÁR | D6 | A 7. lépésben: „A terved” sorok Módosítással + a meglévő összegző panel (5.20) |
 | M15 | Ajánlatkérés | KÉSZ, JÓVÁHAGYÁSRA VÁR | D6 | Felmérési űrlap az összegzésben; „Ajánlatot kérek” minden lépésből (D6) (5.20) |
