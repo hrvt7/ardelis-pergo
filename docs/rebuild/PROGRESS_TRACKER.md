@@ -21,8 +21,8 @@
 |---|---|---|---|---|
 | M00 | Lecsupaszítás | KÉSZ | D1–D3 | `?mod=ujraepites`: teljes képernyős 3D, a gyártó alaptervéből, mérés és böngészőírás nélkül, 3D-kattintások ki (5.06) |
 | M01 | Panelkeret és lépésnavigáció | KÉSZ | D8 | Gyűrűs lépéssáv a lépéskártya tetején (asztal) / a lap tetején (telefon), folyékony üveg kártya (5.07–5.11) |
-| M02 | Elhelyezés | NEM INDULT | – | |
-| M03 | Méretek és modulok | NEM INDULT | – | |
+| M02 | Elhelyezés | KÉSZ, JÓVÁHAGYÁSRA VÁR | D9 | A 2. lépésben (Hely és méret), 5.12 |
+| M03 | Méretek és modulok | KÉSZ, JÓVÁHAGYÁSRA VÁR | D9 | A 2. lépésben (Hely és méret), 5.12 |
 | M04 | Visszavonás, újra, alaphelyzet | NEM INDULT | – | |
 | M05 | Élő ár és kalkuláció | NEM INDULT | – | |
 | M06 | Tetőrendszer és tetőmozgatás | NEM INDULT | – | |
@@ -49,6 +49,7 @@
 | D3 | M00: kiinduló terv a gyártó alapterve, vagy a böngésző utolsó terve? | Gyártói alapterv | **2026-11-18: gyártói alapterv** |
 | D7 | Lépés-architektúra (`STEP_ARCHITECTURE.md`) | 7 lépés; ház és környezet az eszköztárba; bútor a 2. lépésbe | **2026-11-18: jóváhagyva a javaslat szerint.** A modulok sorrendje ehhez igazodik (M01 = lebegő lépéssáv és üvegpanel). |
 | D8 | M01 megjelenés (`UI_INSPIRATION.md`) | – | **2026-11-18:** asztalon a lépéssáv a kártya tetején, a 03-as minta stílusában (gyűrűs dokk, a kártya széléhez olvadva); telefonon ugyanez a felhúzható lap tetején, összecsukva csak Vissza / Tovább; kártya folyékony üvegből; az eszköztár a bal szélre tapad (M13/M16). Panelszélesség-húzás nincs (fix kártya). |
+| D9 | 2. lépés megjelenése | – | **2026-11-18:** folyékony üveg csúszka lime színnel (mindhárom méretre); rögzítés 2 oszlopos rácsban rajzokkal; a bútor lenyitható „Mire használod?” részben. |
 | D4 | Ársáv helye | Felül jobbra | **2026-11-18: felül jobbra**, a lépéssáv mellett, mindig látható lebegő üvegelem. |
 | D5 | Alapértelmezett ármód új gyártónál | Becsült teljes ár | **2026-11-18: becsült teljes ár** „becsült” felirattal; a gyártó átkapcsolhatja „-tól” árra vagy rejtett árra. |
 | D6 | Ajánlatkérés helye | Minden lépésből | **2026-11-18: minden lépésből** elérhető másodlagos gombként; a fő gomb marad a „Tovább”. |

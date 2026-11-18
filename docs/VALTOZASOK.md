@@ -1,5 +1,13 @@
 # Változások
 
+## 5.12 – Újraépítési mód: 2. lépés – Hely és méret (M02–M03)
+
+- **Rögzítés:** 2 oszlopos rács felülnézeti rajzokkal (ház falai, pergolakeret, oszlopok), a gyártó által kínált módokkal; a kiválasztott leírása alatta.
+- **Méretek:** szélesség, mélység, oszlopmagasság folyékony üveg csúszkával (Ádám mintája, lime): a fogantyú átlátszó lencse, amely felnagyítja az alatta futó sávot; mellette centiméteres mező (5 cm-re kerekít, a gyártói határok közé szorít), alatta a minimum és a maximum. Alatta valódi csúszkavezérlő van (billentyű, képernyőolvasó).
+- **Modulok száma** (ha a gyártó kínálja), középoszlop-figyelmeztetés 6 m felett, méretjavaslat, a lépés szabályfigyelmeztetései egy kattintásos javítással – a meglévő logikával.
+- **„Mire használod?”** lenyitható részben: a meglévő bútorválasztó helyigény-ellenőrzéssel.
+- Tesztek: `rebuildSlider.test.ts` (csúszkahelyzet, centiméter → méter kerekítés és határok), `rebuildMode.test.ts` (M02–M03 látható).
+
 ## 5.11 – Újraépítési mód: telefonon is a lap tetején a lépéssáv, összecsukva csak Vissza / Tovább
 
 - **Telefon:** a gyűrűs lépéssáv a felhúzható lap tetejére került (mint asztalon a kártya tetején); az alsó bemélyedéses sáv megszűnt.

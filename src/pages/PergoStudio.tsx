@@ -49,6 +49,7 @@ import { mobileBarAction } from '@/lib/configSteps'
 import { currentRebuildMode, moduleVisible } from '@/lib/rebuildMode'
 import StepCard from '@/components/rebuild/StepCard'
 import StepDock from '@/components/rebuild/StepDock'
+import MountStep from '@/components/rebuild/MountStep'
 import '@/components/rebuild/rebuild.css'
 import { clearExpansion, LOCKED_STEPS, readExpansion } from '@/lib/expansion'
 import { clampExpansion } from '@/lib/installations'
@@ -597,7 +598,7 @@ export default function PergoStudio() {
           <section className="viewer-panel" aria-label={tr('3D előnézet', '3D-Vorschau')}>
             <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={scene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSceneChange={ignoreSceneChange} /></IntroSceneGate>
           </section>
-          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={<StepDock step={step} onStep={goStep} />}><p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p></StepCard>}
+          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={<StepDock step={step} onStep={goStep} />}>{step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : <p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
         </main>
         {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
       </div>
