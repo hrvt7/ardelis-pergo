@@ -27,7 +27,7 @@
 | M05 | Élő ár és kalkuláció | KÉSZ, JÓVÁHAGYÁSRA VÁR | D4, D5 | Ársáv felül jobbra + Részletek (5.14); hátra: gyártónkénti ármód-kapcsoló (új admin-beállítás) |
 | M06 | Tetőrendszer és tetőmozgatás | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 3. lépésben (Tető), 5.15 |
 | M07 | Tetőelemek | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 3. lépésben (Tető), 5.15 |
-| M08 | Oldalzárások | NEM INDULT | – | |
+| M08 | Oldalzárások | KÉSZ, JÓVÁHAGYÁSRA VÁR | D2, D7 | A 4. lépésben (Oldalak) + 3D-kattintások vissza, 5.16 |
 | M09 | Szerkezet- és tetőszín | NEM INDULT | – | |
 | M10 | Ház és környezet | NEM INDULT | – | |
 | M11 | Komfort és vezérlés | NEM INDULT | – | |

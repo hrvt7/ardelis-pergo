@@ -1,5 +1,12 @@
 # Változások
 
+## 5.16 – Újraépítési mód: 4. lépés – Oldalak (M08)
+
+- **Oldalválasztó felülnézet:** a négy oldal a tető körül (hátsó, bal, jobb, elülső), mindegyiken a jelenlegi elem neve; a ház falai sötéten, nem választhatók; a kiválasztott lime. A 3D modellen is rá lehet kattintani egy oldalra (telefonon ilyenkor kinyílik a lap).
+- **A kiválasztott oldal:** a meglévő oldalbeállító (egész oldal / két fél, 10 oldaltípus felárral), ZIP-nél nyitottság %-ban, ajtónál „Nyitás a másik oldalra”; zárt építménynél falüvegezés; a lépés szabályfigyelmeztetései.
+- **3D-kattintások vissza:** oldal kijelölése, tolóüveg, lamellafal és ajtó nyitása kattintásra (az M00 óta ki voltak kapcsolva).
+- A meglévő választók kiemelőszíne az újraépített felületen lime (a régi vaníliasárga helyett), a bútorválasztóban is.
+
 ## 5.15 – Újraépítési mód: 3. lépés – Tető (M06–M07)
 
 - **Tetőrendszer:** a gyártó által kínált tetők (zárt építménynél csak a megengedettek) egy oszlopban: ikon, név, rövid leírás, árnyék és eső, és a felár / megtakarítás a jelenlegi tervhez képest.

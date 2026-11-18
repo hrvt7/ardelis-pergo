@@ -1,5 +1,5 @@
 /* Újraépített konfigurátor (`?mod=ujraepites`): lebegő elemek a teljes képernyős 3D fölött. */
-.rebuild-shell { --rb-card-w: 400px; --rb-gap: 20px; --rb-ink: #15171a; --rb-bar: rgba(21, 22, 25, .92); --rb-accent: #C4F03C; font-family: inherit; }
+.rebuild-shell { --accent-selected: color-mix(in oklab, #C4F03C 45%, #fff); --l-vanilla: color-mix(in oklab, #C4F03C 45%, #fff); --rb-card-w: 400px; --rb-gap: 20px; --rb-ink: #15171a; --rb-bar: rgba(21, 22, 25, .92); --rb-accent: #C4F03C; font-family: inherit; }
 
 /* Lépéssáv: közös mozgás */
 .rebuild-shell { --rb-ease: cubic-bezier(.62, 0, .3, 1); --rb-move: .62s; }
@@ -193,3 +193,23 @@
 .rb-arc-value { font-size: 34px; font-weight: 700; fill: var(--rb-ink); font-variant-numeric: tabular-nums; }
 .rb-arc-caption { font-size: 12.5px; fill: rgba(21, 23, 26, .55); }
 .rb-legacy { display: grid; gap: 10px; }
+
+/* 4. lépés: oldalak – felülnézeti választó */
+.rb-sides { position: relative; display: grid; grid-template-columns: 74px 1fr 74px; grid-template-rows: 58px 92px 58px; gap: 6px; }
+.rb-side { display: grid; align-content: center; justify-items: center; gap: 2px; padding: 6px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, .6); background: rgba(255, 255, 255, .32); color: var(--rb-ink); font: inherit; cursor: pointer; text-align: center; transition: background .2s, box-shadow .2s; }
+.rb-side strong { font-size: 12.5px; font-weight: 650; }
+.rb-side small { font-size: 11px; line-height: 1.2; color: rgba(21, 23, 26, .6); }
+.rb-side:hover:not(:disabled) { background: rgba(255, 255, 255, .55); }
+.rb-side.is-closed { background: rgba(255, 255, 255, .55); }
+.rb-side.is-selected { background: color-mix(in oklab, var(--rb-accent) 55%, #fff); box-shadow: inset 0 0 0 1.5px var(--rb-ink); }
+.rb-side.is-wall { background: var(--rb-ink); color: rgba(255, 255, 255, .85); cursor: default; }
+.rb-side.is-wall small { color: rgba(255, 255, 255, .55); }
+.rb-side-back { grid-column: 1 / -1; grid-row: 1; }
+.rb-side-left { grid-column: 1; grid-row: 2; }
+.rb-side-right { grid-column: 3; grid-row: 2; }
+.rb-side-front { grid-column: 1 / -1; grid-row: 3; }
+.rb-sides-roof { grid-column: 2; grid-row: 2; display: grid; place-items: center; border-radius: 14px; background: repeating-linear-gradient(90deg, rgba(21, 23, 26, .08) 0 2px, transparent 2px 10px); font-size: 12px; font-weight: 600; color: rgba(21, 23, 26, .45); }
+.rb-hint { display: flex; align-items: center; gap: 6px; }
+.rb-option.rb-toggle { grid-template-columns: auto 1fr; justify-items: start; align-items: center; gap: 12px; padding: 12px 14px; text-align: left; }
+.rb-option.rb-toggle span { display: grid; gap: 2px; }
+.rb-option.rb-toggle small { font-size: 12px; color: rgba(21, 23, 26, .6); }

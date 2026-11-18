@@ -51,6 +51,7 @@ import StepCard from '@/components/rebuild/StepCard'
 import StepDock from '@/components/rebuild/StepDock'
 import MountStep from '@/components/rebuild/MountStep'
 import RoofStep from '@/components/rebuild/RoofStep'
+import SidesStep from '@/components/rebuild/SidesStep'
 import PriceBar from '@/components/rebuild/PriceBar'
 import '@/components/rebuild/rebuild.css'
 import { clearExpansion, LOCKED_STEPS, readExpansion } from '@/lib/expansion'
@@ -590,9 +591,12 @@ export default function PergoStudio() {
   // Újraépítési mód (M00): csak a teljes képernyős 3D. Forgatás, nagyítás, mozgatás működik; a 3D-n belüli
   // kattintások (oldal kijelölése, ajtó- és üvegnyitás) kikapcsolva, a felületi elemek a modulokkal jönnek vissza.
   // Újraépítési mód: a Hely és méret lépésben a 3D méretcímkéi automatikusan látszanak (kilépéskor visszaáll).
+  // M08: a 3D-n belüli kattintások (oldal kijelölése, ajtó- és üvegnyitás) visszakapcsolva; telefonon a lap kinyílik.
+  const rebuildSideSelect = useCallback((side: SideKey | 'roof') => { handleSideSelect(side); setRebuildSheetOpen(true) }, [handleSideSelect])
   const rebuildScene = useMemo(() => (rebuild && step === 'mount' && !scene.showDimensions ? { ...scene, showDimensions: true } : scene), [rebuild, step, scene])
   if (rebuild) {
     const frame = moduleVisible('M01', true)
+    const clicks = moduleVisible('M08', true)
     // Asztalon a pergola a kártya nélküli rész közepére kerül; telefonon a lap fölé.
     const rebuildShiftX = frame && !isNarrow && viewportWidth > 0 ? (400 + 40) / 2 / viewportWidth : 0
     const rebuildShiftY = frame && isNarrow ? (rebuildSheetOpen ? 0.3 : 0.05) : 0
@@ -600,10 +604,10 @@ export default function PergoStudio() {
       <div className="app-shell rebuild-shell">
         <main className="rebuild-stage" id="top">
           <section className="viewer-panel" aria-label={tr('3D előnézet', '3D-Vorschau')}>
-            <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={rebuildScene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSceneChange={ignoreSceneChange} /></IntroSceneGate>
+            <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={rebuildScene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSideSelect={clicks ? rebuildSideSelect : undefined} onSceneChange={clicks ? updateScene : ignoreSceneChange} /></IntroSceneGate>
           </section>
           {moduleVisible('M05', true) && <PriceBar price={price} compact={isNarrow} />}
-          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={<StepDock step={step} onStep={goStep} />}>{step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'roof' && moduleVisible('M06', true) ? <RoofStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : <p className="rb-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
+          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={<StepDock step={step} onStep={goStep} />}>{step === 'mount' && moduleVisible('M03', true) ? <MountStep config={config} scene={scene} prices={prices} area={price.area} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'roof' && moduleVisible('M06', true) ? <RoofStep config={config} scene={scene} prices={prices} onChange={updateConfig} onSceneChange={updateScene} /> : step === 'sides' && moduleVisible('M08', true) ? <SidesStep config={config} scene={scene} prices={prices} selected={selectedSide} onSelect={selectSide} onChange={updateConfig} onSceneChange={updateScene} /> : <p className="rb-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p>}</StepCard>}
         </main>
         {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
       </div>

@@ -14,9 +14,9 @@ describe('újraépítési mód', () => {
     for (const module of REBUILD_MODULES) expect(moduleVisible(module, false)).toBe(true)
   })
 
-  it('újraépítési módban csak a visszaépített modulok látszanak (most: M01–M03, M05–M07)', () => {
-    expect([...REBUILT_MODULES]).toEqual(['M01', 'M02', 'M03', 'M05', 'M06', 'M07'])
-    for (const module of REBUILD_MODULES) expect(moduleVisible(module, true)).toBe(['M01', 'M02', 'M03', 'M05', 'M06', 'M07'].includes(module))
+  it('újraépítési módban csak a visszaépített modulok látszanak (most: M01–M03, M05–M08)', () => {
+    expect([...REBUILT_MODULES]).toEqual(['M01', 'M02', 'M03', 'M05', 'M06', 'M07', 'M08'])
+    for (const module of REBUILD_MODULES) expect(moduleVisible(module, true)).toBe(['M01', 'M02', 'M03', 'M05', 'M06', 'M07', 'M08'].includes(module))
   })
 
   it('a visszaépített modul újraépítési módban is látszik', () => {
