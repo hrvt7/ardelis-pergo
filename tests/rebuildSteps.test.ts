@@ -20,8 +20,8 @@ describe('újraépített lépések', () => {
 })
 
 describe('lépéssáv a kártya tetején', () => {
-  it('a rövid nevek elférnek', () => {
-    expect(REBUILD_STEPS.every((step) => step.short.length <= 9)).toBe(true)
+  it('a rövid nevek elférnek a 92 px-es oszlopban', () => {
+    expect(REBUILD_STEPS.every((step) => step.short.length <= 13)).toBe(true)
   })
 })
 

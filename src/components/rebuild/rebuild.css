@@ -464,3 +464,107 @@
 }
 /* Telefonon az „Ajánlatot kérek” kompakt, jobbra igazított gomb (nem teljes szélességű sáv a 3D fölött). */
 .rb-price.is-compact .rb-price-request { width: auto; justify-self: end; padding: 0 20px; }
+
+/* ── Kritikus kör, 2. forduló ───────────────────────────────────────────────────────────────────────────────────── */
+
+/* Fejléc: a lépés nevét a lépéssáv mutatja, itt csak a kérdés (képernyőolvasónak megmarad). Telefonon jobbra a lap
+   összecsukó gombja (44 px), a fejléc húzható; külön fogantyú-sor nincs. */
+.rb-stepcard-count { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.rb-stepcard-head { position: relative; border-bottom: 1px solid rgba(21, 23, 26, .08); padding-bottom: 14px; }
+.rb-stepcard-head h2 { margin-top: 0; }
+.rb-stepcard.is-sheet .rb-stepcard-head { padding: 12px 64px 10px 20px; touch-action: none; }
+.rb-sheet-toggle { position: absolute; top: 50%; right: 12px; display: grid; place-items: center; width: 44px; height: 44px; margin-top: -22px; border: 0; border-radius: 50%; background: rgba(21, 23, 26, .07); color: var(--rb-ink); cursor: pointer; transition: transform .3s var(--rb-ease); }
+.rb-stepcard.is-sheet:not(.is-open) .rb-sheet-toggle { transform: rotate(180deg); }
+/* A görgetett tartalom csak alul tűnik el; felül a fejléc vonala zár (nem látszik át semmi a kérdés alatt). */
+.rb-stepcard-body { -webkit-mask-image: linear-gradient(#000 0, #000 calc(100% - 22px), transparent 100%); mask-image: linear-gradient(#000 0, #000 calc(100% - 22px), transparent 100%); padding-top: 16px; }
+
+/* Lábléc: ársor + Vissza / Tovább egy tömbben (asztalon az ár külön sorban, telefonon a gombok között). */
+.rb-stepcard-foot { border-top: 1px solid rgba(21, 23, 26, .08); }
+.rb-stepcard-foot .rb-price { position: static; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px 0; }
+.rb-stepcard-foot .rb-price-main { display: grid; grid-template-columns: none; gap: 0; padding: 0; text-align: left; }
+.rb-stepcard-foot .rb-price-label { font-size: 12px; font-weight: 600; letter-spacing: 0; color: rgba(21, 23, 26, .68); }
+.rb-stepcard-foot .rb-price-main strong { display: inline-flex; align-items: center; gap: 6px; font-size: 22px; }
+.rb-price-chevron { transition: transform .3s var(--rb-ease); color: rgba(21, 23, 26, .6); }
+.rb-price.is-open .rb-price-chevron { transform: rotate(180deg); }
+.rb-stepcard-foot .rb-price-request { width: auto; height: 44px; padding: 0 18px; background: rgba(255, 255, 255, .55); color: var(--rb-ink); border: 1px solid rgba(21, 23, 26, .2); box-shadow: none; font-size: 14px; }
+.rb-stepcard-foot .rb-price-request:hover { background: #fff; }
+.rb-stepcard-foot .rb-price .delta-pop { right: auto; left: 20px; top: -14px; }
+.rb-stepcard-nav { padding: 14px 18px 18px; }
+.rb-stepcard.is-sheet .rb-stepcard-nav { align-items: center; padding: 10px 12px 12px; }
+.rb-stepcard.is-sheet .rb-stepcard-nav .rb-btn-ghost { flex: none; width: 48px; padding: 0; }
+.rb-stepcard.is-sheet .rb-btn-back-text { display: none; }
+.rb-stepcard.is-sheet .rb-stepcard-nav .rb-price { flex: 1; min-width: 0; padding: 0; justify-content: center; }
+.rb-stepcard.is-sheet .rb-stepcard-nav .rb-price-main strong { font-size: 18px; }
+.rb-stepcard.is-sheet .rb-stepcard-nav .rb-price-label { font-size: 12px; }
+.rb-stepcard.is-sheet .rb-stepcard-nav .rb-btn-primary { flex: none; }
+@media (max-width: 480px) { .rb-stepcard.is-sheet .rb-btn-next { display: none; } }
+
+/* A tételes kalkuláció a jelenet fölött nyílik (asztalon a kártya mellett, telefonon alulról), átlátszatlan lapon,
+   saját görgetéssel; a tájékoztató mondat mindig teljesen látszik. */
+.rb-price-sheet { position: fixed; z-index: 45; right: calc(var(--rb-card-w) + var(--rb-gap) * 2); bottom: var(--rb-gap); width: 380px; }
+.rb-price-sheet.is-compact { left: 10px; right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); width: auto; max-width: 680px; margin-inline: auto; }
+.rb-price-sheet .rb-price-details { position: static; width: auto; max-height: min(78vh, 640px); overflow: hidden; display: flex; flex-direction: column; padding: 16px 18px; background: rgba(250, 250, 247, .96); }
+.rb-price-sheet.is-compact .rb-price-details { max-height: min(78dvh, 640px); }
+.rb-price-sheet #rb-price-details { display: flex; flex-direction: column; min-height: 0; }
+.rb-price-details-scroll { flex: 1; min-height: 0; overflow: auto; }
+.rb-price-basis { margin: 0 0 12px; font-size: 12px; line-height: 1.45; color: rgba(21, 23, 26, .68); }
+.rb-price-sheet .rb-price-note { flex: none; padding-top: 10px; border-top: 1px solid rgba(21, 23, 26, .1); }
+.rb-price-sheet-request { flex: none; height: 48px; margin-top: 12px; border: 0; border-radius: 999px; background: var(--rb-ink); color: #fff; font: inherit; font-size: 15px; font-weight: 650; cursor: pointer; }
+
+/* Egy „kiválasztva” jel mindenhol: 2 px sötét keret + sötét pipa a jobb felső sarokban (ugyanott minden kártyán). */
+.rb-option-check, .rb-option.rb-roof .rb-option-check, .rb-option.rb-preset .rb-option-check { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; }
+.rb-option.rb-swatch .rb-option-check { top: 8px; right: 8px; }
+.rb-option.is-selected { border-color: var(--rb-ink); box-shadow: inset 0 0 0 1px var(--rb-ink), 0 6px 16px rgba(18, 22, 26, .1); }
+.rb-option.rb-roof.is-selected em:empty { display: none; }
+.rb-step-product .building-card { position: relative; }
+.rb-step-product .building-card.selected .building-card-head em { display: none; }
+.rb-step-product .building-card.selected::after, .rb-side.is-selected::after { content: ''; position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 50%; background: var(--rb-ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 12px no-repeat; }
+.rb-side { position: relative; }
+.rb-side.is-selected::after { top: 6px; right: 6px; width: 20px; height: 20px; }
+.rebuild-shell .building-season { border-color: rgba(21, 23, 26, .2); color: var(--rb-ink); background: rgba(255, 255, 255, .5); }
+.rb-side:disabled { opacity: 1; }
+
+/* A lime egyetlen jelentése: „itt tartasz” (az aktuális lépés). Kapcsoló, csúszka, lamellaszög: grafit. */
+.rb-metal { background: linear-gradient(180deg, #d5d8db, #eceef0); box-shadow: inset 0 2px 4px rgba(0, 0, 0, .18), inset 0 -1px 0 rgba(255, 255, 255, .7), 0 1px 0 rgba(255, 255, 255, .6); }
+.rb-option.is-on .rb-metal { background: linear-gradient(180deg, #2a2d31, #15171a); box-shadow: inset 0 2px 5px rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .6); }
+.rb-slider-track i { background: linear-gradient(90deg, #3a3e43, var(--rb-ink)); }
+.rb-slider-knob { box-shadow: inset 0 1.5px 1px rgba(255, 255, 255, .95), inset 0 -2px 6px rgba(0, 0, 0, .06), 0 6px 16px rgba(18, 22, 26, .18), 0 1px 3px rgba(18, 22, 26, .12); }
+.rb-arc-fill { stroke: var(--rb-ink); }
+.rb-arc-pivot { fill: var(--rb-ink); }
+
+/* Egy másodlagos szövegszín, legalább 4,5:1 a matt üvegen; minden felár ugyanúgy (13 px, félkövér, sötét). */
+.rb-roof-text small, .rb-roof-props, .rb-switch-text small, .rb-option.rb-glazing small, .rb-option.rb-target small, .rb-side small,
+.rb-option.rb-swatch small, .rb-note, .rb-disclosure > summary small, .rb-slider-value span, .rb-slider-limits, .rb-summary-text small,
+.rb-summary-edit, .rb-price-details li small, .rb-price-note, .rb-price-monthly small, .rb-callout, .rb-footnote, .rb-area,
+.rb-step-product .building-card-head small, .rb-step-product .building-card-text, .rb-color-now small, .rb-color-now em { color: rgba(21, 23, 26, .7); }
+.rb-option.rb-roof em, .rb-switch-text em, .rb-option.rb-swatch em, .rb-option.rb-glazing em, .rb-step-product .building-card-head em, .rb-preset-price { font-size: 13px; font-weight: 650; color: var(--rb-ink); }
+
+/* Ajánlatkérő űrlap a panel anyagában: nagyobb címkék, 44 px-es mezők, saját jelölőnégyzet. */
+.rb-summary-legacy .lead-grid label > span { font-size: 13px; color: var(--rb-ink); }
+.rb-summary-legacy .lead-grid input, .rb-summary-legacy .lead-grid select, .rb-summary-legacy .lead-grid textarea { min-height: 44px; border-radius: 12px; border: 1px solid rgba(21, 23, 26, .18); background: rgba(255, 255, 255, .78); color: var(--rb-ink); font-size: 15px; }
+.rb-summary-legacy .consent-row { min-height: 44px; font-size: 13px; color: rgba(21, 23, 26, .78); }
+.rb-summary-legacy .consent-row input { width: 22px; height: 22px; flex: none; accent-color: var(--rb-ink); }
+.rb-summary-legacy .consent-row > span > svg { color: var(--rb-ink); }
+.rb-summary-legacy .privacy-note, .rb-summary-legacy .lead-form-intro { font-size: 12px; color: rgba(21, 23, 26, .7); }
+.rb-summary-legacy .lead-submit { min-height: 48px; border-radius: 999px; background: var(--rb-ink); color: #fff; }
+
+/* Telefonos lépéssáv: alatta az aktuális lépés neve; 360 px-en is a sávon belül marad. */
+.rb-dock { height: 78px; }
+.rb-dock ol { height: 58px; }
+.rb-dock-slot { bottom: auto; height: 58px; }
+.rb-dock button { width: min(46px, 100%); height: 46px; }
+.rb-dock-knob { width: 46px; height: 46px; }
+.rb-dock-label { position: absolute; bottom: 6px; transform: translateX(-50%); font-size: 12px; font-weight: 650; color: var(--rb-ink); white-space: nowrap; transition: left var(--rb-move) var(--rb-ease); pointer-events: none; }
+@media (max-width: 380px) { .rb-dock ol { padding: 0 2px; } .rb-dock-slot { left: 2px; width: calc((100% - 4px) / var(--rb-count)); } .rb-dock-knob { width: 42px; height: 42px; } }
+
+/* Asztali lépéssáv: a teljes lépésnév (Hely és méret) kifér. */
+.rb-stepbar ol { grid-template-columns: repeat(var(--rb-count), 92px); }
+
+/* Bal oldali eszköztár telefonon: a nyitó fül 44 px széles; a panel felül nyílik, a modell látszik alatta. */
+.rb-rail-tab { width: 44px; height: 56px; left: calc(100% + 4px); }
+.rb-rail.is-compact .rb-rail-panel { top: max(10px, env(safe-area-inset-top)); max-height: 42dvh; }
+@media (min-width: 700px) { .rb-rail.is-compact .rb-rail-bar button { width: 86px; } .rb-rail.is-compact .rb-rail-bar button span { display: block; } .rb-rail.is-compact { top: 50%; transform: translateY(-50%); } }
+/* Telefonon a záró lépésen nincs ár a gombsorban: az „Ajánlatot kérek” kitölti a sort. A behúzott eszköztár füle
+   a jelenet tetején, hogy ne takarja a méretcímkéket. */
+.rb-stepcard.is-sheet .rb-stepcard-nav:not(:has(.rb-price)) .rb-btn-primary { flex: 1; }
+@media (max-width: 699px) { .rb-rail.is-compact { top: max(14px, env(safe-area-inset-top)); } }

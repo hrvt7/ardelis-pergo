@@ -21,6 +21,8 @@ export default function StepDock({ step, onStep }: { step: ConfigStep; onStep: (
           </button>
         </li>)}
       </ol>
+      {/* Az aktuális lépés neve a gomb alatt (telefonon az ikonok önmagukban nem mindig egyértelműek). */}
+      <span className="rb-dock-label" aria-hidden="true" style={{ left: `clamp(44px, ${((index + 0.5) / count) * 100}%, calc(100% - 44px))` }}>{REBUILD_STEPS[index].label}</span>
     </nav>
   )
 }

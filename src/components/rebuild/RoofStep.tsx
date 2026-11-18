@@ -37,7 +37,7 @@ export default function RoofStep({ config, scene, prices, onChange, onSceneChang
             <span className="rb-roof-text"><strong>{brand.name}</strong><small>{brand.short}</small>
               <span className="rb-roof-props"><span>{tr('Árnyék', 'Schatten')}: {roofInfo.shade}</span><span>{tr('Eső', 'Regen')}: {roofInfo.rain}</span></span>
             </span>
-            <em>{active ? <span className="rb-option-check"><Check size={12} strokeWidth={3} /></span> : `${delta > 0 ? '+' : '−'}${formatPrice(Math.abs(delta))}`}</em>
+            {active && <span className="rb-option-check"><Check size={12} strokeWidth={3} /></span>}<em>{active ? '' : `${delta > 0 ? '+' : '−'}${formatPrice(Math.abs(delta))}`}</em>
           </button>
         })}
       </div>

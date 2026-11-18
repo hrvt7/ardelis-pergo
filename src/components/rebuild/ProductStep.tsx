@@ -1,7 +1,7 @@
 import { ArrowRight, Check } from 'lucide-react'
 import type { PergolaConfig, PriceSettings } from '@/types/pergola'
 import { presetConfig, tenantPrice } from '@/tenants/rules'
-import { signedPrice } from '@/lib/money'
+import { formatPrice } from '@/lib/pricing'
 import { useTenant } from '@/tenants/TenantContext'
 import { BuildingPicker } from '@/components/BuildingControls'
 import { tr } from '@/i18n/locale'
@@ -12,7 +12,6 @@ export default function ProductStep({ config, prices, onChange, onPreset }: { co
   const building = config.building ?? 'pergola'
   const matching = tenant.presets.filter((preset) => (preset.config.building ?? 'pergola') === building)
   const presets = matching.length ? matching : tenant.presets
-  const current = tenantPrice(tenant, config, prices).totalGross
   const same = (next: PergolaConfig) => JSON.stringify(next) === JSON.stringify(config)
 
   return <div className="rb-step rb-step-product">
@@ -27,11 +26,11 @@ export default function ProductStep({ config, prices, onChange, onPreset }: { co
         {presets.map((preset) => {
           const next = presetConfig(tenant, preset.config)
           const active = same(next)
-          // Ugyanaz a jelölés, mint a típuskártyákon: az árkülönbség a mostani tervhez képest.
-          const delta = tenantPrice(tenant, next, prices).totalGross - current
+          // A csomag teljes becsült ára (egy csomag kiinduló terv, ezért a végösszeg beszédesebb, mint a különbség).
+          const total = tenantPrice(tenant, next, prices).totalGross
           return <button type="button" key={preset.id} className={`rb-option rb-preset${active ? ' is-selected' : ''}`} aria-pressed={active} onClick={() => !active && onPreset(next)}>
             <span className="rb-switch-text"><strong>{preset.name}{preset.featured && <i className="rb-badge">{tr('Legnépszerűbb', 'Am beliebtesten')}</i>}</strong><small>{preset.description}</small></span>
-            <em className="rb-preset-price">{active ? <span className="rb-option-check"><Check size={12} strokeWidth={3} /></span> : signedPrice(delta)}</em>{!active && <ArrowRight size={16} aria-hidden="true" />}
+            {active && <span className="rb-option-check"><Check size={12} strokeWidth={3} /></span>}<em className="rb-preset-price">{tr('kb.', 'ca.')} {formatPrice(total)}</em>{!active && <ArrowRight size={16} aria-hidden="true" />}
           </button>
         })}
       </div>

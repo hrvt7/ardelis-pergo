@@ -144,7 +144,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     lines.push({
       id: `wall-${side}`,
       label: tr(`Oldalfali rögzítés · ${side === 'left' ? 'bal' : 'jobb'} oldal`, `Seitliche Wandbefestigung · ${side === 'left' ? 'links' : 'rechts'}`),
-      detail: tr(`${formatNumber(config.depth, 2)} fm × ${money(prices.sideWallAttachPerMeterNet)} / fm`, `${formatNumber(config.depth, 2)} lfm × ${money(prices.sideWallAttachPerMeterNet)} / lfm`),
+      detail: tr(`${formatNumber(config.depth, 2)} m × ${money(prices.sideWallAttachPerMeterNet)} / m`, `${formatNumber(config.depth, 2)} lfm × ${money(prices.sideWallAttachPerMeterNet)} / lfm`),
       amountNet: round(config.depth * prices.sideWallAttachPerMeterNet),
     })
   })
@@ -241,8 +241,8 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
   if (config.led) {
     lines.push({
       id: 'led',
-      label: tr('Periméter LED-világítás', 'Umlaufende LED-Beleuchtung'),
-      detail: tr(`${formatNumber(perimeter)} fm integrált világítás`, `${formatNumber(perimeter)} lfm integrierte Beleuchtung`),
+      label: tr('Periméter LED', 'Umlaufende LED'),
+      detail: tr(`${formatNumber(perimeter)} m integrált világítás`, `${formatNumber(perimeter)} lfm integrierte Beleuchtung`),
       amountNet: round(perimeter * prices.ledPerMeterNet),
     })
   }
@@ -250,7 +250,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     lines.push({
       id: 'led-rgb',
       label: tr('Színváltós RGB+W LED', 'Farbwechsel-LED RGB+W'),
-      detail: tr(`${formatNumber(perimeter)} fm × ${money(prices.ledRgbPerMeterNet)} felár · színek és jelenetek`, `${formatNumber(perimeter)} lfm × ${money(prices.ledRgbPerMeterNet)} Aufpreis · Farben und Szenen`),
+      detail: tr(`${formatNumber(perimeter)} m × ${money(prices.ledRgbPerMeterNet)} felár · színek és jelenetek`, `${formatNumber(perimeter)} lfm × ${money(prices.ledRgbPerMeterNet)} Aufpreis · Farben und Szenen`),
       amountNet: round(perimeter * prices.ledRgbPerMeterNet),
     })
   }
@@ -273,8 +273,8 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
   if (config.sensors) {
     lines.push({
       id: 'sensors',
-      label: tr('Eső- és szélérzékelő csomag', 'Regen- und Windsensor-Paket'),
-      detail: tr('Automata vezérlési mintacsomag', 'Muster-Automatikpaket'),
+      label: tr('Eső- és szélszenzor', 'Regen- und Windsensor'),
+      detail: tr('Automata tetőzárás esőben és szélben', 'Automatisches Schließen bei Regen und Wind'),
       amountNet: round(prices.sensorsNet),
     })
   }
@@ -300,7 +300,7 @@ export function calculatePrice(config: PergolaConfig, prices: PriceSettings, roo
     lines.push({
       id: 'pitch',
       label: tr(`Dőlt tető · ${config.pitch}°`, `Geneigtes Dach · ${config.pitch}°`),
-      detail: tr(`Magasított hátsó oszlopok és oldalkitöltés · ${config.pitch}° × ${formatNumber(config.width, 2)} fm × ${money(prices.pitchPerDegreePerMeterNet)}`, `Erhöhte hintere Steher und Seitenfüllung · ${config.pitch}° × ${formatNumber(config.width, 2)} lfm × ${money(prices.pitchPerDegreePerMeterNet)}`),
+      detail: tr(`Magasított hátsó oszlopok és oldalkitöltés · ${config.pitch}° × ${formatNumber(config.width, 2)} m × ${money(prices.pitchPerDegreePerMeterNet)}`, `Erhöhte hintere Steher und Seitenfüllung · ${config.pitch}° × ${formatNumber(config.width, 2)} lfm × ${money(prices.pitchPerDegreePerMeterNet)}`),
       amountNet: round(config.pitch * config.width * prices.pitchPerDegreePerMeterNet),
     })
   }

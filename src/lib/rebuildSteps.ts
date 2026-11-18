@@ -7,7 +7,7 @@ import { localized, tr } from '../i18n/locale'
  */
 export const REBUILD_STEPS: { id: ConfigStep; label: string; short: string; question: string }[] = localized(() => ([
   { id: 'size', label: tr('Termék', 'Produkt'), short: tr('Termék', 'Produkt'), question: tr('Mit építesz?', 'Was bauen Sie?') },
-  { id: 'mount', label: tr('Méret', 'Größe'), short: tr('Méret', 'Größe'), question: tr('Hová kerül és mekkora?', 'Wohin und wie groß?') },
+  { id: 'mount', label: tr('Hely és méret', 'Ort und Größe'), short: tr('Hely és méret', 'Ort und Größe'), question: tr('Hová kerül és mekkora?', 'Wohin und wie groß?') },
   { id: 'roof', label: tr('Tető', 'Dach'), short: tr('Tető', 'Dach'), question: tr('Milyen tető legyen?', 'Welches Dach?') },
   { id: 'sides', label: tr('Oldalak', 'Seiten'), short: tr('Oldalak', 'Seiten'), question: tr('Mi zárja az oldalakat?', 'Was schließt die Seiten?') },
   { id: 'color', label: tr('Szín', 'Farbe'), short: tr('Szín', 'Farbe'), question: tr('Milyen színű legyen?', 'Welche Farbe?') },

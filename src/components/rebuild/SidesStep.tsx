@@ -23,7 +23,7 @@ const listTypes: SideTypePicker = ({ types, current, label, delta, select }) => 
     return <button type="button" role="radio" aria-checked={active} key={type} className={`rb-option rb-roof rb-type${active ? ' is-selected' : ''}`} onClick={() => !active && select(type)}>
       <span className="rb-roof-icon"><SideIcon type={type} /></span>
       <span className="rb-roof-text"><strong>{SIDE_INFO[type].label}</strong><small>{SIDE_INFO[type].description}</small></span>
-      <em>{active ? <span className="rb-option-check"><Check size={12} strokeWidth={3} /></span> : signedPrice(delta(type))}</em>
+      {active && <span className="rb-option-check"><Check size={12} strokeWidth={3} /></span>}<em>{active ? '' : signedPrice(delta(type))}</em>
     </button>
   })}
 </div>

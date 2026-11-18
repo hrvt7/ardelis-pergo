@@ -1,5 +1,14 @@
 # Változások
 
+## 5.30 – Új konfigurátor: második kritikus kör javításai
+
+- **Ár és ajánlatkérés a lépéslapon:** a becsült bruttó ár és az „Ajánlatot kérek” a lépéslap láblécébe került (telefonon a Vissza és Tovább gomb közé), nem lebeg külön a jelenet fölött. A tételes kalkuláció saját lapon nyílik, görgethető, a tájékoztató mondat mindig teljesen látszik, és egy sor elmagyarázza, hogy a tételek nettó listaárak, a lépésekben látott felárak pedig bruttó változások.
+- **Összegzés:** az utolsó lépés fő gombja „Ajánlatot kérek”, az űrlap gombja „Elküldöm”; az űrlap mezői 44 px magasak, a jelölőnégyzet nagyobb.
+- **Egy „kiválasztva” jel:** minden választható kártyán sötét keret és sötét pipa a jobb felső sarokban; a lime csak az aktuális lépést jelöli, a kapcsolók, csúszkák és a lamellaszög grafit színűek. A másodlagos szövegek sötétebbek (jobb kontraszt).
+- **Csomagok és oldalak:** a csomagkártyákon a csomag becsült teljes ára, az oldalzárás-listán minden nem választott típuson a felár.
+- **Telefon:** a lépéssáv alatt az aktuális lépés neve, 360 px-en is kifér; az eszköztár füle 44 px széles és a jelenet tetején van; a lap fejlécében 44 px-es összecsukó gomb. Asztalon a lépéssávban kifér a „Hely és méret”.
+- Tesztek: `rebuildCriticFixes.test.ts` (lábléc-ár, kalkulációs lap, kiválasztva-jel, telefonos lépéssáv, űrlapmezők).
+
 ## 5.29 – Új konfigurátor: a kritikus kör hibáinak javítása
 
 - **Telefon és álló tablet:** a lépéslap alapból nyitva (kérdés, lépéssáv, első opciók); összecsukva is látszik a lépéssáv és a kérdés. A fogantyú érintési felülete legalább 44 px; tableten a lap legfeljebb 680 px széles.

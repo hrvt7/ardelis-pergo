@@ -69,10 +69,10 @@ export default function ColorStep({ config, scene, prices, onChange }: { config:
           const isOn = item.key === selectedKey
           const delta = isOn ? 0 : tenantPrice(tenant, { ...config, ...patch(item.color, item.custom) }, prices).totalGross - base
           return <button type="button" role="radio" aria-checked={isOn} key={item.key} className={`rb-option rb-swatch${isOn ? ' is-selected' : ''}`} onClick={() => onChange(patch(item.color, item.custom))}>
-            <span className="rb-swatch-ball" style={{ ['--rb-swatch' as string]: item.hex }}>{isOn && <Check size={15} strokeWidth={3} />}</span>
+            {isOn && <span className="rb-option-check"><Check size={12} strokeWidth={3} /></span>}<span className="rb-swatch-ball" style={{ ['--rb-swatch' as string]: item.hex }} />
             <strong>{item.name}</strong>
             <small>{item.detail}</small>
-            <em>{isOn ? tr('Kiválasztva', 'Ausgewählt') : delta === 0 ? (item.standard ? tr('felár nélkül', 'ohne Aufpreis') : tr('azonos ár', 'gleicher Preis')) : `${delta > 0 ? '+' : '−'}${formatPrice(Math.abs(delta))}`}</em>
+            <em>{delta === 0 ? (item.standard ? tr('felár nélkül', 'ohne Aufpreis') : tr('azonos ár', 'gleicher Preis')) : `${delta > 0 ? '+' : '−'}${formatPrice(Math.abs(delta))}`}</em>
           </button>
         })}
       </div>

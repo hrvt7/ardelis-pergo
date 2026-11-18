@@ -9,7 +9,6 @@ describe('kritikus kör javításai – új konfigurátor (5.28)', () => {
   it('telefonon a lépéslap alapból nyitva, összecsukva is látszik a lépéssáv és a kérdés', () => {
     expect(read('src/pages/PergoStudio.tsx')).toContain('const [rebuildSheetOpen, setRebuildSheetOpen] = useState(true)')
     expect(css).toMatch(/\.rb-stepcard\.is-sheet:not\(\.is-open\) \.rb-dock, \.rb-stepcard\.is-sheet:not\(\.is-open\) \.rb-stepcard-head \{ display: block; \}/)
-    expect(css).toMatch(/\.rb-sheet-handle::before \{[^}]*top: -10px; bottom: -8px;/)
   })
 
   it('lépésváltáskor a panel a tetejéről indul, a görgetett tartalom elhalványul a szélen', () => {
@@ -25,13 +24,13 @@ describe('kritikus kör javításai – új konfigurátor (5.28)', () => {
 
   it('az összegzésen egy ajánlatkérő gomb van, az ár egyszer szerepel, üres képhely nincs', () => {
     const studio = read('src/pages/PergoStudio.tsx')
-    expect(studio).toContain("step !== 'summary' && <PriceBar")
+    expect(studio).not.toContain("step !== 'summary' && <PriceBar")
     expect(studio).toContain('variant="rebuild"')
     const card = read('src/components/rebuild/StepCard.tsx')
     expect(card).not.toContain("tr('Felmérést kérek'")
     const panel = read('src/components/SummaryPanel.tsx')
     expect(panel).toContain("{!rebuild && <div className=\"showroom-image\">")
-    expect(panel).toContain("submitLabel={rebuild ? tr('Ajánlatot kérek', 'Angebot anfragen') : undefined}")
+    expect(panel).toContain("submitLabel={rebuild ? tr('Elküldöm', 'Absenden') : undefined}")
   })
 
   it('oldaltípusok olvasható listában, minden soron felárral', () => {
@@ -58,5 +57,43 @@ describe('kritikus kör javításai – új konfigurátor (5.28)', () => {
     for (const rule of ['.rb-segmented button { height: 44px; }', '.rb-stepper button { width: 44px; height: 44px; }', '.rb-price.is-compact .rb-price-request { height: 44px;']) expect(coarse).toContain(rule)
     expect(css).toMatch(/\.rb-stepbar button span \{ font-size: 12px; \}/)
     expect(css).toMatch(/\.rb-rail-bar button span \{ font-size: 12px; \}/)
+  })
+})
+
+describe('kritikus kör, 2. forduló', () => {
+  it('az ár és az ajánlatkérés a lépéslap láblécében van, nem lebegő szigeten', () => {
+    const card = read('src/components/rebuild/StepCard.tsx')
+    expect(card).toContain('{next && !compact && price}')
+    expect(card).toContain('{next && compact && price}')
+    expect(card).toContain("tr('Ajánlatot kérek', 'Angebot anfragen')")
+    expect(read('src/pages/PergoStudio.tsx')).toContain('price={moduleVisible(\'M05\', true) ? <PriceBar')
+  })
+
+  it('a tételes kalkuláció külön lapon nyílik, a tájékoztató mindig látszik, és jelzi a nettó/bruttó alapot', () => {
+    const bar = read('src/components/rebuild/PriceBar.tsx')
+    expect(bar).toContain('createPortal(')
+    expect(bar).toContain('rb-price-basis')
+    expect(bar).toContain('rb-price-sheet-request')
+    expect(css).toMatch(/\.rb-price-details-scroll \{ flex: 1; min-height: 0; overflow: auto; \}/)
+    expect(css).toMatch(/\.rb-price-sheet \.rb-price-note \{ flex: none;/)
+  })
+
+  it('egy kiválasztva-jel a jobb felső sarokban, a lime csak az aktuális lépésé', () => {
+    expect(css).toMatch(/\.rb-option-check, \.rb-option\.rb-roof \.rb-option-check, \.rb-option\.rb-preset \.rb-option-check \{ position: absolute; top: 10px; right: 10px;/)
+    expect(css).toMatch(/\.rb-arc-fill \{ stroke: var\(--rb-ink\); \}/)
+    expect(css).toMatch(/\.rb-slider-track i \{ background: linear-gradient\(90deg, #3a3e43, var\(--rb-ink\)\); \}/)
+  })
+
+  it('telefonos lépéssáv a lépés nevével, 44 px-es eszköztár-fül, nagy űrlapmezők', () => {
+    expect(read('src/components/rebuild/StepDock.tsx')).toContain('className="rb-dock-label"')
+    expect(css).toMatch(/\.rb-rail-tab \{ width: 44px;/)
+    expect(css).toMatch(/\.rb-summary-legacy \.lead-grid input, [^{]+\{ min-height: 44px;/)
+    expect(css).toMatch(/\.rb-summary-legacy \.consent-row input \{ width: 22px; height: 22px;/)
+  })
+
+  it('csomagok teljes árral; az összegzés sorai nagybetűvel és RAL-kóddal', () => {
+    expect(read('src/components/rebuild/ProductStep.tsx')).toContain('rb-preset-price')
+    const summary = read('src/lib/rebuildSummary.ts')
+    expect(summary).toContain("'Periméter LED'")
   })
 })
