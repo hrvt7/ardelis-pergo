@@ -1,5 +1,12 @@
 # Változások
 
+## 5.18 – Újraépítési mód: 5. lépés – Szín (M09)
+
+- **Ádám döntése szerint egyszerű:** „Jelenlegi szín” sor, alatta 6 gyakori szín (a gyártó felár nélküli alapszínei, kiegészítve gyakori RAL színekkel, ha a gyártó vállal egyedi RAL-t), mindegyiken a kód és a felár / megtakarítás; alatta „Egyedi RAL szín” mező (pl. 6005 → Mohazöld, a 3D és az ár azonnal követi).
+- „Illeszd a házadhoz” lenyitható részben a nyílászáró-színhez igazító javaslat.
+- A teljes RAL-katalógus, a kéttónusú kivitel és a szín fotóról ebben a lépésben nem jelenik meg (a kód megmaradt, az éles felület változatlan).
+- Tesztek: `rebuildColors.test.ts` (a rövid színlista összeállítása).
+
 ## 5.17 – Újraépítési mód: íves oldaltípus-választó
 
 - **Íves választó (Ádám mintája):** az Oldalak lépésben a 10 oldaltípus egy íven sorakozik; középen a kiválasztott (név kiemelve, rövid leírás, lime keretes ikon), a többin a felár. Görgővel, húzással, kattintással és nyilakkal is választható; elengedéskor a legközelebbire pattan. Két félre osztott oldalnál a kiválasztott félre vonatkozik.

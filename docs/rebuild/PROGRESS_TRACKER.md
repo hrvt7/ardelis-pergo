@@ -28,7 +28,7 @@
 | M06 | Tetőrendszer és tetőmozgatás | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 3. lépésben (Tető), 5.15 |
 | M07 | Tetőelemek | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 3. lépésben (Tető), 5.15 |
 | M08 | Oldalzárások | KÉSZ, JÓVÁHAGYÁSRA VÁR | D2, D7 | A 4. lépésben (Oldalak) + 3D-kattintások vissza, 5.16 |
-| M09 | Szerkezet- és tetőszín | NEM INDULT | – | |
+| M09 | Szerkezet- és tetőszín | KÉSZ, JÓVÁHAGYÁSRA VÁR | D11 | 6 gyakori szín + egyedi RAL kód (5.18); a katalógus, kéttónusú és fotós szín nincs a lépésben |
 | M10 | Ház és környezet | NEM INDULT | – | |
 | M11 | Komfort és vezérlés | NEM INDULT | – | |
 | M12 | Építménytípus | NEM INDULT | – | |
@@ -51,6 +51,7 @@
 | D8 | M01 megjelenés (`UI_INSPIRATION.md`) | – | **2026-11-18:** asztalon a lépéssáv a kártya tetején, a 03-as minta stílusában (gyűrűs dokk, a kártya széléhez olvadva); telefonon ugyanez a felhúzható lap tetején, összecsukva csak Vissza / Tovább; kártya folyékony üvegből; az eszköztár a bal szélre tapad (M13/M16). Panelszélesség-húzás nincs (fix kártya). |
 | D9 | 2. lépés megjelenése | – | **2026-11-18:** folyékony üveg csúszka lime színnel (mindhárom méretre); rögzítés 2 oszlopos rácsban rajzokkal; a bútor lenyitható „Mire használod?” részben. |
 | D10 | 2. lépés kiegészítés | – | **2026-11-18:** méretcímkék automatikusan, alapterület, tájolás (É/K/D/Ny), felmérési megjegyzés. |
+| D11 | Szín lépés | – | **2026-11-18:** csak 5–6 gyakori szín + egyedi RAL kód. |
 | D4 | Ársáv helye | Felül jobbra | **2026-11-18: felül jobbra**, a lépéssáv mellett, mindig látható lebegő üvegelem. |
 | D5 | Alapértelmezett ármód új gyártónál | Becsült teljes ár | **2026-11-18: becsült teljes ár** „becsült” felirattal; a gyártó átkapcsolhatja „-tól” árra vagy rejtett árra. |
 | D6 | Ajánlatkérés helye | Minden lépésből | **2026-11-18: minden lépésből** elérhető másodlagos gombként; a fő gomb marad a „Tovább”. |
