@@ -24,7 +24,7 @@
 | M02 | Elhelyezés | KÉSZ | D9 | A 2. lépésben (Hely és méret), 5.12 |
 | M03 | Méretek és modulok | KÉSZ | D9 | A 2. lépésben (Hely és méret), 5.12 |
 | M04 | Visszavonás, újra, alaphelyzet | NEM INDULT | – | |
-| M05 | Élő ár és kalkuláció | NEM INDULT | – | |
+| M05 | Élő ár és kalkuláció | KÉSZ, JÓVÁHAGYÁSRA VÁR | D4, D5 | Ársáv felül jobbra + Részletek (5.14); hátra: gyártónkénti ármód-kapcsoló (új admin-beállítás) |
 | M06 | Tetőrendszer és tetőmozgatás | NEM INDULT | – | |
 | M07 | Tetőelemek | NEM INDULT | – | |
 | M08 | Oldalzárások | NEM INDULT | – | |

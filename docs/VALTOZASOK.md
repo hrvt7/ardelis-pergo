@@ -1,5 +1,12 @@
 # Változások
 
+## 5.14 – Újraépítési mód: ársáv (M05)
+
+- **Ársáv (D4–D5):** felül jobbra, a lépéskártya mellett lebegő üvegelem: „Becsült ár – bruttó, szereléssel”, animált összeg, változásnál rövid „+/− összeg” jelzés. Telefonon kis ár-pirula a képernyő tetején.
+- **Részletek:** alatta lenyíló tételes kalkuláció a meglévő árszámításból (tételek nettóban, szerelés, nettó, ÁFA, becsült bruttó ár), a gyártói havi részletpéldával (ha be van állítva), és a „tájékoztató, becsült ár, nem ajánlattétel” megjegyzéssel. Kívülre kattintva vagy Esc-re bezárul.
+- Ellenőrizve: a szélesség 400 → 600 cm-re állítása az árat 5 648 000 Ft-ról 6 598 000 Ft-ra frissíti (asztal és telefon).
+- Az ármód gyártónkénti kapcsolója (pontos / „-tól” / rejtett) még nincs: ehhez új gyártói beállítás kell (admin), külön feladat.
+
 ## 5.13 – Újraépítési mód: Hely és méret kiegészítve (méretcímkék, alapterület, tájolás)
 
 - **Méretcímkék:** a Hely és méret lépésben a 3D-ben automatikusan látszik a szélesség, a mélység és a magasság cm-ben; a lépésből kilépve visszaáll a korábbi beállítás.
