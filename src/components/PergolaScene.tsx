@@ -54,6 +54,7 @@ import { effectiveGlazing, isGlazedRoof, isMovableRoof, roofRise } from '@/lib/r
 import { deckBounds } from '@/lib/deck'
 import { SolarPanels } from '@/components/SceneExtras'
 import { Os140Beams, Os140Posts, Os140Roof } from '@/components/Os140Pergola'
+import { Os140Slide, Os140Zip } from '@/components/Os140Sides'
 import WalkController from '@/components/WalkController'
 import { OS140_SOURCE, os140Details, type Os140DetailId } from '@/lib/os140Details'
 import Car from '@/components/models/Car'
@@ -718,7 +719,11 @@ function SlatWall({ length, height, color, wood }: { length: number; height: num
 
 
 function SideSegmentWall({ type, length, height, color, config, scene, onSceneChange, label, inward, mirror = false }: { inward: 1 | -1; mirror?: boolean; type: SideType; length: number; height: number; color: string; config: PergolaConfig; scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void; label: boolean }) {
-  if (type === 'zip') return <ZipScreen length={length} height={height} open={config.screenOpen} color={color} wind={scene.wind} />
+  const { materialDetail } = useQuality()
+  // Forgólamellás (MB-OpenSky 140) vázon a ZIP és a toló üvegfal a gyári Aluprof-rendszerből épül (Os140Sides).
+  const os140 = config.roof === 'louvered' && !config.building
+  if (type === 'zip') return os140 ? <Os140Zip length={length} height={height} inward={inward} open={config.screenOpen} wind={scene.wind} material={getCoat(color, 0.4, materialDetail)} /> : <ZipScreen length={length} height={height} open={config.screenOpen} color={color} wind={scene.wind} />
+  if ((type === 'glass' || type === 'glassFramed') && os140) return <Os140Slide length={length} height={height} inward={inward} label={label} opened={scene.glassOpen} onToggle={() => onSceneChange({ glassOpen: !scene.glassOpen })} material={getCoat(color, 0.4, materialDetail)} />
   if (type === 'glass' || type === 'glassFramed') return <GlassWall length={length} height={height} color={color} framed={type === 'glassFramed'} label={label} opened={scene.glassOpen} onToggle={() => onSceneChange({ glassOpen: !scene.glassOpen })} />
   const look = wallGlassLook(config.wallGlazing, config.building)
   if (type === 'glassFixed') return <FixedGlassWall length={length} height={height} color={color} look={look} />

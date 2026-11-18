@@ -7,42 +7,13 @@ import * as THREE from 'three'
 import { stillMotion } from '@/lib/sceneClock'
 import { demoAngle, demoSeconds } from '@/lib/louvreSystem'
 import { OS140, os140Layout, os140PostSpot } from '@/lib/os140'
-import { OS140_BEAM, OS140_BEAM_COVER, OS140_GUTTER, OS140_POST, OS140_SLAT, type Loop, type ProfileShape } from '@/lib/os140Profiles'
+import { OS140_BEAM, OS140_BEAM_COVER, OS140_GUTTER, OS140_POST, OS140_SLAT } from '@/lib/os140Profiles'
+import { alongX, ident, toShapes, upward, type Map2 } from '@/components/profileGeometry'
 
 const REDUCED = stillMotion(typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
 
-type Map2 = (p: [number, number]) => [number, number]
-const ident: Map2 = (p) => p
 /** gerendaszelvény: x = kifelé (−u), y = a gerenda tetejétől (v) */
 const outward: Map2 = ([u, v]) => [-u, v]
-
-function toShapes(profile: ProfileShape[], map: Map2, holes = true) {
-  const path = (loop: Loop, target: THREE.Path) => loop.forEach((p, i) => { const [x, y] = map(p); if (i) target.lineTo(x, y); else target.moveTo(x, y) })
-  return profile.map(({ outer, holes: hs }) => {
-    const shape = new THREE.Shape()
-    path(outer, shape)
-    shape.closePath()
-    if (holes) for (const h of hs) { const hole = new THREE.Path(); path(h, hole); hole.closePath(); shape.holes.push(hole) }
-    return shape
-  })
-}
-
-/** a szelvény (x → világ z, y → világ y) kihúzása az x tengely mentén, középre igazítva */
-function alongX(shapes: THREE.Shape[], length: number) {
-  const g = new THREE.ExtrudeGeometry(shapes, { depth: length, bevelEnabled: false, curveSegments: 1 })
-  g.translate(0, 0, -length / 2)
-  g.rotateY(-Math.PI / 2)
-  g.computeVertexNormals()
-  return g
-}
-
-/** függőleges kihúzás (oszlop) 0-tól `height`-ig */
-function upward(shapes: THREE.Shape[], height: number) {
-  const g = new THREE.ExtrudeGeometry(shapes, { depth: height, bevelEnabled: false, curveSegments: 1 })
-  g.rotateX(-Math.PI / 2)
-  g.computeVertexNormals()
-  return g
-}
 
 export function Os140Posts({ posts, width, depth, height, material }: { posts: [number, number][]; width: number; depth: number; height: number; material: THREE.Material }) {
   const beamTop = height + OS140.beamH / 2

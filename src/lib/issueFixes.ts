@@ -46,6 +46,8 @@ export const FIX_RULES: Record<string, FixRule> = localized(() => ({
     label: tr('Kerettel osztott üveg', 'Gerahmtes, geteiltes Glas'),
     candidates: (config) => [{ sides: { ...config.sides, ...Object.fromEntries(SIDES.filter((side) => config.sides[side] === 'glass').map((side) => [side, 'glassFramed'])) } }],
   },
+  'os140-depth': { label: tr('Kinyúlás 6,8 m', 'Ausladung 6,8 m'), candidates: () => [{ depth: 6.8 }] },
+  'os140-height': { label: tr('Magasság 2,8 m', 'Höhe 2,8 m'), candidates: () => [{ height: 2.8 }] },
   'rain-sensor': { label: tr('Eső- és szélérzékelő', 'Regen- und Windsensor'), candidates: () => [{ sensors: true }] },
 }))
 

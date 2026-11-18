@@ -1,5 +1,14 @@
 # Változások
 
+## 5.31 – MB-OpenSky 140: ZIP-screen és toló üvegfal gyári adatokból; carport ki a választóból
+
+- **Hiba: pergolán beragadt a fix tető.** Carportra (vagy verandára) váltás után vissza pergolára a tető fix maradt, így nem az MB-OpenSky 140 lamellás tető jelent meg. Mostantól pergolára váltva a tető visszaáll lamellásra, ha a gyártó kínálja.
+- **Carport kikerült az építménytípus-választóból.** Régi carport-linkek továbbra is betöltenek, és onnan át lehet váltani.
+- **SkyRoll ZIP (SRS90E) gyári metszetekből:** 102 × 102-es tok a gerenda alatt, a belső síkkal egy vonalban; PP SRS/35/T vezetősín az oszlopokon; BOA SRS záróléc; a szövet a tok résében. 5 m szélesség vagy 16 m² felett két screen, köztük dupla sín. Tokméret-szabály (85/100/120) a gyári max. magasság-táblázatból.
+- **MB-OpenSlide toló üvegfal:** a szárnyszám a gyári táblázatból (pl. 5,72 m → 5 szárny), felső vezető, küszöb sínekkel, nyitáskor a szárnyak egy oldalra tolódnak. Feltételezés: sínosztás, szárnyprofil-méretek, 30 mm szárnyátfedés (becsült).
+- **Jelzések:** kinyúlás > 6,98 m vagy magasság > 3,0 m (egy kattintásos javítással), ZIP-osztás, OpenSlide méret-/magasságkorlát.
+- Tesztek: `os140Sides.test.ts` (tokméret, osztás, szárnytáblázat, jelzések), `buildings.test.ts` (tető visszaállítás, carport a választóban).
+
 ## 5.30 – Új konfigurátor: második kritikus kör javításai
 
 - **Ár és ajánlatkérés a lépéslapon:** a becsült bruttó ár és az „Ajánlatot kérek” a lépéslap láblécébe került (telefonon a Vissza és Tovább gomb közé), nem lebeg külön a jelenet fölött. A tételes kalkuláció saját lapon nyílik, görgethető, a tájékoztató mondat mindig teljesen látszik, és egy sor elmagyarázza, hogy a tételek nettó listaárak, a lépésekben látott felárak pedig bruttó változások.

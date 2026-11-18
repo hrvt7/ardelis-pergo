@@ -2,7 +2,7 @@
 // figyelmeztetések, valamint a hatósági tudnivalók. Az árkülönbség mindig a teljes bruttó irányár változása.
 import { Building2, Info, Landmark, TriangleAlert, Wand2 } from 'lucide-react'
 import { resolveFix } from '@/lib/issueFixes'
-import { availableBuildings, BUILDING_INFO, BUILDING_TYPES, buildingIssues, buildingPatch, CLIMATE_INFO, defaultWallGlazing, effectiveWallGlazing, isClosedBuilding, permitNotes, WALL_GLAZING_INFO, wallGlazingOptions } from '@/lib/buildings'
+import { availableBuildings, pickerBuildings, BUILDING_INFO, BUILDING_TYPES, buildingIssues, buildingPatch, CLIMATE_INFO, defaultWallGlazing, effectiveWallGlazing, isClosedBuilding, permitNotes, WALL_GLAZING_INFO, wallGlazingOptions } from '@/lib/buildings'
 import { formatPrice } from '@/lib/pricing'
 import { signedPrice } from '@/lib/money'
 import { enabledRoofs, normalizeConfig, tenantPrice } from '@/tenants/rules'
@@ -66,7 +66,8 @@ export function BuildingPicker({ config, prices, onChange, modular }: { config: 
   const { tenant } = useTenant()
   const roofs = enabledRoofs(tenant)
   // Minden építménytípus ugyanebben a konfigurátorban választható (a carport is): a modell, a lépések és az ár átáll.
-  const available: BuildingType[] = availableBuildings(roofs, tenant.sides)
+  // A carport a választóban nem szerepel (2026-11-18 döntés: a fókusz a pergola/veranda/télikert); régi linkjei továbbra is betöltenek.
+  const available: BuildingType[] = pickerBuildings(availableBuildings(roofs, tenant.sides), config.building ?? 'pergola')
   if (available.length < 2 && !modular) return null
   const current: BuildingType | 'modular' = modular?.selected ? 'modular' : config.building ?? 'pergola'
   const base = tenantPrice(tenant, config, prices).totalGross
