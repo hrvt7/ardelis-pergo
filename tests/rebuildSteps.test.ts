@@ -53,4 +53,12 @@ describe('bemélyedéses lépéssáv', () => {
     expect(path).not.toMatch(/NaN|undefined/)
     expect(path).toContain(`A ${NOTCH_DESKTOP.notch} ${NOTCH_DESKTOP.notch} 0 0 0 ${240 + NOTCH_DESKTOP.notch} ${NOTCH_DESKTOP.dip}`)
   })
+
+  it('függőleges változat: a bemélyedés a bal oldalon, az adott magasságban', () => {
+    const path = notchPath(400, 200, NOTCH_COMPACT, true)
+    expect(path).not.toMatch(/NaN|undefined/)
+    // A bemélyedés íve a bal széltől `dip` távolságra, a 200 ± notch magasságok között fut.
+    expect(path).toContain(`A ${NOTCH_COMPACT.notch} ${NOTCH_COMPACT.notch} 0 0 1 ${NOTCH_COMPACT.dip} ${200 + NOTCH_COMPACT.notch}`)
+    expect(path).toContain(`M 0 ${NOTCH_COMPACT.corner}`)
+  })
 })

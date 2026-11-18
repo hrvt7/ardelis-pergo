@@ -10,7 +10,7 @@
 .lx-stepbar-strip path { fill: var(--lx-bar); }
 .lx-stepbar ol { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; }
 .lx-stepbar li { position: absolute; top: 0; bottom: 0; transform: translateX(-50%); display: grid; place-items: center; padding-top: 4px; }
-.lx-stepbar li button { width: 42px; height: 42px; display: grid; place-items: center; border: 0; border-radius: 14px; background: transparent; color: rgba(255, 255, 255, .5); cursor: pointer; transition: color .25s, background .25s, opacity .3s, transform .3s var(--lx-ease); }
+.lx-stepbar li button { width: 42px; height: 42px; display: grid; place-items: center; border: 0; border-radius: 14px; background: transparent; color: rgba(255, 255, 255, .62); cursor: pointer; transition: color .25s, background .25s, opacity .3s, transform .3s var(--lx-ease); }
 .lx-stepbar li button:hover { color: #fff; background: rgba(255, 255, 255, .07); transform: translateY(-1px); }
 .lx-stepbar li button:focus-visible { outline: 2px solid var(--lx-accent); outline-offset: 1px; }
 .lx-stepbar li button.is-current { opacity: 0; transform: scale(.6); }
@@ -25,6 +25,15 @@
 .lx-stepbar.is-bottom { top: auto; bottom: 22px; }
 .lx-stepbar.is-card { position: relative; top: auto; left: auto; transform: none; width: auto; margin: 30px 18px 0; }
 .lx-stepbar.is-card .lx-stepbar-clip { box-shadow: 0 8px 18px rgba(10, 12, 14, .18); }
+.lx-stepbar.is-rail { position: absolute; top: 22px; bottom: 96px; right: 0; left: auto; transform: none; width: auto; z-index: 2; }
+.lx-stepbar.is-rail .lx-stepbar-track { height: 100%; }
+.lx-stepbar.is-rail .lx-stepbar-clip { border-radius: var(--lx-r) 0 0 var(--lx-r); box-shadow: -10px 0 24px rgba(10, 12, 14, .16); }
+.lx-stepbar.is-rail li { top: auto; bottom: auto; left: 0; right: 0; transform: translateY(-50%); padding: 0 0 0 4px; }
+.lx-rail-fillet { position: absolute; right: 0; }
+.lx-rail-fillet path { fill: var(--lx-bar); }
+.lx-rail-fillet.is-top { top: -16px; }
+.lx-rail-fillet.is-bottom { bottom: -16px; }
+.lx-stepcard.has-rail .lx-stepcard-head, .lx-stepcard.has-rail .lx-stepcard-body { padding-right: 92px; }
 .lx-stepbar.is-compact { position: fixed; top: auto; bottom: max(12px, env(safe-area-inset-bottom)); left: 12px; right: 12px; width: auto; transform: none; }
 
 /* Folyékony üveg (közös) */

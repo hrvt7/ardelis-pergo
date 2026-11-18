@@ -106,8 +106,9 @@ export default function PergoStudio() {
   // Újraépítési mód (`?mod=ujraepites`, docs/rebuild): csak a 3D, a gyártó alaptervéből; nem ír a böngészőbe és nem mér.
   const [rebuild] = useState(currentRebuildMode)
   const [rebuildSheetOpen, setRebuildSheetOpen] = useState(false)
-  // Asztali lépéssáv helye (Ádám döntéséig mindkettő kipróbálható): `?sav=lent` = alul középen, alapból a kártya tetején.
-  const [rebuildBar] = useState<'card' | 'bottom'>(() => { try { return new URLSearchParams(window.location.search).get('sav') === 'lent' ? 'bottom' : 'card' } catch { return 'card' } })
+  // Asztali lépéssáv helye (Ádám döntéséig mind kipróbálható): alapból függőleges sín a kártya jobb szélén;
+  // `?sav=kartya` = vízszintesen a kártya tetején, `?sav=lent` = alul középen.
+  const [rebuildBar] = useState<'rail' | 'card' | 'bottom'>(() => { try { const value = new URLSearchParams(window.location.search).get('sav'); return value === 'lent' ? 'bottom' : value === 'kartya' ? 'card' : 'rail' } catch { return 'rail' } })
   // Bővítés a tulajdonosi oldalról: a felszerelt termékből indul, a meglévő szerkezet zárolt (csak hozzáadni lehet).
   const [expansion] = useState(() => (product === 'pergola' && !rebuild ? readExpansion(tenant.id) : null))
   const expansionBase = useMemo(() => (expansion ? normalizeConfig(tenant, expansion.config) : null), [expansion, tenant])
@@ -600,7 +601,7 @@ export default function PergoStudio() {
             <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={scene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSceneChange={ignoreSceneChange} /></IntroSceneGate>
           </section>
           {frame && (isNarrow || rebuildBar === 'bottom') && <StepNotchBar step={step} compact={isNarrow} placement="bottom" onStep={goStep} />}
-          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={!isNarrow && rebuildBar === 'card' ? <StepNotchBar step={step} compact={false} placement="card" onStep={goStep} /> : undefined}><p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p></StepCard>}
+          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep} bar={!isNarrow && rebuildBar !== 'bottom' ? <StepNotchBar step={step} compact={false} placement={rebuildBar} onStep={goStep} /> : undefined} railed={!isNarrow && rebuildBar === 'rail'}><p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p></StepCard>}
         </main>
         {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
       </div>

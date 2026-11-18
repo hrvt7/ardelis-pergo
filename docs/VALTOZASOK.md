@@ -1,5 +1,11 @@
 # Változások
 
+## 5.09 – Újraépítési mód: függőleges lépéssín a kártya jobb szélén
+
+- **Lépéssín (Ádám rajza és a 03-as minta szerint):** asztalon a lépések a lépéskártya jobb szélére tapadó sötét sínen, lágy átmenettel a kártya széléhez; az aktív lépés köre a sín bal oldali bemélyedéséből lóg ki, és ugyanazzal a GPU-áttűnéssel úszik. A kártya tartalma helyet hagy a sínnek, így jól elkülönül.
+- Kipróbálható a többi elhelyezés is: `?sav=kartya` (vízszintesen a kártya tetején), `?sav=lent` (alul középen). Telefonon a sáv alul marad.
+- Tesztek: `rebuildSteps.test.ts` (a függőleges bemélyedés geometriája).
+
 ## 5.08 – Újraépítési mód: simább lépéssáv, saját ikonok, két asztali elhelyezés
 
 - **Simább átváltás:** a kör, a bemélyedés és a felirat egyetlen, a GPU-n futó áttűnéssel mozog (a sáv egy dupla széles, középen bemélyedéses csík, amely eltolódik); képkockánként semmi nem számolódik, így a 3D kameramozgása mellett telefonon sem akad. A lap üvegének elmosása telefonon kisebb (kevesebb terhelés).

@@ -50,25 +50,29 @@ const r = (value: number) => Math.round(value * 100) / 100
 
 /**
  * A lépéssáv körvonala: lekerekített téglalap, a tetején az `x` helyen lágy vállú, félkör alakú bemélyedéssel,
- * amelyben az aktív lépés köre ül (Ádám 01-es mintája).
+ * amelyben az aktív lépés köre ül (Ádám 01-es mintája). `vertical`: ugyanez függőlegesen, a bemélyedés a bal
+ * oldalon (a kártya jobb szélére tapadó lépéssínhez); ilyenkor az `x` a függőleges hely.
  */
-export function notchPath(width: number, x: number, g: NotchGeometry): string {
+export function notchPath(width: number, x: number, g: NotchGeometry, vertical = false): string {
   const { height: h, corner: c, notch: n, shoulder: s, dip: d } = g
   const cx = clampNotch(x, width, g)
+  // Függőlegesen a két koordináta helyet cserél (tükrözés az átlóra), ezért az ív iránya is megfordul.
+  const p = (a: number, b: number) => (vertical ? `${r(b)} ${r(a)}` : `${r(a)} ${r(b)}`)
+  const sweep = vertical ? 1 : 0
   return [
-    `M ${c} 0`,
-    `L ${r(cx - n - s)} 0`,
-    `C ${r(cx - n - s / 3)} 0 ${r(cx - n)} ${r(d * 0.4)} ${r(cx - n)} ${d}`,
-    `A ${n} ${n} 0 0 0 ${r(cx + n)} ${d}`,
-    `C ${r(cx + n)} ${r(d * 0.4)} ${r(cx + n + s / 3)} 0 ${r(cx + n + s)} 0`,
-    `L ${width - c} 0`,
-    `Q ${width} 0 ${width} ${c}`,
-    `L ${width} ${h - c}`,
-    `Q ${width} ${h} ${width - c} ${h}`,
-    `L ${c} ${h}`,
-    `Q 0 ${h} 0 ${h - c}`,
-    `L 0 ${c}`,
-    `Q 0 0 ${c} 0`,
+    `M ${p(c, 0)}`,
+    `L ${p(cx - n - s, 0)}`,
+    `C ${p(cx - n - s / 3, 0)} ${p(cx - n, d * 0.4)} ${p(cx - n, d)}`,
+    `A ${n} ${n} 0 0 ${sweep} ${p(cx + n, d)}`,
+    `C ${p(cx + n, d * 0.4)} ${p(cx + n + s / 3, 0)} ${p(cx + n + s, 0)}`,
+    `L ${p(width - c, 0)}`,
+    `Q ${p(width, 0)} ${p(width, c)}`,
+    `L ${p(width, h - c)}`,
+    `Q ${p(width, h)} ${p(width - c, h)}`,
+    `L ${p(c, h)}`,
+    `Q ${p(0, h)} ${p(0, h - c)}`,
+    `L ${p(0, c)}`,
+    `Q ${p(0, 0)} ${p(c, 0)}`,
     'Z',
   ].join(' ')
 }
