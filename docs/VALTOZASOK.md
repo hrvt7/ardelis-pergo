@@ -1,5 +1,11 @@
 # Változások
 
+## 5.08 – Újraépítési mód: simább lépéssáv, saját ikonok, két asztali elhelyezés
+
+- **Simább átváltás:** a kör, a bemélyedés és a felirat egyetlen, a GPU-n futó áttűnéssel mozog (a sáv egy dupla széles, középen bemélyedéses csík, amely eltolódik); képkockánként semmi nem számolódik, így a 3D kameramozgása mellett telefonon sem akad. A lap üvegének elmosása telefonon kisebb (kevesebb terhelés).
+- **Saját lépésikonok:** pergolakeret, alaprajz méretnyíllal, lamellák, screen, festékcsepp, függőlámpa, lap pipával; az aktív lépés neve a kör alatt jelenik meg, az ikon finoman beúszik.
+- **Asztali elhelyezés:** alapból a lépéskártya tetején; `?sav=lent` mellett alul középen (Ádám döntéséig mindkettő kipróbálható). Telefonon alul.
+
 ## 5.07 – Újraépítési mód: lépéssáv bemélyedéssel és folyékony üveg lépéskártya (M01)
 
 - **Lépéssáv:** a 7 lépés (Termék, Hely és méret, Tető, Oldalak, Szín, Komfort, Összegzés) sötét sávon, az aktív lépés a sávba „süllyedő” akcentkörben; lépésváltáskor a kör és a bemélyedés átúszik (időalapú animáció, csökkentett mozgásnál azonnal). Asztalon felül, a kártya nélküli rész közepén; telefonon alul.

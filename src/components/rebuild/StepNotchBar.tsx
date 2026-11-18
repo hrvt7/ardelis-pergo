@@ -1,24 +1,23 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { Blinds, ClipboardCheck, Lightbulb, Palette, PanelsLeftRight, Ruler, Warehouse, type LucideIcon } from 'lucide-react'
 import type { ConfigStep } from '@/types/pergola'
 import { NOTCH_COMPACT, NOTCH_DESKTOP, notchPad, notchPath, REBUILD_STEPS, rebuildStepIndex, slotCenter } from '@/lib/rebuildSteps'
 import { tr } from '@/i18n/locale'
+import StepIcon from './StepIcons'
 
-const ICONS: Record<ConfigStep, LucideIcon> = { size: Warehouse, mount: Ruler, roof: Blinds, sides: PanelsLeftRight, color: Palette, extras: Lightbulb, summary: ClipboardCheck }
-
-const reducedMotion = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false } }
-
-/** Lépéssáv bemélyedéssel (Ádám 01-es mintája): az aktív lépés köre a sávba „süllyed”, lépésváltáskor átúszik. */
-export default function StepNotchBar({ step, compact, onStep }: { step: ConfigStep; compact: boolean; onStep: (step: ConfigStep) => void }) {
-  const geometry = compact ? NOTCH_COMPACT : NOTCH_DESKTOP
+/**
+ * Lépéssáv bemélyedéssel (Ádám 01-es mintája): az aktív lépés köre a sávba „süllyed”, lépésváltáskor átúszik.
+ * A sima mozgáshoz semmi nem számolódik képkockánként: a sáv egy kétszer olyan széles, középen bemélyedéses
+ * csík, amelyet a kör és a felirat a GPU-n, ugyanazzal az áttűnéssel tol el (a 3D terhelése mellett sem akad).
+ */
+export default function StepNotchBar({ step, compact, placement = 'top', onStep }: { step: ConfigStep; compact: boolean; /** asztalon: a kártya tetején, alul középen vagy felül */ placement?: 'card' | 'bottom' | 'top'; onStep: (step: ConfigStep) => void }) {
+  const geometry = compact || placement === 'card' ? NOTCH_COMPACT : NOTCH_DESKTOP
   const wrap = useRef<HTMLDivElement>(null)
-  const path = useRef<SVGPathElement>(null)
-  const knob = useRef<HTMLSpanElement>(null)
-  const pos = useRef<{ x: number } | null>(null)
   const [width, setWidth] = useState(0)
+  const [ready, setReady] = useState(false)
   const index = rebuildStepIndex(step)
   const count = REBUILD_STEPS.length
   const pad = width ? notchPad(width, count, geometry) : 0
+  const x = width ? slotCenter(index, count, width, pad) : 0
 
   useLayoutEffect(() => {
     const element = wrap.current
@@ -29,45 +28,25 @@ export default function StepNotchBar({ step, compact, onStep }: { step: ConfigSt
     observer.observe(element)
     return () => observer.disconnect()
   }, [])
+  // Az első elhelyezés áttűnés nélkül (ne ússzon be a bal szélről).
+  useLayoutEffect(() => { if (width && !ready) { const frame = requestAnimationFrame(() => setReady(true)); return () => cancelAnimationFrame(frame) } }, [width, ready])
 
-  useLayoutEffect(() => {
-    if (!width) return
-    const target = slotCenter(index, count, width, pad)
-    const draw = () => {
-      const x = pos.current!.x
-      path.current?.setAttribute('d', notchPath(width, x, geometry))
-      if (knob.current) knob.current.style.transform = `translate(${x}px, ${geometry.dip}px) translate(-50%, -50%)`
-    }
-    if (!pos.current || reducedMotion()) { pos.current = { x: target }; draw(); return }
-    // Időalapú animáció (lassú képkockáknál sem marad le: mindig a valós idő szerint áll).
-    const from = pos.current.x
-    const start = performance.now()
-    const duration = 550
-    let frame = 0
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration)
-      const eased = t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
-      pos.current!.x = from + (target - from) * eased
-      draw()
-      if (t < 1) frame = requestAnimationFrame(tick)
-    }
-    frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
-  }, [index, width, pad, count, geometry])
-
-  const Active = ICONS[step]
+  const knob = (geometry.notch - 6) * 2
+  const label = REBUILD_STEPS[index].label
   return (
-    <nav className={`lx-stepbar${compact ? ' is-compact' : ''}`} aria-label={tr('Konfigurálás lépései', 'Konfigurationsschritte')}>
-      <div className="lx-stepbar-track" ref={wrap} style={{ height: geometry.height }}>
-        {width > 0 && <svg className="lx-stepbar-shape" width={width} height={geometry.height} viewBox={`0 0 ${width} ${geometry.height}`} aria-hidden="true"><path ref={path} /></svg>}
-        <span className="lx-stepbar-knob" ref={knob} aria-hidden="true" style={{ width: (geometry.notch - 6) * 2, height: (geometry.notch - 6) * 2 }}><Active size={compact ? 19 : 21} strokeWidth={1.8} /></span>
+    <nav className={`lx-stepbar${compact ? ' is-compact' : ` is-${placement}`}${ready ? ' is-ready' : ''}`} aria-label={tr('Konfigurálás lépései', 'Konfigurationsschritte')}>
+      <div className="lx-stepbar-track" ref={wrap} style={{ height: geometry.height, ['--lx-x' as string]: `${x}px`, ['--lx-r' as string]: `${geometry.corner}px` }}>
+        <div className="lx-stepbar-clip" aria-hidden="true">
+          {width > 0 && <svg className="lx-stepbar-strip" width={width * 2} height={geometry.height} viewBox={`0 0 ${width * 2} ${geometry.height}`} style={{ transform: `translate3d(${x - width}px, 0, 0)` }}><path d={notchPath(width * 2, width, geometry)} /></svg>}
+        </div>
+        <span className="lx-stepbar-knob" aria-hidden="true" style={{ width: knob, height: knob, transform: `translate3d(${x - knob / 2}px, ${geometry.dip - knob / 2}px, 0)` }}><span key={step} className="lx-stepbar-knob-icon"><StepIcon step={step} size={geometry === NOTCH_COMPACT ? 20 : 22} /></span></span>
+        <span className="lx-stepbar-label" aria-hidden="true" style={{ transform: `translate3d(${x}px, 0, 0) translateX(-50%)` }}><span key={step}>{label}</span></span>
         <ol>
           {REBUILD_STEPS.map((item, i) => {
-            const Icon = ICONS[item.id]
             const current = i === index
             return <li key={item.id} style={{ left: width ? slotCenter(i, count, width, pad) : `${((i + 0.5) / count) * 100}%` }}>
               <button type="button" className={current ? 'is-current' : ''} aria-current={current ? 'step' : undefined} aria-label={`${i + 1}. ${item.label}`} title={item.label} onClick={() => onStep(item.id)}>
-                <Icon size={compact ? 18 : 20} strokeWidth={1.6} />
+                <StepIcon step={item.id} size={geometry === NOTCH_COMPACT ? 20 : 22} />
               </button>
             </li>
           })}

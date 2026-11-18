@@ -9,7 +9,7 @@ import LiquidGlass from './LiquidGlass'
  * A lépés lebegő üvegkártyája. Asztalon jobbra lebeg; telefonon alulról felhúzható lap (két állás).
  * A lépés tartalma (`children`) a modulokkal érkezik.
  */
-export default function StepCard({ step, compact, open, onOpenChange, onStep, children }: { step: ConfigStep; compact: boolean; open: boolean; onOpenChange: (open: boolean) => void; onStep: (step: ConfigStep) => void; children?: ReactNode }) {
+export default function StepCard({ step, compact, open, onOpenChange, onStep, bar, children }: { step: ConfigStep; compact: boolean; open: boolean; onOpenChange: (open: boolean) => void; onStep: (step: ConfigStep) => void; /** a kártya tetejére tapadó lépéssáv (asztalon) */ bar?: ReactNode; children?: ReactNode }) {
   const index = rebuildStepIndex(step)
   const current = REBUILD_STEPS[index]
   const prev = neighbourStep(step, -1)
@@ -18,11 +18,12 @@ export default function StepCard({ step, compact, open, onOpenChange, onStep, ch
   const drag = useRef<{ y: number; id: number } | null>(null)
 
   return (
-    <LiquidGlass as="aside" className={`lx-stepcard${compact ? ' is-sheet' : ''}${compact && open ? ' is-open' : ''}`} radius={compact ? 26 : 28} bezel={compact ? 14 : 18} aria-label={current.label}>
+    <LiquidGlass as="aside" className={`lx-stepcard${compact ? ' is-sheet' : ''}${compact && open ? ' is-open' : ''}`} radius={compact ? 26 : 28} bezel={compact ? 14 : 18} blur={compact ? 6 : 14} aria-label={current.label}>
       {compact && <button type="button" className="lx-sheet-handle" aria-expanded={open} aria-label={open ? tr('Lap lecsukása', 'Blatt einklappen') : tr('Lap kinyitása', 'Blatt ausklappen')}
         onClick={() => onOpenChange(!open)}
         onPointerDown={(event) => { drag.current = { y: event.clientY, id: event.pointerId } }}
         onPointerUp={(event) => { const start = drag.current; drag.current = null; if (!start) return; const dy = event.clientY - start.y; if (dy < -24 && !open) { event.preventDefault(); onOpenChange(true) } else if (dy > 24 && open) { event.preventDefault(); onOpenChange(false) } }}><i /></button>}
+      {bar}
       <header className="lx-stepcard-head">
         <span className="lx-stepcard-count">{index + 1} / {REBUILD_STEPS.length} · {current.label}</span>
         <h2>{current.question}</h2>
