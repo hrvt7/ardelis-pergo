@@ -10,7 +10,7 @@ import LiquidGlass from './LiquidGlass'
  * Felül a kérdés (a lépés nevét a lépéssáv mutatja), középen a lépés tartalma, alul egy tömbben az ár, az
  * „Ajánlatot kérek” és a Vissza / Tovább. Az utolsó lépésen a fő gomb maga az „Ajánlatot kérek”.
  */
-export default function StepCard({ step, compact, open, onOpenChange, onStep, bar, price, onRequest, children }: { step: ConfigStep; compact: boolean; open: boolean; onOpenChange: (open: boolean) => void; onStep: (step: ConfigStep) => void; /** a kártya tetejére tapadó lépéssáv (telefonon) */ bar?: ReactNode; /** ársor a gombok fölött */ price?: ReactNode; /** az utolsó lépésen a fő gomb: ajánlatkérés (az űrlaphoz visz) */ onRequest?: () => void; children?: ReactNode }) {
+export default function StepCard({ step, compact, open, onOpenChange, onStep, bar, price, onRequest, corner, children }: { step: ConfigStep; compact: boolean; open: boolean; onOpenChange: (open: boolean) => void; onStep: (step: ConfigStep) => void; /** a kártya tetejére tapadó lépéssáv (telefonon) */ bar?: ReactNode; /** ársor a gombok fölött */ price?: ReactNode; /** az utolsó lépésen a fő gomb: ajánlatkérés (az űrlaphoz visz) */ onRequest?: () => void; /** a kártya jobb felső sarkában ülő kapcsoló (asztalon) */ corner?: ReactNode; children?: ReactNode }) {
   const index = rebuildStepIndex(step)
   const current = REBUILD_STEPS[index]
   const prev = neighbourStep(step, -1)
@@ -24,6 +24,7 @@ export default function StepCard({ step, compact, open, onOpenChange, onStep, ba
   return (
     <LiquidGlass as="aside" className={`rb-stepcard${bar ? ' has-dock' : ''}${compact ? ' is-sheet' : ''}${compact && open ? ' is-open' : ''}`} radius={compact ? 26 : 28} bezel={compact ? 14 : 18} blur={compact ? 6 : 14} aria-label={current.label}>
       {bar}
+      {!compact && corner}
       <header className="rb-stepcard-head"
         onPointerDown={compact ? (event) => { drag.current = { y: event.clientY } } : undefined}
         onPointerUp={compact ? (event) => { const start = drag.current; drag.current = null; if (!start) return; const dy = event.clientY - start.y; if (dy < -24 && !open) onOpenChange(true); else if (dy > 24 && open) onOpenChange(false) } : undefined}>

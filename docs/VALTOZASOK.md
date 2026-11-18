@@ -1,5 +1,10 @@
 # Változások
 
+## 5.34 – Környezet-kapcsoló a lépéskártya sarkában
+
+- **Új:** asztalon a lépéskártya jobb felső sarkában kapcsoló: sima háttér vagy családi ház a pergola mögött. A gomb belül, a kártya lekerekítésével párhuzamos sínen csúszik: felül vízszintesen (sima háttér), a sarkon átfordulva függőlegesen (ház), mögötte lime színnel telik ki a sín. Visszakapcsoláskor a korábbi környezet (terasz vagy kert) jön vissza. Csak látvány, az árat nem módosítja. Telefonon a bal oldali eszköztár Környezet panelje marad.
+- Tesztek: `cornerEnvSwitch.test.ts` (sín geometriája, kapcsoló szerep, elhelyezés).
+
 ## 5.33 – Kalkulációs lap: bruttó tételek ezresre kerekítve
 
 - **Hiba:** a tételes kalkuláció bruttó sorai forintra pontosan jelentek meg (pl. 4 191 230 Ft), miközben a végösszeg ezresre kerekített. Most minden tétel ezresre kerekítve látszik, ahogy a végösszeg.
