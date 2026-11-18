@@ -1,5 +1,13 @@
 # Változások
 
+## 5.07 – Újraépítési mód: lépéssáv bemélyedéssel és folyékony üveg lépéskártya (M01)
+
+- **Lépéssáv:** a 7 lépés (Termék, Hely és méret, Tető, Oldalak, Szín, Komfort, Összegzés) sötét sávon, az aktív lépés a sávba „süllyedő” akcentkörben; lépésváltáskor a kör és a bemélyedés átúszik (időalapú animáció, csökkentett mozgásnál azonnal). Asztalon felül, a kártya nélküli rész közepén; telefonon alul.
+- **Lépéskártya:** jobbra lebegő folyékony üveg panel („3 / 7 · Tető”, a lépés kérdése, Vissza / Tovább: következő lépés). Chromium-alapú böngészőben egérrel valódi peremtörés (SVG elmozdítási térkép a háttéren), máshol és telefonon matt üveg. Telefonon alulról felhúzható lap két állásban.
+- A pergola asztalon a kártya nélküli rész közepére kerül. A lépésváltás a meglévő kameralogikát használja.
+- Csak `?mod=ujraepites` alatt látszik; az éles felület képe pixelre azonos (asztal és telefon).
+- Tesztek: `rebuildSteps.test.ts` (lépéssorrend a meglévő logikával egyezik, bemélyedés-geometria, a szélső lépések is a bemélyedésben), `liquidGlass.test.ts` (elmozdítási térkép), `rebuildMode.test.ts` (M01 látható).
+
 ## 5.06 – Újraépítési mód: csak a 3D (M00)
 
 - **Újraépítési mód:** a `/konfigurator?mod=ujraepites` címen a 3D kitölti a teljes képernyőt, minden felületi elem nélkül. A terv mindig a gyártó alaptervéből indul; a mód nem ír a böngészőbe (piszkozat, ház, változatok), nem mér, nem nyit AR-t, nem írja a címsort. A 3D forgatható, nagyítható, mozgatható; a 3D-n belüli kattintások (oldal kijelölése, ajtó- és üvegnyitás), a feliratok és a műszaki jelölések kikapcsolva – a modulok hozzák vissza őket.

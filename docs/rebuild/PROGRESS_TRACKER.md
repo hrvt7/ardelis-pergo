@@ -19,8 +19,8 @@
 
 | Kód | Modul | Állapot | Ádám döntése | Megjegyzés |
 |---|---|---|---|---|
-| M00 | Lecsupaszítás | KÉSZ, JÓVÁHAGYÁSRA VÁR | D1–D3 | `?mod=ujraepites`: teljes képernyős 3D, a gyártó alaptervéből, mérés és böngészőírás nélkül, 3D-kattintások ki (5.06) |
-| M01 | Panelkeret és lépésnavigáció | NEM INDULT | – | |
+| M00 | Lecsupaszítás | KÉSZ | D1–D3 | `?mod=ujraepites`: teljes képernyős 3D, a gyártó alaptervéből, mérés és böngészőírás nélkül, 3D-kattintások ki (5.06) |
+| M01 | Panelkeret és lépésnavigáció | KÉSZ, JÓVÁHAGYÁSRA VÁR | D8 | Bemélyedéses lépéssáv + folyékony üveg lépéskártya, telefonon felhúzható lap (5.07) |
 | M02 | Elhelyezés | NEM INDULT | – | |
 | M03 | Méretek és modulok | NEM INDULT | – | |
 | M04 | Visszavonás, újra, alaphelyzet | NEM INDULT | – | |
@@ -48,6 +48,7 @@
 | D2 | M00: a 3D-n belüli kattintások (oldal kijelölése, üveg/ajtó nyitása) kikapcsolva? | Igen, az M08 hozza vissza | **2026-11-18: igen** (Ádám: „csináld így, kezdjük”) |
 | D3 | M00: kiinduló terv a gyártó alapterve, vagy a böngésző utolsó terve? | Gyártói alapterv | **2026-11-18: gyártói alapterv** |
 | D7 | Lépés-architektúra (`STEP_ARCHITECTURE.md`) | 7 lépés; ház és környezet az eszköztárba; bútor a 2. lépésbe | **2026-11-18: jóváhagyva a javaslat szerint.** A modulok sorrendje ehhez igazodik (M01 = lebegő lépéssáv és üvegpanel). |
+| D8 | M01 megjelenés (`UI_INSPIRATION.md`) | – | **2026-11-18:** lépéssáv bemélyedéssel (01-es minta, asztalon és telefonon); kártya folyékony üvegből; az eszköztár a bal szélre tapad (M13/M16). Panelszélesség-húzás nincs (fix kártya). |
 | D4 | Ársáv helye | Felül jobbra | **2026-11-18: felül jobbra**, a lépéssáv mellett, mindig látható lebegő üvegelem. |
 | D5 | Alapértelmezett ármód új gyártónál | Becsült teljes ár | **2026-11-18: becsült teljes ár** „becsült” felirattal; a gyártó átkapcsolhatja „-tól” árra vagy rejtett árra. |
 | D6 | Ajánlatkérés helye | Minden lépésből | **2026-11-18: minden lépésből** elérhető másodlagos gombként; a fő gomb marad a „Tovább”. |
@@ -75,4 +76,5 @@ Nyitottak; a hozzájuk tartozó modul visszaépítésekor javítandók, ha Ádá
 | 2026-11-18 | D1 eldőlt: teljes képernyős 3D, a panelek lebegő üvegablakként jönnek vissza. |
 | 2026-11-18 | D4–D6 eldőlt a referencia-kutatás alapján (`REFERENCE_CONFIGURATORS.md`): ársáv felül jobbra, becsült ár alapból (kapcsolható), ajánlatkérés minden lépésből. |
 | 2026-11-18 | M00 kész (5.06): `src/lib/rebuildMode.ts` + `tests/rebuildMode.test.ts`; ellenőrizve 1440×900 és 390×844 méreten: csak a 3D látszik (a vászon kitölti a képernyőt, egyetlen gomb sincs), a húzás forgat, nincs `/api/track` kérés, a böngészőben mentett piszkozat érintetlen, a hash nem íródik. Az éles `/konfigurator` képe pixelre azonos a módosítás előttivel (asztalon 176 px élsimítási eltérés a Tanácsadó kártya ikonján, mobilon 0). |
+| 2026-11-18 | M01 kész (5.07): ellenőrizve 1440×900 és 390×844 méreten: lépésváltás sávról és Tovább gombbal, a kör a helyére úszik, konzolhiba nincs; az éles felület képe 0 pixel eltérés. |
 | 2026-11-18 | Elkészült az audit, a leltár, a függőségi térkép és a terv (`docs/rebuild/`), kódmódosítás nélkül. |

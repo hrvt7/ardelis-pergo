@@ -46,7 +46,10 @@ import { buildWalkArea } from '@/lib/walkArea'
 import { floatPhoneShiftX, floatViewShiftX, glassViewShiftX, resolveUiStyle, studioInitialTime, UI_STYLE_KEY, usesCyclorama, usesFloatLayout, type UiStyle } from '@/lib/uiStyle'
 import { cameraViewsFor } from '@/lib/cameraViews'
 import { mobileBarAction } from '@/lib/configSteps'
-import { currentRebuildMode } from '@/lib/rebuildMode'
+import { currentRebuildMode, moduleVisible } from '@/lib/rebuildMode'
+import StepNotchBar from '@/components/rebuild/StepNotchBar'
+import StepCard from '@/components/rebuild/StepCard'
+import '@/components/rebuild/rebuild.css'
 import { clearExpansion, LOCKED_STEPS, readExpansion } from '@/lib/expansion'
 import { clampExpansion } from '@/lib/installations'
 import { DEFAULT_USAGE, energyCostSupported, estimateEnergy, roundCost, type EnergyUsage } from '@/lib/energy'
@@ -102,6 +105,7 @@ export default function PergoStudio() {
   usePageSeo(product === 'carport' ? '/konfigurator/carport' : '/konfigurator', { noindex: embed || !tenant.demo, title: tenant.demo ? undefined : `${tenant.brand.name} · ${product === 'carport' ? 'Carport' : 'Pergola'} ${tr('konfigurátor', 'Konfigurator')}` })
   // Újraépítési mód (`?mod=ujraepites`, docs/rebuild): csak a 3D, a gyártó alaptervéből; nem ír a böngészőbe és nem mér.
   const [rebuild] = useState(currentRebuildMode)
+  const [rebuildSheetOpen, setRebuildSheetOpen] = useState(false)
   // Bővítés a tulajdonosi oldalról: a felszerelt termékből indul, a meglévő szerkezet zárolt (csak hozzáadni lehet).
   const [expansion] = useState(() => (product === 'pergola' && !rebuild ? readExpansion(tenant.id) : null))
   const expansionBase = useMemo(() => (expansion ? normalizeConfig(tenant, expansion.config) : null), [expansion, tenant])
@@ -582,15 +586,24 @@ export default function PergoStudio() {
   )
   // Újraépítési mód (M00): csak a teljes képernyős 3D. Forgatás, nagyítás, mozgatás működik; a 3D-n belüli
   // kattintások (oldal kijelölése, ajtó- és üvegnyitás) kikapcsolva, a felületi elemek a modulokkal jönnek vissza.
-  if (rebuild) return (
-    <div className="app-shell rebuild-shell">
-      <main className="rebuild-stage" id="top">
-        <section className="viewer-panel" aria-label={tr('3D előnézet', '3D-Vorschau')}>
-          <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={scene} view={view} focus={focus} onSceneChange={ignoreSceneChange} /></IntroSceneGate>
-        </section>
-      </main>
-    </div>
-  )
+  if (rebuild) {
+    const frame = moduleVisible('M01', true)
+    // Asztalon a pergola a kártya nélküli rész közepére kerül; telefonon a lap fölé.
+    const rebuildShiftX = frame && !isNarrow && viewportWidth > 0 ? (380 + 40) / 2 / viewportWidth : 0
+    const rebuildShiftY = frame && isNarrow ? (rebuildSheetOpen ? 0.24 : 0.1) : 0
+    return (
+      <div className="app-shell rebuild-shell">
+        <main className="rebuild-stage" id="top">
+          <section className="viewer-panel" aria-label={tr('3D előnézet', '3D-Vorschau')}>
+            <IntroSceneGate><PergolaScene cyclorama={usesCyclorama(uiStyle)} cycloramaTone={uiStyle === 'light' ? 'light' : 'neutral'} config={config} scene={scene} view={view} focus={focus} viewShift={rebuildShiftY} viewShiftX={rebuildShiftX} onSceneChange={ignoreSceneChange} /></IntroSceneGate>
+          </section>
+          {frame && <StepNotchBar step={step} compact={isNarrow} onStep={goStep} />}
+          {frame && <StepCard step={step} compact={isNarrow} open={rebuildSheetOpen} onOpenChange={setRebuildSheetOpen} onStep={goStep}><p className="lx-stepcard-empty">{tr('A lépés beállításai a következő modulokkal érkeznek.', 'Die Einstellungen dieses Schritts folgen mit den nächsten Modulen.')}</p></StepCard>}
+        </main>
+        {frame && toast && <div className="toast" role="status"><Check size={17} /><span>{toast}</span><button type="button" aria-label={tr('Értesítés bezárása', 'Hinweis schließen')} onClick={() => setToast('')}><X size={16} /></button></div>}
+      </div>
+    )
+  }
 
   return (
     <div className={`app-shell layout-a ${modularMode ? '' : 'bar-in-panel'} ${presentation ? 'presentation-mode' : ''} ${detailsOpen ? 'details-open' : ''} ${walking ? 'walk-mode' : ''} ${uiStyle === 'glass' ? 'style-glass' : ''} ${uiStyle === 'studio' ? 'style-studio' : ''} ${uiStyle === 'light' ? 'style-light' : ''} ${floatLayout ? 'layout-float' : ''}`} style={panelLayout ? ({ '--panel-w': `${panelWidth}px`, '--side-w': `${panelWidth}px` } as CSSProperties) : undefined}>
