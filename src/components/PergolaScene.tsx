@@ -40,7 +40,7 @@ import { gardenLayout, getHouseLayout, wingFootprints, WING_DEPTH } from '@/lib/
 import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
 import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
-import { doorKinematics, doorProgress, doorSwingAngle, INWARD, MULLION, sideSegmentPlacements, slidingLeafX, slidingLeafZ } from '@/lib/mechanics'
+import { doorKinematics, doorProgress, doorSwingAngle, GLASS_SLIDE_SECONDS, glideEase, glideStep, INWARD, MULLION, sideSegmentPlacements, slidingLeafX, slidingLeafZ } from '@/lib/mechanics'
 import { sceneTime, stillMotion } from '@/lib/sceneClock'
 import { carportBays, hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
 import { ModularCameraRig, ModularDimensions, ModularGroundExtras, ModularHouseModel, type ModularView } from '@/components/ModularHouseScene'
@@ -553,15 +553,17 @@ function GlassWall({ length, height, color, opened, onToggle, framed = false, la
   const panels = useRef<THREE.Group[]>([])
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
+  // Időarányos, lassan induló és lassan megálló csúszás (mint az MB-OpenSlide-nál), nem exponenciális rándulás.
+  const phase = useRef(-1)
   useFrame((_, delta) => {
-    let moving = false
+    const target = opened ? 1 : 0
+    const previous = phase.current
+    phase.current = REDUCED || previous < 0 ? target : glideStep(previous, target, delta, GLASS_SLIDE_SECONDS)
+    const eased = glideEase(phase.current)
     panels.current.slice(0, panelCount).forEach((panel, index) => {
-      if (!panel) return
-      const target = layout.position(index, opened)
-      if (Math.abs(panel.position.x - target) > 0.002) moving = true
-      panel.position.x = REDUCED ? target : THREE.MathUtils.damp(panel.position.x, target, 7, delta)
+      if (panel) panel.position.x = THREE.MathUtils.lerp(layout.position(index, false), layout.position(index, true), eased)
     })
-    if (moving) { refreshShadows(gl); invalidate() }
+    if (previous !== phase.current) { refreshShadows(gl); invalidate() }
   })
   return <group onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>{Array.from({ length: panelCount }, (_, index) => {
     const x = -length / 2 + 0.06 + panelWidth * (index + 0.5)

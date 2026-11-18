@@ -13,6 +13,7 @@ import { openSlidePlan, SIDE_POST_INSET, ZIP, zipPlan, OPENSLIDE } from '@/lib/o
 import { ZIP_BAR, ZIP_BOX, ZIP_GUIDE } from '@/lib/zipProfiles'
 import { alongX, loopsToShapes, upward } from '@/components/profileGeometry'
 import { tr } from '@/i18n/locale'
+import { GLASS_SLIDE_SECONDS, glideEase, glideStep, MAX_FRAME_DELTA } from '@/lib/mechanics'
 
 const REDUCED = stillMotion(typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
 const HALF_BEAM = OS140.beamW / 2
@@ -50,7 +51,7 @@ export function Os140Zip({ length, height, inward, open, wind, material }: { len
   const invalidate = useThree((state) => state.invalidate)
   useFrame(({ clock, gl }, delta) => {
     const previous = current.current
-    current.current = REDUCED || previous < 0 ? open : THREE.MathUtils.damp(current.current, open, 8, delta)
+    current.current = REDUCED || previous < 0 ? open : THREE.MathUtils.damp(current.current, open, 8, Math.min(delta, MAX_FRAME_DELTA))
     const fraction = Math.max(0.012, 1 - current.current / 100)
     const barY = Math.max(0, boxBottom - fraction * boxBottom)
     const visible = Math.max(0.005, boxBottom - barY - 0.024)
@@ -104,9 +105,9 @@ export function Os140Slide({ length, height, inward, opened, onToggle, label, ma
   useFrame(({ gl }, delta) => {
     const target = opened ? 1 : 0
     const prev = progress.current
-    progress.current = REDUCED || prev < 0 ? target : THREE.MathUtils.damp(prev, target, 4, delta)
-    if (Math.abs(progress.current - target) < 0.001) progress.current = target
-    sashes.current.forEach((g, i) => { if (g) g.position.x = THREE.MathUtils.lerp(closedX(i), openX(i), progress.current) })
+    progress.current = REDUCED || prev < 0 ? target : glideStep(prev, target, delta, GLASS_SLIDE_SECONDS)
+    const eased = glideEase(progress.current)
+    sashes.current.forEach((g, i) => { if (g) g.position.x = THREE.MathUtils.lerp(closedX(i), openX(i), eased) })
     if (Math.abs(prev - progress.current) > 0.0005) { gl.shadowMap.needsUpdate = true; invalidate() }
   })
   const glassMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: '#b4cdd0', metalness: 0.02, roughness: 0.045, transparent: true, opacity: 0.28, clearcoat: 1, clearcoatRoughness: 0.05, depthWrite: false }), [])

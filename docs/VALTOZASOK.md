@@ -1,5 +1,11 @@
 # Változások
 
+## 5.35 – Tolóüveg: sima, nyugodt nyitás és zárás
+
+- **Hiba (Ádám jelezte):** a toló üvegfal szárnyai nyitáskor/záráskor szinte egy pillanat alatt „becsapódtak”. Ok: a 3D csak igény szerint rajzol, így a kattintás utáni első képkocka a legutóbbi rajzolás óta eltelt teljes időt kapta, és a gyors exponenciális csillapítás ebben az egy lépésben majdnem végig is ért.
+- **Javítás:** a csúszás időarányos, kb. 2,2 s alatt fut végig, lassan indul és lassan áll meg (smootherstep); egy képkocka legfeljebb 1/30 s-ot léptet, így szünet után sincs ugrás; menet közben visszafordítható. Érvényes az MB-OpenSlide (forgólamellás váz) és az általános toló üvegfal szárnyaira; a ZIP-redőny is megkapta a képkocka-korlátot.
+- Tesztek: `glassGlide.test.ts`.
+
 ## 5.34 – Környezet-kapcsoló a lépéskártya sarkában
 
 - **Új:** asztalon a lépéskártya jobb felső sarkában kapcsoló: sima háttér vagy családi ház a pergola mögött. A gomb belül, a kártya lekerekítésével párhuzamos sínen csúszik: felül vízszintesen (sima háttér), a sarkon átfordulva függőlegesen (ház), mögötte lime színnel telik ki a sín. Visszakapcsoláskor a korábbi környezet (terasz vagy kert) jön vissza. Csak látvány, az árat nem módosítja. Telefonon a bal oldali eszköztár Környezet panelje marad.

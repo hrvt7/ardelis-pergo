@@ -189,3 +189,24 @@ export function polygonsIntersect(a: Point[], b: Point[]) {
 
 /** Tengelyhez igazított téglalap sokszögként (z, y). */
 export const rectPolygon = (z0: number, z1: number, y0: number, y1: number): Point[] => [[z0, y0], [z1, y0], [z1, y1], [z0, y1]]
+
+/** Tolóüveg (MB-OpenSlide és általános üvegfal) teljes nyitása/zárása (s): nehéz üvegszárny, nyugodt csúszás. */
+export const GLASS_SLIDE_SECONDS = 2.2
+/** Egy képkocka leghosszabb figyelembe vett ideje (s). Igény szerinti rajzolásnál az első képkocka a legutóbbi rajzolás
+ *  óta eltelt teljes időt kapná, és a mozgás egy lépésben a végére ugrana („becsapódás”). */
+export const MAX_FRAME_DELTA = 1 / 30
+
+/** Lassan induló és lassan megálló görbe (smootherstep, 0→1). */
+export function glideEase(u: number) {
+  const t = Math.min(1, Math.max(0, u))
+  return t * t * t * (t * (t * 6 - 15) + 10)
+}
+
+/**
+ * A mozgás fázisa (0 = zárva, 1 = nyitva) időarányosan lép a cél felé, állandó sebességgel; a kirajzolt pozíció
+ * `glideEase(fázis)`. Menet közbeni visszafordításnál a fázis onnan halad vissza, ahol tart, nincs ugrás.
+ */
+export function glideStep(phase: number, target: number, delta: number, seconds: number) {
+  const step = Math.min(Math.max(delta, 0), MAX_FRAME_DELTA) / seconds
+  return phase < target ? Math.min(target, phase + step) : Math.max(target, phase - step)
+}
