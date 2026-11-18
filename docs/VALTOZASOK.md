@@ -1,5 +1,13 @@
 # Változások
 
+## 5.37 – Tető és oldalak: egy fő döntés, renderelt képekkel, csoportosítva
+
+- **Kiválasztott = domináns:** a tető- és az oldalzárás-lépésen a kiválasztott opció nagy kártya, a saját 3D-nkből renderelt képpel, lime bal sávval, a nevével, egy sor előnnyel (tetőnél árnyék és eső). Választáskor az új kártya beúszik.
+- **A többi halk és csoportosított:** „További lehetőségek” alatt kompakt sorok (kis kép, név, egy sor, kisebb és halkabb felár). Oldalak: Nyitott / árnyékoló · Üveg · Lamella / léc. Tető: Mozgatható tető · Fix fedés.
+- **Bélyegképek:** 16 kép (10 oldalzárás, 6 tető) a saját modellünkből, antracit vázzal, stúdió háttérrel (`public/assets/thumbs`, összesen kb. 150 KB, webp). Illusztráció: a választott színt a 3D mutatja.
+- A ZIP nyitottság csúszkája továbbra is csak ZIP-es oldalnál jelenik meg.
+- Tesztek: `choiceStack.test.ts` (minden típusnak van képe, csoportok, kiemelés, ZIP-csúszka).
+
 ## 5.36 – Környezet-kapcsoló: a kép a csúszkával együtt vált
 
 - **Hiba:** a környezet (családi ház) azonnal megjelent, a kapcsoló gombja csak utána, megakadva indult el, mert a ház betöltése lefoglalta a böngészőt. Most a gomb azonnal végigcsúszik a sínen (0,52 s), és a környezet akkor vált, amikor megérkezik. Csökkentett mozgás beállításnál azonnal vált.

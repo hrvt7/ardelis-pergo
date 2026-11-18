@@ -8,7 +8,9 @@ import { issuesForStep } from '@/lib/configSteps'
 import { useTenant } from '@/tenants/TenantContext'
 import { BuildingIssues } from '@/components/BuildingControls'
 import { RoofShadeOption } from '@/components/SideAndExtras'
-import { RoofIcon, SolarToggle } from '@/components/ConfiguratorControls'
+import { SolarToggle } from '@/components/ConfiguratorControls'
+import { ROOF_GROUPS, roofGroup, thumbFor } from '@/lib/choiceGroups'
+import ChoiceStack from './ChoiceStack'
 import { tr } from '@/i18n/locale'
 import LiquidSlider from './LiquidSlider'
 import LouvreArc from './LouvreArc'
@@ -26,21 +28,10 @@ export default function RoofStep({ config, scene, prices, onChange, onSceneChang
   return <div className="rb-step rb-step-roof">
     <section className="rb-section">
       <h3>{tr('Tetőrendszer', 'Dachsystem')}</h3>
-      <div className="rb-roof-list">
-        {roofs.map((roof) => {
-          const brand = tenant.roofs[roof]!
-          const active = roof === config.roof
-          const delta = active ? 0 : tenantPrice(tenant, { ...config, roof }, prices).totalGross - current
-          const roofInfo = ROOF_INFO[roof]
-          return <button type="button" key={roof} className={`rb-option rb-roof${active ? ' is-selected' : ''}`} aria-pressed={active} onClick={() => onChange({ roof })}>
-            <span className="rb-roof-icon"><RoofIcon roof={roof} /></span>
-            <span className="rb-roof-text"><strong>{brand.name}</strong><small>{brand.short}</small>
-              <span className="rb-roof-props"><span>{tr('Árnyék', 'Schatten')}: {roofInfo.shade}</span><span>{tr('Eső', 'Regen')}: {roofInfo.rain}</span></span>
-            </span>
-            {active && <span className="rb-option-check"><Check size={12} strokeWidth={3} /></span>}<em>{active ? '' : `${delta > 0 ? '+' : '−'}${formatPrice(Math.abs(delta))}`}</em>
-          </button>
-        })}
-      </div>
+      <ChoiceStack label={tr('Tetőrendszer', 'Dachsystem')} current={config.roof} groups={ROOF_GROUPS()} onSelect={(roof) => onChange({ roof })}
+        delta={(roof) => tenantPrice(tenant, { ...config, roof }, prices).totalGross - current}
+        items={roofs.map((roof) => ({ id: roof, title: tenant.roofs[roof]!.name, line: tenant.roofs[roof]!.short, thumb: thumbFor('roof', roof), group: roofGroup(roof),
+          details: <span className="rb-roof-props"><span>{tr('Árnyék', 'Schatten')}: {ROOF_INFO[roof].shade}</span><span>{tr('Eső', 'Regen')}: {ROOF_INFO[roof].rain}</span></span> }))} />
       {isClosedBuilding(config.building) && <p className="rb-note">{config.building === 'conservatory' ? tr('Télikerthez üveg- vagy fix (szigetelt) tető való.', 'Für einen Wintergarten eignet sich ein Glas- oder festes (gedämmtes) Dach.') : tr('Verandához zárt tető való.', 'Für eine Veranda eignet sich ein geschlossenes Dach.')}</p>}
     </section>
 

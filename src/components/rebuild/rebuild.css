@@ -619,3 +619,36 @@
 .rb-corner-switch:hover .rb-corner-knob { box-shadow: inset 0 1px 0 #fff, inset 0 -1px 2px rgba(0, 0, 0, .08), 0 6px 14px rgba(18, 22, 26, .28), 0 1px 2px rgba(18, 22, 26, .2); }
 .rb-stepcard:not(.is-sheet) .rb-stepcard-head { padding-right: 84px; }
 @media (prefers-reduced-motion: reduce) { .rb-corner-knob, .rb-corner-fill, .rb-corner-knob svg { transition: none; } }
+
+/* ── Egy fő döntés + halk lehetőségek (tető, oldalak) ────────────────────────────────────────────────────────────
+   A kiválasztott: nagy kártya, a saját 3D-nkből renderelt képpel, lime bal sávval és sötét pipával; a többi kompakt,
+   csoportosított sor (kis kép, név, egy sor, halk felár). Választáskor az új kártya beúszik. */
+.rb-choice { display: grid; gap: 18px; }
+.rb-choice-hero { position: relative; display: grid; overflow: hidden; border-radius: 18px; background: rgba(255, 255, 255, .86); box-shadow: inset 0 0 0 1.5px var(--rb-ink), 0 10px 26px rgba(18, 22, 26, .12); animation: rb-hero-in .45s var(--rb-ease) both; }
+.rb-choice-hero::before { content: ''; position: absolute; z-index: 1; left: 0; top: 0; bottom: 0; width: 5px; background: var(--rb-accent); }
+.rb-choice-hero img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; background: #e9e6df; }
+.rb-choice-hero .rb-option-check { top: 12px; right: 12px; }
+.rb-choice-hero-text { display: grid; gap: 4px; padding: 14px 16px 16px 20px; }
+.rb-choice-hero-text strong { font-size: 18px; font-weight: 700; letter-spacing: -.01em; color: var(--rb-ink); }
+.rb-choice-hero-text > span { font-size: 14px; color: rgba(21, 23, 26, .78); }
+.rb-choice-hero-text .rb-roof-props { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; font-size: 13px; }
+.rb-choice-more h4 { margin: 0 0 6px; font-size: 13px; font-weight: 650; color: var(--rb-ink); }
+.rb-choice-group { display: grid; }
+.rb-choice-group h5 { margin: 10px 0 2px; font-size: 11.5px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: rgba(21, 23, 26, .62); }
+.rb-choice-row { display: grid; grid-template-columns: 60px 1fr auto; align-items: center; gap: 12px; min-height: 56px; padding: 6px 4px; border: 0; border-bottom: 1px solid rgba(21, 23, 26, .08); background: none; text-align: left; font: inherit; color: var(--rb-ink); cursor: pointer; transition: background .2s, opacity .2s; }
+.rb-choice-group .rb-choice-row:last-child { border-bottom: 0; }
+.rb-choice-row:hover { background: rgba(255, 255, 255, .5); border-radius: 12px; }
+.rb-choice-row img { width: 60px; height: 40px; border-radius: 8px; object-fit: cover; background: #e9e6df; opacity: .92; }
+.rb-choice-row-text { display: grid; min-width: 0; }
+.rb-choice-row-text strong { font-size: 14.5px; font-weight: 600; }
+.rb-choice-row-text small { overflow: hidden; font-size: 12.5px; color: rgba(21, 23, 26, .66); white-space: nowrap; text-overflow: ellipsis; }
+.rb-choice-row em { font-style: normal; font-size: 12.5px; font-weight: 500; color: rgba(21, 23, 26, .62); white-space: nowrap; }
+.rb-choice-row:focus-visible, .rb-choice-hero:focus-visible { outline: 2px solid var(--rb-ink); outline-offset: 2px; }
+@keyframes rb-hero-in { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .rb-choice-hero { animation: none; } }
+/* A nagy kártya fekvő elrendezésben: kép balra, név és részletek jobbra, így telefonon is egy pillantásra látszik. */
+.rb-choice-hero { grid-template-columns: minmax(120px, 44%) 1fr; align-items: stretch; }
+.rb-choice-hero img { height: 100%; min-height: 112px; aspect-ratio: auto; }
+.rb-choice-hero-text { align-content: center; padding: 14px 40px 14px 14px; }
+.rb-choice-hero .rb-option-check { top: 10px; right: 10px; }
+.rb-choice-hero-text .rb-roof-props { display: grid; gap: 2px; }

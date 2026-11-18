@@ -1,32 +1,25 @@
 import { useState } from 'react'
-import { ArrowLeftRight, Check, MousePointerClick } from 'lucide-react'
+import { ArrowLeftRight, MousePointerClick } from 'lucide-react'
 import type { PergolaConfig, PriceSettings, SceneSettings, SideKey } from '@/types/pergola'
 import { isWallSide, wallLabel } from '@/lib/mount'
 import { closedSegments, SIDE_INFO, SIDE_LABELS } from '@/lib/sides'
 import { issuesForStep } from '@/lib/configSteps'
 import { isClosedBuilding } from '@/lib/buildings'
 import { BuildingIssues, WallGlazingPicker } from '@/components/BuildingControls'
-import { SideIcon, SideSettings, type SideTypePicker } from '@/components/SideAndExtras'
-import { signedPrice } from '@/lib/money'
+import { SideSettings, type SideTypePicker } from '@/components/SideAndExtras'
+import { SIDE_GROUPS, sideGroup, thumbFor } from '@/lib/choiceGroups'
+import ChoiceStack from './ChoiceStack'
 import { tr } from '@/i18n/locale'
 import LiquidSlider from './LiquidSlider'
 
 const ORDER: SideKey[] = ['back', 'left', 'right', 'front']
 
 /**
- * Az oldaltípusok teljes kontrasztú listában (kritikus kör, 2026-11-18): minden sorban ikon, név, rövid leírás és felár,
- * hogy a döntéshez szükséges adat mindig olvasható legyen (az íves választón a szélső elemek elhalványultak).
+ * Oldaltípus: a kiválasztott nagy kártya (renderelt kép, név, leírás), alatta a többi csoportosítva, kompakt sorokban
+ * (Nyitott / árnyékoló · Üveg · Lamella / léc), halk felárral.
  */
-const listTypes: SideTypePicker = ({ types, current, label, delta, select }) => <div className="rb-type-list" role="radiogroup" aria-label={label}>
-  {types.map((type) => {
-    const active = type === current
-    return <button type="button" role="radio" aria-checked={active} key={type} className={`rb-option rb-roof rb-type${active ? ' is-selected' : ''}`} onClick={() => !active && select(type)}>
-      <span className="rb-roof-icon"><SideIcon type={type} /></span>
-      <span className="rb-roof-text"><strong>{SIDE_INFO[type].label}</strong><small>{SIDE_INFO[type].description}</small></span>
-      {active && <span className="rb-option-check"><Check size={12} strokeWidth={3} /></span>}<em>{active ? '' : signedPrice(delta(type))}</em>
-    </button>
-  })}
-</div>
+const listTypes: SideTypePicker = ({ types, current, label, delta, select }) => <ChoiceStack label={label} current={current} groups={SIDE_GROUPS()} delta={delta} onSelect={(type) => type !== current && select(type)}
+  items={types.map((type) => ({ id: type, title: SIDE_INFO[type].label, line: SIDE_INFO[type].description, thumb: thumbFor('side', type), group: sideGroup(type) }))} />
 
 /** 4. lépés – Oldalak: oldal kijelölése a felülnézeten (vagy a 3D-ben), majd a típusa és a beállításai. */
 export default function SidesStep({ config, scene, prices, selected, onSelect, onChange, onSceneChange }: { config: PergolaConfig; scene: SceneSettings; prices: PriceSettings; selected: SideKey | 'roof'; onSelect: (side: SideKey) => void; onChange: (patch: Partial<PergolaConfig>) => void; onSceneChange: (patch: Partial<SceneSettings>) => void }) {
