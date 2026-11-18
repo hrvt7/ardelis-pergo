@@ -341,7 +341,13 @@
 .rb-select { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 16px; background: rgba(255, 255, 255, .45); font-size: 13.5px; font-weight: 600; }
 .rb-select select { border: 0; background: transparent; font: inherit; color: var(--rb-ink); }
 /* Telefon: a sín kisebb, a panel a sín fölött, teljes szélességben */
-.rb-rail.is-compact { top: 26%; transform: none; }
+.rb-rail.is-compact { top: 150px; transform: none; }
 .rb-rail.is-compact .rb-rail-bar button { width: 52px; padding: 8px 2px; }
 .rb-rail.is-compact .rb-rail-bar button span { display: none; }
 .rb-rail.is-compact .rb-rail-panel { position: fixed; left: 10px; right: 10px; top: 132px; width: auto; max-height: calc(100dvh - 260px); }
+/* Telefon, nyitott lap: a sín a bal szél mögé húzódik (nem lóg a lapra), csak egy fül marad; a fül becsukja a lapot. */
+.rb-rail.is-compact { transition: transform .38s var(--rb-ease); }
+.rb-rail.is-compact.is-tucked { transform: translateX(-100%); }
+.rb-rail.is-compact.is-tucked .rb-rail-panel { display: none; }
+.rb-rail-tab { position: absolute; left: 100%; top: 0; display: grid; place-items: center; width: 22px; height: 56px; padding: 0; border: 0; border-radius: 0 14px 14px 0; background: var(--rb-bar); color: rgba(255, 255, 255, .8); cursor: pointer; box-shadow: 6px 0 16px rgba(10, 12, 14, .2); }
+@media (prefers-reduced-motion: reduce) { .rb-rail.is-compact { transition: none; } }

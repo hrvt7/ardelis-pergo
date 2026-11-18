@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Armchair, Box, Eye, House, Maximize2, Moon, Scan, Sun, Sunset, Video, X, type LucideIcon } from 'lucide-react'
+import { Armchair, Box, ChevronRight, Eye, House, Maximize2, Moon, Scan, Sun, Sunset, Video, X, type LucideIcon } from 'lucide-react'
 import type { CameraView, PergolaConfig, QualityLevel, SceneSettings } from '@/types/pergola'
 import { cameraViewsFor } from '@/lib/cameraViews'
 import HouseLook from '@/components/HouseLook'
@@ -17,7 +17,7 @@ const timeOf = (dayTime: number): SceneSettings['time'] => (dayTime >= 20 || day
  * a mellette nyíló üvegpanelt nyitja, egy témával: Kamera, Napszak, Környezet, Megjelenítés.
  * A beállítások csak a látványt változtatják, az árat nem.
  */
-export default function SceneRail({ config, scene, view, compact, onView, onSceneChange, onChange }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; compact: boolean; onView: (view: CameraView) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onChange: (patch: Partial<PergolaConfig>) => void }) {
+export default function SceneRail({ config, scene, view, compact, tucked = false, onUntuck, onView, onSceneChange, onChange }: { config: PergolaConfig; scene: SceneSettings; view: CameraView; compact: boolean; /** telefonon nyitott lapnál a sín a szél mögé húzódik, csak egy fül látszik */ tucked?: boolean; onUntuck?: () => void; onView: (view: CameraView) => void; onSceneChange: (patch: Partial<SceneSettings>) => void; onChange: (patch: Partial<PergolaConfig>) => void }) {
   const [open, setOpen] = useState<Panel | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const carport = config.building === 'carport'
@@ -73,7 +73,8 @@ export default function SceneRail({ config, scene, view, compact, onView, onScen
   }
 
   return (
-    <div className={`rb-rail${compact ? ' is-compact' : ''}`} ref={root}>
+    <div className={`rb-rail${compact ? ' is-compact' : ''}${tucked ? ' is-tucked' : ''}`} ref={root}>
+      {tucked && <button type="button" className="rb-rail-tab" aria-label={tr('Nézet és környezet megnyitása', 'Ansicht und Umgebung öffnen')} onClick={onUntuck}><ChevronRight size={16} /></button>}
       <nav className="rb-rail-bar" aria-label={tr('Nézet és környezet', 'Ansicht und Umgebung')}>
         <svg className="rb-rail-fillet is-top" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M 0 0 L 0 16 L 16 16 A 16 16 0 0 1 0 0 Z" /></svg>
         {tools.map(({ id, icon: Icon, label }) => <button type="button" key={id} className={open === id ? 'is-open' : ''} aria-expanded={open === id} aria-label={label} title={label} onClick={() => setOpen((current) => (current === id ? null : id))}><Icon size={20} strokeWidth={1.6} /><span>{label}</span></button>)}

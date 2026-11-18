@@ -1,5 +1,10 @@
 # Változások
 
+## 5.23 – Újraépítési mód: telefonon a nézet-sín nem lóg a lapra
+
+- **Hiba (Ádám jelezte):** telefonon kinyitott lépéslapnál a bal szélső Nézet és Környezet sín rálógott a lapra (lépéssáv, címsor).
+- **Javítás:** kinyitott lapnál a sín a bal szél mögé húzódik, csak egy kis fül marad a lap fölött; a fülre koppintva a lap becsukódik és a sín visszajön. A sín feljebb került (150 px), hogy összecsukott lapnál se érjen a gombokhoz.
+
 ## 5.22 – Újraépítési mód: Nézet és Környezet eszköztár (M13)
 
 - **Eszköztár a bal szélen (D8):** sötét sín, amely lágy ívvel a képernyő széléhez olvad; négy téma, mindegyik a mellette nyíló üvegpanelt nyitja (egyszerre egy; kívülre kattintva vagy Esc-re bezárul):
