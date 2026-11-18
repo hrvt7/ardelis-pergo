@@ -1,5 +1,15 @@
 # Változások
 
+## 5.22 – Újraépítési mód: Nézet és Környezet eszköztár (M13)
+
+- **Eszköztár a bal szélen (D8):** sötét sín, amely lágy ívvel a képernyő széléhez olvad; négy téma, mindegyik a mellette nyíló üvegpanelt nyitja (egyszerre egy; kívülre kattintva vagy Esc-re bezárul):
+  - **Kamera:** öt nézőpont ikonnal (kívülről, alulról, felülről, részlet, kanapé – carportnál kanapé nélkül), automata forgatás, követő kamera.
+  - **Napszak:** Nappal / Aranyóra / Éjszaka és órás csúszka (6–23). A tájolás a Hely és méret lépésben van.
+  - **Környezet:** Családi ház / Csak a termék; családi háznál a meglévő házbeállító (ház típusa, homlokzat, ablakszín). Csak látvány.
+  - **Megjelenítés:** méretcímkék, 180 cm-es figura, műszaki jelölések, feliratok, robbantott nézet (fém kapcsolókkal), 3D minőség.
+- Telefonon a sín keskenyebb (csak ikonok), a panel a képernyő tetején, teljes szélességben nyílik.
+- A bútor a Hely és méret lépésben maradt („Mire használod?”, D7).
+
 ## 5.21 – Újraépítési mód: 1. lépés – Termék (M12)
 
 - **Hiba (Ádám jelezte):** az 1. lépés üres maradt („a következő modulokkal érkeznek”), mert az építménytípus modulja (M12) még nem volt visszaépítve.

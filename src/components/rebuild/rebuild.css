@@ -315,3 +315,33 @@
 .rb-option.rb-preset { grid-template-columns: 1fr auto; justify-items: start; align-items: center; gap: 12px; padding: 12px 14px; text-align: left; }
 .rb-option.rb-preset.is-featured { border-color: color-mix(in oklab, var(--rb-accent) 70%, #fff); }
 .rb-badge { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--rb-accent); color: #10120f; font-style: normal; font-size: 10.5px; font-weight: 700; vertical-align: 2px; }
+
+/* Nézet és Környezet eszköztár: a bal szélhez olvadó sín + mellette nyíló üvegpanel */
+.rb-rail { position: absolute; z-index: 27; left: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 12px; }
+.rb-rail-bar { position: relative; display: grid; gap: 4px; padding: 10px 8px 10px 6px; border-radius: 0 22px 22px 0; background: var(--rb-bar); box-shadow: 10px 0 30px rgba(10, 12, 14, .22); }
+.rb-rail-bar button { display: grid; justify-items: center; gap: 3px; width: 64px; padding: 9px 2px; border: 0; border-radius: 16px; background: transparent; color: rgba(255, 255, 255, .62); font: inherit; cursor: pointer; transition: background .2s, color .2s; }
+.rb-rail-bar button span { font-size: 10px; font-weight: 600; }
+.rb-rail-bar button:hover { color: #fff; background: rgba(255, 255, 255, .07); }
+.rb-rail-bar button.is-open { color: #10120f; background: var(--rb-accent); }
+.rb-rail-bar button:focus-visible { outline: 2px solid var(--rb-accent); outline-offset: 1px; }
+.rb-rail-fillet { position: absolute; left: 0; }
+.rb-rail-fillet path { fill: var(--rb-bar); }
+.rb-rail-fillet.is-top { top: -16px; }
+.rb-rail-fillet.is-bottom { bottom: -16px; }
+.rb-rail-panel { width: 340px; max-height: min(78vh, 680px); display: flex; flex-direction: column; overflow: hidden; }
+.rb-rail-panel header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 6px 20px; }
+.rb-rail-panel h3 { margin: 0; font-size: 17px; font-weight: 650; }
+.rb-rail-panel header button { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: rgba(21, 23, 26, .07); color: var(--rb-ink); cursor: pointer; }
+.rb-rail-body { display: grid; gap: 10px; padding: 8px 20px 20px; overflow: auto; }
+.rb-rail-body h4 { margin: 6px 0 0; font-size: 11.5px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: rgba(21, 23, 26, .55); }
+.rb-view-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rb-view-grid.is-two { grid-template-columns: 1fr 1fr; }
+.rb-option.rb-view { gap: 6px; padding: 12px 6px; }
+.rb-option.rb-view strong { font-size: 12px; }
+.rb-select { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 16px; background: rgba(255, 255, 255, .45); font-size: 13.5px; font-weight: 600; }
+.rb-select select { border: 0; background: transparent; font: inherit; color: var(--rb-ink); }
+/* Telefon: a sín kisebb, a panel a sín fölött, teljes szélességben */
+.rb-rail.is-compact { top: 26%; transform: none; }
+.rb-rail.is-compact .rb-rail-bar button { width: 52px; padding: 8px 2px; }
+.rb-rail.is-compact .rb-rail-bar button span { display: none; }
+.rb-rail.is-compact .rb-rail-panel { position: fixed; left: 10px; right: 10px; top: 132px; width: auto; max-height: calc(100dvh - 260px); }

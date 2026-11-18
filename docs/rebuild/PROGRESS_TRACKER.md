@@ -29,10 +29,10 @@
 | M07 | Tetőelemek | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 3. lépésben (Tető), 5.15 |
 | M08 | Oldalzárások | KÉSZ, JÓVÁHAGYÁSRA VÁR | D2, D7 | A 4. lépésben (Oldalak) + 3D-kattintások vissza, 5.16 |
 | M09 | Szerkezet- és tetőszín | KÉSZ, JÓVÁHAGYÁSRA VÁR | D11 | 6 gyakori szín + egyedi RAL kód (5.18); kéttónusú vissza; a katalógus és a fotós szín nincs a lépésben |
-| M10 | Ház és környezet | NEM INDULT | – | |
+| M10 | Ház és környezet | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7, D8 | A Környezet panelben (M13), 5.22 |
 | M11 | Komfort és vezérlés | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 6. lépésben (Komfort), fém kapcsolókkal (5.19) |
 | M12 | Építménytípus | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | Az 1. lépésben (Termék) + kiinduló csomagok (5.21); modulház és Tanácsadó később |
-| M13 | Nézet és jelenet-beállítások | NEM INDULT | – | |
+| M13 | Nézet és jelenet-beállítások | KÉSZ, JÓVÁHAGYÁSRA VÁR | D8 | Bal szélső sín: Kamera, Napszak, Környezet, Megjelenítés (5.22) |
 | M14 | Összegzés, mentés, megosztás, export | KÉSZ, JÓVÁHAGYÁSRA VÁR | D6 | A 7. lépésben: „A terved” sorok Módosítással + a meglévő összegző panel (5.20) |
 | M15 | Ajánlatkérés | KÉSZ, JÓVÁHAGYÁSRA VÁR | D6 | Felmérési űrlap az összegzésben; „Ajánlatot kérek” minden lépésből (D6) (5.20) |
 | M16 | Bemutató eszközök | NEM INDULT | – | |
