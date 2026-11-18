@@ -1,5 +1,11 @@
 # Változások
 
+## 5.25 – Újraépítési mód: asztalon és tableten a lépések alul, a bal sín stílusában
+
+- **Lépéssáv (Ádám kérése):** asztali és tablet nézetben a 7 lépés kikerült a kártyáról, és alulra került egy sötét sávba, amely a bal oldali Nézet és Környezet sín testvére: az alsó szélhez olvad, egy sorban ikon és rövid név (Termék, Méret, Tető, Oldalak, Szín, Komfort, Összegzés). Az aktuális lépést lime pirula jelöli, amely átcsúszik; a kész lépéseket kis lime pont jelzi. A sáv a kártya nélküli jelenetrész közepén áll, kb. 75 px magas.
+- Telefonon nem változott: ott a lap tetején marad a folyékony üveg lépéssáv.
+- Tesztek: `rebuildStepBar.test.ts`.
+
 ## 5.24 – Újraépítési mód: új lépéssáv (folyékony üveg pirula, lime kijelölés)
 
 - **Lépéssáv (Ádám mintája alapján):** a kártya tetején a 7 lépés egy világos, folyékony üveg hatású pirulában ül; az aktuális lépés egy kiemelkedő, enyhén lime árnyalatú üveggombban van, amely lépésváltáskor egyetlen GPU-áttűnéssel csúszik át. A kész lépések alatt kis lime pont jelzi a haladást. Telefonon ugyanez a lap tetején.
