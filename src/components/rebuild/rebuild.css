@@ -27,7 +27,7 @@
 .rb-stepcard.has-dock .rb-stepcard-head { padding-top: 22px; }
 
 /* Folyékony üveg (közös) */
-.rb-glass { position: relative; isolation: isolate; color: var(--rb-ink); background: linear-gradient(155deg, rgba(255, 255, 255, .46), rgba(255, 255, 255, .16) 55%, rgba(255, 255, 255, .24)); border: 1px solid rgba(255, 255, 255, .55); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), inset 0 -1px 0 rgba(255, 255, 255, .25), inset 0 0 30px rgba(255, 255, 255, .1), 0 24px 60px rgba(18, 22, 26, .22); }
+.rb-glass { position: relative; isolation: isolate; color: var(--rb-ink); background: linear-gradient(155deg, rgba(255, 255, 255, .66), rgba(250, 250, 247, .44) 55%, rgba(255, 255, 255, .52)); border: 1px solid rgba(255, 255, 255, .55); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), inset 0 -1px 0 rgba(255, 255, 255, .25), inset 0 0 30px rgba(255, 255, 255, .1), 0 24px 60px rgba(18, 22, 26, .22); }
 .rb-glass::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; background: radial-gradient(90% 40% at 18% 0%, rgba(255, 255, 255, .5), transparent 70%), radial-gradient(60% 30% at 100% 100%, rgba(255, 255, 255, .18), transparent 70%); }
 .rb-glass-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 
@@ -88,9 +88,9 @@
 .rb-callout p { margin: 0; }
 .rb-callout strong { display: block; color: var(--rb-ink); font-weight: 650; }
 .rb-callout.is-warning { background: rgba(255, 214, 102, .28); border-color: rgba(214, 160, 40, .45); }
-.rb-modules { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; font-weight: 600; }
+.rb-modules { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 12px; font-size: 14px; font-weight: 600; }
 .rb-segmented { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(21, 23, 26, .08); }
-.rb-segmented button { min-width: 44px; height: 34px; border: 0; border-radius: 999px; background: transparent; color: rgba(21, 23, 26, .7); font: inherit; font-weight: 650; cursor: pointer; transition: background .2s, color .2s; }
+.rb-segmented button { min-width: 44px; height: 34px; padding: 0 12px; white-space: nowrap; border: 0; border-radius: 999px; background: transparent; color: rgba(21, 23, 26, .7); font: inherit; font-weight: 650; cursor: pointer; transition: background .2s, color .2s; }
 .rb-segmented button.is-selected { background: var(--rb-ink); color: #fff; }
 .rb-disclosure { border-radius: 18px; background: rgba(255, 255, 255, .3); border: 1px solid rgba(255, 255, 255, .55); padding: 0 14px; }
 .rb-disclosure > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 0; list-style: none; cursor: pointer; }
@@ -254,3 +254,37 @@
 .rb-ral-ball { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1px dashed rgba(21, 23, 26, .3); }
 .rb-ral input { flex: 1; min-width: 0; border: 0; background: none; font: inherit; font-size: 15px; font-weight: 600; color: var(--rb-ink); }
 .rb-ral input:focus { outline: none; }
+.rb-targets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rb-option.rb-target { grid-template-columns: auto 1fr; justify-items: start; align-items: center; gap: 10px; padding: 10px 12px; text-align: left; }
+.rb-option.rb-target span:last-child { display: grid; }
+.rb-option.rb-target small { font-size: 11px; color: rgba(21, 23, 26, .55); }
+.rb-option.rb-target strong { text-align: left; }
+.rb-target-ball { width: 28px; height: 28px; border-radius: 50%; box-shadow: inset 0 -3px 6px rgba(0, 0, 0, .25), 0 2px 6px rgba(18, 22, 26, .18); }
+
+/* 6. lépés: komfort – fém kapcsolók */
+.rb-option.rb-switch-row, .rb-option.rb-stepper-row { grid-template-columns: auto 1fr auto; justify-items: start; align-items: center; gap: 12px; padding: 12px 14px; text-align: left; }
+.rb-option.rb-stepper-row { grid-template-columns: 1fr auto; cursor: default; }
+.rb-switch-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; background: rgba(21, 23, 26, .06); transition: background .3s, color .3s; }
+.rb-option.is-on .rb-switch-icon { background: color-mix(in oklab, var(--rb-accent) 40%, #fff); }
+.rb-switch-text { display: grid; gap: 1px; }
+.rb-switch-text strong { font-size: 14px; text-align: left; }
+.rb-switch-text small { font-size: 12px; color: rgba(21, 23, 26, .6); }
+.rb-switch-text em { font-style: normal; font-size: 12px; font-weight: 650; color: rgba(21, 23, 26, .7); }
+.rb-option.rb-switch-row.is-selected, .rb-option.rb-switch-row.is-on { background: rgba(255, 255, 255, .62); }
+.rb-metal { position: relative; width: 54px; height: 30px; border-radius: 999px; background: linear-gradient(180deg, #2a2d31, #45494e); box-shadow: inset 0 2px 5px rgba(0, 0, 0, .55), inset 0 -1px 0 rgba(255, 255, 255, .12), 0 1px 0 rgba(255, 255, 255, .6); transition: background .3s; }
+.rb-metal i { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff 0%, #d9dcdf 35%, #9aa0a6 75%, #c7cbcf 100%); box-shadow: 0 3px 6px rgba(0, 0, 0, .45), inset 0 -1px 2px rgba(0, 0, 0, .25), inset 0 1px 1px rgba(255, 255, 255, .9); transition: transform .32s cubic-bezier(.5, 1.6, .4, 1); }
+.rb-option.is-on .rb-metal { background: linear-gradient(180deg, color-mix(in oklab, var(--rb-accent) 70%, #3a4a00), var(--rb-accent)); }
+.rb-option.is-on .rb-metal i { transform: translateX(24px); }
+.rb-stepper { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border-radius: 999px; background: rgba(21, 23, 26, .08); }
+.rb-stepper button { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .85); color: var(--rb-ink); cursor: pointer; }
+.rb-stepper button:disabled { opacity: .35; cursor: default; }
+.rb-stepper b { min-width: 42px; text-align: center; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .rb-metal i { transition: none; } }
+.rb-rgb { display: grid; gap: 8px; padding: 10px 14px; border-radius: 16px; background: rgba(21, 23, 26, .05); }
+.rb-rgb small { font-size: 12px; color: rgba(21, 23, 26, .6); }
+.rb-rgb div { display: flex; flex-wrap: wrap; gap: 8px; }
+.rb-rgb button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .9); box-shadow: 0 2px 6px rgba(18, 22, 26, .2); cursor: pointer; }
+.rb-rgb button.is-white { background: radial-gradient(circle, #fff7e0, #f4d9a3); }
+.rb-rgb button.is-selected { box-shadow: 0 0 0 2px var(--rb-ink), 0 2px 6px rgba(18, 22, 26, .2); }
+.rb-ghost-action { display: inline-flex; align-items: center; gap: 8px; justify-self: start; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(21, 23, 26, .14); background: rgba(255, 255, 255, .5); color: var(--rb-ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.rb-ghost-action[aria-pressed=true] { background: var(--rb-ink); color: #fff; }

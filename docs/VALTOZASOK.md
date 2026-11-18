@@ -1,5 +1,11 @@
 # Változások
 
+## 5.19 – Újraépítési mód: kéttónusú szín és 6. lépés – Komfort (M11)
+
+- **Kéttónusú kivitel (Ádám kérésére vissza):** a Szín lépésben Egyszínű / Kéttónusú kapcsoló (ha a gyártó kínálja és a tető támogatja); kéttónusúnál Váz, oszlopok és Lamellák / Tető kártya, a gyakori színek és az egyedi RAL kód a kijelölt részre vonatkoznak. Bekapcsoláskor a meglévő kontrasztszabály szerint indul (sötét vázhoz fehér, világoshoz antracit).
+- **Komfort lépés fém kapcsolókkal (Ádám mintája):** periméter LED, színváltós RGB+W LED (esti színpróbával), Bluetooth hang, eső- és szélszenzor (csak mozgó tetőhöz vagy ZIP-hez), okosotthon (mit kapcsol ebben a tervben); infravörös fűtés és mennyezeti ventilátor léptetővel (belmagasság-figyelmeztetés, 3D bekapcsolás); zárt építménynél klíma és alap; becsült éves üzemeltetési költség. Carportnál csak a LED.
+- Az üvegkártya átlátszósága csökkent, hogy esti (sötét) jelenet előtt is jól olvasható legyen.
+
 ## 5.18 – Újraépítési mód: 5. lépés – Szín (M09)
 
 - **Ádám döntése szerint egyszerű:** „Jelenlegi szín” sor, alatta 6 gyakori szín (a gyártó felár nélküli alapszínei, kiegészítve gyakori RAL színekkel, ha a gyártó vállal egyedi RAL-t), mindegyiken a kód és a felár / megtakarítás; alatta „Egyedi RAL szín” mező (pl. 6005 → Mohazöld, a 3D és az ár azonnal követi).

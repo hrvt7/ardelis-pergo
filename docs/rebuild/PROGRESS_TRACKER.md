@@ -28,9 +28,9 @@
 | M06 | Tetőrendszer és tetőmozgatás | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 3. lépésben (Tető), 5.15 |
 | M07 | Tetőelemek | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 3. lépésben (Tető), 5.15 |
 | M08 | Oldalzárások | KÉSZ, JÓVÁHAGYÁSRA VÁR | D2, D7 | A 4. lépésben (Oldalak) + 3D-kattintások vissza, 5.16 |
-| M09 | Szerkezet- és tetőszín | KÉSZ, JÓVÁHAGYÁSRA VÁR | D11 | 6 gyakori szín + egyedi RAL kód (5.18); a katalógus, kéttónusú és fotós szín nincs a lépésben |
+| M09 | Szerkezet- és tetőszín | KÉSZ, JÓVÁHAGYÁSRA VÁR | D11 | 6 gyakori szín + egyedi RAL kód (5.18); kéttónusú vissza; a katalógus és a fotós szín nincs a lépésben |
 | M10 | Ház és környezet | NEM INDULT | – | |
-| M11 | Komfort és vezérlés | NEM INDULT | – | |
+| M11 | Komfort és vezérlés | KÉSZ, JÓVÁHAGYÁSRA VÁR | D7 | A 6. lépésben (Komfort), fém kapcsolókkal (5.19) |
 | M12 | Építménytípus | NEM INDULT | – | |
 | M13 | Nézet és jelenet-beállítások | NEM INDULT | – | |
 | M14 | Összegzés, mentés, megosztás, export | NEM INDULT | – | |
