@@ -50,7 +50,7 @@ import { FURNITURE_SETS, furnitureFit, furnitureLayout } from '@/lib/furniture'
 import { kitchenModules, packPlan } from '@/lib/usePacks'
 import HotTub from '@/components/HotTub'
 import { getSpecCode } from '@/lib/specification'
-import { GENERIC_BEAM, fanBarSpan, frameBeam, ledStripLayout, showsMotorHousing, sideWallTop, type FrameBeam } from '@/lib/fixtures'
+import { GENERIC_BEAM, contactShadowKey, fanBarSpan, frameBeam, ledStripLayout, showsMotorHousing, sideWallTop, type FrameBeam } from '@/lib/fixtures'
 import { effectiveGlazing, isGlazedRoof, isMovableRoof, roofRise } from '@/lib/roofs'
 import { deckBounds } from '@/lib/deck'
 import { SolarPanels } from '@/components/SceneExtras'
@@ -3134,6 +3134,8 @@ function SceneContent({ cyclorama = false, cycloramaTone = 'neutral', config, sc
   const shownNight = shownKey.endsWith('|true')
   const lighting = { ...target, night: shownNight, hdr: shownKey.slice(0, shownKey.lastIndexOf('|')) }
   const studio = scene.ground === 'studio'
+  // Betöltött modellek száma: a talajárnyék újrasül, ha egy késve betöltődő tárgy megjelenik.
+  const assetsLoaded = useProgress((state) => state.loaded)
   // Az árnyéktérkép csak kérésre frissül (autoUpdate = false). Környezetváltáskor (ház, kert, stúdió, ház kinézete)
   // eltűnnek vagy megjelennek árnyékvető tárgyak: azonnal és a késleltetve betöltődő részek után is újra kell rajzolni,
   // különben a kikapcsolt ház, ösvénylámpák és növények árnyéka a stúdió padlón marad.
@@ -3202,7 +3204,7 @@ function SceneContent({ cyclorama = false, cycloramaTone = 'neutral', config, sc
     {!studio && !scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} look={houseLook} night={lighting.night} />}
     {!studio && !scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house">{houseLook.houseStyle === 'classic' ? <House config={config} look={houseLook} night={lighting.night} /> : <StyledHouse key={houseLook.houseStyle} config={config} look={houseLook} night={lighting.night} style={houseLook.houseStyle} />}</OptionalSceneAsset>{lighting.night && <Stars />}</>}
     {pergola}
-    {!scene.photoMode && <ContactShadows key={`${config.width}-${config.depth}-${config.height}-${config.mount}`} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality.contactShadowResolution} frames={1} color="#10171d" />}
+    {!scene.photoMode && <ContactShadows key={contactShadowKey(config, scene.ground, scene.houseStyle, assetsLoaded)} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality.contactShadowResolution} frames={1} color="#10171d" />}
     {scene.rain && <Rain config={config} quality={quality} />}
     {scene.sunStudy && !scene.photoMode && <CompassRose config={config} facing={scene.facing} />}
     {scene.sunStudy && !scene.photoMode && !coreOnly && onShade && <SceneAssetBoundary name="shade analysis"><Suspense fallback={null}><ShadeProbe config={config} scene={scene} onResult={onShade} /></Suspense></SceneAssetBoundary>}

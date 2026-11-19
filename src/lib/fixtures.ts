@@ -36,3 +36,13 @@ export function showsMotorHousing(realLouvres: boolean, roof: RoofType): boolean
 export function sideWallTop(height: number): number {
   return height - 0.11
 }
+
+/**
+ * A talajárnyék (ContactShadows) egyszer sül ki, ezért minden olyan változásra újra kell sütni, ami a
+ * talajon álló tárgyakat cseréli: a teljes konfiguráció, a háttér (stúdió ↔ kert), a háztípus és a
+ * betöltött modellek száma. Korábban csak a méret és a rögzítés volt a kulcsban, így a semleges háttérre
+ * váltva a kerti dézsák árnyéka a padlón maradt.
+ */
+export function contactShadowKey(config: unknown, ground: string | undefined, houseStyle: string | undefined, assetsLoaded: number): string {
+  return `${JSON.stringify(config)}|${ground ?? ''}|${houseStyle ?? ''}|${assetsLoaded}`
+}

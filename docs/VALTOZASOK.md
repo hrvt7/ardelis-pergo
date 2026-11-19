@@ -1,5 +1,11 @@
 # Változások
 
+## 5.50 – Semleges háttér: nem marad ott a kerti tárgyak árnyéka
+
+- **Hiba:** a padlóárnyék egyszer készült el, és csak a méret vagy a rögzítés módosításakor frissült. Ezért a „Csak a pergola” (semleges háttér) nézetre váltva a kerti dézsák és lámpák árnyéka a padlón maradt.
+- **Javítás:** az árnyék most akkor is újra elkészül, ha bármi változik a konfigurációban, ha a háttér vagy a háztípus vált, és ha egy modell később töltődik be.
+- Tesztek: `contactShadowKey.test.ts`.
+
 ## 5.49 – Hibakeresés a 3D jelenetben: szerelvények a vázhoz igazítva
 
 - **Hiba: motorház fix tetőn.** A generikus motorház-doboz üveg-, polikarbonát- és fix tetőn is megjelent a gerenda tetején. Most csak mozgó tetőn (lamella, zip-tető) és csak a generikus vázon látszik.
