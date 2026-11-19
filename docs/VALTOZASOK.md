@@ -1,5 +1,14 @@
 # Változások
 
+## 5.49 – Hibakeresés a 3D jelenetben: szerelvények a vázhoz igazítva
+
+- **Hiba: motorház fix tetőn.** A generikus motorház-doboz üveg-, polikarbonát- és fix tetőn is megjelent a gerenda tetején. Most csak mozgó tetőn (lamella, zip-tető) és csak a generikus vázon látszik.
+- **Hiba: lebegő LED-szalag.** A LED-szalag az OS140 vázon 1,3–2,6 cm-rel a gerenda alatt lógott és 2,5–5 cm-rel beljebb futott. Most a 255 mm-es gerenda belső alsó élén fut.
+- **Hiba: rövid ventilátor-tartórúd.** OS140 vázon a rúd 3 cm-rel rövidebb volt a gerendaköznél. Most a két gerenda belső síkja közt végig ér.
+- **Hiba: lamella- és lécfal nem ért fel.** Az oldalfalak 5–20 cm-rel a gerenda alatt véget értek. Most felső tartóprofillal a gerenda aljáig érnek.
+- A geometria egy helyen van: `src/lib/fixtures.ts`.
+- Tesztek: `sceneFixtures.test.ts` (LED, ventilátor, motorház, oldalfal-magasság OS140 és generikus vázon).
+
 ## 5.48 – Forgólamellás pergola: pontos fali csatlakozás
 
 - **Hiba (Ádám jelezte, telefonos képpel):** falhoz rögzített forgólamellás (MB-OpenSky 140) pergolánál a falcsatlakozás „elcsúszottnak” látszott. Okok: (1) a hátsó gerenda külső síkja 7 cm-rel a stúdió falába lógott, a kerti ház homlokzata pedig 11,5 cm-re mögötte állt; (2) az általános vázra méretezett fali szerelőlemez és vízvető ~10 cm-rel a lamellás gerenda teteje fölött lebegett, a lemez 6 cm-re a homlokzattól; (3) a fal felőli sarkokban (ahol nincs oszlop) 14 × 14 cm-es lyuk maradt a gerendák között; (4) az esőérzékelő a gerenda fölött lebegett.

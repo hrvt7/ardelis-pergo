@@ -50,6 +50,7 @@ import { FURNITURE_SETS, furnitureFit, furnitureLayout } from '@/lib/furniture'
 import { kitchenModules, packPlan } from '@/lib/usePacks'
 import HotTub from '@/components/HotTub'
 import { getSpecCode } from '@/lib/specification'
+import { GENERIC_BEAM, fanBarSpan, frameBeam, ledStripLayout, showsMotorHousing, sideWallTop, type FrameBeam } from '@/lib/fixtures'
 import { effectiveGlazing, isGlazedRoof, isMovableRoof, roofRise } from '@/lib/roofs'
 import { deckBounds } from '@/lib/deck'
 import { SolarPanels } from '@/components/SceneExtras'
@@ -582,8 +583,10 @@ function GlassWall({ length, height, color, opened, onToggle, framed = false, la
 }
 
 function LouverWall({ length, height, color, opened, onToggle, label = true }: { length: number; height: number; color: string; opened: boolean; onToggle: () => void; label?: boolean }) {
-  const usableHeight = height - 0.28
+  // A lamellasor a gerenda aljáig ér: felső tartóprofil a gerenda alatt, az oldaltartók odáig futnak (korábban 5–7 cm-es rés maradt).
+  const usableHeight = height - 0.25
   const slatCount = Math.floor(usableHeight / 0.15)
+  const postTop = sideWallTop(height)
   const slats = useRef<THREE.Group[]>([])
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
@@ -597,7 +600,7 @@ function LouverWall({ length, height, color, opened, onToggle, label = true }: {
     })
     if (moving) { refreshShadows(gl); invalidate() }
   })
-  return <group onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>{Array.from({ length: slatCount }, (_, index) => { const y = 0.16 + index * (usableHeight / slatCount); return <group key={index} ref={(node) => { if (node) slats.current[index] = node }} position={[0, y, 0]} rotation={[0.25, 0, 0]}><Beam args={[length - 0.12, 0.065, 0.105]} position={[0, 0, 0]} color={color} radius={0.02} /></group> })}<Beam args={[0.05, usableHeight, 0.07]} position={[-length / 2 + 0.05, usableHeight / 2 + 0.1, 0]} color={color} /><Beam args={[0.05, usableHeight, 0.07]} position={[length / 2 - 0.05, usableHeight / 2 + 0.1, 0]} color={color} />{label && <Html position={[0, 0.3, 0.08]} center className="interaction-label" zIndexRange={[7, 0]}>{opened ? tr('Lamellák zárása', 'Lamellen schließen') : tr('Lamellák döntése', 'Lamellen kippen')}</Html>}</group>
+  return <group onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>{Array.from({ length: slatCount }, (_, index) => { const y = 0.16 + index * (usableHeight / slatCount); return <group key={index} ref={(node) => { if (node) slats.current[index] = node }} position={[0, y, 0]} rotation={[0.25, 0, 0]}><Beam args={[length - 0.12, 0.065, 0.105]} position={[0, 0, 0]} color={color} radius={0.02} /></group> })}<Beam args={[0.05, postTop - 0.1, 0.07]} position={[-length / 2 + 0.05, (postTop + 0.1) / 2, 0]} color={color} /><Beam args={[0.05, postTop - 0.1, 0.07]} position={[length / 2 - 0.05, (postTop + 0.1) / 2, 0]} color={color} /><Beam args={[length - 0.04, 0.06, 0.07]} position={[0, height - 0.14, 0]} color={color} radius={0.006} />{label && <Html position={[0, 0.3, 0.08]} center className="interaction-label" zIndexRange={[7, 0]}>{opened ? tr('Lamellák zárása', 'Lamellen schließen') : tr('Lamellák döntése', 'Lamellen kippen')}</Html>}</group>
 }
 
 /** Fix (nem nyitható) üvegfal: kb. 1,5 m-es táblák U-profilban, keskeny illesztéssel. */
@@ -708,10 +711,13 @@ const WOOD_TONES = ['#8d5b36', '#94613a', '#87552f', '#9a663e']
 
 /** Fix lécfal: vízszintes alumínium vagy hőkezelt fa lécek, oldalt tartóprofil. */
 function SlatWall({ length, height, color, wood }: { length: number; height: number; color: string; wood: boolean }) {
-  const usableHeight = height - 0.3
+  // A tartók a gerenda aljáig futnak (felül vízszintes tartóprofil), a lécek kitöltik a magasságot – korábban a fal
+  // 12–20 cm-rel a gerenda alatt véget ért, mintha lebegne.
+  const top = sideWallTop(height)
+  const usableHeight = top - 0.06
   const pitch = wood ? 0.115 : 0.105
   const slatHeight = wood ? 0.095 : 0.08
-  const count = Math.floor((usableHeight - 0.04) / pitch)
+  const count = Math.floor((top - 0.06 - 0.12) / pitch)
   const slatLength = length - 0.1
   return <group>
     {Array.from({ length: count }, (_, index) => <mesh key={index} position={[0, 0.12 + index * pitch + slatHeight / 2, 0]} castShadow receiveShadow>
@@ -720,6 +726,7 @@ function SlatWall({ length, height, color, wood }: { length: number; height: num
     </mesh>)}
     <Beam args={[0.045, usableHeight, 0.05]} position={[-length / 2 + 0.03, usableHeight / 2 + 0.06, -0.025]} color={color} radius={0.005} />
     <Beam args={[0.045, usableHeight, 0.05]} position={[length / 2 - 0.03, usableHeight / 2 + 0.06, -0.025]} color={color} radius={0.005} />
+    <Beam args={[length - 0.02, 0.05, 0.05]} position={[0, top - 0.025, -0.025]} color={color} radius={0.005} />
   </group>
 }
 
@@ -1005,7 +1012,7 @@ function SidePlacement({ side, config, scene, color, onSelect, onSceneChange, la
 }
 
 /** Mennyezeti ventilátor tartógerendával; bekapcsolva forog. */
-function CeilingFans({ config, color, spinning }: { config: PergolaConfig; color: string; spinning: boolean }) {
+function CeilingFans({ config, color, spinning, beam = GENERIC_BEAM }: { config: PergolaConfig; color: string; spinning: boolean; /** a váz gerendája: a tartórúd a két gerenda belső síkja közt fut */ beam?: FrameBeam }) {
   const layout = fanLayout(config)
   const rotors = useRef<(THREE.Group | null)[]>([])
   const speed = useRef(0)
@@ -1022,11 +1029,11 @@ function CeilingFans({ config, color, spinning }: { config: PergolaConfig; color
   useEffect(() => () => window.clearTimeout(pending.current), [])
   useEffect(() => { invalidate() }, [spinning, invalidate])
   const { width, depth, height } = config
-  const beamBottom = height - 0.115
+  const { beamBottom, spanX, spanZ } = fanBarSpan(width, depth, height, beam)
   const bladeY = beamBottom - FAN_DROP
   const radius = FAN_DIAMETER / 2
   return <group name="ceiling-fans">
-    {layout.bars.map((bar, index) => <Beam key={index} args={bar.along === 'x' ? [width - 0.2, 0.1, 0.07] : [0.07, 0.1, depth - 0.2]} position={bar.along === 'x' ? [0, height - 0.06, bar.at] : [bar.at, height - 0.06, 0]} color={color} radius={0.008} />)}
+    {layout.bars.map((bar, index) => <Beam key={index} args={bar.along === 'x' ? [spanX, 0.1, 0.07] : [0.07, 0.1, spanZ]} position={bar.along === 'x' ? [0, height - 0.06, bar.at] : [bar.at, height - 0.06, 0]} color={color} radius={0.008} />)}
     {layout.positions.map(([x, z], index) => <group key={index} position={[x, 0, z]}>
       <mesh position={[0, (beamBottom + 0.01 + bladeY) / 2 + 0.06, 0]}><cylinderGeometry args={[0.013, 0.013, beamBottom - bladeY - 0.1, 10]} /><PowderCoat color={color} /></mesh>
       <mesh position={[0, beamBottom - 0.02, 0]}><cylinderGeometry args={[0.05, 0.06, 0.05, 20]} /><PowderCoat color={color} /></mesh>
@@ -1356,13 +1363,18 @@ function FabricRoof({ width, depth, height, color, openness }: { width: number; 
 }
 
 /** Periméter LED: a fényerő és a színhőmérséklet a vásárló „esti hangulat” beállítása. */
-function LedLighting({ width, depth, height, night, kelvin, level, rgb = null }: { width: number; depth: number; height: number; night: boolean; kelvin: number; level: number; rgb?: string | null }) {
+/**
+ * LED-sáv a gerendák alsó belső élén. `beam` a váz gerendája: fél szélesség (a tengelytől a belső síkig) és fél magasság.
+ * A sáv a gerenda aljához simul, közvetlenül a belső sík mellett (korábban 2–3 cm-rel alatta és beljebb lebegett).
+ */
+function LedLighting({ width, depth, height, night, kelvin, level, rgb = null, beam = GENERIC_BEAM }: { width: number; depth: number; height: number; night: boolean; kelvin: number; level: number; rgb?: string | null; beam?: FrameBeam }) {
   const color = rgb ?? kelvinToHex(kelvin)
+  const { y, inset, runX, runZ } = ledStripLayout(width, depth, height, beam)
   return <group>
-    <LedStrip args={[width - 0.3, 0.018, 0.018]} position={[0, height - 0.15, depth / 2 - 0.12]} night={night} color={color} level={level} />
-    <LedStrip args={[width - 0.3, 0.018, 0.018]} position={[0, height - 0.15, -depth / 2 + 0.12]} night={night} color={color} level={level} />
-    <LedStrip args={[0.018, 0.018, depth - 0.3]} position={[-width / 2 + 0.12, height - 0.15, 0]} night={night} color={color} level={level} />
-    <LedStrip args={[0.018, 0.018, depth - 0.3]} position={[width / 2 - 0.12, height - 0.15, 0]} night={night} color={color} level={level} />
+    <LedStrip args={[runX, 0.018, 0.018]} position={[0, y, depth / 2 - inset]} night={night} color={color} level={level} />
+    <LedStrip args={[runX, 0.018, 0.018]} position={[0, y, -depth / 2 + inset]} night={night} color={color} level={level} />
+    <LedStrip args={[0.018, 0.018, runZ]} position={[-width / 2 + inset, y, 0]} night={night} color={color} level={level} />
+    <LedStrip args={[0.018, 0.018, runZ]} position={[width / 2 - inset, y, 0]} night={night} color={color} level={level} />
     {/* A fények éjjel mindig jelen vannak (0 fényerőnél 0 intenzitással): a fényforrások számának
         változása az összes anyag újrafordítását okozná, ami mobilon akadást jelent. */}
     {/* A fények mindig a jelenetben maradnak (nappal 0 intenzitással): a fényszám változása újrafordítaná az összes anyag shaderét. */}<pointLight position={[-width * 0.28, height - 0.4, 0]} color={color} intensity={night ? 25 * level : 0} distance={7} decay={2} /><pointLight position={[width * 0.28, height - 0.4, 0]} color={color} intensity={night ? 25 * level : 0} distance={7} decay={2} />
@@ -1451,7 +1463,8 @@ function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'nig
     {!drainPost && <group name="wall-downpipe" position={[width / 2 + 0.05, 0, depth / 2 - 0.06]}><mesh position={[0, height / 2 + 0.05, 0]} castShadow><cylinderGeometry args={[0.04, 0.04, height + 0.1, 18]} /><PowderCoat color={color} /></mesh><mesh position={[-0.02, 0.06, 0.04]} rotation={[0.9, 0, 0]}><cylinderGeometry args={[0.04, 0.04, 0.14, 18]} /><PowderCoat color={color} /></mesh></group>}
     {!realLouvres && <group position={[0, height + 0.02, depth / 2 + 0.105]}><mesh><boxGeometry args={[width - 0.05, 0.12, 0.045]} /><PowderCoat color={color} /></mesh><mesh position={[0, -0.065, 0.025]}><boxGeometry args={[width - 0.08, 0.014, 0.075]} /><meshStandardMaterial color="#1c2426" metalness={0.5} roughness={0.4} /></mesh></group>}
     {drainPost && <mesh position={[drainPost[0], 0.14, drainPost[1] + (realLouvres ? 0.065 : 0.095)]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.08, 0.025, 8, 20, Math.PI / 2]} /><PowderCoat color={color} /></mesh>}
-    {!realLouvres && <RoundedBox args={[0.28, 0.19, 0.34]} position={[width / 2 - 0.02, height + 0.12, depth / 2 - 0.25]} radius={0.035} smoothness={4} castShadow><PowderCoat color={color} /></RoundedBox>}
+    {/* Hajtásdoboz csak mozgó (nyitható, textil) tetőnél; fix, üveg- és polikarbonát tetőn nincs motor. */}
+    {showsMotorHousing(realLouvres, roof) && <RoundedBox args={[0.28, 0.19, 0.34]} position={[width / 2 - 0.02, height + 0.12, depth / 2 - 0.25]} radius={0.035} smoothness={4} castShadow><PowderCoat color={color} /></RoundedBox>}
     {/* Eső-/szélérzékelő: forgólamellás vázon a fali gerenda tetején (nem lebeg a gerenda fölött), a többinél a tető fölött. */}
     <group position={realLouvres ? [-width / 2 + 0.3, height + OS140.beamH / 2 + 0.06, -depth / 2] : [-width / 2 + 0.2, height + 0.32 + rise, -depth / 2 + 0.2]}><mesh><cylinderGeometry args={[0.045, 0.055, 0.12, 16]} /><meshStandardMaterial color="#31383a" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, 0.075, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.034, 16]} /><meshPhysicalMaterial color="#8aa0a4" roughness={0.1} clearcoat={1} /></mesh></group>
     <ExplodePart ex={ex} dy={1.6} label={roof === 'fabric' ? tr('Textiltető', 'Textildach') : isGlazedRoof(roof) ? tr('Üvegtető', 'Glasdach') : roof === 'fixed' ? tr('Fix tető', 'Festes Dach') : tr('Tetőlamellák', 'Dachlamellen')} labelAt={[0, height + 0.5 + rise / 2, -depth / 4]} show={x}>
@@ -1467,11 +1480,11 @@ function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'nig
     </>)}</RoofSwap>
     </ExplodePart>
     {(() => { const labelled = new Set<string>(); return (['front', 'back', 'left', 'right'] as SideKey[]).map((side) => <ExplodePart key={side} ex={ex} dx={side === 'left' ? -1.1 : side === 'right' ? 1.1 : 0} dz={side === 'front' ? 1.1 : side === 'back' ? -1.1 : 0}><SidePlacement side={side} config={config} scene={scene} color={color} onSelect={onSideSelect} onSceneChange={onSceneChange} labelled={labelled} settled={settled} /></ExplodePart>) })()}
-    {config.led && tilt(<LedRamp settled={settled} night={night}>{(factor) => <LedLighting width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={(scene.ledLevel / 100) * factor} rgb={config.ledRgb ? scene.ledColor : null} />}</LedRamp>)}
+    {config.led && tilt(<LedRamp settled={settled} night={night}>{(factor) => <LedLighting beam={frameBeam(realLouvres)} width={width} depth={depth} height={height} night={night} kelvin={scene.ledKelvin} level={(scene.ledLevel / 100) * factor} rgb={config.ledRgb ? scene.ledColor : null} />}</LedRamp>)}
     {config.foundation && <SlabRise settled={settled} width={width} depth={depth} />}
     {hasSplitUnit(config.climate) && <DropIn settled={settled} delay={1.1}><SplitUnits config={config} run={scene.climateRun} /></DropIn>}
     {hasUnderfloor(config.climate) && <FloorGlow width={width} depth={depth} run={scene.climateRun} />}
-    {(config.fans ?? 0) > 0 && <DropIn settled={settled}><CeilingFans config={rise ? { ...config, height: height + rise / 2 } : config} color={color} spinning={scene.fanOn} /></DropIn>}
+    {(config.fans ?? 0) > 0 && <DropIn settled={settled}><CeilingFans config={rise ? { ...config, height: height + rise / 2 } : config} color={color} spinning={scene.fanOn} beam={frameBeam(realLouvres)} /></DropIn>}
     {Array.from({ length: config.heaters }, (_, index) => { const x = (index - (config.heaters - 1) / 2) * Math.min(1.4, width / Math.max(config.heaters, 1)); return <DropIn key={index} settled={settled}><group position={[x, height - 0.3, -depth / 2 + 0.3]} rotation={[-0.25, 0, 0]}><RoundedBox args={[0.72, 0.1, 0.15]} radius={0.035} smoothness={4} castShadow><meshPhysicalMaterial color="#24292b" metalness={0.7} roughness={0.3} /></RoundedBox><mesh position={[0, -0.052, 0.015]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[0.6, 0.065]} /><meshStandardMaterial color="#f08b49" emissive="#f06f32" emissiveIntensity={scene.heatersOn ? (night ? 3 : 0.15) : 0} toneMapped={false} /></mesh>{night && <pointLight position={[0, -0.25, 0.25]} color="#ff8a4a" intensity={scene.heatersOn ? 3.2 : 0} distance={3.2} decay={2} />}</group></DropIn> })}
     {config.speakers && [-1, 1].map((direction) => <DropIn key={direction} settled={settled}><group position={[direction * (width / 2 - 0.17), height - 0.38, depth / 2 - 0.17]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[0.082, 0.082, 0.065, 24]} /><meshStandardMaterial color="#1b2022" metalness={0.48} roughness={0.38} /></mesh><mesh position={[0, 0.035, 0]}><cylinderGeometry args={[0.065, 0.065, 0.004, 24]} /><meshStandardMaterial color="#080b0c" roughness={0.85} /></mesh></group></DropIn>)}
     <group name="ar-skip-overlays">{scene.showDimensions && <DimensionGuides config={config} />}{scene.showPerson && <OptionalSceneAsset name="180 cm reference person"><Person config={config} /></OptionalSceneAsset>}{scene.showHotspots && <Hotspots config={config} posts={postPositions} />}</group>
