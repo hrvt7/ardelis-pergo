@@ -19,6 +19,16 @@ https://polyhaven.com/license
 - tree_small_02: https://polyhaven.com/a/tree_small_02 (CC0; web geometry simplification applied)
 - shrub_04: https://polyhaven.com/a/shrub_04 (CC0)
 
+# Környezet-frissítés (2026-11-19)
+
+- ambientCG Grass004 (CC0, https://ambientcg.com/view?id=Grass004): a gyep színtérképe (enyhén visszafogott telítettség), normál- és érdességtérképe a public/assets/textures/grass_ground alatt.
+- rough_linen (CC0, https://polyhaven.com/a/rough_linen): kültéri bútorszövet (párnák), a párnák színére hangolva.
+- oak_veneer_01 (CC0, https://polyhaven.com/a/oak_veneer_01): teak hatású bútorfa és burkolófa (elforgatva, színre hangolva).
+- brown_planks_07 (CC0, https://polyhaven.com/a/brown_planks_07): kerítésléc.
+- grey_roof_tiles (CC0, https://polyhaven.com/a/grey_roof_tiles): a nyeregtetős ház cserepe.
+- concrete_floor_02 (CC0): lábazat, kőasztallap, járólap (paver_concrete: világos, alacsony kontrasztú változat).
+- Sövény- és ültetőlomb: saját, procedurálisan rajzolt levélatlasz (nem külső forrás).
+
 # Kimi design asset library
 
 - Cedar and zinc gable house (asset ID 01-L2-0001): complete editable architectural model with standing-seam roof, cedar cladding, glazing, porch, gutters and downpipes. Placed as a complete house, normalized to the pergola scene, with an added chimney and night lighting. Three.js runtime license is included beside the asset.

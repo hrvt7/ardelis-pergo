@@ -2222,11 +2222,30 @@ function Neighborhood({ config, scene }: { config: PergolaConfig; scene: SceneSe
   const fence = [-1, 1].flatMap((side) => Array.from({ length: fenceCount }, (_, index): [number, number, number, number] => [side * boundary, fenceFrom + (index + 0.5) * fenceStep, Math.PI / 2, fenceStep / 2]))
   return <group>
     <mesh position={[0, -0.045, 12.6]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[46, 5.4]} /><meshStandardMaterial color="#3f4648" roughness={0.94} /></mesh>
-    <mesh position={[0, -0.005, 9.25]} receiveShadow><boxGeometry args={[46, 0.09, 1.25]} /><meshStandardMaterial color="#aaa99f" roughness={0.96} /></mesh>
-    <mesh position={[0, 0.025, 9.92]} receiveShadow><boxGeometry args={[46, 0.14, 0.16]} /><meshStandardMaterial color="#c2c0b4" roughness={0.9} /></mesh>
-    {Array.from({ length: 7 }, (_, index) => <mesh key={index} position={[0, 0.005, 3.2 + index * 0.82]} receiveShadow><boxGeometry args={[1.15, 0.055, 0.68]} /><meshStandardMaterial color={index % 2 ? '#b8b3a6' : '#c4bfb2'} roughness={0.94} /></mesh>)}
+    {/* Járda, szegély és kerti járólapok: beton PBR-anyag (színtérkép, normál- és érdességtérkép), a tónus lapról lapra kicsit változik. */}
+    <SceneAssetBoundary name="paving pbr" fallback={null}><Suspense fallback={null}><Pavers /></Suspense></SceneAssetBoundary>
     <OptionalSceneAsset name="garden fence"><KitInstances url={GARDEN_KIT.fence} places={fence} /></OptionalSceneAsset>
     {[-12.2, 12.2].map((x) => <group key={x} position={[x, 0, 9.05]}><mesh position={[0, 1.65, 0]} castShadow><cylinderGeometry args={[0.045, 0.065, 3.3, 10]} /><meshStandardMaterial color="#303a3d" metalness={0.55} roughness={0.42} /></mesh><mesh position={[0, 3.28, 0]}><boxGeometry args={[0.34, 0.12, 0.34]} /><meshStandardMaterial color="#ffe0aa" emissive="#ffc576" emissiveIntensity={night ? 3.2 : 0.08} /></mesh>{night && <pointLight position={[0, 3.05, 0]} color="#ffd09a" intensity={5} distance={5} decay={2} />}</group>)}
+  </group>
+}
+
+/** A kerti járólapok (60 × 115 cm-es betonlapok), a járda és a szegély — PBR-betonnal, lapról lapra eltérő tónussal és UV-eltolással. */
+function Pavers() {
+  const slab = usePBR('paver_concrete', [1, 1])
+  const walk = usePBR('paver_concrete', [18, 0.5])
+  const kerb = usePBR('paver_concrete', [30, 0.1])
+  const slabs = useMemo(() => Array.from({ length: 7 }, (_, index) => {
+    const geometry = new THREE.BoxGeometry(1.15, 0.055, 0.68)
+    const uv = geometry.getAttribute('uv')
+    const u = seeded(index, 41), v = seeded(index, 43)
+    for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * 0.55 + u * 0.45, uv.getY(k) * 0.33 + v * 0.6)
+    return { geometry, tint: new THREE.Color('#ffffff').multiplyScalar(0.9 + seeded(index, 47) * 0.12) }
+  }), [])
+  useEffect(() => () => slabs.forEach((slab) => slab.geometry.dispose()), [slabs])
+  return <group name="pavers">
+    <mesh position={[0, -0.005, 9.25]} receiveShadow><boxGeometry args={[46, 0.09, 1.25]} /><meshStandardMaterial map={walk.diff} normalMap={walk.normal} normalScale={[0.6, 0.6]} roughnessMap={walk.rough} color="#d8d6ce" roughness={1} /></mesh>
+    <mesh position={[0, 0.025, 9.92]} receiveShadow><boxGeometry args={[46, 0.14, 0.16]} /><meshStandardMaterial map={kerb.diff} normalMap={kerb.normal} normalScale={[0.5, 0.5]} roughnessMap={kerb.rough} color="#eeece4" roughness={1} /></mesh>
+    {slabs.map((item, index) => <mesh key={index} geometry={item.geometry} position={[0, 0.005, 3.2 + index * 0.82]} receiveShadow castShadow><meshStandardMaterial map={slab.diff} normalMap={slab.normal} normalScale={[0.7, 0.7]} roughnessMap={slab.rough} color={item.tint} roughness={1} /></mesh>)}
   </group>
 }
 

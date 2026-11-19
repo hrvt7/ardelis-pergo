@@ -1,5 +1,17 @@
 # Változások
 
+## 5.51 – Környezet: PBR-anyagok, élethű sövény és ültető, ápolt gyep, betonlapok
+
+- **Csak a környezet változott, a pergolák (váz, lamellák, oldalzárások, konfigurációs logika) érintetlenek.** A bútor-, kert- és házmodellek mérete, origója, hálónevei és anyagszerepei (wall/frame/glass/interior/lamp) azonosak, így a kód ugyanúgy illeszti őket.
+- **Bútorok** (kanapé, székek, asztalok, napozóágy, bárszék, bisztró, kisasztal, dézsa): eddig textúra nélküli egyszínű felületek; most PBR-anyag: kültéri vászon (szövetszerkezet, normál- és érdességtérkép), teak hatású fa erezettel, porszórt alumínium finom szemcsével, kőasztallap.
+- **Sövény és ültetőláda újraépítve:** a zöld tömbök helyett levélkártyás lomb saját levélatlasszal (alfa-maszk, normáltérkép), sötét belső tömbbel; antracit ültetőláda falvastagsággal és földdel.
+- **Kerítés** fa erezettel, **lámpaoszlopok** porszórt fémmel.
+- **Házak** (lapostetős, nyeregtetős): cseréptető-, lábazat-, burkolófa-, bádog- és díszléc-anyag a felülethez igazított UV-val. A homlokzat (vakolat/tégla/fa) továbbra is a választott burkolatot kapja.
+- **Gyep:** a száraz, barnás fűtextúra helyett ápolt pázsit (ambientCG Grass004, CC0), természetes tónusra hangolva. Csak magas és ultra minőségi szinten látszik; alacsony és közepes szinten a beágyazott, azonnal kész fű marad.
+- **Járólapok, járda, szegély:** egyszínű dobozok helyett világos betonlap PBR-anyaggal, lapról lapra eltérő tónussal.
+- Webre optimalizálva: Meshopt-tömörítés kvantálás nélkül (`npm run models:optimize`), WebP-textúrák (512 px). A környezeti modellek együtt kb. 2,6 MB (eddig kb. 0,4 MB); csak a látható elemek töltődnek be.
+- Forrásmegjelölés: `public/assets/CREDITS.md`. Mentés a változtatás előttről: `backup/kornyezet-elott-2026-11-19` ág.
+
 ## 5.50 – Semleges háttér: nem marad ott a kerti tárgyak árnyéka
 
 - **Hiba:** a padlóárnyék egyszer készült el, és csak a méret vagy a rögzítés módosításakor frissült. Ezért a „Csak a pergola” (semleges háttér) nézetre váltva a kerti dézsák és lámpák árnyéka a padlón maradt.
