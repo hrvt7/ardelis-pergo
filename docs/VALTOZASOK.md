@@ -1,5 +1,10 @@
 # Változások
 
+## 5.47 – Telefonos lépésjelző: a lépés neve pontosan a fény alatt
+
+- **Hiba:** a lépés neve az első és az utolsó lépésnél a szegmenshez képest el volt tolva (balra, illetve jobbra igazítva), és a lenyitó nyíl is eltolta a szöveg közepét, így nem esett egybe a lime fénnyel. Most a név mindig a világító szegmens és a fénykúp közepe alatt áll, a nyíl mellette lóg. Böngészős méréssel mind a 7 lépésen: a szöveg közepe legfeljebb 2 px-re van a szegmens közepétől.
+- Tesztek: `rebuildStepBar.test.ts` frissítve.
+
 ## 5.46 – Telefonos környezet-kapcsoló: saját sarok, nem lóg rá semmire
 
 - **Hiba:** telefonon a kapcsoló gombja kikapcsolva a haladássáv végére, bekapcsolva a lap összecsukó gombjára lógott, és a lime fény a sávra szóródott. Most a sarok a kapcsolóé: a haladássáv 84 px-re a lap szélétől véget ér, a cím és az összecsukó gomb beljebb került, a sín és a gomb keskenyebb, a fény nem szóródik. Böngészős méréssel ellenőrizve 390 és 360 px szélességen, ki- és bekapcsolt állapotban: semmivel nem fed át.

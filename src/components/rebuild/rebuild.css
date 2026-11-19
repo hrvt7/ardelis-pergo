@@ -808,3 +808,7 @@
 .rb-stepcard.is-sheet .rb-sheet-toggle { right: 30px; }
 .rb-stepcard.is-sheet .rb-stepcard-head { padding-right: 82px; }
 .rb-corner-switch.is-compact .rb-corner-groove { stroke: rgba(21, 23, 26, .08); }
+/* A lépés neve a világító szegmens közepére igazítva (a fénykúppal együtt); a lenyitó nyíl a szöveg mellett lóg. */
+.rb-strip-label { transform: translateX(-50%); transition: left var(--rb-move) var(--rb-ease); }
+.rb-strip-label .rb-strip-chevron { position: absolute; left: calc(100% + 2px); top: 50%; margin: -8px 0 0; }
+.rb-strip.is-open .rb-strip-label .rb-strip-chevron { transform: rotate(180deg); }
