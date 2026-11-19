@@ -60,3 +60,32 @@ describe('MB-OpenSky 140 jelzések', () => {
     expect(buildingIssues({ ...base, height: 2.95, sides: { ...base.sides, front: 'glass' } }).map((issue) => issue.id)).toContain('openslide-size')
   })
 })
+
+import { segmentWallEnds, sideEndInsets, SIDE_POST_INSET, SIDE_WALL_INSET } from '../src/lib/os140Sides'
+
+describe('oldalzárás a falnál (nincs rés a fal és a ZIP/üvegfal között)', () => {
+  it('falra szerelt pergola bal/jobb oldala: a hátsó (+x) vég a falnál', () => {
+    expect(segmentWallEnds('left', ['back'], true, true)).toEqual([false, true])
+    expect(segmentWallEnds('right', ['back'], true, true)).toEqual([false, true])
+  })
+  it('sarokrögzítés: az elülső oldal fal felőli vége', () => {
+    expect(segmentWallEnds('front', ['back', 'left'], true, true)).toEqual([true, false])
+    expect(segmentWallEnds('front', ['back', 'right'], true, true)).toEqual([false, true])
+  })
+  it('osztott oldal belső vége (osztóprofil) nem falnál van', () => {
+    expect(segmentWallEnds('left', ['back'], true, false)).toEqual([false, false])
+  })
+  it('falnál a nyílás a fal síkjáig tart, oszlopnál az oszlop oldallapjáig', () => {
+    expect(sideEndInsets([false, true])).toEqual([SIDE_POST_INSET, SIDE_WALL_INSET])
+    expect(SIDE_WALL_INSET).toBeCloseTo(-(0.1395 / 2 + 0.015), 6)
+  })
+})
+
+describe('ZIP-osztás jelzése a falig érő nyílással', () => {
+  it('sarokrögzítésnél az 5 m-es elülső oldal a falig ér → 5 m felett két screen (a 3D-vel egyezően)', () => {
+    const corner = { ...demoTenant.defaultConfig, roof: 'louvered', building: undefined, mount: 'corner-left', width: 5, depth: 4, height: 2.5, sides: { front: 'zip', back: 'none', left: 'none', right: 'none' } } as PergolaConfig
+    expect(buildingIssues(corner).map((issue) => issue.id)).toContain('zip-split')
+    const free = { ...corner, mount: 'freestanding' } as PergolaConfig
+    expect(buildingIssues(free).map((issue) => issue.id)).not.toContain('zip-split')
+  })
+})

@@ -1,10 +1,10 @@
 // Építmény-típusok: nyitott pergola, zárt veranda (üvegezett terasz) és egész éves télikert.
 // Egyetlen igazságforrás a választóhoz, a szabályokhoz, az árhoz, a linkhez és a tájékoztatókhoz.
 // Tiszta TypeScript — böngészőben és szerveren is fut.
-import { isWallSide } from './mount'
+import { isWallSide, wallSides } from './mount'
 import { closedSegments } from './sides'
 import { OS140 } from './os140'
-import { openSlidePlan, SIDE_POST_INSET, zipPlan } from './os140Sides'
+import { openSlidePlan, segmentOpening, zipPlan } from './os140Sides'
 import type { BuildingType, ClimateType, PergolaConfig, PriceSettings, RoofType, SideKey, SideType, WallGlazing } from '../types/pergola'
 import { localized, tr } from '../i18n/locale'
 
@@ -115,8 +115,8 @@ export function os140Issues(config: PergolaConfig): BuildingIssue[] {
   if (totalHeight > OS140.maxHeight + 1e-6) issues.push({ id: 'os140-height', level: 'warn', text: tr(`A szerkezet ${f(totalHeight)} m magas; az MB-OpenSky 140 legfeljebb ${f(OS140.maxHeight)} m.`, `Die Konstruktion ist ${f(totalHeight)} m hoch; das MB-OpenSky 140 erlaubt höchstens ${f(OS140.maxHeight)} m.`) })
   const beamBottom = config.height - OS140.beamH / 2
   const segments = closedSegments(config)
-  if (segments.some((segment) => segment.type === 'zip' && zipPlan(segment.length - 2 * SIDE_POST_INSET, beamBottom).screens > 1)) issues.push({ id: 'zip-split', level: 'info', text: tr('Egy ZIP-screen legfeljebb 5 m széles és 16 m² lehet: a hosszabb oldalon két screen kerül egymás mellé, köztük dupla vezetősínnel.', 'Ein ZIP-Screen darf höchstens 5 m breit und 16 m² groß sein: An der längeren Seite sitzen zwei Screens nebeneinander, dazwischen eine Doppelführung.') })
-  const slide = segments.filter((segment) => segment.type === 'glass' || segment.type === 'glassFramed').flatMap((segment) => openSlidePlan(segment.length - 2 * SIDE_POST_INSET, beamBottom).issues)
+  if (segments.some((segment) => segment.type === 'zip' && zipPlan(segmentOpening(segment.side, wallSides(config.mount), segment), beamBottom).screens > 1)) issues.push({ id: 'zip-split', level: 'info', text: tr('Egy ZIP-screen legfeljebb 5 m széles és 16 m² lehet: a hosszabb oldalon két screen kerül egymás mellé, köztük dupla vezetősínnel.', 'Ein ZIP-Screen darf höchstens 5 m breit und 16 m² groß sein: An der längeren Seite sitzen zwei Screens nebeneinander, dazwischen eine Doppelführung.') })
+  const slide = segments.filter((segment) => segment.type === 'glass' || segment.type === 'glassFramed').flatMap((segment) => openSlidePlan(segmentOpening(segment.side, wallSides(config.mount), segment), beamBottom).issues)
   if (slide.length) issues.push({ id: 'openslide-size', level: 'info', text: tr(`Toló üvegfal (MB-OpenSlide): ${slide[0]}`, `Glasschiebewand (MB-OpenSlide): ${slide[0]}`) })
   return issues
 }

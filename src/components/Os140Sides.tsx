@@ -9,7 +9,7 @@ import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { stillMotion, sceneTime } from '@/lib/sceneClock'
 import { OS140 } from '@/lib/os140'
-import { openSlidePlan, SIDE_POST_INSET, ZIP, zipPlan, OPENSLIDE } from '@/lib/os140Sides'
+import { openSlidePlan, sideEndInsets, ZIP, zipPlan, OPENSLIDE } from '@/lib/os140Sides'
 import { ZIP_BAR, ZIP_BOX, ZIP_GUIDE } from '@/lib/zipProfiles'
 import { alongX, loopsToShapes, upward } from '@/components/profileGeometry'
 import { tr } from '@/i18n/locale'
@@ -21,11 +21,13 @@ const HALF_BEAM = OS140.beamW / 2
 const SLOT_A = -0.0395
 const SLOT_B = 0.008
 
-export function Os140Zip({ length, height, inward, open, wind, material }: { length: number; height: number; inward: 1 | -1; open: number; wind: boolean; material: THREE.Material }) {
+export function Os140Zip({ length, height, inward, open, wind, material, wallEnds }: { length: number; height: number; inward: 1 | -1; open: number; wind: boolean; material: THREE.Material; /** a szakasz −x / +x vége falhoz ér-e (ott a sín a homlokzaton) */ wallEnds?: readonly [boolean, boolean] }) {
   const s = -inward
   const zIn = inward * HALF_BEAM
   const beamBottom = height - OS140.beamH / 2
-  const opening = Math.max(0.3, length - 2 * SIDE_POST_INSET)
+  const [insetStart, insetEnd] = sideEndInsets(wallEnds)
+  const opening = Math.max(0.3, length - insetStart - insetEnd)
+  const shift = (insetStart - insetEnd) / 2
   const plan = useMemo(() => zipPlan(opening, beamBottom), [opening, beamBottom])
   const boxBottom = beamBottom - ZIP.box
   const fabricZ = zIn + s * ZIP.fabric
@@ -62,7 +64,7 @@ export function Os140Zip({ length, height, inward, open, wind, material }: { len
     else if (wind && clock.elapsedTime - lastWind.current >= 1 / 30) { lastWind.current = clock.elapsedTime; invalidate() }
   })
 
-  return <group name="os140-zip" ref={group}>
+  return <group name="os140-zip" ref={group} position={[shift, 0, 0]}>
     <mesh geometry={geo.box} material={material} castShadow receiveShadow />
     {/* vezetősínek a két oszlopon; screenek között dupla sín (két sín háttal) */}
     <mesh geometry={geo.left} material={material} position={[-opening / 2, 0, 0]} castShadow />
@@ -82,11 +84,13 @@ export function Os140Zip({ length, height, inward, open, wind, material }: { len
 
 const SASH = { stile: 0.02, depth: 0.03, bottom: 0.045, top: 0.03, glass: 0.01, overlap: 0.03 }
 
-export function Os140Slide({ length, height, inward, opened, onToggle, label, material }: { length: number; height: number; inward: 1 | -1; opened: boolean; onToggle: () => void; label: boolean; material: THREE.Material }) {
+export function Os140Slide({ length, height, inward, opened, onToggle, label, material, wallEnds }: { length: number; height: number; inward: 1 | -1; opened: boolean; onToggle: () => void; label: boolean; material: THREE.Material; wallEnds?: readonly [boolean, boolean] }) {
   const s = -inward
   const zIn = inward * HALF_BEAM
   const beamBottom = height - OS140.beamH / 2
-  const opening = Math.max(0.6, length - 2 * SIDE_POST_INSET)
+  const [insetStart, insetEnd] = sideEndInsets(wallEnds)
+  const opening = Math.max(0.6, length - insetStart - insetEnd)
+  const shift = (insetStart - insetEnd) / 2
   const plan = useMemo(() => openSlidePlan(opening, beamBottom), [opening, beamBottom])
   const n = plan.sashes
   const t = plan.tracks
@@ -113,7 +117,7 @@ export function Os140Slide({ length, height, inward, opened, onToggle, label, ma
   const glassMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: '#b4cdd0', metalness: 0.02, roughness: 0.045, transparent: true, opacity: 0.28, clearcoat: 1, clearcoatRoughness: 0.05, depthWrite: false }), [])
   useEffect(() => () => glassMat.dispose(), [glassMat])
   const w = sw + SASH.overlap
-  return <group name="os140-openslide" onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>
+  return <group name="os140-openslide" position={[shift, 0, 0]} onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>
     {/* felső vezető (50 mm) a gerenda alatt, küszöb (19 mm) a padlón, sínek a küszöbön */}
     <mesh material={material} position={[0, beamBottom - 0.025, midZ]} castShadow receiveShadow><boxGeometry args={[opening, 0.05, guideW]} /></mesh>
     <mesh material={material} position={[0, 0.0095, midZ]} receiveShadow><boxGeometry args={[opening, 0.019, guideW]} /></mesh>

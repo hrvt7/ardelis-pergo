@@ -88,7 +88,7 @@ export function doorLeafWidth(type: 'door' | 'doorSliding', length: number) {
 export function closedSegments(config: Pick<PergolaConfig, 'sides' | 'split' | 'mount' | 'width' | 'depth'>) {
   return (['front', 'back', 'left', 'right'] as SideKey[]).flatMap((side) => sideSegments(config, side)
     .filter((segment) => segment.type !== 'none')
-    .map((segment) => ({ side, type: segment.type, half: segment.half, length: sideLength(config, side) * (segment.to - segment.from) })))
+    .map((segment) => ({ side, type: segment.type, half: segment.half, from: segment.from, to: segment.to, length: sideLength(config, side) * (segment.to - segment.from) })))
 }
 
 /** Hány osztóprofil kell (félbe osztott oldal, ahol nincs ott oszlop). */

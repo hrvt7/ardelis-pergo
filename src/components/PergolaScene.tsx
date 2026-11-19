@@ -62,6 +62,8 @@ import { OS140 } from '@/lib/os140'
 import Car from '@/components/models/Car'
 import { currentViewportKind, overviewFov, sheetDistanceScale, sofaFov, usesSheetLayout } from '@/lib/viewport'
 import { localized, tr } from '../i18n/locale'
+import { segmentWallEnds } from '@/lib/os140Sides'
+import { missingShadowMap } from '@/lib/shadowGuard'
 
 const SceneEffects = lazy(() => import('@/components/SceneEffects'))
 const ShadeProbe = lazy(() => import('@/components/ShadeProbe'))
@@ -731,12 +733,12 @@ function SlatWall({ length, height, color, wood }: { length: number; height: num
 }
 
 
-function SideSegmentWall({ type, length, height, color, config, scene, onSceneChange, label, inward, mirror = false }: { inward: 1 | -1; mirror?: boolean; type: SideType; length: number; height: number; color: string; config: PergolaConfig; scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void; label: boolean }) {
+function SideSegmentWall({ type, length, height, color, config, scene, onSceneChange, label, inward, mirror = false, wallEnds }: { inward: 1 | -1; mirror?: boolean; /** a szakasz −x / +x vége falhoz ér-e (OS140 ZIP/üvegfal: ott a sín a homlokzaton, nincs rés) */ wallEnds?: readonly [boolean, boolean]; type: SideType; length: number; height: number; color: string; config: PergolaConfig; scene: SceneSettings; onSceneChange: (patch: Partial<SceneSettings>) => void; label: boolean }) {
   const { materialDetail } = useQuality()
   // Forgólamellás (MB-OpenSky 140) vázon a ZIP és a toló üvegfal a gyári Aluprof-rendszerből épül (Os140Sides).
   const os140 = config.roof === 'louvered' && !config.building
-  if (type === 'zip') return os140 ? <Os140Zip length={length} height={height} inward={inward} open={config.screenOpen} wind={scene.wind} material={getCoat(color, 0.4, materialDetail)} /> : <ZipScreen length={length} height={height} open={config.screenOpen} color={color} wind={scene.wind} />
-  if ((type === 'glass' || type === 'glassFramed') && os140) return <Os140Slide length={length} height={height} inward={inward} label={label} opened={scene.glassOpen} onToggle={() => onSceneChange({ glassOpen: !scene.glassOpen })} material={getCoat(color, 0.4, materialDetail)} />
+  if (type === 'zip') return os140 ? <Os140Zip length={length} height={height} inward={inward} wallEnds={wallEnds} open={config.screenOpen} wind={scene.wind} material={getCoat(color, 0.4, materialDetail)} /> : <ZipScreen length={length} height={height} open={config.screenOpen} color={color} wind={scene.wind} />
+  if ((type === 'glass' || type === 'glassFramed') && os140) return <Os140Slide length={length} height={height} inward={inward} wallEnds={wallEnds} label={label} opened={scene.glassOpen} onToggle={() => onSceneChange({ glassOpen: !scene.glassOpen })} material={getCoat(color, 0.4, materialDetail)} />
   if (type === 'glass' || type === 'glassFramed') return <GlassWall length={length} height={height} color={color} framed={type === 'glassFramed'} label={label} opened={scene.glassOpen} onToggle={() => onSceneChange({ glassOpen: !scene.glassOpen })} />
   const look = wallGlassLook(config.wallGlazing, config.building)
   if (type === 'glassFixed') return <FixedGlassWall length={length} height={height} color={color} look={look} />
@@ -1004,7 +1006,7 @@ function SidePlacement({ side, config, scene, color, onSelect, onSceneChange, la
       const key = segment.type === 'glassFramed' ? 'glass' : segment.type
       const label = !labelled.has(key)
       if (label) labelled.add(key)
-      return <group key={`${index}-${segment.type}`} position={[x, 0, 0]}><BuildIn height={height} settled={settled} delay={config.building ? ({ front: 0, left: 1, right: 2, back: 3 }[side]) * 0.12 + (segment.type === 'door' || segment.type === 'doorSliding' ? 0.22 : 0) : 0}><SideSegmentWall type={segment.type} length={segmentLength} height={height} color={color} config={config} scene={scene} onSceneChange={onSceneChange} label={label && scene.labels !== false} inward={INWARD[side]} mirror={!!config.doorMirror?.[side]} /></BuildIn></group>
+      return <group key={`${index}-${segment.type}`} position={[x, 0, 0]}><BuildIn height={height} settled={settled} delay={config.building ? ({ front: 0, left: 1, right: 2, back: 3 }[side]) * 0.12 + (segment.type === 'door' || segment.type === 'doorSliding' ? 0.22 : 0) : 0}><SideSegmentWall type={segment.type} length={segmentLength} height={height} color={color} config={config} scene={scene} onSceneChange={onSceneChange} label={label && scene.labels !== false} inward={INWARD[side]} mirror={!!config.doorMirror?.[side]} wallEnds={segmentWallEnds(side, wallSides(config.mount), Math.abs(x - segmentLength / 2 + length / 2) < 0.05, Math.abs(x + segmentLength / 2 - length / 2) < 0.05)} /></BuildIn></group>
     })}
     {!isHorizontal && !allOpen && roofRise(config) > 0 && <GableInfill depth={depth} height={height} rise={roofRise(config)} glassy={segments.some((segment) => segment.type === 'glass' || segment.type === 'glassFramed' || segment.type === 'glassFixed')} color={color} />}
     {split && !midPost && <Beam args={[MULLION, height - 0.1, 0.09]} position={[0, (height - 0.1) / 2, 0]} color={color} radius={0.008} />}
@@ -2991,10 +2993,21 @@ function ShadowBudget({ config, sunKey }: { config: PergolaConfig; sunKey: strin
   const invalidate = useThree((state) => state.invalidate)
   // Az árnyéktérkép csak változáskor készül újra (akkumulátorkímélés) — ezért a
   // konfiguráció mellett a nap állásának és a nézetnek a változásakor is frissíteni kell.
+  // A minőségváltás új árnyéktérkép-méretet ad, a napfény ezért újra létrejön: ha az új fény árnyéktérképe
+  // nem készülne el, minden árnyékot fogadó anyag rajzolása WebGL-hibára futna, és a pergola eltűnne.
   useEffect(() => {
     configureShadowBudget(gl)
     invalidate()
   }, [gl, config, sunKey, invalidate])
+  // Védőháló (lib/shadowGuard.ts): bármi hozza is létre újra a fényt (a fény lehet beágyazott csoportban is,
+  // ezért nem elég a gyökér gyerekszáma), a hiányzó árnyéktérkép a következő képkockán elkészül. A bejárás csak a
+  // ténylegesen kirajzolt képkockákon fut (igény szerinti képfrissítés), és csak fényeket gyűjt: a költsége elhanyagolható.
+  useFrame(({ scene }) => {
+    if (gl.shadowMap.autoUpdate || gl.shadowMap.needsUpdate) return
+    const lights: THREE.Light[] = []
+    scene.traverseVisible((object) => { if ((object as THREE.Light).isLight && (object as THREE.Light).castShadow) lights.push(object as THREE.Light) })
+    if (missingShadowMap(lights)) { refreshShadows(gl); invalidate() }
+  })
   return null
 }
 
@@ -3193,7 +3206,7 @@ function SceneContent({ cyclorama = false, cycloramaTone = 'neutral', config, sc
   if (modular) {
     const sceneNoPhoto = { ...scene, photoMode: false }
     return <>
-      <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|modular|${modular.config.facade}|${modular.config.roof}`} />
+      <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|modular|${modular.config.facade}|${modular.config.roof}|${quality.shadowMapSize}`} />
       <FogFollow />
       <LightingMood target={target} targetKey={targetKey} shownNight={shownNight} onSwap={setShownKey} rain={false} quality={quality} studio={studio} shadowExtent={shadowExtent} fogEnabled />
       {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}
@@ -3210,7 +3223,7 @@ function SceneContent({ cyclorama = false, cycloramaTone = 'neutral', config, sc
     </>
   }
   return <>
-    <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}|${scene.wallColor}|${scene.windowColor}`} />
+    <ShadowBudget config={config} sunKey={`${lighting.position.join(',')}|${lighting.intensity}|${scene.photoMode}|${scene.wallFinish}|${scene.wallColor}|${scene.windowColor}|${quality.shadowMapSize}`} />
     {!scene.photoMode && <FogFollow />}
     <LightingMood target={target} targetKey={targetKey} shownNight={shownNight} onSwap={setShownKey} rain={scene.rain} quality={quality} studio={studio} shadowExtent={shadowExtent} fogEnabled={!scene.photoMode} />
     {lighting.night && <><directionalLight position={[5, 6, 8]} color="#b7d5f2" intensity={1.05} /><directionalLight position={[-6, 4, -3]} color="#8fb5dc" intensity={0.62} /></>}

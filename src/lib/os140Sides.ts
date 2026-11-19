@@ -3,10 +3,32 @@
 // (tokméret, max. magasság, max. méret, min. szélesség) és az IM_OpenSlide_EN szerelési útmutató szárnytáblázata.
 // Tiszta függvények, méterben. Feltételezés (nem gyári adat): Szövet 1 + Ø63 csőtengely + Aluprof motor a tokválasztáshoz;
 // az OpenSlide sínosztása és szárnyprofil-méretei (claude/17-os140-blender-modell.md).
-import { OS140 } from './os140'
+import { OS140, OS140_WALL_GAP } from './os140'
 
 /** a vezetősín helye az oszlop oldallapján: a nyílás mindkét végén ennyivel szűkebb a screen (oszlop fele) */
 export const SIDE_POST_INSET = OS140.post / 2
+/** Falnál nincs oszlop: a vezetősín a homlokzatra kerül, a nyílás a gerendatengelyen túl a fal síkjáig tart. */
+export const SIDE_WALL_INSET = -(OS140.beamW / 2 + OS140_WALL_GAP)
+
+/**
+ * Egy oldalszakasz két végének behúzása (helyi −x és +x vég): oszlopnál az oszlop fele, falnál negatív (a nyílás a
+ * falig ér, így a ZIP vagy az üvegfal oldalt teljesen zár — nincs rés a fal és a screen között).
+ */
+export function sideEndInsets(wallEnds: readonly [boolean, boolean] = [false, false]): [number, number] {
+  return [wallEnds[0] ? SIDE_WALL_INSET : SIDE_POST_INSET, wallEnds[1] ? SIDE_WALL_INSET : SIDE_POST_INSET]
+}
+
+type SideName = 'front' | 'back' | 'left' | 'right'
+/**
+ * Melyik vége ér falhoz egy oldal szakaszának. A helyi x a jelenetben: elöl/hátul a világ x-e (−x = bal),
+ * bal/jobb oldalon a világ −z-je (−x = elöl, +x = hátul). Csak az oldal szélére futó szakaszvég lehet falnál.
+ */
+export function segmentWallEnds(side: SideName, walls: readonly SideName[], atStart: boolean, atEnd: boolean): [boolean, boolean] {
+  const horizontal = side === 'front' || side === 'back'
+  const startWall = horizontal ? walls.includes('left') : walls.includes('front')
+  const endWall = horizontal ? walls.includes('right') : walls.includes('back')
+  return [atStart && startWall, atEnd && endWall]
+}
 
 export const ZIP = {
   /** SRS90E/100 tok (102 × 102) */
@@ -102,4 +124,10 @@ export function openSlidePlan(opening: number, height: number): SlidePlan {
   if (opening > OPENSLIDE.maxSection) issues.push(`${opening.toFixed(2)} m felett két szekcióra osztva (szekció legfeljebb ${OPENSLIDE.maxSection} m).`)
   const tracks = Math.min(OPENSLIDE.maxTracks, Math.max(3, Math.ceil(sashes / 2) + 1, sashes <= 5 ? sashes : 0))
   return { sashes, sashWidth: opening / sashes, tracks, height, issues }
+}
+
+/** Egy oldalszakasz tiszta nyílása (a két vég behúzásával): ugyanazt adja, amit a 3D-modell épít. */
+export function segmentOpening(side: SideName, walls: readonly SideName[], segment: { from: number; to: number; length: number }): number {
+  const [start, end] = sideEndInsets(segmentWallEnds(side, walls, segment.from <= 1e-6, segment.to >= 1 - 1e-6))
+  return segment.length - start - end
 }

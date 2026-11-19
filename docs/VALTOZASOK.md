@@ -1,5 +1,13 @@
 # Változások
 
+## 5.52 – Javítás: minőségváltáskor eltűnő pergola; a ZIP és az üvegfal falnál teljesen zár
+
+- **Hiba: magas vagy ultra minőségre váltva eltűnt a pergola** (és minden árnyékot fogadó tárgy). Ok: az árnyéktérkép mérete a minőséggel változik, ezért a napfény újra létrejön, de a takarékos árnyékolás miatt az új fény árnyéktérképe nem készült el. A WebGL így minden ilyen rajzolást eldobott („Mismatch between texture format and sampler type”). Javítás: a minőségváltás frissíti az árnyékot. Általános védőháló is került be: ha bármikor van árnyékot vető fény árnyéktérkép nélkül, a következő képkockán elkészül (`lib/shadowGuard.ts`).
+- **Hiba: falra szerelt pergolán rés volt a ház fala és a ZIP (vagy a toló üvegfal) között.** A falnál nincs oszlop, de a screen mindkét végén oszlopnyi helyet hagyott ki. Mostantól falnál a vezetősín a homlokzatra kerül, a tok, a szövet és az üvegfal a falig ér: oldalt teljesen zár (sarok- és fülkerögzítésnél az elülső oldalon is).
+- A ZIP-osztás jelzése ugyanezzel a falig érő nyílással számol, mint a 3D (5 m felett két screen).
+- Ellenőrizve fej nélküli böngészőben: minőségváltás alacsonyról magasra és ultrára; szabadon álló, fali, bal és jobb sarok, fülke × ZIP / üvegfal minden oldalon, WebGL-hiba nélkül.
+- Tesztek: `shadowGuard.test.ts`, `os140Sides.test.ts` (falvégek, behúzások, ZIP-osztás jelzése).
+
 ## 5.51 – Környezet: PBR-anyagok, élethű sövény és ültető, ápolt gyep, betonlapok
 
 - **Csak a környezet változott, a pergolák (váz, lamellák, oldalzárások, konfigurációs logika) érintetlenek.** A bútor-, kert- és házmodellek mérete, origója, hálónevei és anyagszerepei (wall/frame/glass/interior/lamp) azonosak, így a kód ugyanúgy illeszti őket.
