@@ -12,7 +12,7 @@ import PhotoRig, { ShadowCatcher } from '@/components/PhotoRig'
 import { PHOTO_GROUP } from '@/lib/photoScene'
 import { cameraMotion } from '@/lib/cameraMotion'
 import { effectiveQualityLevel, governorEnabled, useDemoDevice } from '@/lib/demoDevice'
-import { QualityContext, budgetDpr, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
+import { QualityContext, applyDprCap, budgetDpr, nextDprCap, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
 import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls, wallSides } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
 import { isOrbitRecording, setActiveScene, setHiResRenderer, setOrbitDriver, setOrbitRecording } from '@/lib/sceneRegistry'
@@ -40,7 +40,7 @@ import { gardenLayout, getHouseLayout, wingFootprints, WING_DEPTH } from '@/lib/
 import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
 import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
-import { doorKinematics, doorProgress, doorSwingAngle, GLASS_SLIDE_SECONDS, glideEase, glideStep, INWARD, MULLION, sideSegmentPlacements, slidingLeafX, slidingLeafZ } from '@/lib/mechanics'
+import { doorKinematics, doorProgress, doorSwingAngle, GLASS_SLIDE_SECONDS, glideEase, glideStep, INWARD, MULLION, refreshShadowInMotion, sideSegmentPlacements, slidingLeafX, slidingLeafZ } from '@/lib/mechanics'
 import { sceneTime, stillMotion } from '@/lib/sceneClock'
 import { carportBays, hasSplitUnit, hasUnderfloor } from '@/lib/buildings'
 import { ModularCameraRig, ModularDimensions, ModularGroundExtras, ModularHouseModel, type ModularView } from '@/components/ModularHouseScene'
@@ -333,12 +333,14 @@ function getCoat(color: string, roughness: number, detail: MaterialDetail): THRE
 
 /**
  * Üveg: low/medium/high-on átlátszó (opacity) fizikai anyag ior 1.5-tel és vékony lakkal — olcsó és nem lassítja a jelenetet;
- * ultra szinten valódi transzmisszió (fénytörés a mögötte lévő jeleneten, vékony lemez: thickness 0.02).
+ * ultra szinten valódi transzmisszió (fénytörés a mögötte lévő jeleneten, vékony lemez: thickness 0.02), fél felbontású
+ * transzmissziós képpel (renderer.transmissionResolutionScale = 0.5); kétoldalas üvegen az olcsó változat.
  */
 function GlassMaterial({ tint, opacity, envMapIntensity, doubleSided = false, matRef }: { tint: string; opacity: number; envMapIntensity: number; doubleSided?: boolean; matRef?: React.Ref<THREE.MeshPhysicalMaterial> }) {
   const { materialDetail } = useQuality()
   const side = doubleSided ? THREE.DoubleSide : THREE.FrontSide
-  if (materialDetail === 'ultra') return <meshPhysicalMaterial ref={matRef} color={tint} metalness={0} roughness={0.08} transmission={0.92} thickness={0.02} ior={1.5} attenuationColor={tint} attenuationDistance={1.2} specularIntensity={1} clearcoat={1} clearcoatRoughness={0.04} envMapIntensity={envMapIntensity} side={side} />
+  // Kétoldalas üvegen nincs transzmisszió (audit 2026-11-19): a three.js ilyenkor a hátlapokat külön is leképezné minden képkockán.
+  if (materialDetail === 'ultra' && !doubleSided) return <meshPhysicalMaterial ref={matRef} color={tint} metalness={0} roughness={0.08} transmission={0.92} thickness={0.02} ior={1.5} attenuationColor={tint} attenuationDistance={1.2} specularIntensity={1} clearcoat={1} clearcoatRoughness={0.04} envMapIntensity={envMapIntensity} side={side} />
   return <meshPhysicalMaterial ref={matRef} color={tint} metalness={0.02} roughness={materialDetail === 'enhanced' ? 0.06 : 0.04} transparent opacity={opacity} ior={1.5} clearcoat={1} clearcoatRoughness={0.04} envMapIntensity={envMapIntensity} depthWrite={false} side={side} />
 }
 
@@ -555,7 +557,7 @@ function GlassWall({ length, height, color, opened, onToggle, framed = false, la
   const gl = useThree((state) => state.gl)
   // Időarányos, lassan induló és lassan megálló csúszás (mint az MB-OpenSlide-nál), nem exponenciális rándulás.
   const phase = useRef(-1)
-  useFrame((_, delta) => {
+  useFrame(({ clock }, delta) => {
     const target = opened ? 1 : 0
     const previous = phase.current
     phase.current = REDUCED || previous < 0 ? target : glideStep(previous, target, delta, GLASS_SLIDE_SECONDS)
@@ -563,7 +565,7 @@ function GlassWall({ length, height, color, opened, onToggle, framed = false, la
     panels.current.slice(0, panelCount).forEach((panel, index) => {
       if (panel) panel.position.x = THREE.MathUtils.lerp(layout.position(index, false), layout.position(index, true), eased)
     })
-    if (previous !== phase.current) { refreshShadows(gl); invalidate() }
+    if (previous !== phase.current) { refreshShadowInMotion(gl, clock.elapsedTime, phase.current === target); invalidate() }
   })
   return <group onClick={(event) => { event.stopPropagation(); onToggle(); invalidate() }}>{Array.from({ length: panelCount }, (_, index) => {
     const x = -length / 2 + 0.06 + panelWidth * (index + 0.5)
@@ -2397,6 +2399,19 @@ function LightingMood({ target, targetKey, shownNight, onSwap, rain, quality, st
     sunColor: new THREE.Color(target.sun), fogColor: new THREE.Color(fogColorFor(target, studio)), skyColor: new THREE.Color(target.night ? '#9fb8d6' : '#cfdce6'), groundColor: new THREE.Color(target.night ? '#2f3338' : '#5a4d3f'),
     position: new THREE.Vector3(...target.position), tmpColor: new THREE.Color(), tmpVector: new THREE.Vector3(),
   })
+  // Méretváltáskor az árnyékkamera határai helyben frissülnek (korábban a fény újraépült, és a 4096²-es árnyéktérkép
+  // minden csúszkalépésnél újra lefoglalódott – audit 2026-11-19). A térkép csak minőségváltáskor épül újra (key).
+  const moodGl = useThree((state) => state.gl)
+  const moodInvalidate = useThree((state) => state.invalidate)
+  useEffect(() => {
+    const light = sun.current
+    if (!light) return
+    const camera = light.shadow.camera
+    camera.left = -shadowExtent; camera.right = shadowExtent; camera.top = shadowExtent; camera.bottom = -shadowExtent
+    camera.updateProjectionMatrix()
+    refreshShadows(moodGl)
+    moodInvalidate()
+  }, [shadowExtent, moodGl, moodInvalidate])
   useFrame(({ gl, scene, invalidate }, delta) => {
     const l = live.current
     const dt = Math.min(delta, 0.05)
@@ -2436,7 +2451,7 @@ function LightingMood({ target, targetKey, shownNight, onSwap, rain, quality, st
     {fogEnabled && <fog ref={fog} attach="fog" args={['#c3cdce', 20, 43]} />}
     <ambientLight ref={ambient} />
     <hemisphereLight ref={hemisphere} />
-    <directionalLight key={shadowExtent} ref={sun} castShadow shadow-mapSize={[quality.shadowMapSize, quality.shadowMapSize]} shadow-radius={quality.shadowRadius} shadow-blurSamples={quality.shadowRadius > 2 ? 16 : 8} shadow-camera-left={-shadowExtent} shadow-camera-right={shadowExtent} shadow-camera-top={shadowExtent} shadow-camera-bottom={-shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
+    <directionalLight key={quality.shadowMapSize} ref={sun} castShadow shadow-mapSize={[quality.shadowMapSize, quality.shadowMapSize]} shadow-radius={quality.shadowRadius} shadow-blurSamples={quality.shadowRadius > 2 ? 16 : 8} shadow-camera-left={-shadowExtent} shadow-camera-right={shadowExtent} shadow-camera-top={shadowExtent} shadow-camera-bottom={-shadowExtent} shadow-bias={-0.0001} shadow-normalBias={0.009} />
   </>
 }
 
@@ -3286,6 +3301,30 @@ function FrameGovernor({ enabled, onSlow }: { enabled: boolean; onSlow: () => vo
   return null
 }
 
+/**
+ * Finom felbontás-szabályozó kézzel választott szinten és bemutató módban (ott a szintet nem írjuk felül):
+ * 30 képkockás ablakonként jelenti az átlagos képkocka-időt; a felbontás-korlátot a `nextDprCap` számolja.
+ * Csak mozgás közben mér (állóképnél nincs képkocka), a betöltés utáni első 3 másodpercet és a hosszú szüneteket kihagyja.
+ */
+function DprGovernor({ enabled, onAverage }: { enabled: boolean; onAverage: (average: number) => void }) {
+  const window_ = useRef({ sum: 0, count: 0, since: 0 })
+  useFrame(({ clock }, delta) => {
+    if (!enabled) return
+    const w = window_.current
+    if (!w.since) w.since = clock.elapsedTime
+    if (clock.elapsedTime - w.since < 3) return
+    if (delta > 0.25) { w.sum = 0; w.count = 0; return }
+    w.sum += delta
+    w.count += 1
+    if (w.count < 30) return
+    const average = w.sum / w.count
+    w.sum = 0
+    w.count = 0
+    onAverage(average)
+  })
+  return null
+}
+
 function FirstFrameReady({ onReady }: { onReady: () => void }) {
   const reported = useRef(false)
   useFrame(() => {
@@ -3332,7 +3371,19 @@ export default memo(function PergolaScene({ cyclorama = false, cycloramaTone = '
     observer.observe(element)
     return () => observer.disconnect()
   }, [])
-  const dpr = useMemo(() => budgetDpr(quality, wrapSize.w, wrapSize.h), [quality, wrapSize.w, wrapSize.h])
+  // Kézi szintnél és bemutató módban a szint marad, csak a felbontás igazodik a géphez (DprGovernor, audit 2026-11-19).
+  const [dprCap, setDprCap] = useState<number | null>(null)
+  const [capTier, setCapTier] = useState(activeTier)
+  if (capTier !== activeTier) { setCapTier(activeTier); setDprCap(null) }
+  const baseDpr = useMemo(() => budgetDpr(quality, wrapSize.w, wrapSize.h), [quality, wrapSize.w, wrapSize.h])
+  const dpr = useMemo(() => applyDprCap(baseDpr, dprCap), [baseDpr, dprCap])
+  const onFrameAverage = useCallback((average: number) => {
+    setDprCap((cap) => {
+      const next = nextDprCap(cap, average, baseDpr[1])
+      if (next !== cap) log.warn('Pergola scene resolution adjusted', { tier: activeTier, from: cap ?? baseDpr[1], to: next ?? baseDpr[1] })
+      return next
+    })
+  }, [baseDpr, activeTier])
   const onSlow = useCallback(() => {
     if (level !== 'auto') return
     const next = lowerTier(activeTier)
@@ -3423,6 +3474,8 @@ export default memo(function PergolaScene({ cyclorama = false, cycloramaTone = '
         onCreated={({ gl }) => {
           gl.toneMapping = THREE.NeutralToneMapping
           gl.toneMappingExposure = 0.88
+          // Fénytörő (ultra) üveg: a mögötte lévő jelenet fél felbontáson elég (a kép úgyis elmosott), negyed annyi képpont.
+          gl.transmissionResolutionScale = 0.5
           gl.shadowMap.autoUpdate = false
           refreshShadows(gl)
           gl.domElement.dataset.pergolaCanvas = 'true'
@@ -3452,6 +3505,7 @@ export default memo(function PergolaScene({ cyclorama = false, cycloramaTone = '
           />
         </Suspense></QualityContext.Provider>
         <FrameGovernor enabled={governorEnabled(scene.quality, demoDevice, loaded)} onSlow={onSlow} />
+        <DprGovernor enabled={loaded && !governorEnabled(scene.quality, demoDevice, loaded)} onAverage={onFrameAverage} />
         <FirstFrameReady onReady={onReady} />
       </Canvas>
     </SceneErrorBoundary>

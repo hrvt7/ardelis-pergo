@@ -210,3 +210,20 @@ export function glideStep(phase: number, target: number, delta: number, seconds:
   const step = Math.min(Math.max(delta, 0), MAX_FRAME_DELTA) / seconds
   return phase < target ? Math.min(target, phase + step) : Math.max(target, phase - step)
 }
+
+/** Mozgás közben az árnyéktérkép legfeljebb ennyi másodpercenként készül újra (60 fps-en minden második képkockán). */
+export const SHADOW_MOTION_INTERVAL = 1 / 30
+const lastShadow = new WeakMap<object, number>()
+
+/**
+ * Árnyékfrissítés animáció közben (tolóüveg, ZIP, lamella): mozgás alatt legfeljebb ~30-szor másodpercenként
+ * (a 4096²-es ultra árnyéktérkép különben minden képkockán újrarajzolódna), a mozgás végén mindig, hogy a nyugvó
+ * állapot árnyéka pontos legyen. `now` a jelenet órája (s).
+ */
+export function refreshShadowInMotion(renderer: { shadowMap: { needsUpdate: boolean } }, now: number, settled: boolean) {
+  const last = lastShadow.get(renderer)
+  if (settled || last === undefined || now - last >= SHADOW_MOTION_INTERVAL - 1e-4 || now < last) {
+    renderer.shadowMap.needsUpdate = true
+    lastShadow.set(renderer, now)
+  }
+}

@@ -56,8 +56,16 @@ describe('képpont-keret (budgetDpr)', () => {
   it('kis vásznon a szint saját dpr-e marad', () => {
     expect(budgetDpr(qualitySettings('medium'), 600, 500)).toEqual(qualitySettings('medium').dpr)
   })
-  it('magas és ultra szinten nincs keret (asztali kép változatlan)', () => {
-    expect(budgetDpr(qualitySettings('ultra'), 2560, 1440)).toEqual(qualitySettings('ultra').dpr)
+  it('magas és ultra szinten 1-es monitoron nincs kényszerített túlmintavételezés, nagy kijelzőn keret van (audit 2026-11-19)', () => {
+    expect(qualitySettings('ultra').dpr[0]).toBe(1)
+    expect(qualitySettings('high').dpr[0]).toBe(1)
+    const [, ultraMax] = budgetDpr(qualitySettings('ultra'), 2560, 1440)
+    expect(2560 * 1440 * ultraMax * ultraMax).toBeLessThanOrEqual(5_000_001)
+    const [, retinaMax] = budgetDpr(qualitySettings('ultra'), 1440, 900)
+    expect(1440 * 900 * retinaMax * retinaMax).toBeLessThanOrEqual(5_000_001)
+    const [, highMax] = budgetDpr(qualitySettings('high'), 1366, 1024)
+    expect(1366 * 1024 * highMax * highMax).toBeLessThanOrEqual(3_500_001)
+    // kis vásznon a szint saját tartománya marad
     expect(budgetDpr(qualitySettings('high'), 1015, 830)).toEqual(qualitySettings('high').dpr)
   })
 })

@@ -8,6 +8,7 @@ import { stillMotion } from '@/lib/sceneClock'
 import { Html, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
 import { crankPin, demoAngle, demoSeconds, DRIVE, drivePlan, LOUVRE, louvreLayout, louvreProfile, louvreSealBoxes } from '@/lib/louvreSystem'
+import { refreshShadowInMotion } from '@/lib/mechanics'
 
 const REDUCED = stillMotion(typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
 const ACCENT = new THREE.Color('#c9ef4f')
@@ -194,7 +195,7 @@ export default function LouvreRoof({ width, depth, height, beam, beamHeight, ang
     if (Math.abs(next - l.angle) > 0.01) {
       l.angle = Math.abs(next - target) < 0.01 ? target : next
       write(l.angle)
-      gl.shadowMap.needsUpdate = true
+      refreshShadowInMotion(gl, clock.elapsedTime, l.angle === target)
       invalidate()
     }
     if (mechanism) invalidate()

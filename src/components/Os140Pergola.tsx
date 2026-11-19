@@ -9,6 +9,7 @@ import { demoAngle, demoSeconds } from '@/lib/louvreSystem'
 import { OS140, os140Layout, os140PostSpot } from '@/lib/os140'
 import { OS140_BEAM, OS140_BEAM_COVER, OS140_GUTTER, OS140_POST, OS140_SLAT } from '@/lib/os140Profiles'
 import { alongX, ident, toShapes, upward, type Map2 } from '@/components/profileGeometry'
+import { refreshShadowInMotion } from '@/lib/mechanics'
 
 const REDUCED = stillMotion(typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
 
@@ -130,7 +131,7 @@ export function Os140Roof({ width, depth, height, angle, mechanism, slow = false
     if (Math.abs(next - l.angle) > 0.01) {
       l.angle = Math.abs(next - target) < 0.01 ? target : next
       write(l.angle)
-      gl.shadowMap.needsUpdate = true
+      refreshShadowInMotion(gl, clock.elapsedTime, l.angle === target)
       invalidate()
     }
     if (mechanism) invalidate()

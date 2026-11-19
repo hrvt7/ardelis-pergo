@@ -7,6 +7,7 @@ import { Bloom, BrightnessContrast, DepthOfField, EffectComposer, HueSaturation,
 import { DepthOfFieldEffect, ShaderPass, ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
 import { cameraMotion } from '@/lib/cameraMotion'
+import { skipIdleDepthOfField, type IdleDepthOfField } from '@/lib/dofIdle'
 
 
 /**
@@ -40,9 +41,14 @@ export default function SceneEffects({ ultra, night, vignette, bloomScale, airy 
   useEffect(() => () => clampPass.dispose(), [clampPass])
   // Filmszerű vágás: kameraváltás közben a célpont marad éles, a környezet enyhén elmosódik („fókuszálás”); nyugalomban a hatás nulla, nem kerül képre.
   const dof = useRef<DepthOfFieldEffect>(null)
+  // Nyugalomban (bokeh = 0) a DOF egyik lépése sem fut: csak kameraváltás közben dolgozik (lib/dofIdle.ts).
+  const patched = useRef<DepthOfFieldEffect | null>(null)
+  const restore = useRef<(() => void) | null>(null)
+  useEffect(() => () => { restore.current?.(); restore.current = null; patched.current = null }, [])
   useFrame(() => {
     const effect = dof.current
     if (!effect) return
+    if (patched.current !== effect) { restore.current?.(); restore.current = skipIdleDepthOfField(effect as unknown as IdleDepthOfField); patched.current = effect }
     const strength = Math.sin(Math.PI * cameraMotion.p)
     const bokeh = strength * 2.6
     if (effect.bokehScale === bokeh && bokeh === 0) return
@@ -51,8 +57,9 @@ export default function SceneEffects({ ultra, night, vignette, bloomScale, airy 
     effect.cocMaterial.worldFocusRange = 1.5 + cameraMotion.focus * 0.25
   })
   // Natív MSAA a HDR pufferen: éles élek 100%-os Windows-skálázású (dpr 1) képernyőn is; az SMAA önmagában „pixeles” képet adott.
+  // Ultrán is 2× (audit 2026-11-19): a 4× a félpontos pufferen kétszer annyi memóriát és sávszélességet vitt, látható különbség nélkül.
   return (
-    <EffectComposer multisampling={ultra ? 4 : 2} enableNormalPass={false}>
+    <EffectComposer multisampling={2} enableNormalPass={false}>
       <primitive object={clampPass} dispose={null} />
       <N8AO
         aoRadius={0.75}

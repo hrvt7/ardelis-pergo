@@ -36,8 +36,8 @@ export interface QualitySettings {
 export const QUALITY_PROFILES: Record<QualityTier, QualitySettings> = {
   low: { tier: 'low', shadowMapSize: 1024, dpr: [1, 1.25], enablePostprocessing: false, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 256, textureResolution: '1k', louvreSegments: 6, environmentIntensity: 0.9, maxAnisotropy: 2, enableGrassDetail: false, enableExtraPlants: false, rainDrops: 160, materialDetail: 'basic', shadowRadius: 1, vignette: false, bloomScale: 0 },
   medium: { tier: 'medium', shadowMapSize: 1024, dpr: [1, 1.75], enablePostprocessing: false, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 256, textureResolution: '1k', louvreSegments: 8, environmentIntensity: 1, maxAnisotropy: 4, enableGrassDetail: false, enableExtraPlants: true, rainDrops: 260, materialDetail: 'basic', shadowRadius: 1.5, vignette: false, bloomScale: 0 },
-  high: { tier: 'high', shadowMapSize: 2048, dpr: [1.25, 2], enablePostprocessing: true, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 12, environmentIntensity: 1, maxAnisotropy: 8, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 320, materialDetail: 'enhanced', shadowRadius: 3, vignette: true, bloomScale: 1 },
-  ultra: { tier: 'ultra', shadowMapSize: 4096, dpr: [1.5, 2], enablePostprocessing: true, ultraEffects: true, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 16, environmentIntensity: 1.1, maxAnisotropy: 16, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 650, materialDetail: 'ultra', shadowRadius: 4.5, vignette: true, bloomScale: 1.25 },
+  high: { tier: 'high', shadowMapSize: 2048, dpr: [1, 2], enablePostprocessing: true, ultraEffects: false, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 12, environmentIntensity: 1, maxAnisotropy: 8, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 320, materialDetail: 'enhanced', shadowRadius: 3, vignette: true, bloomScale: 1 },
+  ultra: { tier: 'ultra', shadowMapSize: 4096, dpr: [1, 2], enablePostprocessing: true, ultraEffects: true, enableContactShadows: true, contactShadowResolution: 512, textureResolution: '2k', louvreSegments: 16, environmentIntensity: 1.1, maxAnisotropy: 16, enableGrassDetail: true, enableExtraPlants: true, rainDrops: 650, materialDetail: 'ultra', shadowRadius: 4.5, vignette: true, bloomScale: 1.25 },
 }
 
 const ORDER: QualityTier[] = ['low', 'medium', 'high', 'ultra']
@@ -155,11 +155,13 @@ export function writeTierCap(tier: QualityTier, now = Date.now()) {
 }
 
 /**
- * Képpont-keret: alacsony és közepes szinten a vászon legfeljebb ennyi tényleges képpontot rajzol. Nagy felbontású
- * tableten (2560 × 1600) a teljes képernyős álló vászon különben 1,25–1,75× felbontással többszörösen túllépné
- * a belépő mobil GPU-k teljesítményét. Magas és ultra szinten nincs keret (asztali gépeken változatlan kép).
+ * Képpont-keret: a vászon legfeljebb ennyi tényleges képpontot rajzol. Nagy felbontású tableten (2560 × 1600) a teljes
+ * képernyős álló vászon különben többszörösen túllépné a mobil GPU-k teljesítményét. Magas és ultra szinten is van keret
+ * (teljesítmény-audit, 2026-11-19): 1-es skálázású monitoron a szint nem rajzol több képpontot, mint ami látszik
+ * (korábban ultra 1,5×, magas 1,25× kényszerített túlmintavételezés), nagy monitoron és retina kijelzőn pedig
+ * legfeljebb 3,5, illetve 5 millió képpont (4K helyett) – az élsimítást az MSAA adja.
  */
-export const PIXEL_BUDGET: Partial<Record<QualityTier, number>> = { low: 1_200_000, medium: 2_000_000 }
+export const PIXEL_BUDGET: Partial<Record<QualityTier, number>> = { low: 1_200_000, medium: 2_000_000, high: 3_500_000, ultra: 5_000_000 }
 
 /** A szint dpr-tartománya a vászon CSS-méretéhez igazítva (R3F `dpr` prop). */
 export function budgetDpr(settings: Pick<QualitySettings, 'tier' | 'dpr'>, cssWidth: number, cssHeight: number): [number, number] {
@@ -179,4 +181,28 @@ export function qualityAboveDevice(level: QualityLevel, detected: QualityTier) {
   const gap = tierRank(level) - tierRank(detected)
   // Egy szinttel feljebb csak gyenge eszközön (alacsony besorolás) figyelmeztetünk; MacBook vagy csúcstablet „magas” → ultra rendben.
   return gap >= 2 || (gap === 1 && detected === 'low')
+}
+
+/**
+ * Finom felbontás-szabályozás kézzel választott szinten és bemutató módban (ahol a szintet nem írjuk felül):
+ * tartósan lassú képkockáknál a felbontás-szorzó felső határa lépésenként csökken, gyors képkockáknál visszanő.
+ * A szint (árnyék, utófeldolgozás, anyagok) változatlan marad, csak a képpontszám igazodik a géphez.
+ */
+export const DPR_GOVERNOR = { slow: 0.034, fast: 0.018, down: 0.15, up: 0.1, floor: 0.85 } as const
+
+/** A következő dpr-felső határ az ablak átlagos képkocka-ideje (s) alapján; null = nincs korlát (a szint saját értéke). */
+export function nextDprCap(cap: number | null, average: number, base: number): number | null {
+  const current = cap ?? base
+  if (average > DPR_GOVERNOR.slow) return Math.max(DPR_GOVERNOR.floor, Math.round((current - DPR_GOVERNOR.down) * 100) / 100)
+  if (average < DPR_GOVERNOR.fast && cap !== null) {
+    const raised = Math.round((current + DPR_GOVERNOR.up) * 100) / 100
+    return raised >= base ? null : raised
+  }
+  return cap
+}
+
+/** A dpr-tartomány a szabályozó korlátjával (a korlát a tartomány alsó értékét is lejjebb viheti). */
+export function applyDprCap(range: [number, number], cap: number | null): [number, number] {
+  if (cap === null || cap >= range[1]) return range
+  return [Math.min(range[0], cap), cap]
 }

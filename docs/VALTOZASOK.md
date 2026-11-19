@@ -1,5 +1,19 @@
 # Változások
 
+## 5.44 – 3D teljesítmény: az audit első javításai (Ultra akadozás)
+
+A `claude/19-teljesitmeny-audit.md` hibajegyzéke alapján; a meglévő szintek finomhangolása, új grafikai rendszer nélkül.
+
+- **Nincs kényszerített túlmintavételezés (H1):** Ultra és Magas szinten a felbontás-szorzó alsó határa 1 (korábban 1,5 és 1,25), és képpont-keretet kaptak (Magas 3,5 MP, Ultra 5 MP). 1-es skálázású monitoron Ultra 56%-kal, Magas 36%-kal kevesebb képpontot rajzol; 2560×1440-es monitoron Ultra 8,3 helyett legfeljebb 5 MP. Mért: 1200×750-es nézetnél Ultra 1800×1125 → 1200×750, Magas 1500×937 → 1200×750; a kép eltérése a régihez képest a képpontok kevesebb mint 1%-a (élek).
+- **A mélységélesség csak kameraváltáskor dolgozik (H2):** nyugalomban és szabad forgatásnál a DOF 7 lépése nem fut; a köztes képei egyszer kinullázódnak, így a kimenet pontosan a bemenet (`lib/dofIdle.ts`). Mért (szoftveres renderelő, Magas szint, forgatás): képkocka-idő 3,40 → 2,66 s (−22%) a felbontás-változással együtt; a kép a régivel azonos.
+- **Finom felbontás-szabályozás kézi szinten és bemutató módban (H5):** ahol a szintet nem írjuk felül (kézzel választott szint, Bemutató eszköz), tartósan 34 ms feletti képkockáknál a felbontás-szorzó 0,15-ös lépésekben csökken (legfeljebb 0,85-ig), 18 ms alatt 0,1-esével visszanő. Az árnyék, az utófeldolgozás és az anyagok maradnak.
+- **Fénytörő üveg (H3):** Ultrán a transzmissziós kép fél felbontású (negyed annyi képpont); kétoldalas üvegen nincs transzmisszió (a hátlapok külön leképezése megszűnik).
+- **Árnyék animáció közben (H4):** tolóüveg, ZIP, lamella és üvegfal mozgása alatt az árnyéktérkép legfeljebb ~30-szor másodpercenként készül újra (60 fps-en minden második képkockán), a mozgás végén mindig.
+- **Ultra élsimítás 4× → 2× (H6):** a félpontos képpufferen a 4× MSAA kétszer annyi memóriát vitt látható különbség nélkül.
+- **Méretváltáskor nem épül újra a napfény (H12):** az árnyékkamera határai helyben frissülnek; az árnyéktérkép csak minőségváltáskor foglalódik újra.
+- Nem változott ebben a körben: vászon-élsimítás és `preserveDrawingBuffer` (H6 második fele, H7), üvegpanelek mozgás közben (H8), iPad-besorolás (H10; a Magas szint új képpont-kerete már korlátozza), shader-előfordítás (H11).
+- Tesztek: `perfAudit.test.ts` (DOF-kihagyás, árnyék-ritkítás, bekötések), `dprGovernor.test.ts`, `deviceTier.test.ts` frissítve.
+
 ## 5.43 – Nyitó animáció vissza: „Lamellafal” (10 mp)
 
 - **A nyitó animáció ismét a „Lamelix logó – Lamellafal”** (10 mp) a „Zsalu” helyett – bitre ugyanazok a fájlok, mint a 4.66-os változatban (videó 0,47 MB, dekóder-index, animált tartalék, logós állókép), 10 mp-es időzítéssel és az ehhez illő háttérszínnel. Minden lejátszási úton ez fut.

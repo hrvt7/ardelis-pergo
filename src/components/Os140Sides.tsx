@@ -13,7 +13,7 @@ import { openSlidePlan, SIDE_POST_INSET, ZIP, zipPlan, OPENSLIDE } from '@/lib/o
 import { ZIP_BAR, ZIP_BOX, ZIP_GUIDE } from '@/lib/zipProfiles'
 import { alongX, loopsToShapes, upward } from '@/components/profileGeometry'
 import { tr } from '@/i18n/locale'
-import { GLASS_SLIDE_SECONDS, glideEase, glideStep, MAX_FRAME_DELTA } from '@/lib/mechanics'
+import { GLASS_SLIDE_SECONDS, glideEase, glideStep, MAX_FRAME_DELTA, refreshShadowInMotion } from '@/lib/mechanics'
 
 const REDUCED = stillMotion(typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
 const HALF_BEAM = OS140.beamW / 2
@@ -58,7 +58,7 @@ export function Os140Zip({ length, height, inward, open, wind, material }: { len
     fabrics.current.forEach((mesh) => { if (mesh) { mesh.scale.y = visible; mesh.position.y = boxBottom - visible / 2 } })
     bars.current.forEach((bar) => { if (bar) bar.position.y = barY })
     if (group.current) group.current.rotation.z = wind ? Math.sin(sceneTime(clock.elapsedTime) * 1.6) * 0.0012 * fraction : 0
-    if (Math.abs(previous - current.current) > 0.001) { gl.shadowMap.needsUpdate = true; invalidate() }
+    if (Math.abs(previous - current.current) > 0.001) { refreshShadowInMotion(gl, clock.elapsedTime, Math.abs(current.current - open) < 0.05); invalidate() }
     else if (wind && clock.elapsedTime - lastWind.current >= 1 / 30) { lastWind.current = clock.elapsedTime; invalidate() }
   })
 
@@ -102,13 +102,13 @@ export function Os140Slide({ length, height, inward, opened, onToggle, label, ma
   const sashes = useRef<(THREE.Group | null)[]>([])
   const progress = useRef(-1)
   const invalidate = useThree((state) => state.invalidate)
-  useFrame(({ gl }, delta) => {
+  useFrame(({ gl, clock }, delta) => {
     const target = opened ? 1 : 0
     const prev = progress.current
     progress.current = REDUCED || prev < 0 ? target : glideStep(prev, target, delta, GLASS_SLIDE_SECONDS)
     const eased = glideEase(progress.current)
     sashes.current.forEach((g, i) => { if (g) g.position.x = THREE.MathUtils.lerp(closedX(i), openX(i), eased) })
-    if (Math.abs(prev - progress.current) > 0.0005) { gl.shadowMap.needsUpdate = true; invalidate() }
+    if (Math.abs(prev - progress.current) > 0.0005) { refreshShadowInMotion(gl, clock.elapsedTime, progress.current === target); invalidate() }
   })
   const glassMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: '#b4cdd0', metalness: 0.02, roughness: 0.045, transparent: true, opacity: 0.28, clearcoat: 1, clearcoatRoughness: 0.05, depthWrite: false }), [])
   useEffect(() => () => glassMat.dispose(), [glassMat])
