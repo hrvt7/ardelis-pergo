@@ -116,12 +116,12 @@ describe('nyitó animáció: a 3D és a felület csak utána épül (nem szaggat
 
 describe('nyitó videó hardveres dekóderrel (tiltott automatikus lejátszás, iPhone/iPad)', () => {
   const read = (f: string) => fs.readFileSync(path.resolve(import.meta.dirname, '../public', f.slice(1)))
-  it('az index a videóhoz tartozik: minden képkocka (9 mp × 24 = 216) benne, a fájlon belül, H.264 hosszelőtagos NAL-egységekkel, kulcskockával kezd', async () => {
+  it('az index a videóhoz tartozik: minden képkocka (10 mp × 24 = 240) benne, a fájlon belül, H.264 hosszelőtagos NAL-egységekkel, kulcskockával kezd', async () => {
     const { INTRO_INDEX_SRC } = await import('../src/lib/introSplash')
     const index = JSON.parse(read(INTRO_INDEX_SRC).toString('utf8')) as { codec: string; description: string; samples: [number, number, number, number][]; durationUs: number }
     const video = read(INTRO_SRC)
     expect(index.codec).toMatch(/^avc1\.[0-9a-f]{6}$/)
-    expect(index.samples).toHaveLength(216)
+    expect(index.samples).toHaveLength(240)
     expect(index.durationUs).toBe(INTRO_DURATION_MS * 1000)
     expect(index.samples[0][3]).toBe(1)
     // Az avcC a videó fájlban lévővel egyezik (ha a videó cserélődik, az indexet újra kell generálni).

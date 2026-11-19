@@ -1,5 +1,11 @@
 # Változások
 
+## 5.43 – Nyitó animáció vissza: „Lamellafal” (10 mp)
+
+- **A nyitó animáció ismét a „Lamelix logó – Lamellafal”** (10 mp) a „Zsalu” helyett – bitre ugyanazok a fájlok, mint a 4.66-os változatban (videó 0,47 MB, dekóder-index, animált tartalék, logós állókép), 10 mp-es időzítéssel és az ehhez illő háttérszínnel. Minden lejátszási úton ez fut.
+- Tesztek: `introSplash.test.ts` (240 képkocka, 10 mp, az index a videóhoz tartozik): zöld; a dekóderes út Chrome-ban 10,3 mp alatt, simán fut végig.
+- Nem ellenőrzött: valódi iPhone-on és iPaden.
+
 ## 5.42 – Reflektoros jelölés: lépéssáv, eszköztár és telefonos lépésjelző
 
 - **Ádám mintája alapján:** az aktív elemet egy lime fénycsík jelöli az üvegsáv szélén, alatta halvány fénykúp, az ikon lime fényben izzik; a folyékony üveg sávok maradnak.
