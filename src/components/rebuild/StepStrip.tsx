@@ -8,6 +8,8 @@ import StepIcon from './StepIcons'
 /**
  * Telefonos lépésjelző (az ikonsor helyett, hogy a 3D-nek több hely maradjon): vékony, hét szegmensből álló haladássáv
  * és alatta „2/7 · Hely és méret”. A sorra koppintva lenyílik a lépések listája, bármelyikre ugorhatsz.
+ * Reflektoros jelölés (Ádám mintája): az aktuális szegmens lime fényben izzik, alatta halvány fénykúp, ami lépésváltáskor
+ * átcsúszik (egy GPU-áttűnés); a lenyíló listában ugyanez a fénycsík jelöli a mostani lépést.
  */
 export default function StepStrip({ step, onStep }: { step: ConfigStep; onStep: (step: ConfigStep) => void }) {
   const index = rebuildStepIndex(step)
@@ -27,6 +29,7 @@ export default function StepStrip({ step, onStep }: { step: ConfigStep; onStep: 
       <button type="button" className="rb-strip-toggle" aria-expanded={open} aria-controls="rb-strip-menu" onClick={() => setOpen((value) => !value)}>
         <span className="rb-strip-bars" aria-hidden="true">
           {REBUILD_STEPS.map((item, i) => <i key={item.id} className={i < index ? 'is-done' : i === index ? 'is-current' : undefined} />)}
+          <span className="rb-strip-beam" style={{ transform: `translate3d(calc(${index} * (100% + 4px)), 0, 0)` }} />
         </span>
         <span className="rb-strip-label"><b>{index + 1}/{count}</b> · {REBUILD_STEPS[index].label}<ChevronDown size={16} className="rb-strip-chevron" /></span>
       </button>

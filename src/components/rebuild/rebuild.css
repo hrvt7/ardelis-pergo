@@ -757,3 +757,33 @@
 /* A kérdés közvetlenül a lépésjelző alatt (nincs külön sáv-sor). */
 .rb-stepcard.is-sheet .rb-strip + .rb-stepcard-head, .rb-stepcard.is-sheet .rb-strip ~ .rb-stepcard-head { padding-top: 2px; }
 .rb-stepcard.is-sheet .rb-stepcard-head h2 { font-size: 22px; }
+
+/* ── Reflektoros jelölés (Ádám mintája, 2026-11-19) ───────────────────────────────────────────────
+   Alsó lépéssáv és bal eszköztár: az aktív elemet egy lime fénycsík jelöli az üvegsáv szélén, alatta halvány
+   fénykúp, az ikon lime fényben izzik. A folyékony üveg sáv marad; a lime csak a fényé. */
+.rebuild-shell { --rb-glow: color-mix(in oklab, var(--rb-accent) 92%, #6f9a00); --rb-glow-ink: #3a5400; }
+.rb-stepbar-pill { top: -8px; bottom: -8px; border-radius: 0; background: none; box-shadow: none; }
+.rb-stepbar-pill::before { content: ''; position: absolute; z-index: 1; top: 0; left: 50%; width: 42px; height: 3px; transform: translateX(-50%); border-radius: 0 0 3px 3px; background: var(--rb-glow); box-shadow: 0 0 10px var(--rb-accent), 0 0 3px var(--rb-glow); }
+.rb-stepbar-pill::after { content: ''; position: absolute; top: 3px; left: 50%; width: 84px; height: 70%; transform: translateX(-50%); clip-path: polygon(25% 0, 75% 0, 100% 100%, 0 100%); background: linear-gradient(180deg, color-mix(in oklab, var(--rb-accent) 60%, transparent) 0%, color-mix(in oklab, var(--rb-accent) 18%, transparent) 55%, transparent 100%); }
+.rb-stepbar button.is-current { color: var(--rb-glow-ink); }
+.rb-stepbar button.is-current svg { filter: drop-shadow(0 0 4px var(--rb-accent)) drop-shadow(0 0 10px color-mix(in oklab, var(--rb-accent) 70%, transparent)); }
+.rb-stepbar button.is-current span { color: var(--rb-ink); font-weight: 700; }
+
+.rb-rail-bar button.is-open { position: relative; color: var(--rb-glow-ink); background: radial-gradient(ellipse 110% 62% at 0% 50%, color-mix(in oklab, var(--rb-accent) 62%, transparent) 0%, color-mix(in oklab, var(--rb-accent) 20%, transparent) 55%, transparent 80%); box-shadow: none; border-radius: 0 16px 16px 0; }
+.rb-rail-bar button.is-open::before { content: ''; position: absolute; left: -8px; top: 50%; width: 3px; height: 38px; transform: translateY(-50%); border-radius: 0 3px 3px 0; background: var(--rb-glow); box-shadow: 0 0 10px var(--rb-accent), 0 0 3px var(--rb-glow); }
+.rb-rail-bar button.is-open svg { filter: drop-shadow(0 0 4px var(--rb-accent)) drop-shadow(0 0 10px color-mix(in oklab, var(--rb-accent) 70%, transparent)); }
+.rb-rail-bar button.is-open span { color: var(--rb-ink); font-weight: 700; }
+.rb-rail.is-compact .rb-rail-bar button.is-open::before { left: -6px; height: 30px; }
+.rb-rail-bar button { transition: color .25s, background .3s; }
+
+/* Telefonos lépésjelző reflektorral: az aktuális szegmens izzik, alatta fénykúp csúszik a lépéssel. */
+.rb-strip-bars { position: relative; }
+.rb-strip-bars i.is-current { background: var(--rb-glow); box-shadow: 0 0 8px var(--rb-accent), 0 0 2px var(--rb-glow); }
+.rb-strip-beam { position: absolute; z-index: -1; top: 4px; left: 0; width: calc((100% - 24px) / 7); height: 30px; pointer-events: none; transition: transform var(--rb-move) var(--rb-ease); will-change: transform; }
+.rb-strip-beam::before { content: ''; position: absolute; top: 0; left: -40%; right: -40%; bottom: 0; clip-path: polygon(28% 0, 72% 0, 100% 100%, 0 100%); background: linear-gradient(180deg, color-mix(in oklab, var(--rb-accent) 55%, transparent) 0%, color-mix(in oklab, var(--rb-accent) 16%, transparent) 60%, transparent 100%); }
+.rb-strip-toggle { position: relative; isolation: isolate; }
+.rb-strip-menu button.is-current { position: relative; color: var(--rb-glow-ink); background: radial-gradient(ellipse 70% 120% at 0% 50%, color-mix(in oklab, var(--rb-accent) 55%, transparent) 0%, color-mix(in oklab, var(--rb-accent) 16%, transparent) 55%, transparent 85%); }
+.rb-strip-menu button.is-current::before { content: ''; position: absolute; left: 0; top: 50%; width: 3px; height: 26px; transform: translateY(-50%); border-radius: 0 3px 3px 0; background: var(--rb-glow); box-shadow: 0 0 8px var(--rb-accent); }
+.rb-strip-menu button.is-current svg { filter: drop-shadow(0 0 4px var(--rb-accent)) drop-shadow(0 0 9px color-mix(in oklab, var(--rb-accent) 70%, transparent)); }
+.rb-strip-menu button.is-current span { color: var(--rb-ink); }
+@media (prefers-reduced-motion: reduce) { .rb-strip-beam { transition: none; } }

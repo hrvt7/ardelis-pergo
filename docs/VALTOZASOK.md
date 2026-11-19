@@ -1,5 +1,12 @@
 # Változások
 
+## 5.42 – Reflektoros jelölés: lépéssáv, eszköztár és telefonos lépésjelző
+
+- **Ádám mintája alapján:** az aktív elemet egy lime fénycsík jelöli az üvegsáv szélén, alatta halvány fénykúp, az ikon lime fényben izzik; a folyékony üveg sávok maradnak.
+- **Asztal/tablet:** az alsó lépéssávon a fénycsík és a kúp a felső élen ül, és lépésváltáskor átcsúszik; a bal eszköztáron a nyitott panel gombját a bal élről világítja meg.
+- **Telefon:** a vékony hét szegmenses csíkon az aktuális szegmens izzik, és alóla fénykúp világít a „4/7 · Oldalak” sorra; lépésváltáskor átcsúszik. A lenyíló listában a mostani lépést ugyanez a fénycsík és izzó ikon jelöli.
+- Tesztek: `rebuildStepBar.test.ts`.
+
 ## 5.41 – Telefon: vékony lépésjelző az ikonsor helyett
 
 - **Több hely a 3D-nek:** telefonon a hét ikonos lépéssáv helyett vékony, hét szegmensből álló haladássáv és alatta „2/7 · Hely és méret” felirat van a kérdés fölött. Kb. 80 px-szel több látszik a 3D modellből.

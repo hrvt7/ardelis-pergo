@@ -33,3 +33,19 @@ describe('telefonos lépésjelző (vékony sáv)', () => {
     expect(css).toMatch(/\.rb-strip-menu button \{[^}]*min-height: 44px;/)
   })
 })
+
+describe('reflektoros jelölés (Ádám mintája)', () => {
+  const css = readFileSync(new URL('../src/components/rebuild/rebuild.css', import.meta.url), 'utf8')
+  const strip = readFileSync(new URL('../src/components/rebuild/StepStrip.tsx', import.meta.url), 'utf8')
+  it('asztali lépéssáv és bal eszköztár: lime fénycsík a szélen, fénykúp, izzó ikon', () => {
+    expect(css).toContain('.rb-stepbar-pill::before')
+    expect(css).toContain('.rb-stepbar-pill::after')
+    expect(css).toContain('.rb-rail-bar button.is-open::before')
+    expect(css).toContain('.rb-stepbar button.is-current svg { filter: drop-shadow')
+  })
+  it('telefon: a vékony csíkon az aktuális szegmensből fénykúp csúszik a lépéssel, a listában fénycsík', () => {
+    expect(strip).toContain('<span className="rb-strip-beam" style={{ transform: `translate3d(calc(${index} * (100% + 4px)), 0, 0)` }} />')
+    expect(css).toContain('.rb-strip-beam::before')
+    expect(css).toContain('.rb-strip-menu button.is-current::before')
+  })
+})
