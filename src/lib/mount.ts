@@ -84,3 +84,12 @@ export function wallLabel(side: SideKey) {
 export function openSides(mount: MountType): SideKey[] {
   return (['front', 'back', 'left', 'right'] as SideKey[]).filter((side) => !isWallSide(mount, side))
 }
+
+/** Oszlop nélküli sarkok (a falas oldalak sarkai): ott a forgólamellás váz oldalgerendája a sarok külső síkjáig fut. */
+export function openCorners(mount: MountType): { backLeft: boolean; backRight: boolean; frontLeft: boolean; frontRight: boolean } {
+  const walls = wallSides(mount)
+  const back = walls.includes('back')
+  const left = walls.includes('left')
+  const right = walls.includes('right')
+  return { backLeft: back || left, backRight: back || right, frontLeft: left, frontRight: right }
+}

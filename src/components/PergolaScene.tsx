@@ -13,7 +13,7 @@ import { PHOTO_GROUP } from '@/lib/photoScene'
 import { cameraMotion } from '@/lib/cameraMotion'
 import { effectiveQualityLevel, governorEnabled, useDemoDevice } from '@/lib/demoDevice'
 import { QualityContext, applyDprCap, budgetDpr, nextDprCap, detectQualityTier, lowerTier, readTierCap, tierRank, useQuality, qualitySettings, resolveQualityTier, writeTierCap, type QualitySettings, type QualityTier } from '@/lib/quality'
-import { hasBackWall, isWallSide, postPositions as getPostPositions, sideWalls, wallSides } from '@/lib/mount'
+import { hasBackWall, isWallSide, openCorners, postPositions as getPostPositions, sideWalls, wallSides } from '@/lib/mount'
 import { getFrameColorHex } from '@/lib/config'
 import { isOrbitRecording, setActiveScene, setHiResRenderer, setOrbitDriver, setOrbitRecording } from '@/lib/sceneRegistry'
 import { orbitAzimuth } from '@/lib/turntableVideo'
@@ -36,7 +36,7 @@ import { glassPanels } from '@/lib/glass'
 import { WOOD_HEXES } from '@/lib/colors'
 import { METALLIC_HEXES, powderCoatSpec } from '@/lib/powderCoat'
 import { getHouseAsset, HOUSE_RAW } from '@/lib/houseAsset'
-import { gardenLayout, getHouseLayout, wingFootprints, WING_DEPTH } from '@/lib/sceneLayout'
+import { facadeOffset, gardenLayout, getHouseLayout, wingFootprints, WING_DEPTH } from '@/lib/sceneLayout'
 import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
 import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
@@ -53,10 +53,11 @@ import { getSpecCode } from '@/lib/specification'
 import { effectiveGlazing, isGlazedRoof, isMovableRoof, roofRise } from '@/lib/roofs'
 import { deckBounds } from '@/lib/deck'
 import { SolarPanels } from '@/components/SceneExtras'
-import { Os140Beams, Os140Posts, Os140Roof } from '@/components/Os140Pergola'
+import { Os140Beams, Os140Posts, Os140Roof, Os140WallJoint } from '@/components/Os140Pergola'
 import { Os140Slide, Os140Zip } from '@/components/Os140Sides'
 import WalkController from '@/components/WalkController'
 import { OS140_SOURCE, os140Details, type Os140DetailId } from '@/lib/os140Details'
+import { OS140 } from '@/lib/os140'
 import Car from '@/components/models/Car'
 import { currentViewportKind, overviewFov, sheetDistanceScale, sofaFov, usesSheetLayout } from '@/lib/viewport'
 import { localized, tr } from '../i18n/locale'
@@ -483,19 +484,20 @@ function WallAttachment({ config, color }: { config: PergolaConfig; color: strin
   const { width, depth, height } = config
   const backZ = -depth / 2
   return <group aria-label={tr('Fali szerelőlemez és vízvető', 'Wandmontageplatte und Wasserabweiser')}>
-    <Beam args={[width + 0.06, 0.3, 0.035]} position={[0, height + 0.04, backZ - 0.105]} color={color} radius={0.006} />
-    <mesh position={[0, height + 0.225, backZ - 0.015]} rotation={[-0.12, 0, 0]} castShadow>
-      <boxGeometry args={[width + 0.08, 0.026, 0.32]} />
+    {/* A szerelőlemez hátlapja a homlokzaton (facadeOffset: 18,5 cm a gerendatengelytől), a konzolok innen nyúlnak a gerenda alá. */}
+    <Beam args={[width + 0.06, 0.3, 0.035]} position={[0, height + 0.04, backZ - 0.1675]} color={color} radius={0.006} />
+    <mesh position={[0, height + 0.225, backZ - 0.02]} rotation={[-0.12, 0, 0]} castShadow>
+      <boxGeometry args={[width + 0.08, 0.026, 0.33]} />
       <PowderCoat color={color} roughness={0.4} />
     </mesh>
     <mesh position={[0, height + 0.205, backZ + 0.135]}>
       <boxGeometry args={[width + 0.08, 0.075, 0.025]} />
       <PowderCoat color={color} />
     </mesh>
-    {[-1, 1].map((side) => <group key={side} position={[side * (width / 2 - 0.18), height - 0.02, backZ - 0.065]}>
+    {[-1, 1].map((side) => <group key={side} position={[side * (width / 2 - 0.18), height - 0.02, backZ - 0.0975]}>
       <Beam args={[0.16, 0.34, 0.035]} position={[0, 0, -0.035]} color={color} radius={0.005} />
       <Beam args={[0.16, 0.035, 0.2]} position={[0, -0.15, 0.045]} color={color} radius={0.005} />
-      <mesh position={[0, 0.07, -0.057]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.018, 0.018, 0.014, 12]} /><meshStandardMaterial color="#737b7d" metalness={0.88} roughness={0.24} /></mesh>
+      <mesh position={[0, 0.07, -0.015]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.018, 0.018, 0.014, 12]} /><meshStandardMaterial color="#737b7d" metalness={0.88} roughness={0.24} /></mesh>
     </group>)}
   </group>
 }
@@ -1432,7 +1434,7 @@ function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'nig
     }
   })
   const x = scene.exploded
-  return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{realLouvres ? <Os140Posts posts={postPositions} width={width} depth={depth} height={height} material={getCoat(color, 0.4, materialDetail)} /> : postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={z < 0 ? height + rise : height} color={color} />)}{x && postPositions[0] && <Html position={[postPositions[0][0], height / 2, postPositions[0][1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">Oszlopok</span></Html>}<ExplodePart ex={ex} dy={0.55} label={tr('Gerendák', 'Träger')} labelAt={[width / 2 - 0.2, height + 0.3, depth / 2]} show={x}>{realLouvres ? <Os140Beams width={width} depth={depth} height={height} bays={bayBoundaries(config)} material={getCoat(color, 0.4, materialDetail)} /> : <><StructuralBeam args={[width + 0.1, beamH, beamW]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, beamH, beamW]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[beamW, beamH, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[beamW, beamH, depth]} position={[width / 2, height, 0]} color={color} />{bayBoundaries(config).map((x) => <StructuralBeam key={x} args={[beamW, beamH, depth]} position={[x, height, 0]} color={color} />)}</>}</ExplodePart>
+  return <group ref={model} name="pergola-model" scale={[1, REDUCED ? 1 : 0.96, 1]}>{realLouvres ? <Os140Posts posts={postPositions} width={width} depth={depth} height={height} material={getCoat(color, 0.4, materialDetail)} /> : postPositions.map(([x, z], index) => <DetailedPost key={index} position={[x, z]} height={z < 0 ? height + rise : height} color={color} />)}{x && postPositions[0] && <Html position={[postPositions[0][0], height / 2, postPositions[0][1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}><span className="explode-label">Oszlopok</span></Html>}<ExplodePart ex={ex} dy={0.55} label={tr('Gerendák', 'Träger')} labelAt={[width / 2 - 0.2, height + 0.3, depth / 2]} show={x}>{realLouvres ? <Os140Beams openCorners={openCorners(mount)} width={width} depth={depth} height={height} bays={bayBoundaries(config)} material={getCoat(color, 0.4, materialDetail)} /> : <><StructuralBeam args={[width + 0.1, beamH, beamW]} position={[0, height, depth / 2]} color={color} /><StructuralBeam args={[width + 0.1, beamH, beamW]} position={[0, height, -depth / 2]} color={color} /><StructuralBeam args={[beamW, beamH, depth]} position={[-width / 2, height, 0]} color={color} /><StructuralBeam args={[beamW, beamH, depth]} position={[width / 2, height, 0]} color={color} />{bayBoundaries(config).map((x) => <StructuralBeam key={x} args={[beamW, beamH, depth]} position={[x, height, 0]} color={color} />)}</>}</ExplodePart>
     <ExplodePart ex={ex} dy={1.0} label={tr('Vízelvezetés', 'Entwässerung')} labelAt={[-width / 2 + 0.4, height + 0.3, depth / 2]} show={x && !realLouvres}>
     {!realLouvres && tilt(<>
     <GutterChannel length={width - 0.18} position={[0, height + 0.04, depth / 2 - 0.105]} color={color} />
@@ -1441,13 +1443,17 @@ function PergolaModel({ config, scene, rainShow = 0, night = scene.time === 'nig
     <GutterChannel length={depth - 0.2} position={[width / 2 - 0.105, height + 0.04, 0]} rotation={Math.PI / 2} color={color} />
     </>)}
     </ExplodePart>
-    {tilt(<>{hasBackWall(mount) && <WallAttachment config={config} color={color} />}
+    {/* Forgólamellás (OS140) vázon a gerenda közvetlenül a falra szerelt (Os140WallJoint), a többinél a fali szerelőprofil. */}
+    {realLouvres ? <>{hasBackWall(mount) && <Os140WallJoint side="back" width={width} depth={depth} height={height} material={getCoat(color, 0.4, materialDetail)} />}
+    {sideWallList.map((side) => <Os140WallJoint key={side} side={side} width={width} depth={depth} height={height} material={getCoat(color, 0.4, materialDetail)} />)}</>
+    : tilt(<>{hasBackWall(mount) && <WallAttachment config={config} color={color} />}
     {sideWallList.map((side) => <SideWallAttachment key={side} config={config} side={side} color={color} />)}</>)}
     {!drainPost && <group name="wall-downpipe" position={[width / 2 + 0.05, 0, depth / 2 - 0.06]}><mesh position={[0, height / 2 + 0.05, 0]} castShadow><cylinderGeometry args={[0.04, 0.04, height + 0.1, 18]} /><PowderCoat color={color} /></mesh><mesh position={[-0.02, 0.06, 0.04]} rotation={[0.9, 0, 0]}><cylinderGeometry args={[0.04, 0.04, 0.14, 18]} /><PowderCoat color={color} /></mesh></group>}
     {!realLouvres && <group position={[0, height + 0.02, depth / 2 + 0.105]}><mesh><boxGeometry args={[width - 0.05, 0.12, 0.045]} /><PowderCoat color={color} /></mesh><mesh position={[0, -0.065, 0.025]}><boxGeometry args={[width - 0.08, 0.014, 0.075]} /><meshStandardMaterial color="#1c2426" metalness={0.5} roughness={0.4} /></mesh></group>}
     {drainPost && <mesh position={[drainPost[0], 0.14, drainPost[1] + (realLouvres ? 0.065 : 0.095)]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.08, 0.025, 8, 20, Math.PI / 2]} /><PowderCoat color={color} /></mesh>}
     {!realLouvres && <RoundedBox args={[0.28, 0.19, 0.34]} position={[width / 2 - 0.02, height + 0.12, depth / 2 - 0.25]} radius={0.035} smoothness={4} castShadow><PowderCoat color={color} /></RoundedBox>}
-    <group position={[-width / 2 + 0.2, height + 0.32 + rise, -depth / 2 + 0.2]}><mesh><cylinderGeometry args={[0.045, 0.055, 0.12, 16]} /><meshStandardMaterial color="#31383a" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, 0.075, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.034, 16]} /><meshPhysicalMaterial color="#8aa0a4" roughness={0.1} clearcoat={1} /></mesh></group>
+    {/* Eső-/szélérzékelő: forgólamellás vázon a fali gerenda tetején (nem lebeg a gerenda fölött), a többinél a tető fölött. */}
+    <group position={realLouvres ? [-width / 2 + 0.3, height + OS140.beamH / 2 + 0.06, -depth / 2] : [-width / 2 + 0.2, height + 0.32 + rise, -depth / 2 + 0.2]}><mesh><cylinderGeometry args={[0.045, 0.055, 0.12, 16]} /><meshStandardMaterial color="#31383a" metalness={0.5} roughness={0.35} /></mesh><mesh position={[0, 0.075, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.034, 16]} /><meshPhysicalMaterial color="#8aa0a4" roughness={0.1} clearcoat={1} /></mesh></group>
     <ExplodePart ex={ex} dy={1.6} label={roof === 'fabric' ? tr('Textiltető', 'Textildach') : isGlazedRoof(roof) ? tr('Üvegtető', 'Glasdach') : roof === 'fixed' ? tr('Fix tető', 'Festes Dach') : tr('Tetőlamellák', 'Dachlamellen')} labelAt={[0, height + 0.5 + rise / 2, -depth / 4]} show={x}>
     <RoofSwap roofKey={roof} settled={settled} height={height}>{tilt(<>
     {roof === 'retractable' && <LouverBlades key={louverCount} geometry={geometry} width={width} depth={depth} height={height} count={louverCount} retractable angle={effectiveAngle} color={roofColor} />}
@@ -2308,6 +2314,8 @@ function Cyclorama({ night, tone = 'neutral' }: { night: boolean; tone?: 'neutra
 function StudioEnvironment({ config, night, neutral = false }: { config: PergolaConfig; night: boolean; /** Stúdió stílus: semlegesebb, kissé sötétebb szürke, hogy nappali fényben se égjen ki krémszínűre. */ neutral?: boolean }) {
   const { width, depth } = config
   const walls = wallSides(config.mount)
+  // A stúdió fala ugyanabban a síkban áll, mint a kerti ház homlokzata (korábban a gerendába vágott).
+  const face = facadeOffset(config)
   const wallHeight = config.height + 1.1
   const wallColor = night ? '#6d6c66' : neutral ? '#c9c9c6' : '#d9d6cf'
   const floorColor = night ? '#555851' : neutral ? '#8e8e8a' : '#dad7cf'
@@ -2316,8 +2324,8 @@ function StudioEnvironment({ config, night, neutral = false }: { config: Pergola
       <planeGeometry args={[600, 600]} />
       <meshStandardMaterial color={floorColor} roughness={0.92} />
     </mesh>
-    {walls.includes('back') && <mesh position={[0, wallHeight / 2 - 0.07, -depth / 2 - 0.14]} castShadow receiveShadow><boxGeometry args={[width + 2.4, wallHeight, 0.28]} /><meshStandardMaterial color={wallColor} roughness={0.95} /></mesh>}
-    {(['left', 'right'] as const).filter((side) => walls.includes(side)).map((side) => { const sx = side === 'left' ? -1 : 1; return <mesh key={side} position={[sx * (width / 2 + 0.14), wallHeight / 2 - 0.07, -0.07]} castShadow receiveShadow><boxGeometry args={[0.28, wallHeight, depth + 0.28]} /><meshStandardMaterial color={wallColor} roughness={0.95} /></mesh> })}
+    {walls.includes('back') && <mesh position={[0, wallHeight / 2 - 0.07, -depth / 2 - face.back - 0.14]} castShadow receiveShadow><boxGeometry args={[width + 2.4, wallHeight, 0.28]} /><meshStandardMaterial color={wallColor} roughness={0.95} /></mesh>}
+    {(['left', 'right'] as const).filter((side) => walls.includes(side)).map((side) => { const sx = side === 'left' ? -1 : 1; return <mesh key={side} position={[sx * (width / 2 + face.side + 0.14), wallHeight / 2 - 0.07, (-face.back - 0.21) / 2]} castShadow receiveShadow><boxGeometry args={[0.28, wallHeight, depth + face.back + 0.35]} /><meshStandardMaterial color={wallColor} roughness={0.95} /></mesh> })}
   </group>
 }
 

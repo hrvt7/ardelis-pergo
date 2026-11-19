@@ -1,5 +1,16 @@
 # Változások
 
+## 5.48 – Forgólamellás pergola: pontos fali csatlakozás
+
+- **Hiba (Ádám jelezte, telefonos képpel):** falhoz rögzített forgólamellás (MB-OpenSky 140) pergolánál a falcsatlakozás „elcsúszottnak” látszott. Okok: (1) a hátsó gerenda külső síkja 7 cm-rel a stúdió falába lógott, a kerti ház homlokzata pedig 11,5 cm-re mögötte állt; (2) az általános vázra méretezett fali szerelőlemez és vízvető ~10 cm-rel a lamellás gerenda teteje fölött lebegett, a lemez 6 cm-re a homlokzattól; (3) a fal felőli sarkokban (ahol nincs oszlop) 14 × 14 cm-es lyuk maradt a gerendák között; (4) az esőérzékelő a gerenda fölött lebegett.
+- **Javítás:**
+  - A homlokzat síkja egy helyről számol (`facadeOffset`): forgólamellás vázon a gerenda külső síkja mögött csak 15 mm szerelési hézag (feltételezés), a többi tetőnél a 18,5 cm-es fali profil marad. Ugyanebből rajzol a kerti ház, a házszárnyak, a stúdió fala és a bejárás ütközése; a stúdió fala már nem vág bele a gerendába.
+  - Új OS140 fali csatlakozó (`Os140WallJoint`): sötét tömítőszalag a hézagban, felül a falhoz hajló fali takaróprofil a gerenda tetejére, alul konzolok csavarfejekkel (≤ 1,2 m osztás, feltételezés). Hátsó falra és oldalfalra (sarok, fülke) is.
+  - Oszlop nélküli saroknál az oldalgerenda a keresztgerenda külső síkjáig fut, nincs lyuk.
+  - Az esőérzékelő a fali gerenda tetején ül.
+  - Az általános váznál a fali szerelőlemez hátlapja a homlokzatra került (eddig 6 cm-re lebegett), a konzolok onnan nyúlnak a gerenda alá.
+- Tesztek: `os140WallJoint.test.ts` (homlokzat-sík, oszlop nélküli sarkok minden rögzítésnél, bekötés).
+
 ## 5.47 – Telefonos lépésjelző: a lépés neve pontosan a fény alatt
 
 - **Hiba:** a lépés neve az első és az utolsó lépésnél a szegmenshez képest el volt tolva (balra, illetve jobbra igazítva), és a lenyitó nyíl is eltolta a szöveg közepét, így nem esett egybe a lime fénnyel. Most a név mindig a világító szegmens és a fénykúp közepe alatt áll, a nyíl mellette lóg. Böngészős méréssel mind a 7 lépésen: a szöveg közepe legfeljebb 2 px-re van a szegmens közepétől.

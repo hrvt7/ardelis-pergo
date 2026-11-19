@@ -28,6 +28,9 @@ export const OS140 = {
   maxHeight: 3.0,
 } as const
 
+/** Falra szerelt gerenda: a gerenda külső síkja és a fal közti szerelési hézag (konzol + tömítőszalag), méter. Feltételezés. */
+export const OS140_WALL_GAP = 0.015
+
 export interface Os140Span {
   /** a fesztáv középvonala (x) és a két gerenda belső síkja közti tiszta szélesség */
   x: number
