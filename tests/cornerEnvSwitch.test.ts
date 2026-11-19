@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { CORNER_TRACK, SLIDE_MS } from '@/lib/cornerTrack'
+import { CORNER_TRACK, CORNER_TRACK_COMPACT, SLIDE_MS } from '@/lib/cornerTrack'
 
 const read = (f: string) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8')
 const css = read('src/components/rebuild/rebuild.css')
@@ -23,8 +23,10 @@ describe('környezet-kapcsoló a kártya sarkában', () => {
     expect(SLIDE_MS).toBe(520)
     expect(css).toContain('transition: offset-distance .52s var(--rb-ease)')
   })
-  it('asztalon a lépéskártyán ül, telefonon nem (ott az eszköztár Környezet panelje marad)', () => {
-    expect(read('src/components/rebuild/StepCard.tsx')).toContain('{!compact && corner}')
-    expect(read('src/pages/PergoStudio.tsx')).toContain('corner={<CornerEnvSwitch ground={scene.ground} onChange={(ground) => updateScene({ ground })} />}')
+  it('asztalon és telefonon is a lépéskártya sarkában ül; telefonon a 26 px-es laphoz igazított sínen', () => {
+    expect(read('src/components/rebuild/StepCard.tsx')).toContain('{corner}')
+    expect(read('src/pages/PergoStudio.tsx')).toContain('corner={<CornerEnvSwitch ground={scene.ground} compact={isNarrow} onChange={(ground) => updateScene({ ground })} />}')
+    expect(CORNER_TRACK_COMPACT).toBe('M18 12 H54 A14 14 0 0 1 68 26 V40')
+    expect(css).toContain(`.rb-corner-switch.is-compact .rb-corner-knob { offset-path: path('${CORNER_TRACK_COMPACT}'); }`)
   })
 })

@@ -2,14 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { Box, House } from 'lucide-react'
 import type { GroundType } from '@/types/pergola'
 import { tr } from '@/i18n/locale'
-import { CORNER_TRACK, SLIDE_MS } from '@/lib/cornerTrack'
+import { CORNER_TRACK, CORNER_TRACK_COMPACT, SLIDE_MS } from '@/lib/cornerTrack'
 
 /**
  * Környezet-kapcsoló a lépéskártya jobb felső sarkában: a gomb belül, a kártya lekerekítésével párhuzamos
  * sínen csúszik. Felül (vízszintesen) = sima háttér, a sarkon átfordulva lent (függőlegesen) = családi ház.
  * A sín a gomb mögött lime színnel telik ki. Csak látvány, az árat nem módosítja.
  */
-export default function CornerEnvSwitch({ ground, onChange }: { ground: GroundType; onChange: (ground: GroundType) => void }) {
+export default function CornerEnvSwitch({ ground, onChange, compact = false }: { ground: GroundType; onChange: (ground: GroundType) => void; compact?: boolean }) {
+  const track = compact ? CORNER_TRACK_COMPACT : CORNER_TRACK
   const actual = ground !== 'studio'
   // A gomb előbb végigcsúszik a sínen, és a környezet akkor vált, amikor a gomb megérkezik: a ház betöltése
   // (nehéz 3D-render) így nem akasztja meg a csúszás elejét, és a kép a csúszkával együtt vált.
@@ -21,7 +22,7 @@ export default function CornerEnvSwitch({ ground, onChange }: { ground: GroundTy
   const [last, setLast] = useState<GroundType>('terrace')
   const Icon = on ? House : Box
   return (
-    <button type="button" role="switch" aria-checked={on} className={`rb-corner-switch${on ? ' is-on' : ''}`}
+    <button type="button" role="switch" aria-checked={on} className={`rb-corner-switch${on ? ' is-on' : ''}${compact ? ' is-compact' : ''}`}
       aria-label={tr('Környezet: családi ház a háttérben', 'Umgebung: Haus im Hintergrund')}
       title={on ? tr('Környezet bekapcsolva (családi ház)', 'Umgebung an (Haus)') : tr('Sima háttér', 'Neutraler Hintergrund')}
       onClick={() => {
@@ -33,8 +34,8 @@ export default function CornerEnvSwitch({ ground, onChange }: { ground: GroundTy
         timer.current = window.setTimeout(() => { onChange(next ? last : 'studio'); setPending(null) }, reduce ? 0 : SLIDE_MS)
       }}>
       <svg viewBox="0 0 80 80" aria-hidden="true">
-        <path className="rb-corner-groove" d={CORNER_TRACK} />
-        <path className="rb-corner-fill" d={CORNER_TRACK} pathLength={100} />
+        <path className="rb-corner-groove" d={track} />
+        <path className="rb-corner-fill" d={track} pathLength={100} />
       </svg>
       <span className="rb-corner-knob" aria-hidden="true"><Icon size={13} strokeWidth={2} /></span>
     </button>

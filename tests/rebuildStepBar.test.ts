@@ -22,8 +22,10 @@ describe('asztali lépéssáv', () => {
 describe('telefonos lépésjelző (vékony sáv)', () => {
   const strip = read('src/components/rebuild/StepStrip.tsx')
   const css = read('src/components/rebuild/rebuild.css')
-  it('hét szegmens, „2/7 · lépés” felirat, koppintásra lenyíló lépéslista', () => {
-    expect(strip).toContain('<b>{index + 1}/{count}</b> · {REBUILD_STEPS[index].label}')
+  it('hét szegmens, a lépés neve a világító szegmens alatt (sorszám nélkül), koppintásra lenyíló lépéslista', () => {
+    expect(strip).not.toContain('/{count}</b>')
+    expect(strip).toContain("transform: `translateX(-${count > 1 ? (index / (count - 1)) * 100 : 50}%)`")
+    expect(strip).toContain('left: `${((index + 0.5) / count) * 100}%`')
     expect(strip).toContain('aria-expanded={open} aria-controls="rb-strip-menu"')
     expect(strip).toContain("onClick={() => { setOpen(false); onStep(item.id) }}")
     expect(css).toMatch(/\.rb-strip-bars i \{ height: 4px;/)

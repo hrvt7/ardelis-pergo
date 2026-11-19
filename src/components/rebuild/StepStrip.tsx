@@ -31,7 +31,8 @@ export default function StepStrip({ step, onStep }: { step: ConfigStep; onStep: 
           {REBUILD_STEPS.map((item, i) => <i key={item.id} className={i < index ? 'is-done' : i === index ? 'is-current' : undefined} />)}
           <span className="rb-strip-beam" style={{ transform: `translate3d(calc(${index} * (100% + 4px)), 0, 0)` }} />
         </span>
-        <span className="rb-strip-label"><b>{index + 1}/{count}</b> · {REBUILD_STEPS[index].label}<ChevronDown size={16} className="rb-strip-chevron" /></span>
+        {/* A lépés neve a világító szegmens alatt: az elsőnél balra, az utolsónál jobbra, közte középre igazítva. */}
+        <span className="rb-strip-label-row"><span className="rb-strip-label" style={{ left: `${((index + 0.5) / count) * 100}%`, transform: `translateX(-${count > 1 ? (index / (count - 1)) * 100 : 50}%)` }}>{REBUILD_STEPS[index].label}<ChevronDown size={16} className="rb-strip-chevron" /></span></span>
       </button>
       {open && <ol id="rb-strip-menu" className="rb-strip-menu">
         {REBUILD_STEPS.map((item, i) => <li key={item.id}>

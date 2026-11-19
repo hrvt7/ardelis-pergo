@@ -24,7 +24,7 @@ export default function StepCard({ step, compact, open, onOpenChange, onStep, ba
   return (
     <LiquidGlass as="aside" className={`rb-stepcard${bar ? ' has-dock' : ''}${compact ? ' is-sheet' : ''}${compact && open ? ' is-open' : ''}`} radius={compact ? 26 : 28} bezel={compact ? 14 : 18} blur={compact ? 6 : 14} aria-label={current.label}>
       {bar}
-      {!compact && corner}
+      {corner}
       <header className="rb-stepcard-head"
         onPointerDown={compact ? (event) => { drag.current = { y: event.clientY } } : undefined}
         onPointerUp={compact ? (event) => { const start = drag.current; drag.current = null; if (!start) return; const dy = event.clientY - start.y; if (dy < -24 && !open) onOpenChange(true); else if (dy > 24 && open) onOpenChange(false) } : undefined}>

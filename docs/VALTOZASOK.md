@@ -1,5 +1,11 @@
 # Változások
 
+## 5.45 – Telefon: lépésnév a világító szegmens alatt, környezet-kapcsoló a lap sarkában
+
+- **Lépésjelző:** a „4/7” sorszám kikerült; a lépés neve a világító szegmens alá igazodik (az elsőnél balra, az utolsónál jobbra, közte középre), és lépésváltáskor a fénnyel együtt csúszik.
+- **Környezet-kapcsoló telefonon is:** a lap jobb felső sarkában, a 26 px-es lekerekítéssel koncentrikus, rövidebb sínen (a lap összecsukó gombja alatta marad). A haladássáv a sín előtt véget ér.
+- Tesztek: `cornerEnvSwitch.test.ts`, `rebuildStepBar.test.ts` frissítve.
+
 ## 5.44 – 3D teljesítmény: az audit első javításai (Ultra akadozás)
 
 A `claude/19-teljesitmeny-audit.md` hibajegyzéke alapján; a meglévő szintek finomhangolása, új grafikai rendszer nélkül.

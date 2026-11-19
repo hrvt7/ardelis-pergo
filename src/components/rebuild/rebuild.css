@@ -787,3 +787,15 @@
 .rb-strip-menu button.is-current svg { filter: drop-shadow(0 0 4px var(--rb-accent)) drop-shadow(0 0 9px color-mix(in oklab, var(--rb-accent) 70%, transparent)); }
 .rb-strip-menu button.is-current span { color: var(--rb-ink); }
 @media (prefers-reduced-motion: reduce) { .rb-strip-beam { transition: none; } }
+
+/* ── Telefon: a lépés neve a világító szegmens alatt; környezet-kapcsoló a lap jobb felső sarkában ─────────────── */
+.rb-strip-label-row { position: relative; display: block; height: 22px; }
+.rb-strip-label { position: absolute; top: 0; white-space: nowrap; font-size: 13.5px; font-weight: 650; color: var(--rb-ink); transition: left var(--rb-move) var(--rb-ease), transform var(--rb-move) var(--rb-ease); }
+@media (prefers-reduced-motion: reduce) { .rb-strip-label { transition: none; } }
+/* A sáv a kapcsoló sínje előtt véget ér (a sín felső szára a lap utolsó 62 px-én fut). */
+.rb-stepcard.is-sheet .rb-strip-toggle { padding-right: 66px; }
+.rb-corner-switch.is-compact .rb-corner-knob { offset-path: path('M18 12 H54 A14 14 0 0 1 68 26 V40'); }
+.rb-corner-switch.is-compact { z-index: 7; }
+/* A lap összecsukó gombja a kapcsoló függőleges szára alatt marad. */
+.rb-stepcard.is-sheet .rb-stepcard-head { padding-top: 8px; }
+.rb-stepcard.is-sheet .rb-sheet-toggle { margin-top: -18px; }
