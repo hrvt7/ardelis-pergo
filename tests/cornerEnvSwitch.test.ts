@@ -30,3 +30,13 @@ describe('környezet-kapcsoló a kártya sarkában', () => {
     expect(css).toContain(`.rb-corner-switch.is-compact .rb-corner-knob { offset-path: path('${CORNER_TRACK_COMPACT}'); }`)
   })
 })
+
+describe('telefonos sarokkapcsoló saját sarokban', () => {
+  const css = readFileSync(new URL('../src/components/rebuild/rebuild.css', import.meta.url), 'utf8')
+  it('a haladássáv, a cím és az összecsukó gomb a kapcsoló sarkán kívül marad', () => {
+    expect(css).toContain('.rb-stepcard.is-sheet .rb-strip-toggle { padding-right: 76px; }')
+    expect(css).toContain('.rb-stepcard.is-sheet .rb-sheet-toggle { right: 30px; }')
+    expect(css).toContain('.rb-stepcard.is-sheet .rb-stepcard-head { padding-right: 82px; }')
+    expect(css).toContain('.rb-corner-switch.is-compact .rb-corner-fill { filter: none; }')
+  })
+})

@@ -793,9 +793,18 @@
 .rb-strip-label { position: absolute; top: 0; white-space: nowrap; font-size: 13.5px; font-weight: 650; color: var(--rb-ink); transition: left var(--rb-move) var(--rb-ease), transform var(--rb-move) var(--rb-ease); }
 @media (prefers-reduced-motion: reduce) { .rb-strip-label { transition: none; } }
 /* A sáv a kapcsoló sínje előtt véget ér (a sín felső szára a lap utolsó 62 px-én fut). */
-.rb-stepcard.is-sheet .rb-strip-toggle { padding-right: 66px; }
+.rb-stepcard.is-sheet .rb-strip-toggle { padding-right: 76px; }
 .rb-corner-switch.is-compact .rb-corner-knob { offset-path: path('M18 12 H54 A14 14 0 0 1 68 26 V40'); }
 .rb-corner-switch.is-compact { z-index: 7; }
 /* A lap összecsukó gombja a kapcsoló függőleges szára alatt marad. */
-.rb-stepcard.is-sheet .rb-stepcard-head { padding-top: 8px; }
-.rb-stepcard.is-sheet .rb-sheet-toggle { margin-top: -18px; }
+.rb-stepcard.is-sheet .rb-stepcard-head { padding-top: 18px; }
+
+/* Telefonos sarokkapcsoló: saját, fenntartott sarok – keskenyebb sín és gomb, a fény nem szóródik a haladássávra,
+   a sáv 84 px-re a lap szélétől véget ér, a lap összecsukó gombja a függőleges szár alatt kezdődik. */
+.rb-corner-switch.is-compact .rb-corner-groove, .rb-corner-switch.is-compact .rb-corner-fill { stroke-width: 16; }
+.rb-corner-switch.is-compact .rb-corner-fill { filter: none; }
+.rb-corner-switch.is-compact .rb-corner-knob { width: 26px; height: 18px; }
+/* A lap összecsukó gombja kicsit beljebb, hogy a kapcsoló függőleges szárával (bekapcsolva) se érjen össze. */
+.rb-stepcard.is-sheet .rb-sheet-toggle { right: 30px; }
+.rb-stepcard.is-sheet .rb-stepcard-head { padding-right: 82px; }
+.rb-corner-switch.is-compact .rb-corner-groove { stroke: rgba(21, 23, 26, .08); }

@@ -1,5 +1,10 @@
 # Változások
 
+## 5.46 – Telefonos környezet-kapcsoló: saját sarok, nem lóg rá semmire
+
+- **Hiba:** telefonon a kapcsoló gombja kikapcsolva a haladássáv végére, bekapcsolva a lap összecsukó gombjára lógott, és a lime fény a sávra szóródott. Most a sarok a kapcsolóé: a haladássáv 84 px-re a lap szélétől véget ér, a cím és az összecsukó gomb beljebb került, a sín és a gomb keskenyebb, a fény nem szóródik. Böngészős méréssel ellenőrizve 390 és 360 px szélességen, ki- és bekapcsolt állapotban: semmivel nem fed át.
+- Tesztek: `cornerEnvSwitch.test.ts` (fenntartott sarok).
+
 ## 5.45 – Telefon: lépésnév a világító szegmens alatt, környezet-kapcsoló a lap sarkában
 
 - **Lépésjelző:** a „4/7” sorszám kikerült; a lépés neve a világító szegmens alá igazodik (az elsőnél balra, az utolsónál jobbra, közte középre), és lépésváltáskor a fénnyel együtt csúszik.
