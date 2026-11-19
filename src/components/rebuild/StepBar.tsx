@@ -7,7 +7,7 @@ import LiquidGlass from './LiquidGlass'
 /**
  * Lépéssáv asztalon és tableten (Ádám kérése): a bal oldali sín testvére, alul lebegő folyékony üveg sáv (a jobb oldali kártyával egy anyagból).
  * Egy sorban a hét lépés ikonnal és rövid névvel; az aktuális lépést lime pirula jelöli, amely lépésváltáskor
- * átcsúszik (egy GPU-áttűnés). A kész lépéseket kis lime pont jelzi. Telefonon helyette a lap tetején lévő StepDock marad.
+ * átcsúszik (egy GPU-áttűnés). A kész lépéseket kis lime pont jelzi. Telefonon helyette a lap tetején a vékony StepStrip lépésjelző van.
  */
 export default function StepBar({ step, onStep }: { step: ConfigStep; onStep: (step: ConfigStep) => void }) {
   const index = rebuildStepIndex(step)

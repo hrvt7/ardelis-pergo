@@ -86,7 +86,7 @@ describe('kritikus kör, 2. forduló', () => {
   })
 
   it('telefonos lépéssáv a lépés nevével, 44 px-es eszköztár-fül, nagy űrlapmezők', () => {
-    expect(read('src/components/rebuild/StepDock.tsx')).toContain('className="rb-dock-label"')
+    expect(read('src/components/rebuild/StepStrip.tsx')).toContain('className="rb-strip-label"')
     expect(css).toMatch(/\.rb-rail-tab \{ width: 44px;/)
     expect(css).toMatch(/\.rb-summary-legacy \.lead-grid input, [^{]+\{ min-height: 44px;/)
     expect(css).toMatch(/\.rb-summary-legacy \.consent-row input \{ width: 22px; height: 22px;/)

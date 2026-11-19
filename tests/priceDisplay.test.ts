@@ -59,7 +59,7 @@ describe('vevői e-mailek a gyártói ármóddal', async () => {
   const { customerFollowUpHtml } = await import('../server/followup')
   const record = (priceDisplay?: 'from' | 'hidden') => ({ tenant: { ...demoTenant, priceDisplay }, ref: 'LX-1', headline: 'Aero · 5,00 × 4,00 m', configUrl: 'https://lamelix.vercel.app/k/demo#c=1', price: { totalGross: 5_648_000 }, input: { customer: { name: 'Kovács Péter' } } })
   const lead = { ref: 'LX-1', tenant_id: 'demo', customer_name: 'Kovács Péter', email: 'kp@example.com', phone: '+36301234567', city: 'Sárvár', notes: null, address: null, estimate_gross: 5_648_000, config_url: 'https://lamelix.vercel.app/k/demo#c=1', status: 'new', created_at: '2026-11-10T10:00:00Z' }
-  const digits = (html: string) => html.replace(/\s|&nbsp;| | /g, '')
+  const digits = (html: string) => html.replace(/\s|&nbsp;|\u00a0|\u202f/g, '')
   it('visszaigazolás: becsült, „-tól” és ár nélküli változat', () => {
     expect(digits(customerEmailHtml(record() as never))).toContain('5648000')
     expect(digits(customerEmailHtml(record('from') as never))).toContain('5600000')

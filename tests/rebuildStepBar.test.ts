@@ -13,8 +13,23 @@ describe('asztali lépéssáv', () => {
     expect(bar).toMatch(/aria-current=\{i === index \? 'step'/)
     expect(bar).toContain('translate3d(${index * 100}%, 0, 0)')
   })
-  it('asztalon/tableten alul a sáv, telefonon a lap tetején marad a dokk', () => {
+  it('asztalon/tableten alul a sáv, telefonon a lap tetején a vékony lépésjelző', () => {
     expect(studio).toContain('{frame && !isNarrow && !immersive && <StepBar step={step} onStep={goStep} />}')
-    expect(studio).toContain('bar={isNarrow ? <StepDock step={step} onStep={goStep} /> : undefined}')
+    expect(studio).toContain('bar={isNarrow ? <StepStrip step={step} onStep={goStep} /> : undefined}')
+  })
+})
+
+describe('telefonos lépésjelző (vékony sáv)', () => {
+  const strip = read('src/components/rebuild/StepStrip.tsx')
+  const css = read('src/components/rebuild/rebuild.css')
+  it('hét szegmens, „2/7 · lépés” felirat, koppintásra lenyíló lépéslista', () => {
+    expect(strip).toContain('<b>{index + 1}/{count}</b> · {REBUILD_STEPS[index].label}')
+    expect(strip).toContain('aria-expanded={open} aria-controls="rb-strip-menu"')
+    expect(strip).toContain("onClick={() => { setOpen(false); onStep(item.id) }}")
+    expect(css).toMatch(/\.rb-strip-bars i \{ height: 4px;/)
+  })
+  it('a lista minden sora legalább 44 px magas, a sáv koppintási felülete is', () => {
+    expect(css).toMatch(/\.rb-strip-toggle \{[^}]*min-height: 44px;/)
+    expect(css).toMatch(/\.rb-strip-menu button \{[^}]*min-height: 44px;/)
   })
 })

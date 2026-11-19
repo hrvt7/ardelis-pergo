@@ -1,5 +1,12 @@
 # Változások
 
+## 5.41 – Telefon: vékony lépésjelző az ikonsor helyett
+
+- **Több hely a 3D-nek:** telefonon a hét ikonos lépéssáv helyett vékony, hét szegmensből álló haladássáv és alatta „2/7 · Hely és méret” felirat van a kérdés fölött. Kb. 80 px-szel több látszik a 3D modellből.
+- **Lépésváltás:** a sorra koppintva lenyílik a lépések listája (ikon, sorszám, név, pipa a már bejárt lépéseknél); bármelyikre ugorhatsz. Minden sor legalább 44 px magas; Escape vagy mellékattintás bezárja.
+- Az asztali és tabletes lépéssáv nem változott. A régi telefonos ikonsor (`StepDock`) kikerült a kódból.
+- Tesztek: `rebuildStepBar.test.ts` (lépésjelző felirata, lenyíló lista, koppintási méretek), `rebuildCriticFixes.test.ts` frissítve.
+
 ## 5.40 – Új felület: visszavonás, Bemutató panel, döntéstámogatók, gyártónkénti ármód
 
 - **Visszavonás, újra, alaphelyzet (M04):** kis üvegsáv a jelenet sarkában (asztalon bal felül, telefonon és tableten jobb felül). Ugyanaz a történet, mint a Ctrl+Z / Ctrl+Y; az alaphelyzet megerősítést kér.
