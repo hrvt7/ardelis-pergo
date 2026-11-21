@@ -1,4 +1,4 @@
-// Nyitó animáció (Lamelix logó – lamellafal, 9:16, 10 mp) a telepített webapp indításakor, mobilon és tableten, amíg a háttérben
+// Nyitó animáció (Lamelix – Időjárás, 9:16, 10 mp) a telepített webapp indításakor, mobilon és tableten, amíg a háttérben
 // betölt a 3D konfigurátor. Tiszta döntési modul: a src/intro/boot.ts használja (a build az index.html-be ágyazza),
 // a tests/introSplash.test.ts ellenőrzi.
 import { isAppPath } from './swRoutes'

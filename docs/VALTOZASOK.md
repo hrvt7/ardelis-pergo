@@ -1,5 +1,12 @@
 # Változások
 
+## 5.53 – Új indítóképernyő: „Lamelix – Időjárás” (10 mp)
+
+- **Az indító animáció lecserélve** a „Lamelix – Időjárás” videóra (9:16, 10 mp, 30 kocka/mp: nap → eső → lamellák → logó). Minden lejátszási úton ez fut (videó, hardveres dekóder tiltott automatikus lejátszásnál, animált tartalék, logós zárókép), a háttérszín az új videóhoz igazítva.
+- A 4K, 40 MB-os forrásból: videó 1,37 MB (720×1280, hang nélkül), animált tartalék 0,88 MB, dekóder-index 300 kockára.
+- Tesztek: `introSplash.test.ts` (300 kocka, 10 mp, az index a videóhoz tartozik; a videó méretkorlátja 2 MB-ra emelve), `tests/e2e/intro.cjs`: zöld; a dekóderes út Chrome-ban 10,4 mp alatt simán végigfut.
+- Nem ellenőrzött: valódi iPhone-on és iPaden.
+
 ## 5.52 – Javítás: minőségváltáskor eltűnő pergola; a ZIP és az üvegfal falnál teljesen zár
 
 - **Hiba: magas vagy ultra minőségre váltva eltűnt a pergola** (és minden árnyékot fogadó tárgy). Ok: az árnyéktérkép mérete a minőséggel változik, ezért a napfény újra létrejön, de a takarékos árnyékolás miatt az új fény árnyéktérképe nem készült el. A WebGL így minden ilyen rajzolást eldobott („Mismatch between texture format and sampler type”). Javítás: a minőségváltás frissíti az árnyékot. Általános védőháló is került be: ha bármikor van árnyékot vető fény árnyéktérkép nélkül, a következő képkockán elkészül (`lib/shadowGuard.ts`).
