@@ -13,11 +13,12 @@ function glbNodes(path: string): string[] {
 }
 
 describe('háztípusok', () => {
-  it('három típus, mindegyikhez felirat; az alap a fa–cink ház', () => {
+  it('három típus, mindegyikhez felirat; az alap a lapostetős ház', () => {
     expect(HOUSE_STYLES).toEqual(['classic', 'modern', 'gable'])
     for (const style of HOUSE_STYLES) expect(HOUSE_STYLE_INFO[style].label.length).toBeGreaterThan(3)
-    expect(DEFAULT_SCENE.houseStyle).toBe('classic')
-    expect(parseHouseLook({}).houseStyle).toBe('classic')
+    expect(DEFAULT_SCENE.houseStyle).toBe('modern')
+    expect(parseHouseLook({}).houseStyle).toBe('modern')
+    expect(parseHouseLook({ houseStyle: 'classic' }).houseStyle).toBe('classic')
     expect(parseHouseLook({ houseStyle: 'modern' }).houseStyle).toBe('modern')
   })
 

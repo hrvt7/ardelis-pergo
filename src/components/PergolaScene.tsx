@@ -36,7 +36,7 @@ import { glassPanels } from '@/lib/glass'
 import { WOOD_HEXES } from '@/lib/colors'
 import { METALLIC_HEXES, powderCoatSpec } from '@/lib/powderCoat'
 import { getHouseAsset, HOUSE_RAW } from '@/lib/houseAsset'
-import { facadeOffset, gardenLayout, getHouseLayout, wingFootprints, WING_DEPTH } from '@/lib/sceneLayout'
+import { facadeOffset, gardenLayout, terraceLayout, getHouseLayout, wingFootprints, WING_DEPTH } from '@/lib/sceneLayout'
 import { boxProjectedGeometry, getBoardMaterial, getFacadeFinish, getFrameMaterial, type FacadeFinish } from '@/components/houseMaterials'
 import { isOriginalCedar, wallColorHex } from '@/lib/house'
 import { findShadeFabric } from '@/lib/roofShade'
@@ -1522,6 +1522,7 @@ function prefetchSceneAssets(scene: SceneSettings) {
     useTexture.preload((['diff', 'nor_gl', 'rough'] as const).map((map) => assetUrl(pbrPath('oak_wood_planks', map))))
     if (!small) useTexture.preload((['diff', 'nor_gl', 'rough'] as const).map((map) => assetUrl(pbrPath('grass_ground', map))))
     DECOR_MODELS.forEach((url) => useGLTF.preload(url))
+    Object.values(GARDEN_PROP).forEach((url) => useGLTF.preload(url))
   } catch (error) {
     log.warn('Scene prefetch skipped', { error: error instanceof Error ? error.message : String(error) })
   }
@@ -2207,9 +2208,38 @@ function Garden({ config, scene, quality }: { config: PergolaConfig; scene: Scen
     <Tree position={[-sideX, -0.05, house.frontZ - 1.5]} scale={1.12} wind={scene.wind} />
     <Tree position={[sideX, -0.05, house.frontZ - 2.1]} scale={1.28} wind={scene.wind} />
     {quality.enableExtraPlants && <Tree position={[sideX + 1.4, -0.05, 4.6]} scale={0.86} wind={scene.wind} />}
+    {/* Háttér-fasor a ház mögött és a telek két oldalán: mélységet ad, a ház nem üres horizont előtt áll (magas minőségtől). */}
+    {quality.enableGrassDetail && ([[-0.36, rearZ - 3.4, 2.15], [0.08, rearZ - 5.2, 2.4], [0.42, rearZ - 3.0, 2.0], [-0.72, house.frontZ - 3.6, 1.7], [0.74, house.frontZ - 5.4, 1.85]] as const).map(([fraction, z, scale]) => <Tree key={fraction} position={[house.width * fraction, -0.05, z]} scale={scale} wind={false} />)}
     {[-0.32, 0, 0.32].map((fraction, index) => <RealisticAsset key={fraction} url={assetUrl('/assets/models/shrub_04/model.gltf')} position={[house.width * fraction, -0.04, rearZ]} height={0.95 + index * 0.08} rotation={index * 0.8} shadows={false} />)}
     {/* Oldalfal esetén a dézsák a fal végéhez, a terasz elejére kerülnek. Nyíló ajtós oldal mellől a dézsa kijjebb kerül, hogy a kinyíló szárny ne ütközzön bele. */}
     {pots.map(([x, z, , scale], index) => <PlantPot key={index} position={[x, 0.01, z]} scale={scale} />)}
+  </group>
+}
+
+const GARDEN_PROP = { lantern: assetUrl('/assets/models/garden/lantern.glb'), firepit: assetUrl('/assets/models/garden/firepit.glb'), shrub: assetUrl('/assets/models/garden/shrub.glb'), fern: assetUrl('/assets/models/garden/fern.glb'), rocks: assetUrl('/assets/models/garden/rocks.glb') } as const
+
+/**
+ * Nagylapos kőterasz a ház és a pergola körül (a fa burkolat ezen ül), kétoldalt acélszegélyes mulcságyással
+ * (cserje, páfrány, kövek), elöl lámpásokkal, a gyepen tűzrakóval. Az elrendezést a terraceLayout adja.
+ */
+function Terrace({ config, scene, quality }: { config: PergolaConfig; scene: SceneSettings; quality: QualitySettings }) {
+  const layout = terraceLayout(config, scene.houseStyle ?? 'classic')
+  const stone = usePBR('terrace_stone', [layout.width / 2.4, layout.depth / 2.4])
+  const mulch = usePBR('garden_mulch', [0.9, 4])
+  const night = scene.time === 'night'
+  return <group name="terrace">
+    <mesh position={[layout.centerX, -0.057, layout.centerZ]} receiveShadow><boxGeometry args={[layout.width, 0.09, layout.depth]} /><meshStandardMaterial map={stone.diff} normalMap={stone.normal} normalScale={[0.7, 0.7]} roughnessMap={stone.rough} color="#e4e1da" roughness={1} /></mesh>
+    {layout.beds.map((bed, index) => {
+      const width = bed.maxX - bed.minX, depth = bed.maxZ - bed.minZ, cx = (bed.minX + bed.maxX) / 2, cz = (bed.minZ + bed.maxZ) / 2
+      return <group key={index}>
+        <mesh position={[cx, -0.06, cz]} receiveShadow><boxGeometry args={[width, 0.06, depth]} /><meshStandardMaterial map={mulch.diff} normalMap={mulch.normal} roughnessMap={mulch.rough} color="#b9aa98" roughness={1} /></mesh>
+        {/* acélszegély az ágyás három szabad oldalán */}
+        {([[cx, bed.minZ - 0.015, width + 0.06, 0.03], [cx, bed.maxZ + 0.015, width + 0.06, 0.03], [Math.abs(bed.minX) > Math.abs(bed.maxX) ? bed.minX - 0.015 : bed.maxX + 0.015, cz, 0.03, depth]] as const).map(([x, z, w, d], edge) => <mesh key={edge} position={[x, -0.045, z]}><boxGeometry args={[w, 0.08, d]} /><meshStandardMaterial color="#3b3a38" metalness={0.3} roughness={0.7} /></mesh>)}
+        {bed.items.filter((_, order) => quality.enableExtraPlants || order % 2 === 0).map((item, order) => <RealisticAsset key={order} url={GARDEN_PROP[item.kind]} position={[item.x, -0.035, item.z]} height={item.height} rotation={item.rotation} shadows={item.kind !== 'fern'} />)}
+      </group>
+    })}
+    {layout.lanterns.map(([x, z, rotation, scale], index) => <group key={index}><RealisticAsset url={GARDEN_PROP.lantern} position={[x, -0.012, z]} height={0.52 * scale} rotation={rotation} />{night && <pointLight position={[x, 0.22 * scale, z]} color="#ffb060" intensity={2.4} distance={3.2} decay={2} />}</group>)}
+    {layout.firepit && <RealisticAsset url={GARDEN_PROP.firepit} position={[layout.firepit[0], -0.07, layout.firepit[1]]} height={0.4} rotation={layout.firepit[2]} />}
   </group>
 }
 
@@ -2225,14 +2255,14 @@ function Neighborhood({ config, scene }: { config: PergolaConfig; scene: SceneSe
   return <group>
     <mesh position={[0, -0.045, 12.6]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[46, 5.4]} /><meshStandardMaterial color="#3f4648" roughness={0.94} /></mesh>
     {/* Járda, szegély és kerti járólapok: beton PBR-anyag (színtérkép, normál- és érdességtérkép), a tónus lapról lapra kicsit változik. */}
-    <SceneAssetBoundary name="paving pbr" fallback={null}><Suspense fallback={null}><Pavers /></Suspense></SceneAssetBoundary>
+    <SceneAssetBoundary name="paving pbr" fallback={null}><Suspense fallback={null}><Pavers from={config.building === 'carport' ? 0 : terraceLayout(config, scene.houseStyle ?? 'classic').maxZ} /></Suspense></SceneAssetBoundary>
     <OptionalSceneAsset name="garden fence"><KitInstances url={GARDEN_KIT.fence} places={fence} /></OptionalSceneAsset>
     {[-12.2, 12.2].map((x) => <group key={x} position={[x, 0, 9.05]}><mesh position={[0, 1.65, 0]} castShadow><cylinderGeometry args={[0.045, 0.065, 3.3, 10]} /><meshStandardMaterial color="#303a3d" metalness={0.55} roughness={0.42} /></mesh><mesh position={[0, 3.28, 0]}><boxGeometry args={[0.34, 0.12, 0.34]} /><meshStandardMaterial color="#ffe0aa" emissive="#ffc576" emissiveIntensity={night ? 3.2 : 0.08} /></mesh>{night && <pointLight position={[0, 3.05, 0]} color="#ffd09a" intensity={5} distance={5} decay={2} />}</group>)}
   </group>
 }
 
 /** A kerti járólapok (60 × 115 cm-es betonlapok), a járda és a szegély — PBR-betonnal, lapról lapra eltérő tónussal és UV-eltolással. */
-function Pavers() {
+function Pavers({ from = 0 }: { /** a terasz elülső széle: az alá eső lépőkövek kimaradnak */ from?: number }) {
   const slab = usePBR('paver_concrete', [1, 1])
   const walk = usePBR('paver_concrete', [18, 0.5])
   const kerb = usePBR('paver_concrete', [30, 0.1])
@@ -2247,7 +2277,7 @@ function Pavers() {
   return <group name="pavers">
     <mesh position={[0, -0.005, 9.25]} receiveShadow><boxGeometry args={[46, 0.09, 1.25]} /><meshStandardMaterial map={walk.diff} normalMap={walk.normal} normalScale={[0.6, 0.6]} roughnessMap={walk.rough} color="#d8d6ce" roughness={1} /></mesh>
     <mesh position={[0, 0.025, 9.92]} receiveShadow><boxGeometry args={[46, 0.14, 0.16]} /><meshStandardMaterial map={kerb.diff} normalMap={kerb.normal} normalScale={[0.5, 0.5]} roughnessMap={kerb.rough} color="#eeece4" roughness={1} /></mesh>
-    {slabs.map((item, index) => <mesh key={index} geometry={item.geometry} position={[0, 0.005, 3.2 + index * 0.82]} receiveShadow castShadow><meshStandardMaterial map={slab.diff} normalMap={slab.normal} normalScale={[0.7, 0.7]} roughnessMap={slab.rough} color={item.tint} roughness={1} /></mesh>)}
+    {slabs.map((item, index) => 3.2 + index * 0.82 < from + 0.45 ? null : <mesh key={index} geometry={item.geometry} position={[0, 0.005, 3.2 + index * 0.82]} receiveShadow castShadow><meshStandardMaterial map={slab.diff} normalMap={slab.normal} normalScale={[0.7, 0.7]} roughnessMap={slab.rough} color={item.tint} roughness={1} /></mesh>)}
   </group>
 }
 
@@ -3234,7 +3264,7 @@ function SceneContent({ cyclorama = false, cycloramaTone = 'neutral', config, sc
     {studio && !scene.photoMode && <StudioEnvironment config={config} night={lighting.night} neutral={cyclorama} />}
     {!studio && !scene.photoMode && <Ground scene={scene} />}
     {!studio && !scene.photoMode && sideWalls(config.mount).length > 0 && <HouseWings config={config} look={houseLook} night={lighting.night} />}
-    {!studio && !scene.photoMode && !coreOnly && <><OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house">{houseLook.houseStyle === 'classic' ? <House config={config} look={houseLook} night={lighting.night} /> : <StyledHouse key={houseLook.houseStyle} config={config} look={houseLook} night={lighting.night} style={houseLook.houseStyle} />}</OptionalSceneAsset>{lighting.night && <Stars />}</>}
+    {!studio && !scene.photoMode && !coreOnly && <>{config.building !== 'carport' && <OptionalSceneAsset name="stone terrace"><Terrace config={config} scene={scene} quality={quality} /></OptionalSceneAsset>}<OptionalSceneAsset name="terrace decking"><Deck config={config} /></OptionalSceneAsset><Neighborhood config={config} scene={scene} /><OptionalSceneAsset name="garden planting"><Garden config={config} scene={scene} quality={quality} /></OptionalSceneAsset><OptionalSceneAsset name="architectural house">{houseLook.houseStyle === 'classic' ? <House config={config} look={houseLook} night={lighting.night} /> : <StyledHouse key={houseLook.houseStyle} config={config} look={houseLook} night={lighting.night} style={houseLook.houseStyle} />}</OptionalSceneAsset>{lighting.night && <Stars />}</>}
     {pergola}
     {!scene.photoMode && <ContactShadows key={contactShadowKey(config, scene.ground, scene.houseStyle, assetsLoaded)} position={[0, 0.018, 0]} opacity={lighting.night ? 0.25 : 0.38} scale={Math.max(config.width, config.depth) + 3} blur={2.2} far={5} resolution={quality.contactShadowResolution} frames={1} color="#10171d" />}
     {scene.rain && <Rain config={config} quality={quality} />}

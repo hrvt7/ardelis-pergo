@@ -27,16 +27,17 @@ describe('ház kinézete', () => {
     expect(normalizeColorCode(findWindowColor('white').match)).toBe('RAL 9016')
   })
 
-  it('az alapjelenet a mintaház eredeti cédrus homlokzatát mutatja', () => {
-    expect(DEFAULT_SCENE.wallColor).toBe(defaultWallColor('cedar'))
-    expect(isOriginalCedar(DEFAULT_SCENE.wallFinish, DEFAULT_SCENE.wallColor)).toBe(true)
+  it('az alapjelenet a lapostetős ház fehér vakolt homlokzatát mutatja; a fa–cink ház eredeti cédrusa felismerhető marad', () => {
+    expect(DEFAULT_SCENE.wallColor).toBe(defaultWallColor('plaster'))
+    expect(isOriginalCedar(DEFAULT_SCENE.wallFinish, DEFAULT_SCENE.wallColor)).toBe(false)
+    expect(isOriginalCedar('cedar', defaultWallColor('cedar'))).toBe(true)
     expect(isOriginalCedar('cedar', WALL_COLORS.cedar[4].hex)).toBe(false)
     expect(isOriginalCedar('plaster', defaultWallColor('cedar'))).toBe(false)
   })
 
   it('hibás vagy hiányzó mentett értéknél alapértéket ad', () => {
-    expect(parseHouseLook(null)).toEqual({ houseStyle: 'classic', wallFinish: 'cedar', wallColor: defaultWallColor('cedar'), windowColor: 'anthracite' })
-    expect(parseHouseLook({ houseStyle: 'castle', wallFinish: 'marble', wallColor: 'red', windowColor: 'pink' })).toEqual({ houseStyle: 'classic', wallFinish: 'cedar', wallColor: defaultWallColor('cedar'), windowColor: 'anthracite' })
+    expect(parseHouseLook(null)).toEqual({ houseStyle: 'modern', wallFinish: 'plaster', wallColor: defaultWallColor('plaster'), windowColor: 'anthracite' })
+    expect(parseHouseLook({ houseStyle: 'castle', wallFinish: 'marble', wallColor: 'red', windowColor: 'pink' })).toEqual({ houseStyle: 'modern', wallFinish: 'plaster', wallColor: defaultWallColor('plaster'), windowColor: 'anthracite' })
     expect(parseHouseLook({ houseStyle: 'gable', wallFinish: 'plaster', wallColor: '#ABCDEF', windowColor: 'white' })).toEqual({ houseStyle: 'gable', wallFinish: 'plaster', wallColor: '#abcdef', windowColor: 'white' })
     // Anyagváltásnál hiányzó szín: az anyag alapszíne.
     expect(parseHouseLook({ wallFinish: 'brick' }).wallColor).toBe(defaultWallColor('brick'))

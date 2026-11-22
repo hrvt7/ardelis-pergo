@@ -37,3 +37,4 @@ https://polyhaven.com/license
 
 - Architectural scale person: original AI-generated GLB created for PERGO / Atelier, normalized to 180 cm. No external model or texture source used.
 - Neighborhood fence, street, sidewalk, path and streetlights: original procedural Three.js geometry created for this project.
+- Poly Haven (CC0, https://polyhaven.com): wooden_lantern_01, stone_fire_pit, shrub_03, fern_02, rock_moss_set_01 (egyszerűsített) a public/assets/models/garden alatt; large_floor_tiles_02 (terrace_stone) és brown_mud_leaves_01 (garden_mulch) textúrák.

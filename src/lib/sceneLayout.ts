@@ -1,5 +1,6 @@
 // A 3D jelenet környezetének elrendezése (ház, házszárnyak, kert), tiszta TypeScript.
 // Egyetlen igazságforrás: a jelenet ebből rajzol, a bejárás ütközésvizsgálata ebből számol.
+import { deckBounds } from './deck'
 import { HOUSE_RAW } from './houseDims'
 import { STYLED_HOUSE, styledHouseScale } from './house'
 import { hasBackWall, isWallSide, sideWalls } from './mount'
@@ -78,4 +79,51 @@ export function gardenLayout(config: Layout & Pick<PergolaConfig, 'sides' | 'spl
   const leftPot: Placement = isWallSide(config.mount, 'left') ? [-config.width / 2 + 0.38, config.depth / 2 + (hasSwingDoor(config, 'front') ? 1.75 : 0.62), 0, 1.25] : [-config.width / 2 - (hasSwingDoor(config, 'left') ? 1.9 : 0.75), config.depth / 2, 0, 1.25]
   const rightPot: Placement = isWallSide(config.mount, 'right') ? [config.width / 2 - 0.38, config.depth / 2 + (hasSwingDoor(config, 'front') ? 1.75 : 0.62), 0, 1.05] : [config.width / 2 + (hasSwingDoor(config, 'right') ? 1.9 : 0.8), hasBackWall(config.mount) ? -config.depth / 2 + 0.5 : -config.depth / 2, 0, 1.05]
   return { house, boundary, hedgeFrom, hedges, planters, bollards, pots: [leftPot, rightPot] }
+}
+
+/** Egy ágyás növénye vagy köve: hely, elforgatás, magasság (m). */
+export interface BedItem { kind: 'shrub' | 'fern' | 'rocks'; x: number; z: number; rotation: number; height: number }
+/** Mulcsos ágyás a terasz mellett (x: belső és külső szél, z: hátsó és elülső vég). */
+export interface TerraceBed { minX: number; maxX: number; minZ: number; maxZ: number; items: BedItem[] }
+
+const TERRACE_MARGIN = 2.6
+const TERRACE_FRONT = 2.6
+const BED_WIDTH = 1.4
+/** determinisztikus álvéletlen 0…1 (a jelenet és a tesztek ugyanazt kapják) */
+const hash = (a: number, b: number) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v) }
+
+/**
+ * Nagylapos kőterasz a ház és a pergola körül, két oldalán mulcsos ágyással, elöl lámpásokkal, a gyepen tűzrakóval.
+ * A terasz a homlokzattól a pergola elé 2,6 m-re fut; falas oldalon a burkolat a fal síkjáig tart, ott ágyás sincs.
+ * Tiszta elrendezés: a jelenet ebből rajzol.
+ */
+export function terraceLayout(config: Layout & Pick<PergolaConfig, 'sides' | 'split'>, style: HouseStyle = 'classic') {
+  const house = getHouseLayout(config, style)
+  const deck = deckBounds(config)
+  const walls = sideWalls(config.mount)
+  const minX = walls.includes('left') ? deck.minX : -(config.width / 2 + TERRACE_MARGIN)
+  const maxX = walls.includes('right') ? deck.maxX : config.width / 2 + TERRACE_MARGIN
+  const minZ = house.frontZ + 0.02
+  const maxZ = config.depth / 2 + TERRACE_FRONT
+  const beds: TerraceBed[] = (['left', 'right'] as const).filter((side) => !walls.includes(side)).map((side, bedIndex) => {
+    const sx = side === 'left' ? -1 : 1
+    const inner = sx * (config.width / 2 + TERRACE_MARGIN + 0.03)
+    const outer = inner + sx * BED_WIDTH
+    const bedMinZ = house.frontZ + 1.2
+    const bedMaxZ = maxZ - 0.5
+    const count = Math.max(2, Math.floor((bedMaxZ - bedMinZ) / 0.85))
+    const step = (bedMaxZ - bedMinZ) / count
+    const items = Array.from({ length: count }, (_, index): BedItem => {
+      const seed = index + bedIndex * 17
+      const kind: BedItem['kind'] = index % 5 === 2 ? 'rocks' : index % 2 === 0 ? 'shrub' : 'fern'
+      const across = 0.3 + hash(seed, 3) * (BED_WIDTH - 0.6)
+      return { kind, x: inner + sx * across, z: bedMinZ + (index + 0.5) * step + (hash(seed, 5) - 0.5) * 0.2, rotation: hash(seed, 7) * Math.PI * 2, height: kind === 'shrub' ? 0.6 + hash(seed, 9) * 0.25 : kind === 'fern' ? 0.42 + hash(seed, 9) * 0.14 : 0.3 }
+    })
+    return { minX: Math.min(inner, outer), maxX: Math.max(inner, outer), minZ: bedMinZ, maxZ: bedMaxZ, items }
+  })
+  // Lámpások a terasz két elülső sarkán; a tűzrakó a gyepen, balra elöl (ha a járda előtt elfér).
+  const lanterns: Placement[] = [[minX + 0.45, maxZ - 0.45, 0.4, 1], [maxX - 0.5, maxZ - 0.8, 2.1, 0.8]]
+  const firepitZ = maxZ + 2.1
+  const firepit: Placement | null = firepitZ <= 7.3 ? [-(config.width / 2 + TERRACE_MARGIN + 0.6), firepitZ, 0.6, 1] : null
+  return { minX, maxX, minZ, maxZ, width: maxX - minX, depth: maxZ - minZ, centerX: (minX + maxX) / 2, centerZ: (minZ + maxZ) / 2, beds, lanterns, firepit }
 }

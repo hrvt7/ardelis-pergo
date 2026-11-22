@@ -1,5 +1,15 @@
 # Változások
 
+## 5.54 – Új kertkörnyezet: lapostetős villa, kőterasz, ágyások, lámpások
+
+- **A „Családi ház” környezet új, Blenderben felépített elemeket kapott.** A „Lapostetős” ház új modell: kétszintes fehér kubus, a földszinten 7,2 m-es üvegfal belső térrel, az emeleten mélyített szalagablak, mellette cédrus burkolatú melléképület (a méretek, az origó és a hálónevek a korábbi szerződés szerint: a homlokzat, a nyílászárók színe és az éjjeli fények ugyanúgy állíthatók).
+- **Kőterasz:** a ház és a pergola körül nagylapos kőburkolat fut (a fa burkolat ezen ül); szabad oldalon acélszegélyes mulcságyás cserjével, páfránnyal és kövekkel, elöl két lámpás (éjjel világít), a gyepen tűzrakó. Falas oldalon a burkolat a falig tart, ott nincs ágyás. A terasz alá eső lépőkövek kimaradnak. Magas minőségtől fasor áll a ház mögött és oldalt.
+- **Alapértelmezett ház:** új látogatónak a „Lapostetős” ház fehér vakolattal (eddig a fa–cink ház); aki már választott házat, annál a mentett választás marad. Az alap háttér továbbra is a semleges stúdió.
+- A pergola, a konfigurációs logika és az árazás nem változott. Carportnál a terasz nem jelenik meg.
+- Új fájlok: `houses/house_modern.glb` (212 kB), `garden/{lantern,firepit,shrub,fern,rocks}.glb` (összesen kb. 2,2 MB, Meshopt), `textures/{terrace_stone,garden_mulch}` (WebP). Források: Poly Haven (CC0), lásd `public/assets/CREDITS.md`.
+- Tesztek: `terraceLayout.test.ts` (a terasz magába foglalja a burkolatot, ágyás csak szabad oldalon, a dézsák a teraszon állnak, determinisztikus); a házalapértelmezés tesztjei frissítve.
+- Ellenőrizve fej nélküli Chrome-ban (magas és alacsony minőség; fali, szabadon álló és sarokrögzítés; nappal és éjszaka): hibaüzenet nélkül. Nem ellenőrzött: valódi telefonon a betöltési idő és a képkockaszám; bejárás módban az ágyásokon át lehet sétálni (nincs ütközésük).
+
 ## 5.53 – Új indítóképernyő: „Lamelix – Időjárás” (10 mp)
 
 - **Az indító animáció lecserélve** a „Lamelix – Időjárás” videóra (9:16, 10 mp, 30 kocka/mp: nap → eső → lamellák → logó). Minden lejátszási úton ez fut (videó, hardveres dekóder tiltott automatikus lejátszásnál, animált tartalék, logós zárókép), a háttérszín az új videóhoz igazítva.
