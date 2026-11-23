@@ -1,5 +1,12 @@
 # Változások
 
+## 5.55 – Visszaállítva a korábbi házak; az új kertkörnyezet marad
+
+- **Házak:** a „Lapostetős” ház ismét a korábbi modell, és új látogatónak ismét a fa–cink ház az alapértelmezett, cédrus homlokzattal (pontosan az 5.53 állapota).
+- **Marad az 5.54 kertkörnyezete:** kőterasz, acélszegélyes ágyások cserjével, páfránnyal és kövekkel, lámpások, tűzrakó, háttér-fasor.
+- A pergola, a konfigurációs logika és az árazás nem változott.
+- Tesztek: a házalapértelmezés tesztjei az 5.53 szerinti állapotra visszaállítva; `terraceLayout.test.ts` mindhárom háztípusra ellenőrzi a teraszt.
+
 ## 5.54 – Új kertkörnyezet: lapostetős villa, kőterasz, ágyások, lámpások
 
 - **A „Családi ház” környezet új, Blenderben felépített elemeket kapott.** A „Lapostetős” ház új modell: kétszintes fehér kubus, a földszinten 7,2 m-es üvegfal belső térrel, az emeleten mélyített szalagablak, mellette cédrus burkolatú melléképület (a méretek, az origó és a hálónevek a korábbi szerződés szerint: a homlokzat, a nyílászárók színe és az éjjeli fények ugyanúgy állíthatók).

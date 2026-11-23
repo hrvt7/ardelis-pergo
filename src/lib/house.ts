@@ -102,9 +102,9 @@ export const WINDOW_COLORS: WindowSwatch[] = localized(() => ([
 ]))
 
 export const DEFAULT_HOUSE: Required<HouseLookSettings> = {
-  houseStyle: 'modern',
-  wallFinish: 'plaster',
-  wallColor: WALL_COLORS.plaster[0].hex,
+  houseStyle: 'classic',
+  wallFinish: 'cedar',
+  wallColor: WALL_COLORS.cedar[0].hex,
   windowColor: 'anthracite',
 }
 
